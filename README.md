@@ -317,6 +317,25 @@ These are the features supported at the function-scope:
   - [mnemonic](#mnemonic)
   - [characteristics](#characteristics)
 
+All of them support an optional description which helps with documenting rules and provides context in capa's output.
+It can be specified in the following way:
+
+```
+- string: This program cannot be run in DOS mode.
+  description: MS-DOS stub message
+- number: 0x4550
+  description: IMAGE_DOS_SIGNATURE (MZ)
+```
+
+For all features except for [string](#string), the description can be specified inline preceded by ` = `.
+For the previous [number](#number) example:
+
+```
+- number: 0x4550 = IMAGE_DOS_SIGNATURE (MZ)
+```
+
+The inline syntax is preferred (except for [string](#string)).
+
 ### api
 A call to a named function, probably an import,
 though possibly a local function (like `malloc`) extracted via FLIRT.
@@ -339,8 +358,8 @@ For example, a crypto constant.
 
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format.
 
-To associate context with a number, e.g. for constant definitions, append an equal sign and the respective name to
-the number definition. This helps with documenting rules and provides context in capa's output.
+It can include an optional description, e.g. for constant definitions.
+The inline syntax is preferred (` = DESCRIPTION STRING`).
 
 Examples:
 
@@ -362,20 +381,29 @@ Regexes should be surrounded with `/` characters.
 By default, capa uses case-sensitive matching and assumes leading and trailing wildcards.
 To perform case-insensitive matching append an `i`. To anchor the regex at the start or end of a string, use `^` and/or `$`.
 
+Strings can include a description, but the inline syntax is not supported.
+
 Examples:
 
-    string: This program cannot be run in DOS mode.
-    string: Firefox 64.0
-    string: /SELECT.*FROM.*WHERE/
-    string: /Hardware\\Description\\System\\CentralProcessor/i
-    
+```
+- string: This program cannot be run in DOS mode.
+  description: MS-DOS stub message
+- string: '{3E5FC7F9-9A51-4367-9063-A120244FBEC7}'
+  description: CLSID_CMSTPLUA
+- string: Firefox 64.0
+- string:'/SELECT.*FROM.*WHERE/
+- string: /Hardware\\Description\\System\\CentralProcessor/i
+```
+
 Note that regex matching is expensive (`O(features)` rather than `O(1)`) so they should be used sparingly.
 
 ### bytes
 A sequence of bytes referenced by the logic of the program. 
 The provided sequence must match from the beginning of the referenced bytes and be no more than `0x100` bytes.
-The parameter is a sequence of hexadecimal bytes followed by an optional description.
- 
+The parameter is a sequence of hexadecimal bytes.
+It can include an optional description.
+The inline syntax is preferred (` = DESCRIPTION STRING`).
+
 
 The example below illustrates byte matching given a COM CLSID pushed onto the stack prior to `CoCreateInstance`.
 
@@ -397,6 +425,7 @@ A structure offset referenced by the logic of the program.
 This should not be a stack offset.
 
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format.
+It can be followed by an optional description.
 
 Examples:
 
@@ -452,6 +481,8 @@ These are the features supported at the file-scope:
   - [export](#export)
   - [import](#import)
   - [section](#section)
+
+All of them can be followed by an optional description, as the features in the previous section.
 
 ### file string
 An ASCII or UTF-16 LE string present in the file.

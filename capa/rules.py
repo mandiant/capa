@@ -207,7 +207,7 @@ def parse_feature(key):
         return capa.features.basicblock.BasicBlock
     elif key.startswith('characteristic(') and key.endswith(')'):
         characteristic = key[len('characteristic('):-len(')')]
-        return lambda v: capa.features.Characteristic(characteristic, v)
+        return lambda v, description=None: capa.features.Characteristic(characteristic, v, description)
     elif key == 'export':
         return capa.features.file.Export
     elif key == 'import':
@@ -220,18 +220,18 @@ def parse_feature(key):
         raise InvalidRule('unexpected statement: %s' % key)
 
 
-def parse_symbol(s, value_type):
+def parse_description(s, value_type, description=None):
     '''
     s can be an int or a string
     '''
-    if isinstance(s, str) and '=' in s:
-        value, symbol = s.split('=', 1)
-        symbol = symbol.strip()
-        if symbol == '':
-            raise InvalidRule('unexpected value: "%s", symbol name cannot be empty' % s)
+    if value_type != 'string' and isinstance(s, str) and ' = ' in s:
+        if description:
+            raise InvalidRule('unexpected value: "%s", only one description allowed (inline description with `=`)' % s)
+        value, description = s.split(' = ', 1)
+        if description == '':
+            raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
     else:
         value = s
-        symbol = None
 
     if isinstance(value, str):
         if value_type == 'bytes':
@@ -244,17 +244,17 @@ def parse_symbol(s, value_type):
             if len(value) > MAX_BYTES_FEATURE_SIZE:
                 raise InvalidRule('unexpected bytes value: byte sequences must be no larger than %s bytes' %
                                   MAX_BYTES_FEATURE_SIZE)
-        else:
+        elif value_type in ['number', 'offset']:
             try:
                 value = parse_int(value)
             except ValueError:
                 raise InvalidRule('unexpected value: "%s", must begin with numerical value' % value)
 
-    return value, symbol
+    return value, description
 
 
 def build_statements(d, scope):
-    if len(d.keys()) != 1:
+    if len(d.keys()) > 2:
         raise InvalidRule('too many statements')
 
     key = list(d.keys())[0]
@@ -330,10 +330,10 @@ def build_statements(d, scope):
                 #
                 #     count(offset(0xC))
                 #     count(number(0x11223344))
-                #     count(number(0x100 = symbol name))
+                #     count(number(0x100 = description))
                 if term in ('number', 'offset', 'bytes'):
-                    value, symbol = parse_symbol(arg, term)
-                    feature = Feature(value, symbol)
+                    value, description = parse_description(arg, term)
+                    feature = Feature(value, description)
                 else:
                     # arg is string, like:
                     #
@@ -370,13 +370,8 @@ def build_statements(d, scope):
             raise InvalidRule('invalid regular expression: %s it should use Python syntax, try it at https://pythex.org' % d[key])
     else:
         Feature = parse_feature(key)
-        if key in ('number', 'offset', 'bytes'):
-            # parse numbers with symbol description, e.g. 0x4550 = IMAGE_DOS_SIGNATURE
-            # or regular numbers, e.g. 37
-            value, symbol = parse_symbol(d[key], key)
-            feature = Feature(value, symbol)
-        else:
-            feature = Feature(d[key])
+        value, symbol = parse_description(d[key], key, d.get('description'))
+        feature = Feature(value, symbol)
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
