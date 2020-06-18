@@ -1,0 +1,2 @@
+FNAMES_EXTENSION = '.fnames'
+FREEZE_EXTENSION = '.frz'

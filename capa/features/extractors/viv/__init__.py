@@ -1,0 +1,73 @@
+import types
+
+import viv_utils
+
+import capa.features.extractors
+import capa.features.extractors.viv.file
+import capa.features.extractors.viv.function
+import capa.features.extractors.viv.basicblock
+import capa.features.extractors.viv.insn
+from capa.features.extractors import FeatureExtractor
+
+import file
+import function
+import basicblock
+import insn
+__all__ = ["file", "function", "basicblock", "insn"]
+
+
+def get_va(self):
+    try:
+        # vivisect type
+        return self.va
+    except AttributeError:
+        pass
+
+    raise TypeError()
+
+
+def add_va_int_cast(o):
+    '''
+    dynamically add a cast-to-int (`__int__`) method to the given object
+    that returns the value of the `.va` property.
+
+    this bit of skullduggery lets use cast viv-utils objects as ints.
+    the correct way of doing this is to update viv-utils (or subclass the objects here).
+    '''
+    setattr(o, '__int__', types.MethodType(get_va, o, type(o)))
+    return o
+
+
+class VivisectFeatureExtractor(FeatureExtractor):
+    def __init__(self, vw, path):
+        super(VivisectFeatureExtractor, self).__init__()
+        self.vw = vw
+        self.path = path
+
+    def extract_file_features(self):
+        for feature, va in capa.features.extractors.viv.file.extract_features(self.vw, self.path):
+            yield feature, va
+
+    def get_functions(self):
+        for va in sorted(self.vw.getFunctions()):
+            yield add_va_int_cast(viv_utils.Function(self.vw, va))
+
+    def extract_function_features(self, f):
+        for feature, va in capa.features.extractors.viv.function.extract_features(f):
+            yield feature, va
+
+    def get_basic_blocks(self, f):
+        for bb in f.basic_blocks:
+            yield add_va_int_cast(bb)
+
+    def extract_basic_block_features(self, f, bb):
+        for feature, va in capa.features.extractors.viv.basicblock.extract_features(f, bb):
+            yield feature, va
+
+    def get_instructions(self, f, bb):
+        for insn in bb.instructions:
+            yield add_va_int_cast(insn)
+
+    def extract_insn_features(self, f, bb, insn):
+        for feature, va in capa.features.extractors.viv.insn.extract_features(f, bb, insn):
+            yield feature, va
