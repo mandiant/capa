@@ -70,3 +70,24 @@ def test_rule_reformat_order():
                - number: 2''')
 
     assert capa.rules.Rule.from_yaml(rule).to_yaml() == EXPECTED
+
+
+def test_rule_reformat_meta_update():
+    rule = textwrap.dedent('''\
+         rule:
+           meta:
+             author: user@domain.com
+             examples:
+               - foo1234
+               - bar5678
+             scope: function
+             name: AAAA
+           features:
+             - and:
+               - number: 1
+               - number: 2''')
+
+    rule = capa.rules.Rule.from_yaml(rule)
+    rule.name = "test rule"
+    assert rule.to_yaml() == EXPECTED
+

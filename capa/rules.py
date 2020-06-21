@@ -533,11 +533,18 @@ class Rule(object):
         #  - ordering the meta elements
         #  - indenting the nested items with two spaces
         #
+        # updates to the rule will be synced for meta fields,
+        # but not for rule logic.
+        # programmatic generation of rules is not yet supported.
 
         definition = yaml.load(self.definition)
         # definition retains a reference to `meta`,
         # so we're updating that in place.
-        meta = definition["rule"]["meta"]
+        definition["rule"]["meta"] = self.meta
+        meta = self.meta
+
+        meta["name"] = self.name
+        meta["scope"] = self.scope
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
