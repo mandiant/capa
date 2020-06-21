@@ -561,7 +561,7 @@ class Rule(object):
 
         ostream = six.BytesIO()
         yaml.dump(definition, ostream)
-        return ostream.getvalue().decode('utf-8').rstrip("\n")
+        return ostream.getvalue().decode('utf-8').rstrip("\n") + "\n"
 
 
 def get_rules_with_scope(rules, scope):

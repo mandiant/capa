@@ -47,7 +47,7 @@ def main(argv=None):
         with open(args.path, 'wb') as f:
             f.write(rule.to_yaml().encode('utf-8'))
     else:
-        print(rule.to_yaml())
+        print(rule.to_yaml().rstrip("\n"))
 
     return 0
 
