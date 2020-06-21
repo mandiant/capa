@@ -508,6 +508,113 @@ class Rule(object):
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
 
+    def to_yaml(self):
+        import six
+        from ruamel.yaml import YAML
+
+        COMMON_KEYS = ("name", "namespace", "rule-category", "author", "att&ck", "mbc", "examples", "scope")
+
+        yaml = YAML(typ='rt')
+        yaml.default_flow_style = False
+
+        definition = yaml.load(self.definition)
+        # definition retains a reference to `meta`,
+        # so we're updating that in place.
+        meta = definition["rule"]["meta"]
+
+        def move_to_end(m, k):
+            # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
+            # here we refresh the insertion order of the given key.
+            # this will move it to the end of the sequence.
+            v = m[k]
+            del m[k]
+            m[k] = v
+
+        for key in COMMON_KEYS:
+            if key in meta:
+                move_to_end(meta, key)
+
+        for key in sorted(meta.keys()):
+            if key in COMMON_KEYS:
+                continue
+            move_to_end(meta, key)
+
+        ostream = six.BytesIO()
+        yaml.dump(definition, ostream)
+        print(ostream.getvalue().decode('utf-8'))
+        return ''
+
+
+        definition = yaml.safe_load(self.definition)
+
+        formatted = DefaultOrderedDict(default_factory=lambda: DefaultOrderedDict(default_factory=DefaultOrderedDict))
+        meta = definition["rule"]["meta"]
+
+
+        for key in COMMON_KEYS:
+            if key in meta:
+                formatted["rule"]["meta"][key] = meta[key]
+
+        for key in sorted(meta.keys()):
+            if key in COMMON_KEYS:
+                continue
+            formatted["rule"]["meta"][key] = meta[key]
+
+        formatted["rule"]["features"] = definition["rule"]["features"]
+
+        return yaml.dump(formatted, Dumper=CapaDumper, default_flow_style=False)
+
+
+class DefaultOrderedDict(collections.OrderedDict):
+    # Source: http://stackoverflow.com/a/6190500/562769
+    def __init__(self, default_factory=None, *a, **kw):
+        if (default_factory is not None and not isinstance(default_factory, collections.Callable)):
+            raise TypeError('first argument must be callable')
+        super(DefaultOrderedDict, self).__init__(*a, **kw)
+        self.default_factory = default_factory
+
+    def __getitem__(self, key):
+        try:
+            return super(DefaultOrderedDict, self).__getitem__(key)
+        except KeyError:
+            return self.__missing__(key)
+
+    def __missing__(self, key):
+        if self.default_factory is None:
+            raise KeyError(key)
+        value = self.default_factory()
+        self[key] = value
+        return value
+
+
+class CapaDumper(yaml.Dumper):
+    '''
+    Tweak the yaml serializer to emit sequences/lists with additional indentation.
+    ref: https://stackoverflow.com/a/39681672/87207
+
+    before:
+
+        rule:
+          features:
+          - or:
+            - count(mnemonic(rdtsc)): 2 or more
+            - mnemonic: icebp
+
+    after:
+
+        rule:
+          features:
+            - or:
+                - count(mnemonic(rdtsc)): 2 or more
+                - mnemonic: icebp
+    '''
+    def __init__(self, *args, **kwargs):
+        super(CapaDumper, self).__init__(*args, **kwargs)
+        self.add_representer(DefaultOrderedDict, lambda dumper, data: dumper.represent_dict(data.iteritems()))
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super(CapaDumper, self).increase_indent(flow, False)
+
 
 def get_rules_with_scope(rules, scope):
     '''
