@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
-META_KEYS = ("name", "namespace", "rule-category", "author", "scope", "att&ck", "mbc", "examples")
+META_KEYS = ("name", "namespace", "rule-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
 
 
 FILE_SCOPE = 'file'
