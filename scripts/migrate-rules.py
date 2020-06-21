@@ -89,13 +89,15 @@ def main(argv=None):
 
         rule.meta["namespace"] = row["proposed namespace"]
 
-        rule.meta["att&ck"] = [
-            row["ATT&CK"]
-        ]
+        if row["ATT&CK"] != 'n/a' and row["ATT&CK"] != "":
+            tag = row["ATT&CK"]
+            name, _, id = tag.rpartition(" ")
+            tag = "%s [%s]" % (name, id)
+            rule.meta["att&ck"] = [tag]
 
-        rule.meta["mbc"] = [
-            row["MBC"]
-        ]
+        if row["MBC"] != 'n/a' and row["MBC"] != "":
+            tag = row["MBC"]
+            rule.meta["mbc"] = [tag]
 
     for rule in rules.values():
         namespace = rule.meta.get("namespace")
