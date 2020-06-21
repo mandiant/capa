@@ -13,8 +13,9 @@ import csv
 import logging
 import collections
 
-import yaml
 import argparse
+
+import capa.rules
 
 
 logger = logging.getLogger('migrate-rules')
@@ -44,16 +45,8 @@ def read_rules(rule_directory):
                 logger.info('skipping file: %s', path)
                 continue
 
-            with open(path, 'rb') as f:
-                rule = yaml.safe_load(f.read().decode('utf-8'))
-
-                # we want the meta section to show up before the logic
-                # so use an ordereddict
-                formatted_rule = {"rule": collections.OrderedDict()}
-                formatted_rule["rule"]["meta"] = rule["rule"]["meta"]
-                formatted_rule["rule"]["features"] = rule["rule"]["features"]
-
-                rules[rule['rule']['meta']['name']] = formatted_rule
+            rule = capa.rules.Rule.from_yaml_file(path)
+            rules[rule.name] = rule
     return rules
 
 
@@ -79,45 +72,39 @@ def main(argv=None):
     rules = read_rules(args.source)
     logger.info("read %d rules", len(rules))
 
-    def dict_representer(dumper, data):
-        return dumper.represent_dict(data.iteritems())
-
-    yaml.add_representer(collections.OrderedDict, dict_representer)
-
     for row in plan:
         if not row["existing name"]:
             continue
 
         rule = rules[row["existing name"]]
-        meta = rule["rule"]["meta"]
 
-        if meta["name"] != row["proposed name"]:
-            logger.info("renaming rule '%s' -> '%s'", meta["name"], row["proposed name"])
-            meta["name"] = row["proposed name"]
+        if rule.meta["name"] != row["proposed name"]:
+            logger.info("renaming rule '%s' -> '%s'", rule.meta["name"], row["proposed name"])
+            rule.meta["name"] = row["proposed name"]
+            rule.name = row["proposed name"]
 
-        if "rule-category" in meta:
-            logger.info("deleting rule category '%s'", meta["rule-category"])
-            del meta["rule-category"]
+        if "rule-category" in rule.meta:
+            logger.info("deleting rule category '%s'", rule.meta["rule-category"])
+            del rule.meta["rule-category"]
 
-        meta["namespace"] = row["proposed namespace"]
+        rule.meta["namespace"] = row["proposed namespace"]
 
-        meta["att&ck"] = [
+        rule.meta["att&ck"] = [
             row["ATT&CK"]
         ]
 
-        meta["mbc"] = [
+        rule.meta["mbc"] = [
             row["MBC"]
         ]
 
     for rule in rules.values():
-        meta = rule["rule"]["meta"]
-        namespace = meta.get("namespace")
+        namespace = rule.meta.get("namespace")
 
         if not namespace:
-            logger.info("%s has no proposed namespace, skipping", meta["name"])
+            logger.info("%s has no proposed namespace, skipping", rule.name)
             continue
 
-        filename = meta["name"]
+        filename = rule.name
         filename = filename.lower()
         filename = filename.replace(" ", "-")
         filename = filename.replace("(", "")
@@ -138,7 +125,7 @@ def main(argv=None):
         logger.info("writing rule %s", path)
 
         with open(path, "wb") as f:
-            f.write(yaml.dump(rule).encode("utf-8"))
+            f.write(rule.to_yaml())
 
     return 0
 
