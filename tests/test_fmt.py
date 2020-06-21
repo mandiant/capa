@@ -14,7 +14,8 @@ EXPECTED = textwrap.dedent('''\
      features:
        - and:
          - number: 1
-         - number: 2''')
+         - number: 2
+''')
 
 
 def test_rule_reformat_top_level_elements():
