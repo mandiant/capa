@@ -384,6 +384,9 @@ yaml.default_flow_style = False
 #         - mnemonic: vaesdec
 yaml.indent(sequence=2, offset=2)
 
+# avoid word wrapping
+yaml.width = 4096
+
 
 class Rule(object):
     def __init__(self, name, scope, statement, meta, definition=''):
