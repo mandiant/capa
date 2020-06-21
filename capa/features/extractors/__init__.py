@@ -10,7 +10,7 @@ try:
 except (ImportError, SyntaxError):
     pass
 
-__all__ = ["ida", "viv"]
+__all__ = ['ida', 'viv']
 
 
 class FeatureExtractor(object):

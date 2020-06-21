@@ -3,96 +3,95 @@ import textwrap
 import capa.rules
 import capa.engine
 from capa.engine import *
-import capa.features
+from capa.features import *
+from capa.features.insn import *
 
 
-def test_element():
-    assert Element(1).evaluate(set([0])) == False
-    assert Element(1).evaluate(set([1])) == True
-    assert Element(1).evaluate(set([None])) == False
-    assert Element(1).evaluate(set([''])) == False
-    assert Element(1).evaluate(set([False])) == False
+def test_number():
+    assert Number(1).evaluate({Number(0): {1}}) == False
+    assert Number(1).evaluate({Number(1): {1}}) == True
+    assert Number(1).evaluate({Number(2): {1, 2}}) == False
 
 
 def test_and():
-    assert And(Element(1)).evaluate(set([0])) == False
-    assert And(Element(1)).evaluate(set([1])) == True
-    assert And(Element(1), Element(2)).evaluate(set([0])) == False
-    assert And(Element(1), Element(2)).evaluate(set([1])) == False
-    assert And(Element(1), Element(2)).evaluate(set([2])) == False
-    assert And(Element(1), Element(2)).evaluate(set([1, 2])) == True
+    assert And(Number(1)).evaluate({Number(0): {1}}) == False
+    assert And(Number(1)).evaluate({Number(1): {1}}) == True
+    assert And(Number(1), Number(2)).evaluate({Number(0): {1}}) == False
+    assert And(Number(1), Number(2)).evaluate({Number(1): {1}}) == False
+    assert And(Number(1), Number(2)).evaluate({Number(2): {1}}) == False
+    assert And(Number(1), Number(2)).evaluate({Number(1): {1}, Number(2): {2}}) == True
 
 
 def test_or():
-    assert Or(Element(1)).evaluate(set([0])) == False
-    assert Or(Element(1)).evaluate(set([1])) == True
-    assert Or(Element(1), Element(2)).evaluate(set([0])) == False
-    assert Or(Element(1), Element(2)).evaluate(set([1])) == True
-    assert Or(Element(1), Element(2)).evaluate(set([2])) == True
-    assert Or(Element(1), Element(2)).evaluate(set([1, 2])) == True
+    assert Or(Number(1)).evaluate({Number(0): {1}}) == False
+    assert Or(Number(1)).evaluate({Number(1): {1}}) == True
+    assert Or(Number(1), Number(2)).evaluate({Number(0): {1}}) == False
+    assert Or(Number(1), Number(2)).evaluate({Number(1): {1}}) == True
+    assert Or(Number(1), Number(2)).evaluate({Number(2): {1}}) == True
+    assert Or(Number(1), Number(2)).evaluate({Number(1): {1}, Number(2): {2}}) == True
 
 
 def test_not():
-    assert Not(Element(1)).evaluate(set([0])) == True
-    assert Not(Element(1)).evaluate(set([1])) == False
+    assert Not(Number(1)).evaluate({Number(0): {1}}) == True
+    assert Not(Number(1)).evaluate({Number(1): {1}}) == False
 
 
 def test_some():
-    assert Some(0, Element(1)).evaluate(set([0])) == True
-    assert Some(1, Element(1)).evaluate(set([0])) == False
+    assert Some(0, Number(1)).evaluate({Number(0): {1}}) == True
+    assert Some(1, Number(1)).evaluate({Number(0): {1}}) == False
 
-    assert Some(2, Element(1), Element(2), Element(3)).evaluate(set([0])) == False
-    assert Some(2, Element(1), Element(2), Element(3)).evaluate(set([0, 1])) == False
-    assert Some(2, Element(1), Element(2), Element(3)).evaluate(set([0, 1, 2])) == True
-    assert Some(2, Element(1), Element(2), Element(3)).evaluate(set([0, 1, 2, 3])) == True
-    assert Some(2, Element(1), Element(2), Element(3)).evaluate(set([0, 1, 2, 3, 4])) == True
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}}) == False
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}}) == False
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}) == True
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}, Number(4): {1}}) == True
 
 
 def test_complex():
     assert True == Or(
-        And(Element(1), Element(2)),
-        Or(Element(3),
-           Some(2, Element(4), Element(5), Element(6)))
-    ).evaluate(set([5, 6, 7, 8]))
+        And(Number(1), Number(2)),
+        Or(Number(3),
+           Some(2, Number(4), Number(5), Number(6)))
+    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
 
     assert False == Or(
-        And(Element(1), Element(2)),
-        Or(Element(3),
-           Some(2, Element(4), Element(5)))
-    ).evaluate(set([5, 6, 7, 8]))
+        And(Number(1), Number(2)),
+        Or(Number(3),
+           Some(2, Number(4), Number(5)))
+    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
 
 
 def test_range():
     # unbounded range, but no matching feature
-    assert Range(Element(1)).evaluate({Element(2): {}}) == False
+    assert Range(Number(1)).evaluate({Number(2): {}}) == False
 
     # unbounded range with matching feature should always match
-    assert Range(Element(1)).evaluate({Element(1): {}}) == True
-    assert Range(Element(1)).evaluate({Element(1): {0}}) == True
+    assert Range(Number(1)).evaluate({Number(1): {}}) == True
+    assert Range(Number(1)).evaluate({Number(1): {0}}) == True
 
     # unbounded max
-    assert Range(Element(1), min=1).evaluate({Element(1): {0}}) == True
-    assert Range(Element(1), min=2).evaluate({Element(1): {0}}) == False
-    assert Range(Element(1), min=2).evaluate({Element(1): {0, 1}}) == True
+    assert Range(Number(1), min=1).evaluate({Number(1): {0}}) == True
+    assert Range(Number(1), min=2).evaluate({Number(1): {0}}) == False
+    assert Range(Number(1), min=2).evaluate({Number(1): {0, 1}}) == True
 
     # unbounded min
-    assert Range(Element(1), max=0).evaluate({Element(1): {0}}) == False
-    assert Range(Element(1), max=1).evaluate({Element(1): {0}}) == True
-    assert Range(Element(1), max=2).evaluate({Element(1): {0}}) == True
-    assert Range(Element(1), max=2).evaluate({Element(1): {0, 1}}) == True
-    assert Range(Element(1), max=2).evaluate({Element(1): {0, 1, 3}}) == False
+    assert Range(Number(1), max=0).evaluate({Number(1): {0}}) == False
+    assert Range(Number(1), max=1).evaluate({Number(1): {0}}) == True
+    assert Range(Number(1), max=2).evaluate({Number(1): {0}}) == True
+    assert Range(Number(1), max=2).evaluate({Number(1): {0, 1}}) == True
+    assert Range(Number(1), max=2).evaluate({Number(1): {0, 1, 3}}) == False
 
     # we can do an exact match by setting min==max
-    assert Range(Element(1), min=1, max=1).evaluate({Element(1): {}}) == False
-    assert Range(Element(1), min=1, max=1).evaluate({Element(1): {1}}) == True
-    assert Range(Element(1), min=1, max=1).evaluate({Element(1): {1, 2}}) == False
+    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {}}) == False
+    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {1}}) == True
+    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {1, 2}}) == False
 
     # bounded range
-    assert Range(Element(1), min=1, max=3).evaluate({Element(1): {}}) == False
-    assert Range(Element(1), min=1, max=3).evaluate({Element(1): {1}}) == True
-    assert Range(Element(1), min=1, max=3).evaluate({Element(1): {1, 2}}) == True
-    assert Range(Element(1), min=1, max=3).evaluate({Element(1): {1, 2, 3}}) == True
-    assert Range(Element(1), min=1, max=3).evaluate({Element(1): {1, 2, 3, 4}}) == False
+    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {}}) == False
+    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1}}) == True
+    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2}}) == True
+    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3}}) == True
+    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3, 4}}) == False
 
 
 def test_match_adds_matched_rule_feature():

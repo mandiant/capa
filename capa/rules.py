@@ -1,8 +1,10 @@
-import yaml
 import uuid
 import codecs
 import logging
 import binascii
+
+import six
+import ruamel.yaml
 
 import capa.engine
 from capa.engine import *
@@ -17,23 +19,26 @@ from capa.features import MAX_BYTES_FEATURE_SIZE
 logger = logging.getLogger(__name__)
 
 
+# these are the standard metadata fields, in the preferred order.
+# when reformatted, any custom keys will come after these.
+META_KEYS = ("name", "namespace", "rule-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
+
+
 FILE_SCOPE = 'file'
 FUNCTION_SCOPE = 'function'
 BASIC_BLOCK_SCOPE = 'basic block'
 
 
 SUPPORTED_FEATURES = {
-    FILE_SCOPE: set([
-        capa.engine.Element,
+    FILE_SCOPE: {
         capa.features.MatchedRule,
         capa.features.file.Export,
         capa.features.file.Import,
         capa.features.file.Section,
         capa.features.Characteristic('embedded pe'),
         capa.features.String,
-    ]),
-    FUNCTION_SCOPE: set([
-        capa.engine.Element,
+    },
+    FUNCTION_SCOPE: {
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -54,9 +59,8 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic('indirect call'),
         capa.features.Characteristic('loop'),
         capa.features.Characteristic('recursive call')
-    ]),
-    BASIC_BLOCK_SCOPE: set([
-        capa.engine.Element,
+    },
+    BASIC_BLOCK_SCOPE: {
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -72,7 +76,7 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic('tight loop'),
         capa.features.Characteristic('stack string'),
         capa.features.Characteristic('indirect call')
-    ]),
+    },
 }
 
 
@@ -180,8 +184,6 @@ def parse_feature(key):
         return capa.features.insn.Mnemonic
     elif key == 'basic blocks':
         return capa.features.basicblock.BasicBlock
-    elif key == 'element':
-        return Element
     elif key.startswith('characteristic(') and key.endswith(')'):
         characteristic = key[len('characteristic('):-len(')')]
         return lambda v: capa.features.Characteristic(characteristic, v)
@@ -311,9 +313,6 @@ def build_statements(d, scope):
                 if term in ('number', 'offset', 'bytes'):
                     value, symbol = parse_symbol(arg, term)
                     feature = Feature(value, symbol)
-                elif term in ('element'):
-                    arg = parse_int(arg)
-                    feature = Feature(arg)
                 else:
                     # arg is string, like:
                     #
@@ -367,6 +366,26 @@ def first(s):
 
 def second(s):
     return s[1]
+
+
+# we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
+yaml = ruamel.yaml.YAML(typ='rt')
+
+
+# use block mode, not inline json-like mode
+yaml.default_flow_style = False
+
+
+# indent lists by two spaces below their parent
+#
+#     features:
+#       - or:
+#         - mnemonic: aesdec
+#         - mnemonic: vaesdec
+yaml.indent(sequence=2, offset=2)
+
+# avoid word wrapping
+yaml.width = 4096
 
 
 class Rule(object):
@@ -498,7 +517,7 @@ class Rule(object):
 
     @classmethod
     def from_yaml(cls, s):
-        return cls.from_dict(yaml.safe_load(s), s)
+        return cls.from_dict(yaml.load(s), s)
 
     @classmethod
     def from_yaml_file(cls, path):
@@ -507,6 +526,42 @@ class Rule(object):
                 return cls.from_yaml(f.read().decode('utf-8'))
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
+
+    def to_yaml(self):
+        # reformat the yaml document with a common style.
+        # this includes:
+        #  - ordering the meta elements
+        #  - indenting the nested items with two spaces
+        #
+
+        definition = yaml.load(self.definition)
+        # definition retains a reference to `meta`,
+        # so we're updating that in place.
+        meta = definition["rule"]["meta"]
+
+        def move_to_end(m, k):
+            # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
+            # here we refresh the insertion order of the given key.
+            # this will move it to the end of the sequence.
+            v = m[k]
+            del m[k]
+            m[k] = v
+
+        move_to_end(definition["rule"], "meta")
+        move_to_end(definition["rule"], "features")
+
+        for key in META_KEYS:
+            if key in meta:
+                move_to_end(meta, key)
+
+        for key in sorted(meta.keys()):
+            if key in META_KEYS:
+                continue
+            move_to_end(meta, key)
+
+        ostream = six.BytesIO()
+        yaml.dump(definition, ostream)
+        return ostream.getvalue().decode('utf-8').rstrip("\n") + "\n"
 
 
 def get_rules_with_scope(rules, scope):

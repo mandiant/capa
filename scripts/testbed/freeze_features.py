@@ -66,15 +66,15 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description="Freeze capa features of a file or of files in a directory")
-    parser.add_argument("file_path", type=str,
-                        help="Path to file or directory to analyze")
-    parser.add_argument("-r", "--reprocess", action="store_true", default=False,
-                        help="Overwrite existing analysis")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="Enable verbose output")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Disable all output but errors")
+    parser = argparse.ArgumentParser(description='Freeze capa features of a file or of files in a directory')
+    parser.add_argument('file_path', type=str,
+                        help='Path to file or directory to analyze')
+    parser.add_argument('-r', '--reprocess', action='store_true', default=False,
+                        help='Overwrite existing analysis')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Enable verbose output')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Disable all output but errors')
     args = parser.parse_args(args=argv)
 
     if args.quiet:
@@ -98,5 +98,5 @@ def main(argv=None):
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
