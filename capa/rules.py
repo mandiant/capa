@@ -30,15 +30,15 @@ BASIC_BLOCK_SCOPE = 'basic block'
 
 
 SUPPORTED_FEATURES = {
-    FILE_SCOPE: set([
+    FILE_SCOPE: {
         capa.features.MatchedRule,
         capa.features.file.Export,
         capa.features.file.Import,
         capa.features.file.Section,
         capa.features.Characteristic('embedded pe'),
         capa.features.String,
-    ]),
-    FUNCTION_SCOPE: set([
+    },
+    FUNCTION_SCOPE: {
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -59,8 +59,8 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic('indirect call'),
         capa.features.Characteristic('loop'),
         capa.features.Characteristic('recursive call')
-    ]),
-    BASIC_BLOCK_SCOPE: set([
+    },
+    BASIC_BLOCK_SCOPE: {
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -76,7 +76,7 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic('tight loop'),
         capa.features.Characteristic('stack string'),
         capa.features.Characteristic('indirect call')
-    ]),
+    },
 }
 
 
