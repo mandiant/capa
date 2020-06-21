@@ -547,6 +547,9 @@ class Rule(object):
             del m[k]
             m[k] = v
 
+        move_to_end(definition["rule"], "meta")
+        move_to_end(definition["rule"], "features")
+
         for key in COMMON_KEYS:
             if key in meta:
                 move_to_end(meta, key)
