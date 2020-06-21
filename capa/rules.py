@@ -4,7 +4,6 @@ import logging
 import binascii
 
 import six
-import yaml
 import ruamel.yaml
 
 import capa.engine
@@ -18,6 +17,11 @@ from capa.features import MAX_BYTES_FEATURE_SIZE
 
 
 logger = logging.getLogger(__name__)
+
+
+# these are the standard metadata fields, in the preferred order.
+# when reformatted, any custom keys will come after these.
+META_KEYS = ("name", "namespace", "rule-category", "author", "scope", "att&ck", "mbc", "examples")
 
 
 FILE_SCOPE = 'file'
@@ -364,6 +368,23 @@ def second(s):
     return s[1]
 
 
+# we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
+yaml = ruamel.yaml.YAML(typ='rt')
+
+
+# use block mode, not inline json-like mode
+yaml.default_flow_style = False
+
+
+# indent lists by two spaces below their parent
+#
+#     features:
+#       - or:
+#         - mnemonic: aesdec
+#         - mnemonic: vaesdec
+yaml.indent(sequence=2, offset=2)
+
+
 class Rule(object):
     def __init__(self, name, scope, statement, meta, definition=''):
         super(Rule, self).__init__()
@@ -493,7 +514,7 @@ class Rule(object):
 
     @classmethod
     def from_yaml(cls, s):
-        return cls.from_dict(yaml.safe_load(s), s)
+        return cls.from_dict(yaml.load(s), s)
 
     @classmethod
     def from_yaml_file(cls, path):
@@ -509,22 +530,6 @@ class Rule(object):
         #  - ordering the meta elements
         #  - indenting the nested items with two spaces
         #
-        # we use the ruamel.yaml parser for this, because it supports roundtripping of documents with comments.
-
-        # order the meta elements in the following preferred order.
-        # any custom keys will come after this.
-        COMMON_KEYS = ("name", "namespace", "rule-category", "author", "att&ck", "mbc", "examples", "scope")
-
-        yaml = ruamel.yaml.YAML(typ='rt')
-        # use block mode, not inline json-like mode
-        yaml.default_flow_style = False
-        # indent lists by two spaces below their parent
-        #
-        #     features:
-        #       - or:
-        #         - mnemonic: aesdec
-        #         - mnemonic: vaesdec
-        yaml.indent(sequence=2, offset=2)
 
         definition = yaml.load(self.definition)
         # definition retains a reference to `meta`,
@@ -542,12 +547,12 @@ class Rule(object):
         move_to_end(definition["rule"], "meta")
         move_to_end(definition["rule"], "features")
 
-        for key in COMMON_KEYS:
+        for key in META_KEYS:
             if key in meta:
                 move_to_end(meta, key)
 
         for key in sorted(meta.keys()):
-            if key in COMMON_KEYS:
+            if key in META_KEYS:
                 continue
             move_to_end(meta, key)
 
