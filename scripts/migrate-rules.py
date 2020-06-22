@@ -47,6 +47,9 @@ def read_rules(rule_directory):
 
             rule = capa.rules.Rule.from_yaml_file(path)
             rules[rule.name] = rule
+
+            if "nursery" in path:
+                rule.meta["nursery"] = True
     return rules
 
 
@@ -109,12 +112,6 @@ def main(argv=None):
             rule.meta["mbc"] = [tag]
 
     for rule in rules.values():
-        namespace = rule.meta.get("namespace")
-
-        if not namespace:
-            logger.info("%s has no proposed namespace, skipping", rule.name)
-            continue
-
         filename = rule.name
         filename = filename.lower()
         filename = filename.replace(" ", "-")
@@ -125,7 +122,12 @@ def main(argv=None):
         filename = filename + ".yml"
 
         try:
-            directory = os.path.join(args.destination, namespace)
+            if rule.meta.get("nursery"):
+                directory = os.path.join(args.destination, "nursery")
+                # this isn't meant to be written into the rule
+                del rule.meta["nursery"]
+            else:
+                directory = os.path.join(args.destination, rule.meta.get("namespace"))
             os.makedirs(directory)
         except OSError:
             pass
