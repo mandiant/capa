@@ -28,13 +28,17 @@ First, install the requirements.
 `$ pip install https://github.com/williballenthin/vivisect/zipball/master`
 
 ### 2. Check out source code
-First, clone the capa git repository.
+First, clone the capa git repository. We use submodules to separate code, rules, and test data. To get all data at once use the `--recurse-submodules` option shown below. To only get the source code and our provided rules, follow these steps:
+- `$ git clone https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS) or `$ git clone git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
+- `$ cd /local/path/to/src`
+- `$ git submodule init`
+- `$ git submodule update rules`
 
 #### SSH
-`$ git clone git@github.com:fireeye/capa.git /local/path/to/src`
+`$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src`
 
 #### HTTPS
-`$ git clone https://github.com/fireeye/capa.git /local/path/to/src`
+`$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src`
 
 ### 3. Install the local source code
 Next, use `pip` to install the source code in "editable" mode. This means that Python will load the capa module from this local directory rather than copying it to `site-packages` or `dist-packages`. This is good, because it is easy for us to modify files and see the effects reflected immediately. But be careful not to remove this directory unless uninstalling capa.
