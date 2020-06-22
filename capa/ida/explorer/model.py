@@ -324,14 +324,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent2 = CapaExplorerDefaultItem(parent, '%d or more' % result.statement.count)
         elif not isinstance(result.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
             # when rending a structural node (and/or/not) then we only care about the node name.
-            '''
-            succs = list(filter(lambda c: bool(c), result.children))
-            if len(succs) == 1:
-                # skip structural node with single succeeding child
-                parent2 = parent
-            else:
-                parent2 = CapaExplorerDefaultItem(parent, result.statement.name.lower())
-            '''
+            if not list(filter(lambda c: bool(c), result.children)):
+                # ignore structural expressions that do not have any successful children (e.g. not)
+                return
             parent2 = CapaExplorerDefaultItem(parent, result.statement.name.lower())
         else:
             # but when rendering a Feature, want to see any arguments to it
@@ -383,6 +378,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if isinstance(feature, string_view):
             # TODO: move string collection to item constructor
             if isinstance(feature, capa.engine.Regex):
+                # rstrip "matched="<string>")" because data already displayed in interface
+                name = name.split(',')[0] + ')'
                 return CapaExplorerStringViewItem(parent, name, ea, feature.match)
 
         if isinstance(feature, capa.features.Characteristic):
