@@ -72,6 +72,15 @@ def main(argv=None):
     rules = read_rules(args.source)
     logger.info("read %d rules", len(rules))
 
+    planned_rules = set([row["existing name"] for row in plan])
+    missing = [rule for (name, rule) in rules.items() if name not in planned_rules]
+
+    if missing:
+        logger.error("plan does not account for %d rules:" % (len(missing)))
+        for rule in missing:
+            logger.error("  " + rule.name)
+        return -1
+
     for row in plan:
         if not row["existing name"]:
             continue
