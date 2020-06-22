@@ -109,3 +109,7 @@ venv.bak/
 *.idb
 *.i64
 !rules/lib
+
+# hooks output
+style-checker-output.log
+rule-linter-output.log

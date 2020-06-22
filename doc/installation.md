@@ -46,3 +46,11 @@ Next, use `pip` to install the source code in "editable" mode. This means that P
 `$ pip install -e ./local/path/to/src`
 
 You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your path now invoke the capa binary from this directory.
+
+### 4. Setup hooks [optional]
+
+If you plan to contribute to capa, you may want to setup the hooks.
+Run `scripts/setup-hooks.sh` to set the following hooks up:
+- The `post-commit` hook runs the linter after every `git commit`, letting you know if there are code style or rule linter offenses you need to fix.
+- The `pre-push` hook runs the linter and the tests and block the `git push` if they do not succeed.
+  This way you realise if everything is alright without the need of sending a PR.
