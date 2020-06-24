@@ -1,5 +1,4 @@
 # capa
-[![Build Status](https://drone.oneteamed.net/api/badges/FLARE/capa/status.svg)](https://drone.oneteamed.net/FLARE/capa)
 
 capa detects capabilities in executable files.
 You run it against a .exe or .dll and it tells you what it thinks the program can do.
