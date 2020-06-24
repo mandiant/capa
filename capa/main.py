@@ -640,7 +640,7 @@ def main(argv=None):
             logger.error('-' * 80)
             logger.error(' Input file does not appear to be a PE file.')
             logger.error(' ')
-            logger.error(' Today, capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64).')
+            logger.error(' capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64).')
             logger.error(' If you don\'t know the input file type, you can try using the `file` utility to guess it.')
             logger.error('-' * 80)
             return -1
@@ -648,7 +648,7 @@ def main(argv=None):
             logger.error('-' * 80)
             logger.error(' Unsupported runtime or Python interpreter.')
             logger.error(' ')
-            logger.error(' Today, capa supports running under Python 2.7 using Vivisect for binary analysis.')
+            logger.error(' capa supports running under Python 2.7 using Vivisect for binary analysis.')
             logger.error(' It can also run within IDA Pro, using either Python 2.7 or 3.5+.')
             logger.error(' ')
             logger.error(' If you\'re seeing this message on the command line, please ensure you\'re running Python 2.7.')
@@ -679,11 +679,12 @@ def main(argv=None):
         logger.warning(' ')
         logger.warning(' .NET is a cross-platform framework for running managed applications.')
         logger.warning(
-            ' Today, capa cannot handle non-native files. This means that the results may be misleading or incomplete.')
+            ' capa cannot handle non-native files. This means that the results may be misleading or incomplete.')
         logger.warning(' You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.')
         logger.warning(' ')
         logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
         logger.warning('-' * 80)
+
         # capa won't detect much in .NET samples.
         # it might match some file-level things.
         # for consistency, bail on things that we don't support.
@@ -698,7 +699,7 @@ def main(argv=None):
         logger.warning(' ')
         logger.warning(' AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.')
         logger.warning(
-            ' Today, capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.')
+            ' capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.')
         logger.warning(' You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.')
         logger.warning(' ')
         logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')

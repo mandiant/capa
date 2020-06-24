@@ -62,6 +62,7 @@ def test_api_features(mimikatz):
 def test_api_features_64_bit(sample_a198216798ca38f280dc413f8c57f2c2):
     features = extract_function_features(viv_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.vw, 0x4011B0))
     assert capa.features.insn.API('kernel32.GetStringTypeA') in features
+    assert capa.features.insn.API('kernel32.GetStringTypeW') not in features
     assert capa.features.insn.API('kernel32.GetStringType') in features
     assert capa.features.insn.API('GetStringTypeA') in features
     assert capa.features.insn.API('GetStringType') in features

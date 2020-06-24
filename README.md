@@ -226,6 +226,11 @@ For this to match, the function must:
 If only one of these features is found in a function, the rule will not match.
 
 
+## limitations
+### circular rule dependencies
+While capa supports [matching on prior rule matches](#matching-prior-rule-matches) users should ensure that their rules do not introduce circular dependencies between rules.
+
+
 # extracted features
 
 ## function features
@@ -248,10 +253,14 @@ though possibly a local function (like `malloc`) extracted via FLIRT.
 
 The parameter is a string describing the function name, specified like `module.functionname` or `functionname`.
 
+Windows API functions that take string arguments come in two API versions. For example `CreateProcessA` takes ANSI strings and `CreateProcessW` takes Unicode strings. capa extracts these API features both with and without the suffix character `A` or `W`. That means you can write a rule to match on both APIs using the base name. If you want to match a specific API version, you can include the suffix.
+
 Example:
 
-    api: kernel32.CreateFileA
-    api: CreateFileA
+    api: kernel32.CreateFile  # matches both Ansi (CreateFileA) and Unicode (CreateFileW) versions
+    api: CreateFile
+    api: GetEnvironmentVariableW  # only matches on Unicode version
+
 
 ### number
 A number used by the logic of the program.
