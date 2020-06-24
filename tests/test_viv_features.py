@@ -83,14 +83,14 @@ def test_string_features(mimikatz):
 
 def test_byte_features(sample_9324d1a8ae37a36ae560c37448c9705a):
     features = extract_function_features(viv_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.vw, 0x406F60))
-    wanted = capa.features.Bytes(b"\xED\x24\x9E\xF4\x52\xA9\x07\x47\x55\x8E\xE1\xAB\x30\x8E\x23\x61")
+    wanted = capa.features.Bytes(b'\xED\x24\x9E\xF4\x52\xA9\x07\x47\x55\x8E\xE1\xAB\x30\x8E\x23\x61')
     # use `==` rather than `is` because the result is not `True` but a truthy value.
     assert wanted.evaluate(features) == True
 
 
 def test_byte_features64(sample_lab21_01):
     features = extract_function_features(viv_utils.Function(sample_lab21_01.vw, 0x1400010C0))
-    wanted = capa.features.Bytes(b"\x32\xA2\xDF\x2D\x99\x2B\x00\x00")
+    wanted = capa.features.Bytes(b'\x32\xA2\xDF\x2D\x99\x2B\x00\x00')
     # use `==` rather than `is` because the result is not `True` but a truthy value.
     assert wanted.evaluate(features) == True
 
