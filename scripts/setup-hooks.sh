@@ -1,4 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+set -e
+set -u
+set -o pipefail
 
 GIT_DIR=`git rev-parse --show-toplevel`
 cd $GIT_DIR
@@ -8,9 +12,9 @@ cd $GIT_DIR
 # After that append `scripts/hooks/$arg` and ensure they can be run
 create_hook() {
   if [[ ! -e .git/hooks/$1 ]]; then
-    echo '#!/bin/sh' > .git/hooks/$1
+    echo "#!/bin/sh" > ".git/hooks/$1"
   fi
-  cat scripts/hooks/$1 >> .git/hooks/$1
+  cat scripts/hooks/$1 >> ".git/hooks/$1"
   chmod +x .git/hooks/$1
 }
 
@@ -19,7 +23,6 @@ create_hook 'post-commit'
 create_hook 'pre-push'
 
 echo '\n#### Installing linter/test dependencies\n'
-pip install pycodestyle
-pytest-sugar
+pip install pycodestyle pytest-sugar
 pip install https://github.com/williballenthin/vivisect/zipball/master
 python setup.py develop
