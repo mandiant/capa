@@ -13,7 +13,7 @@ import file
 import function
 import basicblock
 import insn
-__all__ = ["file", "function", "basicblock", "insn"]
+__all__ = ['file', 'function', 'basicblock', 'insn']
 
 
 def get_va(self):
