@@ -85,13 +85,13 @@ def get_function_names(fnames_file):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Launch IDA Pro in autonomous mode to dump function names of a file or of files in a directory")
-    parser.add_argument("file_path", type=str,
-                        help="File or directory path to analyze")
-    parser.add_argument("-r", "--reprocess", action="store_true", default=False,
-                        help="Overwrite existing analysis")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="Enable verbose output")
+        description='Launch IDA Pro in autonomous mode to dump function names of a file or of files in a directory')
+    parser.add_argument('file_path', type=str,
+                        help='File or directory path to analyze')
+    parser.add_argument('-r', '--reprocess', action='store_true', default=False,
+                        help='Overwrite existing analysis')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Enable verbose output')
     args = parser.parse_args(args=sys.argv[1:])
 
     if args.verbose:
@@ -127,5 +127,5 @@ def main():
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

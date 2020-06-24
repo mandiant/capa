@@ -362,7 +362,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 technique = parts[2].replace('-', ' ')
                 techniques.add(technique)
             if len(parts) > 3:
-                raise capa.rules.InvalidRule(capa.main.RULE_CATEGORY + " tag must have at most three components")
+                raise capa.rules.InvalidRule(capa.main.RULE_CATEGORY + ' tag must have at most three components')
 
         # set row count to max set size
         self._view_summary.setRowCount(max(map(len, (rules, objectives, behaviors, techniques))))

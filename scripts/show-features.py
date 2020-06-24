@@ -28,13 +28,13 @@ def main(argv=None):
     ]
     format_help = ', '.join(['%s: %s' % (f[0], f[1]) for f in formats])
 
-    parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    parser.add_argument("sample", type=str,
-                        help="Path to sample to analyze")
-    parser.add_argument("-f", "--format", choices=[f[0] for f in formats], default="auto",
-                        help="Select sample format, %s" % format_help)
-    parser.add_argument("-F", "--function", type=lambda x: int(x, 0),
-                        help="Show features for specific function")
+    parser = argparse.ArgumentParser(description='detect capabilities in programs.')
+    parser.add_argument('sample', type=str,
+                        help='Path to sample to analyze')
+    parser.add_argument('-f', '--format', choices=[f[0] for f in formats], default='auto',
+                        help='Select sample format, %s' % format_help)
+    parser.add_argument('-F', '--function', type=lambda x: int(x, 0),
+                        help='Show features for specific function')
     args = parser.parse_args(args=argv)
 
     logging.basicConfig(level=logging.INFO)
@@ -77,5 +77,5 @@ def main(argv=None):
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
