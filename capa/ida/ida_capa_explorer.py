@@ -32,8 +32,11 @@ from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
 
-PLUGIN_NAME = 'capaex'
+PLUGIN_NAME = 'capa explorer'
 
+SUPPORTED_FILE_TYPES = [
+    'Portable executable for 80386 (PE)',
+]
 
 logger = logging.getLogger(PLUGIN_NAME)
 
@@ -326,12 +329,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules_path = os.path.join(os.path.dirname(self._file_loc), '../..', 'rules')
         rules = capa.main.get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
-        results = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+        capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+
+        if capa.main.is_file_limitation(rules, capabilities):
+            idaapi.info('capa encountered warnings during analysis. Please refer to the IDA Output window for more information.')
 
         logger.info('analysis completed.')
 
-        self._model_data.render_capa_results(rules, results)
-        self._render_capa_summary(rules, results)
+        self._model_data.render_capa_results(rules, capabilities)
+        self._render_capa_summary(rules, capabilities)
 
         logger.info('render views completed.')
 
@@ -440,6 +446,15 @@ class CapaExplorerForm(idaapi.PluginForm):
 def main():
     ''' TODO: move to idaapi.plugin_t class '''
     logging.basicConfig(level=logging.INFO)
+
+    if idaapi.get_file_type_name() not in SUPPORTED_FILE_TYPES:
+        logger.error('-' * 80)
+        logger.error(' Input file does not appear to be a PE file.')
+        logger.error(' ')
+        logger.error(' capa explorer currently only supports analyzing PE files.')
+        logger.error('-' * 80)
+        idaapi.info('capa does not support the format of this file. Please refer to the IDA output window for more information.')
+        return -1
 
     global CAPA_EXPLORER_FORM
 
