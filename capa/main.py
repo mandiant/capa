@@ -374,7 +374,7 @@ def render_result(res, indent=''):
         render_result(children, indent=indent + '  ')
 
 
-def render_capabilities_vverbose(results):
+def render_capabilities_vverbose(ruleset, results):
     '''
     print the matching rules, the functions in which they matched,
       and the logic tree with annotated matching features.
@@ -392,8 +392,13 @@ def render_capabilities_vverbose(results):
     '''
     for rule, ress in results.items():
         print('rule %s:' % (rule))
-        for (fva, res) in sorted(ress, key=lambda p: p[0]):
-            print('  - function 0x%x:' % (fva))
+        for (va, res) in sorted(ress, key=lambda p: p[0]):
+            rule_scope = ruleset.rules[rule].scope
+            if rule_scope == capa.rules.FILE_SCOPE:
+                # does not make sense to display va at file scope
+                print('  - %s:' % rule_scope)
+            else:
+                print('  - %s 0x%x:' % (rule_scope, va))
             render_result(res, indent='      ')
 
 
@@ -722,7 +727,7 @@ def main(argv=None):
         logger.warning('-' * 80)
 
     if args.vverbose:
-        render_capabilities_vverbose(capabilities)
+        render_capabilities_vverbose(rules, capabilities)
     elif args.verbose:
         render_capabilities_verbose(capabilities)
     else:
