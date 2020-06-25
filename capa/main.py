@@ -350,7 +350,7 @@ def render_result(res, indent=''):
                 print('%soptional:' % indent)
         else:
             print('%s%d or more' % (indent, res.statement.count))
-    elif not isinstance(res.statement, (capa.features.Feature, capa.engine.Element, capa.engine.Range, capa.engine.Regex)):
+    elif not isinstance(res.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
         # when rending a structural node (and/or/not),
         #  then we only care about the node name.
         #
