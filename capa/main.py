@@ -305,7 +305,7 @@ def render_capabilities_concise(results):
         print(rule)
 
 
-def render_capabilities_verbose(results):
+def render_capabilities_verbose(ruleset, results):
     '''
     print the matching rules, and the functions in which they matched.
 
@@ -321,6 +321,11 @@ def render_capabilities_verbose(results):
           - 0x40105d
     '''
     for rule, ress in results.items():
+        rule_scope = ruleset.rules[rule].scope
+        if rule_scope == capa.rules.FILE_SCOPE:
+            # only display rule name at file scope
+            print('%s' % rule)
+            continue
         print('%s:' % (rule))
         seen = set([])
         for (fva, _) in sorted(ress, key=lambda p: p[0]):
@@ -374,7 +379,7 @@ def render_result(res, indent=''):
         render_result(children, indent=indent + '  ')
 
 
-def render_capabilities_vverbose(results):
+def render_capabilities_vverbose(ruleset, results):
     '''
     print the matching rules, the functions in which they matched,
       and the logic tree with annotated matching features.
@@ -392,8 +397,13 @@ def render_capabilities_vverbose(results):
     '''
     for rule, ress in results.items():
         print('rule %s:' % (rule))
-        for (fva, res) in sorted(ress, key=lambda p: p[0]):
-            print('  - function 0x%x:' % (fva))
+        for (va, res) in sorted(ress, key=lambda p: p[0]):
+            rule_scope = ruleset.rules[rule].scope
+            if rule_scope == capa.rules.FILE_SCOPE:
+                # does not make sense to display va at file scope
+                print('  - %s:' % rule_scope)
+            else:
+                print('  - %s 0x%x:' % (rule_scope, va))
             render_result(res, indent='      ')
 
 
@@ -718,9 +728,9 @@ def main(argv=None):
             return -1
 
     if args.vverbose:
-        render_capabilities_vverbose(capabilities)
+        render_capabilities_vverbose(rules, capabilities)
     elif args.verbose:
-        render_capabilities_verbose(capabilities)
+        render_capabilities_verbose(rules, capabilities)
     else:
         render_capabilities_default(rules, capabilities)
 
