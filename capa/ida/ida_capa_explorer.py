@@ -26,16 +26,15 @@ import idaapi
 import capa.main
 import capa.rules
 import capa.features.extractors.ida
+import capa.ida.helpers
 
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
+PLUGIN_NAME = 'capa explorer'
 
-PLUGIN_NAME = 'capaex'
-
-
-logger = logging.getLogger(PLUGIN_NAME)
+logger = logging.getLogger('capa')
 
 
 class CapaExplorerIdaHooks(idaapi.UI_Hooks):
@@ -326,12 +325,31 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules_path = os.path.join(os.path.dirname(self._file_loc), '../..', 'rules')
         rules = capa.main.get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
-        results = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+        capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+
+        # support binary files specifically for x86/AMD64 shellcode
+        # warn user binary file is loaded but still allow capa to process it
+        # TODO: check specific architecture of binary files based on how user configured IDA processors
+        if idaapi.get_file_type_name() == 'Binary file':
+            logger.warning('-' * 80)
+            logger.warning(' Input file appears to be a binary file.')
+            logger.warning(' ')
+            logger.warning(
+                ' capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA.')
+            logger.warning(
+                ' This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64.')
+            logger.warning(' If you don\'t know the input file type, you can try using the `file` utility to guess it.')
+            logger.warning('-' * 80)
+
+            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+
+        if capa.main.is_file_limitation(rules, capabilities, is_standalone=False):
+            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
 
         logger.info('analysis completed.')
 
-        self._model_data.render_capa_results(rules, results)
-        self._render_capa_summary(rules, results)
+        self._model_data.render_capa_results(rules, capabilities)
+        self._render_capa_summary(rules, capabilities)
 
         logger.info('render views completed.')
 
@@ -440,6 +458,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 def main():
     ''' TODO: move to idaapi.plugin_t class '''
     logging.basicConfig(level=logging.INFO)
+
+    if not capa.ida.helpers.is_supported_file_type():
+        return -1
 
     global CAPA_EXPLORER_FORM
 
