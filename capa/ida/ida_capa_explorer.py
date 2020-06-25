@@ -34,7 +34,7 @@ from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
 PLUGIN_NAME = 'capa explorer'
 
-logger = logging.getLogger(PLUGIN_NAME)
+logger = logging.getLogger('capa')
 
 
 class CapaExplorerIdaHooks(idaapi.UI_Hooks):
@@ -327,7 +327,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules = capa.rules.RuleSet(rules)
         capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
 
-        if capa.main.is_file_limitation(rules, capabilities):
+        # support binary files specifically for x86/AMD64 shellcode
+        # warn user binary file is loaded but still allow capa to process it
+        # TODO: check specific architecture of binary files based on how user configured IDA processors
+        if idaapi.get_file_type_name() == 'Binary file':
+            logger.warning('-' * 80)
+            logger.warning(' Input file appears to be a binary file.')
+            logger.warning(' ')
+            logger.warning(
+                ' capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA.')
+            logger.warning(
+                ' This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64.')
+            logger.warning(' If you don\'t know the input file type, you can try using the `file` utility to guess it.')
+            logger.warning('-' * 80)
+
+            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+
+        if capa.main.is_file_limitation(rules, capabilities, is_standalone=False):
             capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
 
         logger.info('analysis completed.')
