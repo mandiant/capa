@@ -322,7 +322,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     parent2 = parent
             else:
                 parent2 = CapaExplorerDefaultItem(parent, '%d or more' % result.statement.count)
-        elif not isinstance(result.statement, (capa.features.Feature, capa.engine.Element, capa.engine.Range, capa.engine.Regex)):
+        elif not isinstance(result.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
             # when rending a structural node (and/or/not) then we only care about the node name.
             '''
             succs = list(filter(lambda c: bool(c), result.children))

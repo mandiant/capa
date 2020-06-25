@@ -1,5 +1,4 @@
 # capa
-[![Build Status](https://drone.oneteamed.net/api/badges/FLARE/capa/status.svg)](https://drone.oneteamed.net/FLARE/capa)
 
 capa detects capabilities in executable files.
 You run it against a .exe or .dll and it tells you what it thinks the program can do.
@@ -154,7 +153,7 @@ Here's an example rule used by capa:
 
 Rules are yaml files that follow a certain schema.
 
-The top level element is a dictionary named `rule` with two required children dictionaries:
+The top-level element is a dictionary named `rule` with two required children dictionaries:
 `meta` and `features`.
 
 
@@ -169,7 +168,7 @@ Here are the common fields:
   - `rule-category` is required when a rule describes a behavior (as opposed to matching a role or disposition).
 The rule category specifies an objective, behavior, and technique matched by this rule,
 using a format like `$objective/$behavior/$technique`.
-An objective is a high level goal of a program, such as "communication".
+An objective is a high-level goal of a program, such as "communication".
 A behavior is something that a program may do, such as "communication via socket".
 A technique is a way of implementing some behavior, such as "send-data".
 
@@ -178,7 +177,7 @@ A technique is a way of implementing some behavior, such as "send-data".
   - `maec/analysis-conclusion` is required when the rule describes a disposition, such as `benign` or `malicious`.
 
   - `scope` indicates to which feature set this rule applies.
-    It can takes the following values:
+    It can take the following values:
     - **`basic block`:** limits matches to a basic block.
       It is used to achieve locality in rules (for example for parameters of a function).
     - **`function`:** identify functions.
@@ -227,6 +226,11 @@ For this to match, the function must:
 If only one of these features is found in a function, the rule will not match.
 
 
+## limitations
+### circular rule dependencies
+While capa supports [matching on prior rule matches](#matching-prior-rule-matches) users should ensure that their rules do not introduce circular dependencies between rules.
+
+
 # extracted features
 
 ## function features
@@ -249,10 +253,14 @@ though possibly a local function (like `malloc`) extracted via FLIRT.
 
 The parameter is a string describing the function name, specified like `module.functionname` or `functionname`.
 
+Windows API functions that take string arguments come in two API versions. For example, `CreateProcessA` takes ANSI strings and `CreateProcessW` takes Unicode strings. capa extracts these API features both with and without the suffix character `A` or `W`. That means you can write a rule to match on both APIs using the base name. If you want to match a specific API version, you can include the suffix.
+
 Example:
 
-    api: kernel32.CreateFileA
-    api: CreateFileA
+    api: kernel32.CreateFile  # matches both Ansi (CreateFileA) and Unicode (CreateFileW) versions
+    api: CreateFile
+    api: GetEnvironmentVariableW  # only matches on Unicode version
+
 
 ### number
 A number used by the logic of the program.
@@ -342,7 +350,7 @@ Characteristics are features that are extracted by the analysis engine.
 They are one-off features that seem interesting to the authors.
 
 For example, the `characteristic(nzxor)` feature describes non-zeroing XOR instructions.
-captdet does not support instruction pattern matching,
+capa does not support instruction pattern matching,
  so a select set of interesting instructions are pulled out as characteristics.
 
 | characteristic                             | scope                 | description |
@@ -441,7 +449,7 @@ You can specify a rule match expression like so:
       - match: process creation
 
 Rules are uniquely identified by their `rule.meta.name` property;
-this is the value that should appear on the right hand side of the `match` expression.
+this is the value that should appear on the right-hand side of the `match` expression.
 
 capa will refuse to run if a rule dependency is not present during matching.
 

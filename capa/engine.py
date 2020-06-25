@@ -145,22 +145,6 @@ class Some(Statement):
         return Result(success, self, results)
 
 
-class Element(Statement):
-    '''match if the child is contained in the ctx set.'''
-    def __init__(self, child):
-        super(Element, self).__init__()
-        self.child = child
-
-    def __hash__(self):
-        return hash((self.name, self.child))
-
-    def __eq__(self, other):
-        return self.name == other.name and self.child == other.child
-
-    def evaluate(self, ctx):
-        return Result(self.child in ctx, self, [])
-
-
 class Range(Statement):
     '''match if the child is contained in the ctx set with a count in the given range.'''
     def __init__(self, child, min=None, max=None):

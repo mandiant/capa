@@ -159,12 +159,12 @@ def test_serialize_features():
 
 def test_freeze_sample(tmpdir, sample_9324d1a8ae37a36ae560c37448c9705a):
     # tmpdir fixture handles cleanup
-    o = tmpdir.mkdir("capa").join("test.frz").strpath
+    o = tmpdir.mkdir('capa').join('test.frz').strpath
     assert capa.features.freeze.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, o, '-v']) == 0
 
 
 def test_freeze_load_sample(tmpdir, sample_9324d1a8ae37a36ae560c37448c9705a):
-    o = tmpdir.mkdir("capa").join("test.frz")
+    o = tmpdir.mkdir('capa').join('test.frz')
     viv_extractor = capa.features.extractors.viv.VivisectFeatureExtractor(sample_9324d1a8ae37a36ae560c37448c9705a.vw,
                                                                           sample_9324d1a8ae37a36ae560c37448c9705a.path)
     with open(o.strpath, 'wb') as f:

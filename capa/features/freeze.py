@@ -237,17 +237,17 @@ def main(argv=None):
     ]
     format_help = ', '.join(['%s: %s' % (f[0], f[1]) for f in formats])
 
-    parser = argparse.ArgumentParser(description="save capa features to a file")
-    parser.add_argument("sample", type=str,
-                        help="Path to sample to analyze")
-    parser.add_argument("output", type=str,
-                        help="Path to output file")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="Enable verbose output")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Disable all output but errors")
-    parser.add_argument("-f", "--format", choices=[f[0] for f in formats], default="auto",
-                        help="Select sample format, %s" % format_help)
+    parser = argparse.ArgumentParser(description='save capa features to a file')
+    parser.add_argument('sample', type=str,
+                        help='Path to sample to analyze')
+    parser.add_argument('output', type=str,
+                        help='Path to output file')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Enable verbose output')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Disable all output but errors')
+    parser.add_argument('-f', '--format', choices=[f[0] for f in formats], default='auto',
+                        help='Select sample format, %s' % format_help)
     args = parser.parse_args(args=argv)
 
     if args.quiet:
@@ -271,6 +271,6 @@ def main(argv=None):
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
     sys.exit(main())

@@ -27,7 +27,6 @@ BASIC_BLOCK_SCOPE = 'basic block'
 
 SUPPORTED_FEATURES = {
     FILE_SCOPE: set([
-        capa.engine.Element,
         capa.features.MatchedRule,
         capa.features.file.Export,
         capa.features.file.Import,
@@ -36,7 +35,6 @@ SUPPORTED_FEATURES = {
         capa.features.String,
     ]),
     FUNCTION_SCOPE: set([
-        capa.engine.Element,
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -59,7 +57,6 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic('recursive call')
     ]),
     BASIC_BLOCK_SCOPE: set([
-        capa.engine.Element,
         capa.features.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -183,8 +180,6 @@ def parse_feature(key):
         return capa.features.insn.Mnemonic
     elif key == 'basic blocks':
         return capa.features.basicblock.BasicBlock
-    elif key == 'element':
-        return Element
     elif key.startswith('characteristic(') and key.endswith(')'):
         characteristic = key[len('characteristic('):-len(')')]
         return lambda v: capa.features.Characteristic(characteristic, v)
@@ -314,9 +309,6 @@ def build_statements(d, scope):
                 if term in ('number', 'offset', 'bytes'):
                     value, symbol = parse_symbol(arg, term)
                     feature = Feature(value, symbol)
-                elif term in ('element'):
-                    arg = parse_int(arg)
-                    feature = Feature(arg)
                 else:
                     # arg is string, like:
                     #

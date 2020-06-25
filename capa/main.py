@@ -221,7 +221,7 @@ def render_capabilities_default(ruleset, results):
             technique = parts[2].replace('-', ' ')
             techniques.add(technique)
         if len(parts) > 3:
-            raise capa.rules.InvalidRule(RULE_CATEGORY + " tag must have at most three components")
+            raise capa.rules.InvalidRule(RULE_CATEGORY + ' tag must have at most three components')
 
         if technique:
             o[objective][behavior][technique][rule.name] = rule
@@ -349,8 +349,8 @@ def render_result(res, indent=''):
             if sum(map(lambda c: c.success, res.children)) > 0:
                 print('%soptional:' % indent)
         else:
-            print("%s%d or more" % (indent, res.statement.count))
-    elif not isinstance(res.statement, (capa.features.Feature, capa.engine.Element, capa.engine.Range, capa.engine.Regex)):
+            print('%s%d or more' % (indent, res.statement.count))
+    elif not isinstance(res.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
         # when rending a structural node (and/or/not),
         #  then we only care about the node name.
         #
@@ -517,7 +517,7 @@ def get_rules(rule_path):
         with open(rule_path, 'rb') as f:
             rule = capa.rules.Rule.from_yaml(f.read().decode('utf-8'))
 
-            if is_nursery_rule_path(root):
+            if is_nursery_rule_path(rule_path):
                 rule.meta['nursery'] = True
 
             rules.append(rule)
@@ -637,35 +637,35 @@ def main(argv=None):
         try:
             extractor = get_extractor(args.sample, args.format)
         except UnsupportedFormatError:
-            logger.error("-" * 80)
-            logger.error(" Input file does not appear to be a PE file.")
-            logger.error(" ")
-            logger.error(" Today, capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64).")
-            logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-            logger.error("-" * 80)
+            logger.error('-' * 80)
+            logger.error(' Input file does not appear to be a PE file.')
+            logger.error(' ')
+            logger.error(' capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64).')
+            logger.error(' If you don\'t know the input file type, you can try using the `file` utility to guess it.')
+            logger.error('-' * 80)
             return -1
         except UnsupportedRuntimeError:
-            logger.error("-" * 80)
-            logger.error(" Unsupported runtime or Python interpreter.")
-            logger.error(" ")
-            logger.error(" Today, capa supports running under Python 2.7 using Vivisect for binary analysis.")
-            logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
-            logger.error(" ")
-            logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
-            logger.error("-" * 80)
+            logger.error('-' * 80)
+            logger.error(' Unsupported runtime or Python interpreter.')
+            logger.error(' ')
+            logger.error(' capa supports running under Python 2.7 using Vivisect for binary analysis.')
+            logger.error(' It can also run within IDA Pro, using either Python 2.7 or 3.5+.')
+            logger.error(' ')
+            logger.error(' If you\'re seeing this message on the command line, please ensure you\'re running Python 2.7.')
+            logger.error('-' * 80)
             return -1
 
     capabilities = find_capabilities(rules, extractor)
 
     if appears_rule_cat(rules, capabilities, 'other-features/installer/'):
-        logger.warning("-" * 80)
-        logger.warning(" This sample appears to be an installer.")
-        logger.warning(" ")
-        logger.warning(" capa cannot handle installers well. This means the results may be misleading or incomplete.")
-        logger.warning(" You should try to understand the install mechanism and analyze created files with capa.")
-        logger.warning(" ")
-        logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
+        logger.warning('-' * 80)
+        logger.warning(' This sample appears to be an installer.')
+        logger.warning(' ')
+        logger.warning(' capa cannot handle installers well. This means the results may be misleading or incomplete.')
+        logger.warning(' You should try to understand the install mechanism and analyze created files with capa.')
+        logger.warning(' ')
+        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
+        logger.warning('-' * 80)
         # capa will likely detect installer specific functionality.
         # this is probably not what the user wants.
         #
@@ -674,16 +674,17 @@ def main(argv=None):
             return -1
 
     if appears_rule_cat(rules, capabilities, 'other-features/compiled-to-dot-net'):
-        logger.warning("-" * 80)
-        logger.warning(" This sample appears to be a .NET module.")
-        logger.warning(" ")
-        logger.warning(" .NET is a cross-platform framework for running managed applications.")
+        logger.warning('-' * 80)
+        logger.warning(' This sample appears to be a .NET module.')
+        logger.warning(' ')
+        logger.warning(' .NET is a cross-platform framework for running managed applications.')
         logger.warning(
-            " Today, capa cannot handle non-native files. This means that the results may be misleading or incomplete.")
-        logger.warning(" You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.")
-        logger.warning(" ")
-        logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
+            ' capa cannot handle non-native files. This means that the results may be misleading or incomplete.')
+        logger.warning(' You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.')
+        logger.warning(' ')
+        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
+        logger.warning('-' * 80)
+
         # capa won't detect much in .NET samples.
         # it might match some file-level things.
         # for consistency, bail on things that we don't support.
@@ -693,16 +694,16 @@ def main(argv=None):
             return -1
 
     if appears_rule_cat(rules, capabilities, 'other-features/compiled-with-autoit'):
-        logger.warning("-" * 80)
-        logger.warning(" This sample appears to be compiled with AutoIt.")
-        logger.warning(" ")
-        logger.warning(" AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.")
+        logger.warning('-' * 80)
+        logger.warning(' This sample appears to be compiled with AutoIt.')
+        logger.warning(' ')
+        logger.warning(' AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.')
         logger.warning(
-            " Today, capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.")
-        logger.warning(" You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.")
-        logger.warning(" ")
-        logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
+            ' capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.')
+        logger.warning(' You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.')
+        logger.warning(' ')
+        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
+        logger.warning('-' * 80)
         # capa will detect dozens of capabilities for AutoIt samples,
         # but these are due to the AutoIt runtime, not the payload script.
         # so, don't confuse the user with FP matches - bail instead
@@ -712,13 +713,13 @@ def main(argv=None):
             return -1
 
     if appears_rule_cat(rules, capabilities, 'anti-analysis/packing/'):
-        logger.warning("-" * 80)
-        logger.warning(" This sample appears packed.")
-        logger.warning(" ")
-        logger.warning(" Packed samples have often been obfuscated to hide their logic.")
-        logger.warning(" capa cannot handle obfuscation well. This means the results may be misleading or incomplete.")
-        logger.warning(" If possible, you should try to unpack this input file before analyzing it with capa.")
-        logger.warning("-" * 80)
+        logger.warning('-' * 80)
+        logger.warning(' This sample appears packed.')
+        logger.warning(' ')
+        logger.warning(' Packed samples have often been obfuscated to hide their logic.')
+        logger.warning(' capa cannot handle obfuscation well. This means the results may be misleading or incomplete.')
+        logger.warning(' If possible, you should try to unpack this input file before analyzing it with capa.')
+        logger.warning('-' * 80)
 
     if args.vverbose:
         render_capabilities_vverbose(capabilities)
@@ -770,7 +771,7 @@ def is_runtime_ida():
         return True
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if is_runtime_ida():
         ida_main()
     else:

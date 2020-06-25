@@ -7,13 +7,13 @@ import re
 from collections import namedtuple
 
 
-ASCII_BYTE = r" !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t".encode('ascii')
-ASCII_RE_4 = re.compile(b"([%s]{%d,})" % (ASCII_BYTE, 4))
-UNICODE_RE_4 = re.compile(b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, 4))
-REPEATS = [b"A", b"\x00", b"\xfe", b"\xff"]
+ASCII_BYTE = r' !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t'.encode('ascii')
+ASCII_RE_4 = re.compile(b'([%s]{%d,})' % (ASCII_BYTE, 4))
+UNICODE_RE_4 = re.compile(b'((?:[%s]\x00){%d,})' % (ASCII_BYTE, 4))
+REPEATS = [b'A', b'\x00', b'\xfe', b'\xff']
 SLICE_SIZE = 4096
 
-String = namedtuple("String", ["s", "offset"])
+String = namedtuple('String', ['s', 'offset'])
 
 
 def buf_filled_with(buf, character):
@@ -46,10 +46,10 @@ def extract_ascii_strings(buf, n=4):
     if n == 4:
         r = ASCII_RE_4
     else:
-        reg = b"([%s]{%d,})" % (ASCII_BYTE, n)
+        reg = b'([%s]{%d,})' % (ASCII_BYTE, n)
         r = re.compile(reg)
     for match in r.finditer(buf):
-        yield String(match.group().decode("ascii"), match.start())
+        yield String(match.group().decode('ascii'), match.start())
 
 
 def extract_unicode_strings(buf, n=4):
@@ -72,11 +72,11 @@ def extract_unicode_strings(buf, n=4):
     if n == 4:
         r = UNICODE_RE_4
     else:
-        reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, n)
+        reg = b'((?:[%s]\x00){%d,})' % (ASCII_BYTE, n)
         r = re.compile(reg)
     for match in r.finditer(buf):
         try:
-            yield String(match.group().decode("utf-16"), match.start())
+            yield String(match.group().decode('utf-16'), match.start())
         except UnicodeDecodeError:
             pass
 

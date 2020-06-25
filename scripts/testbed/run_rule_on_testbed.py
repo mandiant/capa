@@ -217,23 +217,23 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description="Run capa rule file against frozen features in a directory")
-    parser.add_argument("rules", type=str,
-                        help="Path to directory containing rules")
-    parser.add_argument("rule_name", type=str,
-                        help="Name of rule to test")
-    parser.add_argument("frozen_path", type=str,
-                        help="Path to frozen feature file or directory")
-    parser.add_argument("-f", "--fast", action="store_true",
-                        help="Don't test slow files")
-    parser.add_argument("-o", "--only_matching", action="store_true",
-                        help="Print only if rule matches")
-    parser.add_argument("-s", "--save_image", action="store",
-                        help="Directory to save exported images of function graphs")
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="Increase output verbosity")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Disable all output but errors")
+    parser = argparse.ArgumentParser(description='Run capa rule file against frozen features in a directory')
+    parser.add_argument('rules', type=str,
+                        help='Path to directory containing rules')
+    parser.add_argument('rule_name', type=str,
+                        help='Name of rule to test')
+    parser.add_argument('frozen_path', type=str,
+                        help='Path to frozen feature file or directory')
+    parser.add_argument('-f', '--fast', action='store_true',
+                        help='Don't test slow files')
+    parser.add_argument('-o', '--only_matching', action='store_true',
+                        help='Print only if rule matches')
+    parser.add_argument('-s', '--save_image', action='store',
+                        help='Directory to save exported images of function graphs')
+    parser.add_argument('-v', '--verbose', action='count', default=0,
+                        help='Increase output verbosity')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Disable all output but errors')
     args = parser.parse_args(args=argv)
 
     if args.quiet:
@@ -293,5 +293,5 @@ def main(argv=None):
     print_summary(args.verbose, time0)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

@@ -15,6 +15,21 @@ def test_main(sample_9324d1a8ae37a36ae560c37448c9705a):
     assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, '-v']) == 0
 
 
+def test_main_single_rule(sample_9324d1a8ae37a36ae560c37448c9705a, tmpdir):
+    # tests a single rule can be loaded successfully
+    RULE_CONTENT = textwrap.dedent('''
+            rule:
+                meta:
+                    name: test rule
+                    scope: file
+                features:
+                  - string: test
+        ''')
+    rule_file = tmpdir.mkdir('capa').join('rule.yml')
+    rule_file.write(RULE_CONTENT)
+    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, '-v', '-r', rule_file.strpath]) == 0
+
+
 def test_main_shellcode(sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32):
     assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, '-v', '-f', 'sc32']) == 0
 
@@ -25,7 +40,7 @@ def test_ruleset():
             rule:
                 meta:
                     name: file rule
-                    scope: file 
+                    scope: file
                 features:
                   - characteristic(embedded pe): y
         ''')),
@@ -33,7 +48,7 @@ def test_ruleset():
             rule:
                 meta:
                     name: function rule
-                    scope: function 
+                    scope: function
                 features:
                   - characteristic(switch): y
         ''')),

@@ -101,17 +101,17 @@ def get_md5_hexdigest(sample_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Launch IDA Pro in autonomous mode to export images of function graphs")
-    parser.add_argument("file_path", type=str,
-                        help="File to export from")
-    parser.add_argument("out_dir", type=str,
-                        help="Export target directory")
-    parser.add_argument("-f", "--functions", action="store",
-                        help="Comma separated list of functions to export")
-    parser.add_argument("-m", "--manual", action="store_true",
-                        help="Manual mode: show IDA dialog boxes")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="Enable verbose output")
+        description='Launch IDA Pro in autonomous mode to export images of function graphs')
+    parser.add_argument('file_path', type=str,
+                        help='File to export from')
+    parser.add_argument('out_dir', type=str,
+                        help='Export target directory')
+    parser.add_argument('-f', '--functions', action='store',
+                        help='Comma separated list of functions to export')
+    parser.add_argument('-m', '--manual', action='store_true',
+                        help='Manual mode: show IDA dialog boxes')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Enable verbose output')
     args = parser.parse_args(args=sys.argv[1:])
 
     if args.verbose:
@@ -131,5 +131,5 @@ def main():
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

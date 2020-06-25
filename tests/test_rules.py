@@ -3,14 +3,13 @@ import textwrap
 import pytest
 
 import capa.rules
-from capa.engine import Element
 from capa.features.insn import Number, Offset
 
 
 def test_rule_ctor():
-    r = capa.rules.Rule('test rule', capa.rules.FUNCTION_SCOPE, Element(1), {})
-    assert r.evaluate(set([0])) == False
-    assert r.evaluate(set([1])) == True
+    r = capa.rules.Rule('test rule', capa.rules.FUNCTION_SCOPE, Number(1), {})
+    assert r.evaluate({Number(0): {1}}) == False
+    assert r.evaluate({Number(1): {1}}) == True
 
 
 def test_rule_yaml():
@@ -25,14 +24,14 @@ def test_rule_yaml():
                     - bar5678
             features:
                 - and:
-                    - element: 1
-                    - element: 2
+                    - number: 1
+                    - number: 2
     ''')
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate(set([0])) == False
-    assert r.evaluate(set([0, 1])) == False
-    assert r.evaluate(set([0, 1, 2])) == True
-    assert r.evaluate(set([0, 1, 2, 3])) == True
+    assert r.evaluate({Number(0): {1}}) == False
+    assert r.evaluate({Number(0): {1}, Number(1): {1}}) == False
+    assert r.evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
+    assert r.evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}) == True
 
 
 def test_rule_yaml_complex():
@@ -43,18 +42,18 @@ def test_rule_yaml_complex():
             features:
                 - or:
                     - and:
-                        - element: 1
-                        - element: 2
+                        - number: 1
+                        - number: 2
                     - or:
-                        - element: 3
+                        - number: 3
                         - 2 or more:
-                            - element: 4
-                            - element: 5
-                            - element: 6
+                            - number: 4
+                            - number: 5
+                            - number: 6
     ''')
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate(set([5, 6, 7, 8])) == True
-    assert r.evaluate(set([6, 7, 8])) == False
+    assert r.evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}) == True
+    assert r.evaluate({Number(6): {1}, Number(7): {1}, Number(8): {1}}) == False
 
 
 def test_rule_yaml_not():
@@ -64,13 +63,13 @@ def test_rule_yaml_not():
                     name: test rule
                 features:
                     - and:
-                        - element: 1
+                        - number: 1
                         - not:
-                            - element: 2
+                            - number: 2
         ''')
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate(set([1])) == True
-    assert r.evaluate(set([1, 2])) == False
+    assert r.evaluate({Number(1): {1}}) == True
+    assert r.evaluate({Number(1): {1}, Number(2): {1}}) == False
 
 
 def test_rule_yaml_count():
@@ -79,12 +78,12 @@ def test_rule_yaml_count():
             meta:
                 name: test rule
             features:
-                - count(element(100)): 1
+                - count(number(100)): 1
     ''')
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Element(100): {}}) == False
-    assert r.evaluate({Element(100): {1}}) == True
-    assert r.evaluate({Element(100): {1, 2}}) == False
+    assert r.evaluate({Number(100): {}}) == False
+    assert r.evaluate({Number(100): {1}}) == True
+    assert r.evaluate({Number(100): {1, 2}}) == False
 
 
 def test_rule_yaml_count_range():
@@ -93,13 +92,13 @@ def test_rule_yaml_count_range():
             meta:
                 name: test rule
             features:
-                - count(element(100)): (1, 2)
+                - count(number(100)): (1, 2)
     ''')
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Element(100): {}}) == False
-    assert r.evaluate({Element(100): {1}}) == True
-    assert r.evaluate({Element(100): {1, 2}}) == True
-    assert r.evaluate({Element(100): {1, 2, 3}}) == False
+    assert r.evaluate({Number(100): {}}) == False
+    assert r.evaluate({Number(100): {1}}) == True
+    assert r.evaluate({Number(100): {1, 2}}) == True
+    assert r.evaluate({Number(100): {1, 2, 3}}) == False
 
 
 def test_invalid_rule_feature():
@@ -239,7 +238,7 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                     features:
-                        - characteristic(count(element(100))): True
+                        - characteristic(count(number(100))): True
             '''))
 
 
