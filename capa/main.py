@@ -305,7 +305,7 @@ def render_capabilities_concise(results):
         print(rule)
 
 
-def render_capabilities_verbose(results):
+def render_capabilities_verbose(ruleset, results):
     '''
     print the matching rules, and the functions in which they matched.
 
@@ -321,6 +321,11 @@ def render_capabilities_verbose(results):
           - 0x40105d
     '''
     for rule, ress in results.items():
+        rule_scope = ruleset.rules[rule].scope
+        if rule_scope == capa.rules.FILE_SCOPE:
+            # only display rule name at file scope
+            print('%s' % rule)
+            continue
         print('%s:' % (rule))
         seen = set([])
         for (fva, _) in sorted(ress, key=lambda p: p[0]):
@@ -725,7 +730,7 @@ def main(argv=None):
     if args.vverbose:
         render_capabilities_vverbose(rules, capabilities)
     elif args.verbose:
-        render_capabilities_verbose(capabilities)
+        render_capabilities_verbose(rules, capabilities)
     else:
         render_capabilities_default(rules, capabilities)
 
