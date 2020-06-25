@@ -26,17 +26,13 @@ import idaapi
 import capa.main
 import capa.rules
 import capa.features.extractors.ida
+import capa.ida.helpers
 
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
-
 PLUGIN_NAME = 'capa explorer'
-
-SUPPORTED_FILE_TYPES = [
-    'Portable executable for 80386 (PE)',
-]
 
 logger = logging.getLogger(PLUGIN_NAME)
 
@@ -332,7 +328,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
 
         if capa.main.is_file_limitation(rules, capabilities):
-            idaapi.info('capa encountered warnings during analysis. Please refer to the IDA Output window for more information.')
+            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
 
         logger.info('analysis completed.')
 
@@ -447,13 +443,7 @@ def main():
     ''' TODO: move to idaapi.plugin_t class '''
     logging.basicConfig(level=logging.INFO)
 
-    if idaapi.get_file_type_name() not in SUPPORTED_FILE_TYPES:
-        logger.error('-' * 80)
-        logger.error(' Input file does not appear to be a PE file.')
-        logger.error(' ')
-        logger.error(' capa explorer currently only supports analyzing PE files.')
-        logger.error('-' * 80)
-        idaapi.info('capa does not support the format of this file. Please refer to the IDA output window for more information.')
+    if not capa.ida.helpers.is_supported_file_type():
         return -1
 
     global CAPA_EXPLORER_FORM

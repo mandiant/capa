@@ -761,13 +761,20 @@ def ida_main():
     import capa.features.extractors.ida
     capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
 
-    if not is_file_limitation(rules, capabilities):
-        render_capabilities_default(rules, capabilities)
+    import capa.ida.helpers
+    if not capa.ida.helpers.is_supported_file_type():
+        return -1
+
+    if is_file_limitation(rules, capabilities):
+        capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+
+    render_capabilities_default(rules, capabilities)
 
 
 def is_runtime_ida():
     try:
         import idc
+        import idaapi
     except ImportError:
         return False
     else:
