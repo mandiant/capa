@@ -126,6 +126,8 @@ def main(argv=None):
                 directory = os.path.join(args.destination, "nursery")
                 # this isn't meant to be written into the rule
                 del rule.meta["nursery"]
+            elif rule.meta.get("lib"):
+                directory = os.path.join(args.destination, "lib")
             else:
                 directory = os.path.join(args.destination, rule.meta.get("namespace"))
             os.makedirs(directory)
