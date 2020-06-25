@@ -404,6 +404,60 @@ def appears_rule_cat(rules, capabilities, rule_cat):
     return False
 
 
+def is_file_limitation(rules, capabilities, is_standalone=True):
+    file_limitations = {
+        # capa will likely detect installer specific functionality.
+        # this is probably not what the user wants.
+        'other-features/installer/': [
+            ' This sample appears to be an installer.',
+            ' ',
+            ' capa cannot handle installers well. This means the results may be misleading or incomplete.'
+            ' You should try to understand the install mechanism and analyze created files with capa.'
+        ],
+        # capa won't detect much in .NET samples.
+        # it might match some file-level things.
+        # for consistency, bail on things that we don't support.
+        'other-features/compiled-to-dot-net': [
+            ' This sample appears to be a .NET module.',
+            ' ',
+            ' .NET is a cross-platform framework for running managed applications.',
+            ' capa cannot handle non-native files. This means that the results may be misleading or incomplete.',
+            ' You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.'
+        ],
+        # capa will detect dozens of capabilities for AutoIt samples,
+        # but these are due to the AutoIt runtime, not the payload script.
+        # so, don't confuse the user with FP matches - bail instead
+        'other-features/compiled-with-autoit': [
+            ' This sample appears to be compiled with AutoIt.',
+            ' ',
+            ' AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.',
+            ' capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.',
+            ' You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.'
+        ],
+        # capa won't detect much in packed samples
+        'anti-analysis/packing/': [
+            ' This sample appears to be packed.',
+            ' ',
+            ' Packed samples have often been obfuscated to hide their logic.',
+            ' capa cannot handle obfuscation well. This means the results may be misleading or incomplete.',
+            ' If possible, you should try to unpack this input file before analyzing it with capa.'
+        ]
+    }
+
+    for category, dialogue in file_limitations.items():
+        if not appears_rule_cat(rules, capabilities, category):
+            continue
+        logger.warning('-' * 80)
+        for line in dialogue:
+            logger.warning(line)
+        if is_standalone:
+            logger.warning(' ')
+            logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
+        logger.warning('-' * 80)
+        return True
+    return False
+
+
 def is_supported_file_type(sample):
     '''
     Return if this is a supported file based on magic header values
@@ -657,69 +711,11 @@ def main(argv=None):
 
     capabilities = find_capabilities(rules, extractor)
 
-    if appears_rule_cat(rules, capabilities, 'other-features/installer/'):
-        logger.warning('-' * 80)
-        logger.warning(' This sample appears to be an installer.')
-        logger.warning(' ')
-        logger.warning(' capa cannot handle installers well. This means the results may be misleading or incomplete.')
-        logger.warning(' You should try to understand the install mechanism and analyze created files with capa.')
-        logger.warning(' ')
-        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
-        logger.warning('-' * 80)
-        # capa will likely detect installer specific functionality.
-        # this is probably not what the user wants.
-        #
+    if is_file_limitation(rules, capabilities):
+        # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose):
             return -1
-
-    if appears_rule_cat(rules, capabilities, 'other-features/compiled-to-dot-net'):
-        logger.warning('-' * 80)
-        logger.warning(' This sample appears to be a .NET module.')
-        logger.warning(' ')
-        logger.warning(' .NET is a cross-platform framework for running managed applications.')
-        logger.warning(
-            ' capa cannot handle non-native files. This means that the results may be misleading or incomplete.')
-        logger.warning(' You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.')
-        logger.warning(' ')
-        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
-        logger.warning('-' * 80)
-
-        # capa won't detect much in .NET samples.
-        # it might match some file-level things.
-        # for consistency, bail on things that we don't support.
-        #
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose):
-            return -1
-
-    if appears_rule_cat(rules, capabilities, 'other-features/compiled-with-autoit'):
-        logger.warning('-' * 80)
-        logger.warning(' This sample appears to be compiled with AutoIt.')
-        logger.warning(' ')
-        logger.warning(' AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.')
-        logger.warning(
-            ' capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.')
-        logger.warning(' You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.')
-        logger.warning(' ')
-        logger.warning(' Use -v or -vv if you really want to see the capabilities identified by capa.')
-        logger.warning('-' * 80)
-        # capa will detect dozens of capabilities for AutoIt samples,
-        # but these are due to the AutoIt runtime, not the payload script.
-        # so, don't confuse the user with FP matches - bail instead
-        #
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose):
-            return -1
-
-    if appears_rule_cat(rules, capabilities, 'anti-analysis/packing/'):
-        logger.warning('-' * 80)
-        logger.warning(' This sample appears packed.')
-        logger.warning(' ')
-        logger.warning(' Packed samples have often been obfuscated to hide their logic.')
-        logger.warning(' capa cannot handle obfuscation well. This means the results may be misleading or incomplete.')
-        logger.warning(' If possible, you should try to unpack this input file before analyzing it with capa.')
-        logger.warning('-' * 80)
 
     if args.vverbose:
         render_capabilities_vverbose(capabilities)
@@ -736,6 +732,10 @@ def main(argv=None):
 def ida_main():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
+
+    import capa.ida.helpers
+    if not capa.ida.helpers.is_supported_file_type():
+        return -1
 
     logger.info('-' * 80)
     logger.info(' Using default embedded rules.')
@@ -759,6 +759,10 @@ def ida_main():
 
     import capa.features.extractors.ida
     capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
+
+    if is_file_limitation(rules, capabilities, is_standalone=False):
+        capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+
     render_capabilities_default(rules, capabilities)
 
 
