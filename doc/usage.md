@@ -21,7 +21,7 @@ capa runs from within IDA Pro. Run `capa/main.py` via File - Script file... (ALT
 
 When running in IDA, capa uses IDA's disassembly and file analysis as its backend. These results may vary from the standalone version that uses vivisect.
 
-In IDA, capa supports Python 2 and Python 3. If you encounter issues with your specific setup please open a new [Issue](https://github.com/fireeye/capa/issues). 
+In IDA, capa supports Python 2 and Python 3. If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues). 
 
 ## IDA Pro plugins
 capa comes with two IDA Pro plugins located in the `capa/ida` directory.
