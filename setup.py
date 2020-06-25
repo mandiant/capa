@@ -5,9 +5,11 @@ import setuptools
 
 
 requirements = [
-    'tqdm',
-    'pyyaml',
-    'tabulate',
+    "six",
+    "tqdm",
+    "pyyaml",
+    "tabulate",
+    "ruamel.yaml"
 ]
 
 if sys.version_info >= (3, 0):

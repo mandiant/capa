@@ -1,8 +1,10 @@
-import yaml
 import uuid
 import codecs
 import logging
 import binascii
+
+import six
+import ruamel.yaml
 
 import capa.engine
 from capa.engine import *
@@ -15,6 +17,11 @@ from capa.features import MAX_BYTES_FEATURE_SIZE
 
 
 logger = logging.getLogger(__name__)
+
+
+# these are the standard metadata fields, in the preferred order.
+# when reformatted, any custom keys will come after these.
+META_KEYS = ("name", "namespace", "rule-category", "author", "scope", "att&ck", "mbc", "examples")
 
 
 FILE_SCOPE = 'file'
@@ -361,6 +368,23 @@ def second(s):
     return s[1]
 
 
+# we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
+yaml = ruamel.yaml.YAML(typ='rt')
+
+
+# use block mode, not inline json-like mode
+yaml.default_flow_style = False
+
+
+# indent lists by two spaces below their parent
+#
+#     features:
+#       - or:
+#         - mnemonic: aesdec
+#         - mnemonic: vaesdec
+yaml.indent(sequence=2, offset=2)
+
+
 class Rule(object):
     def __init__(self, name, scope, statement, meta, definition=''):
         super(Rule, self).__init__()
@@ -490,7 +514,7 @@ class Rule(object):
 
     @classmethod
     def from_yaml(cls, s):
-        return cls.from_dict(yaml.safe_load(s), s)
+        return cls.from_dict(yaml.load(s), s)
 
     @classmethod
     def from_yaml_file(cls, path):
@@ -499,6 +523,42 @@ class Rule(object):
                 return cls.from_yaml(f.read().decode('utf-8'))
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
+
+    def to_yaml(self):
+        # reformat the yaml document with a common style.
+        # this includes:
+        #  - ordering the meta elements
+        #  - indenting the nested items with two spaces
+        #
+
+        definition = yaml.load(self.definition)
+        # definition retains a reference to `meta`,
+        # so we're updating that in place.
+        meta = definition["rule"]["meta"]
+
+        def move_to_end(m, k):
+            # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
+            # here we refresh the insertion order of the given key.
+            # this will move it to the end of the sequence.
+            v = m[k]
+            del m[k]
+            m[k] = v
+
+        move_to_end(definition["rule"], "meta")
+        move_to_end(definition["rule"], "features")
+
+        for key in META_KEYS:
+            if key in meta:
+                move_to_end(meta, key)
+
+        for key in sorted(meta.keys()):
+            if key in META_KEYS:
+                continue
+            move_to_end(meta, key)
+
+        ostream = six.BytesIO()
+        yaml.dump(definition, ostream)
+        return ostream.getvalue().decode('utf-8').rstrip("\n")
 
 
 def get_rules_with_scope(rules, scope):
