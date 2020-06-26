@@ -324,8 +324,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent2 = CapaExplorerDefaultItem(parent, '%d or more' % result.statement.count)
         elif not isinstance(result.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
             # when rending a structural node (and/or/not) then we only care about the node name.
-            if not len(list(filter(lambda c: bool(c), result.children))):
-                # ignore empty structural expressions (e.g. not)
+            if not list(filter(lambda c: bool(c), result.children)):
+                # ignore structural expressions that do not have any successful children (e.g. not)
                 return
             parent2 = CapaExplorerDefaultItem(parent, result.statement.name.lower())
         else:
