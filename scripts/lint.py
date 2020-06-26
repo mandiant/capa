@@ -190,7 +190,7 @@ def lint_scope(ctx, rule):
 
 
 META_LINTS = (
-    MissingRuleCategory(),
+    MissingNamespace(),
     MissingAuthor(),
     MissingExamples(),
     MissingExampleOffset(),
