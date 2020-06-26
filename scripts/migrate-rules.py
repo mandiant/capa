@@ -84,6 +84,9 @@ def main(argv=None):
             logger.error("  " + rule.name)
         return -1
 
+    # pairs of strings (needle, replacement)
+    match_translations = []
+
     for row in plan:
         if not row["existing name"]:
             continue
@@ -92,6 +95,13 @@ def main(argv=None):
 
         if rule.meta["name"] != row["proposed name"]:
             logger.info("renaming rule '%s' -> '%s'", rule.meta["name"], row["proposed name"])
+
+            # assume the yaml is formatted like `- match: $rule-name`.
+            # but since its been linted, this should be ok.
+            match_translations.append(
+                ("- match: " + rule.meta["name"],
+                 "- match: " + row["proposed name"]))
+
             rule.meta["name"] = row["proposed name"]
             rule.name = row["proposed name"]
 
@@ -139,8 +149,12 @@ def main(argv=None):
         path = os.path.join(directory, filename)
         logger.info("writing rule %s", path)
 
+        doc = rule.to_yaml().decode("utf-8")
+        for (needle, replacement) in match_translations:
+            doc = doc.replace(needle, replacement)
+
         with open(path, "wb") as f:
-            f.write(rule.to_yaml())
+            f.write(doc.encode("utf-8"))
 
     return 0
 
