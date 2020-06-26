@@ -321,6 +321,10 @@ def render_capabilities_verbose(ruleset, results):
           - 0x40105d
     '''
     for rule, ress in results.items():
+        if ruleset.rules[rule].meta.get('capa/subscope-rule', False):
+            # don't display subscope rules
+            continue
+
         rule_scope = ruleset.rules[rule].scope
         if rule_scope == capa.rules.FILE_SCOPE:
             # only display rule name at file scope
@@ -396,6 +400,10 @@ def render_capabilities_vverbose(ruleset, results):
                     - virtual address: 0x4010c8
     '''
     for rule, ress in results.items():
+        if ruleset.rules[rule].meta.get('capa/subscope-rule', False):
+            # don't display subscope rules
+            continue
+
         print('rule %s:' % (rule))
         for (va, res) in sorted(ress, key=lambda p: p[0]):
             rule_scope = ruleset.rules[rule].scope
@@ -686,6 +694,9 @@ def main(argv=None):
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
             logger.info('selected %s rules', len(rules))
+            for i, r in enumerate(rules.rules, 1):
+                # TODO don't display subscope rules?
+                logger.debug(' %d. %s', i, r)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error('%s', str(e))
         return -1

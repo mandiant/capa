@@ -298,7 +298,7 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
     '''
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     '''
-    # TODO extract x64
+    # TODO handle where fs/gs are loaded into a register or onto the stack and used later
 
     if insn.mnem not in ['push', 'mov']:
         return
