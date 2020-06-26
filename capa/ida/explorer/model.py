@@ -383,6 +383,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if isinstance(feature, string_view):
             # TODO: move string collection to item constructor
             if isinstance(feature, capa.engine.Regex):
+                # rstrip "matched="<string>")" because data already displayed in interface
+                name = name.split(',')[0] + ')'
                 return CapaExplorerStringViewItem(parent, name, ea, feature.match)
 
         if isinstance(feature, capa.features.Characteristic):

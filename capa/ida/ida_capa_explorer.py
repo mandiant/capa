@@ -351,6 +351,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self._model_data.render_capa_results(rules, capabilities)
         self._render_capa_summary(rules, capabilities)
 
+        self._view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, Qt.AscendingOrder)
+
         logger.info('render views completed.')
 
     def _render_capa_summary(self, ruleset, results):
