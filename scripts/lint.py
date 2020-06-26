@@ -39,12 +39,13 @@ class NameCasing(Lint):
                 rule.name[1] not in string.ascii_uppercase)
 
 
-class MissingRuleCategory(Lint):
-    name = 'missing rule category'
-    recommendation = 'Add meta.rule-category so that the rule is emitted correctly'
+class MissingNamespace(Lint):
+    name = 'missing rule namespace'
+    recommendation = 'Add meta.namespace so that the rule is emitted correctly'
 
     def check_rule(self, ctx, rule):
-        return ('rule-category' not in rule.meta and
+        return ('namespace' not in rule.meta and
+                'nursery' not in rule.meta and
                 'maec/malware-category' not in rule.meta and
                 'lib' not in rule.meta)
 
