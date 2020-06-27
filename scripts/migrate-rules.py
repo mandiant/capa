@@ -49,7 +49,7 @@ def read_rules(rule_directory):
             rules[rule.name] = rule
 
             if "nursery" in path:
-                rule.meta["nursery"] = True
+                rule.meta["capa/nursery"] = True
     return rules
 
 
@@ -132,10 +132,8 @@ def main(argv=None):
         filename = filename + ".yml"
 
         try:
-            if rule.meta.get("nursery"):
+            if rule.meta.get("capa/nursery"):
                 directory = os.path.join(args.destination, "nursery")
-                # this isn't meant to be written into the rule
-                del rule.meta["nursery"]
             elif rule.meta.get("lib"):
                 directory = os.path.join(args.destination, "lib")
             else:

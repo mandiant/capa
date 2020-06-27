@@ -45,7 +45,7 @@ class MissingNamespace(Lint):
 
     def check_rule(self, ctx, rule):
         return ('namespace' not in rule.meta and
-                'nursery' not in rule.meta and
+                not is_nursery_rule(rule) and
                 'maec/malware-category' not in rule.meta and
                 'lib' not in rule.meta)
 
@@ -250,7 +250,7 @@ def is_nursery_rule(rule):
     For example, they may not have references to public example of a technique.
     Yet, we still want to capture and report on their matches.
     '''
-    return rule.meta.get('nursery')
+    return rule.meta.get('capa/nursery')
 
 
 def lint_rule(ctx, rule):

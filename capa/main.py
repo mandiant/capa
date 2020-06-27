@@ -583,18 +583,9 @@ def get_rules(rule_path):
     if not os.path.exists(rule_path):
         raise IOError('%s does not exist or cannot be accessed' % rule_path)
 
-    rules = []
+    rule_paths = []
     if os.path.isfile(rule_path):
-        logger.info('reading rule file: %s', rule_path)
-        with open(rule_path, 'rb') as f:
-            rule = capa.rules.Rule.from_yaml(f.read().decode('utf-8'))
-
-            if is_nursery_rule_path(rule_path):
-                rule.meta['nursery'] = True
-
-            rules.append(rule)
-            logger.debug('rule: %s scope: %s', rule.name, rule.scope)
-
+        rule_paths.append(rule_path)
     elif os.path.isdir(rule_path):
         logger.info('reading rules from directory %s', rule_path)
         for root, dirs, files in os.walk(rule_path):
@@ -603,18 +594,24 @@ def get_rules(rule_path):
                     logger.warning('skipping non-.yml file: %s', file)
                     continue
 
-                path = os.path.join(root, file)
-                logger.debug('reading rule file: %s', path)
-                try:
-                    rule = capa.rules.Rule.from_yaml_file(path)
-                except capa.rules.InvalidRule:
-                    raise
-                else:
-                    if is_nursery_rule_path(root):
-                        rule.meta['nursery'] = True
+                rule_path = os.path.join(root, file)
+                rule_paths.append(rule_path)
 
-                    rules.append(rule)
-                    logger.debug('rule: %s scope: %s', rule.name, rule.scope)
+    rules = []
+    for rule_path in rule_paths:
+        logger.info('reading rule file: %s', rule_path)
+        try:
+            rule = capa.rules.Rule.from_yaml_file(rule_path)
+        except capa.rules.InvalidRule:
+            raise
+        else:
+            rule.meta['capa/path'] = rule_path
+            if is_nursery_rule_path(rule_path):
+                rule.meta['capa/nursery'] = True
+
+            rules.append(rule)
+            logger.debug('rule: %s scope: %s', rule.name, rule.scope)
+
     return rules
 
 

@@ -566,8 +566,27 @@ class Rule(object):
                 continue
             move_to_end(meta, key)
 
+        # these are meta fields that are internal to capa,
+        # and added during rule reading/construction.
+        # they may help use manipulate or index rules,
+        # but should not be exposed to clients.
+        hidden_meta_keys = ("capa/nursery", "capa/path")
+        hidden_meta = {
+            key: meta.get(key)
+            for key in hidden_meta_keys
+        }
+
+        for key in hidden_meta.keys():
+            del meta[key]
+
         ostream = six.BytesIO()
         yaml.dump(definition, ostream)
+
+        for key, value in hidden_meta.items():
+            if value is None:
+                continue
+            meta[key] = value
+
         return ostream.getvalue().decode('utf-8').rstrip("\n") + "\n"
 
 
