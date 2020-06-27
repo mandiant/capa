@@ -21,8 +21,3 @@ create_hook() {
 echo '\n#### Copying hooks into .git/hooks'
 create_hook 'post-commit'
 create_hook 'pre-push'
-
-echo '\n#### Installing linter/test dependencies\n'
-pip install pycodestyle pytest-sugar
-pip install https://github.com/williballenthin/vivisect/zipball/master
-python setup.py develop
