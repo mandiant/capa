@@ -741,7 +741,7 @@ def main(argv=None):
 
     if args.json:
         print(capa.render.render_json(rules, capabilities))
-    if args.vverbose:
+    elif args.vverbose:
         print(capa.render.render_vverbose(rules, capabilities))
     elif args.verbose:
         print(capa.render.render_verbose(rules, capabilities))

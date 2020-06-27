@@ -3,13 +3,17 @@ import json
 import capa.engine
 
 
-def convert_statement_to_result_document(rules, statement):
+def convert_statement_to_result_document(statement):
     """
-    args:
-      rules (RuleSet):
-      node (Statement):
+        "statement": {
+            "type": "or"
+        },
 
-    returns: Dict[str, Any]
+        "statement": {
+            "max": 9223372036854775808,
+            "min": 2,
+            "type": "range"
+        },
     """
     if isinstance(statement, capa.engine.And):
         return {
@@ -56,29 +60,43 @@ def convert_statement_to_result_document(rules, statement):
         raise RuntimeError("unexpected match statement type: " + str(statement))
 
 
-def convert_feature_to_result_document(rules, feature):
+def convert_feature_to_result_document(feature):
     """
-    args:
-      rules (RuleSet):
-      node (Feature):
+        "feature": {
+            "number": 6,
+            "type": "number"
+        },
 
-    returns: Dict[str, Any]
+        "feature": {
+            "api": "ws2_32.WSASocket",
+            "type": "api"
+        },
+
+        "feature": {
+            "match": "create TCP socket",
+            "type": "match"
+        },
+
+        "feature": {
+            "characteristic": [
+                "loop",
+                true
+            ],
+            "type": "characteristic"
+        },
     """
     name, value = feature.freeze_serialize()
 
+    # make the terms pretty
     name = name.lower()
     if name == 'matchedrule':
         name = 'match'
 
+    # in the common case, there's a single argument
+    # so use it directly.
+    # like: name=number value=1
     if isinstance(value, list) and len(value) == 1:
         value = value[0]
-
-    if name == 'match':
-        rule_name = value
-        rule = rules[rule_name]
-        if rule.meta.get('capa/subscope-rule'):
-            name = rule.meta['scope']
-            # TODO: link this logic together, when present
 
     return {
         'type': name,
@@ -86,33 +104,36 @@ def convert_feature_to_result_document(rules, feature):
     }
 
 
-def convert_node_to_result_document(rules, node):
+def convert_node_to_result_document(node):
     """
+        "node": {
+            "type": "statement",
+            "statement": { ... }
+        },
 
-    args:
-      rules (RuleSet):
-      node (Statement|Feature):
-
-    returns: Dict[str, Any]
+        "node": {
+            "type": "feature",
+            "feature": { ... }
+        },
     """
 
     if isinstance(node, capa.engine.Statement):
         return {
             'type': 'statement',
-            'statement': convert_statement_to_result_document(rules, node),
+            'statement': convert_statement_to_result_document(node),
         }
     elif isinstance(node, capa.features.Feature):
         return {
             'type': 'feature',
-            'feature': convert_feature_to_result_document(rules, node),
+            'feature': convert_feature_to_result_document(node),
         }
     else:
         raise RuntimeError("unexpected match node type")
 
 
-def convert_match_to_result_document(rules, result):
+def convert_match_to_result_document(rules, capabilities, result):
     """
-    convert the given rule set and Result instance into a common, Python-native data structure.
+    convert the given Result instance into a common, Python-native data structure.
     this will become part of the "result document" format that can be emitted to JSON.
 
     args:
@@ -123,29 +144,58 @@ def convert_match_to_result_document(rules, result):
     """
     doc = {
         'success': bool(result.success),
-        'node': convert_node_to_result_document(rules, result.statement),
+        'node': convert_node_to_result_document(result.statement),
         'children': [
-            convert_match_to_result_document(rules, child)
+            convert_match_to_result_document(rules, capabilities, child)
             for child in result.children
         ],
     }
 
+    # logic expression, like `and`, don't have locations - their children do.
+    # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.Feature):
         if bool(result.success):
             doc['locations'] = result.locations
 
-    # TODO: can a feature ever have children? suspect so with `match`?
+    # if we have a `match` statement, then we're referencing another rule.
+    # this could an external rule (written by a human), or
+    #  rule generated to support a subscope (basic block, etc.)
+    # we still want to include the matching logic in this tree.
+    #
+    # so, we need to lookup the other rule results
+    # and then filter those down to the address used here.
+    # finally, splice that logic into this tree.
+    if (doc['node']['type'] == 'feature' and
+            doc['node']['feature']['type'] == 'match' and
+            # only add subtree on success,
+            # because there won't be results for the other rule on failure.
+            doc['success']):
+
+        rule_name = doc['node']['feature']['match']
+        rule = rules[rule_name]
+        rule_matches = {address: result for (address, result) in capabilities[rule_name]}
+
+        if rule.meta.get('capa/subscope-rule'):
+            # for a subscope rule, rename the rule name to the scope,
+            # which is consistent with the rule text.
+            #
+            # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
+            scope = rule.meta['scope']
+            doc['node']['feature']['match'] = scope
+
+        for location in doc['locations']:
+            doc['children'].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
 
     return doc
 
 
 def convert_capabilities_to_result_document(rules, capabilities):
     """
-    convert the given rule set and capabilties result to a common, Python-native data structure.
+    convert the given rule set and capabilities result to a common, Python-native data structure.
     this format can be directly emitted to JSON, or passed to the other `render_*` routines
      to render as text.
 
-     TODO: document the structure and provide examples
+    see examples of substructures in above routines.
 
     schema:
 
@@ -154,7 +204,7 @@ def convert_capabilities_to_result_document(rules, capabilities):
       $rule-name: {
         "meta": {...copied from rule.meta...},
         "matches: {
-          $address: {...TODO: match details...},
+          $address: {...match details...},
           ...
         }
       },
@@ -162,11 +212,9 @@ def convert_capabilities_to_result_document(rules, capabilities):
     }
     ```
 
-    args:
+    Args:
       rules (RuleSet):
       capabilities (Dict[str, List[Tuple[int, Result]]]):
-
-    returns: Dict[str, Any]
     """
     doc = {}
 
@@ -179,7 +227,7 @@ def convert_capabilities_to_result_document(rules, capabilities):
         doc[rule_name] = {
             'meta': dict(rule.meta),
             'matches': {
-                addr: convert_match_to_result_document(rules, match)
+                addr: convert_match_to_result_document(rules, capabilities, match)
                 for (addr, match) in matches
             },
         }
@@ -218,5 +266,4 @@ def render_json(rules, capabilities):
         convert_capabilities_to_result_document(rules, capabilities),
         cls=CapaJsonObjectEncoder,
         sort_keys=True,
-        indent=4,
     )
