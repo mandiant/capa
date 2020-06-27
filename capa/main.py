@@ -10,6 +10,7 @@ import collections
 
 import tqdm
 import argparse
+import colorama
 
 import capa.rules
 import capa.engine
@@ -739,6 +740,11 @@ def main(argv=None):
         if not (args.verbose or args.vverbose):
             return -1
 
+    # colorama will detect:
+    #  - when on Windows console, and fixup coloring, and
+    #  - when not an interactive session, and disable coloring
+    # renderers should use coloring and assume it will be stripped out if necessary.
+    colorama.init()
     if args.json:
         print(capa.render.render_json(rules, capabilities))
     elif args.vverbose:
@@ -747,6 +753,7 @@ def main(argv=None):
         print(capa.render.render_verbose(rules, capabilities))
     else:
         print(capa.render.render_default(rules, capabilities))
+    colorama.deinit()
 
     logger.info('done.')
 
