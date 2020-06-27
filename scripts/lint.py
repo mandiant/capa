@@ -70,6 +70,24 @@ class MissingNamespace(Lint):
                 'lib' not in rule.meta)
 
 
+class NamespaceDoesntMatchRulePath(Lint):
+    name = 'file path doesn\'t match rule namespace'
+    recommendation = 'Move rule to appropriate directory or update the namespace'
+
+    def check_rule(self, ctx, rule):
+        # let the other lints catch namespace issues
+        if 'namespace' not in rule.meta:
+            return False
+        if is_nursery_rule(rule):
+            return False
+        if 'maec/malware-category' in rule.meta:
+            return False
+        if 'lib' in rule.meta:
+            return False
+
+        return rule.meta["namespace"] not in rule.meta['capa/path'].replace('\\', '/')
+
+
 class MissingScope(Lint):
     name = 'missing scope'
     recommendation = 'Add meta.scope so that the scope is explicit (defaults to `function`)'
@@ -212,6 +230,7 @@ def lint_scope(ctx, rule):
 
 META_LINTS = (
     MissingNamespace(),
+    NamespaceDoesntMatchRulePath(),
     MissingAuthor(),
     MissingExamples(),
     MissingExampleOffset(),
