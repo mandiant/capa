@@ -21,7 +21,12 @@ logger = logging.getLogger(__name__)
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
-META_KEYS = ("name", "namespace", "rule-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
+META_KEYS = ("name", "namespace", "rule-category", "maec/malware-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
+# these are meta fields that are internal to capa,
+# and added during rule reading/construction.
+# they may help use manipulate or index rules,
+# but should not be exposed to clients.
+HIDDEN_META_KEYS = ("capa/nursery", "capa/path")
 
 
 FILE_SCOPE = 'file'
@@ -566,14 +571,12 @@ class Rule(object):
                 continue
             move_to_end(meta, key)
 
-        # these are meta fields that are internal to capa,
-        # and added during rule reading/construction.
-        # they may help use manipulate or index rules,
-        # but should not be exposed to clients.
-        hidden_meta_keys = ("capa/nursery", "capa/path")
+        # save off the existing hidden meta values,
+        # emit the document,
+        # and re-add the hidden meta.
         hidden_meta = {
             key: meta.get(key)
-            for key in hidden_meta_keys
+            for key in HIDDEN_META_KEYS
         }
 
         for key in hidden_meta.keys():
