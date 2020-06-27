@@ -165,11 +165,11 @@ def convert_match_to_result_document(rules, capabilities, result):
     # so, we need to lookup the other rule results
     # and then filter those down to the address used here.
     # finally, splice that logic into this tree.
-    if (doc['node']['type'] == 'feature' and
-            doc['node']['feature']['type'] == 'match' and
+    if (doc['node']['type'] == 'feature'
+            and doc['node']['feature']['type'] == 'match'
             # only add subtree on success,
             # because there won't be results for the other rule on failure.
-            doc['success']):
+            and doc['success']):
 
         rule_name = doc['node']['feature']['match']
         rule = rules[rule_name]
