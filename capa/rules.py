@@ -706,6 +706,9 @@ class RuleSet(object):
     def __len__(self):
         return len(self.rules)
 
+    def __getitem__(self, rulename):
+        return self.rules[rulename]
+
     @staticmethod
     def _get_rules_for_scope(rules, scope):
         '''
