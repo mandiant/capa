@@ -47,12 +47,12 @@ class FilenameDoesntMatchRuleName(Lint):
     def check_rule(self, ctx, rule):
         expected = rule.name
         expected = expected.lower()
-        expected = expected.replace(" ", "-")
-        expected = expected.replace("(", "")
-        expected = expected.replace(")", "")
-        expected = expected.replace("+", "")
-        expected = expected.replace("/", "")
-        expected = expected + ".yml"
+        expected = expected.replace(' ', '-')
+        expected = expected.replace('(', '')
+        expected = expected.replace(')', '')
+        expected = expected.replace('+', '')
+        expected = expected.replace('/', '')
+        expected = expected + '.yml'
 
         found = os.path.basename(rule.meta['capa/path'])
 
@@ -85,7 +85,7 @@ class NamespaceDoesntMatchRulePath(Lint):
         if 'lib' in rule.meta:
             return False
 
-        return rule.meta["namespace"] not in rule.meta['capa/path'].replace('\\', '/')
+        return rule.meta['namespace'] not in rule.meta['capa/path'].replace('\\', '/')
 
 
 class MissingScope(Lint):
@@ -185,7 +185,7 @@ class DoesntMatchExample(Lint):
 
 class UnusualMetaField(Lint):
     name = 'unusual meta field'
-    recommendation = 'Remove the unusual meta field'
+    recommendation = 'Remove the meta field: "{:s}"'
 
     def check_rule(self, ctx, rule):
         for key in rule.meta.keys():
@@ -193,7 +193,7 @@ class UnusualMetaField(Lint):
                 continue
             if key in capa.rules.HIDDEN_META_KEYS:
                 continue
-            logger.debug("unusual meta field: %s", key)
+            self.recommendation = self.recommendation.format(key)
             return True
 
         return False

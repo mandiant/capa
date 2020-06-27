@@ -21,12 +21,28 @@ logger = logging.getLogger(__name__)
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
-META_KEYS = ("name", "namespace", "rule-category", "maec/malware-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
+META_KEYS = (
+    'name',
+    'namespace',
+    'rule-category',
+    'maec/analysis-conclusion',
+    'maec/analysis-conclusion-ov',
+    'maec/malware-category',
+    'maec/malware-category-ov',
+    'author',
+    'description',
+    'lib',
+    'scope',
+    'att&ck',
+    'mbc',
+    'references',
+    'examples'
+)
 # these are meta fields that are internal to capa,
 # and added during rule reading/construction.
 # they may help use manipulate or index rules,
 # but should not be exposed to clients.
-HIDDEN_META_KEYS = ("capa/nursery", "capa/path")
+HIDDEN_META_KEYS = ('capa/nursery', 'capa/path')
 
 
 FILE_SCOPE = 'file'
@@ -545,11 +561,11 @@ class Rule(object):
         definition = yaml.load(self.definition)
         # definition retains a reference to `meta`,
         # so we're updating that in place.
-        definition["rule"]["meta"] = self.meta
+        definition['rule']['meta'] = self.meta
         meta = self.meta
 
-        meta["name"] = self.name
-        meta["scope"] = self.scope
+        meta['name'] = self.name
+        meta['scope'] = self.scope
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -559,8 +575,8 @@ class Rule(object):
             del m[k]
             m[k] = v
 
-        move_to_end(definition["rule"], "meta")
-        move_to_end(definition["rule"], "features")
+        move_to_end(definition['rule'], 'meta')
+        move_to_end(definition['rule'], 'features')
 
         for key in META_KEYS:
             if key in meta:
@@ -590,7 +606,7 @@ class Rule(object):
                 continue
             meta[key] = value
 
-        return ostream.getvalue().decode('utf-8').rstrip("\n") + "\n"
+        return ostream.getvalue().decode('utf-8').rstrip('\n') + '\n'
 
 
 def get_rules_with_scope(rules, scope):
