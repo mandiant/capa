@@ -6,6 +6,7 @@ Usage:
    $ python scripts/lint.py rules/
 '''
 import os
+import os.path
 import sys
 import string
 import hashlib
@@ -37,6 +38,25 @@ class NameCasing(Lint):
     def check_rule(self, ctx, rule):
         return (rule.name[0] in string.ascii_uppercase and
                 rule.name[1] not in string.ascii_uppercase)
+
+
+class FilenameDoesntMatchRuleName(Lint):
+    name = 'filename doesn\'t match the rule name'
+    recommendation = 'Rename rule file to match the rule name'
+
+    def check_rule(self, ctx, rule):
+        expected = rule.name
+        expected = expected.lower()
+        expected = expected.replace(" ", "-")
+        expected = expected.replace("(", "")
+        expected = expected.replace(")", "")
+        expected = expected.replace("+", "")
+        expected = expected.replace("/", "")
+        expected = expected + ".yml"
+
+        found = os.path.basename(rule.meta['capa/path'])
+
+        return expected != found
 
 
 class MissingNamespace(Lint):
@@ -172,6 +192,7 @@ def run_feature_lints(lints, ctx, features):
 
 NAME_LINTS = (
     NameCasing(),
+    FilenameDoesntMatchRuleName(),
 )
 
 
