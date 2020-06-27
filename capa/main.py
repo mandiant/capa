@@ -589,7 +589,7 @@ def get_rules(rule_path):
     if os.path.isfile(rule_path):
         rule_paths.append(rule_path)
     elif os.path.isdir(rule_path):
-        logger.info('reading rules from directory %s', rule_path)
+        logger.debug('reading rules from directory %s', rule_path)
         for root, dirs, files in os.walk(rule_path):
             for file in files:
                 if not file.endswith('.yml'):
@@ -601,7 +601,7 @@ def get_rules(rule_path):
 
     rules = []
     for rule_path in rule_paths:
-        logger.info('reading rule file: %s', rule_path)
+        logger.debug('reading rule file: %s', rule_path)
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
