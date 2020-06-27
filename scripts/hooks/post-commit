@@ -1,34 +1,38 @@
+#!/usr/bin/env bash
+# doesn't matter if this gets repeated later on in a hooks file
 
 # Use a console with emojis support for a better experience
 
 # Stash uncommited changes
-MSG="post-commit-$(date +%s)"
-git stash push -kqum $MSG
-STASH_LIST=$(git stash list)
+MSG="post-commit-$(date +%s)";
+git stash push -kqum "$MSG";
+STASH_LIST=$(git stash list);
 if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-  echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`"
+  echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
 fi
 
 # Run style checker and print state (it doesn't block the commit)
-pycodestyle --config=./ci/tox.ini ./capa/ > style-checker-output.log 2>&1
+pycodestyle --config=./ci/tox.ini ./capa/ > style-checker-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Style checker succeeds!! 💘'
+  echo 'Style checker succeeds!! 💘';
 else
-  echo 'Style checker failed 😭\nCheck style-checker-output.log for details'
-  exit 1
+  echo 'Style checker failed 😭';
+  echo 'Check style-checker-output.log for details';
+  exit 1;
 fi
 
 # Run rule linter and print state (it doesn't block the commit)
-python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1
+python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Rule linter succeeds!! 💖'
+  echo 'Rule linter succeeds!! 💖';
 else
-  echo 'Rule linter failed 😭\nCheck rule-linter-output.log for details'
-  exit 2
+  echo 'Rule linter failed 😭';
+  echo 'Check rule-linter-output.log for details';
+  exit 2;
 fi
 
 # Restore stashed changes
 if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-  git stash pop -q --index
-  echo "Stashed changes '$MSG' restored"
+  git stash pop -q --index;
+  echo "Stashed changes '$MSG' restored";
 fi

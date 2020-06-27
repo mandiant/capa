@@ -1,52 +1,57 @@
+#!/usr/bin/env bash
+# doesn't matter if this gets repeated later on in a hooks file
 
 # Use a console with emojis support for a better experience
 
 # Stash uncommited changes
-MSG="pre-push-$(date +%s)"
-git stash push -kqum $MSG
-STASH_LIST=$(git stash list)
+MSG="pre-push-$(date +%s)";
+git stash push -kqum "$MSG";
+STASH_LIST=$(git stash list);
 if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-  echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`"
+  echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
 fi
 
 restore_stashed() {
   if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-    git stash pop -q --index
-    echo "Stashed changes '$MSG' restored"
+    git stash pop -q --index;
+    echo "Stashed changes '$MSG' restored";
   fi
 }
 
 # Run style checker and print state
-pycodestyle --config=./ci/tox.ini ./capa/ > style-checker-output.log 2>&1
+pycodestyle --config=./ci/tox.ini ./capa/ > style-checker-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Style checker succeeds!! 💘'
+  echo 'Style checker succeeds!! 💘';
 else
-  echo 'Style checker failed 😭 PUSH ABORTED\nCheck style-checker-output.log for details'
-  restore_stashed
-  exit 1
+  echo 'Style checker failed 😭 PUSH ABORTED';
+  echo 'Check style-checker-output.log for details';
+  restore_stashed;
+  exit 1;
 fi
 
 # Run rule linter and print state
-python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1
+python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Rule linter succeeds!! 💖'
+  echo 'Rule linter succeeds!! 💖';
 else
-  echo 'Rule linter failed 😭 PUSH ABORTED\nCheck rule-linter-output.log for details'
-  restore_stashed
-  exit 2
+  echo 'Rule linter failed 😭 PUSH ABORTED';
+  echo 'Check rule-linter-output.log for details';
+  restore_stashed;
+  exit 2;
 fi
 
 # Run tests
-echo 'Running tests, please wait ⌛'
-pytest tests/ --maxfail=1
+echo 'Running tests, please wait ⌛';
+pytest tests/ --maxfail=1;
 if [ $? == 0 ]; then
-  echo 'Tests succeed!! 🎉'
+  echo 'Tests succeed!! 🎉';
 else
-  echo 'Tests failed 😓 PUSH ABORTED\nRun `pytest -v --cov=capa test/` if you need more details'
-  restore_stashed
-  exit 3
+  echo 'Tests failed 😓 PUSH ABORTED';
+  echo 'Run `pytest -v --cov=capa test/` if you need more details';
+  restore_stashed;
+  exit 3;
 fi
 
-echo 'PUSH SUCCEEDED 🎉🎉'
+echo 'PUSH SUCCEEDED 🎉🎉';
 
-restore_stashed
+restore_stashed;
