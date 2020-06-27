@@ -2,23 +2,14 @@ import collections
 
 import six
 import tabulate
-import termcolor
 
-
-def bold(s):
-    """draw attention to the given string"""
-    return termcolor.colored(s, 'blue')
+import capa.render.utils as rutils
 
 
 def render_capabilities(doc, ostream):
     rows = []
-    for (namespace, name, rule) in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
-        if rule['meta'].get('lib'):
-            continue
-        if rule['meta'].get('capa/subscope'):
-            continue
-
-        rows.append((bold(name), namespace))
+    for rule in rutils.capability_rules(doc):
+        rows.append((rutils.bold(rule['meta']['name']), rule['meta']['namespace']))
 
     ostream.write(tabulate.tabulate(rows, headers=['CAPABILITY', 'NAMESPACE'], tablefmt="psql"))
     ostream.write("\n")
@@ -26,11 +17,7 @@ def render_capabilities(doc, ostream):
 
 def render_attack(doc, ostream):
     tactics = collections.defaultdict(set)
-    for rule in doc.values():
-        if rule['meta'].get('lib'):
-            continue
-        if rule['meta'].get('capa/subscope'):
-            continue
+    for rule in rutils.capability_rules(doc):
         if not rule['meta'].get('att&ck'):
             continue
 
@@ -49,13 +36,13 @@ def render_attack(doc, ostream):
         for spec in sorted(techniques):
             if len(spec) == 2:
                 technique, id = spec
-                rows.append(("%s %s" % (bold(technique), id), ))
+                rows.append(("%s %s" % (rutils.bold(technique), id), ))
             elif len(spec) == 3:
                 technique, subtechnique, id = spec
-                rows.append(("%s::%s %s" % (bold(technique), subtechnique, id), ))
+                rows.append(("%s::%s %s" % (rutils.bold(technique), subtechnique, id), ))
             else:
                 raise RuntimeError("unexpected ATT&CK spec format")
-        ostream.write(tabulate.tabulate(rows, headers=['ATT&CK tactic: ' + bold(tactic.upper())], tablefmt="psql"))
+        ostream.write(tabulate.tabulate(rows, headers=['ATT&CK tactic: ' + rutils.bold(tactic.upper())], tablefmt="psql"))
         ostream.write("\n")
 
 
