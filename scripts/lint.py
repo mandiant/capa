@@ -183,6 +183,22 @@ class DoesntMatchExample(Lint):
                 return True
 
 
+class UnusualMetaField(Lint):
+    name = 'unusual meta field'
+    recommendation = 'Remove the unusual meta field'
+
+    def check_rule(self, ctx, rule):
+        for key in rule.meta.keys():
+            if key in capa.rules.META_KEYS:
+                continue
+            if key in capa.rules.HIDDEN_META_KEYS:
+                continue
+            logger.debug("unusual meta field: %s", key)
+            return True
+
+        return False
+
+
 class FeatureStringTooShort(Lint):
     name = 'feature string too short'
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
@@ -235,6 +251,7 @@ META_LINTS = (
     MissingExamples(),
     MissingExampleOffset(),
     ExampleFileDNE(),
+    UnusualMetaField(),
 )
 
 
