@@ -13,6 +13,7 @@ import argparse
 
 import capa.rules
 import capa.engine
+import capa.render
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
@@ -110,6 +111,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     matches.update(all_bb_matches)
     matches.update(all_function_matches)
     matches.update(all_file_matches)
+
     return matches
 
 
@@ -635,6 +637,8 @@ def main(argv=None):
                         help='Path to rule file or directory, use embedded rules by default')
     parser.add_argument('-t', '--tag', type=str,
                         help='Filter on rule meta field values')
+    parser.add_argument('--json', action='store_true',
+                        help='Emit JSON instead of text')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
     parser.add_argument('-vv', '--vverbose', action='store_true',
@@ -735,12 +739,14 @@ def main(argv=None):
         if not (args.verbose or args.vverbose):
             return -1
 
+    if args.json:
+        print(capa.render.render_json(rules, capabilities))
     if args.vverbose:
-        render_capabilities_vverbose(rules, capabilities)
+        print(capa.render.render_vverbose(rules, capabilities))
     elif args.verbose:
-        render_capabilities_verbose(rules, capabilities)
+        print(capa.render.render_verbose(rules, capabilities))
     else:
-        render_capabilities_default(rules, capabilities)
+        print(capa.render.render_default(rules, capabilities))
 
     logger.info('done.')
 
