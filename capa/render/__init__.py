@@ -1,6 +1,7 @@
 import json
 
 import capa.engine
+import capa.render.default
 
 
 def convert_statement_to_result_document(statement):
@@ -247,7 +248,7 @@ def render_verbose(rules, capabilities):
 
 def render_default(rules, capabilities):
     doc = convert_capabilities_to_result_document(rules, capabilities)
-    return ''
+    return capa.render.default.render_default(doc)
 
 
 class CapaJsonObjectEncoder(json.JSONEncoder):

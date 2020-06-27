@@ -9,6 +9,8 @@ requirements = [
     "tqdm",
     "pyyaml",
     "tabulate",
+    "colorama",
+    "termcolor",
     "ruamel.yaml"
 ]
 
