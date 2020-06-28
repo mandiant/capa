@@ -46,6 +46,8 @@ def convert_statement_to_result_document(statement):
         return {
             'type': 'regex',
             'pattern': statement.pattern,
+            # the string that was matched
+            'match': statement.match,
         }
     elif isinstance(statement, capa.engine.Subscope):
         return {

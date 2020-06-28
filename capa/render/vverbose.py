@@ -23,7 +23,10 @@ def render_statement(ostream, statement, indent=0):
         ostream.write(statement['subscope'])
         ostream.writeln(':')
     elif statement['type'] == 'regex':
-        ostream.writeln('string: /%s/' % (statement['pattern']))
+        # regex is a `Statement` not a `Feature`
+        # this is because it doesn't get extracted, but applies to all strings in scope.
+        # so we have to handle it here
+        ostream.writeln('string: %s' % (statement['match']))
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
 
