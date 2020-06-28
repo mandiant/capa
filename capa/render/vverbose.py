@@ -69,7 +69,7 @@ def render_match(ostream, match, indent=0):
     render_node(ostream, match, match['node'], indent=indent)
 
     for child in match['children']:
-        render_match(ostream, child, indent=indent+1)
+        render_match(ostream, child, indent=indent + 1)
 
 
 def render_vverbose(doc):
