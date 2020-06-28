@@ -5,23 +5,51 @@ You run it against a .exe or .dll and it tells you what it thinks the program ca
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
 ```
-λ capa.exe suspicious.exe -q
+$ capa.exe suspicious.exe
 
-objectives:
-  communication
-  data manipulation
-  machine access control
++------------------------+----------------------------------------------------------------------+
+| ATT&CK Tactic          | ATT&CK Technique                                                     |
+|------------------------+----------------------------------------------------------------------|
+| DEFENSE EVASION        | Obfuscated Files or Information [T1027]                              |
+| DISCOVERY              | Query Registry [T1012]                                               |
+|                        | System Information Discovery [T1082]                                 |
+| EXECUTION              | Command and Scripting Interpreter::Windows Command Shell [T1059.003] |
+|                        | Shared Modules [T1129]                                               |
+| EXFILTRATION           | Exfiltration Over C2 Channel [T1041]                                 |
+| PERSISTENCE            | Create or Modify System Process::Windows Service [T1543.003]         |
++------------------------+----------------------------------------------------------------------+
 
-behaviors:
-  communication-via-http
-  encrypt data
-  load code functionality
-
-techniques:
-  send-http-request
-  encrypt data using rc4
-  load pe
-
++-------------------------------------------------------+-------------------------------------------------+
+| CAPABILITY                                            | NAMESPACE                                       |
+|-------------------------------------------------------+-------------------------------------------------|
+| check for OutputDebugString error                     | anti-analysis/anti-debugging/debugger-detection |
+| read and send data from client to server              | c2/file-transfer                                |
+| execute shell command and capture output              | c2/shell                                        |
+| receive data (2 matches)                              | communication                                   |
+| send data (6 matches)                                 | communication                                   |
+| connect to HTTP server (3 matches)                    | communication/http/client                       |
+| send HTTP request (3 matches)                         | communication/http/client                       |
+| create pipe                                           | communication/named-pipe/create                 |
+| get socket status (2 matches)                         | communication/socket                            |
+| receive data on socket (2 matches)                    | communication/socket/receive                    |
+| send data on socket (3 matches)                       | communication/socket/send                       |
+| connect TCP socket                                    | communication/socket/tcp                        |
+| encode data using Base64                              | data-manipulation/encoding/base64               |
+| encode data using XOR (6 matches)                     | data-manipulation/encoding/xor                  |
+| run as a service                                      | executable/pe                                   |
+| get common file path (3 matches)                      | host-interaction/file-system                    |
+| read file                                             | host-interaction/file-system/read               |
+| write file (2 matches)                                | host-interaction/file-system/write              |
+| print debug messages (2 matches)                      | host-interaction/log/debug/write-event          |
+| resolve DNS                                           | host-interaction/network/dns/resolve            |
+| get hostname                                          | host-interaction/os/hostname                    |
+| create a process with modified I/O handles and window | host-interaction/process/create                 |
+| create process                                        | host-interaction/process/create                 |
+| create registry key                                   | host-interaction/registry/create                |
+| create service                                        | host-interaction/service/create                 |
+| create thread                                         | host-interaction/thread/create                  |
+| persist via Windows service                           | persistence/service                             |
++-------------------------------------------------------+-------------------------------------------------+
 ```
 
 # download
@@ -66,57 +94,92 @@ For more information about how to use capa, including running it as an IDA scrip
 
 # example
 
-Here we run capa against an unknown binary (`level32.exe`),
+Here we run capa against an unknown binary (`suspicious.exe`),
 and the tool reports that the program can decode data via XOR,
-references data in its resource section, writes to a file, and spawns a new process.
-Taken together, this makes us think that `level32.exe` could be a dropper.
-Therefore, our next analysis step might be to run `level32.exe` in a sandbox and try to recover the payload.
+contains an embedded PE, writes to a file, and spawns a new process.
+Taken together, this makes us think that `suspicious.exe` could be a dropper or backdoor.
+Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the payload.
 
 ```
-λ capa.exe level32.exe -q
-disposition: malicious
-category: dropper
+$ capa.exe suspicious.exe
 
-objectives:
-  data manipulation
-  machine access control
++------------------------+----------------------------------------------------------------------+
+| ATT&CK Tactic          | ATT&CK Technique                                                     |
+|------------------------+----------------------------------------------------------------------|
+| DEFENSE EVASION        | Obfuscated Files or Information [T1027]                              |
+| DISCOVERY              | Query Registry [T1012]                                               |
+|                        | System Information Discovery [T1082]                                 |
+| EXECUTION              | Command and Scripting Interpreter::Windows Command Shell [T1059.003] |
+|                        | Shared Modules [T1129]                                               |
+| EXFILTRATION           | Exfiltration Over C2 Channel [T1041]                                 |
+| PERSISTENCE            | Create or Modify System Process::Windows Service [T1543.003]         |
++------------------------+----------------------------------------------------------------------+
 
-behaviors:
-  encrypt data
-  load code functionality
-
-techniques:
-  encrypt data using rc4
-  load pe
-
-anomalies:
-  embedded PE file
++-------------------------------------------------------+-------------------------------------------------+
+| CAPABILITY                                            | NAMESPACE                                       |
+|-------------------------------------------------------+-------------------------------------------------|
+| check for OutputDebugString error                     | anti-analysis/anti-debugging/debugger-detection |
+| read and send data from client to server              | c2/file-transfer                                |
+| execute shell command and capture output              | c2/shell                                        |
+| receive data (2 matches)                              | communication                                   |
+| send data (6 matches)                                 | communication                                   |
+| connect to HTTP server (3 matches)                    | communication/http/client                       |
+| send HTTP request (3 matches)                         | communication/http/client                       |
+| create pipe                                           | communication/named-pipe/create                 |
+| get socket status (2 matches)                         | communication/socket                            |
+| receive data on socket (2 matches)                    | communication/socket/receive                    |
+| send data on socket (3 matches)                       | communication/socket/send                       |
+| connect TCP socket                                    | communication/socket/tcp                        |
+| encode data using Base64                              | data-manipulation/encoding/base64               |
+| encode data using XOR (6 matches)                     | data-manipulation/encoding/xor                  |
+| run as a service                                      | executable/pe                                   |
+| contain an embedded PE file                           | executable/subfile/pe                           |
+| get common file path (3 matches)                      | host-interaction/file-system                    |
+| read file                                             | host-interaction/file-system/read               |
+| write file (2 matches)                                | host-interaction/file-system/write              |
+| print debug messages (2 matches)                      | host-interaction/log/debug/write-event          |
+| resolve DNS                                           | host-interaction/network/dns/resolve            |
+| get hostname                                          | host-interaction/os/hostname                    |
+| create a process with modified I/O handles and window | host-interaction/process/create                 |
+| create process                                        | host-interaction/process/create                 |
+| create registry key                                   | host-interaction/registry/create                |
+| create service                                        | host-interaction/service/create                 |
+| create thread                                         | host-interaction/thread/create                  |
+| persist via Windows service                           | persistence/service                             |
++-------------------------------------------------------+-------------------------------------------------+
 ```
 
 By passing the `-vv` flag (for Very Verbose), capa reports exactly where it found evidence of these capabilities.
 This is useful for at least two reasons:
 
-  - it helps explain why we should trust the results, and enables us to verify the conclusions
+  - it helps explain why we should trust the results, and enables us to verify the conclusions, and
   - it shows where within the binary an experienced analyst might study with IDA Pro
 
 ```
-λ capa.exe level32.exe -q -vv
-rule load PE file:
-  - function 0x401c58:
+λ capa.exe suspicious.exe -vv
+execute shell command and capture output
+namespace   c2/shell
+author      matthew.williams@fireeye.com
+scope       function
+att&ck      Execution::Command and Scripting Interpreter::Windows Command Shell [T1059.003]
+references  https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
+examples    Practical Malware Analysis Lab 14-02.exe_:0x4011C0
+function @ 0x10003A13
+  and:
+    match: create a process with modified I/O handles and window @ 0x10003A13
+      and:
+        or:
+          api: kernel32.CreateProcess @ 0x10003D6D
+        number: 0x101 @ 0x10003B03
+        or:
+          number: 0x44 @ 0x10003ADC
+        optional:
+          api: kernel32.GetStartupInfo @ 0x10003AE4
+    match: create pipe @ 0x10003A13
       or:
-        and:
-          mnemonic(cmp):
-            - virtual address: 0x401c58
-            - virtual address: 0x401c68
-            - virtual address: 0x401c74
-            - virtual address: 0x401c7f
-            - virtual address: 0x401c8a
-          or:
-            number(0x4550):
-              - virtual address: 0x401c68
-          or:
-            number(0x5a4d):
-              - virtual address: 0x401c58
+        api: kernel32.CreatePipe @ 0x10003ACB
+    or:
+      string: cmd.exe /c  @ 0x10003AED
 ...
 ```
 
@@ -131,24 +194,27 @@ In some regards, capa rules are a mixture of the OpenIOC, Yara, and YAML formats
 Here's an example rule used by capa:
 
 ```
-───────┬────────────────────────────────────────────────────────
-       │ File: rules/calculate-crc32.yml
-───────┼────────────────────────────────────────────────────────
+───────┬──────────────────────────────────────────────────────────────────────────
+       │ File: rules/data-manipulation/checksum/crc32/chechsum-data-with-crc32.yml
+───────┼──────────────────────────────────────────────────────────────────────────
    1   │ rule:
    2   │   meta:
-   3   │     name: calculate CRC32
-   4   |     rule-category: data-manipulation/hash-data/hash-data-using-crc32
+   3   │     name: checksum data with CRC32
+   4   │     namespace: data-manipulation/checksum/crc32
    5   │     author: moritz.raabe@fireeye.com
    6   │     scope: function
    7   │     examples:
    8   │       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
-   9   │   features:
-  10   │     - and:
-  11   │       - mnemonic: shr
-  12   │       - number: 0xEDB88320
-  13   │       - number: 8
-  14   │       - characteristic(nzxor): True
-───────┴────────────────────────────────────────────────────────
+   9   │       - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
+  10   │   features:
+  11   │     - or:
+  12   │       - and:
+  13   │         - mnemonic: shr
+  14   │         - number: 0xEDB88320
+  15   │         - number: 8
+  16   │         - characteristic(nzxor): true
+  17   │       - api: RtlComputeCrc32
+──────────────────────────────────────────────────────────────────────────────────
 ```
 
 Rules are yaml files that follow a certain schema.
@@ -159,18 +225,22 @@ The top-level element is a dictionary named `rule` with two required children di
 
 ## meta block
 
-The meta block contains metadata that identifies the rule, categorizes into behaviors, 
+The meta block contains metadata that identifies the rule, groups the technique, 
 and provides references to additional documentation.
 Here are the common fields:
 
   - `name` is required. This string should uniquely identify the rule.
 
-  - `rule-category` is required when a rule describes a behavior (as opposed to matching a role or disposition).
-The rule category specifies an objective, behavior, and technique matched by this rule,
-using a format like `$objective/$behavior/$technique`.
-An objective is a high-level goal of a program, such as "communication".
-A behavior is something that a program may do, such as "communication via socket".
-A technique is a way of implementing some behavior, such as "send-data".
+  - `namespace` is required when a rule describes a technique (as opposed to matching a role or disposition).
+The namespace helps us group rules into buckets, such as `host-manipulation/file-system` or `impact/wipe-disk`.
+When capa emits its final report, it orders the results by category, so related techniques show up together.
+
+  - `att&ck` is an optional list of [ATT&CK framework](https://attack.mitre.org/) techniques that the rule implies, like 
+`Discovery::Query Registry [T1012]` or `Persistence::Create or Modify System Process::Windows Service [T1543.003]`.
+These tags are used to derive the ATT&CK mapping for the sample when the report gets rendered.
+
+  - `mbc` is an optional list of [Malware Behavior Catalog](https://github.com/MBCProject/mbc-markdown) techniques that the rule implies,
+like the ATT&CK list.
 
   - `maec/malware-category` is required when the rule describes a role, such as `dropper` or `backdoor`.
 
@@ -189,10 +259,10 @@ A technique is a way of implementing some behavior, such as "send-data".
 
   - `author` specifies the name or handle of the rule author.
 
-  - `examples` is a list of references to samples that should match the capability.
+  - `examples` is a required list of references to samples that should match the capability.
 When the rule scope is `function`, then the reference should be `<sample hash>:<function va>`.
 
-  - `reference` lists related information in a book, article, blog post, etc.
+  - `references` lists related information in a book, article, blog post, etc.
 
 Other fields are allowed but not defined in this specification. `description` is probably a good one.
 
