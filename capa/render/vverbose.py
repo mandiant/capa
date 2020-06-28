@@ -52,12 +52,19 @@ def render_feature(ostream, match, feature, indent=0):
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
-    if len(match['locations']) == 1:
+    locations = list(sorted(match['locations']))
+    if len(locations) == 1:
         ostream.write(' @ ')
-        ostream.write(rutils.hex(list(match['locations'])[0]))
-    elif len(match['locations']) > 1:
+        ostream.write(rutils.hex(locations[0]))
+    elif len(locations) > 1:
         ostream.write(' @ ')
-        ostream.write(', '.join(map(rutils.hex, sorted(match['locations']))))
+        if len(locations) > 4:
+            # don't display too many locations, because it becomes very noisy.
+            # probably only the first handful of locations will be useful for inspection.
+            ostream.write(', '.join(map(rutils.hex, locations[0:4])))
+            ostream.write('...')
+        else:
+            ostream.write(', '.join(map(rutils.hex, locations)))
 
     ostream.write('\n')
 
