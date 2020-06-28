@@ -27,10 +27,6 @@ def convert_statement_to_result_document(statement):
         return {
             'type': 'not',
         }
-    elif isinstance(statement, capa.engine.Or):
-        return {
-            'type': 'or',
-        }
     elif isinstance(statement, capa.engine.Some) and statement.count == 0:
         return {
             'type': 'optional'
