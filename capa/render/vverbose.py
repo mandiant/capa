@@ -174,7 +174,6 @@ def render_vverbose(doc):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt='plain'))
 
-
         if rule['meta']['scope'] == capa.rules.FILE_SCOPE:
             matches = list(doc[rule['meta']['name']]['matches'].values())
             if len(matches) != 1:
