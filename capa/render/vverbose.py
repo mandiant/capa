@@ -86,6 +86,8 @@ def render_vverbose(doc):
             v = rule['meta'][key]
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]
+            elif isinstance(v, list) and len(v) > 1:
+                v = ', '.join(v)
             rows.append((key, v))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt='plain'))
