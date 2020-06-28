@@ -17,8 +17,31 @@ def render_statement(ostream, statement, indent=0):
         ostream.write(statement['count'] + ' or more')
         ostream.writeln(':')
     elif statement['type'] == 'range':
-        ostream.write('range(%d, %d)' % (statement['min'], statement['max']))
-        ostream.writeln(':')
+        # `range` is a weird node, its almost a hybrid of statement+feature.
+        # it is a specific feature repeated multiple times.
+        # there's no additional logic in the feature part, just the existence of a feature.
+        # so, we have to inline some of the feature rendering here.
+
+        child = statement['child']
+        if child['type'] in ('string', 'bytes', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+            feature = '%s(%s)' % (child['type'], rutils.bold2(child[child['type']]))
+        elif child['type'] in ('number', 'offset'):
+            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex(child[child['type']])))
+        elif child['type'] == 'characteristic':
+            feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic'][0]))
+        else:
+            raise RuntimeError('unexpected feature type: ' + str(child))
+
+        ostream.write('count(%s): ' % feature)
+
+        if statement['max'] == statement['min']:
+            ostream.writeln('%d' % (statement['min']))
+        elif statement['min'] == 0:
+            ostream.writeln('%d or fewer' % (statement['max']))
+        elif statement['max'] == (1 << 64 - 1):
+            ostream.writeln('%d or more' % (statement['min']))
+        else:
+            ostream.writeln('between %d and %d' % (statement['min'], statement['max']))
     elif statement['type'] == 'subscope':
         ostream.write(statement['subscope'])
         ostream.writeln(':')

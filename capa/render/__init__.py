@@ -41,6 +41,7 @@ def convert_statement_to_result_document(statement):
             'type': 'range',
             'min': statement.min,
             'max': statement.max,
+            'child': convert_feature_to_result_document(statement.child),
         }
     elif isinstance(statement, capa.engine.Regex):
         return {
