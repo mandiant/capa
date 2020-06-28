@@ -224,6 +224,7 @@ def convert_capabilities_to_result_document(rules, capabilities):
 
         doc[rule_name] = {
             'meta': dict(rule.meta),
+            'source': rule.definition,
             'matches': {
                 addr: convert_match_to_result_document(rules, capabilities, match)
                 for (addr, match) in matches
