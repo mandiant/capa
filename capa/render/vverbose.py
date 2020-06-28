@@ -62,7 +62,7 @@ def render_feature(ostream, match, feature, indent=0):
             # don't display too many locations, because it becomes very noisy.
             # probably only the first handful of locations will be useful for inspection.
             ostream.write(', '.join(map(rutils.hex, locations[0:4])))
-            ostream.write('...')
+            ostream.write(', ...')
         else:
             ostream.write(', '.join(map(rutils.hex, locations)))
 
