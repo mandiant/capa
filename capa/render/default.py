@@ -20,7 +20,12 @@ def render_capabilities(doc, ostream):
     """
     rows = []
     for rule in rutils.capability_rules(doc):
-        rows.append((rutils.bold(rule['meta']['name']), rule['meta']['namespace']))
+        count = len(rule['matches'])
+        if count == 1:
+            capability = rutils.bold(rule['meta']['name'])
+        else:
+            capability = '%s (%d matches)' % (rutils.bold(rule['meta']['name']), count)
+        rows.append((capability, rule['meta']['namespace']))
 
     ostream.write(tabulate.tabulate(rows, headers=['CAPABILITY', 'NAMESPACE'], tablefmt="psql"))
     ostream.write("\n")
