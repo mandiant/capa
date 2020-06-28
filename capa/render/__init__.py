@@ -54,7 +54,7 @@ def convert_statement_to_result_document(statement):
     elif isinstance(statement, capa.engine.Subscope):
         return {
             'type': 'subscope',
-            'scope': statement.scope,
+            'subscope': statement.scope,
         }
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
@@ -176,12 +176,17 @@ def convert_match_to_result_document(rules, capabilities, result):
         rule_matches = {address: result for (address, result) in capabilities[rule_name]}
 
         if rule.meta.get('capa/subscope-rule'):
-            # for a subscope rule, rename the rule name to the scope,
-            # which is consistent with the rule text.
+            # for a subscope rule, fixup the node to be a scope node, rather than a match feature node.
             #
             # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
             scope = rule.meta['scope']
-            doc['node']['feature']['match'] = scope
+            doc['node'] = {
+                'type': 'statement',
+                'statement': {
+                    'type': 'subscope',
+                    'subscope': scope,
+                },
+            }
 
         for location in doc['locations']:
             doc['children'].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
