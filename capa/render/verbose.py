@@ -24,7 +24,13 @@ def render_verbose(doc):
     ostream = rutils.StringIO()
 
     for rule in rutils.capability_rules(doc):
-        ostream.writeln(rutils.bold(rule['meta']['name']))
+        count = len(rule['matches'])
+        if count == 1:
+            capability = rutils.bold(rule['meta']['name'])
+        else:
+            capability = '%s (%d matches)' % (rutils.bold(rule['meta']['name']), count)
+
+        ostream.writeln(capability)
 
         rows = []
         for key in ('namespace', 'description', 'scope'):
