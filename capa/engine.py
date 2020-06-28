@@ -155,7 +155,7 @@ class Range(Statement):
 
     def evaluate(self, ctx):
         if self.child not in ctx:
-            return Result(False, self, [self.child])
+            return Result(False, self, [])
 
         count = len(ctx[self.child])
         return Result(self.min <= count <= self.max, self, [], locations=ctx[self.child])
