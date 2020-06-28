@@ -135,12 +135,6 @@ def convert_match_to_result_document(rules, capabilities, result):
     """
     convert the given Result instance into a common, Python-native data structure.
     this will become part of the "result document" format that can be emitted to JSON.
-
-    args:
-      rules (RuleSet):
-      result (Result):
-
-    returns: Dict[str, Any]
     """
     doc = {
         'success': bool(result.success),
