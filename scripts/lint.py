@@ -13,6 +13,7 @@ import hashlib
 import logging
 import os.path
 import itertools
+import posixpath
 
 import argparse
 
@@ -87,7 +88,7 @@ class NamespaceDoesntMatchRulePath(Lint):
         if 'lib' in rule.meta:
             return False
 
-        return rule.meta['namespace'] not in rule.meta['capa/path'].replace('\\', '/')
+        return rule.meta['namespace'] not in posixpath.normpath(rule.meta['capa/path'])
 
 
 class MissingScope(Lint):
