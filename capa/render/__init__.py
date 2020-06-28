@@ -241,8 +241,9 @@ def convert_capabilities_to_result_document(rules, capabilities):
 
 
 def render_vverbose(rules, capabilities):
+    import capa.render.vverbose
     doc = convert_capabilities_to_result_document(rules, capabilities)
-    return ''
+    return capa.render.vverbose.render_vverbose(doc)
 
 
 def render_verbose(rules, capabilities):
