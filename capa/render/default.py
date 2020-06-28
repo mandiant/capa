@@ -6,7 +6,6 @@ import tabulate
 import capa.render.utils as rutils
 
 
-
 def width(s, character_count):
     """pad the given string to at least `character_count`"""
     if len(s) < character_count:
