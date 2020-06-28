@@ -115,7 +115,7 @@ MODE_SUCCESS = 'success'
 MODE_FAILURE = 'failure'
 
 
-def render_match(ostream, match, indent=1, mode=MODE_SUCCESS):
+def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
     child_mode = mode
     if mode == MODE_SUCCESS:
         # display only nodes that evaluated successfully.
@@ -174,14 +174,22 @@ def render_vverbose(doc):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt='plain'))
 
+
         if rule['meta']['scope'] == capa.rules.FILE_SCOPE:
-            render_match(ostream, match, indent=0)
+            matches = list(doc[rule['meta']['name']]['matches'].values())
+            if len(matches) != 1:
+                # i think there should only ever be one match per file-scope rule,
+                # because we do the file-scope evaluation a single time.
+                # but i'm not 100% sure if this is/will always be true.
+                # so, lets be explicit about our assumptions and raise an exception if they fail.
+                raise RuntimeError('unexpected file scope match count: ' + len(matches))
+            render_match(ostream, matches[0], indent=0)
         else:
-            for location, match in doc[rule['meta']['name']]['matches'].items():
+            for location, match in sorted(doc[rule['meta']['name']]['matches'].items()):
                 ostream.write(rule['meta']['scope'])
                 ostream.write(' @ ')
                 ostream.writeln(rutils.hex(location))
-                render_match(ostream, match)
+                render_match(ostream, match, indent=1)
 
         ostream.write('\n')
 
