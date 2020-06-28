@@ -42,7 +42,7 @@ class NameCasing(Lint):
 
 class FilenameDoesntMatchRuleName(Lint):
     name = 'filename doesn\'t match the rule name'
-    recommendation = 'Rename rule file to match the rule name'
+    recommendation = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
 
     def check_rule(self, ctx, rule):
         expected = rule.name
@@ -55,6 +55,8 @@ class FilenameDoesntMatchRuleName(Lint):
         expected = expected + '.yml'
 
         found = os.path.basename(rule.meta['capa/path'])
+
+        self.recommendation = self.recommendation.format(expected, found)
 
         return expected != found
 
