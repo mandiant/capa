@@ -39,7 +39,8 @@ def render_feature(ostream, match, feature, indent=0):
         ostream.write(': ')
         ostream.write(rutils.bold2(feature[feature['type']]))
     elif feature['type'] == 'characteristic':
-        ostream.write('characteristic(%s): %s' % (rutils.bold2(feature['characteristic'][0]), feature['characteristic'][1]))
+        ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'][0])))
+    # note that regex is found in `render_statement`
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
