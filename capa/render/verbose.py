@@ -27,7 +27,7 @@ def render_verbose(doc):
         ostream.writeln(rutils.bold(rule['meta']['name']))
 
         rows = []
-        for key in capa.rules.META_KEYS:
+        for key in ('namespace', 'description', 'scope'):
             if key == 'name' or key not in rule['meta']:
                 continue
 
