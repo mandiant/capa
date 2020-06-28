@@ -10,9 +10,8 @@ def render_statement(ostream, statement, indent=0):
         ostream.write(statement['type'])
         ostream.writeln(':')
     elif statement['type'] == 'not':
-        # we won't have successful results for the children of a not
-        # so display a placeholder `...`
-        ostream.writeln('not: ...')
+        # this statement is handled specially in `render_match` using the MODE_SUCCESS/MODE_FAILURE flags.
+        ostream.writeln('not:')
     elif statement['type'] == 'some':
         ostream.write(statement['count'] + ' or more')
         ostream.writeln(':')
@@ -79,7 +78,10 @@ def render_feature(ostream, match, feature, indent=0):
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
-    locations = list(sorted(match['locations']))
+    # its possible to have an empty locations array here,
+    # such as when we're in MODE_FAILURE and showing the logic
+    # under a `not` statement (which will have no matched locations).
+    locations = list(sorted(match.get('locations', [])))
     if len(locations) == 1:
         ostream.write(' @ ')
         ostream.write(rutils.hex(locations[0]))
@@ -105,17 +107,45 @@ def render_node(ostream, match, node, indent=0):
         raise RuntimeError('unexpected node type: ' + str(node))
 
 
-def render_match(ostream, match, indent=0):
-    if not match['success']:
-        return
+# display nodes that successfully evaluated against the sample.
+MODE_SUCCESS = 'success'
 
-    if match['node'].get('statement', {}).get('type') == 'optional' and not any(map(lambda m: m['success'], match['children'])):
-        return
+# display nodes that did not evaluate to True against the sample.
+# this is useful when rendering the logic tree under a `not` node.
+MODE_FAILURE = 'failure'
+
+
+def render_match(ostream, match, indent=1, mode=MODE_SUCCESS):
+    child_mode = mode
+    if mode == MODE_SUCCESS:
+        # display only nodes that evaluated successfully.
+        if not match['success']:
+            return
+        # optional statement with no successful children is empty
+        if (match['node'].get('statement', {}).get('type') == 'optional'
+                and not any(map(lambda m: m['success'], match['children']))):
+            return
+        # not statement, so invert the child mode to show failed evaluations
+        if match['node'].get('statement', {}).get('type') == 'not':
+            child_mode = MODE_FAILURE
+    elif mode == MODE_FAILURE:
+        # display only nodes that did not evaluate to True
+        if match['success']:
+            return
+        # optional statement with successful children is not relevant
+        if (match['node'].get('statement', {}).get('type') == 'optional'
+                and any(map(lambda m: m['success'], match['children']))):
+            return
+        # not statement, so invert the child mode to show successful evaluations
+        if match['node'].get('statement', {}).get('type') == 'not':
+            child_mode = MODE_SUCCESS
+    else:
+        raise RuntimeError('unexpected mode: ' + mode)
 
     render_node(ostream, match, match['node'], indent=indent)
 
     for child in match['children']:
-        render_match(ostream, child, indent=indent + 1)
+        render_match(ostream, child, indent=indent + 1, mode=child_mode)
 
 
 def render_vverbose(doc):
@@ -145,7 +175,7 @@ def render_vverbose(doc):
                 ostream.write(rule['meta']['scope'])
                 ostream.write(' @ ')
                 ostream.writeln(rutils.hex(location))
-                render_match(ostream, match, indent=1)
+                render_match(ostream, match)
 
         ostream.write('\n')
 
