@@ -1,7 +1,6 @@
 import json
 
 import capa.engine
-import capa.render.default
 
 
 def convert_statement_to_result_document(statement):
@@ -242,11 +241,13 @@ def render_vverbose(rules, capabilities):
 
 
 def render_verbose(rules, capabilities):
+    import capa.render.verbose
     doc = convert_capabilities_to_result_document(rules, capabilities)
-    return ''
+    return capa.render.verbose.render_verbose(doc)
 
 
 def render_default(rules, capabilities):
+    import capa.render.default
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.default.render_default(doc)
 

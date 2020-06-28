@@ -1,3 +1,4 @@
+import six
 import termcolor
 
 
@@ -8,7 +9,7 @@ def bold(s):
 
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
-    for rule in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
+    for (_, _, rule) in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
         if rule['meta'].get('lib'):
             continue
         if rule['meta'].get('capa/subscope'):
@@ -18,8 +19,14 @@ def capability_rules(doc):
         if rule['meta'].get('maec/analysis-conclusion-ov'):
             continue
         if rule['meta'].get('maec/malware-category'):
-           continue
+            continue
         if rule['meta'].get('maec/malware-category-ov'):
             continue
 
         yield rule
+
+
+class StringIO(six.StringIO):
+    def writeln(self, s):
+        self.write(s)
+        self.write('\n')
