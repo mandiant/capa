@@ -34,10 +34,14 @@ def render_statement(ostream, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write('  ' * indent)
 
-    if feature['type'] in ('string', 'api', 'number', 'offset', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
         ostream.write(feature['type'])
         ostream.write(': ')
         ostream.write(rutils.bold2(feature[feature['type']]))
+    elif feature['type'] in ('number', 'offset'):
+        ostream.write(feature['type'])
+        ostream.write(': ')
+        ostream.write(rutils.bold2(rutils.hex(feature[feature['type']])))
     elif feature['type'] == 'bytes':
         ostream.write('bytes: ')
         # bytes is the uppercase, hex-encoded string.
