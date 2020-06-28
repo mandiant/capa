@@ -7,6 +7,17 @@ import capa.render.utils as rutils
 
 
 def render_capabilities(doc, ostream):
+    """
+    example::
+
+        +-------------------------------------------------------+-------------------------------------------------+
+        | CAPABILITY                                            | NAMESPACE                                       |
+        |-------------------------------------------------------+-------------------------------------------------|
+        | check for OutputDebugString error                     | anti-analysis/anti-debugging/debugger-detection |
+        | read and send data from client to server              | c2/file-transfer                                |
+        | ...                                                   | ...                                             |
+        +-------------------------------------------------------+-------------------------------------------------+
+    """
     rows = []
     for rule in rutils.capability_rules(doc):
         rows.append((rutils.bold(rule['meta']['name']), rule['meta']['namespace']))
@@ -16,6 +27,17 @@ def render_capabilities(doc, ostream):
 
 
 def render_attack(doc, ostream):
+    """
+    example::
+
+        +----------------------------------------------------------------------+
+        | ATT&CK tactic: EXECUTION                                             |
+        |----------------------------------------------------------------------|
+        | Command and Scripting Interpreter::Windows Command Shell [T1059.003] |
+        | Shared Modules [T1129]                                               |
+        | ...                                                                  |
+        +----------------------------------------------------------------------+
+    """
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         if not rule['meta'].get('att&ck'):
