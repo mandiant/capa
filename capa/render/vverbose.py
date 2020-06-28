@@ -40,8 +40,10 @@ def render_feature(ostream, match, feature, indent=0):
         ostream.write(rutils.bold2(feature[feature['type']]))
     elif feature['type'] == 'bytes':
         ostream.write('bytes: ')
+        # bytes is the uppercase, hex-encoded string.
+        # it should always be an even number of characters (its hex).
         bytes = feature['bytes']
-        for i in range(len(bytes)//2):
+        for i in range(len(bytes) // 2):
             ostream.write(rutils.bold2(bytes[i:i + 2]))
             ostream.write(' ')
     elif feature['type'] == 'characteristic':
