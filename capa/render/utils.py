@@ -7,6 +7,11 @@ def bold(s):
     return termcolor.colored(s, 'blue')
 
 
+def bold2(s):
+    """draw attention to the given string, within a `bold` section"""
+    return termcolor.colored(s, 'green')
+
+
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
     for (_, _, rule) in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
