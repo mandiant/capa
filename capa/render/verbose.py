@@ -38,7 +38,7 @@ def render_verbose(doc):
 
         if rule['meta']['scope'] != capa.rules.FILE_SCOPE:
             locations = doc[rule['meta']['name']]['matches'].keys()
-            rows.append(('matches', '\n'.join(map(hex, locations))))
+            rows.append(('matches', '\n'.join(map(rutils.hex, locations))))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt='plain'))
         ostream.write('\n')

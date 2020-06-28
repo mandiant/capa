@@ -42,10 +42,10 @@ def render_feature(ostream, match, feature, indent=0):
 
     if len(match['locations']) == 1:
         ostream.write(' @ ')
-        ostream.write(hex(list(match['locations'])[0]))
+        ostream.write(rutils.hex(list(match['locations'])[0]))
     elif len(match['locations']) > 1:
         ostream.write(' @ ')
-        ostream.write(', '.join(map(hex, sorted(match['locations']))))
+        ostream.write(', '.join(map(rutils.hex, sorted(match['locations']))))
 
     ostream.write('\n')
 
@@ -96,7 +96,7 @@ def render_vverbose(doc):
             for location, match in doc[rule['meta']['name']]['matches'].items():
                 ostream.write(rule['meta']['scope'])
                 ostream.write(' @ ')
-                ostream.writeln(hex(location))
+                ostream.writeln(rutils.hex(location))
                 render_match(ostream, match, indent=1)
 
         ostream.write('\n')

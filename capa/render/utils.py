@@ -12,6 +12,11 @@ def bold2(s):
     return termcolor.colored(s, 'green')
 
 
+def hex(n):
+    """render the given number using upper case hex, like: 0x123ABC"""
+    return '0x%X' % n
+
+
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
     for (_, _, rule) in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
