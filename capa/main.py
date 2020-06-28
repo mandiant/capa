@@ -641,9 +641,11 @@ def main(argv=None):
     parser.add_argument('--json', action='store_true',
                         help='Emit JSON instead of text')
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Enable verbose output')
+                        help='Enable verbose result document (no effect with --json)')
     parser.add_argument('-vv', '--vverbose', action='store_true',
-                        help='Enable very verbose output')
+                        help='Enable very verbose result document (no effect with --json)')
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help='Enable debugging output on STDERR')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='Disable all output but errors')
     parser.add_argument('-f', '--format', choices=[f[0] for f in formats], default='auto',
@@ -653,7 +655,7 @@ def main(argv=None):
     if args.quiet:
         logging.basicConfig(level=logging.ERROR)
         logging.getLogger().setLevel(logging.ERROR)
-    elif args.verbose:
+    elif args.debug:
         logging.basicConfig(level=logging.DEBUG)
         logging.getLogger().setLevel(logging.DEBUG)
     else:
