@@ -6,6 +6,15 @@ import tabulate
 import capa.render.utils as rutils
 
 
+
+def width(s, character_count):
+    """pad the given string to at least `character_count`"""
+    if len(s) < character_count:
+        return s + ' ' * (character_count - len(s))
+    else:
+        return s
+
+
 def render_capabilities(doc, ostream):
     """
     example::
@@ -27,7 +36,7 @@ def render_capabilities(doc, ostream):
             capability = '%s (%d matches)' % (rutils.bold(rule['meta']['name']), count)
         rows.append((capability, rule['meta']['namespace']))
 
-    ostream.write(tabulate.tabulate(rows, headers=['CAPABILITY', 'NAMESPACE'], tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, headers=[width('CAPABILITY', 40), width('NAMESPACE', 40)], tablefmt="psql"))
     ostream.write("\n")
 
 
@@ -69,7 +78,7 @@ def render_attack(doc, ostream):
                 rows.append(("%s::%s %s" % (rutils.bold(technique), subtechnique, id), ))
             else:
                 raise RuntimeError("unexpected ATT&CK spec format")
-        ostream.write(tabulate.tabulate(rows, headers=['ATT&CK tactic: ' + rutils.bold(tactic.upper())], tablefmt="psql"))
+        ostream.write(tabulate.tabulate(rows, headers=[width('ATT&CK tactic: ' + rutils.bold(tactic.upper()), 80)], tablefmt="psql"))
         ostream.write("\n")
 
 
