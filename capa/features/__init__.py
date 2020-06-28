@@ -106,7 +106,7 @@ class Bytes(Feature):
 
     def freeze_serialize(self):
         return (self.__class__.__name__,
-                map(lambda x: codecs.encode(x, 'hex'), self.args))
+                map(lambda x: codecs.encode(x, 'hex').upper(), self.args))
 
     @classmethod
     def freeze_deserialize(cls, args):

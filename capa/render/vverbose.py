@@ -34,10 +34,16 @@ def render_statement(ostream, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write('  ' * indent)
 
-    if feature['type'] in ('string', 'bytes', 'api', 'number', 'offset', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+    if feature['type'] in ('string', 'api', 'number', 'offset', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
         ostream.write(feature['type'])
         ostream.write(': ')
         ostream.write(rutils.bold2(feature[feature['type']]))
+    elif feature['type'] == 'bytes':
+        ostream.write('bytes: ')
+        bytes = feature['bytes']
+        for i in range(len(bytes)//2):
+            ostream.write(rutils.bold2(bytes[i:i + 2]))
+            ostream.write(' ')
     elif feature['type'] == 'characteristic':
         ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'][0])))
     # note that regex is found in `render_statement`
