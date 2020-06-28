@@ -418,18 +418,18 @@ def render_capabilities_vverbose(ruleset, results):
             render_result(res, indent='      ')
 
 
-def appears_rule_cat(rules, capabilities, rule_cat):
+def has_rule_with_namespace(rules, capabilities, rule_cat):
     for rule_name in capabilities.keys():
-        if rules.rules[rule_name].meta.get('rule-category', '').startswith(rule_cat):
+        if rules.rules[rule_name].meta.get('namespace', '').startswith(rule_cat):
             return True
     return False
 
 
-def is_file_limitation(rules, capabilities, is_standalone=True):
+def has_file_limitation(rules, capabilities, is_standalone=True):
     file_limitations = {
         # capa will likely detect installer specific functionality.
         # this is probably not what the user wants.
-        'other-features/installer/': [
+        'executable/installer': [
             ' This sample appears to be an installer.',
             ' ',
             ' capa cannot handle installers well. This means the results may be misleading or incomplete.'
@@ -438,7 +438,7 @@ def is_file_limitation(rules, capabilities, is_standalone=True):
         # capa won't detect much in .NET samples.
         # it might match some file-level things.
         # for consistency, bail on things that we don't support.
-        'other-features/compiled-to-dot-net': [
+        'runtime/dotnet': [
             ' This sample appears to be a .NET module.',
             ' ',
             ' .NET is a cross-platform framework for running managed applications.',
@@ -448,7 +448,7 @@ def is_file_limitation(rules, capabilities, is_standalone=True):
         # capa will detect dozens of capabilities for AutoIt samples,
         # but these are due to the AutoIt runtime, not the payload script.
         # so, don't confuse the user with FP matches - bail instead
-        'other-features/compiled-with-autoit': [
+        'compiler/autoit': [
             ' This sample appears to be compiled with AutoIt.',
             ' ',
             ' AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.',
@@ -456,7 +456,7 @@ def is_file_limitation(rules, capabilities, is_standalone=True):
             ' You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.'
         ],
         # capa won't detect much in packed samples
-        'anti-analysis/packing/': [
+        'anti-analysis/packer/': [
             ' This sample appears to be packed.',
             ' ',
             ' Packed samples have often been obfuscated to hide their logic.',
@@ -466,7 +466,7 @@ def is_file_limitation(rules, capabilities, is_standalone=True):
     }
 
     for category, dialogue in file_limitations.items():
-        if not appears_rule_cat(rules, capabilities, category):
+        if not has_rule_with_namespace(rules, capabilities, category):
             continue
         logger.warning('-' * 80)
         for line in dialogue:
@@ -736,7 +736,7 @@ def main(argv=None):
 
     capabilities = find_capabilities(rules, extractor)
 
-    if is_file_limitation(rules, capabilities):
+    if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose):
@@ -793,7 +793,7 @@ def ida_main():
     import capa.features.extractors.ida
     capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
 
-    if is_file_limitation(rules, capabilities, is_standalone=False):
+    if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
 
     render_capabilities_default(rules, capabilities)
