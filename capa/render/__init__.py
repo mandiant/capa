@@ -235,18 +235,25 @@ def convert_capabilities_to_result_document(rules, capabilities):
 
 
 def render_vverbose(rules, capabilities):
+    # there's an import loop here
+    # if capa.render imports capa.render.vverbose
+    # and capa.render.vverbose import capa.render (implicitly, as a submodule)
+    # so, defer the import until routine is called, breaking the import loop.
     import capa.render.vverbose
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.vverbose.render_vverbose(doc)
 
 
 def render_verbose(rules, capabilities):
+    # break import loop
     import capa.render.verbose
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.verbose.render_verbose(doc)
 
 
 def render_default(rules, capabilities):
+    # break import loop
+    import capa.render.verbose
     import capa.render.default
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.default.render_default(doc)
