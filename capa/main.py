@@ -746,7 +746,7 @@ def main(argv=None):
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose):
+        if not (args.verbose or args.vverbose or args.json):
             return -1
 
     # colorama will detect:
