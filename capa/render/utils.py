@@ -19,7 +19,7 @@ def hex(n):
 
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
-    for (_, _, rule) in sorted(map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
+    for (_, _, rule) in sorted(map(lambda rule: (rule['meta'].get('namespace', ''), rule['meta']['name'], rule), doc.values())):
         if rule['meta'].get('lib'):
             continue
         if rule['meta'].get('capa/subscope'):
