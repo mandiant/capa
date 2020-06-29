@@ -216,6 +216,17 @@ class LibRuleNotInLibDirectory(Lint):
         return '/lib/' not in posixpath.normpath(rule.meta['capa/path'])
 
 
+class LibRuleHasNamespace(Lint):
+    name = 'lib rule has a namespace'
+    recommendation = 'Remove the namespace from the rule'
+
+    def check_rule(self, ctx, rule):
+        if 'lib' not in rule.meta:
+            return False
+
+        return 'namespace' in rule.meta
+
+
 class FeatureStringTooShort(Lint):
     name = 'feature string too short'
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
@@ -270,6 +281,7 @@ META_LINTS = (
     ExampleFileDNE(),
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
+    LibRuleHasNamespace(),
 )
 
 
