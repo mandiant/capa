@@ -372,6 +372,10 @@ def collect_samples(path):
                 continue
             if name.endswith('.i64'):
                 continue
+            if name.endswith('.frz'):
+                continue
+            if name.endswith('.fnames'):
+                continue
 
             path = os.path.join(root, name)
 
