@@ -221,6 +221,9 @@ def topologically_order_rules(rules):
 
     assumes that the rule dependency graph is a DAG.
     '''
+    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    rules = list(rules)
+    namespaces = capa.rules.index_rules_by_namespace(rules)
     rules = {rule.name: rule for rule in rules}
     seen = set([])
     ret = []
@@ -229,7 +232,7 @@ def topologically_order_rules(rules):
         if rule.name in seen:
             return
 
-        for dep in rule.get_dependencies():
+        for dep in rule.get_dependencies(namespaces):
             rec(rules[dep])
 
         ret.append(rule)
@@ -266,5 +269,11 @@ def match(rules, features, va):
         if res:
             results[rule.name].append((va, res))
             features[capa.features.MatchedRule(rule.name)].add(va)
+
+            namespace = rule.meta.get('namespace')
+            if namespace:
+                while namespace:
+                    features[capa.features.MatchedRule(namespace)].add(va)
+                    namespace, _, _ = namespace.rpartition('/')
 
     return (features, results)

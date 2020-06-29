@@ -452,3 +452,49 @@ def test_filter_rules_missing_dependency():
                             - match: rule 2
             ''')),
         ])
+
+
+def test_rules_namespace_dependencies():
+    rules = [
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: rule 1
+                    namespace: ns1/nsA
+                features:
+                    - api: CreateFile
+        ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: rule 2
+                    namespace: ns1/nsB
+                features:
+                    - api: CreateFile
+        ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                rule:
+                    meta:
+                        name: rule 3
+                    features:
+                        - match: ns1/nsA
+        ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                rule:
+                    meta:
+                        name: rule 4
+                    features:
+                        - match: ns1
+        ''')),
+    ]
+
+    r3 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, 'rule 3')))
+    assert 'rule 1' in r3
+    assert 'rule 2' not in r3
+    assert 'rule 4' not in r3
+
+    r4 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, 'rule 4')))
+    assert 'rule 1' in r4
+    assert 'rule 2' in r4
+    assert 'rule 3' not in r4
+

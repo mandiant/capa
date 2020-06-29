@@ -424,11 +424,15 @@ class Rule(object):
     def __repr__(self):
         return 'Rule(scope=%s, name=%s)' % (self.scope, self.name)
 
-    def get_dependencies(self):
+    def get_dependencies(self, namespaces):
         '''
         fetch the names of rules this rule relies upon.
         these are only the direct dependencies; a user must
          compute the transitive dependency graph themself, if they want it.
+
+        Args:
+          namespaces(Dict[str, List[Rule]]): mapping from namespace name to rules in it.
+            see `index_rules_by_namespace`.
 
         Returns:
           List[str]: names of rules upon which this rule depends.
@@ -437,7 +441,12 @@ class Rule(object):
 
         def rec(statement):
             if isinstance(statement, capa.features.MatchedRule):
-                deps.add(statement.rule_name)
+                if statement.rule_name in namespaces:
+                    # appears to be a namespace
+                    deps.update(map(lambda r: r.name, namespaces[statement.rule_name]))
+                else:
+                    # must be a rule name
+                    deps.add(statement.rule_name)
 
             elif isinstance(statement, Statement):
                 for child in statement.get_children():
@@ -634,12 +643,15 @@ def get_rules_and_dependencies(rules, rule_name):
     yields:
       Rule:
     '''
+    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    rules = list(rules)
+    namespaces = index_rules_by_namespace(rules)
     rules = {rule.name: rule for rule in rules}
     wanted = set([rule_name])
 
     def rec(rule):
         wanted.add(rule.name)
-        for dep in rule.get_dependencies():
+        for dep in rule.get_dependencies(namespaces):
             rec(rules[dep])
 
     rec(rules[rule_name])
@@ -664,11 +676,48 @@ def ensure_rule_dependencies_are_met(rules):
     raises:
       InvalidRule: if a dependency is not met.
     '''
+    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    rules = list(rules)
+    namespaces = index_rules_by_namespace(rules)
     rules = {rule.name: rule for rule in rules}
     for rule in rules.values():
-        for dep in rule.get_dependencies():
+        for dep in rule.get_dependencies(namespaces):
             if dep not in rules:
                 raise InvalidRule('rule "%s" depends on missing rule "%s"' % (rule.name, dep))
+
+
+def index_rules_by_namespace(rules):
+    '''
+    compute the rules that fit into each namespace found within the given rules.
+
+    for example, given:
+
+      - c2/shell :: create reverse shell
+      - c2/file-transfer :: download and write a file
+
+    return the index:
+
+      c2/shell: [create reverse shell]
+      c2/file-transfer: [download and write a file]
+      c2: [create reverse shell, download and write a file]
+
+    Args:
+      rules (List[Rule]):
+
+    Returns: Dict[str, List[Rule]]
+    '''
+    namespaces = collections.defaultdict(list)
+
+    for rule in rules:
+        namespace = rule.meta.get('namespace')
+        if not namespace:
+            continue
+
+        while namespace:
+            namespaces[namespace].append(rule)
+            namespace, _, _ = namespace.rpartition('/')
+
+    return dict(namespaces)
 
 
 class RuleSet(object):
