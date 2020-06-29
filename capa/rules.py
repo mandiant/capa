@@ -21,7 +21,28 @@ logger = logging.getLogger(__name__)
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
-META_KEYS = ("name", "namespace", "rule-category", "author", "description", "lib", "scope", "att&ck", "mbc", "references", "examples")
+META_KEYS = (
+    'name',
+    'namespace',
+    'rule-category',
+    'maec/analysis-conclusion',
+    'maec/analysis-conclusion-ov',
+    'maec/malware-category',
+    'maec/malware-category-ov',
+    'author',
+    'description',
+    'lib',
+    'scope',
+    'att&ck',
+    'mbc',
+    'references',
+    'examples'
+)
+# these are meta fields that are internal to capa,
+# and added during rule reading/construction.
+# they may help use manipulate or index rules,
+# but should not be exposed to clients.
+HIDDEN_META_KEYS = ('capa/nursery', 'capa/path')
 
 
 FILE_SCOPE = 'file'
@@ -540,11 +561,11 @@ class Rule(object):
         definition = yaml.load(self.definition)
         # definition retains a reference to `meta`,
         # so we're updating that in place.
-        definition["rule"]["meta"] = self.meta
+        definition['rule']['meta'] = self.meta
         meta = self.meta
 
-        meta["name"] = self.name
-        meta["scope"] = self.scope
+        meta['name'] = self.name
+        meta['scope'] = self.scope
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -554,8 +575,8 @@ class Rule(object):
             del m[k]
             m[k] = v
 
-        move_to_end(definition["rule"], "meta")
-        move_to_end(definition["rule"], "features")
+        move_to_end(definition['rule'], 'meta')
+        move_to_end(definition['rule'], 'features')
 
         for key in META_KEYS:
             if key in meta:
@@ -566,9 +587,26 @@ class Rule(object):
                 continue
             move_to_end(meta, key)
 
+        # save off the existing hidden meta values,
+        # emit the document,
+        # and re-add the hidden meta.
+        hidden_meta = {
+            key: meta.get(key)
+            for key in HIDDEN_META_KEYS
+        }
+
+        for key in hidden_meta.keys():
+            del meta[key]
+
         ostream = six.BytesIO()
         yaml.dump(definition, ostream)
-        return ostream.getvalue().decode('utf-8').rstrip("\n") + "\n"
+
+        for key, value in hidden_meta.items():
+            if value is None:
+                continue
+            meta[key] = value
+
+        return ostream.getvalue().decode('utf-8').rstrip('\n') + '\n'
 
 
 def get_rules_with_scope(rules, scope):
@@ -667,6 +705,9 @@ class RuleSet(object):
 
     def __len__(self):
         return len(self.rules)
+
+    def __getitem__(self, rulename):
+        return self.rules[rulename]
 
     @staticmethod
     def _get_rules_for_scope(rules, scope):

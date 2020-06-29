@@ -155,7 +155,7 @@ class Range(Statement):
 
     def evaluate(self, ctx):
         if self.child not in ctx:
-            return Result(False, self, [self.child])
+            return Result(False, self, [])
 
         count = len(ctx[self.child])
         return Result(self.min <= count <= self.max, self, [], locations=ctx[self.child])
@@ -216,7 +216,7 @@ class Subscope(Statement):
 def topologically_order_rules(rules):
     '''
     order the given rules such that dependencies show up before dependents.
-    this means that as we match rules, we can add features, and these
+    this means that as we match rules, we can add features for the matches, and these
      will be matched by subsequent rules if they follow this order.
 
     assumes that the rule dependency graph is a DAG.

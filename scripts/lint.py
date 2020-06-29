@@ -6,12 +6,14 @@ Usage:
    $ python scripts/lint.py rules/
 '''
 import os
+import os.path
 import sys
 import string
 import hashlib
 import logging
 import os.path
 import itertools
+import posixpath
 
 import argparse
 
@@ -39,14 +41,54 @@ class NameCasing(Lint):
                 rule.name[1] not in string.ascii_uppercase)
 
 
-class MissingRuleCategory(Lint):
-    name = 'missing rule category'
-    recommendation = 'Add meta.rule-category so that the rule is emitted correctly'
+class FilenameDoesntMatchRuleName(Lint):
+    name = 'filename doesn\'t match the rule name'
+    recommendation = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
 
     def check_rule(self, ctx, rule):
-        return ('rule-category' not in rule.meta and
+        expected = rule.name
+        expected = expected.lower()
+        expected = expected.replace(' ', '-')
+        expected = expected.replace('(', '')
+        expected = expected.replace(')', '')
+        expected = expected.replace('+', '')
+        expected = expected.replace('/', '')
+        expected = expected + '.yml'
+
+        found = os.path.basename(rule.meta['capa/path'])
+
+        self.recommendation = self.recommendation.format(expected, found)
+
+        return expected != found
+
+
+class MissingNamespace(Lint):
+    name = 'missing rule namespace'
+    recommendation = 'Add meta.namespace so that the rule is emitted correctly'
+
+    def check_rule(self, ctx, rule):
+        return ('namespace' not in rule.meta and
+                not is_nursery_rule(rule) and
                 'maec/malware-category' not in rule.meta and
                 'lib' not in rule.meta)
+
+
+class NamespaceDoesntMatchRulePath(Lint):
+    name = 'file path doesn\'t match rule namespace'
+    recommendation = 'Move rule to appropriate directory or update the namespace'
+
+    def check_rule(self, ctx, rule):
+        # let the other lints catch namespace issues
+        if 'namespace' not in rule.meta:
+            return False
+        if is_nursery_rule(rule):
+            return False
+        if 'maec/malware-category' in rule.meta:
+            return False
+        if 'lib' in rule.meta:
+            return False
+
+        return rule.meta['namespace'] not in posixpath.normpath(rule.meta['capa/path'])
 
 
 class MissingScope(Lint):
@@ -144,6 +186,22 @@ class DoesntMatchExample(Lint):
                 return True
 
 
+class UnusualMetaField(Lint):
+    name = 'unusual meta field'
+    recommendation = 'Remove the meta field: "{:s}"'
+
+    def check_rule(self, ctx, rule):
+        for key in rule.meta.keys():
+            if key in capa.rules.META_KEYS:
+                continue
+            if key in capa.rules.HIDDEN_META_KEYS:
+                continue
+            self.recommendation = self.recommendation.format(key)
+            return True
+
+        return False
+
+
 class FeatureStringTooShort(Lint):
     name = 'feature string too short'
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
@@ -171,6 +229,7 @@ def run_feature_lints(lints, ctx, features):
 
 NAME_LINTS = (
     NameCasing(),
+    FilenameDoesntMatchRuleName(),
 )
 
 
@@ -189,11 +248,13 @@ def lint_scope(ctx, rule):
 
 
 META_LINTS = (
-    MissingRuleCategory(),
+    MissingNamespace(),
+    NamespaceDoesntMatchRulePath(),
     MissingAuthor(),
     MissingExamples(),
     MissingExampleOffset(),
     ExampleFileDNE(),
+    UnusualMetaField(),
 )
 
 
@@ -249,7 +310,7 @@ def is_nursery_rule(rule):
     For example, they may not have references to public example of a technique.
     Yet, we still want to capture and report on their matches.
     '''
-    return rule.meta.get('nursery')
+    return rule.meta.get('capa/nursery')
 
 
 def lint_rule(ctx, rule):

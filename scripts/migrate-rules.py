@@ -24,15 +24,15 @@ logger = logging.getLogger('migrate-rules')
 
 def read_plan(plan_path):
     with open(plan_path, 'rb') as f:
-        return list(csv.DictReader(f, restkey="other", fieldnames=(
-            "existing path",
-            "existing name",
-            "existing rule-category",
-            "proposed name",
-            "proposed namespace",
-            "ATT&CK",
-            "MBC",
-            "comment1",
+        return list(csv.DictReader(f, restkey='other', fieldnames=(
+            'existing path',
+            'existing name',
+            'existing rule-category',
+            'proposed name',
+            'proposed namespace',
+            'ATT&CK',
+            'MBC',
+            'comment1',
         )))
 
 
@@ -48,8 +48,8 @@ def read_rules(rule_directory):
             rule = capa.rules.Rule.from_yaml_file(path)
             rules[rule.name] = rule
 
-            if "nursery" in path:
-                rule.meta["nursery"] = True
+            if 'nursery' in path:
+                rule.meta['capa/nursery'] = True
     return rules
 
 
@@ -70,91 +70,89 @@ def main(argv=None):
     logging.getLogger().setLevel(logging.INFO)
 
     plan = read_plan(args.plan)
-    logger.info("read %d plan entries", len(plan))
+    logger.info('read %d plan entries', len(plan))
 
     rules = read_rules(args.source)
-    logger.info("read %d rules", len(rules))
+    logger.info('read %d rules', len(rules))
 
-    planned_rules = set([row["existing name"] for row in plan])
+    planned_rules = set([row['existing name'] for row in plan])
     unplanned_rules = [rule for (name, rule) in rules.items() if name not in planned_rules]
 
     if unplanned_rules:
-        logger.error("plan does not account for %d rules:" % (len(unplanned_rules)))
+        logger.error('plan does not account for %d rules:' % (len(unplanned_rules)))
         for rule in unplanned_rules:
-            logger.error("  " + rule.name)
+            logger.error('  ' + rule.name)
         return -1
 
     # pairs of strings (needle, replacement)
     match_translations = []
 
     for row in plan:
-        if not row["existing name"]:
+        if not row['existing name']:
             continue
 
-        rule = rules[row["existing name"]]
+        rule = rules[row['existing name']]
 
-        if rule.meta["name"] != row["proposed name"]:
-            logger.info("renaming rule '%s' -> '%s'", rule.meta["name"], row["proposed name"])
+        if rule.meta['name'] != row['proposed name']:
+            logger.info("renaming rule '%s' -> '%s'", rule.meta['name'], row['proposed name'])
 
             # assume the yaml is formatted like `- match: $rule-name`.
             # but since its been linted, this should be ok.
             match_translations.append(
-                ("- match: " + rule.meta["name"],
-                 "- match: " + row["proposed name"]))
+                ('- match: ' + rule.meta['name'],
+                 '- match: ' + row['proposed name']))
 
-            rule.meta["name"] = row["proposed name"]
-            rule.name = row["proposed name"]
+            rule.meta['name'] = row['proposed name']
+            rule.name = row['proposed name']
 
-        if "rule-category" in rule.meta:
-            logger.info("deleting rule category '%s'", rule.meta["rule-category"])
-            del rule.meta["rule-category"]
+        if 'rule-category' in rule.meta:
+            logger.info("deleting rule category '%s'", rule.meta['rule-category'])
+            del rule.meta['rule-category']
 
-        rule.meta["namespace"] = row["proposed namespace"]
+        rule.meta['namespace'] = row['proposed namespace']
 
-        if row["ATT&CK"] != 'n/a' and row["ATT&CK"] != "":
-            tag = row["ATT&CK"]
-            name, _, id = tag.rpartition(" ")
-            tag = "%s [%s]" % (name, id)
-            rule.meta["att&ck"] = [tag]
+        if row['ATT&CK'] != 'n/a' and row['ATT&CK'] != '':
+            tag = row['ATT&CK']
+            name, _, id = tag.rpartition(' ')
+            tag = '%s [%s]' % (name, id)
+            rule.meta['att&ck'] = [tag]
 
-        if row["MBC"] != 'n/a' and row["MBC"] != "":
-            tag = row["MBC"]
-            rule.meta["mbc"] = [tag]
+        if row['MBC'] != 'n/a' and row['MBC'] != '':
+            tag = row['MBC']
+            rule.meta['mbc'] = [tag]
 
     for rule in rules.values():
         filename = rule.name
         filename = filename.lower()
-        filename = filename.replace(" ", "-")
-        filename = filename.replace("(", "")
-        filename = filename.replace(")", "")
-        filename = filename.replace("+", "")
-        filename = filename.replace("/", "")
-        filename = filename + ".yml"
+        filename = filename.replace(' ', '-')
+        filename = filename.replace('(', '')
+        filename = filename.replace(')', '')
+        filename = filename.replace('+', '')
+        filename = filename.replace('/', '')
+        filename = filename + '.yml'
 
         try:
-            if rule.meta.get("nursery"):
-                directory = os.path.join(args.destination, "nursery")
-                # this isn't meant to be written into the rule
-                del rule.meta["nursery"]
-            elif rule.meta.get("lib"):
-                directory = os.path.join(args.destination, "lib")
+            if rule.meta.get('capa/nursery'):
+                directory = os.path.join(args.destination, 'nursery')
+            elif rule.meta.get('lib'):
+                directory = os.path.join(args.destination, 'lib')
             else:
-                directory = os.path.join(args.destination, rule.meta.get("namespace"))
+                directory = os.path.join(args.destination, rule.meta.get('namespace'))
             os.makedirs(directory)
         except OSError:
             pass
         else:
-            logger.info("created namespace: %s", directory)
+            logger.info('created namespace: %s', directory)
 
         path = os.path.join(directory, filename)
-        logger.info("writing rule %s", path)
+        logger.info('writing rule %s', path)
 
-        doc = rule.to_yaml().decode("utf-8")
+        doc = rule.to_yaml().decode('utf-8')
         for (needle, replacement) in match_translations:
             doc = doc.replace(needle, replacement)
 
-        with open(path, "wb") as f:
-            f.write(doc.encode("utf-8"))
+        with open(path, 'wb') as f:
+            f.write(doc.encode('utf-8'))
 
     return 0
 
