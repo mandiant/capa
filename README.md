@@ -348,7 +348,8 @@ Examples:
     number: 0x10
     number: 0x40 = PAGE_EXECUTE_READWRITE
 
-TODO: signed vs unsigned.
+Note that capa treats all numbers as unsigned values. A negative number is not a valid feature value.
+To match a negative number you may specify its two's complement representation. For example, `0xFFFFFFF0` (`-2`) in a 32-bit file.
 
 ### string
 A string referenced by the logic of the program.
@@ -401,6 +402,8 @@ Examples:
 
     offset: 0xC
     offset: 0x14
+
+Note that capa treats all offsets as unsigned values. A negative number is not a valid feature value.
 
 ### mnemonic
 
