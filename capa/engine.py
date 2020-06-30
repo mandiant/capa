@@ -154,10 +154,14 @@ class Range(Statement):
         self.max = max if max is not None else (1 << 64 - 1)
 
     def evaluate(self, ctx):
-        if self.child not in ctx:
+        count = len(ctx.get(self.child, []))
+        if self.min == 0:
+            if count == 0:
+                return Result(True, self, [])
+        elif self.child not in ctx:
+            # self.min > 0 so there needs to be more than zero matches
             return Result(False, self, [])
 
-        count = len(ctx[self.child])
         return Result(self.min <= count <= self.max, self, [], locations=ctx[self.child])
 
     def __str__(self):
