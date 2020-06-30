@@ -20,6 +20,7 @@ import argparse
 import capa.main
 import capa.engine
 import capa.features
+import capa.features.insn
 
 logger = logging.getLogger('capa.lint')
 
@@ -215,6 +216,20 @@ class FeatureStringTooShort(Lint):
         return False
 
 
+class FeatureNegativeNumberOrOffset(Lint):
+    name = 'feature value is negative'
+    recommendation = 'capa treats all numbers as unsigned values; you may specify the number\'s two\'s complement ' \
+                     'representation; will not match on "{:d}"'
+
+    def check_features(self, ctx, features):
+        for feature in features:
+            if isinstance(feature, (capa.features.insn.Number, capa.features.insn.Offset)):
+                if feature.value < 0:
+                    self.recommendation = self.recommendation.format(feature.value)
+                    return True
+        return False
+
+
 def run_lints(lints, ctx, rule):
     for lint in lints:
         if lint.check_rule(ctx, rule):
@@ -264,6 +279,7 @@ def lint_meta(ctx, rule):
 
 FEATURE_LINTS = (
     FeatureStringTooShort(),
+    FeatureNegativeNumberOrOffset(),
 )
 
 

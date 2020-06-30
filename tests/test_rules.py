@@ -250,7 +250,7 @@ def test_number_symbol():
             features:
                 - and:
                     - number: 1
-                    - number: -1
+                    - number: 0xFFFFFFFF
                     - number: 2 = symbol name
                     - number: 3  =  symbol name
                     - number: 4  =  symbol name = another name
@@ -260,7 +260,7 @@ def test_number_symbol():
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
     assert (Number(1) in children) == True
-    assert (Number(-1) in children) == True
+    assert (Number(0xFFFFFFFF) in children) == True
     assert (Number(2, 'symbol name') in children) == True
     assert (Number(3, 'symbol name') in children) == True
     assert (Number(4, 'symbol name = another name') in children) == True
@@ -323,7 +323,6 @@ def test_offset_symbol():
             features:
                 - and:
                     - offset: 1
-                    # what about negative offsets?
                     - offset: 2 = symbol name
                     - offset: 3  =  symbol name
                     - offset: 4  =  symbol name = another name
