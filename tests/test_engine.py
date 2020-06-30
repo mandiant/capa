@@ -226,7 +226,7 @@ def test_match_namespace():
                 rule:
                     meta:
                         name: CreateFile API
-                        namespace: file/create
+                        namespace: file/create/CreateFile
                     features:
                         - api: CreateFile
             ''')),
@@ -260,6 +260,9 @@ def test_match_namespace():
     assert 'CreateFile API' in matches
     assert 'file-create' in matches
     assert 'filesystem-any' in matches
+    assert capa.features.MatchedRule('file') in features
+    assert capa.features.MatchedRule('file/create') in features
+    assert capa.features.MatchedRule('file/create/CreateFile') in features
 
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
                                           {capa.features.insn.API('WriteFile'): {1}},
