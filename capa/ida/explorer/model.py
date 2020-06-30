@@ -1,6 +1,5 @@
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, Qt
 from collections import deque
-import binascii
 
 import idaapi
 import idc
@@ -8,24 +7,24 @@ import idc
 from capa.ida.explorer.item import (
     CapaExplorerDataItem,
     CapaExplorerDefaultItem,
-    CapaExplorerFeatureItem,
     CapaExplorerFunctionItem,
     CapaExplorerRuleItem,
     CapaExplorerStringViewItem,
     CapaExplorerInstructionViewItem,
     CapaExplorerByteViewItem,
-    CapaExplorerBlockItem
+    CapaExplorerBlockItem,
+    CapaExplorerRuleMatchItem,
+    CapaExplorerFeatureItem
 )
 
 import capa.ida.helpers
-
 
 # default highlight color used in IDA window
 DEFAULT_HIGHLIGHT = 0xD096FF
 
 
 class CapaExplorerDataModel(QtCore.QAbstractItemModel):
-    ''' '''
+    """ """
 
     COLUMN_INDEX_RULE_INFORMATION = 0
     COLUMN_INDEX_VIRTUAL_ADDRESS = 1
@@ -34,114 +33,134 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
     COLUMN_COUNT = 3
 
     def __init__(self, parent=None):
-        ''' '''
+        """ """
         super(CapaExplorerDataModel, self).__init__(parent)
-
-        self._root = CapaExplorerDataItem(None, ['Rule Information', 'Address', 'Details'])
+        self.root_node = CapaExplorerDataItem(None, ['Rule Information', 'Address', 'Details'])
 
     def reset(self):
-        ''' '''
+        """ """
         # reset checkboxes and color highlights
         # TODO: make less hacky
-        for idx in range(self._root.childCount()):
-            rindex = self.index(idx, 0, QtCore.QModelIndex())
-            for mindex in self.iterateChildrenIndexFromRootIndex(rindex, ignore_root=False):
-                mindex.internalPointer().setChecked(False)
-                self._util_reset_ida_highlighting(mindex.internalPointer(), False)
-                self.dataChanged.emit(mindex, mindex)
+        for idx in range(self.root_node.childCount()):
+            root_index = self.index(idx, 0, QtCore.QModelIndex())
+            for model_index in self.iterateChildrenIndexFromRootIndex(root_index, ignore_root=False):
+                model_index.internalPointer().setChecked(False)
+                self.util_reset_ida_highlighting(model_index.internalPointer(), False)
+                self.dataChanged.emit(model_index, model_index)
 
     def clear(self):
-        ''' '''
+        """ """
         self.beginResetModel()
-        # TODO: make sure this isn't for memory
-        self._root.removeChildren()
+        self.root_node.removeChildren()
         self.endResetModel()
 
-    def columnCount(self, mindex):
-        ''' get the number of columns for the children of the given parent
+    def columnCount(self, model_index):
+        """ get the number of columns for the children of the given parent
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
 
             @retval column count
-        '''
-        if mindex.isValid():
-            return mindex.internalPointer().columnCount()
+        """
+        if model_index.isValid():
+            return model_index.internalPointer().columnCount()
         else:
-            return self._root.columnCount()
+            return self.root_node.columnCount()
 
-    def data(self, mindex, role):
-        ''' get data stored under the given role for the item referred to by the index
+    def data(self, model_index, role):
+        """ get data stored under the given role for the item referred to by the index
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
             @param role: QtCore.Qt.*
 
             @retval data to be displayed
-        '''
-        if not mindex.isValid():
+        """
+        if not model_index.isValid():
             return None
+
+        item = model_index.internalPointer()
+        column = model_index.column()
 
         if role == QtCore.Qt.DisplayRole:
             # display data in corresponding column
-            return mindex.internalPointer().data(mindex.column())
+            return item.data(column)
 
-        if role == QtCore.Qt.ToolTipRole and \
-            CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION == mindex.column() and \
-                isinstance(mindex.internalPointer(), CapaExplorerRuleItem):
-            # show tooltip containing rule definition
-            return mindex.internalPointer().definition
+        if role == QtCore.Qt.ToolTipRole and isinstance(item, (CapaExplorerRuleItem, CapaExplorerRuleMatchItem)) and \
+                CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION == column:
+            # show tooltip containing rule source
+            return item.source
 
-        if role == QtCore.Qt.CheckStateRole and mindex.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
+        if role == QtCore.Qt.CheckStateRole and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
             # inform view how to display content of checkbox - un/checked
-            return QtCore.Qt.Checked if mindex.internalPointer().isChecked() else QtCore.Qt.Unchecked
+            return QtCore.Qt.Checked if item.isChecked() else QtCore.Qt.Unchecked
 
-        if role == QtCore.Qt.FontRole and mindex.column() in (CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, CapaExplorerDataModel.COLUMN_INDEX_DETAILS):
-            return QtGui.QFont('Courier', weight=QtGui.QFont.Medium)
+        if role == QtCore.Qt.FontRole and column in (CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS,
+                                                     CapaExplorerDataModel.COLUMN_INDEX_DETAILS):
+            # set font for virtual address and details columns
+            font = QtGui.QFont('Courier', weight=QtGui.QFont.Medium)
+            if column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
+                font.setBold(True)
+            return font
 
-        if role == QtCore.Qt.FontRole and mindex.internalPointer() == self._root:
-            return QtCore.QFont(bold=True)
+        if role == QtCore.Qt.FontRole and isinstance(item, (CapaExplorerRuleItem, CapaExplorerRuleMatchItem,
+                                                            CapaExplorerBlockItem, CapaExplorerFunctionItem,
+                                                            CapaExplorerFeatureItem)) and \
+                column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
+            # set bold font for top-level rules
+            font = QtGui.QFont()
+            font.setBold(True)
+            return font
+
+        if role == QtCore.Qt.ForegroundRole and column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
+            # set color for virtual address column
+            return QtGui.QColor(88, 139, 174)
+
+        if role == QtCore.Qt.ForegroundRole and isinstance(item, CapaExplorerFeatureItem) and column == \
+                CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
+            # set color for feature items
+            return QtGui.QColor(79, 121, 66)
 
         return None
 
-    def flags(self, mindex):
-        ''' get item flags for given index
+    def flags(self, model_index):
+        """ get item flags for given index
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
 
             @retval QtCore.Qt.ItemFlags
-        '''
-        if not mindex.isValid():
+        """
+        if not model_index.isValid():
             return QtCore.Qt.NoItemFlags
 
-        return mindex.internalPointer().flags
+        return model_index.internalPointer().flags
 
     def headerData(self, section, orientation, role):
-        ''' get data for the given role and section in the header with the specified orientation
+        """ get data for the given role and section in the header with the specified orientation
 
             @param section: int
             @param orientation: QtCore.Qt.Orientation
             @param role: QtCore.Qt.DisplayRole
 
             @retval header data list()
-        '''
+        """
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return self._root.data(section)
+            return self.root_node.data(section)
 
         return None
 
     def index(self, row, column, parent):
-        ''' get index of the item in the model specified by the given row, column and parent index
+        """ get index of the item in the model specified by the given row, column and parent index
 
             @param row: int
             @param column: int
             @param parent: QModelIndex*
 
             @retval QModelIndex*
-        '''
+        """
         if not self.hasIndex(row, column, parent):
             return QtCore.QModelIndex()
 
         if not parent.isValid():
-            parent_item = self._root
+            parent_item = self.root_node
         else:
             parent_item = parent.internalPointer()
 
@@ -152,64 +171,66 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         else:
             return QtCore.QModelIndex()
 
-    def parent(self, mindex):
-        ''' get parent of the model item with the given index
+    def parent(self, model_index):
+        """ get parent of the model item with the given index
 
             if the item has no parent, an invalid QModelIndex* is returned
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
 
             @retval QModelIndex*
-        '''
-        if not mindex.isValid():
+        """
+        if not model_index.isValid():
             return QtCore.QModelIndex()
 
-        child = mindex.internalPointer()
+        child = model_index.internalPointer()
         parent = child.parent()
 
-        if parent == self._root:
+        if parent == self.root_node:
             return QtCore.QModelIndex()
 
         return self.createIndex(parent.row(), 0, parent)
 
-    def iterateChildrenIndexFromRootIndex(self, mindex, ignore_root=True):
-        ''' depth-first traversal of child nodes
+    def iterateChildrenIndexFromRootIndex(self, model_index, ignore_root=True):
+        """ depth-first traversal of child nodes
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
+            @param ignore_root: if set, do not return root index
 
             @retval yield QModelIndex*
-        '''
+        """
         visited = set()
-        stack = deque((mindex,))
+        stack = deque((model_index,))
 
         while True:
             try:
-                cmindex = stack.pop()
+                child_index = stack.pop()
             except IndexError:
                 break
 
-            if cmindex not in visited:
-                if not ignore_root or cmindex is not mindex:
+            if child_index not in visited:
+                if not ignore_root or child_index is not model_index:
                     # ignore root
-                    yield cmindex
+                    yield child_index
 
-                visited.add(cmindex)
+                visited.add(child_index)
 
-                for idx in range(self.rowCount(cmindex)):
-                    stack.append(cmindex.child(idx, 0))
+                for idx in range(self.rowCount(child_index)):
+                    stack.append(child_index.child(idx, 0))
 
-    def _util_reset_ida_highlighting(self, item, checked):
-        ''' '''
-        if not isinstance(item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem, CapaExplorerByteViewItem)):
+    def util_reset_ida_highlighting(self, item, checked):
+        """ """
+        if not isinstance(item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem,
+                                 CapaExplorerByteViewItem)):
             # ignore other item types
             return
 
-        curr_highlight = idc.get_color(item.ea, idc.CIC_ITEM)
+        curr_highlight = idc.get_color(item.location, idc.CIC_ITEM)
 
         if checked:
             # item checked - record current highlight and set to new
             item.ida_highlight = curr_highlight
-            idc.set_color(item.ea, idc.CIC_ITEM, DEFAULT_HIGHLIGHT)
+            idc.set_color(item.location, idc.CIC_ITEM, DEFAULT_HIGHLIGHT)
         else:
             # item unchecked - reset highlight
             if curr_highlight != DEFAULT_HIGHLIGHT:
@@ -217,36 +238,37 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 item.ida_highlight = curr_highlight
             else:
                 # reset highlight to previous
-                idc.set_color(item.ea, idc.CIC_ITEM, item.ida_highlight)
+                idc.set_color(item.location, idc.CIC_ITEM, item.ida_highlight)
 
-    def setData(self, mindex, value, role):
-        ''' set the role data for the item at index to value
+    def setData(self, model_index, value, role):
+        """ set the role data for the item at index to value
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
             @param value: QVariant*
             @param role: QtCore.Qt.EditRole
 
             @retval True/False
-        '''
-        if not mindex.isValid():
+        """
+        if not model_index.isValid():
             return False
 
-        if role == QtCore.Qt.CheckStateRole and mindex.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
+        if role == QtCore.Qt.CheckStateRole and model_index.column() ==\
+                CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
             # user un/checked box - un/check parent and children
-            for cindex in self.iterateChildrenIndexFromRootIndex(mindex, ignore_root=False):
-                cindex.internalPointer().setChecked(value)
-                self._util_reset_ida_highlighting(cindex.internalPointer(), value)
-                self.dataChanged.emit(cindex, cindex)
+            for child_index in self.iterateChildrenIndexFromRootIndex(model_index, ignore_root=False):
+                child_index.internalPointer().setChecked(value)
+                self.util_reset_ida_highlighting(child_index.internalPointer(), value)
+                self.dataChanged.emit(child_index, child_index)
             return True
 
         if role == QtCore.Qt.EditRole and value and \
-                mindex.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION and \
-                isinstance(mindex.internalPointer(), CapaExplorerFunctionItem):
+                model_index.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION and \
+                isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
             # user renamed function - update IDA database and data model
-            old_name = mindex.internalPointer().info
+            old_name = model_index.internalPointer().info
             new_name = str(value)
 
-            if idaapi.set_name(mindex.internalPointer().ea, new_name):
+            if idaapi.set_name(model_index.internalPointer().location, new_name):
                 # success update IDA database - update data model
                 self.update_function_name(old_name, new_name)
                 return True
@@ -254,167 +276,299 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # no handle
         return False
 
-    def rowCount(self, mindex):
-        ''' get the number of rows under the given parent
+    def rowCount(self, model_index):
+        """ get the number of rows under the given parent
 
             when the parent is valid it means that is returning the number of
             children of parent
 
-            @param mindex: QModelIndex*
+            @param model_index: QModelIndex*
 
             @retval row count
-        '''
-        if mindex.column() > 0:
+        """
+        if model_index.column() > 0:
             return 0
 
-        if not mindex.isValid():
-            item = self._root
+        if not model_index.isValid():
+            item = self.root_node
         else:
-            item = mindex.internalPointer()
+            item = model_index.internalPointer()
 
         return item.childCount()
 
-    def render_capa_results(self, rule_set, results):
-        ''' populate data model with capa results
-
-            @param rule_set: TODO
-            @param results: TODO
-        '''
-        # prepare data model for changes
-        self.beginResetModel()
-
-        for (rule, ress) in results.items():
-            if rule_set.rules[rule].meta.get('lib', False):
-                # skip library rules
+    def capa_capability_rules(self, doc):
+        """ enumerate the rules in (namespace, name) order that are 'capability'
+        rules (not lib/subscope/disposition/etc) """
+        for (_, _, rule) in sorted(
+                map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
+            if rule['meta'].get('lib'):
                 continue
+            if rule['meta'].get('capa/subscope'):
+                continue
+            if rule['meta'].get('maec/analysis-conclusion'):
+                continue
+            if rule['meta'].get('maec/analysis-conclusion-ov'):
+                continue
+            if rule['meta'].get('maec/malware-category'):
+                continue
+            if rule['meta'].get('maec/malware-category-ov'):
+                continue
+            yield rule
 
-            # top level item is rule
-            parent = CapaExplorerRuleItem(self._root, rule, len(ress), rule_set.rules[rule].definition)
+    def render_capa_doc_statement_node(self, parent, statement, doc):
+        """ render capa statement read from doc
 
-            for (ea, res) in sorted(ress, key=lambda p: p[0]):
-                if rule_set.rules[rule].scope == capa.rules.FILE_SCOPE:
-                    # file scope - parent is rule
-                    parent2 = parent
-                elif rule_set.rules[rule].scope == capa.rules.FUNCTION_SCOPE:
-                    parent2 = CapaExplorerFunctionItem(parent, idaapi.get_name(ea), ea)
-                elif rule_set.rules[rule].scope == capa.rules.BASIC_BLOCK_SCOPE:
-                    parent2 = CapaExplorerBlockItem(parent, ea)
-                else:
-                    # TODO: better way to notify a missed scope?
-                    parent2 = CapaExplorerDefaultItem(parent, '', ea)
+            @param parent: parent to which new child is assigned
+            @param statement: statement read from doc
+            @param doc: capa result doc
 
-                self._render_result(rule_set, res, parent2)
+            "statement": {
+                "type": "or"
+            },
+        """
+        if statement['type'] in ('and', 'or', 'optional'):
+            return CapaExplorerDefaultItem(parent, statement['type'])
+        elif statement['type'] == 'not':
+            # TODO: do we display 'not'
+            pass
+        elif statement['type'] == 'some':
+            return CapaExplorerDefaultItem(parent, statement['count'] + ' or more')
+        elif statement['type'] == 'range':
+            # `range` is a weird node, its almost a hybrid of statement + feature.
+            # it is a specific feature repeated multiple times.
+            # there's no additional logic in the feature part, just the existence of a feature.
+            # so, we have to inline some of the feature rendering here.
+            display = 'count(%s): ' % self.capa_doc_feature_to_display(statement['child'])
 
-        # reset data model after making changes
-        self.endResetModel()
+            if statement['max'] == statement['min']:
+                display += '%d' % (statement['min'])
+            elif statement['min'] == 0:
+                display += '%d or fewer' % (statement['max'])
+            elif statement['max'] == (1 << 64 - 1):
+                display += '%d or more' % (statement['min'])
+            else:
+                display += 'between %d and %d' % (statement['min'], statement['max'])
 
-    def _render_result(self, rule_set, result, parent):
-        ''' '''
-        if not result.success:
-            # TODO: display failed branches??
+            return CapaExplorerFeatureItem(parent, display=display)
+        elif statement['type'] == 'subscope':
+            return CapaExplorerDefaultItem(parent, statement['subscope'])
+        elif statement['type'] == 'regex':
+            # regex is a `Statement` not a `Feature`
+            # this is because it doesn't get extracted, but applies to all strings in scope.
+            # so we have to handle it here
+            return CapaExplorerFeatureItem(parent, 'regex(%s)' % statement['pattern'], details=statement['match'])
+        else:
+            raise RuntimeError('unexpected match statement type: ' + str(statement))
+
+    def render_capa_doc_match(self, parent, match, doc):
+        """ render capa match read from doc
+
+            @param parent: parent node to which new child is assigned
+            @param match: match read from doc
+            @param doc: capa result doc
+
+            "matches": {
+                "0": {
+                    "children": [],
+                    "locations": [
+                        4317184
+                    ],
+                    "node": {
+                        "feature": {
+                            "section": ".rsrc",
+                            "type": "section"
+                        },
+                        "type": "feature"
+                    },
+                    "success": true
+                }
+            },
+        """
+        if not match['success']:
+            # TODO: display failed branches at some point? Help with debugging rules?
             return
 
-        if isinstance(result.statement, capa.engine.Some):
-            if result.statement.count == 0:
-                if sum(map(lambda c: c.success, result.children)) > 0:
-                    parent2 = CapaExplorerDefaultItem(parent, 'optional')
-                else:
-                    parent2 = parent
-            else:
-                parent2 = CapaExplorerDefaultItem(parent, '%d or more' % result.statement.count)
-        elif not isinstance(result.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
-            # when rending a structural node (and/or/not) then we only care about the node name.
-            if not list(filter(lambda c: bool(c), result.children)):
-                # ignore structural expressions that do not have any successful children (e.g. not)
-                return
-            parent2 = CapaExplorerDefaultItem(parent, result.statement.name.lower())
+        # optional statement with no successful children is empty
+        if (match['node'].get('statement', {}).get('type') == 'optional'
+                and not any(map(lambda m: m['success'], match['children']))):
+            return
+
+        if match['node']['type'] == 'statement':
+            parent2 = self.render_capa_doc_statement_node(parent, match['node']['statement'], doc)
+        elif match['node']['type'] == 'feature':
+            parent2 = self.render_capa_doc_feature_node(parent, match['node']['feature'], match['locations'], doc)
         else:
-            # but when rendering a Feature, want to see any arguments to it
-            if len(result.locations) == 1:
-                # ea = result.locations.pop()
-                ea = next(iter(result.locations))
-                parent2 = self._render_feature(rule_set, parent, result.statement, ea, str(result.statement))
-            else:
-                parent2 = CapaExplorerDefaultItem(parent, str(result.statement))
+            raise RuntimeError('unexpected node type: ' + str(match['node']['type']))
 
-                for ea in sorted(result.locations):
-                    self._render_feature(rule_set, parent2, result.statement, ea)
+        for child in match['children']:
+            self.render_capa_doc_match(parent2, child, doc)
 
-        for child in result.children:
-            self._render_result(rule_set, child, parent2)
+    def render_capa_doc(self, doc):
+        """ render capa features specified in doc
 
-    def _render_feature(self, rule_set, parent, feature, ea, name='-'):
-        ''' render a given feature
+            @param doc: capa result doc
+        """
+        self.beginResetModel()
 
-            @param rule_set: TODO
-            @param parent: TODO
-            @param result: TODO
-            @param ea: virtual address
-            @param name: TODO
+        for rule in self.capa_capability_rules(doc):
+            parent = CapaExplorerRuleItem(self.root_node, rule['meta']['name'], len(rule['matches']), rule['source'])
+
+            for (location, match) in doc[rule['meta']['name']]['matches'].items():
+                if rule['meta']['scope'] == capa.rules.FILE_SCOPE:
+                    parent2 = parent
+                elif rule['meta']['scope'] == capa.rules.FUNCTION_SCOPE:
+                    parent2 = CapaExplorerFunctionItem(parent, location)
+                elif rule['meta']['scope'] == capa.rules.BASIC_BLOCK_SCOPE:
+                    parent2 = CapaExplorerBlockItem(parent, location)
+                else:
+                    raise RuntimeError('unexpected rule scope: ' + str(rule['meta']['scope']))
+
+                self.render_capa_doc_match(parent2, match, doc)
+
+        self.endResetModel()
+
+    def capa_doc_feature_to_display(self, feature):
+        """ convert capa doc feature type string to display string for ui
+
+            @param feature: capa feature read from doc
+
+            "feature": {
+                "number": 2147483903,
+                "type": "number"
+            },
+        """
+        mapping = {
+            'string': 'string(%s)',
+            'bytes': 'bytes(%s)',
+            'api': 'api(%s)',
+            'mnemonic': 'mnemonic(%s)',
+            'export': 'export(%s)',
+            'import': 'import(%s)',
+            'section': 'section(%s)',
+            'number': 'number(0x%X)',
+            'offset': 'offset(0x%X)',
+            'characteristic': 'characteristic(%s)',
+            'match': 'rule match(%s)'
+        }
+
         '''
+            "feature": {
+                "characteristic": [
+                    "loop",
+                    true
+                ],
+                "type": "characteristic"
+            },
+        '''
+        if feature['type'] == 'characteristic':
+            return mapping['characteristic'] % feature['characteristic'][0]
+
+        # convert bytes feature from "410ab4" to "41 0A B4"
+        if feature['type'] == 'bytes':
+            return mapping['bytes'] % ' '.join(feature['bytes'][i:i + 2] for i in
+                                               range(0, len(feature['bytes']), 2)).upper()
+
+        try:
+            fmt = mapping[feature['type']]
+        except KeyError:
+            raise RuntimeError('unexpected doc type: ' + str(feature['type']))
+
+        return fmt % feature[feature['type']]
+
+    def render_capa_doc_feature_node(self, parent, feature, locations, doc):
+        """ """
+        display = self.capa_doc_feature_to_display(feature)
+
+        if len(locations) == 1:
+            parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display)
+        else:
+            # feature has multiple children, nest  under one parent feature node
+            parent2 = CapaExplorerFeatureItem(parent, display=display)
+
+            for location in sorted(locations):
+                self.render_capa_doc_feature(parent2, feature, location, doc)
+
+        return parent2
+
+    def render_capa_doc_feature(self, parent, feature, location, doc, display='-'):
+        """ render capa feature read from doc
+
+            @param parent: parent node to which new child is assigned
+            @param feature: feature read from doc
+            @param doc: capa feature doc
+
+            "node": {
+                "feature": {
+                    "number": 255,
+                    "type": "number"
+                },
+                "type": "feature"
+            },
+
+            @param location: address of feature
+            @param display: text to display in plugin ui
+        """
         instruction_view = (
-            capa.features.Bytes,
-            capa.features.String,
-            capa.features.insn.API,
-            capa.features.insn.Mnemonic,
-            capa.features.insn.Number,
-            capa.features.insn.Offset
+            'bytes',
+            'api',
+            'mnemonic',
+            'number',
+            'offset'
         )
-
         byte_view = (
-            capa.features.file.Section,
+            'section',
         )
-
         string_view = (
-            capa.engine.Regex,
+            'string',
+        )
+        default_feature_view = (
+            'import',
+            'export'
         )
 
-        if isinstance(feature, instruction_view):
-            return CapaExplorerInstructionViewItem(parent, name, ea)
+        # special handling for characteristic pending type
+        if feature['type'] == 'characteristic':
+            if feature['characteristic'][0] in ('embedded pe',):
+                return CapaExplorerByteViewItem(parent, display, location)
 
-        if isinstance(feature, byte_view):
-            return CapaExplorerByteViewItem(parent, name, ea)
+            if feature['characteristic'][0] in ('loop', 'recursive call', 'tight loop', 'switch'):
+                return CapaExplorerFeatureItem(parent, display=display)
 
-        if isinstance(feature, string_view):
-            # TODO: move string collection to item constructor
-            if isinstance(feature, capa.engine.Regex):
-                # rstrip "matched="<string>")" because data already displayed in interface
-                name = name.split(',')[0] + ')'
-                return CapaExplorerStringViewItem(parent, name, ea, feature.match)
+            # default to instruction view
+            return CapaExplorerInstructionViewItem(parent, display, location)
 
-        if isinstance(feature, capa.features.Characteristic):
-            # special rendering for characteristics
-            if feature.name in ('loop', 'recursive call', 'tight loop', 'switch'):
-                return CapaExplorerDefaultItem(parent, name)
-            if feature.name in ('embedded pe',):
-                return CapaExplorerByteViewItem(parent, name, ea)
-            return CapaExplorerInstructionViewItem(parent, name, ea)
+        if feature['type'] == 'match':
+            return CapaExplorerRuleMatchItem(parent, display, source=doc.get(feature['match'], {}).get('source', ''))
 
-        if isinstance(feature, capa.features.MatchedRule):
-            # render feature as a rule item
-            return CapaExplorerRuleItem(parent, name, 0, rule_set.rules[feature.rule_name].definition)
+        if feature['type'] in instruction_view:
+            return CapaExplorerInstructionViewItem(parent, display, location)
 
-        if isinstance(feature, capa.engine.Range):
-            # render feature based upon type child
-            return self._render_feature(rule_set, parent, feature.child, ea, name)
+        if feature['type'] in byte_view:
+            return CapaExplorerByteViewItem(parent, display, location)
 
-        # no handle, default to name and virtual address display
-        return CapaExplorerDefaultItem(parent, name, ea)
+        if feature['type'] in string_view:
+            return CapaExplorerStringViewItem(parent, display, location)
+
+        if feature['type'] in default_feature_view:
+            return CapaExplorerFeatureItem(parent, display=display)
+
+        raise RuntimeError('unexpected feature type: ' + str(feature['type']))
 
     def update_function_name(self, old_name, new_name):
-        ''' update all instances of function name
+        """ update all instances of function name
 
             @param old_name: previous function name
             @param new_name: new function name
-        '''
-        rmindex = self.index(0, 0, QtCore.QModelIndex())
+        """
+        root_index = self.index(0, 0, QtCore.QModelIndex())
 
         # convert name to view format for matching
-        # TODO: handle this better
-        old_name = CapaExplorerFunctionItem.view_fmt % old_name
+        old_name = CapaExplorerFunctionItem.fmt % old_name
 
-        for mindex in self.match(rmindex, QtCore.Qt.DisplayRole, old_name, hits=-1, flags=QtCore.Qt.MatchRecursive):
-            if not isinstance(mindex.internalPointer(), CapaExplorerFunctionItem):
+        for model_index in self.match(root_index, QtCore.Qt.DisplayRole, old_name, hits=-1,
+                                      flags=QtCore.Qt.MatchRecursive):
+            if not isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
                 continue
-            mindex.internalPointer().info = new_name
-            self.dataChanged.emit(mindex, mindex)
+
+            model_index.internalPointer().info = new_name
+            self.dataChanged.emit(model_index, model_index)
