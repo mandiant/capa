@@ -19,7 +19,7 @@ def bytes_to_str(b):
 class Feature(object):
     def __init__(self, args, description=None):
         super(Feature, self).__init__()
-        self.name = self.__class__.__name__
+        self.name = self.__class__.__name__.lower()
         self.args = args
         self.description = description
 
@@ -29,17 +29,16 @@ class Feature(object):
     def __eq__(self, other):
         return self.name == other.name and self.args == other.args
 
-    def _str_name(self):
-        return self.name.lower()
-
-    def _str_value(self):
+    # Used to overwrite the rendering of the feature args in `__str__` and the
+    # json output
+    def get_args_str(self):
         return ','.join(self.args)
 
     def __str__(self):
         if self.description:
-            return '%s(%s = %s)' % (self._str_name(), self._str_value(), self.description)
+            return '%s(%s = %s)' % (self.name, self.get_args_str(), self.description)
         else:
-            return '%s(%s)' % (self._str_name(), self._str_value())
+            return '%s(%s)' % (self.name, self.get_args_str())
 
     def __repr__(self):
         return str(self)
@@ -62,21 +61,19 @@ class Feature(object):
 class MatchedRule(Feature):
     def __init__(self, rule_name, description=None):
         super(MatchedRule, self).__init__([rule_name], description)
+        self.name = 'match'
         self.rule_name = rule_name
-
-    def _str_name(self):
-        return 'match'
 
 
 class Characteristic(Feature):
-    def __init__(self, name, value=None, description=None):
+    def __init__(self, attribute, value=None, description=None):
         '''
         when `value` is not provided, this serves as descriptor for a class of characteristics.
         this is only used internally, such as in `rules.py` when checking if a statement is
           supported by a given scope.
         '''
-        super(Characteristic, self).__init__([name, value], description)
-        self.name = name
+        super(Characteristic, self).__init__([attribute, value], description)
+        self.attribute = attribute
         self.value = value
 
     def evaluate(self, ctx):
@@ -84,11 +81,11 @@ class Characteristic(Feature):
             raise ValueError('cannot evaluate characteristc %s with empty value' % (str(self)))
         return super(Characteristic, self).evaluate(ctx)
 
-    def _str_value(self):
+    def get_args_str(self):
         if self.value is None:
-            return self.name
+            return self.attribute
         else:
-            return '%s(%s)' % (self.name, self.value)
+            return '%s(%s)' % (self.attribute, self.value)
 
 
 class String(Feature):
@@ -112,8 +109,8 @@ class Bytes(Feature):
 
         return capa.engine.Result(False, self, [])
 
-    def _str_value(self):
-        return '0x%s' % bytes_to_str(self.value).upper()
+    def get_args_str(self):
+        return bytes_to_str(self.value).upper()
 
     def freeze_serialize(self):
         return (self.__class__.__name__,

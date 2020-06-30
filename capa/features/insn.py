@@ -16,8 +16,8 @@ class Number(Feature):
         super(Number, self).__init__([value], description)
         self.value = value
 
-    def _str_value(self):
-        return '0x%x' % self.value
+    def get_args_str(self):
+        return '0x%X' % self.value
 
 
 class Offset(Feature):
@@ -25,8 +25,8 @@ class Offset(Feature):
         super(Offset, self).__init__([value])
         self.value = value
 
-    def _str_value(self):
-        return '0x%x' % self.value
+    def get_args_str(self):
+        return '0x%X' % self.value
 
 
 class Mnemonic(Feature):

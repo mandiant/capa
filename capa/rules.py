@@ -138,7 +138,7 @@ class InvalidRuleSet(ValueError):
 
 def ensure_feature_valid_for_scope(scope, feature):
     if isinstance(feature, capa.features.Characteristic):
-        if capa.features.Characteristic(feature.name) not in SUPPORTED_FEATURES[scope]:
+        if capa.features.Characteristic(feature.attribute) not in SUPPORTED_FEATURES[scope]:
             raise InvalidRule('feature %s not support for scope %s' % (feature, scope))
     elif not isinstance(feature, tuple(filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope]))):
         raise InvalidRule('feature %s not support for scope %s' % (feature, scope))
@@ -226,7 +226,7 @@ def parse_description(s, value_type, description=None):
     '''
     if value_type != 'string' and isinstance(s, str) and ' = ' in s:
         if description:
-            raise InvalidRule('unexpected value: "%s", only one description allowed (inline description with `=`)' % s)
+            raise InvalidRule('unexpected value: "%s", only one description allowed (inline description with ` = `)' % s)
         value, description = s.split(' = ', 1)
         if description == '':
             raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
@@ -244,7 +244,7 @@ def parse_description(s, value_type, description=None):
             if len(value) > MAX_BYTES_FEATURE_SIZE:
                 raise InvalidRule('unexpected bytes value: byte sequences must be no larger than %s bytes' %
                                   MAX_BYTES_FEATURE_SIZE)
-        elif value_type in ['number', 'offset']:
+        elif value_type in {'number', 'offset'}:
             try:
                 value = parse_int(value)
             except ValueError:
@@ -370,8 +370,8 @@ def build_statements(d, scope):
             raise InvalidRule('invalid regular expression: %s it should use Python syntax, try it at https://pythex.org' % d[key])
     else:
         Feature = parse_feature(key)
-        value, symbol = parse_description(d[key], key, d.get('description'))
-        feature = Feature(value, symbol)
+        value, description = parse_description(d[key], key, d.get('description'))
+        feature = Feature(value, description)
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 

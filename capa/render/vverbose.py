@@ -48,7 +48,7 @@ def render_statement(ostream, match, statement, indent=0):
         elif child['type'] == 'bytes':
             feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex_string(child[child['type']])))
         elif child['type'] == 'characteristic':
-            feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic'][0]))
+            feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic']))
         else:
             raise RuntimeError('unexpected feature type: ' + str(child))
 
@@ -94,13 +94,16 @@ def render_feature(ostream, match, feature, indent=0):
         # it should always be an even number of characters (its hex).
         ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
     elif feature['type'] == 'characteristic':
-        ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'][0])))
+        ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'])))
     # note that regex is found in `render_statement`
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
-    render_locations(ostream, match)
+    if 'description' in feature:
+        ostream.write(' = ')
+        ostream.write(feature['description'])
 
+    render_locations(ostream, match)
     ostream.write('\n')
 
 
