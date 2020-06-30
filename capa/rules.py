@@ -599,10 +599,11 @@ class Rule(object):
         # save off the existing hidden meta values,
         # emit the document,
         # and re-add the hidden meta.
-        hidden_meta = {
-            key: meta.get(key)
-            for key in HIDDEN_META_KEYS
-        }
+        hidden_meta = {}
+        for key in HIDDEN_META_KEYS:
+            value = meta.get(key)
+            if value:
+                hidden_meta[key] = value
 
         for key in hidden_meta.keys():
             del meta[key]
