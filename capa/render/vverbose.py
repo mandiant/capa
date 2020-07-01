@@ -22,10 +22,12 @@ def render_statement(ostream, statement, indent=0):
         # so, we have to inline some of the feature rendering here.
 
         child = statement['child']
-        if child['type'] in ('string', 'bytes', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
             feature = '%s(%s)' % (child['type'], rutils.bold2(child[child['type']]))
         elif child['type'] in ('number', 'offset'):
             feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex(child[child['type']])))
+        elif child['type'] == 'bytes':
+            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex_string(child[child['type']])))
         elif child['type'] == 'characteristic':
             feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic'][0]))
         else:
@@ -68,10 +70,7 @@ def render_feature(ostream, match, feature, indent=0):
         ostream.write('bytes: ')
         # bytes is the uppercase, hex-encoded string.
         # it should always be an even number of characters (its hex).
-        bytes = feature['bytes']
-        for i in range(len(bytes) // 2):
-            ostream.write(rutils.bold2(bytes[i:i + 2]))
-            ostream.write(' ')
+        ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
     elif feature['type'] == 'characteristic':
         ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'][0])))
     # note that regex is found in `render_statement`
