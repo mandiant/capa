@@ -206,7 +206,7 @@ class CapaExplorerDefaultItem(CapaExplorerDataItem):
 class CapaExplorerFeatureItem(CapaExplorerDataItem):
     """ store data relevant to capa feature result """
 
-    def __init__(self, parent, display='', location='', details=''):
+    def __init__(self, parent, display, location='', details=''):
         location = location_to_hex(location) if location else ''
         super(CapaExplorerFeatureItem, self).__init__(parent, [display, location, details])
 
@@ -216,8 +216,7 @@ class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
     def __init__(self, parent, display, location):
         """ """
         details = capa.ida.helpers.get_disasm_line(location)
-        super(CapaExplorerInstructionViewItem, self).__init__(parent, display=display,
-                                                              location=location, details=details)
+        super(CapaExplorerInstructionViewItem, self).__init__(parent, display, location=location, details=details)
         self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
 
 
@@ -236,7 +235,7 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
         else:
             details = ''
 
-        super(CapaExplorerByteViewItem, self).__init__(parent, display=display, location=location, details=details)
+        super(CapaExplorerByteViewItem, self).__init__(parent, display, location=location, details=details)
         self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
 
 
@@ -244,5 +243,5 @@ class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
 
     def __init__(self, parent, display, location):
         """ """
-        super(CapaExplorerStringViewItem, self).__init__(parent, display=display, location=location)
+        super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location)
         self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)

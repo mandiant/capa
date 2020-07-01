@@ -334,7 +334,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             return CapaExplorerFeatureItem(parent, display=display)
         elif statement['type'] == 'subscope':
-            return CapaExplorerDefaultItem(parent, statement['subscope'])
+            return CapaExplorerFeatureItem(parent, 'subscope(%s)' % statement['subscope'])
         elif statement['type'] == 'regex':
             # regex is a `Statement` not a `Feature`
             # this is because it doesn't get extracted, but applies to all strings in scope.
@@ -466,7 +466,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display)
         else:
             # feature has multiple children, nest  under one parent feature node
-            parent2 = CapaExplorerFeatureItem(parent, display=display)
+            parent2 = CapaExplorerFeatureItem(parent, display)
 
             for location in sorted(locations):
                 self.render_capa_doc_feature(parent2, feature, location, doc)
