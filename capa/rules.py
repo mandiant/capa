@@ -301,45 +301,37 @@ def build_statements(d, scope):
 
         term = key[len('count('):-len(')')]
 
-        if term.startswith('characteristic('):
-            # characteristic features are specified a bit specially:
-            # they simply indicate the presence of something unusual/interesting,
-            # and we embed the name in the feature name, like `characteristic(nzxor)`.
-            Feature = parse_feature(term)
-            feature = Feature()
-            ensure_feature_valid_for_scope(scope, feature)
-        else:
-            # however, for remaining counted features, like `count(mnemonic(mov))`,
-            # we have to jump through hoops.
-            #
-            # when looking for the existance of such a feature, our rule might look like:
-            #     - mnemonic: mov
-            #
-            # but here we deal with the form: `mnemonic(mov)`.
-            term, _, arg = term.partition('(')
-            Feature = parse_feature(term)
+        # or counted features, like `count(mnemonic(mov))`,
+        # we have to jump through hoops.
+        #
+        # when looking for the existence of such a feature, our rule might look like:
+        #     - mnemonic: mov
+        #
+        # but here we deal with the form: `mnemonic(mov)`.
+        term, _, arg = term.partition('(')
+        Feature = parse_feature(term)
 
-            if arg:
-                arg = arg[:-len(')')]
-                # can't rely on yaml parsing ints embedded within strings
-                # like:
-                #
-                #     count(offset(0xC))
-                #     count(number(0x11223344))
-                #     count(number(0x100 = symbol name))
-                if term in ('number', 'offset', 'bytes'):
-                    value, symbol = parse_symbol(arg, term)
-                    feature = Feature(value, symbol)
-                else:
-                    # arg is string, like:
-                    #
-                    #     count(mnemonic(mov))
-                    #     count(string(error))
-                    # TODO: what about embedded newlines?
-                    feature = Feature(arg)
+        if arg:
+            arg = arg[:-len(')')]
+            # can't rely on yaml parsing ints embedded within strings
+            # like:
+            #
+            #     count(offset(0xC))
+            #     count(number(0x11223344))
+            #     count(number(0x100 = symbol name))
+            if term in ('number', 'offset', 'bytes'):
+                value, symbol = parse_symbol(arg, term)
+                feature = Feature(value, symbol)
             else:
-                feature = Feature()
-            ensure_feature_valid_for_scope(scope, feature)
+                # arg is string, like:
+                #
+                #     count(mnemonic(mov))
+                #     count(string(error))
+                # TODO: what about embedded newlines?
+                feature = Feature(arg)
+        else:
+            feature = Feature()
+        ensure_feature_valid_for_scope(scope, feature)
 
         count = d[key]
         if isinstance(count, int):

@@ -3,6 +3,7 @@ import textwrap
 import pytest
 
 import capa.rules
+from capa.features import Characteristic
 from capa.features.insn import Number, Offset
 
 
@@ -84,6 +85,20 @@ def test_rule_yaml_count():
     assert r.evaluate({Number(100): {}}) == False
     assert r.evaluate({Number(100): {1}}) == True
     assert r.evaluate({Number(100): {1, 2}}) == False
+
+
+def test_rule_yaml_count_characteristic():
+    rule = textwrap.dedent('''
+        rule:
+            meta:
+                name: test rule
+            features:
+                - count(characteristic(nzxor)): 1
+    ''')
+    r = capa.rules.Rule.from_yaml(rule)
+    assert r.evaluate({Characteristic('nzxor'): {}}) == False
+    assert r.evaluate({Characteristic('nzxor'): {1}}) == True
+    assert r.evaluate({Characteristic('nzxor'): {1, 2}}) == False
 
 
 def test_rule_yaml_count_range():
