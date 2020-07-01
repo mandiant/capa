@@ -205,9 +205,8 @@ def parse_feature(key):
         return capa.features.insn.Mnemonic
     elif key == 'basic blocks':
         return capa.features.basicblock.BasicBlock
-    elif key.startswith('characteristic(') and key.endswith(')'):
-        characteristic = key[len('characteristic('):-len(')')]
-        return lambda v: capa.features.Characteristic(characteristic, v)
+    elif key == 'characteristic':
+        return capa.features.Characteristic
     elif key == 'export':
         return capa.features.file.Export
     elif key == 'import':
@@ -306,11 +305,8 @@ def build_statements(d, scope):
             # characteristic features are specified a bit specially:
             # they simply indicate the presence of something unusual/interesting,
             # and we embed the name in the feature name, like `characteristic(nzxor)`.
-            #
-            # when we're dealing with counts, like `count(characteristic(nzxor))`,
-            # we can simply extract the feature and assume we're looking for `True` values.
             Feature = parse_feature(term)
-            feature = Feature(True)
+            feature = Feature()
             ensure_feature_valid_for_scope(scope, feature)
         else:
             # however, for remaining counted features, like `count(mnemonic(mov))`,

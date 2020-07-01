@@ -59,26 +59,28 @@ class MatchedRule(Feature):
 
 
 class Characteristic(Feature):
-    def __init__(self, name, value=None):
-        '''
-        when `value` is not provided, this serves as descriptor for a class of characteristics.
-        this is only used internally, such as in `rules.py` when checking if a statement is
-          supported by a given scope.
-        '''
-        super(Characteristic, self).__init__([name, value])
+    def __init__(self, name):
+        super(Characteristic, self).__init__([name])
         self.name = name
-        self.value = value
 
     def evaluate(self, ctx):
-        if self.value is None:
-            raise ValueError('cannot evaluate characteristc %s with empty value' % (str(self)))
         return super(Characteristic, self).evaluate(ctx)
 
     def __str__(self):
-        if self.value is None:
-            return 'characteristic(%s)' % (self.name)
-        else:
-            return 'characteristic(%s(%s))' % (self.name, self.value)
+        return 'characteristic(%s)' % (self.name)
+
+    def freeze_serialize(self):
+        # in an older version of capa, characteristics could theoretically match non-existence (value=False).
+        # but we found this was never used (and better expressed with `not: characteristic: ...`).
+        # this was represented using an additional parameter, called `value`, for Characteristic.
+        # its been removed, but we keep it around in the freeze format to maintain backwards compatibility.
+        # this value is ignored, however.
+        return (self.__class__.__name__, [self.name, True])
+
+    @classmethod
+    def freeze_deserialize(cls, args):
+        # see above. we ignore the second element in the 2-tuple here.
+        return cls(args[0])
 
 
 class String(Feature):

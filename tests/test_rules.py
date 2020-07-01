@@ -118,7 +118,7 @@ def test_invalid_rule_feature():
                     name: test rule
                     scope: file
                 features:
-                    - characteristic(nzxor): true
+                    - characteristic: nzxor
         '''))
 
     with pytest.raises(capa.rules.InvalidRule):
@@ -128,7 +128,7 @@ def test_invalid_rule_feature():
                     name: test rule
                     scope: function
                 features:
-                    - characteristic(embedded pe): true
+                    - characteristic: embedded pe
         '''))
 
     with pytest.raises(capa.rules.InvalidRule):
@@ -138,7 +138,7 @@ def test_invalid_rule_feature():
                     name: test rule
                     scope: basic block
                 features:
-                    - characteristic(embedded pe): true
+                    - characteristic: embedded pe
         '''))
 
 
@@ -173,11 +173,11 @@ def test_subscope_rules():
                     scope: file
                 features:
                     - and:
-                        - characteristic(embedded pe): true
+                        - characteristic: embedded pe
                         - function:
                             - and:
-                                - characteristic(nzxor): true
-                                - characteristic(switch): true
+                                - characteristic: nzxor
+                                - characteristic: switch
         '''))
     ])
     # the file rule scope will have one rules:
@@ -229,7 +229,7 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                     features:
-                        - characteristic(number(1)): True
+                        - characteristic: number(1)
             '''))
 
     with pytest.raises(capa.rules.InvalidRule):
@@ -238,7 +238,7 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                     features:
-                        - characteristic(count(number(100))): True
+                        - characteristic: count(number(100))
             '''))
 
 

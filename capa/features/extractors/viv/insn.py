@@ -286,7 +286,7 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     if is_security_cookie(f, bb, insn):
         return
 
-    yield Characteristic('nzxor', True), insn.va
+    yield Characteristic('nzxor'), insn.va
 
 
 def extract_insn_mnemonic_features(f, bb, insn):
@@ -314,12 +314,12 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
             #     fs: push dword [eax + 0x30]  ; i386RegMemOper, with eax = 0
             if (isinstance(oper, envi.archs.i386.disasm.i386RegMemOper) and oper.disp == 0x30) or \
                     (isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper) and oper.imm == 0x30):
-                yield Characteristic('peb access', True), insn.va
+                yield Characteristic('peb access'), insn.va
     elif 'gs' in insn.getPrefixName():
         for oper in insn.opers:
             if (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60) or \
                     (isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60):
-                yield Characteristic('peb access', True), insn.va
+                yield Characteristic('peb access'), insn.va
     else:
         pass
 
@@ -329,10 +329,10 @@ def extract_insn_segment_access_features(f, bb, insn):
     prefix = insn.getPrefixName()
 
     if prefix == 'fs':
-        yield Characteristic('fs access', True), insn.va
+        yield Characteristic('fs access'), insn.va
 
     if prefix == 'gs':
-        yield Characteristic('gs access', True), insn.va
+        yield Characteristic('gs access'), insn.va
 
 
 def get_section(vw, va):
@@ -369,7 +369,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
                     continue
 
             if get_section(f.vw, insn.va) != get_section(f.vw, va):
-                yield Characteristic('cross section flow', True), insn.va
+                yield Characteristic('cross section flow'), insn.va
 
         except KeyError:
             continue
@@ -387,7 +387,7 @@ def extract_function_calls_from(f, bb, insn):
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
         oper = insn.opers[0]
         target = oper.getOperAddr(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic('calls from'), target
 
     # call via thunk on x86,
     # see 9324d1a8ae37a36ae560c37448c9705a at 0x407985
@@ -396,18 +396,18 @@ def extract_function_calls_from(f, bb, insn):
     # see Lab21-01.exe_:0x140001178
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
         target = insn.opers[0].getOperValue(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic('calls from'), target
 
     # call via IAT, x64
     elif isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
         op = insn.opers[0]
         target = op.getOperAddr(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic('calls from'), target
 
     if target and target == f.va:
         # if we found a jump target and it's the function address
         # mark as recursive
-        yield Characteristic('recursive call', True), target
+        yield Characteristic('recursive call'), target
 
 
 # this is a feature that's most relevant at the function or basic block scope,
@@ -423,13 +423,13 @@ def extract_function_indirect_call_characteristic_features(f, bb, insn):
     # Checks below work for x86 and x64
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper):
         # call edx
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic('indirect call'), insn.va
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegMemOper):
         # call dword ptr [eax+50h]
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic('indirect call'), insn.va
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386SibOper):
         # call qword ptr [rsp+78h]
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic('indirect call'), insn.va
 
 
 def extract_features(f, bb, insn):
