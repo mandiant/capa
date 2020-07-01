@@ -195,7 +195,7 @@ Here's an example rule used by capa:
 
 ```
 ───────┬──────────────────────────────────────────────────────────────────────────
-       │ File: rules/data-manipulation/checksum/crc32/chechsum-data-with-crc32.yml
+       │ File: rules/data-manipulation/checksum/crc32/checksum-data-with-crc32.yml
 ───────┼──────────────────────────────────────────────────────────────────────────
    1   │ rule:
    2   │   meta:
