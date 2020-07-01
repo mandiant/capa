@@ -203,6 +203,31 @@ class UnusualMetaField(Lint):
         return False
 
 
+class LibRuleNotInLibDirectory(Lint):
+    name = 'lib rule not found in lib directory'
+    recommendation = 'Move the rule to the `lib` subdirectory of the rules path'
+
+    def check_rule(self, ctx, rule):
+        if is_nursery_rule(rule):
+            return False
+
+        if 'lib' not in rule.meta:
+            return False
+
+        return '/lib/' not in posixpath.normpath(rule.meta['capa/path'])
+
+
+class LibRuleHasNamespace(Lint):
+    name = 'lib rule has a namespace'
+    recommendation = 'Remove the namespace from the rule'
+
+    def check_rule(self, ctx, rule):
+        if 'lib' not in rule.meta:
+            return False
+
+        return 'namespace' in rule.meta
+
+
 class FeatureStringTooShort(Lint):
     name = 'feature string too short'
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
@@ -270,6 +295,8 @@ META_LINTS = (
     MissingExampleOffset(),
     ExampleFileDNE(),
     UnusualMetaField(),
+    LibRuleNotInLibDirectory(),
+    LibRuleHasNamespace(),
 )
 
 
@@ -387,6 +414,10 @@ def collect_samples(path):
             if name.endswith('.idb'):
                 continue
             if name.endswith('.i64'):
+                continue
+            if name.endswith('.frz'):
+                continue
+            if name.endswith('.fnames'):
                 continue
 
             path = os.path.join(root, name)
