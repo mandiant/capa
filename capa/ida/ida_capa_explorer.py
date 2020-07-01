@@ -378,9 +378,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.render_capa_doc_summary(doc)
         self.render_capa_doc_mitre_summary(doc)
 
-        self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
+        self.set_view_tree_default_sort_order()
 
         logger.info('render views completed.')
+
+    def set_view_tree_default_sort_order(self):
+        """ """
+        self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
 
     def render_capa_doc_summary(self, doc):
         """ """
@@ -462,6 +466,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.reset()
         self.view_tree.reset()
         self.view_checkbox_limit_by.setChecked(False)
+        self.set_view_tree_default_sort_order()
 
     def reload(self):
         """ reload views and re-run capa analysis """
