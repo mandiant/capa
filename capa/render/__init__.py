@@ -18,43 +18,41 @@ def convert_statement_to_result_document(statement):
     """
     if isinstance(statement, capa.engine.And):
         return {
-            'type': 'and',
+            "type": "and",
         }
     elif isinstance(statement, capa.engine.Or):
         return {
-            'type': 'or',
+            "type": "or",
         }
     elif isinstance(statement, capa.engine.Not):
         return {
-            'type': 'not',
+            "type": "not",
         }
     elif isinstance(statement, capa.engine.Some) and statement.count == 0:
-        return {
-            'type': 'optional'
-        }
+        return {"type": "optional"}
     elif isinstance(statement, capa.engine.Some) and statement.count > 0:
         return {
-            'type': 'some',
-            'count': statement.count,
+            "type": "some",
+            "count": statement.count,
         }
     elif isinstance(statement, capa.engine.Range):
         return {
-            'type': 'range',
-            'min': statement.min,
-            'max': statement.max,
-            'child': convert_feature_to_result_document(statement.child),
+            "type": "range",
+            "min": statement.min,
+            "max": statement.max,
+            "child": convert_feature_to_result_document(statement.child),
         }
     elif isinstance(statement, capa.engine.Regex):
         return {
-            'type': 'regex',
-            'pattern': statement.pattern,
+            "type": "regex",
+            "pattern": statement.pattern,
             # the string that was matched
-            'match': statement.match,
+            "match": statement.match,
         }
     elif isinstance(statement, capa.engine.Subscope):
         return {
-            'type': 'subscope',
-            'subscope': statement.scope,
+            "type": "subscope",
+            "subscope": statement.scope,
         }
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
@@ -89,8 +87,8 @@ def convert_feature_to_result_document(feature):
 
     # make the terms pretty
     name = name.lower()
-    if name == 'matchedrule':
-        name = 'match'
+    if name == "matchedrule":
+        name = "match"
 
     # in the common case, there's a single argument
     # so use it directly.
@@ -99,7 +97,7 @@ def convert_feature_to_result_document(feature):
         value = value[0]
 
     return {
-        'type': name,
+        "type": name,
         name: value,
     }
 
@@ -119,13 +117,13 @@ def convert_node_to_result_document(node):
 
     if isinstance(node, capa.engine.Statement):
         return {
-            'type': 'statement',
-            'statement': convert_statement_to_result_document(node),
+            "type": "statement",
+            "statement": convert_statement_to_result_document(node),
         }
     elif isinstance(node, capa.features.Feature):
         return {
-            'type': 'feature',
-            'feature': convert_feature_to_result_document(node),
+            "type": "feature",
+            "feature": convert_feature_to_result_document(node),
         }
     else:
         raise RuntimeError("unexpected match node type")
@@ -137,19 +135,16 @@ def convert_match_to_result_document(rules, capabilities, result):
     this will become part of the "result document" format that can be emitted to JSON.
     """
     doc = {
-        'success': bool(result.success),
-        'node': convert_node_to_result_document(result.statement),
-        'children': [
-            convert_match_to_result_document(rules, capabilities, child)
-            for child in result.children
-        ],
+        "success": bool(result.success),
+        "node": convert_node_to_result_document(result.statement),
+        "children": [convert_match_to_result_document(rules, capabilities, child) for child in result.children],
     }
 
     # logic expression, like `and`, don't have locations - their children do.
     # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.Feature):
         if bool(result.success):
-            doc['locations'] = result.locations
+            doc["locations"] = result.locations
 
     # if we have a `match` statement, then we're referencing another rule.
     # this could an external rule (written by a human), or
@@ -159,31 +154,30 @@ def convert_match_to_result_document(rules, capabilities, result):
     # so, we need to lookup the other rule results
     # and then filter those down to the address used here.
     # finally, splice that logic into this tree.
-    if (doc['node']['type'] == 'feature'
-            and doc['node']['feature']['type'] == 'match'
-            # only add subtree on success,
-            # because there won't be results for the other rule on failure.
-            and doc['success']):
+    if (
+        doc["node"]["type"] == "feature"
+        and doc["node"]["feature"]["type"] == "match"
+        # only add subtree on success,
+        # because there won't be results for the other rule on failure.
+        and doc["success"]
+    ):
 
-        rule_name = doc['node']['feature']['match']
+        rule_name = doc["node"]["feature"]["match"]
         rule = rules[rule_name]
         rule_matches = {address: result for (address, result) in capabilities[rule_name]}
 
-        if rule.meta.get('capa/subscope-rule'):
+        if rule.meta.get("capa/subscope-rule"):
             # for a subscope rule, fixup the node to be a scope node, rather than a match feature node.
             #
             # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
-            scope = rule.meta['scope']
-            doc['node'] = {
-                'type': 'statement',
-                'statement': {
-                    'type': 'subscope',
-                    'subscope': scope,
-                },
+            scope = rule.meta["scope"]
+            doc["node"] = {
+                "type": "statement",
+                "statement": {"type": "subscope", "subscope": scope,},
             }
 
-        for location in doc['locations']:
-            doc['children'].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
+        for location in doc["locations"]:
+            doc["children"].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
 
     return doc
 
@@ -220,15 +214,14 @@ def convert_capabilities_to_result_document(rules, capabilities):
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
 
-        if rule.meta.get('capa/subscope-rule'):
+        if rule.meta.get("capa/subscope-rule"):
             continue
 
         doc[rule_name] = {
-            'meta': dict(rule.meta),
-            'source': rule.definition,
-            'matches': {
-                addr: convert_match_to_result_document(rules, capabilities, match)
-                for (addr, match) in matches
+            "meta": dict(rule.meta),
+            "source": rule.definition,
+            "matches": {
+                addr: convert_match_to_result_document(rules, capabilities, match) for (addr, match) in matches
             },
         }
 
@@ -241,6 +234,7 @@ def render_vverbose(rules, capabilities):
     # and capa.render.vverbose import capa.render (implicitly, as a submodule)
     # so, defer the import until routine is called, breaking the import loop.
     import capa.render.vverbose
+
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.vverbose.render_vverbose(doc)
 
@@ -248,6 +242,7 @@ def render_vverbose(rules, capabilities):
 def render_verbose(rules, capabilities):
     # break import loop
     import capa.render.verbose
+
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.verbose.render_verbose(doc)
 
@@ -256,6 +251,7 @@ def render_default(rules, capabilities):
     # break import loop
     import capa.render.verbose
     import capa.render.default
+
     doc = convert_capabilities_to_result_document(rules, capabilities)
     return capa.render.default.render_default(doc)
 
@@ -273,7 +269,5 @@ class CapaJsonObjectEncoder(json.JSONEncoder):
 
 def render_json(rules, capabilities):
     return json.dumps(
-        convert_capabilities_to_result_document(rules, capabilities),
-        cls=CapaJsonObjectEncoder,
-        sort_keys=True,
+        convert_capabilities_to_result_document(rules, capabilities), cls=CapaJsonObjectEncoder, sort_keys=True,
     )

@@ -8,7 +8,7 @@ class Export(Feature):
         self.value = value
 
     def __str__(self):
-        return 'Export(%s)' % (self.value)
+        return "Export(%s)" % (self.value)
 
 
 class Import(Feature):
@@ -18,7 +18,7 @@ class Import(Feature):
         self.value = value
 
     def __str__(self):
-        return 'Import(%s)' % (self.value)
+        return "Import(%s)" % (self.value)
 
 
 class Section(Feature):
@@ -28,4 +28,4 @@ class Section(Feature):
         self.value = value
 
     def __str__(self):
-        return 'Section(%s)' % (self.value)
+        return "Section(%s)" % (self.value)

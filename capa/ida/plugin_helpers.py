@@ -8,34 +8,34 @@ import idc
 import idaapi
 
 
-CAPA_EXTENSION = '.capas'
+CAPA_EXTENSION = ".capas"
 
 
-logger = logging.getLogger('capa_ida')
+logger = logging.getLogger("capa_ida")
 
 
 def get_input_file(freeze=True):
-    '''
+    """
     get input file path
 
         freeze (bool): if True, get freeze file if it exists
-    '''
+    """
     # try original file in same directory as idb/i64 without idb/i64 file extension
     input_file = idc.get_idb_path()[:-4]
 
     if freeze:
         # use frozen file if it exists
-        freeze_file_cand = '%s%s' % (input_file, CAPA_EXTENSION)
+        freeze_file_cand = "%s%s" % (input_file, CAPA_EXTENSION)
         if os.path.isfile(freeze_file_cand):
             return freeze_file_cand
 
     if not os.path.isfile(input_file):
         # TM naming
-        input_file = '%s.mal_' % idc.get_idb_path()[:-4]
+        input_file = "%s.mal_" % idc.get_idb_path()[:-4]
         if not os.path.isfile(input_file):
-            input_file = idaapi.ask_file(0, '*.*', 'Please specify input file.')
+            input_file = idaapi.ask_file(0, "*.*", "Please specify input file.")
     if not input_file:
-        raise ValueError('could not find input file')
+        raise ValueError("could not find input file")
     return input_file
 
 

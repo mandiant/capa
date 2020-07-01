@@ -13,7 +13,8 @@ import file
 import function
 import basicblock
 import insn
-__all__ = ['file', 'function', 'basicblock', 'insn']
+
+__all__ = ["file", "function", "basicblock", "insn"]
 
 
 def get_va(self):
@@ -27,14 +28,14 @@ def get_va(self):
 
 
 def add_va_int_cast(o):
-    '''
+    """
     dynamically add a cast-to-int (`__int__`) method to the given object
     that returns the value of the `.va` property.
 
     this bit of skullduggery lets use cast viv-utils objects as ints.
     the correct way of doing this is to update viv-utils (or subclass the objects here).
-    '''
-    setattr(o, '__int__', types.MethodType(get_va, o, type(o)))
+    """
+    setattr(o, "__int__", types.MethodType(get_va, o, type(o)))
     return o
 
 

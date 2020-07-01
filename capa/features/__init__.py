@@ -11,9 +11,9 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 
 def bytes_to_str(b):
     if sys.version_info[0] >= 3:
-        return str(codecs.encode(b, 'hex').decode('utf-8'))
+        return str(codecs.encode(b, "hex").decode("utf-8"))
     else:
-        return codecs.encode(b, 'hex')
+        return codecs.encode(b, "hex")
 
 
 class Feature(object):
@@ -29,7 +29,7 @@ class Feature(object):
         return self.name == other.name and self.args == other.args
 
     def __str__(self):
-        return '%s(%s)' % (self.name.lower(), ','.join(self.args))
+        return "%s(%s)" % (self.name.lower(), ",".join(self.args))
 
     def __repr__(self):
         return str(self)
@@ -41,8 +41,7 @@ class Feature(object):
         return self.__dict__
 
     def freeze_serialize(self):
-        return (self.__class__.__name__,
-                self.args)
+        return (self.__class__.__name__, self.args)
 
     @classmethod
     def freeze_deserialize(cls, args):
@@ -55,30 +54,30 @@ class MatchedRule(Feature):
         self.rule_name = rule_name
 
     def __str__(self):
-        return 'match(%s)' % (self.rule_name)
+        return "match(%s)" % (self.rule_name)
 
 
 class Characteristic(Feature):
     def __init__(self, name, value=None):
-        '''
+        """
         when `value` is not provided, this serves as descriptor for a class of characteristics.
         this is only used internally, such as in `rules.py` when checking if a statement is
           supported by a given scope.
-        '''
+        """
         super(Characteristic, self).__init__([name, value])
         self.name = name
         self.value = value
 
     def evaluate(self, ctx):
         if self.value is None:
-            raise ValueError('cannot evaluate characteristc %s with empty value' % (str(self)))
+            raise ValueError("cannot evaluate characteristc %s with empty value" % (str(self)))
         return super(Characteristic, self).evaluate(ctx)
 
     def __str__(self):
         if self.value is None:
-            return 'characteristic(%s)' % (self.name)
+            return "characteristic(%s)" % (self.name)
         else:
-            return 'characteristic(%s(%s))' % (self.name, self.value)
+            return "characteristic(%s(%s))" % (self.name, self.value)
 
 
 class String(Feature):
@@ -98,7 +97,7 @@ class Bytes(Feature):
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.Bytes, )):
+            if not isinstance(feature, (capa.features.Bytes,)):
                 continue
 
             if feature.value.startswith(self.value):
@@ -108,14 +107,13 @@ class Bytes(Feature):
 
     def __str__(self):
         if self.symbol:
-            return 'bytes(0x%s = %s)' % (bytes_to_str(self.value).upper(), self.symbol)
+            return "bytes(0x%s = %s)" % (bytes_to_str(self.value).upper(), self.symbol)
         else:
-            return 'bytes(0x%s)' % (bytes_to_str(self.value).upper())
+            return "bytes(0x%s)" % (bytes_to_str(self.value).upper())
 
     def freeze_serialize(self):
-        return (self.__class__.__name__,
-                [bytes_to_str(x).upper() for x in self.args])
+        return (self.__class__.__name__, [bytes_to_str(x).upper() for x in self.args])
 
     @classmethod
     def freeze_deserialize(cls, args):
-        return cls(*[codecs.decode(x, 'hex') for x in args])
+        return cls(*[codecs.decode(x, "hex") for x in args])

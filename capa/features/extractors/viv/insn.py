@@ -15,7 +15,7 @@ from capa.features.extractors.viv.indirect_calls import resolve_indirect_call
 
 
 def interface_extract_instruction_XXX(f, bb, insn):
-    '''
+    """
     parse features from the given instruction.
 
     args:
@@ -25,31 +25,31 @@ def interface_extract_instruction_XXX(f, bb, insn):
 
     yields:
       (Feature, int): the feature and the address at which its found.
-    '''
-    yield NotImplementedError('feature'), NotImplementedError('virtual address')
+    """
+    yield NotImplementedError("feature"), NotImplementedError("virtual address")
 
 
 def get_imports(vw):
-    '''
+    """
     caching accessor to vivisect workspace imports
     avoids performance issues in vivisect when collecting locations
-    '''
-    if 'imports' in vw.metadata:
-        return vw.metadata['imports']
+    """
+    if "imports" in vw.metadata:
+        return vw.metadata["imports"]
     else:
         imports = {p[0]: p[3] for p in vw.getImports()}
-        vw.metadata['imports'] = imports
+        vw.metadata["imports"] = imports
         return imports
 
 
 def extract_insn_api_features(f, bb, insn):
-    '''parse API features from the given instruction.'''
+    """parse API features from the given instruction."""
 
     # example:
     #
     #    call dword [0x00473038]
 
-    if insn.mnem != 'call':
+    if insn.mnem != "call":
         return
 
     # traditional call via IAT
@@ -71,7 +71,7 @@ def extract_insn_api_features(f, bb, insn):
         target = insn.opers[0].getOperValue(insn)
 
         try:
-            thunk = f.vw.getFunctionMeta(target, 'Thunk')
+            thunk = f.vw.getFunctionMeta(target, "Thunk")
         except vivisect.exc.InvalidFunction:
             return
         else:
@@ -108,7 +108,7 @@ def extract_insn_api_features(f, bb, insn):
 
 
 def extract_insn_number_features(f, bb, insn):
-    '''parse number features from the given instruction.'''
+    """parse number features from the given instruction."""
     # example:
     #
     #     push    3136B0h         ; dwControlCode
@@ -124,9 +124,7 @@ def extract_insn_number_features(f, bb, insn):
             # assume its not also a constant.
             continue
 
-        if insn.mnem == 'add' \
-           and insn.opers[0].isReg() \
-           and insn.opers[0].reg == envi.archs.i386.disasm.REG_ESP:
+        if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.disasm.REG_ESP:
             # skip things like:
             #
             #    .text:00401140                 call    sub_407E2B
@@ -137,13 +135,13 @@ def extract_insn_number_features(f, bb, insn):
 
 
 def extract_insn_bytes_features(f, bb, insn):
-    '''
+    """
     parse byte sequence features from the given instruction.
     example:
         #     push    offset iid_004118d4_IShellLinkA ; riid
-    '''
+    """
     for oper in insn.opers:
-        if insn.mnem == 'call':
+        if insn.mnem == "call":
             # ignore call instructions
             continue
 
@@ -184,7 +182,7 @@ def read_string(vw, offset):
         pass
     else:
         if alen > 0:
-            return vw.readMemory(offset, alen).decode('utf-8')
+            return vw.readMemory(offset, alen).decode("utf-8")
 
     try:
         ulen = vw.detectUnicode(offset)
@@ -199,13 +197,13 @@ def read_string(vw, offset):
                 # vivisect seems to mis-detect the end unicode strings
                 # off by one, too short
                 ulen += 1
-            return vw.readMemory(offset, ulen).decode('utf-16')
+            return vw.readMemory(offset, ulen).decode("utf-16")
 
-    raise ValueError('not a string', offset)
+    raise ValueError("not a string", offset)
 
 
 def extract_insn_string_features(f, bb, insn):
-    '''parse string features from the given instruction.'''
+    """parse string features from the given instruction."""
     # example:
     #
     #     push    offset aAcr     ; "ACR  > "
@@ -222,11 +220,11 @@ def extract_insn_string_features(f, bb, insn):
         except ValueError:
             continue
         else:
-            yield String(s.rstrip('\x00')), insn.va
+            yield String(s.rstrip("\x00")), insn.va
 
 
 def extract_insn_offset_features(f, bb, insn):
-    '''parse structure offset features from the given instruction.'''
+    """parse structure offset features from the given instruction."""
     # example:
     #
     #     .text:0040112F    cmp     [esi+4], ebx
@@ -249,15 +247,18 @@ def extract_insn_offset_features(f, bb, insn):
 
 
 def is_security_cookie(f, bb, insn):
-    '''
+    """
     check if an instruction is related to security cookie checks
-    '''
+    """
     # security cookie check should use SP or BP
     oper = insn.opers[1]
-    if oper.isReg() \
-        and oper.reg not in [envi.archs.i386.disasm.REG_ESP, envi.archs.i386.disasm.REG_EBP,
-                             # TODO: do x64 support for real.
-                             envi.archs.amd64.disasm.REG_RBP, envi.archs.amd64.disasm.REG_RSP]:
+    if oper.isReg() and oper.reg not in [
+        envi.archs.i386.disasm.REG_ESP,
+        envi.archs.i386.disasm.REG_EBP,
+        # TODO: do x64 support for real.
+        envi.archs.amd64.disasm.REG_RBP,
+        envi.archs.amd64.disasm.REG_RSP,
+    ]:
         return False
 
     # expect security cookie init in first basic block within first bytes (instructions)
@@ -273,11 +274,11 @@ def is_security_cookie(f, bb, insn):
 
 
 def extract_insn_nzxor_characteristic_features(f, bb, insn):
-    '''
+    """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
-    '''
-    if insn.mnem != 'xor':
+    """
+    if insn.mnem != "xor":
         return
 
     if insn.opers[0] == insn.opers[1]:
@@ -286,24 +287,24 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     if is_security_cookie(f, bb, insn):
         return
 
-    yield Characteristic('nzxor', True), insn.va
+    yield Characteristic("nzxor", True), insn.va
 
 
 def extract_insn_mnemonic_features(f, bb, insn):
-    '''parse mnemonic features from the given instruction.'''
+    """parse mnemonic features from the given instruction."""
     yield Mnemonic(insn.mnem), insn.va
 
 
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
-    '''
+    """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
-    '''
+    """
     # TODO handle where fs/gs are loaded into a register or onto the stack and used later
 
-    if insn.mnem not in ['push', 'mov']:
+    if insn.mnem not in ["push", "mov"]:
         return
 
-    if 'fs' in insn.getPrefixName():
+    if "fs" in insn.getPrefixName():
         for oper in insn.opers:
             # examples
             #
@@ -312,27 +313,29 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
             #     IDA: push    large dword ptr fs:30h
             #     viv: fs: push dword [0x00000030]
             #     fs: push dword [eax + 0x30]  ; i386RegMemOper, with eax = 0
-            if (isinstance(oper, envi.archs.i386.disasm.i386RegMemOper) and oper.disp == 0x30) or \
-                    (isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper) and oper.imm == 0x30):
-                yield Characteristic('peb access', True), insn.va
-    elif 'gs' in insn.getPrefixName():
+            if (isinstance(oper, envi.archs.i386.disasm.i386RegMemOper) and oper.disp == 0x30) or (
+                isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper) and oper.imm == 0x30
+            ):
+                yield Characteristic("peb access", True), insn.va
+    elif "gs" in insn.getPrefixName():
         for oper in insn.opers:
-            if (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60) or \
-                    (isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60):
-                yield Characteristic('peb access', True), insn.va
+            if (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60) or (
+                isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60
+            ):
+                yield Characteristic("peb access", True), insn.va
     else:
         pass
 
 
 def extract_insn_segment_access_features(f, bb, insn):
-    ''' parse the instruction for access to fs or gs '''
+    """ parse the instruction for access to fs or gs """
     prefix = insn.getPrefixName()
 
-    if prefix == 'fs':
-        yield Characteristic('fs access', True), insn.va
+    if prefix == "fs":
+        yield Characteristic("fs access", True), insn.va
 
-    if prefix == 'gs':
-        yield Characteristic('gs access', True), insn.va
+    if prefix == "gs":
+        yield Characteristic("gs access", True), insn.va
 
 
 def get_section(vw, va):
@@ -344,16 +347,16 @@ def get_section(vw, va):
 
 
 def extract_insn_cross_section_cflow(f, bb, insn):
-    '''
+    """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
-    '''
+    """
     for va, flags in insn.getBranches():
         if flags & envi.BR_FALL:
             continue
 
         try:
             # skip 32-bit calls to imports
-            if insn.mnem == 'call' and isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
+            if insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
                 oper = insn.opers[0]
                 target = oper.getOperAddr(insn)
 
@@ -361,7 +364,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
                     continue
 
             # skip 64-bit calls to imports
-            elif insn.mnem == 'call' and isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
+            elif insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
                 op = insn.opers[0]
                 target = op.getOperAddr(insn)
 
@@ -369,7 +372,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
                     continue
 
             if get_section(f.vw, insn.va) != get_section(f.vw, va):
-                yield Characteristic('cross section flow', True), insn.va
+                yield Characteristic("cross section flow", True), insn.va
 
         except KeyError:
             continue
@@ -378,7 +381,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
 def extract_function_calls_from(f, bb, insn):
-    if insn.mnem != 'call':
+    if insn.mnem != "call":
         return
 
     target = None
@@ -387,7 +390,7 @@ def extract_function_calls_from(f, bb, insn):
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
         oper = insn.opers[0]
         target = oper.getOperAddr(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic("calls from", True), target
 
     # call via thunk on x86,
     # see 9324d1a8ae37a36ae560c37448c9705a at 0x407985
@@ -396,44 +399,44 @@ def extract_function_calls_from(f, bb, insn):
     # see Lab21-01.exe_:0x140001178
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
         target = insn.opers[0].getOperValue(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic("calls from", True), target
 
     # call via IAT, x64
     elif isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
         op = insn.opers[0]
         target = op.getOperAddr(insn)
-        yield Characteristic('calls from', True), target
+        yield Characteristic("calls from", True), target
 
     if target and target == f.va:
         # if we found a jump target and it's the function address
         # mark as recursive
-        yield Characteristic('recursive call', True), target
+        yield Characteristic("recursive call", True), target
 
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
 def extract_function_indirect_call_characteristic_features(f, bb, insn):
-    '''
+    """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
-    '''
-    if insn.mnem != 'call':
+    """
+    if insn.mnem != "call":
         return
 
     # Checks below work for x86 and x64
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper):
         # call edx
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic("indirect call", True), insn.va
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegMemOper):
         # call dword ptr [eax+50h]
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic("indirect call", True), insn.va
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386SibOper):
         # call qword ptr [rsp+78h]
-        yield Characteristic('indirect call', True), insn.va
+        yield Characteristic("indirect call", True), insn.va
 
 
 def extract_features(f, bb, insn):
-    '''
+    """
     extract features from the given insn.
 
     args:
@@ -443,7 +446,7 @@ def extract_features(f, bb, insn):
 
     yields:
       Feature, set[VA]: the features and their location found in this insn.
-    '''
+    """
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, va in insn_handler(f, bb, insn):
             yield feature, va
@@ -461,5 +464,5 @@ INSTRUCTION_HANDLERS = (
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,
     extract_function_calls_from,
-    extract_function_indirect_call_characteristic_features
+    extract_function_indirect_call_characteristic_features,
 )

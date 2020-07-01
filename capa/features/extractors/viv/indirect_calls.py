@@ -14,13 +14,13 @@ Amd64RipRelOper = envi.archs.amd64.disasm.Amd64RipRelOper
 LOC_OP = vivisect.const.LOC_OP
 IF_NOFALL = envi.IF_NOFALL
 REF_CODE = vivisect.const.REF_CODE
-FAR_BRANCH_MASK = (envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH)
+FAR_BRANCH_MASK = envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH
 
-DESTRUCTIVE_MNEMONICS = ('mov', 'lea', 'pop', 'xor')
+DESTRUCTIVE_MNEMONICS = ("mov", "lea", "pop", "xor")
 
 
 def get_previous_instructions(vw, va):
-    '''
+    """
     collect the instructions that flow to the given address, local to the current function.
 
     args:
@@ -29,7 +29,7 @@ def get_previous_instructions(vw, va):
 
     returns:
       List[int]: the prior instructions, which may fallthrough and/or jump here
-    '''
+    """
     ret = []
 
     # find the immediate prior instruction.
@@ -61,7 +61,7 @@ class NotFoundError(Exception):
 
 
 def find_definition(vw, va, reg):
-    '''
+    """
     scan backwards from the given address looking for assignments to the given register.
     if a constant, return that value.
 
@@ -75,7 +75,7 @@ def find_definition(vw, va, reg):
 
     raises:
       NotFoundError: when the definition cannot be found.
-    '''
+    """
     q = collections.deque()
     seen = set([])
 
@@ -95,10 +95,7 @@ def find_definition(vw, va, reg):
             continue
 
         opnd0 = insn.opers[0]
-        if not \
-                (isinstance(opnd0, i386RegOper)
-                 and opnd0.reg == reg
-                 and insn.mnem in DESTRUCTIVE_MNEMONICS):
+        if not (isinstance(opnd0, i386RegOper) and opnd0.reg == reg and insn.mnem in DESTRUCTIVE_MNEMONICS):
             q.extend(get_previous_instructions(vw, cur))
             continue
 
@@ -107,7 +104,7 @@ def find_definition(vw, va, reg):
         # we currently only support extracting the constant from something like: `mov $reg, IAT`
         # so, any other pattern results in an unknown value, represented by None.
         # this is a good place to extend in the future, if we need more robust support.
-        if insn.mnem != 'mov':
+        if insn.mnem != "mov":
             return (cur, None)
         else:
             opnd1 = insn.opers[1]
@@ -128,12 +125,11 @@ def is_indirect_call(vw, va, insn=None):
     if insn is None:
         insn = vw.parseOpcode(va)
 
-    return (insn.mnem == 'call'
-            and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper))
+    return insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
 def resolve_indirect_call(vw, va, insn=None):
-    '''
+    """
     inspect the given indirect call instruction and attempt to resolve the target address.
 
     args:
@@ -145,7 +141,7 @@ def resolve_indirect_call(vw, va, insn=None):
 
     raises:
       NotFoundError: when the definition cannot be found.
-    '''
+    """
     if insn is None:
         insn = vw.parseOpcode(va)
 

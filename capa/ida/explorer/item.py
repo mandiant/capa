@@ -15,14 +15,14 @@ def info_to_name(display):
         e.g. function(my_function) => my_function
     """
     try:
-        return display.split('(')[1].rstrip(')')
+        return display.split("(")[1].rstrip(")")
     except IndexError:
-        return ''
+        return ""
 
 
 def location_to_hex(location):
     """ convert location to hex for display """
-    return '%08X' % location
+    return "%08X" % location
 
 
 class CapaExplorerDataItem(object):
@@ -35,7 +35,12 @@ class CapaExplorerDataItem(object):
         self.children = []
         self._checked = False
 
-        self.flags = (QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsTristate | QtCore.Qt.ItemIsUserCheckable)
+        self.flags = (
+            QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+            | QtCore.Qt.ItemIsTristate
+            | QtCore.Qt.ItemIsUserCheckable
+        )
 
         if self.pred:
             self.pred.appendChild(self)
@@ -109,7 +114,7 @@ class CapaExplorerDataItem(object):
 
     def __str__(self):
         """ get string representation of columns """
-        return ' '.join([data for data in self._data if data])
+        return " ".join([data for data in self._data if data])
 
     @property
     def info(self):
@@ -133,12 +138,12 @@ class CapaExplorerDataItem(object):
 class CapaExplorerRuleItem(CapaExplorerDataItem):
     """ store data relevant to capa function result """
 
-    fmt = '%s (%d matches)'
+    fmt = "%s (%d matches)"
 
     def __init__(self, parent, display, count, source):
         """ """
         display = self.fmt % (display, count) if count > 1 else display
-        super(CapaExplorerRuleItem, self).__init__(parent, [display, '', ''])
+        super(CapaExplorerRuleItem, self).__init__(parent, [display, "", ""])
         self._source = source
 
     @property
@@ -150,9 +155,9 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
 class CapaExplorerRuleMatchItem(CapaExplorerDataItem):
     """ store data relevant to capa function match result """
 
-    def __init__(self, parent, display, source=''):
+    def __init__(self, parent, display, source=""):
         """ """
-        super(CapaExplorerRuleMatchItem, self).__init__(parent, [display, '', ''])
+        super(CapaExplorerRuleMatchItem, self).__init__(parent, [display, "", ""])
         self._source = source
 
     @property
@@ -164,12 +169,13 @@ class CapaExplorerRuleMatchItem(CapaExplorerDataItem):
 class CapaExplorerFunctionItem(CapaExplorerDataItem):
     """ store data relevant to capa function result """
 
-    fmt = 'function(%s)'
+    fmt = "function(%s)"
 
     def __init__(self, parent, location):
         """ """
-        super(CapaExplorerFunctionItem, self).__init__(parent, [self.fmt % idaapi.get_name(location),
-                                                                location_to_hex(location), ''])
+        super(CapaExplorerFunctionItem, self).__init__(
+            parent, [self.fmt % idaapi.get_name(location), location_to_hex(location), ""]
+        )
 
     @property
     def info(self):
@@ -187,32 +193,31 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
 class CapaExplorerBlockItem(CapaExplorerDataItem):
     """ store data relevant to capa basic block result """
 
-    fmt = 'basic block(loc_%08X)'
+    fmt = "basic block(loc_%08X)"
 
     def __init__(self, parent, location):
         """ """
-        super(CapaExplorerBlockItem, self).__init__(parent, [self.fmt % location, location_to_hex(location), ''])
+        super(CapaExplorerBlockItem, self).__init__(parent, [self.fmt % location, location_to_hex(location), ""])
 
 
 class CapaExplorerDefaultItem(CapaExplorerDataItem):
     """ store data relevant to capa default result """
 
-    def __init__(self, parent, display, details='', location=None):
+    def __init__(self, parent, display, details="", location=None):
         """ """
-        location = location_to_hex(location) if location else ''
+        location = location_to_hex(location) if location else ""
         super(CapaExplorerDefaultItem, self).__init__(parent, [display, location, details])
 
 
 class CapaExplorerFeatureItem(CapaExplorerDataItem):
     """ store data relevant to capa feature result """
 
-    def __init__(self, parent, display, location='', details=''):
-        location = location_to_hex(location) if location else ''
+    def __init__(self, parent, display, location="", details=""):
+        location = location_to_hex(location) if location else ""
         super(CapaExplorerFeatureItem, self).__init__(parent, [display, location, details])
 
 
 class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
-
     def __init__(self, parent, display, location):
         """ """
         details = capa.ida.helpers.get_disasm_line(location)
@@ -221,26 +226,24 @@ class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
 
 
 class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
-
     def __init__(self, parent, display, location):
         """ """
         byte_snap = idaapi.get_bytes(location, 32)
 
         if byte_snap:
-            byte_snap = codecs.encode(byte_snap, 'hex').upper()
+            byte_snap = codecs.encode(byte_snap, "hex").upper()
             if sys.version_info >= (3, 0):
-                details = ' '.join([byte_snap[i:i + 2].decode() for i in range(0, len(byte_snap), 2)])
+                details = " ".join([byte_snap[i : i + 2].decode() for i in range(0, len(byte_snap), 2)])
             else:
-                details = ' '.join([byte_snap[i:i + 2] for i in range(0, len(byte_snap), 2)])
+                details = " ".join([byte_snap[i : i + 2] for i in range(0, len(byte_snap), 2)])
         else:
-            details = ''
+            details = ""
 
         super(CapaExplorerByteViewItem, self).__init__(parent, display, location=location, details=details)
         self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
 
 
 class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
-
     def __init__(self, parent, display, location):
         """ """
         super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location)

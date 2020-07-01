@@ -26,17 +26,17 @@ def get_va(self):
 
 
 def add_va_int_cast(o):
-    '''
+    """
     dynamically add a cast-to-int (`__int__`) method to the given object
     that returns the value of the `.va` property.
     this bit of skullduggery lets use cast viv-utils objects as ints.
     the correct way of doing this is to update viv-utils (or subclass the objects here).
-    '''
+    """
 
     if sys.version_info >= (3, 0):
-        setattr(o, '__int__', types.MethodType(get_va, o))
+        setattr(o, "__int__", types.MethodType(get_va, o))
     else:
-        setattr(o, '__int__', types.MethodType(get_va, o, type(o)))
+        setattr(o, "__int__", types.MethodType(get_va, o, type(o)))
     return o
 
 

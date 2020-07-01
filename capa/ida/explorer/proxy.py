@@ -4,7 +4,6 @@ from capa.ida.explorer.model import CapaExplorerDataModel
 
 
 class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
-
     def __init__(self, parent=None):
         """ """
         super(CapaExplorerSortFilterProxyModel, self).__init__(parent)
@@ -20,8 +19,12 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         ldata = left.internalPointer().data(left.column())
         rdata = right.internalPointer().data(right.column())
 
-        if ldata and rdata and left.column() == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS and left.column() \
-                == right.column():
+        if (
+            ldata
+            and rdata
+            and left.column() == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS
+            and left.column() == right.column()
+        ):
             # convert virtual address before compare
             return int(ldata, 16) < int(rdata, 16)
         else:

@@ -4,9 +4,9 @@ from capa.features import Feature
 class API(Feature):
     def __init__(self, name):
         # Downcase library name if given
-        if '.' in name:
-            modname, impname = name.split('.')
-            name = modname.lower() + '.' + impname
+        if "." in name:
+            modname, impname = name.split(".")
+            name = modname.lower() + "." + impname
 
         super(API, self).__init__([name])
 
@@ -19,9 +19,9 @@ class Number(Feature):
 
     def __str__(self):
         if self.symbol:
-            return 'number(0x%x = %s)' % (self.value, self.symbol)
+            return "number(0x%x = %s)" % (self.value, self.symbol)
         else:
-            return 'number(0x%x)' % (self.value)
+            return "number(0x%x)" % (self.value)
 
 
 class Offset(Feature):
@@ -32,9 +32,9 @@ class Offset(Feature):
 
     def __str__(self):
         if self.symbol:
-            return 'offset(0x%x = %s)' % (self.value, self.symbol)
+            return "offset(0x%x = %s)" % (self.value, self.symbol)
         else:
-            return 'offset(0x%x)' % (self.value)
+            return "offset(0x%x)" % (self.value)
 
 
 class Mnemonic(Feature):
@@ -43,4 +43,4 @@ class Mnemonic(Feature):
         self.value = value
 
     def __str__(self):
-        return 'mnemonic(%s)' % (self.value)
+        return "mnemonic(%s)" % (self.value)
