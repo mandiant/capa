@@ -41,14 +41,12 @@ def render_statement(ostream, match, statement, indent=0):
         # so, we have to inline some of the feature rendering here.
 
         child = statement['child']
-        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
             feature = '%s(%s)' % (child['type'], rutils.bold2(child[child['type']]))
         elif child['type'] in ('number', 'offset'):
             feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex(child[child['type']])))
         elif child['type'] == 'bytes':
             feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex_string(child[child['type']])))
-        elif child['type'] == 'characteristic':
-            feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic']))
         else:
             raise RuntimeError('unexpected feature type: ' + str(child))
 
@@ -80,7 +78,7 @@ def render_statement(ostream, match, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write('  ' * indent)
 
-    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
         ostream.write(feature['type'])
         ostream.write(': ')
         ostream.write(rutils.bold2(feature[feature['type']]))
@@ -93,8 +91,6 @@ def render_feature(ostream, match, feature, indent=0):
         # bytes is the uppercase, hex-encoded string.
         # it should always be an even number of characters (its hex).
         ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
-    elif feature['type'] == 'characteristic':
-        ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'])))
     # note that regex is found in `render_statement`
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))

@@ -42,7 +42,7 @@ def test_ruleset():
                     name: file rule
                     scope: file
                 features:
-                  - characteristic(embedded pe): y
+                  - characteristic: embedded pe
         ''')),
         capa.rules.Rule.from_yaml(textwrap.dedent('''
             rule:
@@ -50,7 +50,7 @@ def test_ruleset():
                     name: function rule
                     scope: function
                 features:
-                  - characteristic(switch): y
+                  - characteristic: switch
         ''')),
          capa.rules.Rule.from_yaml(textwrap.dedent('''
             rule:
@@ -58,7 +58,7 @@ def test_ruleset():
                     name: basic block rule
                     scope: basic block
                 features:
-                  - characteristic(nzxor): y
+                  - characteristic: nzxor
         ''')),
 
     ])
@@ -128,7 +128,7 @@ def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
                     examples:
                       - 9324d1a8ae37a36ae560c37448c9705a:0x403685
                 features:
-                  - characteristic(tight loop): true
+                  - characteristic: tight loop
         ''')),
         # this rule should match on a function (0x403660)
         # based on API, as well as prior basic block rule match
@@ -176,7 +176,7 @@ def test_subscope_bb_rules(sample_9324d1a8ae37a36ae560c37448c9705a):
                  features:
                      - and:
                          - basic block:
-                             - characteristic(tight loop): true
+                             - characteristic: tight loop
          '''))
     ])
     # tight loop at 0x403685

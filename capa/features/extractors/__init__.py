@@ -184,22 +184,22 @@ class NullFeatureExtractor(FeatureExtractor):
 
         extractor = NullFeatureExtractor({
             'file features': [
-                (0x402345, capa.features.Characteristic('embedded pe', True)),
+                (0x402345, capa.features.Characteristic('embedded pe')),
             ],
             'functions': {
                 0x401000: {
                     'features': [
-                        (0x401000, capa.features.Characteristic('switch', True)),
+                        (0x401000, capa.features.Characteristic('switch')),
                     ],
                     'basic blocks': {
                         0x401000: {
                             'features': [
-                                (0x401000, capa.features.Characteristic('tight-loop', True)),
+                                (0x401000, capa.features.Characteristic('tight-loop')),
                             ],
                             'instructions': {
                                 0x401000: {
                                     'features': [
-                                        (0x401000, capa.features.Characteristic('nzxor', True)),
+                                        (0x401000, capa.features.Characteristic('nzxor')),
                                     ],
                                 },
                                 0x401002: ...

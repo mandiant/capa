@@ -138,7 +138,7 @@ class InvalidRuleSet(ValueError):
 
 def ensure_feature_valid_for_scope(scope, feature):
     if isinstance(feature, capa.features.Characteristic):
-        if capa.features.Characteristic(feature.attribute) not in SUPPORTED_FEATURES[scope]:
+        if capa.features.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]:
             raise InvalidRule('feature %s not support for scope %s' % (feature, scope))
     elif not isinstance(feature, tuple(filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope]))):
         raise InvalidRule('feature %s not support for scope %s' % (feature, scope))
@@ -205,9 +205,8 @@ def parse_feature(key):
         return capa.features.insn.Mnemonic
     elif key == 'basic blocks':
         return capa.features.basicblock.BasicBlock
-    elif key.startswith('characteristic(') and key.endswith(')'):
-        characteristic = key[len('characteristic('):-len(')')]
-        return lambda v, description=None: capa.features.Characteristic(characteristic, v, description)
+    elif key == 'characteristic':
+        return capa.features.Characteristic
     elif key == 'export':
         return capa.features.file.Export
     elif key == 'import':
@@ -302,48 +301,34 @@ def build_statements(d, scope):
 
         term = key[len('count('):-len(')')]
 
-        if term.startswith('characteristic('):
-            # characteristic features are specified a bit specially:
-            # they simply indicate the presence of something unusual/interesting,
-            # and we embed the name in the feature name, like `characteristic(nzxor)`.
-            #
-            # when we're dealing with counts, like `count(characteristic(nzxor))`,
-            # we can simply extract the feature and assume we're looking for `True` values.
-            Feature = parse_feature(term)
-            feature = Feature(True)
-            ensure_feature_valid_for_scope(scope, feature)
-        else:
-            # however, for remaining counted features, like `count(mnemonic(mov))`,
-            # we have to jump through hoops.
-            #
-            # when looking for the existance of such a feature, our rule might look like:
-            #     - mnemonic: mov
-            #
-            # but here we deal with the form: `mnemonic(mov)`.
-            term, _, arg = term.partition('(')
-            Feature = parse_feature(term)
+        # when looking for the existence of such a feature, our rule might look like:
+        #     - mnemonic: mov
+        #
+        # but here we deal with the form: `mnemonic(mov)`.
+        term, _, arg = term.partition('(')
+        Feature = parse_feature(term)
 
-            if arg:
-                arg = arg[:-len(')')]
-                # can't rely on yaml parsing ints embedded within strings
-                # like:
-                #
-                #     count(offset(0xC))
-                #     count(number(0x11223344))
-                #     count(number(0x100 = description))
-                if term in ('number', 'offset', 'bytes'):
-                    value, description = parse_description(arg, term)
-                    feature = Feature(value, description)
-                else:
-                    # arg is string, like:
-                    #
-                    #     count(mnemonic(mov))
-                    #     count(string(error))
-                    # TODO: what about embedded newlines?
-                    feature = Feature(arg)
+        if arg:
+            arg = arg[:-len(')')]
+            # can't rely on yaml parsing ints embedded within strings
+            # like:
+            #
+            #     count(offset(0xC))
+            #     count(number(0x11223344))
+            #     count(number(0x100 = description))
+            if term in ('number', 'offset', 'bytes'):
+                value, description = parse_description(arg, term)
+                feature = Feature(value, description)
             else:
-                feature = Feature()
-            ensure_feature_valid_for_scope(scope, feature)
+                # arg is string, like:
+                #
+                #     count(mnemonic(mov))
+                #     count(string(error))
+                # TODO: what about embedded newlines?
+                feature = Feature(arg)
+        else:
+            feature = Feature()
+        ensure_feature_valid_for_scope(scope, feature)
 
         count = d[key]
         if isinstance(count, int):
