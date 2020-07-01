@@ -298,11 +298,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         return item.childCount()
 
-    def render_capa_doc_statement_node(self, parent, statement, doc):
+    def render_capa_doc_statement_node(self, parent, statement, locations, doc):
         """ render capa statement read from doc
 
             @param parent: parent to which new child is assigned
             @param statement: statement read from doc
+            @param locations: locations of children (applies to range only?)
             @param doc: capa result doc
 
             "statement": {
@@ -332,7 +333,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             else:
                 display += 'between %d and %d' % (statement['min'], statement['max'])
 
-            return CapaExplorerFeatureItem(parent, display=display)
+            parent2 = CapaExplorerFeatureItem(parent, display=display)
+
+            for location in locations:
+                # for each location render child node for range statement
+                self.render_capa_doc_feature(parent2, statement['child'], location, doc)
+
+            return parent2
         elif statement['type'] == 'subscope':
             return CapaExplorerFeatureItem(parent, 'subscope(%s)' % statement['subscope'])
         elif statement['type'] == 'regex':
@@ -377,7 +384,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return
 
         if match['node']['type'] == 'statement':
-            parent2 = self.render_capa_doc_statement_node(parent, match['node']['statement'], doc)
+            parent2 = self.render_capa_doc_statement_node(parent, match['node']['statement'],
+                                                          match.get('locations', []), doc)
         elif match['node']['type'] == 'feature':
             parent2 = self.render_capa_doc_feature_node(parent, match['node']['feature'], match['locations'], doc)
         else:
