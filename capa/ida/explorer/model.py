@@ -16,7 +16,8 @@ from capa.ida.explorer.item import (
     CapaExplorerByteViewItem,
     CapaExplorerBlockItem,
     CapaExplorerRuleMatchItem,
-    CapaExplorerFeatureItem
+    CapaExplorerFeatureItem,
+    CapaExplorerSubscopeItem
 )
 
 import capa.ida.helpers
@@ -105,7 +106,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.FontRole and isinstance(item, (CapaExplorerRuleItem, CapaExplorerRuleMatchItem,
                                                             CapaExplorerBlockItem, CapaExplorerFunctionItem,
-                                                            CapaExplorerFeatureItem)) and \
+                                                            CapaExplorerFeatureItem, CapaExplorerSubscopeItem)) and \
                 column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
             # set bold font for top-level rules
             font = QtGui.QFont()
@@ -341,7 +342,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             return parent2
         elif statement['type'] == 'subscope':
-            return CapaExplorerFeatureItem(parent, 'subscope(%s)' % statement['subscope'])
+            return CapaExplorerSubscopeItem(parent, statement['subscope'])
         elif statement['type'] == 'regex':
             # regex is a `Statement` not a `Feature`
             # this is because it doesn't get extracted, but applies to all strings in scope.
