@@ -4,7 +4,26 @@ import capa.rules
 import capa.render.utils as rutils
 
 
-def render_statement(ostream, statement, indent=0):
+def render_locations(ostream, match):
+    # its possible to have an empty locations array here,
+    # such as when we're in MODE_FAILURE and showing the logic
+    # under a `not` statement (which will have no matched locations).
+    locations = list(sorted(match.get('locations', [])))
+    if len(locations) == 1:
+        ostream.write(' @ ')
+        ostream.write(rutils.hex(locations[0]))
+    elif len(locations) > 1:
+        ostream.write(' @ ')
+        if len(locations) > 4:
+            # don't display too many locations, because it becomes very noisy.
+            # probably only the first handful of locations will be useful for inspection.
+            ostream.write(', '.join(map(rutils.hex, locations[0:4])))
+            ostream.write(', and %d more...' % (len(locations) - 4))
+        else:
+            ostream.write(', '.join(map(rutils.hex, locations)))
+
+
+def render_statement(ostream, match, statement, indent=0):
     ostream.write('  ' * indent)
     if statement['type'] in ('and', 'or', 'optional'):
         ostream.write(statement['type'])
@@ -36,13 +55,16 @@ def render_statement(ostream, statement, indent=0):
         ostream.write('count(%s): ' % feature)
 
         if statement['max'] == statement['min']:
-            ostream.writeln('%d' % (statement['min']))
+            ostream.write('%d' % (statement['min']))
         elif statement['min'] == 0:
-            ostream.writeln('%d or fewer' % (statement['max']))
+            ostream.write('%d or fewer' % (statement['max']))
         elif statement['max'] == (1 << 64 - 1):
-            ostream.writeln('%d or more' % (statement['min']))
+            ostream.write('%d or more' % (statement['min']))
         else:
-            ostream.writeln('between %d and %d' % (statement['min'], statement['max']))
+            ostream.write('between %d and %d' % (statement['min'], statement['max']))
+
+        render_locations(ostream, match)
+        ostream.write('\n')
     elif statement['type'] == 'subscope':
         ostream.write(statement['subscope'])
         ostream.writeln(':')
@@ -77,29 +99,14 @@ def render_feature(ostream, match, feature, indent=0):
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
-    # its possible to have an empty locations array here,
-    # such as when we're in MODE_FAILURE and showing the logic
-    # under a `not` statement (which will have no matched locations).
-    locations = list(sorted(match.get('locations', [])))
-    if len(locations) == 1:
-        ostream.write(' @ ')
-        ostream.write(rutils.hex(locations[0]))
-    elif len(locations) > 1:
-        ostream.write(' @ ')
-        if len(locations) > 4:
-            # don't display too many locations, because it becomes very noisy.
-            # probably only the first handful of locations will be useful for inspection.
-            ostream.write(', '.join(map(rutils.hex, locations[0:4])))
-            ostream.write(', and %d more...' % (len(locations) - 4))
-        else:
-            ostream.write(', '.join(map(rutils.hex, locations)))
+    render_locations(ostream, match)
 
     ostream.write('\n')
 
 
 def render_node(ostream, match, node, indent=0):
     if node['type'] == 'statement':
-        render_statement(ostream, node['statement'], indent=indent)
+        render_statement(ostream, match, node['statement'], indent=indent)
     elif node['type'] == 'feature':
         render_feature(ostream, match, node['feature'], indent=indent)
     else:
