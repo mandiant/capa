@@ -1,4 +1,5 @@
 import json
+import six
 
 import capa.engine
 
@@ -261,7 +262,7 @@ def render_default(rules, capabilities):
 
 class CapaJsonObjectEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, (list, dict, str, unicode, int, float, bool, type(None))):
+        if isinstance(obj, (list, dict, int, float, bool, type(None))) or isinstance(obj, six.string_types):
             return json.JSONEncoder.default(self, obj)
         elif isinstance(obj, set):
             return list(sorted(obj))

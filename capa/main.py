@@ -15,6 +15,7 @@ import colorama
 import capa.rules
 import capa.engine
 import capa.render
+import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
@@ -114,308 +115,6 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     matches.update(all_file_matches)
 
     return matches
-
-
-def pluck_meta(rules, key):
-    for rule in rules:
-        value = rule.meta.get(key)
-        if value:
-            yield value
-
-
-def get_dispositions(matched_rules):
-    for disposition in pluck_meta(matched_rules, 'maec/analysis-conclusion'):
-        yield disposition
-
-    for disposition in pluck_meta(matched_rules, 'maec/analysis-conclusion-ov'):
-        yield disposition
-
-
-def get_roles(matched_rules):
-    for role in pluck_meta(matched_rules, 'maec/malware-category'):
-        yield role
-
-    for role in pluck_meta(matched_rules, 'maec/malware-category-ov'):
-        yield role
-
-
-RULE_CATEGORY = 'rule-category'
-
-
-def is_other_feature_rule(rule):
-    '''
-    does this rule *not* have any of:
-      - maec/malware-category
-      - maec/analysis-conclusion
-      - rule-category
-
-    if so, it will be placed into the "other features" bucket
-    '''
-    if rule.meta.get('lib', False):
-        return False
-
-    for meta in ('maec/analysis-conclusion',
-                 'maec/analysis-conclusion-ov',
-                 'maec/malware-category',
-                 'maec/malware-category-ov',
-                 RULE_CATEGORY):
-        if meta in rule.meta:
-            return False
-    return True
-
-
-def render_capabilities_default(ruleset, results):
-    rules = [ruleset.rules[rule_name] for rule_name in results.keys()]
-
-    # we render the highest level conclusions first:
-    #
-    #  1. is it malware?
-    #  2. what is the role? (dropper, backdoor, etc.)
-    #
-    # after this, we'll enumerate the specific objectives, behaviors, and techniques.
-    dispositions = list(sorted(get_dispositions(rules)))
-    if dispositions:
-        print('disposition: ' + ', '.join(dispositions))
-
-    categories = list(sorted(get_roles(rules)))
-    if categories:
-        print('role: ' + ', '.join(categories))
-
-    # rules may have a meta tag `rule-category` that specifies:
-    #
-    #     rule-category: $objective[/$behavior[/$technique]]
-    #
-    # this classification describes a tree of increasingly specific conclusions.
-    # the tree allows us to tie a high-level conclusion, e.g. an objective, to
-    #   the evidence of this - the behaviors, techniques, rules, and ultimately, features.
-
-    # this data structure is a nested map:
-    #
-    #     objective name -> behavior name -> technique name -> rule name -> rule
-    #
-    # at each level, a matched rule is also legal.
-    # this indicates that only a portion of the rule-category was provided.
-    o = collections.defaultdict(
-        lambda: collections.defaultdict(
-            lambda: collections.defaultdict(
-                dict
-            )
-        )
-    )
-    objectives = set()
-    behaviors = set()
-    techniques = set()
-
-    for rule in rules:
-        objective = None
-        behavior = None
-        technique = None
-
-        parts = rule.meta.get(RULE_CATEGORY, '').split('/')
-        if len(parts) == 0 or list(parts) == ['']:
-            continue
-        if len(parts) > 0:
-            objective = parts[0].replace('-', ' ')
-            objectives.add(objective)
-        if len(parts) > 1:
-            behavior = parts[1].replace('-', ' ')
-            behaviors.add(behavior)
-        if len(parts) > 2:
-            technique = parts[2].replace('-', ' ')
-            techniques.add(technique)
-        if len(parts) > 3:
-            raise capa.rules.InvalidRule(RULE_CATEGORY + ' tag must have at most three components')
-
-        if technique:
-            o[objective][behavior][technique][rule.name] = rule
-        elif behavior:
-            o[objective][behavior][rule.name] = rule
-        elif objective:
-            o[objective][rule.name] = rule
-
-    if objectives:
-        print('\nobjectives:')
-        for objective in sorted(objectives):
-            print('  ' + objective)
-
-    if behaviors:
-        print('\nbehaviors:')
-        for behavior in sorted(behaviors):
-            print('  ' + behavior)
-
-    if techniques:
-        print('\ntechniques:')
-        for technique in sorted(techniques):
-            print('  ' + technique)
-
-    other_features = list(filter(is_other_feature_rule, rules))
-    if other_features:
-        print('\nother features:')
-        for rule in sorted(map(lambda r: r.name, other_features)):
-            print('  ' + rule)
-
-    # now, render a tree of the objectives, behaviors, techniques, and matched rule names.
-    # it will look something like:
-    #
-    #     details:
-    #       load data
-    #         load data from self
-    #           load data from resource
-    #             extract resource via API
-    #
-    # implementation note:
-    # when we enumerate the items in this tree, we have two cases:
-    #
-    #   1. usually, we'll get a pair (objective name, map of children); but its possible that
-    #   2. we'll get a pair (rule name, rule instance)
-    #
-    # this is why we do the `ininstance(..., Rule)` check below.
-    #
-    # i believe the alternative, to have separate data structures for the tree and rules,
-    # is probably more code and more confusing.
-    if o:
-        print('\ndetails:')
-        for objective, behaviors in o.items():
-            print('  ' + objective)
-
-            if isinstance(behaviors, capa.rules.Rule):
-                continue
-            for behavior, techniques in behaviors.items():
-                print('    ' + behavior)
-
-                if isinstance(techniques, capa.rules.Rule):
-                    continue
-                for technique, rules in techniques.items():
-                    print('      ' + technique)
-
-                    if isinstance(rules, capa.rules.Rule):
-                        continue
-                    for rule in rules.keys():
-                        print('        ' + rule)
-
-
-def render_capabilities_concise(results):
-    '''
-    print the matching rules, newline separated.
-
-    example:
-
-        foo
-        bar
-        mimikatz::kull_m_arc_sendrecv
-    '''
-    for rule in sorted(results.keys()):
-        print(rule)
-
-
-def render_capabilities_verbose(ruleset, results):
-    '''
-    print the matching rules, and the functions in which they matched.
-
-    example:
-
-        foo:
-          - 0x401000
-          - 0x401005
-        bar:
-          - 0x402044
-          - 0x402076
-        mimikatz::kull_m_arc_sendrecv:
-          - 0x40105d
-    '''
-    for rule, ress in results.items():
-        if ruleset.rules[rule].meta.get('capa/subscope-rule', False):
-            # don't display subscope rules
-            continue
-
-        rule_scope = ruleset.rules[rule].scope
-        if rule_scope == capa.rules.FILE_SCOPE:
-            # only display rule name at file scope
-            print('%s' % rule)
-            continue
-        print('%s:' % (rule))
-        seen = set([])
-        for (fva, _) in sorted(ress, key=lambda p: p[0]):
-            if fva in seen:
-                continue
-            print('  - 0x%x' % (fva))
-            seen.add(fva)
-
-
-def render_result(res, indent=''):
-    '''
-    render the given Result to stdout.
-
-    args:
-      res (capa.engine.Result)
-      indent (str)
-    '''
-    # prune failing branches
-    if not res.success:
-        return
-
-    if isinstance(res.statement, capa.engine.Some):
-        if res.statement.count == 0:
-            # we asked for optional, so we'll match even if no children matched.
-            # but in this case, its not worth rendering the optional node.
-            if sum(map(lambda c: c.success, res.children)) > 0:
-                print('%soptional:' % indent)
-        else:
-            print('%s%d or more' % (indent, res.statement.count))
-    elif not isinstance(res.statement, (capa.features.Feature, capa.engine.Range, capa.engine.Regex)):
-        # when rending a structural node (and/or/not),
-        #  then we only care about the node name.
-        #
-        # for example:
-        #
-        #     and:
-        #       Number(0x3136b0): True
-        #       Number(0x3136b0): True
-        print('%s%s:' % (indent, res.statement.name.lower()))
-    else:
-        # but when rendering a Feature, want to see any arguments to it
-        #
-        # for example:
-        #
-        #     Number(0x3136b0): True
-        print('%s%s:' % (indent, res.statement))
-        for location in sorted(res.locations):
-            print('%s  - virtual address: 0x%x' % (indent, location))
-
-    for children in res.children:
-        render_result(children, indent=indent + '  ')
-
-
-def render_capabilities_vverbose(ruleset, results):
-    '''
-    print the matching rules, the functions in which they matched,
-      and the logic tree with annotated matching features.
-
-    example:
-
-        function mimikatz::kull_m_arc_sendrecv:
-          - 0x40105d
-              Or:
-                And:
-                  string("ACR  > "):
-                    - virtual address: 0x401089
-                  number(0x3136b0):
-                    - virtual address: 0x4010c8
-    '''
-    for rule, ress in results.items():
-        if ruleset.rules[rule].meta.get('capa/subscope-rule', False):
-            # don't display subscope rules
-            continue
-
-        print('rule %s:' % (rule))
-        for (va, res) in sorted(ress, key=lambda p: p[0]):
-            rule_scope = ruleset.rules[rule].scope
-            if rule_scope == capa.rules.FILE_SCOPE:
-                # does not make sense to display va at file scope
-                print('  - %s:' % rule_scope)
-            else:
-                print('  - %s 0x%x:' % (rule_scope, va))
-            render_result(res, indent='      ')
 
 
 def has_rule_with_namespace(rules, capabilities, rule_cat):
@@ -638,6 +337,8 @@ def main(argv=None):
                         help='Path to rule file or directory, use embedded rules by default')
     parser.add_argument('-t', '--tag', type=str,
                         help='Filter on rule meta field values')
+    parser.add_argument('--version', action='store_true',
+                        help='Print the executable version and exit')
     parser.add_argument('-j', '--json', action='store_true',
                         help='Emit JSON instead of text')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -651,6 +352,10 @@ def main(argv=None):
     parser.add_argument('-f', '--format', choices=[f[0] for f in formats], default='auto',
                         help='Select sample format, %s' % format_help)
     args = parser.parse_args(args=argv)
+
+    if args.version:
+        print(capa.version.__version__)
+        return 0
 
     if args.quiet:
         logging.basicConfig(level=logging.ERROR)
@@ -739,7 +444,7 @@ def main(argv=None):
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose):
+        if not (args.verbose or args.vverbose or args.json):
             return -1
 
     # colorama will detect:
