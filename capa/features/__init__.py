@@ -63,12 +63,6 @@ class Characteristic(Feature):
         super(Characteristic, self).__init__([name])
         self.name = name
 
-    def evaluate(self, ctx):
-        return super(Characteristic, self).evaluate(ctx)
-
-    def __str__(self):
-        return 'characteristic(%s)' % (self.name)
-
     def freeze_serialize(self):
         # in an older version of capa, characteristics could theoretically match non-existence (value=False).
         # but we found this was never used (and better expressed with `not: characteristic: ...`).
