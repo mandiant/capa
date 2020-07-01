@@ -1,11 +1,19 @@
 import codecs
 import logging
+import sys
 
 import capa.engine
 
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
+
+
+def bytes_to_str(b):
+    if sys.version_info[0] >= 3:
+        return str(codecs.encode(b, 'hex').decode('utf-8'))
+    else:
+        return codecs.encode(b, 'hex')
 
 
 class Feature(object):
@@ -100,14 +108,14 @@ class Bytes(Feature):
 
     def __str__(self):
         if self.symbol:
-            return 'bytes(0x%s = %s)' % (codecs.encode(self.value, 'hex').upper(), self.symbol)
+            return 'bytes(0x%s = %s)' % (bytes_to_str(self.value).upper(), self.symbol)
         else:
-            return 'bytes(0x%s)' % (codecs.encode(self.value, 'hex').upper())
+            return 'bytes(0x%s)' % (bytes_to_str(self.value).upper())
 
     def freeze_serialize(self):
         return (self.__class__.__name__,
-                map(lambda x: codecs.encode(x, 'hex').upper(), self.args))
+                [bytes_to_str(x).upper() for x in self.args])
 
     @classmethod
     def freeze_deserialize(cls, args):
-        return cls(*map(lambda x: codecs.decode(x, 'hex'), args))
+        return cls(*[codecs.decode(x, 'hex') for x in args])
