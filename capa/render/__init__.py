@@ -1,6 +1,7 @@
 import json
 import six
 
+import capa.rules
 import capa.engine
 
 
@@ -148,6 +149,9 @@ def convert_match_to_result_document(rules, capabilities, result):
     # logic expression, like `and`, don't have locations - their children do.
     # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.Feature):
+        if bool(result.success):
+            doc['locations'] = result.locations
+    elif isinstance(result.statement, capa.rules.Range):
         if bool(result.success):
             doc['locations'] = result.locations
 
