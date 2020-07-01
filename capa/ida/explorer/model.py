@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, Qt
 from collections import deque
 
+import capa.render.utils as rutils
+
 import idaapi
 import idc
 
@@ -296,25 +298,6 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         return item.childCount()
 
-    def capa_capability_rules(self, doc):
-        """ enumerate the rules in (namespace, name) order that are 'capability'
-        rules (not lib/subscope/disposition/etc) """
-        for (_, _, rule) in sorted(
-                map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
-            if rule['meta'].get('lib'):
-                continue
-            if rule['meta'].get('capa/subscope'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion-ov'):
-                continue
-            if rule['meta'].get('maec/malware-category'):
-                continue
-            if rule['meta'].get('maec/malware-category-ov'):
-                continue
-            yield rule
-
     def render_capa_doc_statement_node(self, parent, statement, doc):
         """ render capa statement read from doc
 
@@ -410,7 +393,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """
         self.beginResetModel()
 
-        for rule in self.capa_capability_rules(doc):
+        for rule in rutils.capability_rules(doc):
             parent = CapaExplorerRuleItem(self.root_node, rule['meta']['name'], len(rule['matches']), rule['source'])
 
             for (location, match) in doc[rule['meta']['name']]['matches'].items():

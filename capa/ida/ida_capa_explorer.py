@@ -14,6 +14,7 @@ import capa.main
 import capa.rules
 import capa.features.extractors.ida
 import capa.ida.helpers
+import capa.render.utils as rutils
 
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
@@ -381,41 +382,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info('render views completed.')
 
-    def capa_capability_rules(self, doc):
-        """ """
-        for (_, _, rule) in sorted(
-                map(lambda rule: (rule['meta']['namespace'], rule['meta']['name'], rule), doc.values())):
-            if rule['meta'].get('lib'):
-                continue
-            if rule['meta'].get('capa/subscope'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion-ov'):
-                continue
-            if rule['meta'].get('maec/malware-category'):
-                continue
-            if rule['meta'].get('maec/malware-category-ov'):
-                continue
-            yield rule
-
     def render_capa_doc_summary(self, doc):
         """ """
-        for (row, rule) in enumerate(self.capa_capability_rules(doc)):
-            if rule['meta'].get('lib'):
-                continue
-            if rule['meta'].get('capa/subscope'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion'):
-                continue
-            if rule['meta'].get('maec/analysis-conclusion-ov'):
-                continue
-            if rule['meta'].get('maec/malware-category'):
-                continue
-            if rule['meta'].get('maec/malware-category-ov'):
-                continue
-
+        for (row, rule) in enumerate(rutils.capability_rules(doc)):
             count = len(rule['matches'])
+
             if count == 1:
                 capability = rule['meta']['name']
             else:
@@ -432,7 +403,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def render_capa_doc_mitre_summary(self, doc):
         """ """
         tactics = collections.defaultdict(set)
-        for rule in self.capa_capability_rules(doc):
+        for rule in rutils.capability_rules(doc):
             if not rule['meta'].get('att&ck'):
                 continue
 
