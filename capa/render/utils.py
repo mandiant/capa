@@ -17,6 +17,11 @@ def hex(n):
     return '0x%X' % n
 
 
+def hex_string(h):
+    """ render hex string e.g. "0a40b1" as "0A 40 B1" """
+    return ' '.join(h[i:i + 2] for i in range(0, len(h), 2)).upper()
+
+
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
     for (_, _, rule) in sorted(map(lambda rule: (rule['meta'].get('namespace', ''), rule['meta']['name'], rule), doc.values())):
