@@ -43,8 +43,10 @@ def test_some():
     assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}}) == False
     assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}}) == False
     assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
-    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}) == True
-    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}, Number(4): {1}}) == True
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate(
+        {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}) == True
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate(
+        {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}, Number(4): {1}}) == True
 
 
 def test_complex():
@@ -118,7 +120,7 @@ def test_match_matched_rules():
                 features:
                     - number: 100
         ''')),
-         capa.rules.Rule.from_yaml(textwrap.dedent('''
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
             rule:
                 meta:
                     name: test rule2
@@ -126,15 +128,16 @@ def test_match_matched_rules():
                     - match: test rule1
         ''')),
     ]
+
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
-                                            {capa.features.insn.Number(100): {1}}, 0x0)
+                                          {capa.features.insn.Number(100): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule1') in features
     assert capa.features.MatchedRule('test rule2') in features
 
     # the ordering of the rules must not matter,
     # the engine should match rules in an appropriate order.
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(reversed(rules)),
-                                            {capa.features.insn.Number(100): {1}}, 0x0)
+                                          {capa.features.insn.Number(100): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule1') in features
     assert capa.features.MatchedRule('test rule2') in features
 
@@ -167,11 +170,11 @@ def test_regex():
         ''')),
     ]
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
-                                            {capa.features.insn.Number(100): {1}}, 0x0)
+                                          {capa.features.insn.Number(100): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule') not in features
 
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
-                                            {capa.features.String('aaaa'): {1}}, 0x0)
+                                          {capa.features.String('aaaa'): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule') not in features
 
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
@@ -179,7 +182,7 @@ def test_regex():
     assert capa.features.MatchedRule('test rule') not in features
 
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
-                                            {capa.features.String('abbbba'): {1}}, 0x0)
+                                          {capa.features.String('abbbba'): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule') in features
     assert capa.features.MatchedRule('rule with implied wildcards') in features
     assert capa.features.MatchedRule('rule with anchor') not in features
@@ -213,5 +216,57 @@ def test_regex_complex():
          ''')),
     ]
     features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
-                                            {capa.features.String(r'Hardware\Key\key with spaces\some value'): {1}}, 0x0)
+                                          {capa.features.String(r'Hardware\Key\key with spaces\some value'): {1}}, 0x0)
     assert capa.features.MatchedRule('test rule') in features
+
+
+def test_match_namespace():
+    rules = [
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                rule:
+                    meta:
+                        name: CreateFile API
+                        namespace: file/create/CreateFile
+                    features:
+                        - api: CreateFile
+            ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                rule:
+                    meta:
+                        name: WriteFile API
+                        namespace: file/write
+                    features:
+                        - api: WriteFile
+            ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                    rule:
+                        meta:
+                            name: file-create
+                        features:
+                            - match: file/create
+            ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+                    rule:
+                        meta:
+                            name: filesystem-any
+                        features:
+                            - match: file
+            ''')),
+    ]
+
+    features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
+                                          {capa.features.insn.API('CreateFile'): {1}},
+                                          0x0)
+    assert 'CreateFile API' in matches
+    assert 'file-create' in matches
+    assert 'filesystem-any' in matches
+    assert capa.features.MatchedRule('file') in features
+    assert capa.features.MatchedRule('file/create') in features
+    assert capa.features.MatchedRule('file/create/CreateFile') in features
+
+    features, matches = capa.engine.match(capa.engine.topologically_order_rules(rules),
+                                          {capa.features.insn.API('WriteFile'): {1}},
+                                          0x0)
+    assert 'WriteFile API' in matches
+    assert 'file-create' not in matches
+    assert 'filesystem-any' in matches
