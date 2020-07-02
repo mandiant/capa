@@ -1,6 +1,7 @@
 from collections import deque
 
 import idc
+import six
 import idaapi
 from PyQt5 import Qt, QtGui, QtCore
 
@@ -365,7 +366,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             return parent2
         elif statement["type"] == "subscope":
-            return CapaExplorerSubscopeItem(parent, statement["subscope"])
+            return CapaExplorerSubscopeItem(parent, statement[statement["type"]])
         elif statement["type"] == "regex":
             # regex is a `Statement` not a `Feature`
             # this is because it doesn't get extracted, but applies to all strings in scope.
@@ -413,11 +414,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent, match["node"]["statement"], match.get("locations", []), doc
             )
         elif match["node"]["type"] == "feature":
-            parent2 = self.render_capa_doc_feature_node(parent, match["node"]["feature"], match["locations"], doc)
+            parent2 = self.render_capa_doc_feature_node(
+                parent, match["node"]["feature"], match.get("locations", []), doc
+            )
         else:
             raise RuntimeError("unexpected node type: " + str(match["node"]["type"]))
 
-        for child in match["children"]:
+        for child in match.get("children", []):
             self.render_capa_doc_match(parent2, child, doc)
 
     def render_capa_doc(self, doc):
@@ -449,53 +452,35 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             @param feature: capa feature read from doc
 
-            "feature": {
-                "number": 2147483903,
-                "type": "number"
-            },
+            Example:
+                "feature": {
+                    "bytes": "01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46",
+                    "description": "CLSID_ShellLink",
+                    "type": "bytes"
+                }
+
+                bytes(01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_ShellLink)
         """
-        mapping = {
-            "string": "string(%s)",
-            "bytes": "bytes(%s)",
-            "api": "api(%s)",
-            "mnemonic": "mnemonic(%s)",
-            "export": "export(%s)",
-            "import": "import(%s)",
-            "section": "section(%s)",
-            "number": "number(0x%X)",
-            "offset": "offset(0x%X)",
-            "characteristic": "characteristic(%s)",
-            "match": "rule match(%s)",
-        }
-
-        """
-            "feature": {
-                "characteristic": [
-                    "loop",
-                    true
-                ],
-                "type": "characteristic"
-            },
-        """
-        if feature["type"] == "characteristic":
-            return mapping["characteristic"] % feature["characteristic"][0]
-
-        # convert bytes feature from "410ab4" to "41 0A B4"
-        if feature["type"] == "bytes":
-            return (
-                mapping["bytes"]
-                % " ".join(feature["bytes"][i : i + 2] for i in range(0, len(feature["bytes"]), 2)).upper()
-            )
-
-        try:
-            fmt = mapping[feature["type"]]
-        except KeyError:
-            raise RuntimeError("unexpected doc type: " + str(feature["type"]))
-
-        return fmt % feature[feature["type"]]
+        if feature.get("description", ""):
+            return "%s(%s = %s)" % (feature["type"], feature[feature["type"]], feature["description"])
+        else:
+            return "%s(%s)" % (feature["type"], feature[feature["type"]])
 
     def render_capa_doc_feature_node(self, parent, feature, locations, doc):
-        """ """
+        """ process capa doc feature node
+
+            @param parent: parent node to which child is assigned
+            @param feature: capa doc feature node
+            @param location: locations identified for feature
+            @param doc: capa doc
+
+            Example:
+              "feature": {
+                "description": "FILE_WRITE_DATA",
+                "number": "0x2",
+                "type": "number"
+              }
+        """
         display = self.capa_doc_feature_to_display(feature)
 
         if len(locations) == 1:
@@ -503,7 +488,6 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
-
             for location in sorted(locations):
                 self.render_capa_doc_feature(parent2, feature, location, doc)
 
@@ -515,17 +499,15 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             @param parent: parent node to which new child is assigned
             @param feature: feature read from doc
             @param doc: capa feature doc
-
-            "node": {
-                "feature": {
-                    "number": 255,
-                    "type": "number"
-                },
-                "type": "feature"
-            },
-
             @param location: address of feature
             @param display: text to display in plugin ui
+
+            Example:
+              "feature": {
+                "description": "FILE_WRITE_DATA",
+                "number": "0x2",
+                "type": "number"
+              }
         """
         instruction_view = ("bytes", "api", "mnemonic", "number", "offset")
         byte_view = ("section",)
@@ -534,17 +516,19 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         # special handling for characteristic pending type
         if feature["type"] == "characteristic":
-            if feature["characteristic"][0] in ("embedded pe",):
+            if feature[feature["type"]] in ("embedded pe",):
                 return CapaExplorerByteViewItem(parent, display, location)
 
-            if feature["characteristic"][0] in ("loop", "recursive call", "tight loop", "switch"):
+            if feature[feature["type"]] in ("loop", "recursive call", "tight loop", "switch"):
                 return CapaExplorerFeatureItem(parent, display=display)
 
             # default to instruction view
             return CapaExplorerInstructionViewItem(parent, display, location)
 
         if feature["type"] == "match":
-            return CapaExplorerRuleMatchItem(parent, display, source=doc.get(feature["match"], {}).get("source", ""))
+            return CapaExplorerRuleMatchItem(
+                parent, display, source=doc.get(feature[feature["type"]], {}).get("source", "")
+            )
 
         if feature["type"] in instruction_view:
             return CapaExplorerInstructionViewItem(parent, display, location)
