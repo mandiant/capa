@@ -317,13 +317,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if new_func_start:
             # navigated to new function - filter for function start virtual address
-            match = capa.ida.explorer.item.ea_to_hex_str(new_func_start)
+            match = capa.ida.explorer.item.location_to_hex(new_func_start)
         else:
             # navigated to virtual address not in valid function - clear filter
             match = ""
 
         # filter on virtual address to avoid updating filter string if function name is changed
         self.model_proxy.add_single_string_filter(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, match)
+        self.view_tree.resize_columns_to_content()
 
     def load_capa_results(self):
         """ """
