@@ -40,7 +40,9 @@ setuptools.setup(
     entry_points={"console_scripts": ["capa=capa.main:main",]},
     include_package_data=True,
     install_requires=requirements,
-    extras_require={"dev": ["pytest", "pytest-sugar", "pycodestyle", "black", "isort"]},
+    extras_require={
+        "dev": ["pytest", "pytest-sugar", "pytest-instafail", "pytest-cov", "pycodestyle", "black", "isort"]
+    },
     zip_safe=False,
     keywords="capa",
     classifiers=[
