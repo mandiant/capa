@@ -347,6 +347,8 @@ def build_statements(d, scope):
             return Range(feature, min=min, max=max)
         else:
             raise InvalidRule("unexpected range: %s" % (count))
+    elif key == "string" and not isinstance(d[key], six.string_types):
+        raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
     elif key == "string" and d[key].startswith("/") and (d[key].endswith("/") or d[key].endswith("/i")):
         try:
             return Regex(d[key])
