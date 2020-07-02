@@ -1,6 +1,6 @@
 # -*- mode: python -*-
-
-block_cipher = None
+import os.path
+import wcwidth
 
 a = Analysis(
     ['../capa/main.py'],
@@ -8,6 +8,13 @@ a = Analysis(
     binaries=None,
     datas=[
         ('../rules', 'rules'),
+        # capa.render.default uses tabulate that depends on wcwidth.
+        # it seems wcwidth uses a json file `version.json`
+        # and this doesn't get picked up by pyinstaller automatically.
+        # so we manually embed the wcwidth resources here.
+        #
+        # ref: https://stackoverflow.com/a/62278462/87207
+        (os.path.dirname(wcwidth.__file__), 'wcwidth')
     ],
     hiddenimports=[
         # vivisect does manual/runtime importing of its modules,
@@ -145,17 +152,14 @@ a = Analysis(
         # since we don't spawn a notebook, we can safely remove these.
         "IPython",
         "ipywidgets",
-    ],
-    win_no_prefer_redirects=None,
-    win_private_assemblies=None,
-    cipher=block_cipher)
+    ])
 
 a.binaries = a.binaries - TOC([
  ('tcl85.dll', None, None),
  ('tk85.dll', None, None),
  ('_tkinter', None, None)])
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data)
 
 exe = EXE(pyz,
           a.scripts,
