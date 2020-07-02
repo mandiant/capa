@@ -535,6 +535,9 @@ class Rule(object):
         if isinstance(statements[0], capa.engine.Subscope):
             raise InvalidRule("top level statement may not be a subscope")
 
+        if scope not in SUPPORTED_FEATURES.keys():
+            raise InvalidRule("{:s} is not a supported scope".format(scope))
+
         return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], s)
 
     @classmethod
