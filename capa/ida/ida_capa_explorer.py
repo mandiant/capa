@@ -370,11 +370,11 @@ class CapaExplorerForm(idaapi.PluginForm):
             "sample": {
                 "md5": idautils.GetInputFileMD5(),
                 # "sha1" not easily accessible
-                # "sha256" not easily accessible
+                "sha256": idaapi.retrieve_input_file_sha256(),
                 "path": idaapi.get_input_file_path(),
             },
             "analysis": {
-                # "format" is difficult to determine via IDAPython
+                "format": idaapi.get_file_type_name(),
                 "extractor": "ida",
             },
         }
