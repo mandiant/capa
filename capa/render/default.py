@@ -7,6 +7,7 @@ import capa.render.utils as rutils
 
 tabulate.PRESERVE_WHITESPACE = True
 
+
 def width(s, character_count):
     """pad the given string to at least `character_count`"""
     if len(s) < character_count:
@@ -16,10 +17,7 @@ def width(s, character_count):
 
 
 def render_meta(doc, ostream):
-    rows = [(
-        rutils.bold("Capa Report for"),
-        rutils.bold(doc["meta"]["sample"]["md5"]),
-    )]
+    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
 
     for k in ("timestamp", "version"):
         rows.append((width(k, 22), width(doc["meta"][k], 60)))
