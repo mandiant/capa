@@ -51,6 +51,7 @@ def find_function_capabilities(ruleset, extractor, f):
 
         for feature, va in extractor.extract_basic_block_features(f, bb):
             bb_features[feature].add(va)
+            function_features[feature].add(va)
 
         for insn in extractor.get_instructions(f, bb):
             for feature, va in extractor.extract_insn_features(f, bb, insn):
