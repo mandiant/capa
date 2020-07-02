@@ -41,18 +41,19 @@ def render_statement(ostream, match, statement, indent=0):
         # so, we have to inline some of the feature rendering here.
 
         child = statement['child']
-        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
-            feature = '%s(%s)' % (child['type'], rutils.bold2(child[child['type']]))
+        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
+            value = rutils.bold2(child[child['type']])
         elif child['type'] in ('number', 'offset'):
-            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex(child[child['type']])))
+            value = rutils.bold2(rutils.hex(child[child['type']]))
         elif child['type'] == 'bytes':
-            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex_string(child[child['type']])))
-        elif child['type'] == 'characteristic':
-            feature = 'characteristic(%s)' % (rutils.bold2(child['characteristic'][0]))
+            value = rutils.bold2(rutils.hex_string(child[child['type']]))
         else:
             raise RuntimeError('unexpected feature type: ' + str(child))
 
-        ostream.write('count(%s): ' % feature)
+        if child['description']:
+            ostream.write('count(%s(%s = %s)): ' % (child['type'], value, child['description']))
+        else:
+            ostream.write('count(%s(%s)): ' % (child['type'], value))
 
         if statement['max'] == statement['min']:
             ostream.write('%d' % (statement['min']))
@@ -80,7 +81,7 @@ def render_statement(ostream, match, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write('  ' * indent)
 
-    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match'):
+    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
         ostream.write(feature['type'])
         ostream.write(': ')
         ostream.write(rutils.bold2(feature[feature['type']]))
@@ -93,14 +94,15 @@ def render_feature(ostream, match, feature, indent=0):
         # bytes is the uppercase, hex-encoded string.
         # it should always be an even number of characters (its hex).
         ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
-    elif feature['type'] == 'characteristic':
-        ostream.write('characteristic(%s)' % (rutils.bold2(feature['characteristic'][0])))
     # note that regex is found in `render_statement`
     else:
         raise RuntimeError('unexpected feature type: ' + str(feature))
 
-    render_locations(ostream, match)
+    if 'description' in feature:
+        ostream.write(' = ')
+        ostream.write(feature['description'])
 
+    render_locations(ostream, match)
     ostream.write('\n')
 
 

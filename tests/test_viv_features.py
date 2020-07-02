@@ -116,7 +116,7 @@ def test_offset_features(mimikatz):
 
 def test_nzxor_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x410DFC))
-    assert capa.features.Characteristic('nzxor', True) in features  # 0x0410F0B
+    assert capa.features.Characteristic('nzxor') in features  # 0x0410F0B
 
 
 def get_bb_insn(f, va):
@@ -154,7 +154,7 @@ def test_mnemonic_features(mimikatz):
 
 def test_peb_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
     features = extract_function_features(viv_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.vw, 0xABA6FEC))
-    assert capa.features.Characteristic('peb access', True) in features
+    assert capa.features.Characteristic('peb access') in features
 
 
 def test_file_section_name_features(mimikatz):
@@ -170,7 +170,7 @@ def test_tight_loop_features(mimikatz):
         if bb.va != 0x402F8E:
             continue
         features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic('tight loop', True) in features
+        assert capa.features.Characteristic('tight loop') in features
         assert capa.features.basicblock.BasicBlock() in features
 
 
@@ -180,7 +180,7 @@ def test_tight_loop_bb_features(mimikatz):
         if bb.va != 0x402F8E:
             continue
         features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic('tight loop', True) in features
+        assert capa.features.Characteristic('tight loop') in features
         assert capa.features.basicblock.BasicBlock() in features
 
 
@@ -202,17 +202,17 @@ def test_file_import_name_features(mimikatz):
 
 def test_cross_section_flow_features(sample_a198216798ca38f280dc413f8c57f2c2):
     features = extract_function_features(viv_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.vw, 0x4014D0))
-    assert capa.features.Characteristic('cross section flow', True) in features
+    assert capa.features.Characteristic('cross section flow') in features
 
     # this function has calls to some imports,
     # which should not trigger cross-section flow characteristic
     features = extract_function_features(viv_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.vw, 0x401563))
-    assert capa.features.Characteristic('cross section flow', True) not in features
+    assert capa.features.Characteristic('cross section flow') not in features
 
 
 def test_segment_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
     features = extract_function_features(viv_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.vw, 0xABA6FEC))
-    assert capa.features.Characteristic('fs access', True) in features
+    assert capa.features.Characteristic('fs access') in features
 
 
 def test_thunk_features(sample_9324d1a8ae37a36ae560c37448c9705a):
@@ -223,36 +223,36 @@ def test_thunk_features(sample_9324d1a8ae37a36ae560c37448c9705a):
 
 def test_file_embedded_pe(pma_lab_12_04):
     features = extract_file_features(pma_lab_12_04.vw, pma_lab_12_04.path)
-    assert capa.features.Characteristic('embedded pe', True) in features
+    assert capa.features.Characteristic('embedded pe') in features
 
 
 def test_stackstring_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x4556E5))
-    assert capa.features.Characteristic('stack string', True) in features
+    assert capa.features.Characteristic('stack string') in features
 
 
 def test_switch_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x409411))
-    assert capa.features.Characteristic('switch', True) in features
+    assert capa.features.Characteristic('switch') in features
 
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x409393))
-    assert capa.features.Characteristic('switch', True) not in features
+    assert capa.features.Characteristic('switch') not in features
 
 
 def test_recursive_call_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
     features = extract_function_features(viv_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.vw, 0x10003100))
-    assert capa.features.Characteristic('recursive call', True) in features
+    assert capa.features.Characteristic('recursive call') in features
 
     features = extract_function_features(viv_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.vw, 0x10007B00))
-    assert capa.features.Characteristic('recursive call', True) not in features
+    assert capa.features.Characteristic('recursive call') not in features
 
 
 def test_loop_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
     features = extract_function_features(viv_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.vw, 0x10003D30))
-    assert capa.features.Characteristic('loop', True) in features
+    assert capa.features.Characteristic('loop') in features
 
     features = extract_function_features(viv_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.vw, 0x10007250))
-    assert capa.features.Characteristic('loop', True) not in features
+    assert capa.features.Characteristic('loop') not in features
 
 
 def test_file_string_features(sample_bfb9b5391a13d0afd787e87ab90f14f5):
@@ -263,20 +263,20 @@ def test_file_string_features(sample_bfb9b5391a13d0afd787e87ab90f14f5):
 
 def test_function_calls_to(sample_9324d1a8ae37a36ae560c37448c9705a):
     features = extract_function_features(viv_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.vw, 0x406F60))
-    assert capa.features.Characteristic('calls to', True) in features
-    assert len(features[capa.features.Characteristic('calls to', True)]) == 1
+    assert capa.features.Characteristic('calls to') in features
+    assert len(features[capa.features.Characteristic('calls to')]) == 1
 
 
 def test_function_calls_to64(sample_lab21_01):
     features = extract_function_features(viv_utils.Function(sample_lab21_01.vw, 0x1400052D0))  # memcpy
-    assert capa.features.Characteristic('calls to', True) in features
-    assert len(features[capa.features.Characteristic('calls to', True)]) == 8
+    assert capa.features.Characteristic('calls to') in features
+    assert len(features[capa.features.Characteristic('calls to')]) == 8
 
 
 def test_function_calls_from(sample_9324d1a8ae37a36ae560c37448c9705a):
     features = extract_function_features(viv_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.vw, 0x406F60))
-    assert capa.features.Characteristic('calls from', True) in features
-    assert len(features[capa.features.Characteristic('calls from', True)]) == 23
+    assert capa.features.Characteristic('calls from') in features
+    assert len(features[capa.features.Characteristic('calls from')]) == 23
 
 
 def test_basic_block_count(sample_9324d1a8ae37a36ae560c37448c9705a):
@@ -286,8 +286,8 @@ def test_basic_block_count(sample_9324d1a8ae37a36ae560c37448c9705a):
 
 def test_indirect_call_features(sample_a933a1a402775cfa94b6bee0963f4b46):
     features = extract_function_features(viv_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.vw, 0xABA68A0))
-    assert capa.features.Characteristic('indirect call', True) in features
-    assert len(features[capa.features.Characteristic('indirect call', True)]) == 3
+    assert capa.features.Characteristic('indirect call') in features
+    assert len(features[capa.features.Characteristic('indirect call')]) == 3
 
 
 def test_indirect_calls_resolved(sample_c91887d861d9bd4a5872249b641bc9f9):

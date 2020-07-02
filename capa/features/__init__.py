@@ -17,10 +17,11 @@ def bytes_to_str(b):
 
 
 class Feature(object):
-    def __init__(self, args):
+    def __init__(self, args, description=None):
         super(Feature, self).__init__()
-        self.name = self.__class__.__name__
+        self.name = self.__class__.__name__.lower()
         self.args = args
+        self.description = description
 
     def __hash__(self):
         return hash((self.name, tuple(self.args)))
@@ -28,8 +29,16 @@ class Feature(object):
     def __eq__(self, other):
         return self.name == other.name and self.args == other.args
 
+    # Used to overwrite the rendering of the feature args in `__str__` and the
+    # json output
+    def get_args_str(self):
+        return ','.join(self.args)
+
     def __str__(self):
-        return '%s(%s)' % (self.name.lower(), ','.join(self.args))
+        if self.description:
+            return '%s(%s = %s)' % (self.name, self.get_args_str(), self.description)
+        else:
+            return '%s(%s)' % (self.name, self.get_args_str())
 
     def __repr__(self):
         return str(self)
@@ -50,51 +59,41 @@ class Feature(object):
 
 
 class MatchedRule(Feature):
-    def __init__(self, rule_name):
-        super(MatchedRule, self).__init__([rule_name])
+    def __init__(self, rule_name, description=None):
+        super(MatchedRule, self).__init__([rule_name], description)
+        self.name = 'match'
         self.rule_name = rule_name
-
-    def __str__(self):
-        return 'match(%s)' % (self.rule_name)
 
 
 class Characteristic(Feature):
-    def __init__(self, name, value=None):
-        '''
-        when `value` is not provided, this serves as descriptor for a class of characteristics.
-        this is only used internally, such as in `rules.py` when checking if a statement is
-          supported by a given scope.
-        '''
-        super(Characteristic, self).__init__([name, value])
-        self.name = name
+    def __init__(self, value, description=None):
+        super(Characteristic, self).__init__([value], description)
         self.value = value
 
-    def evaluate(self, ctx):
-        if self.value is None:
-            raise ValueError('cannot evaluate characteristc %s with empty value' % (str(self)))
-        return super(Characteristic, self).evaluate(ctx)
+    def freeze_serialize(self):
+        # in an older version of capa, characteristics could theoretically match non-existence (value=False).
+        # but we found this was never used (and better expressed with `not: characteristic: ...`).
+        # this was represented using an additional parameter for Characteristic.
+        # its been removed, but we keep it around in the freeze format to maintain backwards compatibility.
+        # this value is ignored, however.
+        return (self.__class__.__name__, [self.value, True])
 
-    def __str__(self):
-        if self.value is None:
-            return 'characteristic(%s)' % (self.name)
-        else:
-            return 'characteristic(%s(%s))' % (self.name, self.value)
+    @classmethod
+    def freeze_deserialize(cls, args):
+        # see above. we ignore the second element in the 2-tuple here.
+        return cls(args[0])
 
 
 class String(Feature):
-    def __init__(self, value):
-        super(String, self).__init__([value])
+    def __init__(self, value, description=None):
+        super(String, self).__init__([value], description)
         self.value = value
-
-    def __str__(self):
-        return 'string("%s")' % (self.value)
 
 
 class Bytes(Feature):
-    def __init__(self, value, symbol=None):
-        super(Bytes, self).__init__([value])
+    def __init__(self, value, description=None):
+        super(Bytes, self).__init__([value], description)
         self.value = value
-        self.symbol = symbol
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
@@ -106,11 +105,8 @@ class Bytes(Feature):
 
         return capa.engine.Result(False, self, [])
 
-    def __str__(self):
-        if self.symbol:
-            return 'bytes(0x%s = %s)' % (bytes_to_str(self.value).upper(), self.symbol)
-        else:
-            return 'bytes(0x%s)' % (bytes_to_str(self.value).upper())
+    def get_args_str(self):
+        return bytes_to_str(self.value).upper()
 
     def freeze_serialize(self):
         return (self.__class__.__name__,

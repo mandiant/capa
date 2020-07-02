@@ -12,23 +12,23 @@ from fixtures import *
 
 EXTRACTOR = capa.features.extractors.NullFeatureExtractor({
     'file features': [
-        (0x402345, capa.features.Characteristic('embedded pe', True)),
+        (0x402345, capa.features.Characteristic('embedded pe')),
     ],
     'functions': {
         0x401000: {
             'features': [
-                (0x401000, capa.features.Characteristic('switch', True)),
+                (0x401000, capa.features.Characteristic('switch')),
             ],
             'basic blocks': {
                 0x401000: {
                     'features': [
-                        (0x401000, capa.features.Characteristic('tight loop', True)),
+                        (0x401000, capa.features.Characteristic('tight loop')),
                     ],
                     'instructions': {
                         0x401000: {
                             'features': [
                                 (0x401000, capa.features.insn.Mnemonic('xor')),
-                                (0x401000, capa.features.Characteristic('nzxor', True)),
+                                (0x401000, capa.features.Characteristic('nzxor')),
                             ],
                         },
                         0x401002: {
@@ -57,9 +57,9 @@ def test_null_feature_extractor():
                     scope: basic block
                 features:
                     - and:
-                        - characteristic(tight loop): true
+                        - characteristic: tight loop
                         - mnemonic: xor
-                        - characteristic(nzxor): true
+                        - characteristic: nzxor
         ''')),
     ])
     capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
@@ -150,7 +150,7 @@ def test_serialize_features():
     roundtrip_feature(capa.features.insn.Offset(0x0))
     roundtrip_feature(capa.features.insn.Mnemonic('push'))
     roundtrip_feature(capa.features.file.Section('.rsrc'))
-    roundtrip_feature(capa.features.Characteristic('tight loop', True))
+    roundtrip_feature(capa.features.Characteristic('tight loop'))
     roundtrip_feature(capa.features.basicblock.BasicBlock())
     roundtrip_feature(capa.features.file.Export('BaseThreadInitThunk'))
     roundtrip_feature(capa.features.file.Import('kernel32.IsWow64Process'))

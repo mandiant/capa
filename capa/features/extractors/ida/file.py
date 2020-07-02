@@ -68,7 +68,7 @@ def extract_file_embedded_pe():
             continue
 
         for ea, _ in _ida_check_segment_for_pe(seg):
-            yield Characteristic('embedded pe', True), ea
+            yield Characteristic('embedded pe'), ea
 
 
 def extract_file_export_names():
