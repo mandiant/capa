@@ -4,6 +4,7 @@ import pytest
 
 import capa.rules
 from capa.features.insn import Number, Offset
+from capa.features import String
 
 
 def test_rule_ctor():
@@ -54,6 +55,22 @@ def test_rule_yaml_complex():
     r = capa.rules.Rule.from_yaml(rule)
     assert r.evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}) == True
     assert r.evaluate({Number(6): {1}, Number(7): {1}, Number(8): {1}}) == False
+
+
+def test_rule_yaml_descriptions():
+    rule = textwrap.dedent('''
+        rule:
+            meta:
+                name: test rule
+            features:
+                - and:
+                    - number: 1 = This is the number 1
+                    - string: This program cannot be run in DOS mode.
+                      description: MS-DOS stub message
+                    - count(number(2 = AF_INET/SOCK_DGRAM)): 2
+    ''')
+    r = capa.rules.Rule.from_yaml(rule)
+    assert r.evaluate({Number(1): {1}, Number(2): {2, 3}, String('This program cannot be run in DOS mode.'): {4}}) == True
 
 
 def test_rule_yaml_not():
