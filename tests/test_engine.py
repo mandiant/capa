@@ -41,18 +41,8 @@ def test_some():
     assert Some(1, Number(1)).evaluate({Number(0): {1}}) == False
 
     assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}}) == False
-    assert (
-        Some(2, Number(1), Number(2), Number(3)).evaluate(
-            {Number(0): {1}, Number(1): {1}}
-        )
-        == False
-    )
-    assert (
-        Some(2, Number(1), Number(2), Number(3)).evaluate(
-            {Number(0): {1}, Number(1): {1}, Number(2): {1}}
-        )
-        == True
-    )
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}}) == False
+    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
     assert (
         Some(2, Number(1), Number(2), Number(3)).evaluate(
             {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}
@@ -61,27 +51,20 @@ def test_some():
     )
     assert (
         Some(2, Number(1), Number(2), Number(3)).evaluate(
-            {
-                Number(0): {1},
-                Number(1): {1},
-                Number(2): {1},
-                Number(3): {1},
-                Number(4): {1},
-            }
+            {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}, Number(4): {1},}
         )
         == True
     )
 
 
 def test_complex():
-    assert True == Or(
-        And(Number(1), Number(2)),
-        Or(Number(3), Some(2, Number(4), Number(5), Number(6))),
-    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
+    assert True == Or(And(Number(1), Number(2)), Or(Number(3), Some(2, Number(4), Number(5), Number(6))),).evaluate(
+        {Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}
+    )
 
-    assert False == Or(
-        And(Number(1), Number(2)), Or(Number(3), Some(2, Number(4), Number(5)))
-    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
+    assert False == Or(And(Number(1), Number(2)), Or(Number(3), Some(2, Number(4), Number(5)))).evaluate(
+        {Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}
+    )
 
 
 def test_range():
@@ -119,100 +102,108 @@ def test_range():
 
 
 def test_range_exact():
-    rule = textwrap.dedent('''
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
             features:
                 - count(number(100)): 2
-    ''')
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # just enough matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # not enough matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
     # too many matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
 
 def test_range_range():
-    rule = textwrap.dedent('''
+    rule = textwrap.dedent(
+        """
          rule:
              meta:
                  name: test rule
              features:
                  - count(number(100)): (2, 3)
-     ''')
+         """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # just enough matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # enough matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # not enough matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
     # too many matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3, 4}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
 
 def test_range_exact_zero():
-    rule = textwrap.dedent('''
+    rule = textwrap.dedent(
+        """
         rule:
             meta:
                 name: test rule
             features:
                 - count(number(100)): 0
-    ''')
+        """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # feature isn't indexed - good.
     features, matches = capa.engine.match([r], {}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # feature is indexed, but no matches.
     # i don't think we should ever really have this case, but good to check anyways.
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # too many matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
 
 def test_range_with_zero():
-    rule = textwrap.dedent('''
+    rule = textwrap.dedent(
+        """
          rule:
              meta:
                  name: test rule
              features:
                  - count(number(100)): (0, 1)
-     ''')
+         """
+    )
     r = capa.rules.Rule.from_yaml(rule)
 
     # ok
     features, matches = capa.engine.match([r], {}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert 'test rule' in matches
+    assert "test rule" in matches
 
     # too many matches
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert 'test rule' not in matches
+    assert "test rule" not in matches
 
 
 def test_match_adds_matched_rule_feature():
@@ -227,9 +218,7 @@ def test_match_adds_matched_rule_feature():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    features, matches = capa.engine.match(
-        [r], {capa.features.insn.Number(100): {1}}, 0x0
-    )
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
     assert capa.features.MatchedRule("test rule") in features
 
 
@@ -261,9 +250,7 @@ def test_match_matched_rules():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.insn.Number(100): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule1") in features
     assert capa.features.MatchedRule("test rule2") in features
@@ -271,9 +258,7 @@ def test_match_matched_rules():
     # the ordering of the rules must not matter,
     # the engine should match rules in an appropriate order.
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(reversed(rules)),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(reversed(rules)), {capa.features.insn.Number(100): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule1") in features
     assert capa.features.MatchedRule("test rule2") in features
@@ -319,30 +304,22 @@ def test_regex():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.insn.Number(100): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aaaa"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.String("aaaa"): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.String("aBBBBa"): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("abbbba"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.String("abbbba"): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
     assert capa.features.MatchedRule("rule with implied wildcards") in features
@@ -365,9 +342,7 @@ def test_regex_ignorecase():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.String("aBBBBa"): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
 
@@ -446,9 +421,7 @@ def test_match_namespace():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.API("CreateFile"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.insn.API("CreateFile"): {1}}, 0x0,
     )
     assert "CreateFile API" in matches
     assert "file-create" in matches
@@ -458,9 +431,7 @@ def test_match_namespace():
     assert capa.features.MatchedRule("file/create/CreateFile") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.API("WriteFile"): {1}},
-        0x0,
+        capa.engine.topologically_order_rules(rules), {capa.features.insn.API("WriteFile"): {1}}, 0x0,
     )
     assert "WriteFile API" in matches
     assert "file-create" not in matches

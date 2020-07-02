@@ -103,7 +103,7 @@ def extract_bb_stackstring(f, bb):
             bb (IDA BasicBlock)
     """
     if _ida_bb_contains_stackstring(f, bb):
-        yield Characteristic('stack string'), bb.start_ea
+        yield Characteristic("stack string"), bb.start_ea
 
 
 def _ida_bb_contains_tight_loop(f, bb):
@@ -133,7 +133,7 @@ def extract_bb_tight_loop(f, bb):
             bb (IDA BasicBlock)
     """
     if _ida_bb_contains_tight_loop(f, bb):
-        yield Characteristic('tight loop'), bb.start_ea
+        yield Characteristic("tight loop"), bb.start_ea
 
 
 def extract_features(f, bb):

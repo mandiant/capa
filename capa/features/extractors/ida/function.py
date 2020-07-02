@@ -29,7 +29,7 @@ def extract_function_switch(f):
             f (IDA func_t)
     """
     if _ida_function_contains_switch(f):
-        yield Characteristic('switch'), f.start_ea
+        yield Characteristic("switch"), f.start_ea
 
 
 def extract_function_calls_to(f):
@@ -39,7 +39,7 @@ def extract_function_calls_to(f):
             f (IDA func_t)
     """
     for ea in idautils.CodeRefsTo(f.start_ea, True):
-        yield Characteristic('calls to'), ea
+        yield Characteristic("calls to"), ea
 
 
 def extract_function_loop(f):
@@ -53,7 +53,7 @@ def extract_function_loop(f):
         map(lambda s: edges.append((bb.start_ea, s.start_ea)), bb.succs())
 
     if edges and loops.has_loop(edges):
-        yield Characteristic('loop'), f.start_ea
+        yield Characteristic("loop"), f.start_ea
 
 
 def extract_recursive_call(f):
@@ -64,7 +64,7 @@ def extract_recursive_call(f):
     """
     for ref in idautils.CodeRefsTo(f.start_ea, True):
         if f.contains(ref):
-            yield Characteristic('recursive call'), f.start_ea
+            yield Characteristic("recursive call"), f.start_ea
             break
 
 

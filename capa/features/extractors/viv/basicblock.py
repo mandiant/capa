@@ -39,7 +39,7 @@ def _bb_has_tight_loop(f, bb):
 def extract_bb_tight_loop(f, bb):
     """ check basic block for tight loop indicators """
     if _bb_has_tight_loop(f, bb):
-        yield Characteristic('tight loop'), bb.va
+        yield Characteristic("tight loop"), bb.va
 
 
 def _bb_has_stackstring(f, bb):
@@ -62,7 +62,7 @@ def _bb_has_stackstring(f, bb):
 def extract_stackstring(f, bb):
     """ check basic block for stackstring indicators """
     if _bb_has_stackstring(f, bb):
-        yield Characteristic('stack string'), bb.va
+        yield Characteristic("stack string"), bb.va
 
 
 def is_mov_imm_to_stack(instr):

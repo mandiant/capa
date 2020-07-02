@@ -68,11 +68,7 @@ def sample_c91887d861d9bd4a5872249b641bc9f9():
 
 @pytest.fixture
 def sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41():
-    path = os.path.join(
-        CD,
-        "data",
-        "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_",
-    )
+    path = os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_",)
     return Sample(viv_utils.getWorkspace(path), path)
 
 

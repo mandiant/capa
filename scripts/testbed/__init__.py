@@ -1,2 +1,2 @@
-FNAMES_EXTENSION = '.fnames'
-FREEZE_EXTENSION = '.frz'
+FNAMES_EXTENSION = ".fnames"
+FREEZE_EXTENSION = ".frz"

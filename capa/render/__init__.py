@@ -84,9 +84,9 @@ def convert_feature_to_result_document(feature):
             "type": "characteristic"
         },
     """
-    result = {'type': feature.name, feature.name: feature.get_args_str()}
+    result = {"type": feature.name, feature.name: feature.get_args_str()}
     if feature.description:
-        result['description'] = feature.description
+        result["description"] = feature.description
 
     return result
 
@@ -133,10 +133,10 @@ def convert_match_to_result_document(rules, capabilities, result):
     # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.Feature):
         if bool(result.success):
-            doc['locations'] = result.locations
+            doc["locations"] = result.locations
     elif isinstance(result.statement, capa.rules.Range):
         if bool(result.success):
-            doc['locations'] = result.locations
+            doc["locations"] = result.locations
 
     # if we have a `match` statement, then we're referencing another rule.
     # this could an external rule (written by a human), or

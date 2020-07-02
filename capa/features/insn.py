@@ -17,7 +17,7 @@ class Number(Feature):
         self.value = value
 
     def get_args_str(self):
-        return '0x%X' % self.value
+        return "0x%X" % self.value
 
 
 class Offset(Feature):
@@ -26,7 +26,7 @@ class Offset(Feature):
         self.value = value
 
     def get_args_str(self):
-        return '0x%X' % self.value
+        return "0x%X" % self.value
 
 
 class Mnemonic(Feature):

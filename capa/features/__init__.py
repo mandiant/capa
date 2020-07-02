@@ -32,13 +32,13 @@ class Feature(object):
     # Used to overwrite the rendering of the feature args in `__str__` and the
     # json output
     def get_args_str(self):
-        return ','.join(self.args)
+        return ",".join(self.args)
 
     def __str__(self):
         if self.description:
-            return '%s(%s = %s)' % (self.name, self.get_args_str(), self.description)
+            return "%s(%s = %s)" % (self.name, self.get_args_str(), self.description)
         else:
-            return '%s(%s)' % (self.name, self.get_args_str())
+            return "%s(%s)" % (self.name, self.get_args_str())
 
     def __repr__(self):
         return str(self)
@@ -60,7 +60,7 @@ class Feature(object):
 class MatchedRule(Feature):
     def __init__(self, rule_name, description=None):
         super(MatchedRule, self).__init__([rule_name], description)
-        self.name = 'match'
+        self.name = "match"
         self.rule_name = rule_name
 
 

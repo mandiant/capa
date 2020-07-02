@@ -139,7 +139,7 @@ class InvalidRuleSet(ValueError):
 def ensure_feature_valid_for_scope(scope, feature):
     if isinstance(feature, capa.features.Characteristic):
         if capa.features.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]:
-            raise InvalidRule('feature %s not support for scope %s' % (feature, scope))
+            raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
     elif not isinstance(feature, tuple(filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope]))):
         raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
 
@@ -205,9 +205,9 @@ def parse_feature(key):
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
         return capa.features.basicblock.BasicBlock
-    elif key == 'characteristic':
+    elif key == "characteristic":
         return capa.features.Characteristic
-    elif key == 'export':
+    elif key == "export":
         return capa.features.file.Export
     elif key == "import":
         return capa.features.file.Import
@@ -220,14 +220,16 @@ def parse_feature(key):
 
 
 def parse_description(s, value_type, description=None):
-    '''
+    """
     s can be an int or a string
-    '''
-    if value_type != 'string' and isinstance(s, str) and ' = ' in s:
+    """
+    if value_type != "string" and isinstance(s, str) and " = " in s:
         if description:
-            raise InvalidRule('unexpected value: "%s", only one description allowed (inline description with ` = `)' % s)
-        value, description = s.split(' = ', 1)
-        if description == '':
+            raise InvalidRule(
+                'unexpected value: "%s", only one description allowed (inline description with ` = `)' % s
+            )
+        value, description = s.split(" = ", 1)
+        if description == "":
             raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
     else:
         value = s
@@ -241,9 +243,10 @@ def parse_description(s, value_type, description=None):
                 raise InvalidRule('unexpected bytes value: "%s", must be a valid hex sequence' % value)
 
             if len(value) > MAX_BYTES_FEATURE_SIZE:
-                raise InvalidRule('unexpected bytes value: byte sequences must be no larger than %s bytes' %
-                                  MAX_BYTES_FEATURE_SIZE)
-        elif value_type in {'number', 'offset'}:
+                raise InvalidRule(
+                    "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
+                )
+        elif value_type in {"number", "offset"}:
             try:
                 value = parse_int(value)
             except ValueError:
@@ -254,7 +257,7 @@ def parse_description(s, value_type, description=None):
 
 def build_statements(d, scope):
     if len(d.keys()) > 2:
-        raise InvalidRule('too many statements')
+        raise InvalidRule("too many statements")
 
     key = list(d.keys())[0]
     if key == "and":
@@ -305,18 +308,18 @@ def build_statements(d, scope):
         #     - mnemonic: mov
         #
         # but here we deal with the form: `mnemonic(mov)`.
-        term, _, arg = term.partition('(')
+        term, _, arg = term.partition("(")
         Feature = parse_feature(term)
 
         if arg:
-            arg = arg[:-len(')')]
+            arg = arg[: -len(")")]
             # can't rely on yaml parsing ints embedded within strings
             # like:
             #
             #     count(offset(0xC))
             #     count(number(0x11223344))
             #     count(number(0x100 = description))
-            if term != 'string':
+            if term != "string":
                 value, description = parse_description(arg, term)
                 feature = Feature(value, description)
             else:
@@ -356,7 +359,7 @@ def build_statements(d, scope):
             )
     else:
         Feature = parse_feature(key)
-        value, description = parse_description(d[key], key, d.get('description'))
+        value, description = parse_description(d[key], key, d.get("description"))
         feature = Feature(value, description)
         ensure_feature_valid_for_scope(scope, feature)
         return feature
