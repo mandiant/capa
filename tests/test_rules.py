@@ -463,6 +463,79 @@ def test_count_offset_symbol():
     assert r.evaluate({Offset(0x100, "symbol name"): {1, 2, 3}}) == True
 
 
+def test_invalid_string_values_int():
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - string: 123
+                """
+            )
+        )
+
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - string: 0x123
+                """
+            )
+        )
+
+
+def test_explicit_string_values_int():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - string: "123"
+                    - string: "0x123"
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (String("123") in children) == True
+    assert (String("0x123") in children) == True
+
+
+def test_regex_values_always_string():
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - or:
+                            - string: /123/
+                            - string: /0x123/
+                """
+            )
+        ),
+    ]
+    features, matches = capa.engine.match(
+        capa.engine.topologically_order_rules(rules), {capa.features.String("123"): {1}}, 0x0,
+    )
+    assert capa.features.MatchedRule("test rule") in features
+
+    features, matches = capa.engine.match(
+        capa.engine.topologically_order_rules(rules), {capa.features.String("0x123"): {1}}, 0x0,
+    )
+    assert capa.features.MatchedRule("test rule") in features
+
+
 def test_invalid_offset():
     with pytest.raises(capa.rules.InvalidRule):
         r = capa.rules.Rule.from_yaml(
