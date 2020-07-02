@@ -26,6 +26,7 @@ EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
                                     (0x401000, capa.features.Characteristic("nzxor")),
                                 ],
                             },
+                            0x401002: {"features": [(0x401002, capa.features.insn.Mnemonic("mov")),],},
                         },
                     },
                 },
