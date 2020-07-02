@@ -376,7 +376,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             "analysis": {
                 # "format" is difficult to determine via IDAPython
                 "extractor": "ida",
-            }
+            },
         }
 
         doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)

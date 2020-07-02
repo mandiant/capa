@@ -258,6 +258,7 @@ def render_default(meta, rules, capabilities):
 
 class CapaJsonObjectEncoder(json.JSONEncoder):
     """JSON encoder that emits Python sets as sorted lists"""
+
     def default(self, obj):
         if isinstance(obj, (list, dict, int, float, bool, type(None))) or isinstance(obj, six.string_types):
             return json.JSONEncoder.default(self, obj)

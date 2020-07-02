@@ -327,7 +327,7 @@ def collect_metadata(argv, path, format, extractor):
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
-    with open(path, 'rb') as f:
+    with open(path, "rb") as f:
         buf = f.read()
 
     md5.update(buf)
@@ -343,10 +343,7 @@ def collect_metadata(argv, path, format, extractor):
             "sha256": sha256.hexdigest(),
             "path": os.path.normpath(path),
         },
-        "analysis": {
-            "format": format,
-            "extractor": extractor.__class__.__name__,
-        },
+        "analysis": {"format": format, "extractor": extractor.__class__.__name__,},
     }
 
 
