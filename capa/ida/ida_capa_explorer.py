@@ -2,31 +2,24 @@ import os
 import logging
 import collections
 
-from PyQt5 import (
-    QtWidgets,
-    QtGui,
-    QtCore
-)
-
 import idaapi
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
-import capa.features.extractors.ida
 import capa.ida.helpers
 import capa.render.utils as rutils
-
+import capa.features.extractors.ida
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
-PLUGIN_NAME = 'capa explorer'
+PLUGIN_NAME = "capa explorer"
 
-logger = logging.getLogger('capa')
+logger = logging.getLogger("capa")
 
 
 class CapaExplorerIdaHooks(idaapi.UI_Hooks):
-
     def __init__(self, screen_ea_changed_hook, action_hooks):
         """ facilitate IDA UI hooks
 
@@ -78,7 +71,6 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
 
 
 class CapaExplorerForm(idaapi.PluginForm):
-
     def __init__(self):
         """ """
         super(CapaExplorerForm, self).__init__()
@@ -109,20 +101,20 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_tree.reset()
 
-        logger.info('form created.')
+        logger.info("form created.")
 
     def Show(self):
         """ """
-        return idaapi.PluginForm.Show(self, self.form_title, options=(
-            idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER
-        ))
+        return idaapi.PluginForm.Show(
+            self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
+        )
 
     def OnClose(self, form):
         """ form is closed """
         self.unload_ida_hooks()
         self.ida_reset()
 
-        logger.info('form closed.')
+        logger.info("form closed.")
 
     def load_interface(self):
         """ load user interface """
@@ -165,8 +157,8 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_view_summary(self):
         """ """
         table_headers = [
-            'Capability',
-            'Namespace',
+            "Capability",
+            "Namespace",
         ]
 
         table = QtWidgets.QTableWidget()
@@ -180,15 +172,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         table.setHorizontalHeaderLabels(table_headers)
         table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft)
         table.setShowGrid(False)
-        table.setStyleSheet('QTableWidget::item { padding: 25px; }')
+        table.setStyleSheet("QTableWidget::item { padding: 25px; }")
 
         self.view_summary = table
 
     def load_view_attack(self):
         """ """
         table_headers = [
-            'ATT&CK Tactic',
-            'ATT&CK Technique ',
+            "ATT&CK Tactic",
+            "ATT&CK Technique ",
         ]
 
         table = QtWidgets.QTableWidget()
@@ -202,13 +194,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         table.setHorizontalHeaderLabels(table_headers)
         table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft)
         table.setShowGrid(False)
-        table.setStyleSheet('QTableWidget::item { padding: 25px; }')
+        table.setStyleSheet("QTableWidget::item { padding: 25px; }")
 
         self.view_attack = table
 
     def load_view_checkbox_limit_by(self):
         """ """
-        check = QtWidgets.QCheckBox('Limit results to current function')
+        check = QtWidgets.QCheckBox("Limit results to current function")
         check.setChecked(False)
         check.stateChanged.connect(self.slot_checkbox_limit_by_changed)
 
@@ -231,7 +223,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         tab = QtWidgets.QWidget()
         tab.setLayout(layout)
 
-        self.view_tabs.addTab(tab, 'Tree View')
+        self.view_tabs.addTab(tab, "Tree View")
 
     def load_view_summary_tab(self):
         """ """
@@ -241,7 +233,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         tab = QtWidgets.QWidget()
         tab.setLayout(layout)
 
-        self.view_tabs.addTab(tab, 'Summary')
+        self.view_tabs.addTab(tab, "Summary")
 
     def load_view_attack_tab(self):
         """ """
@@ -251,16 +243,16 @@ class CapaExplorerForm(idaapi.PluginForm):
         tab = QtWidgets.QWidget()
         tab.setLayout(layout)
 
-        self.view_tabs.addTab(tab, 'MITRE')
+        self.view_tabs.addTab(tab, "MITRE")
 
     def load_file_menu(self):
         """ load file menu actions """
         actions = (
-            ('Reset view', 'Reset plugin view', self.reset),
-            ('Run analysis', 'Run capa analysis on current database', self.reload),
+            ("Reset view", "Reset plugin view", self.reset),
+            ("Run analysis", "Run capa analysis on current database", self.reload),
         )
 
-        menu = self.view_menu_bar.addMenu('File')
+        menu = self.view_menu_bar.addMenu("File")
 
         for name, _, handle in actions:
             action = QtWidgets.QAction(name, self.parent)
@@ -271,8 +263,8 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_ida_hooks(self):
         """ """
         action_hooks = {
-            'MakeName': self.ida_hook_rename,
-            'EditFunction': self.ida_hook_rename,
+            "MakeName": self.ida_hook_rename,
+            "EditFunction": self.ida_hook_rename,
         }
 
         self.ida_hooks = CapaExplorerIdaHooks(self.ida_hook_screen_ea_changed, action_hooks)
@@ -300,10 +292,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if post:
             # post action update data model w/ current name
-            self.model_data.update_function_name(meta.get('prev_name', ''), curr_name)
+            self.model_data.update_function_name(meta.get("prev_name", ""), curr_name)
         else:
             # pre action so save current name for replacement later
-            meta['prev_name'] = curr_name
+            meta["prev_name"] = curr_name
 
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
         """ """
@@ -328,21 +320,21 @@ class CapaExplorerForm(idaapi.PluginForm):
             match = capa.ida.explorer.item.ea_to_hex_str(new_func_start)
         else:
             # navigated to virtual address not in valid function - clear filter
-            match = ''
+            match = ""
 
         # filter on virtual address to avoid updating filter string if function name is changed
         self.model_proxy.add_single_string_filter(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, match)
 
     def load_capa_results(self):
         """ """
-        logger.info('-' * 80)
-        logger.info(' Using default embedded rules.')
-        logger.info(' ')
-        logger.info(' You can see the current default rule set here:')
-        logger.info('     https://github.com/fireeye/capa-rules')
-        logger.info('-' * 80)
+        logger.info("-" * 80)
+        logger.info(" Using default embedded rules.")
+        logger.info(" ")
+        logger.info(" You can see the current default rule set here:")
+        logger.info("     https://github.com/fireeye/capa-rules")
+        logger.info("-" * 80)
 
-        rules_path = os.path.join(os.path.dirname(self.file_loc), '../..', 'rules')
+        rules_path = os.path.join(os.path.dirname(self.file_loc), "../..", "rules")
         rules = capa.main.get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
         capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
@@ -350,27 +342,30 @@ class CapaExplorerForm(idaapi.PluginForm):
         # support binary files specifically for x86/AMD64 shellcode
         # warn user binary file is loaded but still allow capa to process it
         # TODO: check specific architecture of binary files based on how user configured IDA processors
-        if idaapi.get_file_type_name() == 'Binary file':
-            logger.warning('-' * 80)
-            logger.warning(' Input file appears to be a binary file.')
-            logger.warning(' ')
+        if idaapi.get_file_type_name() == "Binary file":
+            logger.warning("-" * 80)
+            logger.warning(" Input file appears to be a binary file.")
+            logger.warning(" ")
             logger.warning(
-                ' capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA.')
+                " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
+            )
             logger.warning(
-                ' This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64.')
-            logger.warning(' If you don\'t know the input file type, you can try using the `file` utility to guess it.')
-            logger.warning('-' * 80)
+                " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
+            )
+            logger.warning(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+            logger.warning("-" * 80)
 
-            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+            capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
         if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
-            capa.ida.helpers.inform_user_ida_ui('capa encountered warnings during analysis')
+            capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-        logger.info('analysis completed.')
+        logger.info("analysis completed.")
 
         doc = capa.render.convert_capabilities_to_result_document(rules, capabilities)
 
         import json
+
         with open("C:\\Users\\spring\\Desktop\\hmm.json", "w") as twitter_data_file:
             json.dump(doc, twitter_data_file, indent=4, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder)
 
@@ -380,7 +375,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.set_view_tree_default_sort_order()
 
-        logger.info('render views completed.')
+        logger.info("render views completed.")
 
     def set_view_tree_default_sort_order(self):
         """ """
@@ -389,17 +384,17 @@ class CapaExplorerForm(idaapi.PluginForm):
     def render_capa_doc_summary(self, doc):
         """ """
         for (row, rule) in enumerate(rutils.capability_rules(doc)):
-            count = len(rule['matches'])
+            count = len(rule["matches"])
 
             if count == 1:
-                capability = rule['meta']['name']
+                capability = rule["meta"]["name"]
             else:
-                capability = '%s (%d matches)' % (rule['meta']['name'], count)
+                capability = "%s (%d matches)" % (rule["meta"]["name"], count)
 
             self.view_summary.setRowCount(row + 1)
 
             self.view_summary.setItem(row, 0, self.render_new_table_header_item(capability))
-            self.view_summary.setItem(row, 1, QtWidgets.QTableWidgetItem(rule['meta']['namespace']))
+            self.view_summary.setItem(row, 1, QtWidgets.QTableWidgetItem(rule["meta"]["namespace"]))
 
         # resize columns to content
         self.view_summary.resizeColumnsToContents()
@@ -408,17 +403,17 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         tactics = collections.defaultdict(set)
         for rule in rutils.capability_rules(doc):
-            if not rule['meta'].get('att&ck'):
+            if not rule["meta"].get("att&ck"):
                 continue
 
-            for attack in rule['meta']['att&ck']:
-                tactic, _, rest = attack.partition('::')
-                if '::' in rest:
-                    technique, _, rest = rest.partition('::')
-                    subtechnique, _, id = rest.rpartition(' ')
+            for attack in rule["meta"]["att&ck"]:
+                tactic, _, rest = attack.partition("::")
+                if "::" in rest:
+                    technique, _, rest = rest.partition("::")
+                    subtechnique, _, id = rest.rpartition(" ")
                     tactics[tactic].add((technique, subtechnique, id))
                 else:
-                    technique, _, id = rest.rpartition(' ')
+                    technique, _, id = rest.rpartition(" ")
                     tactics[tactic].add((technique, id))
 
         column_one = []
@@ -426,17 +421,17 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         for tactic, techniques in sorted(tactics.items()):
             column_one.append(tactic.upper())
-            column_one.extend(['' for i in range(len(techniques) - 1)])
+            column_one.extend(["" for i in range(len(techniques) - 1)])
 
             for spec in sorted(techniques):
                 if len(spec) == 2:
                     technique, id = spec
-                    column_two.append('%s %s' % (technique, id))
+                    column_two.append("%s %s" % (technique, id))
                 elif len(spec) == 3:
                     technique, subtechnique, id = spec
-                    column_two.append('%s::%s %s' % (technique, subtechnique, id))
+                    column_two.append("%s::%s %s" % (technique, subtechnique, id))
                 else:
-                    raise RuntimeError('unexpected ATT&CK spec format')
+                    raise RuntimeError("unexpected ATT&CK spec format")
 
         self.view_attack.setRowCount(max(len(column_one), len(column_two)))
 
@@ -476,8 +471,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_summary.setRowCount(0)
         self.load_capa_results()
 
-        logger.info('reload complete.')
-        idaapi.info('%s reload completed.' % PLUGIN_NAME)
+        logger.info("reload complete.")
+        idaapi.info("%s reload completed." % PLUGIN_NAME)
 
     def reset(self):
         """ reset user interface elements
@@ -486,8 +481,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         self.ida_reset()
 
-        logger.info('reset completed.')
-        idaapi.info('%s reset completed.' % PLUGIN_NAME)
+        logger.info("reset completed.")
+        idaapi.info("%s reset completed." % PLUGIN_NAME)
 
     def slot_menu_bar_hovered(self, action):
         """ display menu action tooltip
@@ -496,7 +491,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             @reference: https://stackoverflow.com/questions/21725119/why-wont-qtooltips-appear-on-qactions-within-a-qmenu
         """
-        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), action.toolTip(), self.view_menu_bar, self.view_menu_bar.actionGeometry(action))
+        QtWidgets.QToolTip.showText(
+            QtGui.QCursor.pos(), action.toolTip(), self.view_menu_bar, self.view_menu_bar.actionGeometry(action)
+        )
 
     def slot_checkbox_limit_by_changed(self):
         """ slot activated if checkbox clicked
@@ -504,7 +501,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             if checked, configure function filter if screen location is located
             in function, otherwise clear filter
         """
-        match = ''
+        match = ""
         if self.view_checkbox_limit_by.isChecked():
             location = capa.ida.helpers.get_func_start_ea(idaapi.get_screen_ea())
             if location:
@@ -535,5 +532,5 @@ def main():
     CAPA_EXPLORER_FORM.Show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

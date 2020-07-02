@@ -1,9 +1,8 @@
+import sys
 import codecs
 import logging
-import sys
 
 import capa.engine
-
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
@@ -11,14 +10,14 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 
 def bytes_to_str(b):
     if sys.version_info[0] >= 3:
-        return str(codecs.encode(b, 'hex').decode('utf-8'))
+        return str(codecs.encode(b, "hex").decode("utf-8"))
     else:
-        return codecs.encode(b, 'hex')
+        return codecs.encode(b, "hex")
 
 
 def hex_string(h):
     """ render hex string e.g. "0a40b1" as "0A 40 B1" """
-    return ' '.join(h[i:i + 2] for i in range(0, len(h), 2)).upper()
+    return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
 
 
 class Feature(object):
@@ -37,13 +36,13 @@ class Feature(object):
     # Used to overwrite the rendering of the feature args in `__str__` and the
     # json output
     def get_args_str(self):
-        return ','.join(self.args)
+        return ",".join(self.args)
 
     def __str__(self):
         if self.description:
-            return '%s(%s = %s)' % (self.name, self.get_args_str(), self.description)
+            return "%s(%s = %s)" % (self.name, self.get_args_str(), self.description)
         else:
-            return '%s(%s)' % (self.name, self.get_args_str())
+            return "%s(%s)" % (self.name, self.get_args_str())
 
     def __repr__(self):
         return str(self)
@@ -55,8 +54,7 @@ class Feature(object):
         return self.__dict__
 
     def freeze_serialize(self):
-        return (self.__class__.__name__,
-                self.args)
+        return (self.__class__.__name__, self.args)
 
     @classmethod
     def freeze_deserialize(cls, args):
@@ -66,7 +64,7 @@ class Feature(object):
 class MatchedRule(Feature):
     def __init__(self, rule_name, description=None):
         super(MatchedRule, self).__init__([rule_name], description)
-        self.name = 'match'
+        self.name = "match"
         self.rule_name = rule_name
 
 
@@ -102,7 +100,7 @@ class Bytes(Feature):
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.Bytes, )):
+            if not isinstance(feature, (capa.features.Bytes,)):
                 continue
 
             if feature.value.startswith(self.value):
@@ -114,9 +112,8 @@ class Bytes(Feature):
         return hex_string(bytes_to_str(self.value))
 
     def freeze_serialize(self):
-        return (self.__class__.__name__,
-                [bytes_to_str(x).upper() for x in self.args])
+        return (self.__class__.__name__, [bytes_to_str(x).upper() for x in self.args])
 
     @classmethod
     def freeze_deserialize(cls, args):
-        return cls(*[codecs.decode(x, 'hex') for x in args])
+        return cls(*[codecs.decode(x, "hex") for x in args])

@@ -6,4 +6,4 @@ class BasicBlock(Feature):
         super(BasicBlock, self).__init__([])
 
     def __str__(self):
-        return 'basic block'
+        return "basic block"

@@ -24,29 +24,29 @@ def render_verbose(doc):
     ostream = rutils.StringIO()
 
     for rule in rutils.capability_rules(doc):
-        count = len(rule['matches'])
+        count = len(rule["matches"])
         if count == 1:
-            capability = rutils.bold(rule['meta']['name'])
+            capability = rutils.bold(rule["meta"]["name"])
         else:
-            capability = '%s (%d matches)' % (rutils.bold(rule['meta']['name']), count)
+            capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
 
         ostream.writeln(capability)
 
         rows = []
-        for key in ('namespace', 'description', 'scope'):
-            if key == 'name' or key not in rule['meta']:
+        for key in ("namespace", "description", "scope"):
+            if key == "name" or key not in rule["meta"]:
                 continue
 
-            v = rule['meta'][key]
+            v = rule["meta"][key]
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]
             rows.append((key, v))
 
-        if rule['meta']['scope'] != capa.rules.FILE_SCOPE:
-            locations = doc[rule['meta']['name']]['matches'].keys()
-            rows.append(('matches', '\n'.join(map(rutils.hex, locations))))
+        if rule["meta"]["scope"] != capa.rules.FILE_SCOPE:
+            locations = doc[rule["meta"]["name"]]["matches"].keys()
+            rows.append(("matches", "\n".join(map(rutils.hex, locations))))
 
-        ostream.writeln(tabulate.tabulate(rows, tablefmt='plain'))
-        ostream.write('\n')
+        ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+        ostream.write("\n")
 
     return ostream.getvalue()

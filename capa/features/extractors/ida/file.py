@@ -1,47 +1,51 @@
-import struct
 import pprint
+import struct
 
-import idautils
-import idaapi
 import idc
+import idaapi
+import idautils
 
-from capa.features import String
-from capa.features import Characteristic
-from capa.features.file import Section
-from capa.features.file import Export
-from capa.features.file import Import
-import capa.features.extractors.strings
 import capa.features.extractors.helpers
+import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
+from capa.features import String, Characteristic
+from capa.features.file import Export, Import, Section
 
 
 def _ida_check_segment_for_pe(seg):
-    ''' check segment for embedded PE
+    """ check segment for embedded PE
 
         adapted for IDA from:
         https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
 
         args:
             seg (IDA segment_t)
-    '''
+    """
     seg_max = seg.end_ea
-    mz_xor = [(capa.features.extractors.helpers.xor_static(b'MZ', i),
-               capa.features.extractors.helpers.xor_static(b'PE', i),
-               i)
-              for i in range(256)]
-    todo = [(capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx), mzx, pex, i) for mzx, pex, i in mz_xor]
+    mz_xor = [
+        (
+            capa.features.extractors.helpers.xor_static(b"MZ", i),
+            capa.features.extractors.helpers.xor_static(b"PE", i),
+            i,
+        )
+        for i in range(256)
+    ]
+    todo = [
+        (capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx), mzx, pex, i)
+        for mzx, pex, i in mz_xor
+    ]
     todo = [(off, mzx, pex, i) for (off, mzx, pex, i) in todo if off != idaapi.BADADDR]
 
     while len(todo):
         off, mzx, pex, i = todo.pop()
 
         # The MZ header has one field we will check e_lfanew is at 0x3c
-        e_lfanew = off + 0x3c
+        e_lfanew = off + 0x3C
 
         if seg_max < (e_lfanew + 4):
             continue
 
-        newoff = struct.unpack('<I', capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
+        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(idc.get_bytes(e_lfanew, 4), i))[0]
 
         peoff = off + newoff
         if seg_max < (peoff + 2):
@@ -56,29 +60,29 @@ def _ida_check_segment_for_pe(seg):
 
 
 def extract_file_embedded_pe():
-    ''' extract embedded PE features
+    """ extract embedded PE features
 
         IDA must load resource sections for this to be complete
             - '-R' from console
             - Check 'Load resource sections' when opening binary in IDA manually
-    '''
+    """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         if seg.is_header_segm():
             # IDA may load header segments, skip if present
             continue
 
         for ea, _ in _ida_check_segment_for_pe(seg):
-            yield Characteristic('embedded pe'), ea
+            yield Characteristic("embedded pe"), ea
 
 
 def extract_file_export_names():
-    ''' extract function exports '''
+    """ extract function exports """
     for _, _, ea, name in idautils.Entries():
         yield Export(name), ea
 
 
 def extract_file_import_names():
-    ''' extract function imports
+    """ extract function imports
 
         1. imports by ordinal:
          - modulename.#ordinal
@@ -87,25 +91,25 @@ def extract_file_import_names():
            matching:
          - modulename.importname
          - importname
-    '''
+    """
     for ea, imp_info in capa.features.extractors.ida.helpers.get_file_imports().items():
         dllname, name, ordi = imp_info
 
         if name:
-            yield Import('%s.%s' % (dllname, name)), ea
+            yield Import("%s.%s" % (dllname, name)), ea
             yield Import(name), ea
 
         if ordi:
-            yield Import('%s.#%s' % (dllname, str(ordi))), ea
+            yield Import("%s.#%s" % (dllname, str(ordi))), ea
 
 
 def extract_file_section_names():
-    ''' extract section names
+    """ extract section names
 
         IDA must load resource sections for this to be complete
             - '-R' from console
             - Check 'Load resource sections' when opening binary in IDA manually
-    '''
+    """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         if seg.is_header_segm():
             # IDA may load header segments, skip if present
@@ -115,12 +119,12 @@ def extract_file_section_names():
 
 
 def extract_file_strings():
-    ''' extract ASCII and UTF-16 LE strings
+    """ extract ASCII and UTF-16 LE strings
 
         IDA must load resource sections for this to be complete
             - '-R' from console
             - Check 'Load resource sections' when opening binary in IDA manually
-    '''
+    """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
 
@@ -132,7 +136,7 @@ def extract_file_strings():
 
 
 def extract_features():
-    ''' extract file features '''
+    """ extract file features """
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler():
             yield feature, va
@@ -151,5 +155,5 @@ def main():
     pprint.pprint(list(extract_features()))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

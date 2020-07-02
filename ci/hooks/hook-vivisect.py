@@ -10,4 +10,4 @@ from PyInstaller.utils.hooks import copy_metadata
 # this hook runs at analysis time and updates the embedded metadata.
 #
 # ref: https://github.com/pyinstaller/pyinstaller/issues/1713#issuecomment-162682084
-datas = copy_metadata('vivisect')
+datas = copy_metadata("vivisect")

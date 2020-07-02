@@ -1,11 +1,11 @@
-'''
+"""
 IDAPython script to dump JSON file of functions names { fva: fname }.
 Meant to be run on benign files with PDB information. IDA should apply function names from the PDB files automatically.
 Can also be run on annotated IDA database files.
 
 Example usage (via IDA autonomous mode):
   ida.exe -A -S_dump_fnames.py "<output path>" <sample_path>
-'''
+"""
 
 import json
 
@@ -26,7 +26,7 @@ def main():
     fnames = {}
     for f in idautils.Functions():
         fname = idc.get_name(f)
-        if fname.startswith('sub_'):
+        if fname.startswith("sub_"):
             continue
 
         name_demangled = idc.demangle_name(fname, INF_SHORT_DN_ATTR)
@@ -35,12 +35,12 @@ def main():
 
         fnames[f] = fname
 
-    with open(idc.ARGV[1], 'w') as f:
+    with open(idc.ARGV[1], "w") as f:
         json.dump(fnames, f)
 
     # exit IDA
     idc.qexit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

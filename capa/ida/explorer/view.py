@@ -1,13 +1,9 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-
-import idaapi
 import idc
+import idaapi
+from PyQt5 import QtGui, QtCore, QtWidgets
 
+from capa.ida.explorer.item import CapaExplorerRuleItem, CapaExplorerFunctionItem
 from capa.ida.explorer.model import CapaExplorerDataModel
-from capa.ida.explorer.item import (
-    CapaExplorerFunctionItem,
-    CapaExplorerRuleItem,
-)
 
 
 class CapaExplorerQtreeView(QtWidgets.QTreeView):
@@ -55,7 +51,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.doubleClicked.connect(self.slot_double_click)
         # self.clicked.connect(self.slot_click)
 
-        self.setStyleSheet('QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}')
+        self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
     def reset(self):
         """ reset user interface changes
@@ -114,8 +110,8 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             @yield QAction*
         """
         default_actions = [
-            ('Copy column', data, self.slot_copy_column),
-            ('Copy row', data, self.slot_copy_row),
+            ("Copy column", data, self.slot_copy_column),
+            ("Copy row", data, self.slot_copy_row),
         ]
 
         # add default actions
@@ -130,7 +126,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             @yield QAction*
         """
         function_actions = [
-            ('Rename function', data, self.slot_rename_function),
+            ("Rename function", data, self.slot_rename_function),
         ]
 
         # add function actions

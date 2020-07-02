@@ -2,18 +2,18 @@ import types
 
 import viv_utils
 
-import capa.features.extractors
-import capa.features.extractors.viv.file
-import capa.features.extractors.viv.function
-import capa.features.extractors.viv.basicblock
-import capa.features.extractors.viv.insn
-from capa.features.extractors import FeatureExtractor
-
 import file
+import insn
 import function
 import basicblock
-import insn
-__all__ = ['file', 'function', 'basicblock', 'insn']
+import capa.features.extractors
+import capa.features.extractors.viv.file
+import capa.features.extractors.viv.insn
+import capa.features.extractors.viv.function
+import capa.features.extractors.viv.basicblock
+from capa.features.extractors import FeatureExtractor
+
+__all__ = ["file", "function", "basicblock", "insn"]
 
 
 def get_va(self):
@@ -27,14 +27,14 @@ def get_va(self):
 
 
 def add_va_int_cast(o):
-    '''
+    """
     dynamically add a cast-to-int (`__int__`) method to the given object
     that returns the value of the `.va` property.
 
     this bit of skullduggery lets use cast viv-utils objects as ints.
     the correct way of doing this is to update viv-utils (or subclass the objects here).
-    '''
-    setattr(o, '__int__', types.MethodType(get_va, o, type(o)))
+    """
+    setattr(o, "__int__", types.MethodType(get_va, o, type(o)))
     return o
 
 

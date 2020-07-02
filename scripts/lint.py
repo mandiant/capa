@@ -1,12 +1,11 @@
-'''
+"""
 Check the given capa rules for style issues.
 
 Usage:
 
    $ python scripts/lint.py rules/
-'''
+"""
 import os
-import os.path
 import sys
 import string
 import hashlib
@@ -22,41 +21,40 @@ import capa.engine
 import capa.features
 import capa.features.insn
 
-logger = logging.getLogger('capa.lint')
+logger = logging.getLogger("capa.lint")
 
 
 class Lint(object):
-    name = 'lint'
-    recommendation = ''
+    name = "lint"
+    recommendation = ""
 
     def check_rule(self, ctx, rule):
         return False
 
 
 class NameCasing(Lint):
-    name = 'rule name casing'
-    recommendation = 'Rename rule using to start with lower case letters'
+    name = "rule name casing"
+    recommendation = "Rename rule using to start with lower case letters"
 
     def check_rule(self, ctx, rule):
-        return (rule.name[0] in string.ascii_uppercase and
-                rule.name[1] not in string.ascii_uppercase)
+        return rule.name[0] in string.ascii_uppercase and rule.name[1] not in string.ascii_uppercase
 
 
 class FilenameDoesntMatchRuleName(Lint):
-    name = 'filename doesn\'t match the rule name'
+    name = "filename doesn't match the rule name"
     recommendation = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
 
     def check_rule(self, ctx, rule):
         expected = rule.name
         expected = expected.lower()
-        expected = expected.replace(' ', '-')
-        expected = expected.replace('(', '')
-        expected = expected.replace(')', '')
-        expected = expected.replace('+', '')
-        expected = expected.replace('/', '')
-        expected = expected + '.yml'
+        expected = expected.replace(" ", "-")
+        expected = expected.replace("(", "")
+        expected = expected.replace(")", "")
+        expected = expected.replace("+", "")
+        expected = expected.replace("/", "")
+        expected = expected + ".yml"
 
-        found = os.path.basename(rule.meta['capa/path'])
+        found = os.path.basename(rule.meta["capa/path"])
 
         self.recommendation = self.recommendation.format(expected, found)
 
@@ -64,95 +62,99 @@ class FilenameDoesntMatchRuleName(Lint):
 
 
 class MissingNamespace(Lint):
-    name = 'missing rule namespace'
-    recommendation = 'Add meta.namespace so that the rule is emitted correctly'
+    name = "missing rule namespace"
+    recommendation = "Add meta.namespace so that the rule is emitted correctly"
 
     def check_rule(self, ctx, rule):
-        return ('namespace' not in rule.meta and
-                not is_nursery_rule(rule) and
-                'maec/malware-category' not in rule.meta and
-                'lib' not in rule.meta)
+        return (
+            "namespace" not in rule.meta
+            and not is_nursery_rule(rule)
+            and "maec/malware-category" not in rule.meta
+            and "lib" not in rule.meta
+        )
 
 
 class NamespaceDoesntMatchRulePath(Lint):
-    name = 'file path doesn\'t match rule namespace'
-    recommendation = 'Move rule to appropriate directory or update the namespace'
+    name = "file path doesn't match rule namespace"
+    recommendation = "Move rule to appropriate directory or update the namespace"
 
     def check_rule(self, ctx, rule):
         # let the other lints catch namespace issues
-        if 'namespace' not in rule.meta:
+        if "namespace" not in rule.meta:
             return False
         if is_nursery_rule(rule):
             return False
-        if 'maec/malware-category' in rule.meta:
+        if "maec/malware-category" in rule.meta:
             return False
-        if 'lib' in rule.meta:
+        if "lib" in rule.meta:
             return False
 
-        return rule.meta['namespace'] not in posixpath.normpath(rule.meta['capa/path'])
+        return rule.meta["namespace"] not in posixpath.normpath(rule.meta["capa/path"])
 
 
 class MissingScope(Lint):
-    name = 'missing scope'
-    recommendation = 'Add meta.scope so that the scope is explicit (defaults to `function`)'
+    name = "missing scope"
+    recommendation = "Add meta.scope so that the scope is explicit (defaults to `function`)"
 
     def check_rule(self, ctx, rule):
-        return 'scope' not in rule.meta
+        return "scope" not in rule.meta
 
 
 class InvalidScope(Lint):
-    name = 'invalid scope'
-    recommendation = 'Use only file, function, or basic block rule scopes'
+    name = "invalid scope"
+    recommendation = "Use only file, function, or basic block rule scopes"
 
     def check_rule(self, ctx, rule):
-        return rule.meta.get('scope') not in ('file', 'function', 'basic block')
+        return rule.meta.get("scope") not in ("file", "function", "basic block")
 
 
 class MissingAuthor(Lint):
-    name = 'missing author'
-    recommendation = 'Add meta.author so that users know who to contact with questions'
+    name = "missing author"
+    recommendation = "Add meta.author so that users know who to contact with questions"
 
     def check_rule(self, ctx, rule):
-        return 'author' not in rule.meta
+        return "author" not in rule.meta
 
 
 class MissingExamples(Lint):
-    name = 'missing examples'
-    recommendation = 'Add meta.examples so that the rule can be tested and verified'
+    name = "missing examples"
+    recommendation = "Add meta.examples so that the rule can be tested and verified"
 
     def check_rule(self, ctx, rule):
-        return ('examples' not in rule.meta or
-                not isinstance(rule.meta['examples'], list) or
-                len(rule.meta['examples']) == 0 or
-                rule.meta['examples'] == [None])
+        return (
+            "examples" not in rule.meta
+            or not isinstance(rule.meta["examples"], list)
+            or len(rule.meta["examples"]) == 0
+            or rule.meta["examples"] == [None]
+        )
 
 
 class MissingExampleOffset(Lint):
-    name = 'missing example offset'
-    recommendation = 'Add offset of example function'
+    name = "missing example offset"
+    recommendation = "Add offset of example function"
 
     def check_rule(self, ctx, rule):
-        if rule.meta.get('scope') in ('function', 'basic block'):
-            for example in rule.meta.get('examples', []):
-                if example and ':' not in example:
-                    logger.debug('example: %s', example)
+        if rule.meta.get("scope") in ("function", "basic block"):
+            for example in rule.meta.get("examples", []):
+                if example and ":" not in example:
+                    logger.debug("example: %s", example)
                     return True
 
 
 class ExampleFileDNE(Lint):
-    name = 'referenced example doesn\'t exist'
-    recommendation = 'Add the referenced example to samples directory ($capa-root/tests/data or supplied via --samples)'
+    name = "referenced example doesn't exist"
+    recommendation = "Add the referenced example to samples directory ($capa-root/tests/data or supplied via --samples)"
 
     def check_rule(self, ctx, rule):
-        if not rule.meta.get('examples'):
+        if not rule.meta.get("examples"):
             # let the MissingExamples lint catch this case, don't double report.
             return False
 
         found = False
-        for example in rule.meta.get('examples', []):
+        for example in rule.meta.get("examples", []):
             if example:
-                example_id = example.partition(':')[0]
-                if example_id in ctx['samples']:
+                example_id = example.partition(":")[0]
+                if example_id in ctx["samples"]:
                     found = True
                     break
 
@@ -160,27 +162,27 @@ class ExampleFileDNE(Lint):
 
 
 class DoesntMatchExample(Lint):
-    name = 'doesn\'t match on referenced example'
-    recommendation = 'Fix the rule logic or provide a different example'
+    name = "doesn't match on referenced example"
+    recommendation = "Fix the rule logic or provide a different example"
 
     def check_rule(self, ctx, rule):
-        if not ctx['is_thorough']:
+        if not ctx["is_thorough"]:
             return False
 
-        for example in rule.meta.get('examples', []):
-            example_id = example.partition(':')[0]
+        for example in rule.meta.get("examples", []):
+            example_id = example.partition(":")[0]
             try:
-                path = ctx['samples'][example_id]
+                path = ctx["samples"][example_id]
             except KeyError:
                 # lint ExampleFileDNE will catch this.
                 # don't double report.
                 continue
 
             try:
-                extractor = capa.main.get_extractor(path, 'auto')
-                capabilities = capa.main.find_capabilities(ctx['rules'], extractor, disable_progress=True)
+                extractor = capa.main.get_extractor(path, "auto")
+                capabilities = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
-                logger.error('failed to extract capabilities: %s %s %s', rule.name, path, e)
+                logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
                 return True
 
             if rule.name not in capabilities:
@@ -188,7 +190,7 @@ class DoesntMatchExample(Lint):
 
 
 class UnusualMetaField(Lint):
-    name = 'unusual meta field'
+    name = "unusual meta field"
     recommendation = 'Remove the meta field: "{:s}"'
 
     def check_rule(self, ctx, rule):
@@ -204,32 +206,32 @@ class UnusualMetaField(Lint):
 
 
 class LibRuleNotInLibDirectory(Lint):
-    name = 'lib rule not found in lib directory'
-    recommendation = 'Move the rule to the `lib` subdirectory of the rules path'
+    name = "lib rule not found in lib directory"
+    recommendation = "Move the rule to the `lib` subdirectory of the rules path"
 
     def check_rule(self, ctx, rule):
         if is_nursery_rule(rule):
             return False
 
-        if 'lib' not in rule.meta:
+        if "lib" not in rule.meta:
             return False
 
-        return '/lib/' not in posixpath.normpath(rule.meta['capa/path'])
+        return "/lib/" not in posixpath.normpath(rule.meta["capa/path"])
 
 
 class LibRuleHasNamespace(Lint):
-    name = 'lib rule has a namespace'
-    recommendation = 'Remove the namespace from the rule'
+    name = "lib rule has a namespace"
+    recommendation = "Remove the namespace from the rule"
 
     def check_rule(self, ctx, rule):
-        if 'lib' not in rule.meta:
+        if "lib" not in rule.meta:
             return False
 
-        return 'namespace' in rule.meta
+        return "namespace" in rule.meta
 
 
 class FeatureStringTooShort(Lint):
-    name = 'feature string too short'
+    name = "feature string too short"
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
 
     def check_features(self, ctx, features):
@@ -242,9 +244,11 @@ class FeatureStringTooShort(Lint):
 
 
 class FeatureNegativeNumberOrOffset(Lint):
-    name = 'feature value is negative'
-    recommendation = 'capa treats all numbers as unsigned values; you may specify the number\'s two\'s complement ' \
-                     'representation; will not match on "{:d}"'
+    name = "feature value is negative"
+    recommendation = (
+        "capa treats all numbers as unsigned values; you may specify the number's two's complement "
+        'representation; will not match on "{:d}"'
+    )
 
     def check_features(self, ctx, features):
         for feature in features:
@@ -319,7 +323,7 @@ def get_features(ctx, rule):
     # get features from rule and all dependencies including subscopes and matched rules
     features = []
     namespaces = capa.rules.index_rules_by_namespace([rule])
-    deps = [ctx['rules'].rules[dep] for dep in rule.get_dependencies(namespaces)]
+    deps = [ctx["rules"].rules[dep] for dep in rule.get_dependencies(namespaces)]
     for r in [rule] + deps:
         features.extend(get_rule_features(r))
     return features
@@ -339,9 +343,7 @@ def get_rule_features(rule):
     return features
 
 
-LOGIC_LINTS = (
-    DoesntMatchExample(),
-)
+LOGIC_LINTS = (DoesntMatchExample(),)
 
 
 def lint_logic(ctx, rule):
@@ -349,53 +351,58 @@ def lint_logic(ctx, rule):
 
 
 def is_nursery_rule(rule):
-    '''
+    """
     The nursery is a spot for rules that have not yet been fully polished.
     For example, they may not have references to public example of a technique.
     Yet, we still want to capture and report on their matches.
-    '''
-    return rule.meta.get('capa/nursery')
+    """
+    return rule.meta.get("capa/nursery")
 
 
 def lint_rule(ctx, rule):
     logger.debug(rule.name)
 
-    violations = list(itertools.chain(
-        lint_name(ctx, rule),
-        lint_scope(ctx, rule),
-        lint_meta(ctx, rule),
-        lint_logic(ctx, rule),
-        lint_features(ctx, rule),
-    ))
+    violations = list(
+        itertools.chain(
+            lint_name(ctx, rule),
+            lint_scope(ctx, rule),
+            lint_meta(ctx, rule),
+            lint_logic(ctx, rule),
+            lint_features(ctx, rule),
+        )
+    )
 
     if len(violations) > 0:
-        category = rule.meta.get('rule-category')
+        category = rule.meta.get("rule-category")
 
-        print('')
-        print('%s%s %s' % ('    (nursery) ' if is_nursery_rule(rule) else '',
-                           rule.name,
-                           ('(%s)' % category) if category else ''))
+        print("")
+        print(
+            "%s%s %s"
+            % ("    (nursery) " if is_nursery_rule(rule) else "", rule.name, ("(%s)" % category) if category else "",)
+        )
 
-        level = 'WARN' if is_nursery_rule(rule) else 'FAIL'
+        level = "WARN" if is_nursery_rule(rule) else "FAIL"
 
         for violation in violations:
-            print('%s  %s: %s: %s' % (
-                  '    ' if is_nursery_rule(rule) else '', level, violation.name, violation.recommendation))
+            print(
+                "%s  %s: %s: %s"
+                % ("    " if is_nursery_rule(rule) else "", level, violation.name, violation.recommendation,)
+            )
 
     return len(violations) > 0 and not is_nursery_rule(rule)
 
 
 def lint(ctx, rules):
-    '''
+    """
     Args:
       samples (Dict[string, string]): map from sample id to path.
         for each sample, record sample id of sha256, md5, and filename.
         see `collect_samples(path)`.
       rules (List[Rule]): the rules to lint.
-    '''
+    """
     did_suggest_fix = False
     for rule in rules.rules.values():
-        if rule.meta.get('capa/subscope-rule', False):
+        if rule.meta.get("capa/subscope-rule", False):
             continue
 
         did_suggest_fix = lint_rule(ctx, rule) or did_suggest_fix
@@ -404,27 +411,27 @@ def lint(ctx, rules):
 
 
 def collect_samples(path):
-    '''
+    """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
-    '''
+    """
     samples = {}
     for root, dirs, files in os.walk(path):
         for name in files:
-            if name.endswith('.viv'):
+            if name.endswith(".viv"):
                 continue
-            if name.endswith('.idb'):
+            if name.endswith(".idb"):
                 continue
-            if name.endswith('.i64'):
+            if name.endswith(".i64"):
                 continue
-            if name.endswith('.frz'):
+            if name.endswith(".frz"):
                 continue
-            if name.endswith('.fnames'):
+            if name.endswith(".fnames"):
                 continue
 
             path = os.path.join(root, name)
 
             try:
-                with open(path, 'rb') as f:
+                with open(path, "rb") as f:
                     buf = f.read()
             except IOError:
                 continue
@@ -448,19 +455,16 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    samples_path = os.path.join(os.path.dirname(__file__), '..', 'tests', 'data')
+    samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
 
-    parser = argparse.ArgumentParser(description='A program.')
-    parser.add_argument('rules', type=str,
-                        help='Path to rules')
-    parser.add_argument('--samples', type=str, default=samples_path,
-                        help='Path to samples')
-    parser.add_argument('--thorough', action='store_true',
-                        help='Enable thorough linting - takes more time, but does a better job')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Enable debug logging')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='Disable all output but errors')
+    parser = argparse.ArgumentParser(description="A program.")
+    parser.add_argument("rules", type=str, help="Path to rules")
+    parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
+    parser.add_argument(
+        "--thorough", action="store_true", help="Enable thorough linting - takes more time, but does a better job",
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
 
     if args.verbose:
@@ -471,42 +475,42 @@ def main(argv=None):
         level = logging.INFO
 
     logging.basicConfig(level=level)
-    logging.getLogger('capa.lint').setLevel(level)
+    logging.getLogger("capa.lint").setLevel(level)
 
     capa.main.set_vivisect_log_level(logging.CRITICAL)
-    logging.getLogger('capa').setLevel(logging.CRITICAL)
+    logging.getLogger("capa").setLevel(logging.CRITICAL)
 
     try:
         rules = capa.main.get_rules(args.rules)
         rules = capa.rules.RuleSet(rules)
-        logger.info('successfully loaded %s rules', len(rules))
+        logger.info("successfully loaded %s rules", len(rules))
     except IOError as e:
-        logger.error('%s', str(e))
+        logger.error("%s", str(e))
         return -1
     except capa.rules.InvalidRule as e:
-        logger.error('%s', str(e))
+        logger.error("%s", str(e))
         return -1
 
-    logger.info('collecting potentially referenced samples')
+    logger.info("collecting potentially referenced samples")
     if not os.path.exists(args.samples):
-        logger.error('samples path %s does not exist', args.samples)
+        logger.error("samples path %s does not exist", args.samples)
         return -1
 
     samples = collect_samples(args.samples)
 
     ctx = {
-        'samples': samples,
-        'rules': rules,
-        'is_thorough': args.thorough,
+        "samples": samples,
+        "rules": rules,
+        "is_thorough": args.thorough,
     }
 
     did_violate = lint(ctx, rules)
     if not did_violate:
-        logger.info('no suggestions, nice!')
+        logger.info("no suggestions, nice!")
         return 0
     else:
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

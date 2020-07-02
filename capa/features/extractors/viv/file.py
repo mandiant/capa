@@ -1,19 +1,16 @@
 import PE.carve as pe_carve  # vivisect PE
 
-from capa.features import Characteristic
-from capa.features.file import Export
-from capa.features.file import Import
-from capa.features.file import Section
-from capa.features import String
 import capa.features.extractors.strings
+from capa.features import String, Characteristic
+from capa.features.file import Export, Import, Section
 
 
 def extract_file_embedded_pe(vw, file_path):
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         fbytes = f.read()
 
     for offset, i in pe_carve.carve(fbytes, 1):
-        yield Characteristic('embedded pe'), offset
+        yield Characteristic("embedded pe"), offset
 
 
 def extract_file_export_names(vw, file_path):
@@ -22,21 +19,21 @@ def extract_file_export_names(vw, file_path):
 
 
 def extract_file_import_names(vw, file_path):
-    '''
+    """
     extract imported function names
     1. imports by ordinal:
      - modulename.#ordinal
     2. imports by name, results in two features to support importname-only matching:
      - modulename.importname
      - importname
-    '''
+    """
     for va, _, _, tinfo in vw.getImports():
         # vivisect source: tinfo = "%s.%s" % (libname, impname)
-        modname, impname = tinfo.split('.')
+        modname, impname = tinfo.split(".")
         if is_viv_ord_impname(impname):
             # replace ord prefix with #
-            impname = '#%s' % impname[len('ord'):]
-            tinfo = '%s.%s' % (modname, impname)
+            impname = "#%s" % impname[len("ord") :]
+            tinfo = "%s.%s" % (modname, impname)
             yield Import(tinfo), va
         else:
             yield Import(tinfo), va
@@ -44,13 +41,13 @@ def extract_file_import_names(vw, file_path):
 
 
 def is_viv_ord_impname(impname):
-    '''
+    """
     return if import name matches vivisect's ordinal naming scheme `'ord%d' % ord`
-    '''
-    if not impname.startswith('ord'):
+    """
+    if not impname.startswith("ord"):
         return False
     try:
-        int(impname[len('ord'):])
+        int(impname[len("ord") :])
     except ValueError:
         return False
     else:
@@ -63,10 +60,10 @@ def extract_file_section_names(vw, file_path):
 
 
 def extract_file_strings(vw, file_path):
-    '''
+    """
     extract ASCII and UTF-16 LE strings from file
-    '''
-    with open(file_path, 'rb') as f:
+    """
+    with open(file_path, "rb") as f:
         b = f.read()
 
     for s in capa.features.extractors.strings.extract_ascii_strings(b):
@@ -77,7 +74,7 @@ def extract_file_strings(vw, file_path):
 
 
 def extract_features(vw, file_path):
-    '''
+    """
     extract file features from given workspace
 
     args:
@@ -86,7 +83,7 @@ def extract_features(vw, file_path):
 
     yields:
       Tuple[Feature, VA]: a feature and its location.
-    '''
+    """
 
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler(vw, file_path):

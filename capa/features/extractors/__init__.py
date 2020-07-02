@@ -10,11 +10,11 @@ try:
 except (ImportError, SyntaxError):
     pass
 
-__all__ = ['ida', 'viv']
+__all__ = ["ida", "viv"]
 
 
 class FeatureExtractor(object):
-    '''
+    """
     FeatureExtractor defines the interface for fetching features from a sample.
 
     There may be multiple backends that support fetching features for capa.
@@ -27,7 +27,8 @@ class FeatureExtractor(object):
     Also, this provides a way to hook in an IDA backend.
 
     This class is not instantiated directly; it is the base class for other implementations.
-    '''
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
@@ -40,7 +41,7 @@ class FeatureExtractor(object):
 
     @abc.abstractmethod
     def extract_file_features(self):
-        '''
+        """
         extract file-scope features.
 
         example::
@@ -51,12 +52,12 @@ class FeatureExtractor(object):
 
         yields:
           Tuple[capa.features.Feature, int]: feature and its location
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def get_functions(self):
-        '''
+        """
         enumerate the functions and provide opaque values that will
          subsequently be provided to `.extract_function_features()`, etc.
 
@@ -67,12 +68,12 @@ class FeatureExtractor(object):
 
         yields:
           any: the opaque function value.
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def extract_function_features(self, f):
-        '''
+        """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
 
@@ -88,12 +89,12 @@ class FeatureExtractor(object):
 
         yields:
           Tuple[capa.features.Feature, int]: feature and its location
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def get_basic_blocks(self, f):
-        '''
+        """
         enumerate the basic blocks in the given function and provide opaque values that will
          subsequently be provided to `.extract_basic_block_features()`, etc.
 
@@ -104,12 +105,12 @@ class FeatureExtractor(object):
 
         yields:
           any: the opaque basic block value.
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def extract_basic_block_features(self, f, bb):
-        '''
+        """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
 
@@ -127,12 +128,12 @@ class FeatureExtractor(object):
 
         yields:
           Tuple[capa.features.Feature, int]: feature and its location
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def get_instructions(self, f, bb):
-        '''
+        """
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.
 
@@ -143,12 +144,12 @@ class FeatureExtractor(object):
 
         yields:
           any: the opaque function value.
-        '''
+        """
         raise NotImplemented
 
     @abc.abstractmethod
     def extract_insn_features(self, f, bb, insn):
-        '''
+        """
         extract instruction-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
 
@@ -168,12 +169,12 @@ class FeatureExtractor(object):
 
         yields:
           Tuple[capa.features.Feature, int]: feature and its location
-        '''
+        """
         raise NotImplemented
 
 
 class NullFeatureExtractor(FeatureExtractor):
-    '''
+    """
     An extractor that extracts some user-provided features.
     The structure of the single parameter is demonstrated in the example below.
 
@@ -211,64 +212,66 @@ class NullFeatureExtractor(FeatureExtractor):
                 0x40200: ...
             }
         )
-    '''
+    """
+
     def __init__(self, features):
         super(NullFeatureExtractor, self).__init__()
         self.features = features
 
     def extract_file_features(self):
-        for p in self.features.get('file features', []):
+        for p in self.features.get("file features", []):
             va, feature = p
             yield feature, va
 
     def get_functions(self):
-        for va in sorted(self.features['functions'].keys()):
+        for va in sorted(self.features["functions"].keys()):
             yield va
 
     def extract_function_features(self, f):
-        for p in (self.features  # noqa: E127 line over-indented
-                            .get('functions', {})
-                            .get(f, {})
-                            .get('features', [])):
+        for p in self.features.get("functions", {}).get(f, {}).get("features", []):  # noqa: E127 line over-indented
             va, feature = p
             yield feature, va
 
     def get_basic_blocks(self, f):
-        for va in sorted(self.features  # noqa: E127 line over-indented
-                                 .get('functions', {})
-                                 .get(f, {})
-                                 .get('basic blocks', {})
-                                 .keys()):
+        for va in sorted(
+            self.features.get("functions", {})  # noqa: E127 line over-indented
+            .get(f, {})
+            .get("basic blocks", {})
+            .keys()
+        ):
             yield va
 
     def extract_basic_block_features(self, f, bb):
-        for p in (self.features  # noqa: E127 line over-indented
-                        .get('functions', {})
-                        .get(f, {})
-                        .get('basic blocks', {})
-                        .get(bb, {})
-                        .get('features', [])):
+        for p in (
+            self.features.get("functions", {})  # noqa: E127 line over-indented
+            .get(f, {})
+            .get("basic blocks", {})
+            .get(bb, {})
+            .get("features", [])
+        ):
             va, feature = p
             yield feature, va
 
     def get_instructions(self, f, bb):
-        for va in sorted(self.features  # noqa: E127 line over-indented
-                         .get('functions', {})
-                         .get(f, {})
-                         .get('basic blocks', {})
-                         .get(bb, {})
-                         .get('instructions', {})
-                         .keys()):
+        for va in sorted(
+            self.features.get("functions", {})  # noqa: E127 line over-indented
+            .get(f, {})
+            .get("basic blocks", {})
+            .get(bb, {})
+            .get("instructions", {})
+            .keys()
+        ):
             yield va
 
     def extract_insn_features(self, f, bb, insn):
-        for p in (self.features  # noqa: E127 line over-indented
-                            .get('functions', {})
-                            .get(f, {})
-                            .get('basic blocks', {})
-                            .get(bb, {})
-                            .get('instructions', {})
-                            .get(insn, {})
-                            .get('features', [])):
+        for p in (
+            self.features.get("functions", {})  # noqa: E127 line over-indented
+            .get(f, {})
+            .get("basic blocks", {})
+            .get(bb, {})
+            .get("instructions", {})
+            .get(insn, {})
+            .get("features", [])
+        ):
             va, feature = p
             yield feature, va

@@ -7,23 +7,24 @@ import capa.features
 
 
 class Statement(object):
-    '''
+    """
     superclass for structural nodes, such as and/or/not.
     this exists to provide a default impl for `__str__` and `__repr__`,
      and to declare the interface method `evaluate`
-    '''
+    """
+
     def __init__(self):
         super(Statement, self).__init__()
         self.name = self.__class__.__name__
 
     def __str__(self):
-        return '%s(%s)' % (self.name.lower(), ','.join(map(str, self.get_children())))
+        return "%s(%s)" % (self.name.lower(), ",".join(map(str, self.get_children())))
 
     def __repr__(self):
         return str(self)
 
     def evaluate(self, ctx):
-        '''
+        """
         classes that inherit `Statement` must implement `evaluate`
 
         args:
@@ -31,30 +32,30 @@ class Statement(object):
 
         returns:
           Result
-        '''
+        """
         raise NotImplementedError()
 
     def get_children(self):
-        if hasattr(self, 'child'):
+        if hasattr(self, "child"):
             yield self.child
 
-        if hasattr(self, 'children'):
+        if hasattr(self, "children"):
             for child in self.children:
                 yield child
 
     def replace_child(self, existing, new):
-        if hasattr(self, 'child'):
+        if hasattr(self, "child"):
             if self.child is existing:
                 self.child = new
 
-        if hasattr(self, 'children'):
+        if hasattr(self, "children"):
             for i, child in enumerate(self.children):
                 if child is existing:
                     self.children[i] = new
 
 
 class Result(object):
-    '''
+    """
     represents the results of an evaluation of statements against features.
 
     instances of this class should behave like a bool,
@@ -65,15 +66,16 @@ class Result(object):
      as well as the children Result instances.
 
     we need this so that we can render the tree of expressions and their results.
-    '''
+    """
+
     def __init__(self, success, statement, children, locations=None):
-        '''
+        """
         args:
           success (bool)
           statement (capa.engine.Statement or capa.features.Feature)
           children (list[Result])
           locations (iterable[VA])
-        '''
+        """
         super(Result, self).__init__()
         self.success = success
         self.statement = statement
@@ -93,7 +95,8 @@ class Result(object):
 
 
 class And(Statement):
-    '''match if all of the children evaluate to True.'''
+    """match if all of the children evaluate to True."""
+
     def __init__(self, *children):
         super(And, self).__init__()
         self.children = list(children)
@@ -105,7 +108,8 @@ class And(Statement):
 
 
 class Or(Statement):
-    '''match if any of the children evaluate to True.'''
+    """match if any of the children evaluate to True."""
+
     def __init__(self, *children):
         super(Or, self).__init__()
         self.children = list(children)
@@ -117,7 +121,8 @@ class Or(Statement):
 
 
 class Not(Statement):
-    '''match only if the child evaluates to False.'''
+    """match only if the child evaluates to False."""
+
     def __init__(self, child):
         super(Not, self).__init__()
         self.child = child
@@ -129,7 +134,8 @@ class Not(Statement):
 
 
 class Some(Statement):
-    '''match if at least N of the children evaluate to True.'''
+    """match if at least N of the children evaluate to True."""
+
     def __init__(self, count, *children):
         super(Some, self).__init__()
         self.count = count
@@ -146,7 +152,8 @@ class Some(Statement):
 
 
 class Range(Statement):
-    '''match if the child is contained in the ctx set with a count in the given range.'''
+    """match if the child is contained in the ctx set with a count in the given range."""
+
     def __init__(self, child, min=None, max=None):
         super(Range, self).__init__()
         self.child = child
@@ -162,27 +169,28 @@ class Range(Statement):
 
     def __str__(self):
         if self.max == (1 << 64 - 1):
-            return 'range(%s, min=%d, max=infinity)' % (str(self.child), self.min)
+            return "range(%s, min=%d, max=infinity)" % (str(self.child), self.min)
         else:
-            return 'range(%s, min=%d, max=%d)' % (str(self.child), self.min, self.max)
+            return "range(%s, min=%d, max=%d)" % (str(self.child), self.min, self.max)
 
 
 class Regex(Statement):
-    '''match if the given pattern matches a String feature.'''
+    """match if the given pattern matches a String feature."""
+
     def __init__(self, pattern):
         super(Regex, self).__init__()
         self.pattern = pattern
-        pat = self.pattern[len('/'):-len('/')]
+        pat = self.pattern[len("/") : -len("/")]
         flags = re.DOTALL
-        if pattern.endswith('/i'):
-            pat = self.pattern[len('/'):-len('/i')]
+        if pattern.endswith("/i"):
+            pat = self.pattern[len("/") : -len("/i")]
             flags |= re.IGNORECASE
         self.re = re.compile(pat, flags)
-        self.match = ''
+        self.match = ""
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.String, )):
+            if not isinstance(feature, (capa.features.String,)):
                 continue
 
             # `re.search` finds a match anywhere in the given string
@@ -200,27 +208,28 @@ class Regex(Statement):
 
 
 class Subscope(Statement):
-    '''
+    """
     a subscope element is a placeholder in a rule - it should not be evaluated directly.
     the engine should preprocess rules to extract subscope statements into their own rules.
-    '''
+    """
+
     def __init__(self, scope, child):
         super(Subscope, self).__init__()
         self.scope = scope
         self.child = child
 
     def evaluate(self, ctx):
-        raise ValueError('cannot evaluate a subscope directly!')
+        raise ValueError("cannot evaluate a subscope directly!")
 
 
 def topologically_order_rules(rules):
-    '''
+    """
     order the given rules such that dependencies show up before dependents.
     this means that as we match rules, we can add features for the matches, and these
      will be matched by subsequent rules if they follow this order.
 
     assumes that the rule dependency graph is a DAG.
-    '''
+    """
     # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
     rules = list(rules)
     namespaces = capa.rules.index_rules_by_namespace(rules)
@@ -245,7 +254,7 @@ def topologically_order_rules(rules):
 
 
 def match(rules, features, va):
-    '''
+    """
     Args:
       rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
       features (Mapping[capa.features.Feature, int]):
@@ -255,7 +264,7 @@ def match(rules, features, va):
       Tuple[List[capa.features.Feature], Dict[str, Tuple[int, capa.engine.Result]]]: two-tuple with entries:
         - list of features used for matching (which may be greater than argument, due to rule match features), and
         - mapping from rule name to (location of match, result object)
-    '''
+    """
     results = collections.defaultdict(list)
 
     # copy features so that we can modify it
@@ -270,10 +279,10 @@ def match(rules, features, va):
             results[rule.name].append((va, res))
             features[capa.features.MatchedRule(rule.name)].add(va)
 
-            namespace = rule.meta.get('namespace')
+            namespace = rule.meta.get("namespace")
             if namespace:
                 while namespace:
                     features[capa.features.MatchedRule(namespace)].add(va)
-                    namespace, _, _ = namespace.rpartition('/')
+                    namespace, _, _ = namespace.rpartition("/")
 
     return (features, results)
