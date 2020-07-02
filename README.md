@@ -54,12 +54,12 @@ $ capa.exe suspicious.exe
 
 # download
 
-Download stable releases of the standalone capa binaries [here](/releases) or get the nightly builds here:
+Download stable releases of the standalone capa binaries [here](/releases). You can run the standalone binaries without installation. See [doc/installation.md](doc/installation.md) for details on using capa as a library in another project.
+
+Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
 - Windows 64bit: TODO
 - Linux: TODO
 - OSX: TODO
-You can run the standalone binaries without installation. See [doc/installation.md](doc/installation.md) for details on using capa as a library in another project.
-
 
 # contents
 
