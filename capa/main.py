@@ -511,10 +511,11 @@ def main(argv=None):
 
 
 def ida_main():
+    import capa.ida.helpers
+    import capa.features.extractors.ida
+
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-
-    import capa.ida.helpers
 
     if not capa.ida.helpers.is_supported_file_type():
         return -1
@@ -536,18 +537,15 @@ def ida_main():
         logger.debug("default rule path (source method): %s", rules_path)
 
     rules = get_rules(rules_path)
-    import capa.rules
-
     rules = capa.rules.RuleSet(rules)
-
-    import capa.features.extractors.ida
 
     capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-    render_capabilities_default(rules, capabilities)
+    meta = capa.ida.helpers.collect_metadata()
+    print(capa.render.render_default(meta, rules, capabilities))
 
 
 def is_runtime_ida():

@@ -1,7 +1,9 @@
 import logging
+import datetime
 
 import idc
 import idaapi
+import idautils
 
 logger = logging.getLogger("capa")
 
@@ -48,3 +50,17 @@ def get_func_start_ea(ea):
     """ """
     f = idaapi.get_func(ea)
     return f if f is None else f.start_ea
+
+
+def collect_metadata():
+    return {
+        "timestamp": datetime.datetime.now().isoformat(),
+        # "argv" is not relevant here
+        "sample": {
+            "md5": idautils.GetInputFileMD5(),
+            # "sha1" not easily accessible
+            "sha256": idaapi.retrieve_input_file_sha256(),
+            "path": idaapi.get_input_file_path(),
+        },
+        "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida", },
+    }

@@ -1,10 +1,8 @@
 import os
 import logging
-import datetime
 import collections
 
 import idaapi
-import idautils
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
@@ -364,21 +362,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info("analysis completed.")
 
-        meta = {
-            "timestamp": datetime.datetime.now().isoformat(),
-            # "argv" is not relevant here
-            "sample": {
-                "md5": idautils.GetInputFileMD5(),
-                # "sha1" not easily accessible
-                "sha256": idaapi.retrieve_input_file_sha256(),
-                "path": idaapi.get_input_file_path(),
-            },
-            "analysis": {
-                "format": idaapi.get_file_type_name(),
-                "extractor": "ida",
-            },
-        }
-
+        meta = capa.ida.helpers.collect_metadata()
         doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
         self.model_data.render_capa_doc(doc)
