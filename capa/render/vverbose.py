@@ -40,11 +40,11 @@ def render_statement(ostream, match, statement, indent=0):
         # there's no additional logic in the feature part, just the existence of a feature.
         # so, we have to inline some of the feature rendering here.
 
-        child = statement['child']
-        value = rutils.bold2(child[child['type']])
+        child = statement["child"]
+        value = rutils.bold2(child[child["type"]])
 
-        if child.get('description'):
-            ostream.write('count(%s(%s = %s)): ' % (child['type'], value, child['description']))
+        if child.get("description"):
+            ostream.write("count(%s(%s = %s)): " % (child["type"], value, child["description"]))
         else:
             ostream.write("count(%s(%s)): " % (child["type"], value))
 
@@ -72,11 +72,11 @@ def render_statement(ostream, match, statement, indent=0):
 
 
 def render_feature(ostream, match, feature, indent=0):
-    ostream.write('  ' * indent)
+    ostream.write("  " * indent)
 
-    ostream.write(feature['type'])
-    ostream.write(': ')
-    ostream.write(rutils.bold2(feature[feature['type']]))
+    ostream.write(feature["type"])
+    ostream.write(": ")
+    ostream.write(rutils.bold2(feature[feature["type"]]))
 
     if "description" in feature:
         ostream.write(" = ")
