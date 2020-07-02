@@ -318,7 +318,8 @@ def lint_features(ctx, rule):
 def get_features(ctx, rule):
     # get features from rule and all dependencies including subscopes and matched rules
     features = []
-    deps = [ctx['rules'].rules[dep] for dep in rule.get_dependencies()]
+    namespaces = capa.rules.index_rules_by_namespace([rule])
+    deps = [ctx['rules'].rules[dep] for dep in rule.get_dependencies(namespaces)]
     for r in [rule] + deps:
         features.extend(get_rule_features(r))
     return features
