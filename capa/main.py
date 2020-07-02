@@ -336,6 +336,7 @@ def collect_metadata(argv, path, format, extractor):
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
+        "version": capa.version.__version__,
         "argv": argv,
         "sample": {
             "md5": md5.hexdigest(),

@@ -5,6 +5,7 @@ import tabulate
 
 import capa.render.utils as rutils
 
+tabulate.PRESERVE_WHITESPACE = True
 
 def width(s, character_count):
     """pad the given string to at least `character_count`"""
@@ -12,6 +13,22 @@ def width(s, character_count):
         return s + " " * (character_count - len(s))
     else:
         return s
+
+
+def render_meta(doc, ostream):
+    rows = [(
+        rutils.bold("Capa Report for"),
+        rutils.bold(doc["meta"]["sample"]["md5"]),
+    )]
+
+    for k in ("timestamp", "version"):
+        rows.append((width(k, 22), width(doc["meta"][k], 60)))
+
+    for k in ("path", "md5"):
+        rows.append((k, doc["meta"]["sample"][k]))
+
+    ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
+    ostream.write("\n")
 
 
 def render_capabilities(doc, ostream):
@@ -90,8 +107,10 @@ def render_attack(doc, ostream):
 
 
 def render_default(doc):
-    ostream = six.StringIO()
+    ostream = rutils.StringIO()
 
+    render_meta(doc, ostream)
+    ostream.write("\n")
     render_attack(doc, ostream)
     ostream.write("\n")
     render_capabilities(doc, ostream)
