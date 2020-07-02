@@ -526,6 +526,10 @@ These rules can be expressed like:
     count(mnemonic(mov)): 3
     count(basic block): 4
 
+`count` supports inline descriptions, except for [strings](#string), using the following syntax:
+
+    count(number(2 = AF_INET/SOCK_DGRAM)): 2
+
 ## matching prior rule matches
 
 capa rules can specify logic for matching on other rule matches.

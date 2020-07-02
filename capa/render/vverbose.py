@@ -42,15 +42,18 @@ def render_statement(ostream, match, statement, indent=0):
 
         child = statement['child']
         if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
-            feature = '%s(%s)' % (child['type'], rutils.bold2(child[child['type']]))
+            value = rutils.bold2(child[child['type']])
         elif child['type'] in ('number', 'offset'):
-            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex(child[child['type']])))
+            value = rutils.bold2(rutils.hex(child[child['type']]))
         elif child['type'] == 'bytes':
-            feature = '%s(%s)' % (child['type'], rutils.bold2(rutils.hex_string(child[child['type']])))
+            value = rutils.bold2(rutils.hex_string(child[child['type']]))
         else:
             raise RuntimeError('unexpected feature type: ' + str(child))
 
-        ostream.write('count(%s): ' % feature)
+        if child['description']:
+            ostream.write('count(%s(%s = %s)): ' % (child['type'], value, child['description']))
+        else:
+            ostream.write('count(%s(%s)): ' % (child['type'], value))
 
         if statement['max'] == statement['min']:
             ostream.write('%d' % (statement['min']))

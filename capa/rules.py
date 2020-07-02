@@ -316,13 +316,12 @@ def build_statements(d, scope):
             #     count(offset(0xC))
             #     count(number(0x11223344))
             #     count(number(0x100 = description))
-            if term in ('number', 'offset', 'bytes'):
+            if term != 'string':
                 value, description = parse_description(arg, term)
                 feature = Feature(value, description)
             else:
-                # arg is string, like:
+                # arg is string (which doesn't support inline descriptions), like:
                 #
-                #     count(mnemonic(mov))
                 #     count(string(error))
                 # TODO: what about embedded newlines?
                 feature = Feature(arg)
