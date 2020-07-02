@@ -15,6 +15,11 @@ def bytes_to_str(b):
         return codecs.encode(b, "hex")
 
 
+def hex_string(h):
+    """ render hex string e.g. "0a40b1" as "0A 40 B1" """
+    return ' '.join(h[i:i + 2] for i in range(0, len(h), 2)).upper()
+
+
 class Feature(object):
     def __init__(self, args, description=None):
         super(Feature, self).__init__()
@@ -104,7 +109,7 @@ class Bytes(Feature):
         return capa.engine.Result(False, self, [])
 
     def get_args_str(self):
-        return bytes_to_str(self.value).upper()
+        return hex_string(bytes_to_str(self.value))
 
     def freeze_serialize(self):
         return (self.__class__.__name__, [bytes_to_str(x).upper() for x in self.args])

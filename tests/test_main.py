@@ -10,8 +10,11 @@ from capa.engine import *
 
 
 def test_main(sample_9324d1a8ae37a36ae560c37448c9705a):
-    # tests rules can be loaded successfully
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, "-v"]) == 0
+    # tests rules can be loaded successfully and all output modes
+    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, '-vv']) == 0
+    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, '-v']) == 0
+    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, '-j']) == 0
+    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path]) == 0
 
 
 def test_main_single_rule(sample_9324d1a8ae37a36ae560c37448c9705a, tmpdir):
@@ -32,7 +35,10 @@ def test_main_single_rule(sample_9324d1a8ae37a36ae560c37448c9705a, tmpdir):
 
 
 def test_main_shellcode(sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32):
-    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, "-v", "-f", "sc32"]) == 0
+    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, '-vv', '-f', 'sc32']) == 0
+    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, '-v', '-f', 'sc32']) == 0
+    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, '-j', '-f', 'sc32']) == 0
+    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, '-f', 'sc32']) == 0
 
 
 def test_ruleset():
