@@ -175,7 +175,7 @@ def convert_match_to_result_document(rules, capabilities, result):
     return doc
 
 
-def convert_capabilities_to_result_document(rules, capabilities):
+def convert_capabilities_to_result_document(meta, rules, capabilities):
     """
     convert the given rule set and capabilities result to a common, Python-native data structure.
     this format can be directly emitted to JSON, or passed to the other `render_*` routines
@@ -187,22 +187,29 @@ def convert_capabilities_to_result_document(rules, capabilities):
 
     ```json
     {
-      $rule-name: {
-        "meta": {...copied from rule.meta...},
-        "matches: {
-          $address: {...match details...},
-          ...
-        }
-      },
-      ...
+      "meta": {...},
+      "rules: {
+        $rule-name: {
+          "meta": {...copied from rule.meta...},
+          "matches: {
+            $address: {...match details...},
+            ...
+          }
+        },
+        ...
+      }
     }
     ```
 
     Args:
+      meta (Dict[str, Any]):
       rules (RuleSet):
       capabilities (Dict[str, List[Tuple[int, Result]]]):
     """
-    doc = {}
+    doc = {
+        "meta": meta,
+        "rules": {},
+    }
 
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
@@ -210,7 +217,7 @@ def convert_capabilities_to_result_document(rules, capabilities):
         if rule.meta.get("capa/subscope-rule"):
             continue
 
-        doc[rule_name] = {
+        doc["rules"][rule_name] = {
             "meta": dict(rule.meta),
             "source": rule.definition,
             "matches": {
@@ -221,35 +228,36 @@ def convert_capabilities_to_result_document(rules, capabilities):
     return doc
 
 
-def render_vverbose(rules, capabilities):
+def render_vverbose(meta, rules, capabilities):
     # there's an import loop here
     # if capa.render imports capa.render.vverbose
     # and capa.render.vverbose import capa.render (implicitly, as a submodule)
     # so, defer the import until routine is called, breaking the import loop.
     import capa.render.vverbose
 
-    doc = convert_capabilities_to_result_document(rules, capabilities)
+    doc = convert_capabilities_to_result_document(meta, rules, capabilities)
     return capa.render.vverbose.render_vverbose(doc)
 
 
-def render_verbose(rules, capabilities):
+def render_verbose(meta, rules, capabilities):
     # break import loop
     import capa.render.verbose
 
-    doc = convert_capabilities_to_result_document(rules, capabilities)
+    doc = convert_capabilities_to_result_document(meta, rules, capabilities)
     return capa.render.verbose.render_verbose(doc)
 
 
-def render_default(rules, capabilities):
+def render_default(meta, rules, capabilities):
     # break import loop
     import capa.render.verbose
     import capa.render.default
 
-    doc = convert_capabilities_to_result_document(rules, capabilities)
+    doc = convert_capabilities_to_result_document(meta, rules, capabilities)
     return capa.render.default.render_default(doc)
 
 
 class CapaJsonObjectEncoder(json.JSONEncoder):
+    """JSON encoder that emits Python sets as sorted lists"""
     def default(self, obj):
         if isinstance(obj, (list, dict, int, float, bool, type(None))) or isinstance(obj, six.string_types):
             return json.JSONEncoder.default(self, obj)
@@ -260,7 +268,7 @@ class CapaJsonObjectEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-def render_json(rules, capabilities):
+def render_json(meta, rules, capabilities):
     return json.dumps(
-        convert_capabilities_to_result_document(rules, capabilities), cls=CapaJsonObjectEncoder, sort_keys=True,
+        convert_capabilities_to_result_document(meta, rules, capabilities), cls=CapaJsonObjectEncoder, sort_keys=True,
     )

@@ -165,7 +165,7 @@ def render_vverbose(doc):
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
         if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
-            matches = list(doc[rule["meta"]["name"]]["matches"].values())
+            matches = list(doc["rules"][rule["meta"]["name"]]["matches"].values())
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
                 # because we do the file-scope evaluation a single time.
@@ -174,7 +174,7 @@ def render_vverbose(doc):
                 raise RuntimeError("unexpected file scope match count: " + len(matches))
             render_match(ostream, matches[0], indent=0)
         else:
-            for location, match in sorted(doc[rule["meta"]["name"]]["matches"].items()):
+            for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
                 ostream.write(rule["meta"]["scope"])
                 ostream.write(" @ ")
                 ostream.writeln(rutils.hex(location))

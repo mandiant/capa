@@ -1,8 +1,10 @@
 import os
 import logging
+import datetime
 import collections
 
 import idaapi
+import idautils
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
@@ -362,12 +364,22 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info("analysis completed.")
 
-        doc = capa.render.convert_capabilities_to_result_document(rules, capabilities)
+        meta = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            # "argv" is not relevant here
+            "sample": {
+                "md5": idautils.GetInputFileMD5(),
+                # "sha1" not easily accessible
+                # "sha256" not easily accessible
+                "path": idaapi.get_input_file_path(),
+            },
+            "analysis": {
+                # "format" is difficult to determine via IDAPython
+                "extractor": "ida",
+            }
+        }
 
-        import json
-
-        with open("C:\\Users\\spring\\Desktop\\hmm.json", "w") as twitter_data_file:
-            json.dump(doc, twitter_data_file, indent=4, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder)
+        doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
         self.model_data.render_capa_doc(doc)
         self.render_capa_doc_summary(doc)
