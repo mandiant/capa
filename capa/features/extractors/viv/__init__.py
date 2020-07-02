@@ -44,6 +44,10 @@ class VivisectFeatureExtractor(FeatureExtractor):
         self.vw = vw
         self.path = path
 
+    def get_base_address(self):
+        # assume there is only one file loaded into the vw
+        return list(self.vw.filemeta.values())[0]["imagebase"]
+
     def extract_file_features(self):
         for feature, va in capa.features.extractors.viv.file.extract_features(self.vw, self.path):
             yield feature, va

@@ -363,12 +363,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info("analysis completed.")
 
-        doc = capa.render.convert_capabilities_to_result_document(rules, capabilities)
-
-        import json
-
-        with open("C:\\Users\\spring\\Desktop\\hmm.json", "w") as twitter_data_file:
-            json.dump(doc, twitter_data_file, indent=4, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder)
+        meta = capa.ida.helpers.collect_metadata()
+        doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
         self.model_data.render_capa_doc(doc)
         self.render_capa_doc_summary(doc)

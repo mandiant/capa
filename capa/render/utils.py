@@ -20,7 +20,7 @@ def hex(n):
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
     for (_, _, rule) in sorted(
-        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc.values())
+        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc["rules"].values())
     ):
         if rule["meta"].get("lib"):
             continue

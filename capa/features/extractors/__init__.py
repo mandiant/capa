@@ -40,6 +40,15 @@ class FeatureExtractor(object):
         super(FeatureExtractor, self).__init__()
 
     @abc.abstractmethod
+    def get_base_address(self):
+        """
+        fetch the preferred load address at which the sample was analyzed.
+
+        returns: int
+        """
+        raise NotImplemented
+
+    @abc.abstractmethod
     def extract_file_features(self):
         """
         extract file-scope features.

@@ -141,6 +141,22 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
 def render_vverbose(doc):
     ostream = rutils.StringIO()
 
+    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
+    for k in ("timestamp", "version"):
+        rows.append((k, doc["meta"][k]))
+
+    for k in ("path", "md5", "sha1", "sha256"):
+        rows.append((k, doc["meta"]["sample"][k]))
+
+    for k in ("format", "extractor"):
+        rows.append((k.replace("_", " "), doc["meta"]["analysis"][k]))
+
+    rows.append(("base address", rutils.hex(doc["meta"]["analysis"]["base_address"])))
+
+    ostream.writeln(rutils.bold("Capa Report for " + doc["meta"]["sample"]["md5"]))
+    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+    ostream.write("\n")
+
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -165,7 +181,7 @@ def render_vverbose(doc):
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
         if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
-            matches = list(doc[rule["meta"]["name"]]["matches"].values())
+            matches = list(doc["rules"][rule["meta"]["name"]]["matches"].values())
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
                 # because we do the file-scope evaluation a single time.
@@ -174,7 +190,7 @@ def render_vverbose(doc):
                 raise RuntimeError("unexpected file scope match count: " + len(matches))
             render_match(ostream, matches[0], indent=0)
         else:
-            for location, match in sorted(doc[rule["meta"]["name"]]["matches"].items()):
+            for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
                 ostream.write(rule["meta"]["scope"])
                 ostream.write(" @ ")
                 ostream.writeln(rutils.hex(location))

@@ -4,8 +4,10 @@ capa - detect capabilities in programs.
 """
 import os
 import sys
+import hashlib
 import logging
 import os.path
+import datetime
 import collections
 
 import tqdm
@@ -320,6 +322,36 @@ def get_rules(rule_path):
     return rules
 
 
+def collect_metadata(argv, path, format, extractor):
+    md5 = hashlib.md5()
+    sha1 = hashlib.sha1()
+    sha256 = hashlib.sha256()
+
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    md5.update(buf)
+    sha1.update(buf)
+    sha256.update(buf)
+
+    return {
+        "timestamp": datetime.datetime.now().isoformat(),
+        "version": capa.version.__version__,
+        "argv": argv,
+        "sample": {
+            "md5": md5.hexdigest(),
+            "sha1": sha1.hexdigest(),
+            "sha256": sha256.hexdigest(),
+            "path": os.path.normpath(path),
+        },
+        "analysis": {
+            "format": format,
+            "extractor": extractor.__class__.__name__,
+            "base_address": extractor.get_base_address(),
+        },
+    }
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -420,9 +452,11 @@ def main(argv=None):
         taste = f.read(8)
 
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+        format = "freeze"
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
+        format = args.format
         try:
             extractor = get_extractor(args.sample, args.format)
         except UnsupportedFormatError:
@@ -446,6 +480,8 @@ def main(argv=None):
             logger.error("-" * 80)
             return -1
 
+    meta = collect_metadata(argv, args.sample, format, extractor)
+
     capabilities = find_capabilities(rules, extractor)
 
     if has_file_limitation(rules, capabilities):
@@ -460,13 +496,13 @@ def main(argv=None):
     # renderers should use coloring and assume it will be stripped out if necessary.
     colorama.init()
     if args.json:
-        print(capa.render.render_json(rules, capabilities))
+        print(capa.render.render_json(meta, rules, capabilities))
     elif args.vverbose:
-        print(capa.render.render_vverbose(rules, capabilities))
+        print(capa.render.render_vverbose(meta, rules, capabilities))
     elif args.verbose:
-        print(capa.render.render_verbose(rules, capabilities))
+        print(capa.render.render_verbose(meta, rules, capabilities))
     else:
-        print(capa.render.render_default(rules, capabilities))
+        print(capa.render.render_default(meta, rules, capabilities))
     colorama.deinit()
 
     logger.info("done.")
@@ -475,10 +511,11 @@ def main(argv=None):
 
 
 def ida_main():
+    import capa.ida.helpers
+    import capa.features.extractors.ida
+
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
-
-    import capa.ida.helpers
 
     if not capa.ida.helpers.is_supported_file_type():
         return -1
@@ -500,18 +537,15 @@ def ida_main():
         logger.debug("default rule path (source method): %s", rules_path)
 
     rules = get_rules(rules_path)
-    import capa.rules
-
     rules = capa.rules.RuleSet(rules)
-
-    import capa.features.extractors.ida
 
     capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-    render_capabilities_default(rules, capabilities)
+    meta = capa.ida.helpers.collect_metadata()
+    print(capa.render.render_default(meta, rules, capabilities))
 
 
 def is_runtime_ida():
