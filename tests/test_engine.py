@@ -86,7 +86,8 @@ def test_complex():
 
 def test_range():
     # unbounded range, but no matching feature
-    assert Range(Number(1)).evaluate({Number(2): {}}) == False
+    # since the lower bound is zero, and there are zero matches, ok
+    assert Range(Number(1)).evaluate({Number(2): {}}) == True
 
     # unbounded range with matching feature should always match
     assert Range(Number(1)).evaluate({Number(1): {}}) == True
@@ -115,6 +116,103 @@ def test_range():
     assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2}}) == True
     assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3}}) == True
     assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3, 4}}) == False
+
+
+def test_range_exact():
+    rule = textwrap.dedent('''
+        rule:
+            meta:
+                name: test rule
+            features:
+                - count(number(100)): 2
+    ''')
+    r = capa.rules.Rule.from_yaml(rule)
+
+    # just enough matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
+    assert 'test rule' in matches
+
+    # not enough matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    assert 'test rule' not in matches
+
+    # too many matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
+    assert 'test rule' not in matches
+
+
+def test_range_range():
+    rule = textwrap.dedent('''
+         rule:
+             meta:
+                 name: test rule
+             features:
+                 - count(number(100)): (2, 3)
+     ''')
+    r = capa.rules.Rule.from_yaml(rule)
+
+    # just enough matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
+    assert 'test rule' in matches
+
+    # enough matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
+    assert 'test rule' in matches
+
+    # not enough matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    assert 'test rule' not in matches
+
+    # too many matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3, 4}}, 0x0)
+    assert 'test rule' not in matches
+
+
+def test_range_exact_zero():
+    rule = textwrap.dedent('''
+        rule:
+            meta:
+                name: test rule
+            features:
+                - count(number(100)): 0
+    ''')
+    r = capa.rules.Rule.from_yaml(rule)
+
+    # feature isn't indexed - good.
+    features, matches = capa.engine.match([r], {}, 0x0)
+    assert 'test rule' in matches
+
+    # feature is indexed, but no matches.
+    # i don't think we should ever really have this case, but good to check anyways.
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
+    assert 'test rule' in matches
+
+    # too many matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    assert 'test rule' not in matches
+
+
+def test_range_with_zero():
+    rule = textwrap.dedent('''
+         rule:
+             meta:
+                 name: test rule
+             features:
+                 - count(number(100)): (0, 1)
+     ''')
+    r = capa.rules.Rule.from_yaml(rule)
+
+    # ok
+    features, matches = capa.engine.match([r], {}, 0x0)
+    assert 'test rule' in matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
+    assert 'test rule' in matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    assert 'test rule' in matches
+
+    # too many matches
+    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
+    assert 'test rule' not in matches
 
 
 def test_match_adds_matched_rule_feature():

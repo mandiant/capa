@@ -53,12 +53,12 @@ def extract_function_switch(f):
     method can be optimized
     """
     if f.va in get_functions_with_switch(f.vw):
-        yield Characteristic("switch", True), f.va
+        yield Characteristic('switch'), f.va
 
 
 def extract_function_calls_to(f):
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
-        yield Characteristic("calls to", True), src
+        yield Characteristic('calls to'), src
 
 
 def extract_function_loop(f):
@@ -74,7 +74,7 @@ def extract_function_loop(f):
                     edges.append((bb.va, bva))
 
     if edges and loops.has_loop(edges):
-        yield Characteristic("loop", True), f.va
+        yield Characteristic('loop'), f.va
 
 
 def extract_features(f):

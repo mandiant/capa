@@ -4,12 +4,31 @@ import capa.rules
 import capa.render.utils as rutils
 
 
-def render_statement(ostream, statement, indent=0):
-    ostream.write("  " * indent)
-    if statement["type"] in ("and", "or", "optional"):
-        ostream.write(statement["type"])
-        ostream.writeln(":")
-    elif statement["type"] == "not":
+def render_locations(ostream, match):
+    # its possible to have an empty locations array here,
+    # such as when we're in MODE_FAILURE and showing the logic
+    # under a `not` statement (which will have no matched locations).
+    locations = list(sorted(match.get('locations', [])))
+    if len(locations) == 1:
+        ostream.write(' @ ')
+        ostream.write(rutils.hex(locations[0]))
+    elif len(locations) > 1:
+        ostream.write(' @ ')
+        if len(locations) > 4:
+            # don't display too many locations, because it becomes very noisy.
+            # probably only the first handful of locations will be useful for inspection.
+            ostream.write(', '.join(map(rutils.hex, locations[0:4])))
+            ostream.write(', and %d more...' % (len(locations) - 4))
+        else:
+            ostream.write(', '.join(map(rutils.hex, locations)))
+
+
+def render_statement(ostream, match, statement, indent=0):
+    ostream.write('  ' * indent)
+    if statement['type'] in ('and', 'or', 'optional'):
+        ostream.write(statement['type'])
+        ostream.writeln(':')
+    elif statement['type'] == 'not':
         # this statement is handled specially in `render_match` using the MODE_SUCCESS/MODE_FAILURE flags.
         ostream.writeln("not:")
     elif statement["type"] == "some":
@@ -21,32 +40,36 @@ def render_statement(ostream, statement, indent=0):
         # there's no additional logic in the feature part, just the existence of a feature.
         # so, we have to inline some of the feature rendering here.
 
-        child = statement["child"]
-        if child["type"] in ("string", "api", "mnemonic", "basic block", "export", "import", "section", "match"):
-            feature = "%s(%s)" % (child["type"], rutils.bold2(child[child["type"]]))
-        elif child["type"] in ("number", "offset"):
-            feature = "%s(%s)" % (child["type"], rutils.bold2(rutils.hex(child[child["type"]])))
-        elif child["type"] == "bytes":
-            feature = "%s(%s)" % (child["type"], rutils.bold2(rutils.hex_string(child[child["type"]])))
-        elif child["type"] == "characteristic":
-            feature = "characteristic(%s)" % (rutils.bold2(child["characteristic"][0]))
+        child = statement['child']
+        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
+            value = rutils.bold2(child[child['type']])
+        elif child['type'] in ('number', 'offset'):
+            value = rutils.bold2(rutils.hex(child[child['type']]))
+        elif child['type'] == 'bytes':
+            value = rutils.bold2(rutils.hex_string(child[child['type']]))
         else:
             raise RuntimeError("unexpected feature type: " + str(child))
 
-        ostream.write("count(%s): " % feature)
-
-        if statement["max"] == statement["min"]:
-            ostream.writeln("%d" % (statement["min"]))
-        elif statement["min"] == 0:
-            ostream.writeln("%d or fewer" % (statement["max"]))
-        elif statement["max"] == (1 << 64 - 1):
-            ostream.writeln("%d or more" % (statement["min"]))
+        if child['description']:
+            ostream.write('count(%s(%s = %s)): ' % (child['type'], value, child['description']))
         else:
-            ostream.writeln("between %d and %d" % (statement["min"], statement["max"]))
-    elif statement["type"] == "subscope":
-        ostream.write(statement["subscope"])
-        ostream.writeln(":")
-    elif statement["type"] == "regex":
+            ostream.write('count(%s(%s)): ' % (child['type'], value))
+
+        if statement['max'] == statement['min']:
+            ostream.write('%d' % (statement['min']))
+        elif statement['min'] == 0:
+            ostream.write('%d or fewer' % (statement['max']))
+        elif statement['max'] == (1 << 64 - 1):
+            ostream.write('%d or more' % (statement['min']))
+        else:
+            ostream.write('between %d and %d' % (statement['min'], statement['max']))
+
+        render_locations(ostream, match)
+        ostream.write('\n')
+    elif statement['type'] == 'subscope':
+        ostream.write(statement['subscope'])
+        ostream.writeln(':')
+    elif statement['type'] == 'regex':
         # regex is a `Statement` not a `Feature`
         # this is because it doesn't get extracted, but applies to all strings in scope.
         # so we have to handle it here
@@ -56,52 +79,38 @@ def render_statement(ostream, statement, indent=0):
 
 
 def render_feature(ostream, match, feature, indent=0):
-    ostream.write("  " * indent)
+    ostream.write('  ' * indent)
 
-    if feature["type"] in ("string", "api", "mnemonic", "basic block", "export", "import", "section", "match"):
-        ostream.write(feature["type"])
-        ostream.write(": ")
-        ostream.write(rutils.bold2(feature[feature["type"]]))
-    elif feature["type"] in ("number", "offset"):
-        ostream.write(feature["type"])
-        ostream.write(": ")
-        ostream.write(rutils.bold2(rutils.hex(feature[feature["type"]])))
-    elif feature["type"] == "bytes":
-        ostream.write("bytes: ")
+    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
+        ostream.write(feature['type'])
+        ostream.write(': ')
+        ostream.write(rutils.bold2(feature[feature['type']]))
+    elif feature['type'] in ('number', 'offset'):
+        ostream.write(feature['type'])
+        ostream.write(': ')
+        ostream.write(rutils.bold2(rutils.hex(feature[feature['type']])))
+    elif feature['type'] == 'bytes':
+        ostream.write('bytes: ')
         # bytes is the uppercase, hex-encoded string.
         # it should always be an even number of characters (its hex).
-        ostream.write(rutils.bold2(rutils.hex_string(feature[feature["type"]])))
-    elif feature["type"] == "characteristic":
-        ostream.write("characteristic(%s)" % (rutils.bold2(feature["characteristic"][0])))
+        ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
     # note that regex is found in `render_statement`
     else:
         raise RuntimeError("unexpected feature type: " + str(feature))
 
-    # its possible to have an empty locations array here,
-    # such as when we're in MODE_FAILURE and showing the logic
-    # under a `not` statement (which will have no matched locations).
-    locations = list(sorted(match.get("locations", [])))
-    if len(locations) == 1:
-        ostream.write(" @ ")
-        ostream.write(rutils.hex(locations[0]))
-    elif len(locations) > 1:
-        ostream.write(" @ ")
-        if len(locations) > 4:
-            # don't display too many locations, because it becomes very noisy.
-            # probably only the first handful of locations will be useful for inspection.
-            ostream.write(", ".join(map(rutils.hex, locations[0:4])))
-            ostream.write(", and %d more..." % (len(locations) - 4))
-        else:
-            ostream.write(", ".join(map(rutils.hex, locations)))
+    if 'description' in feature:
+        ostream.write(' = ')
+        ostream.write(feature['description'])
 
-    ostream.write("\n")
+    render_locations(ostream, match)
+    ostream.write('\n')
 
 
 def render_node(ostream, match, node, indent=0):
-    if node["type"] == "statement":
-        render_statement(ostream, node["statement"], indent=indent)
-    elif node["type"] == "feature":
-        render_feature(ostream, match, node["feature"], indent=indent)
+    if node['type'] == 'statement':
+        render_statement(ostream, match, node['statement'], indent=indent)
+    elif node['type'] == 'feature':
+        render_feature(ostream, match, node['feature'], indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 

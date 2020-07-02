@@ -17,6 +17,7 @@ from capa.ida.explorer.item import (
     CapaExplorerBlockItem,
     CapaExplorerRuleMatchItem,
     CapaExplorerFeatureItem,
+    CapaExplorerSubscopeItem
 )
 
 import capa.ida.helpers
@@ -108,20 +109,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 font.setBold(True)
             return font
 
-        if (
-            role == QtCore.Qt.FontRole
-            and isinstance(
-                item,
-                (
-                    CapaExplorerRuleItem,
-                    CapaExplorerRuleMatchItem,
-                    CapaExplorerBlockItem,
-                    CapaExplorerFunctionItem,
-                    CapaExplorerFeatureItem,
-                ),
-            )
-            and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
-        ):
+        if role == QtCore.Qt.FontRole and isinstance(item, (CapaExplorerRuleItem, CapaExplorerRuleMatchItem,
+                                                            CapaExplorerBlockItem, CapaExplorerFunctionItem,
+                                                            CapaExplorerFeatureItem, CapaExplorerSubscopeItem)) and \
+                column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
             # set bold font for top-level rules
             font = QtGui.QFont()
             font.setBold(True)
@@ -322,11 +313,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         return item.childCount()
 
-    def render_capa_doc_statement_node(self, parent, statement, doc):
+    def render_capa_doc_statement_node(self, parent, statement, locations, doc):
         """ render capa statement read from doc
 
             @param parent: parent to which new child is assigned
             @param statement: statement read from doc
+            @param locations: locations of children (applies to range only?)
             @param doc: capa result doc
 
             "statement": {
@@ -356,10 +348,16 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             else:
                 display += "between %d and %d" % (statement["min"], statement["max"])
 
-            return CapaExplorerFeatureItem(parent, display=display)
-        elif statement["type"] == "subscope":
-            return CapaExplorerFeatureItem(parent, "subscope(%s)" % statement["subscope"])
-        elif statement["type"] == "regex":
+            parent2 = CapaExplorerFeatureItem(parent, display=display)
+
+            for location in locations:
+                # for each location render child node for range statement
+                self.render_capa_doc_feature(parent2, statement['child'], location, doc)
+
+            return parent2
+        elif statement['type'] == 'subscope':
+            return CapaExplorerSubscopeItem(parent, statement['subscope'])
+        elif statement['type'] == 'regex':
             # regex is a `Statement` not a `Feature`
             # this is because it doesn't get extracted, but applies to all strings in scope.
             # so we have to handle it here
@@ -401,10 +399,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         ):
             return
 
-        if match["node"]["type"] == "statement":
-            parent2 = self.render_capa_doc_statement_node(parent, match["node"]["statement"], doc)
-        elif match["node"]["type"] == "feature":
-            parent2 = self.render_capa_doc_feature_node(parent, match["node"]["feature"], match["locations"], doc)
+        if match['node']['type'] == 'statement':
+            parent2 = self.render_capa_doc_statement_node(parent, match['node']['statement'],
+                                                          match.get('locations', []), doc)
+        elif match['node']['type'] == 'feature':
+            parent2 = self.render_capa_doc_feature_node(parent, match['node']['feature'], match['locations'], doc)
         else:
             raise RuntimeError("unexpected node type: " + str(match["node"]["type"]))
 

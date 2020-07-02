@@ -4,6 +4,7 @@ import pytest
 
 import capa.rules
 from capa.features.insn import Number, Offset
+from capa.features import String
 
 
 def test_rule_ctor():
@@ -64,6 +65,22 @@ def test_rule_yaml_complex():
         == True
     )
     assert r.evaluate({Number(6): {1}, Number(7): {1}, Number(8): {1}}) == False
+
+
+def test_rule_yaml_descriptions():
+    rule = textwrap.dedent('''
+        rule:
+            meta:
+                name: test rule
+            features:
+                - and:
+                    - number: 1 = This is the number 1
+                    - string: This program cannot be run in DOS mode.
+                      description: MS-DOS stub message
+                    - count(number(2 = AF_INET/SOCK_DGRAM)): 2
+    ''')
+    r = capa.rules.Rule.from_yaml(rule)
+    assert r.evaluate({Number(1): {1}, Number(2): {2, 3}, String('This program cannot be run in DOS mode.'): {4}}) == True
 
 
 def test_rule_yaml_not():
@@ -132,37 +149,47 @@ def test_invalid_rule_feature():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                        scope: file
-                    features:
-                        - characteristic(nzxor): true
-                """
-            )
-        )
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: test rule
+                    scope: file
+                features:
+                    - characteristic: nzxor
+        '''))
 
     with pytest.raises(capa.rules.InvalidRule):
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                        scope: function
-                    features:
-                        - characteristic(embedded pe): true
-                """
-            )
-        )
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: test rule
+                    scope: function
+                features:
+                    - characteristic: embedded pe
+        '''))
 
     with pytest.raises(capa.rules.InvalidRule):
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: test rule
+                    scope: basic block
+                features:
+                    - characteristic: embedded pe
+        '''))
+
+
+def test_lib_rules():
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: a lib rule
+                    lib: true
+                features:
+                    - api: CreateFileA
+        ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
                 rule:
                     meta:
                         name: test rule
@@ -207,27 +234,21 @@ def test_lib_rules():
 
 
 def test_subscope_rules():
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: test rule
-                            scope: file
-                        features:
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: test rule
+                    scope: file
+                features:
+                    - and:
+                        - characteristic: embedded pe
+                        - function:
                             - and:
-                                - characteristic(embedded pe): true
-                                - function:
-                                    - and:
-                                        - characteristic(nzxor): true
-                                        - characteristic(switch): true
-                    """
-                )
-            )
-        ]
-    )
+                                - characteristic: nzxor
+                                - characteristic: switch
+        '''))
+    ])
     # the file rule scope will have one rules:
     #  - `test rule`
     assert len(rules.file_rules) == 1
@@ -295,10 +316,8 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                     features:
-                        - characteristic(number(1)): True
-                """
-            )
-        )
+                        - characteristic: number(1)
+            '''))
 
     with pytest.raises(capa.rules.InvalidRule):
         r = capa.rules.Rule.from_yaml(
@@ -308,10 +327,8 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                     features:
-                        - characteristic(count(number(100))): True
-                """
-            )
-        )
+                        - characteristic: count(number(100))
+            '''))
 
 
 def test_number_symbol():

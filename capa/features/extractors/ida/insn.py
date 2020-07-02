@@ -259,7 +259,7 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     if _is_nzxor_stack_cookie(f, bb, insn):
         return
 
-    yield Characteristic("nzxor", True), insn.ea
+    yield Characteristic('nzxor'), insn.ea
 
 
 def extract_insn_mnemonic_features(f, bb, insn):
@@ -292,7 +292,7 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
 
     if " fs:30h" in disasm or " gs:60h" in disasm:
         # TODO: replace above with proper IDA
-        yield Characteristic("peb access", True), insn.ea
+        yield Characteristic('peb access'), insn.ea
 
 
 def extract_insn_segment_access_features(f, bb, insn):
@@ -309,11 +309,11 @@ def extract_insn_segment_access_features(f, bb, insn):
 
     if " fs:" in disasm:
         # TODO: replace above with proper IDA
-        yield Characteristic("fs access", True), insn.ea
+        yield Characteristic('fs access'), insn.ea
 
     if " gs:" in disasm:
         # TODO: replace above with proper IDA
-        yield Characteristic("gs access", True), insn.ea
+        yield Characteristic('gs access'), insn.ea
 
 
 def extract_insn_cross_section_cflow(f, bb, insn):
@@ -336,7 +336,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
         if idaapi.getseg(ref) == idaapi.getseg(insn.ea):
             continue
 
-        yield Characteristic("cross section flow", True), insn.ea
+        yield Characteristic('cross section flow'), insn.ea
 
 
 def extract_function_calls_from(f, bb, insn):
@@ -354,7 +354,7 @@ def extract_function_calls_from(f, bb, insn):
         return
 
     for ref in idautils.CodeRefsFrom(insn.ea, False):
-        yield Characteristic("calls from", True), ref
+        yield Characteristic('calls from'), ref
 
 
 def extract_function_indirect_call_characteristic_features(f, bb, insn):
@@ -373,7 +373,7 @@ def extract_function_indirect_call_characteristic_features(f, bb, insn):
         return
 
     if idc.get_operand_type(insn.ea, 0) in (idc.o_reg, idc.o_phrase, idc.o_displ):
-        yield Characteristic("indirect call", True), insn.ea
+        yield Characteristic('indirect call'), insn.ea
 
 
 def extract_features(f, bb, insn):

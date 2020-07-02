@@ -13,7 +13,7 @@ def extract_file_embedded_pe(vw, file_path):
         fbytes = f.read()
 
     for offset, i in pe_carve.carve(fbytes, 1):
-        yield Characteristic("embedded pe", True), offset
+        yield Characteristic('embedded pe'), offset
 
 
 def extract_file_export_names(vw, file_path):

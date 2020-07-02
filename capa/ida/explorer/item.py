@@ -190,6 +190,14 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
         self._data[0] = self.fmt % display
 
 
+class CapaExplorerSubscopeItem(CapaExplorerDataItem):
+
+    fmt = 'subscope(%s)'
+
+    def __init__(self, parent, scope):
+        super(CapaExplorerSubscopeItem, self).__init__(parent, [self.fmt % scope, '', ''])
+
+
 class CapaExplorerBlockItem(CapaExplorerDataItem):
     """ store data relevant to capa basic block result """
 

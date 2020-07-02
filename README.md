@@ -84,6 +84,7 @@ Download capa from the [Releases](/releases) page or get the nightly builds here
     - [section](#section)
   - [counting](#counting)
   - [matching prior rule matches](#matching-prior-rule-matches)
+  - [descriptions](#descriptions)
 - [limitations](#Limitations)
 
 # installation
@@ -339,8 +340,9 @@ For example, a crypto constant.
 
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format.
 
-To associate context with a number, e.g. for constant definitions, append an equal sign and the respective name to
-the number definition. This helps with documenting rules and provides context in capa's output.
+To help humans understand the meaning of a number, such that the constant `0x40` means `PAGE_EXECUTE_READWRITE`, you may provide a description alongside the definition.
+Use the inline syntax (preferred) by ending the line with ` = DESCRIPTION STRING`.
+Check the [description section](#description) for more details.
 
 Examples:
 
@@ -362,20 +364,31 @@ Regexes should be surrounded with `/` characters.
 By default, capa uses case-sensitive matching and assumes leading and trailing wildcards.
 To perform case-insensitive matching append an `i`. To anchor the regex at the start or end of a string, use `^` and/or `$`.
 
+To add context to a string use the two-line syntax, using  the `description` tag: `description: DESCRIPTION STRING`.
+The inline syntax is not supported.
+Check the [description section](#description) for more details.
+
 Examples:
 
-    string: This program cannot be run in DOS mode.
-    string: Firefox 64.0
-    string: /SELECT.*FROM.*WHERE/
-    string: /Hardware\\Description\\System\\CentralProcessor/i
-    
+```
+- string: This program cannot be run in DOS mode.
+  description: MS-DOS stub message
+- string: '{3E5FC7F9-9A51-4367-9063-A120244FBEC7}'
+  description: CLSID_CMSTPLUA
+- string: Firefox 64.0
+- string:'/SELECT.*FROM.*WHERE/
+- string: /Hardware\\Description\\System\\CentralProcessor/i
+```
+
 Note that regex matching is expensive (`O(features)` rather than `O(1)`) so they should be used sparingly.
 
 ### bytes
 A sequence of bytes referenced by the logic of the program. 
 The provided sequence must match from the beginning of the referenced bytes and be no more than `0x100` bytes.
-The parameter is a sequence of hexadecimal bytes followed by an optional description.
- 
+The parameter is a sequence of hexadecimal bytes.
+To help humans understand the meaning of the bytes sequence, you may provide a description.
+Use the inline syntax (preferred) by ending the line with ` = DESCRIPTION STRING`.
+Check the [description section](#description) for more details.
 
 The example below illustrates byte matching given a COM CLSID pushed onto the stack prior to `CoCreateInstance`.
 
@@ -397,6 +410,7 @@ A structure offset referenced by the logic of the program.
 This should not be a stack offset.
 
 The parameter is a number; if prefixed with `0x` then in hex format, otherwise, decimal format.
+It can be followed by an optional description.
 
 Examples:
 
@@ -452,6 +466,7 @@ These are the features supported at the file-scope:
   - [export](#export)
   - [import](#import)
   - [section](#section)
+
 
 ### file string
 An ASCII or UTF-16 LE string present in the file.
@@ -511,6 +526,10 @@ These rules can be expressed like:
     count(mnemonic(mov)): 3
     count(basic block): 4
 
+`count` supports inline descriptions, except for [strings](#string), using the following syntax:
+
+    count(number(2 = AF_INET/SOCK_DGRAM)): 2
+
 ## matching prior rule matches
 
 capa rules can specify logic for matching on other rule matches.
@@ -531,6 +550,28 @@ These are rules with `rule.meta.lib: True`.
 By default, library rules will not be output to the user as a rule match, 
 but can be matched by other rules.
 When no active rules depend on a library rule, these the library rules will not be evaluated - maintaining performance.
+
+## description
+
+All features support an optional description which helps with documenting rules and provides context in capa's output.
+For all features except for [strings](#string), the description can be specified inline preceded by ` = `: ` = DESCRIPTION STRING`.
+For example:
+
+```
+- number: 0x4550 = IMAGE_DOS_SIGNATURE (MZ)
+```
+
+The inline syntax is preferred.
+For [strings](#string) or if the description is long or contains newlines, use the two-line syntax.
+It uses the `description` tag in the following way: `description: DESCRIPTION STRING`
+For example:
+
+```
+- string: This program cannot be run in DOS mode.
+  description: MS-DOS stub message
+- number: 0x4550
+  description: IMAGE_DOS_SIGNATURE (MZ)
+```
 
 # limitations
 

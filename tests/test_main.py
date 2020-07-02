@@ -52,46 +52,33 @@ def test_main_shellcode(sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32):
 
 
 def test_ruleset():
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: file rule
-                            scope: file
-                        features:
-                          - characteristic(embedded pe): y
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: function rule
-                            scope: function
-                        features:
-                          - characteristic(switch): y
-                    """
-                )
-            ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: basic block rule
-                            scope: basic block
-                        features:
-                          - characteristic(nzxor): y
-                    """
-                )
-            ),
-        ]
-    )
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: file rule
+                    scope: file
+                features:
+                  - characteristic: embedded pe
+        ''')),
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: function rule
+                    scope: function
+                features:
+                  - characteristic: switch
+        ''')),
+         capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: basic block rule
+                    scope: basic block
+                features:
+                  - characteristic: nzxor
+        ''')),
+
+    ])
     assert len(rules.file_rules) == 1
     assert len(rules.function_rules) == 1
     assert len(rules.basic_block_rules) == 1
@@ -165,65 +152,48 @@ def test_match_across_scopes_file_function(sample_9324d1a8ae37a36ae560c37448c970
 
 
 def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
-    rules = capa.rules.RuleSet(
-        [
-            # this rule should match on a basic block (including at least 0x403685)
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: tight loop
-                            scope: basic block
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a:0x403685
-                        features:
-                          - characteristic(tight loop): true
-                    """
-                )
-            ),
-            # this rule should match on a function (0x403660)
-            # based on API, as well as prior basic block rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: kill thread loop
-                            scope: function
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a:0x403660
-                        features:
-                          - and:
-                            - api: kernel32.TerminateThread
-                            - api: kernel32.CloseHandle
-                            - match: tight loop
-                    """
-                )
-            ),
-            # this rule should match on a file feature and a prior function rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: kill thread program
-                            scope: file
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a
-                        features:
-                          - and:
-                            - section: .text
-                            - match: kill thread loop
-                    """
-                )
-            ),
-        ]
-    )
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw,
-        sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
+    rules = capa.rules.RuleSet([
+        # this rule should match on a basic block (including at least 0x403685)
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: tight loop
+                    scope: basic block
+                    examples:
+                      - 9324d1a8ae37a36ae560c37448c9705a:0x403685
+                features:
+                  - characteristic: tight loop
+        ''')),
+        # this rule should match on a function (0x403660)
+        # based on API, as well as prior basic block rule match
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: kill thread loop
+                    scope: function
+                    examples:
+                      - 9324d1a8ae37a36ae560c37448c9705a:0x403660
+                features:
+                  - and:
+                    - api: kernel32.TerminateThread
+                    - api: kernel32.CloseHandle
+                    - match: tight loop
+        ''')),
+        # this rule should match on a file feature and a prior function rule match
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+            rule:
+                meta:
+                    name: kill thread program
+                    scope: file
+                    examples:
+                      - 9324d1a8ae37a36ae560c37448c9705a
+                features:
+                  - and:
+                    - section: .text
+                    - match: kill thread loop
+        ''')),
+    ])
+    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path)
     capabilities = capa.main.find_capabilities(rules, extractor)
     assert "tight loop" in capabilities
     assert "kill thread loop" in capabilities
@@ -231,24 +201,18 @@ def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
 
 
 def test_subscope_bb_rules(sample_9324d1a8ae37a36ae560c37448c9705a):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: test rule
-                            scope: function
-                        features:
-                            - and:
-                                - basic block:
-                                    - characteristic(tight loop): true
-                    """
-                )
-            )
-        ]
-    )
+    rules = capa.rules.RuleSet([
+        capa.rules.Rule.from_yaml(textwrap.dedent('''
+             rule:
+                 meta:
+                     name: test rule
+                     scope: function
+                 features:
+                     - and:
+                         - basic block:
+                             - characteristic: tight loop
+         '''))
+    ])
     # tight loop at 0x403685
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw,

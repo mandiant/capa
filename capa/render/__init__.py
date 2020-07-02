@@ -1,6 +1,7 @@
 import json
 import six
 
+import capa.rules
 import capa.engine
 
 
@@ -83,23 +84,11 @@ def convert_feature_to_result_document(feature):
             "type": "characteristic"
         },
     """
-    name, value = feature.freeze_serialize()
+    result = {'type': feature.name, feature.name: feature.get_args_str()}
+    if feature.description:
+        result['description'] = feature.description
 
-    # make the terms pretty
-    name = name.lower()
-    if name == "matchedrule":
-        name = "match"
-
-    # in the common case, there's a single argument
-    # so use it directly.
-    # like: name=number value=1
-    if isinstance(value, list) and len(value) == 1:
-        value = value[0]
-
-    return {
-        "type": name,
-        name: value,
-    }
+    return result
 
 
 def convert_node_to_result_document(node):
@@ -144,7 +133,10 @@ def convert_match_to_result_document(rules, capabilities, result):
     # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.Feature):
         if bool(result.success):
-            doc["locations"] = result.locations
+            doc['locations'] = result.locations
+    elif isinstance(result.statement, capa.rules.Range):
+        if bool(result.success):
+            doc['locations'] = result.locations
 
     # if we have a `match` statement, then we're referencing another rule.
     # this could an external rule (written by a human), or
