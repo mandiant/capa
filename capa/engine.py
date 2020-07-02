@@ -158,7 +158,7 @@ class Range(Statement):
         if self.min == 0 and count == 0:
             return Result(True, self, [])
 
-        return Result(self.min <= count <= self.max, self, [], locations=ctx[self.child])
+        return Result(self.min <= count <= self.max, self, [], locations=ctx.get(self.child))
 
     def __str__(self):
         if self.max == (1 << 64 - 1):
