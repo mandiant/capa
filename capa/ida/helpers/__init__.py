@@ -1,7 +1,7 @@
 import logging
 
-import idaapi
 import idc
+import idaapi
 
 logger = logging.getLogger("capa")
 

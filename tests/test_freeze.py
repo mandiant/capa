@@ -4,11 +4,9 @@ import capa.main
 import capa.helpers
 import capa.features
 import capa.features.insn
-import capa.features.extractors
 import capa.features.freeze
-
+import capa.features.extractors
 from fixtures import *
-
 
 EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
     {

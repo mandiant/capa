@@ -7,14 +7,13 @@ import six
 import ruamel.yaml
 
 import capa.engine
-from capa.engine import *
 import capa.features
 import capa.features.file
+import capa.features.insn
 import capa.features.function
 import capa.features.basicblock
-import capa.features.insn
+from capa.engine import *
 from capa.features import MAX_BYTES_FEATURE_SIZE
-
 
 logger = logging.getLogger(__name__)
 

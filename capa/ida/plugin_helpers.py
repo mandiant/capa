@@ -1,12 +1,10 @@
 import os
 import logging
 
-from PyQt5.QtWidgets import QTreeWidgetItem, QTreeWidgetItemIterator
-from PyQt5.QtCore import Qt
-
 import idc
 import idaapi
-
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTreeWidgetItem, QTreeWidgetItemIterator
 
 CAPA_EXTENSION = ".capas"
 

@@ -1,16 +1,15 @@
 import sys
-import struct
-import string
 import pprint
+import string
+import struct
 
-import idautils
-import idaapi
 import idc
-
-from capa.features.extractors.ida import helpers
+import idaapi
+import idautils
 
 from capa.features import Characteristic
 from capa.features.basicblock import BasicBlock
+from capa.features.extractors.ida import helpers
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 
 

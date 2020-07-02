@@ -1,9 +1,8 @@
+import sys
 import codecs
 import logging
-import sys
 
 import capa.engine
-
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100

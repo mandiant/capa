@@ -1,13 +1,9 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-
-import idaapi
 import idc
+import idaapi
+from PyQt5 import QtGui, QtCore, QtWidgets
 
+from capa.ida.explorer.item import CapaExplorerRuleItem, CapaExplorerFunctionItem
 from capa.ida.explorer.model import CapaExplorerDataModel
-from capa.ida.explorer.item import (
-    CapaExplorerFunctionItem,
-    CapaExplorerRuleItem,
-)
 
 
 class CapaExplorerQtreeView(QtWidgets.QTreeView):

@@ -6,7 +6,6 @@ Usage:
    $ python scripts/lint.py rules/
 """
 import os
-import os.path
 import sys
 import string
 import hashlib

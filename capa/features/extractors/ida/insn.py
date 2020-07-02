@@ -1,19 +1,13 @@
 import pprint
 
-import idautils
-import idaapi
 import idc
+import idaapi
+import idautils
 
-from capa.features import String
-from capa.features import Bytes
-from capa.features import Characteristic
-from capa.features import MAX_BYTES_FEATURE_SIZE
-from capa.features.insn import Number
-from capa.features.insn import Offset
-from capa.features.insn import Mnemonic
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-
+from capa.features import MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
+from capa.features.insn import Number, Offset, Mnemonic
 
 _file_imports_cache = None
 

@@ -3,9 +3,9 @@
 capa - detect capabilities in programs.
 """
 import os
-import os.path
 import sys
 import logging
+import os.path
 import collections
 
 import tqdm
@@ -19,9 +19,7 @@ import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
-
 from capa.helpers import oint
-
 
 SUPPORTED_FILE_MAGIC = set(["MZ"])
 

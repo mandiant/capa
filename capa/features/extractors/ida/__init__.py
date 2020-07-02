@@ -3,13 +3,12 @@ import types
 
 import idaapi
 
-from capa.features.extractors import FeatureExtractor
-
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.helpers
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
+from capa.features.extractors import FeatureExtractor
 
 
 def get_va(self):

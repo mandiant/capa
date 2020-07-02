@@ -5,7 +5,6 @@ import collections
 import pytest
 import viv_utils
 
-
 CD = os.path.dirname(__file__)
 
 

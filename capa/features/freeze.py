@@ -44,15 +44,13 @@ import json
 import zlib
 import logging
 
-import capa.features.extractors
 import capa.features
 import capa.features.file
+import capa.features.insn
 import capa.features.function
 import capa.features.basicblock
-import capa.features.insn
-
+import capa.features.extractors
 from capa.helpers import hex
-
 
 logger = logging.getLogger(__name__)
 

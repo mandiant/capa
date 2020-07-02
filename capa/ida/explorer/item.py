@@ -1,10 +1,9 @@
-import codecs
 import sys
+import codecs
 
-from PyQt5 import QtCore
-
-import idaapi
 import idc
+import idaapi
+from PyQt5 import QtCore
 
 import capa.ida.helpers
 

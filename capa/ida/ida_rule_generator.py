@@ -5,19 +5,15 @@ import binascii
 import textwrap
 from collections import Counter, defaultdict
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QTextEdit, QHeaderView
-
 import idc
 import idaapi
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QTextEdit, QHeaderView, QTreeWidget, QTreeWidgetItem
 
 import capa
 import capa.main
-
-from capa.ida import plugin_helpers
-
 import capa.features.extractors.ida.helpers
-
+from capa.ida import plugin_helpers
 
 logger = logging.getLogger("rulegen")
 

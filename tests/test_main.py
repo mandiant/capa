@@ -3,11 +3,10 @@ import textwrap
 import capa.main
 import capa.rules
 import capa.engine
-from capa.engine import *
 import capa.features
 import capa.features.extractors.viv
-
 from fixtures import *
+from capa.engine import *
 
 
 def test_main(sample_9324d1a8ae37a36ae560c37448c9705a):

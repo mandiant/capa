@@ -7,16 +7,15 @@ example:
     $ python scripts/migrate-rules.py migration.csv ./rules ./new-rules
 """
 import os
-import os.path
-import sys
 import csv
+import sys
 import logging
+import os.path
 import collections
 
 import argparse
 
 import capa.rules
-
 
 logger = logging.getLogger("migrate-rules")
 

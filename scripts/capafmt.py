@@ -13,7 +13,6 @@ import argparse
 
 import capa.rules
 
-
 logger = logging.getLogger("capafmt")
 
 

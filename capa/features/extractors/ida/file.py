@@ -1,18 +1,15 @@
-import struct
 import pprint
+import struct
 
-import idautils
-import idaapi
 import idc
+import idaapi
+import idautils
 
-from capa.features import String
-from capa.features import Characteristic
-from capa.features.file import Section
-from capa.features.file import Export
-from capa.features.file import Import
-import capa.features.extractors.strings
 import capa.features.extractors.helpers
+import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
+from capa.features import String, Characteristic
+from capa.features.file import Export, Import, Section
 
 
 def _ida_check_segment_for_pe(seg):

@@ -1,5 +1,5 @@
-import idautils
 import idaapi
+import idautils
 
 from capa.features import Characteristic
 from capa.features.extractors import loops

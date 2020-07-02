@@ -3,8 +3,8 @@ import textwrap
 import pytest
 
 import capa.rules
-from capa.features.insn import Number, Offset
 from capa.features import String
+from capa.features.insn import Number, Offset
 
 
 def test_rule_ctor():

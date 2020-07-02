@@ -3,7 +3,6 @@ import sys
 
 import setuptools
 
-
 requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "ruamel.yaml"]
 
 if sys.version_info >= (3, 0):

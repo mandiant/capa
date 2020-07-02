@@ -1,5 +1,5 @@
-import struct
 import string
+import struct
 
 import envi
 import vivisect.const

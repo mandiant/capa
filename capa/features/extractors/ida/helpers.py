@@ -1,9 +1,9 @@
 import sys
 import string
 
-import idautils
-import idaapi
 import idc
+import idaapi
+import idautils
 
 
 def find_byte_sequence(start, end, seq):

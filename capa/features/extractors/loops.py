@@ -1,5 +1,5 @@
-from networkx.algorithms.components import strongly_connected_components
 from networkx import nx
+from networkx.algorithms.components import strongly_connected_components
 
 
 def has_loop(edges, threshold=2):

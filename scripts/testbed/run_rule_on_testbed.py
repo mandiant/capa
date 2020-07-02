@@ -11,7 +11,6 @@ import sys
 import json
 import time
 import logging
-
 from collections import defaultdict
 
 import argparse
@@ -19,10 +18,8 @@ import argparse
 import capa.main
 import capa.rules
 import capa.features.freeze
-
 from scripts.testbed import FNAMES_EXTENSION, FREEZE_EXTENSION
 from start_ida_export_fimages import export_fimages
-
 
 logger = logging.getLogger(__name__)
 

@@ -2,17 +2,16 @@ import types
 
 import viv_utils
 
-import capa.features.extractors
-import capa.features.extractors.viv.file
-import capa.features.extractors.viv.function
-import capa.features.extractors.viv.basicblock
-import capa.features.extractors.viv.insn
-from capa.features.extractors import FeatureExtractor
-
 import file
+import insn
 import function
 import basicblock
-import insn
+import capa.features.extractors
+import capa.features.extractors.viv.file
+import capa.features.extractors.viv.insn
+import capa.features.extractors.viv.function
+import capa.features.extractors.viv.basicblock
+from capa.features.extractors import FeatureExtractor
 
 __all__ = ["file", "function", "basicblock", "insn"]
 

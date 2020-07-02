@@ -16,7 +16,6 @@ import argparse
 from scripts.testbed import FREEZE_EXTENSION
 from capa.features.freeze import main as freeze_features
 
-
 # only process files with these extensions
 TARGET_EXTENSIONS = [".mal_", ".exe_", ".dll_", ".sys_"]
 

@@ -1,10 +1,9 @@
 import collections
 
 import envi
+import vivisect.const
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
-import vivisect.const
-
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper

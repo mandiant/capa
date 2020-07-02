@@ -1,11 +1,8 @@
 import PE.carve as pe_carve  # vivisect PE
 
-from capa.features import Characteristic
-from capa.features.file import Export
-from capa.features.file import Import
-from capa.features.file import Section
-from capa.features import String
 import capa.features.extractors.strings
+from capa.features import String, Characteristic
+from capa.features.file import Export, Import, Section
 
 
 def extract_file_embedded_pe(vw, file_path):
