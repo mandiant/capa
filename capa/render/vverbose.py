@@ -41,16 +41,9 @@ def render_statement(ostream, match, statement, indent=0):
         # so, we have to inline some of the feature rendering here.
 
         child = statement['child']
-        if child['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
-            value = rutils.bold2(child[child['type']])
-        elif child['type'] in ('number', 'offset'):
-            value = rutils.bold2(rutils.hex(child[child['type']]))
-        elif child['type'] == 'bytes':
-            value = rutils.bold2(rutils.hex_string(child[child['type']]))
-        else:
-            raise RuntimeError('unexpected feature type: ' + str(child))
+        value = rutils.bold2(child[child['type']])
 
-        if child['description']:
+        if child.get('description'):
             ostream.write('count(%s(%s = %s)): ' % (child['type'], value, child['description']))
         else:
             ostream.write('count(%s(%s)): ' % (child['type'], value))
@@ -81,22 +74,9 @@ def render_statement(ostream, match, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write('  ' * indent)
 
-    if feature['type'] in ('string', 'api', 'mnemonic', 'basic block', 'export', 'import', 'section', 'match', 'characteristic'):
-        ostream.write(feature['type'])
-        ostream.write(': ')
-        ostream.write(rutils.bold2(feature[feature['type']]))
-    elif feature['type'] in ('number', 'offset'):
-        ostream.write(feature['type'])
-        ostream.write(': ')
-        ostream.write(rutils.bold2(rutils.hex(feature[feature['type']])))
-    elif feature['type'] == 'bytes':
-        ostream.write('bytes: ')
-        # bytes is the uppercase, hex-encoded string.
-        # it should always be an even number of characters (its hex).
-        ostream.write(rutils.bold2(rutils.hex_string(feature[feature['type']])))
-    # note that regex is found in `render_statement`
-    else:
-        raise RuntimeError('unexpected feature type: ' + str(feature))
+    ostream.write(feature['type'])
+    ostream.write(': ')
+    ostream.write(rutils.bold2(feature[feature['type']]))
 
     if 'description' in feature:
         ostream.write(' = ')
