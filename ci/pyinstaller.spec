@@ -1,6 +1,13 @@
 # -*- mode: python -*-
 import os.path
+import subprocess
+
 import wcwidth
+
+
+with open('./capa/version.py', 'wb') as f:
+    f.write("__version__ = '%s'"
+            % subprocess.check_output(["git", "describe", "--always"]).strip())
 
 a = Analysis(
     ['../capa/main.py'],
