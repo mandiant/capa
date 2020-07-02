@@ -62,5 +62,5 @@ def collect_metadata():
             "sha256": idaapi.retrieve_input_file_sha256(),
             "path": idaapi.get_input_file_path(),
         },
-        "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida", },
+        "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida",},
     }
