@@ -344,7 +344,11 @@ def collect_metadata(argv, path, format, extractor):
             "sha256": sha256.hexdigest(),
             "path": os.path.normpath(path),
         },
-        "analysis": {"format": format, "extractor": extractor.__class__.__name__,},
+        "analysis": {
+            "format": format,
+            "extractor": extractor.__class__.__name__,
+            "base_address": extractor.get_base_address(),
+        },
     }
 
 

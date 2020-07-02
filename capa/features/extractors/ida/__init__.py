@@ -43,6 +43,9 @@ class IdaFeatureExtractor(FeatureExtractor):
     def __init__(self):
         super(IdaFeatureExtractor, self).__init__()
 
+    def get_base_address(self):
+        return idaapi.get_imagebase()
+
     def extract_file_features(self):
         for feature, va in capa.features.extractors.ida.file.extract_features():
             yield feature, va

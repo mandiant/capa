@@ -149,7 +149,9 @@ def render_vverbose(doc):
         rows.append((k, doc["meta"]["sample"][k]))
 
     for k in ("format", "extractor"):
-        rows.append((k, doc["meta"]["analysis"][k]))
+        rows.append((k.replace("_", " "), doc["meta"]["analysis"][k]))
+
+    rows.append(("base address", rutils.hex(doc["meta"]["analysis"]["base_address"])))
 
     ostream.writeln(rutils.bold("Capa Report for " + doc["meta"]["sample"]["md5"]))
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))

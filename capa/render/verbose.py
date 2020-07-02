@@ -31,7 +31,9 @@ def render_verbose(doc):
         rows.append((k, doc["meta"]["sample"][k]))
 
     for k in ("format", "extractor"):
-        rows.append((k, doc["meta"]["analysis"][k]))
+        rows.append((k.replace("_", " "), doc["meta"]["analysis"][k]))
+
+    rows.append(("base address", rutils.hex(doc["meta"]["analysis"]["base_address"])))
 
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
     ostream.write("\n")
