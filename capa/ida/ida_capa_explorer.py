@@ -209,6 +209,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_view_parent(self):
         """ load view parent """
         layout = QtWidgets.QVBoxLayout()
+
         layout.addWidget(self.view_tabs)
         layout.setMenuBar(self.view_menu_bar)
 
@@ -399,6 +400,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def render_capa_doc_mitre_summary(self, doc):
         """ """
         tactics = collections.defaultdict(set)
+
         for rule in rutils.capability_rules(doc):
             if not rule["meta"].get("att&ck"):
                 continue

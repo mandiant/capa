@@ -433,7 +433,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         for rule in rutils.capability_rules(doc):
             parent = CapaExplorerRuleItem(self.root_node, rule["meta"]["name"], len(rule["matches"]), rule["source"])
 
-            for (location, match) in doc[rule["meta"]["name"]]["matches"].items():
+            for (location, match) in doc["rules"][rule["meta"]["name"]]["matches"].items():
                 if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
                     parent2 = parent
                 elif rule["meta"]["scope"] == capa.rules.FUNCTION_SCOPE:
@@ -527,7 +527,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if feature["type"] == "match":
             return CapaExplorerRuleMatchItem(
-                parent, display, source=doc.get(feature[feature["type"]], {}).get("source", "")
+                parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
             )
 
         if feature["type"] in instruction_view:
