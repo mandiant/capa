@@ -296,4 +296,3 @@ def test_count_bb(sample_9324d1a8ae37a36ae560c37448c9705a):
     )
     capabilities = capa.main.find_capabilities(rules, extractor)
     assert "count bb" in capabilities
-
