@@ -342,7 +342,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         meta = capa.ida.helpers.collect_metadata()
 
-        capabilities, counts = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+        capabilities, counts = capa.main.find_capabilities(
+            rules, capa.features.extractors.ida.IdaFeatureExtractor(), True
+        )
         meta.update(counts)
 
         # support binary files specifically for x86/AMD64 shellcode
