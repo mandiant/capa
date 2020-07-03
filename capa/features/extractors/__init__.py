@@ -180,6 +180,7 @@ class NullFeatureExtractor(FeatureExtractor):
     example::
 
         extractor = NullFeatureExtractor({
+            'base address: 0x401000,
             'file features': [
                 (0x402345, capa.features.Characteristic('embedded pe')),
             ],
@@ -213,6 +214,9 @@ class NullFeatureExtractor(FeatureExtractor):
     def __init__(self, features):
         super(NullFeatureExtractor, self).__init__()
         self.features = features
+
+    def get_base_address(self):
+        return self.features["base address"]
 
     def extract_file_features(self):
         for p in self.features.get("file features", []):
