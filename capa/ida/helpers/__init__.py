@@ -5,6 +5,8 @@ import idc
 import idaapi
 import idautils
 
+import capa
+
 logger = logging.getLogger("capa")
 
 # file type names as returned by idaapi.get_file_type_name()
@@ -57,10 +59,11 @@ def collect_metadata():
         "timestamp": datetime.datetime.now().isoformat(),
         # "argv" is not relevant here
         "sample": {
-            "md5": idautils.GetInputFileMD5(),
+            "md5": capa.features.bytes_to_str(idautils.GetInputFileMD5()),
             # "sha1" not easily accessible
-            "sha256": idaapi.retrieve_input_file_sha256(),
+            "sha256": capa.features.bytes_to_str(idaapi.retrieve_input_file_sha256()),
             "path": idaapi.get_input_file_path(),
         },
         "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida",},
+        "version": capa.version.__version__,
     }
