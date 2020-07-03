@@ -269,3 +269,30 @@ def test_byte_matching(sample_9324d1a8ae37a36ae560c37448c9705a):
     )
     capabilities = capa.main.find_capabilities(rules, extractor)
     assert "byte match test" in capabilities
+
+
+def test_count_bb(sample_9324d1a8ae37a36ae560c37448c9705a):
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: count bb
+                        namespace: test
+                        scope: function
+                      features:
+                        - and:
+                          - count(basic blocks): 1 or more
+                    """
+                )
+            )
+        ]
+    )
+
+    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
+        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
+    )
+    capabilities = capa.main.find_capabilities(rules, extractor)
+    assert "count bb" in capabilities
