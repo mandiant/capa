@@ -93,7 +93,8 @@ def get_capabilities(path, rules):
     logger.debug("matching rules in %s", path)
     with open(path, "rb") as f:
         extractor = capa.features.freeze.load(f.read())
-    return capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    return capabilities
 
 
 def get_function_hits(capabilities, rule_name):

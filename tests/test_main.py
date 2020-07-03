@@ -147,7 +147,7 @@ def test_match_across_scopes_file_function(sample_9324d1a8ae37a36ae560c37448c970
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
     )
-    capabilities = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor)
     assert "install service" in capabilities
     assert ".text section" in capabilities
     assert ".text section and install service" in capabilities
@@ -212,7 +212,7 @@ def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path
     )
-    capabilities = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor)
     assert "tight loop" in capabilities
     assert "kill thread loop" in capabilities
     assert "kill thread program" in capabilities
@@ -241,7 +241,7 @@ def test_subscope_bb_rules(sample_9324d1a8ae37a36ae560c37448c9705a):
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
     )
-    capabilities = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor)
     assert "test rule" in capabilities
 
 
@@ -267,7 +267,7 @@ def test_byte_matching(sample_9324d1a8ae37a36ae560c37448c9705a):
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
     )
-    capabilities = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor)
     assert "byte match test" in capabilities
 
 
@@ -294,5 +294,5 @@ def test_count_bb(sample_9324d1a8ae37a36ae560c37448c9705a):
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
         sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
     )
-    capabilities = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, extractor)
     assert "count bb" in capabilities
