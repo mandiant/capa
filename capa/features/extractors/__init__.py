@@ -1,5 +1,6 @@
 import abc
 
+
 class FeatureExtractor(object):
     """
     FeatureExtractor defines the interface for fetching features from a sample.
