@@ -155,7 +155,8 @@ def render_vverbose(doc):
     rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
     rows.append(("function count", len(doc["meta"]["counts"]["functions"])))
     rows.append(
-        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values())))
+        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values()))
+    )
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
     ostream.write("\n")
 

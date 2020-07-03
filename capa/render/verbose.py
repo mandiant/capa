@@ -34,7 +34,9 @@ def render_verbose(doc):
     rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
     rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
     rows.append(("function count", len(doc["meta"]["counts"]["functions"])))
-    rows.append(("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values())))
+    rows.append(
+        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values()))
+    )
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
     ostream.write("\n")
 
