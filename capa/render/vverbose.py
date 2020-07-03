@@ -141,19 +141,16 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
 def render_vverbose(doc):
     ostream = rutils.StringIO()
 
-    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
-    for k in ("timestamp", "version"):
-        rows.append((k, doc["meta"][k]))
-
-    for k in ("path", "md5", "sha1", "sha256"):
-        rows.append((k, doc["meta"]["sample"][k]))
-
-    for k in ("format", "extractor"):
-        rows.append((k.replace("_", " "), doc["meta"]["analysis"][k]))
-
-    rows.append(("base address", rutils.hex(doc["meta"]["analysis"]["base_address"])))
-
-    ostream.writeln(rutils.bold("Capa Report for " + doc["meta"]["sample"]["md5"]))
+    rows = []
+    rows.append(("md5", doc["meta"]["sample"]["md5"]))
+    rows.append(("sha1", doc["meta"]["sample"]["sha1"]))
+    rows.append(("sha256", doc["meta"]["sample"]["sha256"]))
+    rows.append(("path", doc["meta"]["sample"]["path"]))
+    rows.append(("timestamp", doc["meta"]["timestamp"]))
+    rows.append(("capa version", doc["meta"]["version"]))
+    rows.append(("format", doc["meta"]["analysis"]["format"]))
+    rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
+    rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
     ostream.write("\n")
 
