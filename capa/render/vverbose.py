@@ -1,3 +1,5 @@
+import collections
+
 import tabulate
 
 import capa.rules
@@ -151,9 +153,30 @@ def render_vverbose(doc):
     rows.append(("format", doc["meta"]["analysis"]["format"]))
     rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
     rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
+    rows.append(("function count", len(doc["meta"]["counts"]["functions"])))
+    rows.append(
+        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values())))
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
     ostream.write("\n")
 
+    matches_by_function = collections.defaultdict(set)
+    for rule in rutils.capability_rules(doc):
+        for va in rule["matches"].keys():
+            matches_by_function[va].add(rule["meta"]["name"])
+
+    ostream.writeln("## functions")
+    for va, feature_count in sorted(doc["meta"]["counts"]["functions"].items()):
+        va = int(va)
+        ostream.write("function at 0x%x with %d features: " % (va, feature_count))
+        if not matches_by_function.get(va, {}):
+            ostream.writeln("no matches")
+        else:
+            ostream.writeln("")
+            for rule_name in matches_by_function[va]:
+                ostream.writeln("  - " + rule_name)
+
+    ostream.write("\n")
+    ostream.writeln("## rules")
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
