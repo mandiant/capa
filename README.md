@@ -61,8 +61,7 @@ Alternatively, you can fetch a nightly build of a standalone binary from one of 
 - Linux: TODO
 - OSX: TODO
 
-
-# installation
+## installation
 
 See [doc/installation.md](doc/installation.md) for information on how to setup the project, including how to use it as a Python library.
 
@@ -110,8 +109,36 @@ function @ 0x10003A13
 ...
 ```
 
+capa uses a collection of rules to identify capabilities within a program.
+These rules are easy to write, even for those new to reverse engineering.
+By authoring rules, you can extend the capabilities that capa recognizes.
+In some regards, capa rules are a mixture of the OpenIOC, Yara, and YAML formats.
 
+Here's an example rule used by capa:
 
-# limitations
+```
+───────┬──────────────────────────────────────────────────────────────────────────
+       │ File: rules/data-manipulation/checksum/crc32/checksum-data-with-crc32.yml
+───────┼──────────────────────────────────────────────────────────────────────────
+   1   │ rule:
+   2   │   meta:
+   3   │     name: checksum data with CRC32
+   4   │     namespace: data-manipulation/checksum/crc32
+   5   │     author: moritz.raabe@fireeye.com
+   6   │     scope: function
+   7   │     examples:
+   8   │       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
+   9   │       - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
+  10   │   features:
+  11   │     - or:
+  12   │       - and:
+  13   │         - mnemonic: shr
+  14   │         - number: 0xEDB88320
+  15   │         - number: 8
+  16   │         - characteristic(nzxor): true
+  17   │       - api: RtlComputeCrc32
+──────────────────────────────────────────────────────────────────────────────────
+```
 
-To learn more about capa's current limitations see [here](doc/limitations.md).
+The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
+Please learn to write rules and contribute new entries as you find interesting techniques in malware.
