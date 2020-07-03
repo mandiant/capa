@@ -17,13 +17,11 @@ def width(s, character_count):
 
 
 def render_meta(doc, ostream):
-    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
-
-    for k in ("timestamp", "version"):
-        rows.append((width(k, 22), width(doc["meta"][k], 60)))
-
-    for k in ("path", "md5"):
-        rows.append((k, doc["meta"]["sample"][k]))
+    rows = []
+    rows.append((width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)))
+    rows.append(("path", doc["meta"]["sample"]["path"]))
+    rows.append(("timestamp", doc["meta"]["timestamp"]))
+    rows.append(("capa version", doc["meta"]["version"]))
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
     ostream.write("\n")
@@ -99,7 +97,7 @@ def render_attack(doc, ostream):
                 raise RuntimeError("unexpected ATT&CK spec format")
         rows.append((rutils.bold(tactic.upper()), "\n".join(inner_rows),))
     ostream.write(
-        tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 60)], tablefmt="psql")
+        tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql")
     )
     ostream.write("\n")
 
