@@ -4,6 +4,7 @@ import tabulate
 
 import capa.rules
 import capa.render.utils as rutils
+import capa.render.verbose
 
 
 def render_locations(ostream, match):
@@ -140,26 +141,28 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
         render_match(ostream, child, indent=indent + 1, mode=child_mode)
 
 
-def render_vverbose(doc):
-    ostream = rutils.StringIO()
+def render_functions(ostream, doc):
+    """
+    like:
 
-    rows = []
-    rows.append(("md5", doc["meta"]["sample"]["md5"]))
-    rows.append(("sha1", doc["meta"]["sample"]["sha1"]))
-    rows.append(("sha256", doc["meta"]["sample"]["sha256"]))
-    rows.append(("path", doc["meta"]["sample"]["path"]))
-    rows.append(("timestamp", doc["meta"]["timestamp"]))
-    rows.append(("capa version", doc["meta"]["version"]))
-    rows.append(("format", doc["meta"]["analysis"]["format"]))
-    rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
-    rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
-    rows.append(("function count", len(doc["meta"]["counts"]["functions"])))
-    rows.append(
-        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values()))
-    )
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
-    ostream.write("\n")
-
+        ## functions
+        function at 0x10001000 with 66 features: no matches
+        function at 0x100012b0 with 73 features: no matches
+        function at 0x1000321a with 33 features:
+          - get hostname
+          - initialize Winsock library
+        function at 0x10003286 with 63 features:
+          - create thread
+          - terminate thread
+        function at 0x10003415 with 116 features:
+          - write file
+          - send data
+          - link function at runtime
+          - create HTTP request
+          - get common file path
+          - send HTTP request
+          - connect to HTTP server
+    """
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         for va in rule["matches"].keys():
@@ -168,7 +171,7 @@ def render_vverbose(doc):
     ostream.writeln("## functions")
     for va, feature_count in sorted(doc["meta"]["counts"]["functions"].items()):
         va = int(va)
-        ostream.write("function at 0x%x with %d features: " % (va, feature_count))
+        ostream.write("function at 0x%X with %d features: " % (va, feature_count))
         if not matches_by_function.get(va, {}):
             ostream.writeln("no matches")
         else:
@@ -176,7 +179,24 @@ def render_vverbose(doc):
             for rule_name in matches_by_function[va]:
                 ostream.writeln("  - " + rule_name)
 
-    ostream.write("\n")
+
+def render_rules(ostream, doc):
+    """
+    like:
+
+        ## rules
+        check for OutputDebugString error
+        namespace  anti-analysis/anti-debugging/debugger-detection
+        author     michael.hunhoff@fireeye.com
+        scope      function
+        mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
+        examples   Practical Malware Analysis Lab 16-02.exe_:0x401020
+        function @ 0x10004706
+          and:
+            api: kernel32.SetLastError @ 0x100047C2
+            api: kernel32.GetLastError @ 0x10004A87
+            api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
+    """
     ostream.writeln("## rules")
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
@@ -216,7 +236,19 @@ def render_vverbose(doc):
                 ostream.write(" @ ")
                 ostream.writeln(rutils.hex(location))
                 render_match(ostream, match, indent=1)
-
         ostream.write("\n")
+
+
+def render_vverbose(doc):
+    ostream = rutils.StringIO()
+
+    capa.render.verbose.render_meta(ostream, doc)
+    ostream.write("\n")
+
+    render_functions(ostream, doc)
+    ostream.write("\n")
+
+    render_rules(ostream, doc)
+    ostream.write("\n")
 
     return ostream.getvalue()
