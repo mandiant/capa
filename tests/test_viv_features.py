@@ -3,7 +3,6 @@ import viv_utils
 import capa.features
 import capa.features.file
 import capa.features.insn
-import capa.features.function
 import capa.features.basicblock
 import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn

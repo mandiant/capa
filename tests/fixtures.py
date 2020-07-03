@@ -2,8 +2,9 @@ import os
 import os.path
 import collections
 
-import pytest
 import viv_utils
+
+import pytest
 
 CD = os.path.dirname(__file__)
 
