@@ -10,7 +10,6 @@ import capa.engine
 import capa.features
 import capa.features.file
 import capa.features.insn
-import capa.features.function
 import capa.features.basicblock
 from capa.engine import *
 from capa.features import MAX_BYTES_FEATURE_SIZE
