@@ -19,6 +19,7 @@ import tabulate
 import capa.rules
 import capa.render.utils as rutils
 
+
 def render_meta(ostream, doc):
     """
     like:
