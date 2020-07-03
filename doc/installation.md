@@ -47,6 +47,14 @@ Next, use `pip` to install the source code in "editable" mode. This means that P
 
 You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your path now invoke the capa binary from this directory.
 
+If you want to install the development dependencies, which you need to run the code formatters, syntax checker, rule linter and tests (and for the [hooks](#4-setup-hooks-optional)) run:
+
+`$ pip install -e ./local/path/to/src[dev]`
+
+If you are using zsh, do not forget to escape the square brackets:
+
+`$ pip install -e ./local/path/to/src\[dev\]`
+
 ### 4. Setup hooks [optional]
 
 If you plan to contribute to capa, you may want to setup the hooks.
