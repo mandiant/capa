@@ -1,18 +1,5 @@
 import abc
 
-try:
-    import ida
-except (ImportError, SyntaxError):
-    pass
-
-try:
-    import viv
-except (ImportError, SyntaxError):
-    pass
-
-__all__ = ["ida", "viv"]
-
-
 class FeatureExtractor(object):
     """
     FeatureExtractor defines the interface for fetching features from a sample.

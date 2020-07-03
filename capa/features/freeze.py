@@ -47,7 +47,6 @@ import logging
 import capa.features
 import capa.features.file
 import capa.features.insn
-import capa.features.function
 import capa.features.basicblock
 import capa.features.extractors
 from capa.helpers import hex
