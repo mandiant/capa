@@ -193,6 +193,9 @@ def is_supported_file_type(sample):
         return False
 
 
+SHELLCODE_BASE = 0x690000
+
+
 def get_shellcode_vw(sample, arch="auto"):
     """
     Return shellcode workspace using explicit arch or via auto detect
@@ -205,13 +208,12 @@ def get_shellcode_vw(sample, arch="auto"):
         # choose arch with most functions, idea by Jay G.
         vw_cands = []
         for arch in ["i386", "amd64"]:
-            vw_cands.append(viv_utils.getShellcodeWorkspace(sample_bytes, arch))
+            vw_cands.append(viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE))
         if not vw_cands:
             raise ValueError("could not generate vivisect workspace")
         vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
     else:
-        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch)
-    vw.setMeta("Format", "blob")  # TODO fix in viv_utils
+        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE)
     return vw
 
 
