@@ -55,6 +55,8 @@ If you are using zsh, do not forget to escape the square brackets:
 
 `$ pip install -e ./local/path/to/src\[dev\]`
 
+Note that some development dependencies require Python3.
+
 ### 4. Setup hooks [optional]
 
 If you plan to contribute to capa, you may want to setup the hooks.
