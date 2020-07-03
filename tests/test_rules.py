@@ -1,6 +1,7 @@
 import textwrap
 
 import pytest
+
 import capa.rules
 from capa.features import String
 from capa.features.insn import Number, Offset
