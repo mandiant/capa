@@ -47,7 +47,7 @@ def render_capabilities(doc, ostream):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
         rows.append((capability, rule["meta"]["namespace"]))
 
-    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 40), width("NAMESPACE", 40)], tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql"))
     ostream.write("\n")
 
 
