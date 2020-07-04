@@ -20,8 +20,6 @@ def render_meta(doc, ostream):
     rows = [
         (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
         ("path", doc["meta"]["sample"]["path"]),
-        ("timestamp", doc["meta"]["timestamp"]),
-        ("capa version", doc["meta"]["version"]),
     ]
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
