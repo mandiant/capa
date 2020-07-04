@@ -109,7 +109,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
             all_bb_matches[rule_name].extend(res)
 
     # mapping from matched rule feature to set of addresses at which it matched.
-    # type: Dict[MatchedRule, Set[int]]
+    # schema: Dic[MatchedRule: Set[int]
     function_features = {
         capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in all_function_matches.items()

@@ -89,7 +89,7 @@ class NamespaceDoesntMatchRulePath(Lint):
         if "lib" in rule.meta:
             return False
 
-        return rule.meta["namespace"] not in posixpath.normpath(rule.meta["capa/path"])
+        return rule.meta["namespace"] not in get_normpath(rule.meta["capa/path"])
 
 
 class MissingScope(Lint):
@@ -216,7 +216,7 @@ class LibRuleNotInLibDirectory(Lint):
         if "lib" not in rule.meta:
             return False
 
-        return "/lib/" not in posixpath.normpath(rule.meta["capa/path"])
+        return "/lib/" not in get_normpath(rule.meta["capa/path"])
 
 
 class LibRuleHasNamespace(Lint):
@@ -312,6 +312,10 @@ FEATURE_LINTS = (
     FeatureStringTooShort(),
     FeatureNegativeNumberOrOffset(),
 )
+
+
+def get_normpath(path):
+    return posixpath.normpath(path).replace(os.sep, "/")
 
 
 def lint_features(ctx, rule):
