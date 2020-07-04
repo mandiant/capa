@@ -169,7 +169,7 @@ def render_functions(ostream, doc):
             matches_by_function[va].add(rule["meta"]["name"])
 
     ostream.writeln("## functions")
-    for va, feature_count in sorted(doc["meta"]["counts"]["functions"].items()):
+    for va, feature_count in sorted(doc["meta"]["analysis"]["feature_counts"]["functions"].items()):
         va = int(va)
         ostream.write("function at 0x%X with %d features: " % (va, feature_count))
         if not matches_by_function.get(va, {}):

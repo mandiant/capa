@@ -46,8 +46,8 @@ def render_meta(ostream, doc):
         ("format", doc["meta"]["analysis"]["format"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
-        ("function count", len(doc["meta"]["counts"]["functions"])),
-        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values())),
+        ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
+        ("total feature count", doc["meta"]["analysis"]["feature_counts"]["file"] + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values())),
     ]
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 

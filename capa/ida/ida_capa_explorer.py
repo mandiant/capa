@@ -345,7 +345,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         capabilities, counts = capa.main.find_capabilities(
             rules, capa.features.extractors.ida.IdaFeatureExtractor(), True
         )
-        meta.update(counts)
+        meta["analysis"].update(counts)
 
         # support binary files specifically for x86/AMD64 shellcode
         # warn user binary file is loaded but still allow capa to process it

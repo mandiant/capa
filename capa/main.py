@@ -96,11 +96,11 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     all_function_matches = collections.defaultdict(list)
     all_bb_matches = collections.defaultdict(list)
 
-    meta = {"counts": {"file": 0, "functions": {},}}
+    meta = {"feature_counts": {"file": 0, "functions": {},}}
 
     for f in tqdm.tqdm(extractor.get_functions(), disable=disable_progress, unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
-        meta["counts"]["functions"][f.__int__()] = feature_count
+        meta["feature_counts"]["functions"][f.__int__()] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
 
         for rule_name, res in function_matches.items():
@@ -116,7 +116,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     }
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_features)
-    meta["counts"]["file"] = feature_count
+    meta["feature_counts"]["file"] = feature_count
 
     matches = {}
     matches.update(all_bb_matches)
@@ -492,7 +492,7 @@ def main(argv=None):
     meta = collect_metadata(argv, args.sample, format, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor)
-    meta.update(counts)
+    meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
@@ -552,7 +552,7 @@ def ida_main():
     meta = capa.ida.helpers.collect_metadata()
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
-    meta.update(counts)
+    meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
