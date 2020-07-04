@@ -36,20 +36,19 @@ def render_meta(ostream, doc):
         function count       42
         total feature count  1918
     """
-    rows = []
-    rows.append(("md5", doc["meta"]["sample"]["md5"]))
-    rows.append(("sha1", doc["meta"]["sample"]["sha1"]))
-    rows.append(("sha256", doc["meta"]["sample"]["sha256"]))
-    rows.append(("path", doc["meta"]["sample"]["path"]))
-    rows.append(("timestamp", doc["meta"]["timestamp"]))
-    rows.append(("capa version", doc["meta"]["version"]))
-    rows.append(("format", doc["meta"]["analysis"]["format"]))
-    rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
-    rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
-    rows.append(("function count", len(doc["meta"]["counts"]["functions"])))
-    rows.append(
-        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values()))
-    )
+    rows = [
+        ("md5", doc["meta"]["sample"]["md5"]),
+        ("sha1", doc["meta"]["sample"]["sha1"]),
+        ("sha256", doc["meta"]["sample"]["sha256"]),
+        ("path", doc["meta"]["sample"]["path"]),
+        ("timestamp", doc["meta"]["timestamp"]),
+        ("capa version", doc["meta"]["version"]),
+        ("format", doc["meta"]["analysis"]["format"]),
+        ("extractor", doc["meta"]["analysis"]["extractor"]),
+        ("base address", hex(doc["meta"]["analysis"]["base_address"])),
+        ("function count", len(doc["meta"]["counts"]["functions"])),
+        ("total feature count", doc["meta"]["counts"]["file"] + sum(doc["meta"]["counts"]["functions"].values())),
+    ]
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
 

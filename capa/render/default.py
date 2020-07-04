@@ -17,11 +17,12 @@ def width(s, character_count):
 
 
 def render_meta(doc, ostream):
-    rows = []
-    rows.append((width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)))
-    rows.append(("path", doc["meta"]["sample"]["path"]))
-    rows.append(("timestamp", doc["meta"]["timestamp"]))
-    rows.append(("capa version", doc["meta"]["version"]))
+    rows = [
+        (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
+        ("path", doc["meta"]["sample"]["path"]),
+        ("timestamp", doc["meta"]["timestamp"]),
+        ("capa version", doc["meta"]["version"]),
+    ]
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
     ostream.write("\n")
