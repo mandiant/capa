@@ -211,7 +211,7 @@ def parse_description(s, value_type, description=None):
     """
     s can be an int or a string
     """
-    if value_type != "string" and isinstance(s, str) and " = " in s:
+    if value_type != "string" and isinstance(s, six.string_types) and " = " in s:
         if description:
             raise InvalidRule(
                 'unexpected value: "%s", only one description allowed (inline description with ` = `)' % s
@@ -222,7 +222,7 @@ def parse_description(s, value_type, description=None):
     else:
         value = s
 
-    if isinstance(value, str):
+    if isinstance(value, six.string_types):
         if value_type == "bytes":
             try:
                 value = codecs.decode(value.replace(" ", ""), "hex")
@@ -801,7 +801,7 @@ class RuleSet(object):
         rules_filtered = set([])
         for rule in rules:
             for k, v in rule.meta.items():
-                if isinstance(v, str) and tag in v:
+                if isinstance(v, six.string_types) and tag in v:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
                     rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
                     break
