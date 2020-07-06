@@ -23,9 +23,6 @@ The following is a set of guidelines for contributing to capa and its packages, 
   * [Python Styleguide](#python-styleguide)
   * [Rules Styleguide](#rules-styleguide)
 
-[Additional Notes](#additional-notes)
-  * [Issue and Pull Request Labels](#issue-and-pull-request-labels)
-
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Capa Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the maintainers.
@@ -41,14 +38,16 @@ We host the capa project as three Github repositories:
   
 The command line tools, logic engine, and other Python source code are found in the `capa` repository.
 This is the repository to fork when you want to enhance the features, performance, or user interface of capa.
+Do *not* push rules directly to this repository, instead...
 
 The standard rules contributed by the community are found in the `capa-rules` repository.
 When you have an idea for a new rule, you should open a PR against `capa-rules`.
 We keep `capa` and `capa-rules` separate to distinguish where ideas, bugs, and discussions should happen.
-Also, we encourage users to develop their own rule repositories, so we treat our recommended set of rules in the same way.
+If you're writing yaml it probably goes in `capa-rules` and if you're writing Python it probably goes in `capa`.
+Also, we encourage users to develop their own rule repositories, so we treat our default set of rules in the same way.
 
 Test fixtures, such as malware samples and analysis workspaces, are found in the `capa-testfiles` repository.
-These are files you'll need to run the lint and full test suites; 
+These are files you'll need in order to run the linter (in `--thorough` mode) and full test suites;
  however, they take up a lot of space (1GB+), so by keeping `capa-testfiles` separate,
  a shallow checkout of `capa` and `capa-rules` doesn't take much bandwidth.
 
@@ -57,7 +56,7 @@ These are files you'll need to run the lint and full test suites;
 When we make a significant decision in how we maintain the project and what we can or cannot support,
  we will document it in the [capa issues tracker](https://github.com/fireeye/capa/issues).
 This is the best place review our discussions about what/how/why we do things in the project.
-If you have a question around how we do things, check to see if it is documented there.
+If you have a question, check to see if it is documented there.
 If it is *not* documented there, or you can't find an answer, please open a issue.
 We'll link to existing issues when appropriate to keep discussions in one place.
 
@@ -71,7 +70,7 @@ Following these guidelines helps maintainers and the community understand your r
 Before creating bug reports, please check [this list](#before-submitting-a-bug-report)
  as you might find out that you don't need to create one.
 When you are creating a bug report, please [include as many details as possible](#how-do-i-submit-a-good-bug-report).
-Fill out [the required template](https://github.com/fireeye/capa/.github/blob/master/.github/ISSUE_TEMPLATE/bug_report.md),
+Fill out [the required template](./ISSUE_TEMPLATE/bug_report.md),
  the information it asks for helps us resolve issues faster.
 
 > **Note:** If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and include a link to the original issue in the body of your new one.
@@ -86,7 +85,7 @@ Fill out [the required template](https://github.com/fireeye/capa/.github/blob/ma
 Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/).
 After you've determined [which repository](#capa-and-its-repositories) your bug is related to,
  create an issue on that repository and provide the following information by filling in 
- [the template](https://github.com/fireeye/capa/.github/blob/master/.github/ISSUE_TEMPLATE/bug_report.md).
+ [the template](./ISSUE_TEMPLATE/bug_report.md).
 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
@@ -115,7 +114,7 @@ Include details about your configuration and environment:
 
 This section guides you through submitting an enhancement suggestion for capa, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
 
-Before creating enhancement suggestions, please check [this list](#before-submitting-an-enhancement-suggestion) as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). Fill in [the template](https://github.com/fireeye/capa/.github/blob/master/.github/ISSUE_TEMPLATE/feature_request.md), including the steps that you imagine you would take if the feature you're requesting existed.
+Before creating enhancement suggestions, please check [this list](#before-submitting-an-enhancement-suggestion) as you might find out that you don't need to create one. When you are creating an enhancement suggestion, please [include as many details as possible](#how-do-i-submit-a-good-enhancement-suggestion). Fill in [the template](./ISSUE_TEMPLATE/feature_request.md), including the steps that you imagine you would take if the feature you're requesting existed.
 
 #### Before Submitting An Enhancement Suggestion
 
