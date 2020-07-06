@@ -44,15 +44,17 @@ Finally, use `pip` to install the source code in "editable" mode. This means tha
 
 You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your path now invoke the capa binary from this directory.
 
-If you want to install the development dependencies, which you need to run the code formatters, syntax checker, rule linter and tests (and for the [hooks](#4-setup-hooks-optional)) run:
+We use the following tools to ensure consistent code style and formatting:
+  - [black](https://github.com/psf/black) code formatter, with `-l 120`
+  - [isort](https://pypi.org/project/isort/) code formatter, with `--length-sort --line-width 120`
+  - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
+  - [capafmt](https://github.com/fireeye/capa/blob/master/scripts/capafmt.py) rule formatter
+
+To install these development dependencies, run:
 
 `$ pip install -e ./local/path/to/src[dev]`
 
-If you are using zsh, do not forget to escape the square brackets:
-
-`$ pip install -e ./local/path/to/src\[dev\]`
-
-Note that some development dependencies require Python3.
+Note that some development dependencies (including the black code formatter) require Python3.
 
 ### 4. Setup hooks [optional]
 
