@@ -17,11 +17,10 @@ def width(s, character_count):
 
 
 def render_meta(doc, ostream):
-    rows = []
-    rows.append((width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)))
-    rows.append(("path", doc["meta"]["sample"]["path"]))
-    rows.append(("timestamp", doc["meta"]["timestamp"]))
-    rows.append(("capa version", doc["meta"]["version"]))
+    rows = [
+        (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
+        ("path", doc["meta"]["sample"]["path"]),
+    ]
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
     ostream.write("\n")
@@ -48,7 +47,7 @@ def render_capabilities(doc, ostream):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
         rows.append((capability, rule["meta"]["namespace"]))
 
-    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 40), width("NAMESPACE", 40)], tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql"))
     ostream.write("\n")
 
 

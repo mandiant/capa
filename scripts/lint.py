@@ -180,7 +180,7 @@ class DoesntMatchExample(Lint):
 
             try:
                 extractor = capa.main.get_extractor(path, "auto")
-                capabilities = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
+                capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
                 logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
                 return True

@@ -20,22 +20,53 @@ import capa.rules
 import capa.render.utils as rutils
 
 
-def render_verbose(doc):
-    ostream = rutils.StringIO()
+def render_meta(ostream, doc):
+    """
+    like:
 
-    rows = []
-    rows.append(("md5", doc["meta"]["sample"]["md5"]))
-    rows.append(("sha1", doc["meta"]["sample"]["sha1"]))
-    rows.append(("sha256", doc["meta"]["sample"]["sha256"]))
-    rows.append(("path", doc["meta"]["sample"]["path"]))
-    rows.append(("timestamp", doc["meta"]["timestamp"]))
-    rows.append(("capa version", doc["meta"]["version"]))
-    rows.append(("format", doc["meta"]["analysis"]["format"]))
-    rows.append(("extractor", doc["meta"]["analysis"]["extractor"]))
-    rows.append(("base address", hex(doc["meta"]["analysis"]["base_address"])))
+        md5                  84882c9d43e23d63b82004fae74ebb61
+        sha1                 c6fb3b50d946bec6f391aefa4e54478cf8607211
+        sha256               5eced7367ed63354b4ed5c556e2363514293f614c2c2eb187273381b2ef5f0f9
+        path                 /tmp/suspicious.dll_
+        timestamp            2020-07-03T10:17:05.796933
+        capa version         0.0.0
+        format               auto
+        extractor            VivisectFeatureExtractor
+        base address         0x10000000
+        function count       42
+        total feature count  1918
+    """
+    rows = [
+        ("md5", doc["meta"]["sample"]["md5"]),
+        ("sha1", doc["meta"]["sample"]["sha1"]),
+        ("sha256", doc["meta"]["sample"]["sha256"]),
+        ("path", doc["meta"]["sample"]["path"]),
+        ("timestamp", doc["meta"]["timestamp"]),
+        ("capa version", doc["meta"]["version"]),
+        ("format", doc["meta"]["analysis"]["format"]),
+        ("extractor", doc["meta"]["analysis"]["extractor"]),
+        ("base address", hex(doc["meta"]["analysis"]["base_address"])),
+        ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
+        (
+            "total feature count",
+            doc["meta"]["analysis"]["feature_counts"]["file"]
+            + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values()),
+        ),
+    ]
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
-    ostream.write("\n")
 
+
+def render_rules(ostream, doc):
+    """
+    like:
+
+        receive data (2 matches)
+        namespace    communication
+        description  all known techniques for receiving data from a potential C2 server
+        scope        function
+        matches      0x10003A13
+                     0x10003797
+    """
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -61,5 +92,15 @@ def render_verbose(doc):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
+
+
+def render_verbose(doc):
+    ostream = rutils.StringIO()
+
+    render_meta(ostream, doc)
+    ostream.write("\n")
+
+    render_rules(ostream, doc)
+    ostream.write("\n")
 
     return ostream.getvalue()

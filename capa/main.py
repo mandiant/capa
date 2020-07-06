@@ -68,7 +68,7 @@ def find_function_capabilities(ruleset, extractor, f):
                 function_features[capa.features.MatchedRule(rule_name)].add(va)
 
     _, function_matches = capa.engine.match(ruleset.function_rules, function_features, oint(f))
-    return function_matches, bb_matches
+    return function_matches, bb_matches, len(function_features)
 
 
 def find_file_capabilities(ruleset, extractor, function_features):
@@ -84,20 +84,25 @@ def find_file_capabilities(ruleset, extractor, function_features):
             if feature not in file_features:
                 file_features[feature] = set()
 
-    logger.info("analyzed file and extracted %d features", len(file_features))
+    logger.debug("analyzed file and extracted %d features", len(file_features))
 
     file_features.update(function_features)
 
     _, matches = capa.engine.match(ruleset.file_rules, file_features, 0x0)
-    return matches
+    return matches, len(file_features)
 
 
 def find_capabilities(ruleset, extractor, disable_progress=None):
     all_function_matches = collections.defaultdict(list)
     all_bb_matches = collections.defaultdict(list)
 
+    meta = {"feature_counts": {"file": 0, "functions": {},}}
+
     for f in tqdm.tqdm(extractor.get_functions(), disable=disable_progress, unit=" functions"):
-        function_matches, bb_matches = find_function_capabilities(ruleset, extractor, f)
+        function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
+        meta["feature_counts"]["functions"][f.__int__()] = feature_count
+        logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
+
         for rule_name, res in function_matches.items():
             all_function_matches[rule_name].extend(res)
         for rule_name, res in bb_matches.items():
@@ -110,14 +115,15 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         for rule_name, results in all_function_matches.items()
     }
 
-    all_file_matches = find_file_capabilities(ruleset, extractor, function_features)
+    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_features)
+    meta["feature_counts"]["file"] = feature_count
 
     matches = {}
     matches.update(all_bb_matches)
     matches.update(all_function_matches)
     matches.update(all_file_matches)
 
-    return matches
+    return matches, meta
 
 
 def has_rule_with_namespace(rules, capabilities, rule_cat):
@@ -301,7 +307,10 @@ def get_rules(rule_path):
         for root, dirs, files in os.walk(rule_path):
             for file in files:
                 if not file.endswith(".yml"):
-                    logger.warning("skipping non-.yml file: %s", file)
+                    if not (file.endswith(".md") or file.endswith(".git")):
+                        # expect to see readme.md, format.md, and maybe a .git directory
+                        # other things maybe are rules, but are mis-named.
+                        logger.warning("skipping non-.yml file: %s", file)
                     continue
 
                 rule_path = os.path.join(root, file)
@@ -485,7 +494,8 @@ def main(argv=None):
 
     meta = collect_metadata(argv, args.sample, format, extractor)
 
-    capabilities = find_capabilities(rules, extractor)
+    capabilities, counts = find_capabilities(rules, extractor)
+    meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
@@ -542,12 +552,14 @@ def ida_main():
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 
-    capabilities = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
+    meta = capa.ida.helpers.collect_metadata()
+
+    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
+    meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-    meta = capa.ida.helpers.collect_metadata()
     print(capa.render.render_default(meta, rules, capabilities))
 
 
