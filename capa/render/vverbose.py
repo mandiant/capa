@@ -141,45 +141,6 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
         render_match(ostream, child, indent=indent + 1, mode=child_mode)
 
 
-def render_functions(ostream, doc):
-    """
-    like:
-
-        ## functions
-        function at 0x10001000 with 66 features: no matches
-        function at 0x100012b0 with 73 features: no matches
-        function at 0x1000321a with 33 features:
-          - get hostname
-          - initialize Winsock library
-        function at 0x10003286 with 63 features:
-          - create thread
-          - terminate thread
-        function at 0x10003415 with 116 features:
-          - write file
-          - send data
-          - link function at runtime
-          - create HTTP request
-          - get common file path
-          - send HTTP request
-          - connect to HTTP server
-    """
-    matches_by_function = collections.defaultdict(set)
-    for rule in rutils.capability_rules(doc):
-        for va in rule["matches"].keys():
-            matches_by_function[va].add(rule["meta"]["name"])
-
-    ostream.writeln("## functions")
-    for va, feature_count in sorted(doc["meta"]["analysis"]["feature_counts"]["functions"].items()):
-        va = int(va)
-        ostream.write("function at 0x%X with %d features: " % (va, feature_count))
-        if not matches_by_function.get(va, {}):
-            ostream.writeln("no matches")
-        else:
-            ostream.writeln("")
-            for rule_name in matches_by_function[va]:
-                ostream.writeln("  - " + rule_name)
-
-
 def render_rules(ostream, doc):
     """
     like:
@@ -197,7 +158,6 @@ def render_rules(ostream, doc):
             api: kernel32.GetLastError @ 0x10004A87
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
-    ostream.writeln("## rules")
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -243,9 +203,6 @@ def render_vverbose(doc):
     ostream = rutils.StringIO()
 
     capa.render.verbose.render_meta(ostream, doc)
-    ostream.write("\n")
-
-    render_functions(ostream, doc)
     ostream.write("\n")
 
     render_rules(ostream, doc)
