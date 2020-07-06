@@ -7,19 +7,10 @@ from PyQt5 import Qt, QtGui, QtCore
 
 import capa.ida.helpers
 import capa.render.utils as rutils
-from capa.ida.explorer.item import (
-    CapaExplorerDataItem,
-    CapaExplorerRuleItem,
-    CapaExplorerBlockItem,
-    CapaExplorerDefaultItem,
-    CapaExplorerFeatureItem,
-    CapaExplorerByteViewItem,
-    CapaExplorerFunctionItem,
-    CapaExplorerSubscopeItem,
-    CapaExplorerRuleMatchItem,
-    CapaExplorerStringViewItem,
-    CapaExplorerInstructionViewItem,
-)
+from capa.ida.explorer.item import (CapaExplorerDataItem, CapaExplorerRuleItem, CapaExplorerBlockItem,
+                                    CapaExplorerDefaultItem, CapaExplorerFeatureItem, CapaExplorerByteViewItem,
+                                    CapaExplorerFunctionItem, CapaExplorerSubscopeItem, CapaExplorerRuleMatchItem,
+                                    CapaExplorerStringViewItem, CapaExplorerInstructionViewItem)
 
 # default highlight color used in IDA window
 DEFAULT_HIGHLIGHT = 0xD096FF
