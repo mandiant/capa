@@ -423,7 +423,7 @@ class Rule(object):
 
         def rec(statement):
             if isinstance(statement, capa.features.MatchedRule):
-                # we're not sure at this point if the `statement.rule_name` is
+                # we're not sure at this point if the `statement.value` is
                 #  really a rule name or a namespace name (we use `MatchedRule` for both cases).
                 # we'll give precedence to namespaces, and then assume if that does work,
                 #  that it must be a rule name.
@@ -431,12 +431,12 @@ class Rule(object):
                 # we don't expect any collisions between namespaces and rule names, but its possible.
                 # most likely would be collision between top level namespace (e.g. `host-interaction`) and rule name.
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
-                if statement.rule_name in namespaces:
+                if statement.value in namespaces:
                     # matches a namespace, so take precedence and don't even check rule names.
-                    deps.update(map(lambda r: r.name, namespaces[statement.rule_name]))
+                    deps.update(map(lambda r: r.name, namespaces[statement.value]))
                 else:
                     # not a namespace, assume its a rule name.
-                    deps.add(statement.rule_name)
+                    deps.add(statement.value)
 
             elif isinstance(statement, Statement):
                 for child in statement.get_children():

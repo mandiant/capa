@@ -8,28 +8,25 @@ class API(Feature):
             modname, impname = name.split(".")
             name = modname.lower() + "." + impname
 
-        super(API, self).__init__([name], description)
+        super(API, self).__init__(name, description)
 
 
 class Number(Feature):
     def __init__(self, value, description=None):
-        super(Number, self).__init__([value], description)
-        self.value = value
+        super(Number, self).__init__(value, description)
 
-    def get_args_str(self):
+    def get_value_str(self):
         return "0x%X" % self.value
 
 
 class Offset(Feature):
     def __init__(self, value, description=None):
-        super(Offset, self).__init__([value], description)
-        self.value = value
+        super(Offset, self).__init__(value, description)
 
-    def get_args_str(self):
+    def get_value_str(self):
         return "0x%X" % self.value
 
 
 class Mnemonic(Feature):
     def __init__(self, value, description=None):
-        super(Mnemonic, self).__init__([value], description)
-        self.value = value
+        super(Mnemonic, self).__init__(value, description)
