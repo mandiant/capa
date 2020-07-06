@@ -22,7 +22,7 @@ class Number(Feature):
 
 class Offset(Feature):
     def __init__(self, value, description=None):
-        super(Offset, self).__init__([value])
+        super(Offset, self).__init__([value], description)
         self.value = value
 
     def get_args_str(self):
