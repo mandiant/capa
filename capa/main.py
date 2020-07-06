@@ -307,7 +307,10 @@ def get_rules(rule_path):
         for root, dirs, files in os.walk(rule_path):
             for file in files:
                 if not file.endswith(".yml"):
-                    logger.warning("skipping non-.yml file: %s", file)
+                    if not (file.endswith(".md") or file.endswith(".git")):
+                        # expect to see readme.md, format.md, and maybe a .git directory
+                        # other things maybe are rules, but are mis-named.
+                        logger.warning("skipping non-.yml file: %s", file)
                     continue
 
                 rule_path = os.path.join(root, file)
