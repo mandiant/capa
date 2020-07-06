@@ -45,18 +45,17 @@ import sys
 import logging
 import collections
 
-import colorama
 import argparse
+import colorama
 
 import capa.main
 import capa.rules
 import capa.engine
 import capa.render
-import capa.render.utils as rutils
 import capa.features
+import capa.render.utils as rutils
 import capa.features.freeze
 import capa.features.extractors.viv
-
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -125,8 +124,11 @@ def main(argv=None):
         parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
         parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
         parser.add_argument(
-            "-f", "--format", choices=[f[0] for f in formats], default="auto",
-            help="Select sample format, %s" % format_help
+            "-f",
+            "--format",
+            choices=[f[0] for f in formats],
+            default="auto",
+            help="Select sample format, %s" % format_help,
         )
         args = parser.parse_args(args=argv)
 
@@ -195,7 +197,8 @@ def main(argv=None):
                     " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
                 )
                 logger.error(
-                    " If you don't know the input file type, you can try using the `file` utility to guess it.")
+                    " If you don't know the input file type, you can try using the `file` utility to guess it."
+                )
                 logger.error("-" * 80)
                 return -1
             except capa.main.UnsupportedRuntimeError:
@@ -206,7 +209,8 @@ def main(argv=None):
                 logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
                 logger.error(" ")
                 logger.error(
-                    " If you're seeing this message on the command line, please ensure you're running Python 2.7.")
+                    " If you're seeing this message on the command line, please ensure you're running Python 2.7."
+                )
                 logger.error("-" * 80)
                 return -1
 
