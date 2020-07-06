@@ -38,7 +38,8 @@ Have you read Capa's Code of Conduct? By filing an Issue, you are expected to co
 
 ### Versions
 
-<!-- You can get this information from copy and pasting the output of `atom --version` and `apm --version` from the command line. Also, please include the OS and what version of the OS you're running. -->
+<!-- You can get this information from copy and pasting the output of `capa --version` from the command line.
+ Also, please include the OS and what version of the OS you're running. -->
 
 ### Additional Information
 
