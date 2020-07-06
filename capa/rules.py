@@ -207,16 +207,23 @@ def parse_feature(key):
         raise InvalidRule("unexpected statement: %s" % key)
 
 
+# this is the separator between a feature value and its description
+# when using the inline description syntax, like:
+#
+#     number: 42 = ENUM_FAVORITE_NUMBER
+DESCRIPTION_SEPARATOR = " = "
+
+
 def parse_description(s, value_type, description=None):
     """
     s can be an int or a string
     """
-    if value_type != "string" and isinstance(s, six.string_types) and " = " in s:
+    if value_type != "string" and isinstance(s, six.string_types) and DESCRIPTION_SEPARATOR in s:
         if description:
             raise InvalidRule(
-                'unexpected value: "%s", only one description allowed (inline description with ` = `)' % s
+                'unexpected value: "%s", only one description allowed (inline description with `%s`)' % (s, DESCRIPTION_SEPARATOR)
             )
-        value, _, description = s.rpartition(" = ")
+        value, _, description = s.rpartition(DESCRIPTION_SEPARATOR)
         if description == "":
             raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
     else:
