@@ -61,9 +61,7 @@ Alternatively, you can fetch a nightly build of a standalone binary from one of 
 - Linux: TODO
 - OSX: TODO
 
-## installation
-
-See [doc/installation.md](doc/installation.md) for information on how to setup the project, including how to use it as a Python library.
+To use capa as a library or integrate with another tool, see [doc/installation.md](doc/installation.md) for further setup instructions.
 
 For more information about how to use capa, including running it as an IDA script/plugin see [doc/usage.md](doc/usage.md).
 
@@ -142,3 +140,9 @@ Here's an example rule used by capa:
 
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
+
+# further information
+  - [doc/usage.md](doc/usage.md)
+  - [doc/installation.md](doc/installation.md)
+  - [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules)
+  - [doc/rule format.md](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
