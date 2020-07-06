@@ -359,7 +359,7 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
         "analysis": {
             "format": format,
             "extractor": extractor.__class__.__name__,
-            "rules": rules_path,
+            "rules": os.path.abspath(os.path.normpath(rules_path)),
             "base_address": extractor.get_base_address(),
         },
     }
