@@ -221,7 +221,8 @@ def parse_description(s, value_type, description=None):
     if value_type != "string" and isinstance(s, six.string_types) and DESCRIPTION_SEPARATOR in s:
         if description:
             raise InvalidRule(
-                'unexpected value: "%s", only one description allowed (inline description with `%s`)' % (s, DESCRIPTION_SEPARATOR)
+                'unexpected value: "%s", only one description allowed (inline description with `%s`)'
+                % (s, DESCRIPTION_SEPARATOR)
             )
         value, _, description = s.rpartition(DESCRIPTION_SEPARATOR)
         if description == "":
