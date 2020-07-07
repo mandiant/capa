@@ -7,7 +7,6 @@ from capa.features import MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
-
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
