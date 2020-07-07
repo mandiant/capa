@@ -398,7 +398,11 @@ def main(argv=None):
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     parser.add_argument(
-        "--color", type=str, choices=("auto", "always", "never"), default="auto", help="Enable ANSI color codes in results, default: only during interactive session"
+        "--color",
+        type=str,
+        choices=("auto", "always", "never"),
+        default="auto",
+        help="Enable ANSI color codes in results, default: only during interactive session",
     )
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
