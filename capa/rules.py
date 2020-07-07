@@ -224,7 +224,7 @@ def parse_description(s, value_type, description=None):
                 'unexpected value: "%s", only one description allowed (inline description with `%s`)'
                 % (s, DESCRIPTION_SEPARATOR)
             )
-        value, _, description = s.rpartition(DESCRIPTION_SEPARATOR)
+        value, _, description = s.partition(DESCRIPTION_SEPARATOR)
         if description == "":
             raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
     else:
