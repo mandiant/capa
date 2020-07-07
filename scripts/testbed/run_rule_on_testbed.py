@@ -18,8 +18,11 @@ import argparse
 import capa.main
 import capa.rules
 import capa.features.freeze
-from scripts.testbed import FNAMES_EXTENSION, FREEZE_EXTENSION
+from utils import FNAMES_EXTENSION, FREEZE_EXTENSION
 from start_ida_export_fimages import export_fimages
+
+# enable import of code in the same directory
+sys.path.append(os.path.dirname(__file__))
 
 logger = logging.getLogger(__name__)
 

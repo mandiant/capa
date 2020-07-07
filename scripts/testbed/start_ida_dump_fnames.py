@@ -17,7 +17,10 @@ import subprocess
 
 import argparse
 
-from scripts.testbed import FNAMES_EXTENSION
+from utils import FNAMES_EXTENSION
+
+# enable import of code in the same directory
+sys.path.append(os.path.dirname(__file__))
 
 IDA32_PATH = "C:\\Program Files\\IDA Pro 7.3\\ida.exe"
 IDA64_PATH = "C:\\Program Files\\IDA Pro 7.3\\ida64.exe"
