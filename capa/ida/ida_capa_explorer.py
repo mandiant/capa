@@ -1,16 +1,15 @@
 import os
 import logging
 import collections
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import idaapi
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
-
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel

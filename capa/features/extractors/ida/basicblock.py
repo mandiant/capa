@@ -5,7 +5,6 @@ import struct
 import idaapi
 
 import capa.features.extractors.ida.helpers
-
 from capa.features import Characteristic
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.ida import helpers

@@ -4,7 +4,6 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-
 from capa.features import MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 

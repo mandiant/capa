@@ -7,7 +7,6 @@ import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
-
 from capa.features.extractors import FeatureExtractor
 
 
