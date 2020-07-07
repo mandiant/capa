@@ -251,7 +251,7 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
     if insn.itype not in (idaapi.NN_push, idaapi.NN_mov):
         return
 
-    if any(map(lambda op: op.type != idaapi.o_mem, insn.ops)):
+    if all(map(lambda op: op.type != idaapi.o_mem, insn.ops)):
         # try to optimize for only memory references
         return
 
@@ -343,7 +343,7 @@ def extract_features(f, bb, insn):
             insn (IDA insn_t)
     """
     for inst_handler in INSTRUCTION_HANDLERS:
-        for feature, ea in inst_handler(f, bb, insn):
+        for (feature, ea) in inst_handler(f, bb, insn):
             yield feature, ea
 
 
