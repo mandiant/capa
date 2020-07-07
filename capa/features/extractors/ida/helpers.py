@@ -14,13 +14,13 @@ def find_byte_sequence(start, end, seq):
             end: max virtual address
             seq: bytes to search e.g. b'\x01\x03'
     """
-    if sys.version_info >= (3, 0):
+    if sys.version_info[0] >= 3:
         return idaapi.find_binary(start, end, " ".join(["%02x" % b for b in seq]), 0, idaapi.SEARCH_DOWN)
     else:
         return idaapi.find_binary(start, end, " ".join(["%02x" % ord(b) for b in seq]), 0, idaapi.SEARCH_DOWN)
 
 
-def get_functions(start=None, end=None, ignore_thunks=False, ignore_libs=False):
+def get_functions(start=None, end=None, skip_thunks=False, skip_libs=False):
     """ get functions, range optional
 
         args:
@@ -32,21 +32,19 @@ def get_functions(start=None, end=None, ignore_thunks=False, ignore_libs=False):
     """
     for ea in idautils.Functions(start=start, end=end):
         f = idaapi.get_func(ea)
-
-        if ignore_thunks and f.flags & idaapi.FUNC_THUNK:
-            continue
-
-        if ignore_libs and f.flags & idaapi.FUNC_LIB:
-            continue
-
-        yield f
+        if not (skip_thunks and (f.flags & idaapi.FUNC_THUNK) or skip_libs and (f.flags & idaapi.FUNC_LIB)):
+            yield f
 
 
-def get_segments():
-    """ Get list of segments (sections) in the binary image """
+def get_segments(skip_header_segments=False):
+    """ get list of segments (sections) in the binary image
+
+        args:
+            skip_header_segments: IDA may load header segments - skip if set
+    """
     for n in range(idaapi.get_segm_qty()):
         seg = idaapi.getnseg(n)
-        if seg:
+        if seg and not (skip_header_segments and seg.is_header_segm()):
             yield seg
 
 
@@ -70,24 +68,24 @@ def get_segment_buffer(seg):
 
 def get_file_imports():
     """ get file imports """
-    _imports = {}
+    imports = {}
 
     for idx in range(idaapi.get_import_module_qty()):
-        dllname = idaapi.get_import_module_name(idx)
+        library = idaapi.get_import_module_name(idx)
 
-        if not dllname:
+        if not library:
             continue
 
-        def _inspect_import(ea, name, ordi):
-            if name and name.startswith("__imp_"):
+        def inspect_import(ea, function, ordinal):
+            if function and function.startswith("__imp_"):
                 # handle mangled names starting
-                name = name[len("__imp_") :]
-            _imports[ea] = (dllname.lower(), name, ordi)
+                function = function[len("__imp_") :]
+            imports[ea] = (library.lower(), function, ordinal)
             return True
 
-        idaapi.enum_import_names(idx, _inspect_import)
+        idaapi.enum_import_names(idx, inspect_import)
 
-    return _imports
+    return imports
 
 
 def get_instructions_in_range(start, end):
@@ -100,9 +98,9 @@ def get_instructions_in_range(start, end):
             (insn_t*)
     """
     for head in idautils.Heads(start, end):
-        inst = idautils.DecodeInstruction(head)
-        if inst:
-            yield inst
+        insn = idautils.DecodeInstruction(head)
+        if insn:
+            yield insn
 
 
 def is_operand_equal(op1, op2):
@@ -133,7 +131,16 @@ def is_operand_equal(op1, op2):
 
 def is_basic_block_equal(bb1, bb2):
     """ compare two IDA BasicBlock """
-    return bb1.start_ea == bb2.start_ea and bb1.end_ea == bb2.end_ea and bb1.type == bb2.type
+    if bb1.start_ea != bb2.start_ea:
+        return False
+
+    if bb1.end_ea != bb2.end_ea:
+        return False
+
+    if bb1.type != bb2.type:
+        return False
+
+    return True
 
 
 def basic_block_size(bb):
@@ -142,6 +149,7 @@ def basic_block_size(bb):
 
 
 def read_bytes_at(ea, count):
+    """ """
     segm_end = idc.get_segm_end(ea)
     if ea + count > segm_end:
         return idc.get_bytes(ea, segm_end - ea)
@@ -163,7 +171,7 @@ def find_string_at(ea, min=4):
             return found
         except UnicodeDecodeError:
             pass
-    return None
+    return ""
 
 
 def get_op_phrase_info(op):
@@ -173,7 +181,7 @@ def get_op_phrase_info(op):
             https://github.com/tmr232/Sark/blob/master/sark/code/instruction.py#L28-L73
     """
     if op.type not in (idaapi.o_phrase, idaapi.o_displ):
-        return
+        return {}
 
     scale = 1 << ((op.specflag2 & 0xC0) >> 6)
     offset = op.addr
@@ -191,7 +199,7 @@ def get_op_phrase_info(op):
             if index & 4:
                 index += 8
     else:
-        return
+        return {}
 
     if (index == base == idautils.procregs.sp.reg) and (scale == 1):
         # HACK: This is a really ugly hack. For some reason, phrases of the form `[esp + ...]` (`sp`, `rsp` as well)
@@ -215,25 +223,19 @@ def is_op_read(insn, op):
 
 def is_sp_modified(insn):
     """ determine if instruction modifies SP, ESP, RSP """
-    for op in get_insn_ops(insn, op_type=(idaapi.o_reg,)):
-        if op.reg != idautils.procregs.sp.reg:
-            continue
-
-        if is_op_write(insn, op):
+    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
+        if op.reg == idautils.procregs.sp.reg and is_op_write(insn, op):
+            # register is stack and written
             return True
-
     return False
 
 
 def is_bp_modified(insn):
     """ check if instruction modifies BP, EBP, RBP """
-    for op in get_insn_ops(insn, op_type=(idaapi.o_reg,)):
-        if op.reg != idautils.procregs.bp.reg:
-            continue
-
-        if is_op_write(insn, op):
+    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
+        if op.reg == idautils.procregs.bp.reg and is_op_write(insn, op):
+            # register is base and written
             return True
-
     return False
 
 
@@ -242,33 +244,26 @@ def is_frame_register(reg):
     return reg in (idautils.procregs.sp.reg, idautils.procregs.bp.reg)
 
 
-def get_insn_ops(insn, op_type=None):
+def get_insn_ops(insn, target_ops=()):
     """ yield op_t for instruction, filter on type if specified """
     for op in insn.ops:
         if op.type == idaapi.o_void:
             # avoid looping all 6 ops if only subset exists
             break
-
-        if op_type and op.type not in op_type:
+        if target_ops and op.type not in target_ops:
             continue
-
         yield op
 
 
-def ea_flags(ea):
-    """ retrieve processor flags for a given address """
-    return idaapi.get_flags(ea)
-
-
-def is_op_stack_var(ea, n):
+def is_op_stack_var(ea, index):
     """ check if operand is a stack variable """
-    return idaapi.is_stkvar(ea_flags(ea), n)
+    return idaapi.is_stkvar(idaapi.get_flags(ea), index)
 
 
 def mask_op_val(op):
-    """ mask off a value based on data type
+    """ mask value by data type
 
-        necesssary due to a bug in 64-bit
+        necessary due to a bug in AMD64
 
         Example:
             .rsrc:0054C12C mov [ebp+var_4], 0FFFFFFFFh
@@ -282,15 +277,49 @@ def mask_op_val(op):
         idaapi.dt_dword: 0xFFFFFFFF,
         idaapi.dt_qword: 0xFFFFFFFFFFFFFFFF,
     }
-
-    mask = masks.get(op.dtype, None)
-
-    if not mask:
-        raise ValueError("No support for operand data type 0x%x" % op.dtype)
-
-    return mask & op.value
+    return masks.get(op.dtype, op.value) & op.value
 
 
-def ea_to_offset(ea):
-    """ convert virtual address to file offset """
-    return idaapi.get_fileregion_offset(ea)
+def is_function_recursive(f):
+    """ check if function is recursive
+
+        args:
+            f (IDA func_t)
+    """
+    for ref in idautils.CodeRefsTo(f.start_ea, True):
+        if f.contains(ref):
+            return True
+    return False
+
+
+def is_function_switch_statement(f):
+    """ check a function for switch statement indicators
+
+        adapted from:
+        https://reverseengineering.stackexchange.com/questions/17548/calc-switch-cases-in-idapython-cant-iterate-over-results?rq=1
+
+        arg:
+            f (IDA func_t)
+    """
+    for (start, end) in idautils.Chunks(f.start_ea):
+        for head in idautils.Heads(start, end):
+            if idaapi.get_switch_info(head):
+                return True
+    return False
+
+
+def is_basic_block_tight_loop(bb):
+    """ check basic block loops to self
+
+        true if last instruction in basic block branches to basic block start
+
+        args:
+            f (IDA func_t)
+            bb (IDA BasicBlock)
+    """
+    bb_end = idc.prev_head(bb.end_ea)
+    if bb.start_ea < bb_end:
+        for ref in idautils.CodeRefsFrom(bb_end, True):
+            if ref == bb.start_ea:
+                return True
+    return False

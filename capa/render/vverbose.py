@@ -82,7 +82,7 @@ def render_feature(ostream, match, feature, indent=0):
     ostream.write(rutils.bold2(feature[feature["type"]]))
 
     if "description" in feature:
-        ostream.write(" = ")
+        ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
         ostream.write(feature["description"])
 
     render_locations(ostream, match)

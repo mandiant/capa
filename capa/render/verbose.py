@@ -33,6 +33,7 @@ def render_meta(ostream, doc):
         format               auto
         extractor            VivisectFeatureExtractor
         base address         0x10000000
+        rules                (embedded rules)
         function count       42
         total feature count  1918
     """
@@ -46,6 +47,7 @@ def render_meta(ostream, doc):
         ("format", doc["meta"]["analysis"]["format"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
+        ("rules", doc["meta"]["analysis"]["rules"]),
         ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
         (
             "total feature count",

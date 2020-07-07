@@ -1,11 +1,10 @@
 import sys
-import pprint
 import string
 import struct
 
-import idc
 import idaapi
-import idautils
+
+import capa.features.extractors.ida.helpers
 
 from capa.features import Characteristic
 from capa.features.basicblock import BasicBlock
@@ -13,13 +12,13 @@ from capa.features.extractors.ida import helpers
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 
 
-def _ida_get_printable_len(op):
+def get_printable_len(op):
     """ Return string length if all operand bytes are ascii or utf16-le printable
 
         args:
             op (IDA op_t)
     """
-    op_val = helpers.mask_op_val(op)
+    op_val = capa.features.extractors.ida.helpers.mask_op_val(op)
 
     if op.dtype == idaapi.dt_byte:
         chars = struct.pack("<B", op_val)
@@ -32,30 +31,30 @@ def _ida_get_printable_len(op):
     else:
         raise ValueError("Unhandled operand data type 0x%x." % op.dtype)
 
-    def _is_printable_ascii(chars):
-        if sys.version_info >= (3, 0):
+    def is_printable_ascii(chars):
+        if sys.version_info[0] >= 3:
             return all(c < 127 and chr(c) in string.printable for c in chars)
         else:
             return all(ord(c) < 127 and c in string.printable for c in chars)
 
-    def _is_printable_utf16le(chars):
-        if sys.version_info >= (3, 0):
+    def is_printable_utf16le(chars):
+        if sys.version_info[0] >= 3:
             if all(c == 0x00 for c in chars[1::2]):
-                return _is_printable_ascii(chars[::2])
+                return is_printable_ascii(chars[::2])
         else:
             if all(c == "\x00" for c in chars[1::2]):
-                return _is_printable_ascii(chars[::2])
+                return is_printable_ascii(chars[::2])
 
-    if _is_printable_ascii(chars):
+    if is_printable_ascii(chars):
         return idaapi.get_dtype_size(op.dtype)
 
-    if _is_printable_utf16le(chars):
-        return idaapi.get_dtype_size(op.dtype) / 2
+    if is_printable_utf16le(chars):
+        return idaapi.get_dtype_size(op.dtype) // 2
 
     return 0
 
 
-def _is_mov_imm_to_stack(insn):
+def is_mov_imm_to_stack(insn):
     """ verify instruction moves immediate onto stack
 
         args:
@@ -73,7 +72,7 @@ def _is_mov_imm_to_stack(insn):
     return True
 
 
-def _ida_bb_contains_stackstring(f, bb):
+def bb_contains_stackstring(f, bb):
     """ check basic block for stackstring indicators
 
         true if basic block contains enough moves of constant bytes to the stack
@@ -83,14 +82,11 @@ def _ida_bb_contains_stackstring(f, bb):
             bb (IDA BasicBlock)
     """
     count = 0
-
-    for insn in helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
-        if _is_mov_imm_to_stack(insn):
-            count += _ida_get_printable_len(insn.Op2)
-
+    for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
+        if is_mov_imm_to_stack(insn):
+            count += get_printable_len(insn.Op2)
         if count > MIN_STACKSTRING_LEN:
             return True
-
     return False
 
 
@@ -101,27 +97,8 @@ def extract_bb_stackstring(f, bb):
             f (IDA func_t)
             bb (IDA BasicBlock)
     """
-    if _ida_bb_contains_stackstring(f, bb):
+    if bb_contains_stackstring(f, bb):
         yield Characteristic("stack string"), bb.start_ea
-
-
-def _ida_bb_contains_tight_loop(f, bb):
-    """ check basic block for stackstring indicators
-
-        true if last instruction in basic block branches to basic block start
-
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-    """
-    bb_end = idc.prev_head(bb.end_ea)
-
-    if bb.start_ea < bb_end:
-        for ref in idautils.CodeRefsFrom(bb_end, True):
-            if ref == bb.start_ea:
-                return True
-
-    return False
 
 
 def extract_bb_tight_loop(f, bb):
@@ -131,7 +108,7 @@ def extract_bb_tight_loop(f, bb):
             f (IDA func_t)
             bb (IDA BasicBlock)
     """
-    if _ida_bb_contains_tight_loop(f, bb):
+    if capa.features.extractors.ida.helpers.is_basic_block_tight_loop(bb):
         yield Characteristic("tight loop"), bb.start_ea
 
 
@@ -142,11 +119,10 @@ def extract_features(f, bb):
             f (IDA func_t)
             bb (IDA BasicBlock)
     """
-    yield BasicBlock(), bb.start_ea
-
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, va in bb_handler(f, bb):
-            yield feature, va
+        for (feature, ea) in bb_handler(f, bb):
+            yield feature, ea
+    yield BasicBlock(), bb.start_ea
 
 
 BASIC_BLOCK_HANDLERS = (
@@ -157,10 +133,11 @@ BASIC_BLOCK_HANDLERS = (
 
 def main():
     features = []
-
-    for f in helpers.get_functions(ignore_thunks=True, ignore_libs=True):
+    for f in helpers.get_functions(skip_thunks=True, skip_libs=True):
         for bb in idaapi.FlowChart(f, flags=idaapi.FC_PREDS):
             features.extend(list(extract_features(f, bb)))
+
+    import pprint
 
     pprint.pprint(features)
 

@@ -334,12 +334,12 @@ def get_rules(rule_path):
     return rules
 
 
-def collect_metadata(argv, path, format, extractor):
+def collect_metadata(argv, sample_path, rules_path, format, extractor):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
-    with open(path, "rb") as f:
+    with open(sample_path, "rb") as f:
         buf = f.read()
 
     md5.update(buf)
@@ -354,11 +354,12 @@ def collect_metadata(argv, path, format, extractor):
             "md5": md5.hexdigest(),
             "sha1": sha1.hexdigest(),
             "sha256": sha256.hexdigest(),
-            "path": os.path.normpath(path),
+            "path": os.path.normpath(sample_path),
         },
         "analysis": {
             "format": format,
             "extractor": extractor.__class__.__name__,
+            "rules": os.path.abspath(os.path.normpath(rules_path)),
             "base_address": extractor.get_base_address(),
         },
     }
@@ -444,17 +445,18 @@ def main(argv=None):
 
         if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
             logger.debug("detected running under PyInstaller")
-            args.rules = os.path.join(sys._MEIPASS, "rules")
-            logger.debug("default rule path (PyInstaller method): %s", args.rules)
+            rules_path = os.path.join(sys._MEIPASS, "rules")
+            logger.debug("default rule path (PyInstaller method): %s", rules_path)
         else:
             logger.debug("detected running from source")
-            args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", args.rules)
+            rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
+            logger.debug("default rule path (source method): %s", rules_path)
     else:
-        logger.info("using rules path: %s", args.rules)
+        rules_path = args.rules
+        logger.info("using rules path: %s", rules_path)
 
     try:
-        rules = get_rules(args.rules)
+        rules = get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
         logger.info("successfully loaded %s rules", len(rules))
         if args.tag:
@@ -499,7 +501,7 @@ def main(argv=None):
             logger.error("-" * 80)
             return -1
 
-    meta = collect_metadata(argv, args.sample, format, extractor)
+    meta = collect_metadata(argv, args.sample, args.rules, format, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
@@ -567,7 +569,7 @@ def ida_main():
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 
-    meta = capa.ida.helpers.collect_metadata()
+    meta = collect_metadata([], "", rules_path, format, "IdaExtractor")
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
     meta["analysis"].update(counts)

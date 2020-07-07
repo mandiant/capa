@@ -1,25 +1,10 @@
 import idaapi
 import idautils
 
+import capa.features.extractors.ida.helpers
+
 from capa.features import Characteristic
 from capa.features.extractors import loops
-
-
-def _ida_function_contains_switch(f):
-    """ check a function for switch statement indicators
-
-        adapted from:
-        https://reverseengineering.stackexchange.com/questions/17548/calc-switch-cases-in-idapython-cant-iterate-over-results?rq=1
-
-        arg:
-            f (IDA func_t)
-    """
-    for start, end in idautils.Chunks(f.start_ea):
-        for head in idautils.Heads(start, end):
-            if idaapi.get_switch_info(head):
-                return True
-
-    return False
 
 
 def extract_function_switch(f):
@@ -28,7 +13,7 @@ def extract_function_switch(f):
         arg:
             f (IDA func_t)
     """
-    if _ida_function_contains_switch(f):
+    if capa.features.extractors.ida.helpers.is_function_switch_statement(f):
         yield Characteristic("switch"), f.start_ea
 
 
@@ -49,10 +34,12 @@ def extract_function_loop(f):
             f (IDA func_t)
     """
     edges = []
+
+    # construct control flow graph
     for bb in idaapi.FlowChart(f):
         map(lambda s: edges.append((bb.start_ea, s.start_ea)), bb.succs())
 
-    if edges and loops.has_loop(edges):
+    if loops.has_loop(edges):
         yield Characteristic("loop"), f.start_ea
 
 
@@ -62,10 +49,8 @@ def extract_recursive_call(f):
         args:
             f (IDA func_t)
     """
-    for ref in idautils.CodeRefsTo(f.start_ea, True):
-        if f.contains(ref):
-            yield Characteristic("recursive call"), f.start_ea
-            break
+    if capa.features.extractors.ida.helpers.is_function_recursive(f):
+        yield Characteristic("recursive call"), f.start_ea
 
 
 def extract_features(f):
@@ -75,18 +60,20 @@ def extract_features(f):
             f (IDA func_t)
     """
     for func_handler in FUNCTION_HANDLERS:
-        for feature, va in func_handler(f):
-            yield feature, va
+        for (feature, ea) in func_handler(f):
+            yield feature, ea
 
 
 FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_switch, extract_function_loop, extract_recursive_call)
 
 
 def main():
+    """ """
     features = []
-
-    for f in helpers.get_functions(ignore_thunks=True, ignore_libs=True):
+    for f in capa.features.extractors.ida.get_functions(skip_thunks=True, skip_libs=True):
         features.extend(list(extract_features(f)))
+
+    import pprint
 
     pprint.pprint(features)
 

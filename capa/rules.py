@@ -207,22 +207,30 @@ def parse_feature(key):
         raise InvalidRule("unexpected statement: %s" % key)
 
 
+# this is the separator between a feature value and its description
+# when using the inline description syntax, like:
+#
+#     number: 42 = ENUM_FAVORITE_NUMBER
+DESCRIPTION_SEPARATOR = " = "
+
+
 def parse_description(s, value_type, description=None):
     """
     s can be an int or a string
     """
-    if value_type != "string" and isinstance(s, str) and " = " in s:
+    if value_type != "string" and isinstance(s, six.string_types) and DESCRIPTION_SEPARATOR in s:
         if description:
             raise InvalidRule(
-                'unexpected value: "%s", only one description allowed (inline description with ` = `)' % s
+                'unexpected value: "%s", only one description allowed (inline description with `%s`)'
+                % (s, DESCRIPTION_SEPARATOR)
             )
-        value, description = s.split(" = ", 1)
+        value, _, description = s.partition(DESCRIPTION_SEPARATOR)
         if description == "":
             raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
     else:
         value = s
 
-    if isinstance(value, str):
+    if isinstance(value, six.string_types):
         if value_type == "bytes":
             try:
                 value = codecs.decode(value.replace(" ", ""), "hex")
@@ -415,7 +423,7 @@ class Rule(object):
 
         def rec(statement):
             if isinstance(statement, capa.features.MatchedRule):
-                # we're not sure at this point if the `statement.rule_name` is
+                # we're not sure at this point if the `statement.value` is
                 #  really a rule name or a namespace name (we use `MatchedRule` for both cases).
                 # we'll give precedence to namespaces, and then assume if that does work,
                 #  that it must be a rule name.
@@ -423,12 +431,12 @@ class Rule(object):
                 # we don't expect any collisions between namespaces and rule names, but its possible.
                 # most likely would be collision between top level namespace (e.g. `host-interaction`) and rule name.
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
-                if statement.rule_name in namespaces:
+                if statement.value in namespaces:
                     # matches a namespace, so take precedence and don't even check rule names.
-                    deps.update(map(lambda r: r.name, namespaces[statement.rule_name]))
+                    deps.update(map(lambda r: r.name, namespaces[statement.value]))
                 else:
                     # not a namespace, assume its a rule name.
-                    deps.add(statement.rule_name)
+                    deps.add(statement.value)
 
             elif isinstance(statement, Statement):
                 for child in statement.get_children():
@@ -801,7 +809,7 @@ class RuleSet(object):
         rules_filtered = set([])
         for rule in rules:
             for k, v in rule.meta.items():
-                if isinstance(v, str) and tag in v:
+                if isinstance(v, six.string_types) and tag in v:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
                     rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
                     break
