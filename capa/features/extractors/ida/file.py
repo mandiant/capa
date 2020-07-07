@@ -143,6 +143,7 @@ FILE_HANDLERS = (
 def main():
     """ """
     import pprint
+
     pprint.pprint(list(extract_features()))
 
 

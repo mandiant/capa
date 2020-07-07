@@ -191,6 +191,7 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
 
 class CapaExplorerSubscopeItem(CapaExplorerDataItem):
     """ store data relevant to subscope """
+
     fmt = "subscope(%s)"
 
     def __init__(self, parent, scope):
