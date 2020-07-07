@@ -90,7 +90,7 @@ After you've determined [which repository](#capa-and-its-repositories) your bug 
 Explain the problem and include additional details to help maintainers reproduce the problem:
 
 * **Use a clear and descriptive title** for the issue to identify the problem.
-* **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining how you started capa, e.g. which command exactly you used in the terminal, or how you started capa otherwise. When listing steps, **don't just say what you did, but explain how you did it**. For example, if you moved the cursor to the end of a line, explain if you used the mouse, or a keyboard shortcut or an capa command, and if so which one?
+* **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining how you started capa, e.g. which command exactly you used in the terminal, or how you started capa otherwise.
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
 * **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
 * **Explain which behavior you expected to see instead and why.**
