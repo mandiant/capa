@@ -12,7 +12,7 @@ if [[ "$STASH_LIST" == *"$MSG"* ]]; then
 fi
 
 # Run style checker and print state (it doesn't block the commit)
-pycodestyle --config=./ci/tox.ini ./capa/ > style-checker-output.log 2>&1;
+pycodestyle --config=./.github/tox.ini ./capa/ > style-checker-output.log 2>&1;
 if [ $? == 0 ]; then
   echo 'Style checker succeeds!! 💘';
 else

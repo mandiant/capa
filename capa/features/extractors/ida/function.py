@@ -2,7 +2,6 @@ import idaapi
 import idautils
 
 import capa.features.extractors.ida.helpers
-
 from capa.features import Characteristic
 from capa.features.extractors import loops
 

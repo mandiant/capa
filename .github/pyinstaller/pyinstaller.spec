@@ -5,16 +5,25 @@ import subprocess
 import wcwidth
 
 
+# when invoking pyinstaller from the project root,
+# this gets run from the project root.
 with open('./capa/version.py', 'wb') as f:
     f.write("__version__ = '%s'"
             % subprocess.check_output(["git", "describe", "--always"]).strip())
 
 a = Analysis(
-    ['../capa/main.py'],
+    # when invoking pyinstaller from the project root,
+    # this gets invoked from the directory of the spec file,
+    # i.e. ./.github/pyinstaller
+    ['../../capa/main.py'],
     pathex=['capa'],
     binaries=None,
     datas=[
-        ('../rules', 'rules'),
+        # when invoking pyinstaller from the project root,
+        # this gets invoked from the directory of the spec file,
+        # i.e. ./.github/pyinstaller
+        ('../../rules', 'rules'),
+
         # capa.render.default uses tabulate that depends on wcwidth.
         # it seems wcwidth uses a json file `version.json`
         # and this doesn't get picked up by pyinstaller automatically.
@@ -144,7 +153,9 @@ a = Analysis(
         "vstruct.defs.windows.win_6_3_wow64",
         "vstruct.defs.windows.win_6_3_wow64.ntdll",
     ],
-    hookspath=['ci/hooks'],
+    # when invoking pyinstaller from the project root,
+    # this gets run from the project root.
+    hookspath=['.github/pyinstaller/hooks'],
     runtime_hooks=None,
     excludes=[
         # ignore packages that would otherwise be bundled with the .exe.
