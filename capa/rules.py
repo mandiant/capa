@@ -58,24 +58,11 @@ SUPPORTED_FEATURES = {
         capa.features.String,
     },
     FUNCTION_SCOPE: {
-        capa.features.MatchedRule,
-        capa.features.insn.API,
-        capa.features.insn.Number,
-        capa.features.String,
-        capa.features.Bytes,
-        capa.features.insn.Offset,
-        capa.features.insn.Mnemonic,
+        # plus basic block scope features, see below
         capa.features.basicblock.BasicBlock,
         capa.features.Characteristic("switch"),
-        capa.features.Characteristic("nzxor"),
-        capa.features.Characteristic("peb access"),
-        capa.features.Characteristic("fs access"),
-        capa.features.Characteristic("gs access"),
-        capa.features.Characteristic("cross section flow"),
-        capa.features.Characteristic("stack string"),
         capa.features.Characteristic("calls from"),
         capa.features.Characteristic("calls to"),
-        capa.features.Characteristic("indirect call"),
         capa.features.Characteristic("loop"),
         capa.features.Characteristic("recursive call"),
     },
@@ -97,6 +84,9 @@ SUPPORTED_FEATURES = {
         capa.features.Characteristic("indirect call"),
     },
 }
+
+# all basic block scope features are also function scope features
+SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
 
 
 class InvalidRule(ValueError):

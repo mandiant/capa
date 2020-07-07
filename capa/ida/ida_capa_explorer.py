@@ -345,7 +345,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules_path = os.path.join(os.path.dirname(self.file_loc), "../..", "rules")
         rules = capa.main.get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
-        capabilities = capa.main.find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor(), True)
+
+        meta = capa.ida.helpers.collect_metadata()
+
+        capabilities, counts = capa.main.find_capabilities(
+            rules, capa.features.extractors.ida.IdaFeatureExtractor(), True
+        )
+        meta["analysis"].update(counts)
 
         # support binary files specifically for x86/AMD64 shellcode
         # warn user binary file is loaded but still allow capa to process it
@@ -370,7 +376,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info("analysis completed.")
 
-        meta = capa.ida.helpers.collect_metadata()
         doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
         self.model_data.render_capa_doc(doc)

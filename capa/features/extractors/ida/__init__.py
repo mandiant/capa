@@ -5,7 +5,6 @@ import idaapi
 
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
-import capa.features.extractors.ida.helpers
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
 
@@ -47,8 +46,9 @@ class IdaFeatureExtractor(FeatureExtractor):
             yield feature, ea
 
     def get_functions(self):
+        import capa.features.extractors.ida.helpers as ida_helpers
         # ignore library functions and thunk functions as identified by IDA
-        for f in capa.features.extractors.ida.helpers.get_functions(skip_thunks=True, skip_libs=True):
+        for f in ida_helpers.get_functions(skip_thunks=True, skip_libs=True):
             yield add_ea_int_cast(f)
 
     def extract_function_features(self, f):
@@ -64,7 +64,8 @@ class IdaFeatureExtractor(FeatureExtractor):
             yield feature, ea
 
     def get_instructions(self, f, bb):
-        for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
+        import capa.features.extractors.ida.helpers as ida_helpers
+        for insn in ida_helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
             yield add_ea_int_cast(insn)
 
     def extract_insn_features(self, f, bb, insn):

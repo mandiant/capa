@@ -41,7 +41,15 @@ setuptools.setup(
     include_package_data=True,
     install_requires=requirements,
     extras_require={
-        "dev": ["pytest", "pytest-sugar", "pytest-instafail", "pytest-cov", "pycodestyle", "black", "isort"]
+        "dev": [
+            "pytest",
+            "pytest-sugar",
+            "pytest-instafail",
+            "pytest-cov",
+            "pycodestyle",
+            "black ; python_version>'3.0'",
+            "isort",
+        ]
     },
     zip_safe=False,
     keywords="capa",

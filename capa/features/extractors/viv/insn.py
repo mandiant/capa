@@ -8,6 +8,11 @@ from capa.features.insn import Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 
+# security cookie checks may perform non-zeroing XORs, these are expected within a certain
+# byte range within the first and returning basic blocks, this helps to reduce FP features
+SECURITY_COOKIE_BYTES_DELTA = 0x40
+
+
 def interface_extract_instruction_XXX(f, bb, insn):
     """
     parse features from the given instruction.
@@ -257,11 +262,12 @@ def is_security_cookie(f, bb, insn):
 
     # expect security cookie init in first basic block within first bytes (instructions)
     bb0 = f.basic_blocks[0]
-    if bb == bb0 and insn.va < bb.va + 30:
+
+    if bb == bb0 and insn.va < (bb.va + SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     # ... or within last bytes (instructions) before a return
-    elif bb.instructions[-1].isReturn() and insn.va > bb.va + bb.size - 30:
+    elif bb.instructions[-1].isReturn() and insn.va > (bb.va + bb.size - SECURITY_COOKIE_BYTES_DELTA):
         return True
 
     return False

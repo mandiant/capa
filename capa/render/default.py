@@ -17,13 +17,10 @@ def width(s, character_count):
 
 
 def render_meta(doc, ostream):
-    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
-
-    for k in ("timestamp", "version"):
-        rows.append((width(k, 22), width(doc["meta"][k], 60)))
-
-    for k in ("path", "md5"):
-        rows.append((k, doc["meta"]["sample"][k]))
+    rows = [
+        (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
+        ("path", doc["meta"]["sample"]["path"]),
+    ]
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
     ostream.write("\n")
@@ -50,7 +47,7 @@ def render_capabilities(doc, ostream):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
         rows.append((capability, rule["meta"]["namespace"]))
 
-    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 40), width("NAMESPACE", 40)], tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql"))
     ostream.write("\n")
 
 
@@ -99,7 +96,7 @@ def render_attack(doc, ostream):
                 raise RuntimeError("unexpected ATT&CK spec format")
         rows.append((rutils.bold(tactic.upper()), "\n".join(inner_rows),))
     ostream.write(
-        tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 60)], tablefmt="psql")
+        tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql")
     )
     ostream.write("\n")
 

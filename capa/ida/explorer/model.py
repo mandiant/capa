@@ -534,6 +534,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
             )
 
+        if feature["type"] == "basicblock":
+            return CapaExplorerBlockItem(parent, location)
+
         if feature["type"] in ("bytes", "api", "mnemonic", "number", "offset"):
             # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)

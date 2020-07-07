@@ -1,7 +1,10 @@
+import collections
+
 import tabulate
 
 import capa.rules
 import capa.render.utils as rutils
+import capa.render.verbose
 
 
 def render_locations(ostream, match):
@@ -138,25 +141,23 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
         render_match(ostream, child, indent=indent + 1, mode=child_mode)
 
 
-def render_vverbose(doc):
-    ostream = rutils.StringIO()
+def render_rules(ostream, doc):
+    """
+    like:
 
-    rows = [(rutils.bold("Capa Report for"), rutils.bold(doc["meta"]["sample"]["md5"]),)]
-    for k in ("timestamp", "version"):
-        rows.append((k, doc["meta"][k]))
-
-    for k in ("path", "md5", "sha1", "sha256"):
-        rows.append((k, doc["meta"]["sample"][k]))
-
-    for k in ("format", "extractor"):
-        rows.append((k.replace("_", " "), doc["meta"]["analysis"][k]))
-
-    rows.append(("base address", rutils.hex(doc["meta"]["analysis"]["base_address"])))
-
-    ostream.writeln(rutils.bold("Capa Report for " + doc["meta"]["sample"]["md5"]))
-    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
-    ostream.write("\n")
-
+        ## rules
+        check for OutputDebugString error
+        namespace  anti-analysis/anti-debugging/debugger-detection
+        author     michael.hunhoff@fireeye.com
+        scope      function
+        mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
+        examples   Practical Malware Analysis Lab 16-02.exe_:0x401020
+        function @ 0x10004706
+          and:
+            api: kernel32.SetLastError @ 0x100047C2
+            api: kernel32.GetLastError @ 0x10004A87
+            api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
+    """
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -195,7 +196,16 @@ def render_vverbose(doc):
                 ostream.write(" @ ")
                 ostream.writeln(rutils.hex(location))
                 render_match(ostream, match, indent=1)
-
         ostream.write("\n")
+
+
+def render_vverbose(doc):
+    ostream = rutils.StringIO()
+
+    capa.render.verbose.render_meta(ostream, doc)
+    ostream.write("\n")
+
+    render_rules(ostream, doc)
+    ostream.write("\n")
 
     return ostream.getvalue()

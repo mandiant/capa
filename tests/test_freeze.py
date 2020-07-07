@@ -10,6 +10,7 @@ from fixtures import *
 
 EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
     {
+        "base address": 0x401000,
         "file features": [(0x402345, capa.features.Characteristic("embedded pe")),],
         "functions": {
             0x401000: {
@@ -58,7 +59,7 @@ def test_null_feature_extractor():
             ),
         ]
     )
-    capabilities = capa.main.find_capabilities(rules, EXTRACTOR)
+    capabilities, meta = capa.main.find_capabilities(rules, EXTRACTOR)
     assert "xor loop" in capabilities
 
 
