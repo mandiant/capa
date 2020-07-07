@@ -114,9 +114,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
             @yield QAction*
         """
-        function_actions = (
-            ("Rename function", data, self.slot_rename_function),
-        )
+        function_actions = (("Rename function", data, self.slot_rename_function),)
 
         # add function actions
         for action in function_actions:

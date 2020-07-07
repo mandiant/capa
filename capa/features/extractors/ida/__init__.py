@@ -47,6 +47,7 @@ class IdaFeatureExtractor(FeatureExtractor):
 
     def get_functions(self):
         import capa.features.extractors.ida.helpers as ida_helpers
+
         # ignore library functions and thunk functions as identified by IDA
         for f in ida_helpers.get_functions(skip_thunks=True, skip_libs=True):
             yield add_ea_int_cast(f)
@@ -65,6 +66,7 @@ class IdaFeatureExtractor(FeatureExtractor):
 
     def get_instructions(self, f, bb):
         import capa.features.extractors.ida.helpers as ida_helpers
+
         for insn in ida_helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
             yield add_ea_int_cast(insn)
 

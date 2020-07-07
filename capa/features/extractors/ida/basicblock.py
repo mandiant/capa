@@ -20,7 +20,6 @@ def get_printable_len(op):
     """
     op_val = capa.features.extractors.ida.helpers.mask_op_val(op)
 
-
     if op.dtype == idaapi.dt_byte:
         chars = struct.pack("<B", op_val)
     elif op.dtype == idaapi.dt_word:
@@ -71,6 +70,7 @@ def is_mov_imm_to_stack(insn):
         return False
 
     return True
+
 
 def bb_contains_stackstring(f, bb):
     """ check basic block for stackstring indicators
@@ -136,8 +136,9 @@ def main():
     for f in helpers.get_functions(skip_thunks=True, skip_libs=True):
         for bb in idaapi.FlowChart(f, flags=idaapi.FC_PREDS):
             features.extend(list(extract_features(f, bb)))
-            
+
     import pprint
+
     pprint.pprint(features)
 
 
