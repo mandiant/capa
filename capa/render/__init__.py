@@ -85,7 +85,7 @@ def convert_feature_to_result_document(feature):
             "type": "characteristic"
         },
     """
-    result = {"type": feature.name, feature.name: feature.get_args_str()}
+    result = {"type": feature.name, feature.name: feature.get_value_str()}
     if feature.description:
         result["description"] = feature.description
 

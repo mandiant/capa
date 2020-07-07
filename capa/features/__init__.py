@@ -21,28 +21,28 @@ def hex_string(h):
 
 
 class Feature(object):
-    def __init__(self, args, description=None):
+    def __init__(self, value, description=None):
         super(Feature, self).__init__()
         self.name = self.__class__.__name__.lower()
-        self.args = args
+        self.value = value
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, tuple(self.args)))
+        return hash((self.name, self.value))
 
     def __eq__(self, other):
-        return self.name == other.name and self.args == other.args
+        return self.name == other.name and self.value == other.value
 
-    # Used to overwrite the rendering of the feature args in `__str__` and the
+    # Used to overwrite the rendering of the feature value in `__str__` and the
     # json output
-    def get_args_str(self):
-        return ",".join(self.args)
+    def get_value_str(self):
+        return self.value
 
     def __str__(self):
         if self.description:
-            return "%s(%s = %s)" % (self.name, self.get_args_str(), self.description)
+            return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
         else:
-            return "%s(%s)" % (self.name, self.get_args_str())
+            return "%s(%s)" % (self.name, self.get_value_str())
 
     def __repr__(self):
         return str(self)
@@ -54,7 +54,7 @@ class Feature(object):
         return self.__dict__
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, self.args)
+        return (self.__class__.__name__, [self.value])
 
     @classmethod
     def freeze_deserialize(cls, args):
@@ -62,16 +62,14 @@ class Feature(object):
 
 
 class MatchedRule(Feature):
-    def __init__(self, rule_name, description=None):
-        super(MatchedRule, self).__init__([rule_name], description)
+    def __init__(self, value, description=None):
+        super(MatchedRule, self).__init__(value, description)
         self.name = "match"
-        self.rule_name = rule_name
 
 
 class Characteristic(Feature):
     def __init__(self, value, description=None):
-        super(Characteristic, self).__init__([value], description)
-        self.value = value
+        super(Characteristic, self).__init__(value, description)
 
     def freeze_serialize(self):
         # in an older version of capa, characteristics could theoretically match non-existence (value=False).
@@ -89,14 +87,12 @@ class Characteristic(Feature):
 
 class String(Feature):
     def __init__(self, value, description=None):
-        super(String, self).__init__([value], description)
-        self.value = value
+        super(String, self).__init__(value, description)
 
 
 class Bytes(Feature):
     def __init__(self, value, description=None):
-        super(Bytes, self).__init__([value], description)
-        self.value = value
+        super(Bytes, self).__init__(value, description)
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
@@ -108,11 +104,11 @@ class Bytes(Feature):
 
         return capa.engine.Result(False, self, [])
 
-    def get_args_str(self):
+    def get_value_str(self):
         return hex_string(bytes_to_str(self.value))
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, [bytes_to_str(x).upper() for x in self.args])
+        return (self.__class__.__name__, [bytes_to_str(self.value).upper()])
 
     @classmethod
     def freeze_deserialize(cls, args):
