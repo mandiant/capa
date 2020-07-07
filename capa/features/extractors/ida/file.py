@@ -1,4 +1,3 @@
-import pprint
 import struct
 
 import idc
@@ -8,11 +7,12 @@ import idautils
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
+
 from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section
 
 
-def _ida_check_segment_for_pe(seg):
+def check_segment_for_pe(seg):
     """ check segment for embedded PE
 
         adapted for IDA from:
@@ -66,18 +66,14 @@ def extract_file_embedded_pe():
             - '-R' from console
             - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments():
-        if seg.is_header_segm():
-            # IDA may load header segments, skip if present
-            continue
-
-        for ea, _ in _ida_check_segment_for_pe(seg):
+    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
+        for (ea, _) in check_segment_for_pe(seg):
             yield Characteristic("embedded pe"), ea
 
 
 def extract_file_export_names():
     """ extract function exports """
-    for _, _, ea, name in idautils.Entries():
+    for (_, _, ea, name) in idautils.Entries():
         yield Export(name), ea
 
 
@@ -92,15 +88,12 @@ def extract_file_import_names():
          - modulename.importname
          - importname
     """
-    for ea, imp_info in capa.features.extractors.ida.helpers.get_file_imports().items():
-        dllname, name, ordi = imp_info
-
-        if name:
-            yield Import("%s.%s" % (dllname, name)), ea
-            yield Import(name), ea
-
-        if ordi:
-            yield Import("%s.#%s" % (dllname, str(ordi))), ea
+    for (ea, info) in capa.features.extractors.ida.helpers.get_file_imports().items():
+        if info[1]:
+            yield Import("%s.%s" % (info[0], info[1])), ea
+            yield Import(info[1]), ea
+        if info[2]:
+            yield Import("%s.#%s" % (info[0], str(info[2]))), ea
 
 
 def extract_file_section_names():
@@ -110,11 +103,7 @@ def extract_file_section_names():
             - '-R' from console
             - Check 'Load resource sections' when opening binary in IDA manually
     """
-    for seg in capa.features.extractors.ida.helpers.get_segments():
-        if seg.is_header_segm():
-            # IDA may load header segments, skip if present
-            continue
-
+    for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         yield Section(idaapi.get_segm_name(seg)), seg.start_ea
 
 
@@ -152,6 +141,8 @@ FILE_HANDLERS = (
 
 
 def main():
+    """ """
+    import pprint
     pprint.pprint(list(extract_features()))
 
 

@@ -47,7 +47,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             root_index = self.index(idx, 0, QtCore.QModelIndex())
             for model_index in self.iterateChildrenIndexFromRootIndex(root_index, ignore_root=False):
                 model_index.internalPointer().setChecked(False)
-                self.util_reset_ida_highlighting(model_index.internalPointer(), False)
+                self.reset_ida_highlighting(model_index.internalPointer(), False)
                 self.dataChanged.emit(model_index, model_index)
 
     def clear(self):
@@ -239,8 +239,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 for idx in range(self.rowCount(child_index)):
                     stack.append(child_index.child(idx, 0))
 
-    def util_reset_ida_highlighting(self, item, checked):
-        """ """
+    def reset_ida_highlighting(self, item, checked):
+        """ reset IDA highlight for an item
+
+            @param item: capa explorer item
+            @param checked: indicates item is or not checked
+        """
         if not isinstance(
             item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem, CapaExplorerByteViewItem)
         ):
@@ -281,7 +285,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # user un/checked box - un/check parent and children
             for child_index in self.iterateChildrenIndexFromRootIndex(model_index, ignore_root=False):
                 child_index.internalPointer().setChecked(value)
-                self.util_reset_ida_highlighting(child_index.internalPointer(), value)
+                self.reset_ida_highlighting(child_index.internalPointer(), value)
                 self.dataChanged.emit(child_index, child_index)
             return True
 
@@ -428,6 +432,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             @param doc: capa result doc
         """
+        # inform model that changes are about to occur
         self.beginResetModel()
 
         for rule in rutils.capability_rules(doc):
@@ -445,6 +450,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
                 self.render_capa_doc_match(parent2, match, doc)
 
+        # inform model changes have ended
         self.endResetModel()
 
     def capa_doc_feature_to_display(self, feature):
@@ -471,7 +477,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             @param parent: parent node to which child is assigned
             @param feature: capa doc feature node
-            @param location: locations identified for feature
+            @param locations: locations identified for feature
             @param doc: capa doc
 
             Example:
@@ -484,10 +490,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         display = self.capa_doc_feature_to_display(feature)
 
         if len(locations) == 1:
+            # only one location for feature so no need to nest children
             parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display)
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
+
             for location in sorted(locations):
                 self.render_capa_doc_feature(parent2, feature, location, doc)
 
@@ -509,11 +517,6 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 "type": "number"
               }
         """
-        instruction_view = ("bytes", "api", "mnemonic", "number", "offset")
-        byte_view = ("section",)
-        string_view = ("string",)
-        default_feature_view = ("import", "export")
-
         # special handling for characteristic pending type
         if feature["type"] == "characteristic":
             if feature[feature["type"]] in ("embedded pe",):
@@ -522,44 +525,52 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             if feature[feature["type"]] in ("loop", "recursive call", "tight loop", "switch"):
                 return CapaExplorerFeatureItem(parent, display=display)
 
-            # default to instruction view
+            # default to instruction view for all other characteristics
             return CapaExplorerInstructionViewItem(parent, display, location)
 
         if feature["type"] == "match":
+            # display content of rule for all rule matches
             return CapaExplorerRuleMatchItem(
                 parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
             )
 
-        if feature["type"] in instruction_view:
+        if feature["type"] in ("bytes", "api", "mnemonic", "number", "offset"):
+            # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)
 
-        if feature["type"] in byte_view:
+        if feature["type"] in ("section",):
+            # display byte preview
             return CapaExplorerByteViewItem(parent, display, location)
 
-        if feature["type"] in string_view:
+        if feature["type"] in ("string",):
+            # display string preview
             return CapaExplorerStringViewItem(parent, display, location)
 
-        if feature["type"] in default_feature_view:
+        if feature["type"] in ("import", "export"):
+            # display no preview
             return CapaExplorerFeatureItem(parent, display=display)
 
         raise RuntimeError("unexpected feature type: " + str(feature["type"]))
 
     def update_function_name(self, old_name, new_name):
-        """ update all instances of function name
+        """ update all instances of old function name with new function name
 
             @param old_name: previous function name
             @param new_name: new function name
         """
+        # create empty root index for search
         root_index = self.index(0, 0, QtCore.QModelIndex())
 
-        # convert name to view format for matching
+        # convert name to view format for matching e.g. function(my_function)
         old_name = CapaExplorerFunctionItem.fmt % old_name
 
+        # recursive search for all instances of old function name
         for model_index in self.match(
             root_index, QtCore.Qt.DisplayRole, old_name, hits=-1, flags=QtCore.Qt.MatchRecursive
         ):
             if not isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
                 continue
 
+            # replace old function name with new function name and emit change
             model_index.internalPointer().info = new_name
             self.dataChanged.emit(model_index, model_index)

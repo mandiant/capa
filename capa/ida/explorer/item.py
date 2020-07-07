@@ -190,10 +190,11 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
 
 
 class CapaExplorerSubscopeItem(CapaExplorerDataItem):
-
+    """ store data relevant to subscope """
     fmt = "subscope(%s)"
 
     def __init__(self, parent, scope):
+        """ """
         super(CapaExplorerSubscopeItem, self).__init__(parent, [self.fmt % scope, "", ""])
 
 
@@ -220,11 +221,14 @@ class CapaExplorerFeatureItem(CapaExplorerDataItem):
     """ store data relevant to capa feature result """
 
     def __init__(self, parent, display, location="", details=""):
+        """ """
         location = location_to_hex(location) if location else ""
         super(CapaExplorerFeatureItem, self).__init__(parent, [display, location, details])
 
 
 class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
+    """ store data relevant to an instruction preview """
+
     def __init__(self, parent, display, location):
         """ """
         details = capa.ida.helpers.get_disasm_line(location)
@@ -233,6 +237,8 @@ class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
 
 
 class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
+    """ store data relevant to byte preview """
+
     def __init__(self, parent, display, location):
         """ """
         byte_snap = idaapi.get_bytes(location, 32)
@@ -251,6 +257,8 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
 
 
 class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
+    """ store data relevant to string preview """
+
     def __init__(self, parent, display, location):
         """ """
         super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location)
