@@ -66,7 +66,7 @@ def main():
     #
     # see: https://github.com/idapython/bin/issues/11
     a = doc["meta"]["sample"]["md5"].lower()
-    b = idautils.GetInputFileMD5().decode("ascii").lower().rstrip('\x00')
+    b = idautils.GetInputFileMD5().decode("ascii").lower().rstrip("\x00")
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2
