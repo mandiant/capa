@@ -1,15 +1,16 @@
 import os
 import logging
 import collections
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import idaapi
-from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
+
 from capa.ida.explorer.view import CapaExplorerQtreeView
 from capa.ida.explorer.model import CapaExplorerDataModel
 from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
@@ -23,8 +24,8 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
     def __init__(self, screen_ea_changed_hook, action_hooks):
         """ facilitate IDA UI hooks
 
-            @param screen_ea_changed: TODO
-            @param action_hooks: TODO
+            @param screen_ea_changed_hook: function hook for IDA screen ea changed
+            @param action_hooks: dict of IDA action handles
         """
         super(CapaExplorerIdaHooks, self).__init__()
 
@@ -76,8 +77,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         super(CapaExplorerForm, self).__init__()
 
         self.form_title = PLUGIN_NAME
-        self.parent = None
         self.file_loc = __file__
+
+        self.parent = None
         self.ida_hooks = None
 
         # models
@@ -145,17 +147,17 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_parent()
 
     def load_view_tabs(self):
-        """ """
+        """ load tabs """
         tabs = QtWidgets.QTabWidget()
         self.view_tabs = tabs
 
     def load_view_menu_bar(self):
-        """ """
+        """ load menu bar """
         bar = QtWidgets.QMenuBar()
         self.view_menu_bar = bar
 
     def load_view_summary(self):
-        """ """
+        """ load capa summary table """
         table_headers = [
             "Capability",
             "Namespace",
@@ -177,7 +179,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_summary = table
 
     def load_view_attack(self):
-        """ """
+        """ load MITRE ATT&CK table """
         table_headers = [
             "ATT&CK Tactic",
             "ATT&CK Technique ",
@@ -199,12 +201,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_attack = table
 
     def load_view_checkbox_limit_by(self):
-        """ """
+        """ load limit results by function checkbox """
         check = QtWidgets.QCheckBox("Limit results to current function")
         check.setChecked(False)
         check.stateChanged.connect(self.slot_checkbox_limit_by_changed)
 
-        self.view_checkbox_limit_by = check
+        self.view_limit_results_by_function = check
 
     def load_view_parent(self):
         """ load view parent """
@@ -216,9 +218,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.parent.setLayout(layout)
 
     def load_view_tree_tab(self):
-        """ load view tree tab """
+        """ load capa tree tab view """
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.view_checkbox_limit_by)
+        layout.addWidget(self.view_limit_results_by_function)
         layout.addWidget(self.view_tree)
 
         tab = QtWidgets.QWidget()
@@ -227,7 +229,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "Tree View")
 
     def load_view_summary_tab(self):
-        """ """
+        """ load capa summary tab view """
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.view_summary)
 
@@ -237,7 +239,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "Summary")
 
     def load_view_attack_tab(self):
-        """ """
+        """ load MITRE ATT&CK tab view """
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.view_attack)
 
@@ -255,14 +257,13 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         menu = self.view_menu_bar.addMenu("File")
 
-        for name, _, handle in actions:
+        for (name, _, handle) in actions:
             action = QtWidgets.QAction(name, self.parent)
             action.triggered.connect(handle)
-            # action.setToolTip(tip)
             menu.addAction(action)
 
     def load_ida_hooks(self):
-        """ """
+        """ load IDA Pro UI hooks """
         action_hooks = {
             "MakeName": self.ida_hook_rename,
             "EditFunction": self.ida_hook_rename,
@@ -272,7 +273,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.ida_hooks.hook()
 
     def unload_ida_hooks(self):
-        """ unhook IDA user interface """
+        """ unload IDA Pro UI hooks """
         if self.ida_hooks:
             self.ida_hooks.unhook()
 
@@ -282,8 +283,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             called twice, once before action and once after
             action completes
 
-            @param meta: TODO
-            @param post: TODO
+            @param meta: metadata cache
+            @param post: indicates pre or post action
         """
         location = idaapi.get_screen_ea()
         if not location or not capa.ida.helpers.is_func_start(location):
@@ -299,8 +300,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             meta["prev_name"] = curr_name
 
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
-        """ """
-        if not self.view_checkbox_limit_by.isChecked():
+        """ hook for IDA screen ea changed
+
+            @param widget: IDA widget type
+            @param new_ea: destination ea
+            @param old_ea: source ea
+         """
+        if not self.view_limit_results_by_function.isChecked():
             # ignore if checkbox not selected
             return
 
@@ -328,7 +334,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tree.resize_columns_to_content()
 
     def load_capa_results(self):
-        """ """
+        """ run capa analysis and render results in UI """
         logger.info("-" * 80)
         logger.info(" Using default embedded rules.")
         logger.info(" ")
@@ -381,11 +387,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         logger.info("render views completed.")
 
     def set_view_tree_default_sort_order(self):
-        """ """
+        """ set capa tree view default sort order """
         self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
 
     def render_capa_doc_summary(self, doc):
-        """ """
+        """ render capa summary results
+
+            @param doc: capa doc
+        """
         for (row, rule) in enumerate(rutils.capability_rules(doc)):
             count = len(rule["matches"])
 
@@ -403,7 +412,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_summary.resizeColumnsToContents()
 
     def render_capa_doc_mitre_summary(self, doc):
-        """ """
+        """ render capa MITRE ATT&CK results
+
+            @param doc: capa doc
+        """
         tactics = collections.defaultdict(set)
 
         for rule in rutils.capability_rules(doc):
@@ -423,8 +435,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         column_one = []
         column_two = []
 
-        for tactic, techniques in sorted(tactics.items()):
+        for (tactic, techniques) in sorted(tactics.items()):
             column_one.append(tactic.upper())
+            # add extra space when more than one technique
             column_one.extend(["" for i in range(len(techniques) - 1)])
 
             for spec in sorted(techniques):
@@ -449,7 +462,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_attack.resizeColumnsToContents()
 
     def render_new_table_header_item(self, text):
-        """ """
+        """ create new table header item with default style """
         item = QtWidgets.QTableWidgetItem(text)
         item.setForeground(QtGui.QColor(88, 139, 174))
 
@@ -461,10 +474,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         return item
 
     def ida_reset(self):
-        """ reset IDA user interface """
+        """ reset IDA UI """
         self.model_data.reset()
         self.view_tree.reset()
-        self.view_checkbox_limit_by.setChecked(False)
+        self.view_limit_results_by_function.setChecked(False)
         self.set_view_tree_default_sort_order()
 
     def reload(self):
@@ -479,7 +492,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         idaapi.info("%s reload completed." % PLUGIN_NAME)
 
     def reset(self):
-        """ reset user interface elements
+        """ reset UI elements
 
             e.g. checkboxes and IDA highlighting
         """
@@ -506,10 +519,11 @@ class CapaExplorerForm(idaapi.PluginForm):
             in function, otherwise clear filter
         """
         match = ""
-        if self.view_checkbox_limit_by.isChecked():
+        if self.view_limit_results_by_function.isChecked():
             location = capa.ida.helpers.get_func_start_ea(idaapi.get_screen_ea())
             if location:
                 match = capa.ida.explorer.item.location_to_hex(location)
+
         self.model_proxy.add_single_string_filter(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, match)
 
         self.view_tree.resize_columns_to_content()

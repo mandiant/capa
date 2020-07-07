@@ -34,6 +34,7 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     def filterAcceptsRow(self, row, parent):
         """ true if the item in the row indicated by the given row and parent
             should be included in the model; otherwise returns false
+
             @param row: int
             @param parent: QModelIndex*
 
