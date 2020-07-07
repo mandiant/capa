@@ -399,6 +399,13 @@ def main(argv=None):
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     parser.add_argument(
+        "--color",
+        type=str,
+        choices=("auto", "always", "never"),
+        default="auto",
+        help="Enable ANSI color codes in results, default: only during interactive session",
+    )
+    parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
     )
     args = parser.parse_args(args=argv)
@@ -505,11 +512,19 @@ def main(argv=None):
         if not (args.verbose or args.vverbose or args.json):
             return -1
 
-    # colorama will detect:
-    #  - when on Windows console, and fixup coloring, and
-    #  - when not an interactive session, and disable coloring
-    # renderers should use coloring and assume it will be stripped out if necessary.
-    colorama.init()
+    if args.color == "always":
+        colorama.init(strip=False)
+    elif args.color == "auto":
+        # colorama will detect:
+        #  - when on Windows console, and fixup coloring, and
+        #  - when not an interactive session, and disable coloring
+        # renderers should use coloring and assume it will be stripped out if necessary.
+        colorama.init()
+    elif args.color == "never":
+        colorama.init(strip=True)
+    else:
+        raise RuntimeError("unexpected --color value: " + args.color)
+
     if args.json:
         print(capa.render.render_json(meta, rules, capabilities))
     elif args.vverbose:
