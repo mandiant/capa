@@ -7,17 +7,17 @@ For example, it might suggest that the file is a backdoor, is capable of install
 ```
 $ capa.exe suspicious.exe
 
-+------------------------+----------------------------------------------------------------------+
-| ATT&CK Tactic          | ATT&CK Technique                                                     |
-|------------------------+----------------------------------------------------------------------|
-| DEFENSE EVASION        | Obfuscated Files or Information [T1027]                              |
-| DISCOVERY              | Query Registry [T1012]                                               |
-|                        | System Information Discovery [T1082]                                 |
-| EXECUTION              | Command and Scripting Interpreter::Windows Command Shell [T1059.003] |
-|                        | Shared Modules [T1129]                                               |
-| EXFILTRATION           | Exfiltration Over C2 Channel [T1041]                                 |
-| PERSISTENCE            | Create or Modify System Process::Windows Service [T1543.003]         |
-+------------------------+----------------------------------------------------------------------+
++------------------------+--------------------------------------------------------------------------------+
+| ATT&CK Tactic          | ATT&CK Technique                                                               |
+|------------------------+--------------------------------------------------------------------------------|
+| DEFENSE EVASION        | Obfuscated Files or Information [T1027]                                        |
+| DISCOVERY              | Query Registry [T1012]                                                         |
+|                        | System Information Discovery [T1082]                                           |
+| EXECUTION              | Command and Scripting Interpreter::Windows Command Shell [T1059.003]           |
+|                        | Shared Modules [T1129]                                                         |
+| EXFILTRATION           | Exfiltration Over C2 Channel [T1041]                                           |
+| PERSISTENCE            | Create or Modify System Process::Windows Service [T1543.003]                   |
++------------------------+--------------------------------------------------------------------------------+
 
 +-------------------------------------------------------+-------------------------------------------------+
 | CAPABILITY                                            | NAMESPACE                                       |
