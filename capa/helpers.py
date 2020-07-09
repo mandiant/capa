@@ -1,3 +1,5 @@
+import os
+
 _hex = hex
 
 
@@ -16,3 +18,11 @@ def oint(i):
         return int(i)
     except TypeError:
         return i.__int__()
+
+
+def get_file_taste(sample_path):
+    if not os.path.exists(sample_path):
+        raise IOError("sample path %s does not exist or cannot be accessed" % sample_path)
+    with open(sample_path, "rb") as f:
+        taste = f.read(8)
+    return taste
