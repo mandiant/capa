@@ -21,8 +21,9 @@ import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
-from capa.helpers import oint
+from capa.helpers import oint, get_file_taste
 
+RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set(["MZ"])
 
 
@@ -297,7 +298,7 @@ def is_nursery_rule_path(path):
 
 def get_rules(rule_path):
     if not os.path.exists(rule_path):
-        raise IOError("%s does not exist or cannot be accessed" % rule_path)
+        raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
     rule_paths = []
     if os.path.isfile(rule_path):
@@ -346,6 +347,9 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
     sha1.update(buf)
     sha256.update(buf)
 
+    if rules_path != RULES_PATH_DEFAULT_STRING:
+        rules_path = os.path.abspath(os.path.normpath(rules_path))
+
     return {
         "timestamp": datetime.datetime.now().isoformat(),
         "version": capa.version.__version__,
@@ -359,7 +363,7 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
         "analysis": {
             "format": format,
             "extractor": extractor.__class__.__name__,
-            "rules": os.path.abspath(os.path.normpath(rules_path)),
+            "rules": rules_path,
             "base_address": extractor.get_base_address(),
         },
     }
@@ -384,7 +388,7 @@ def main(argv=None):
         "-r",
         "--rules",
         type=str,
-        default="(embedded rules)",
+        default=RULES_PATH_DEFAULT_STRING,
         help="Path to rule file or directory, use embedded rules by default",
     )
     parser.add_argument("-t", "--tag", type=str, help="Filter on rule meta field values")
@@ -427,6 +431,12 @@ def main(argv=None):
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
 
+    try:
+        taste = get_file_taste(args.sample)
+    except IOError as e:
+        logger.error("%s", str(e))
+        return -1
+
     # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
     # tqdm bails when trying to render the progress bar in this setup.
     # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
@@ -435,10 +445,10 @@ def main(argv=None):
 
     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
 
-    if args.rules == "(embedded rules)":
+    if args.rules == RULES_PATH_DEFAULT_STRING:
         logger.info("-" * 80)
         logger.info(" Using default embedded rules.")
-        logger.info(" To provide your own rules, use the form `capa.exe  ./path/to/rules/  /path/to/mal.exe`.")
+        logger.info(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
         logger.info(" You can see the current default rule set here:")
         logger.info("     https://github.com/fireeye/capa-rules")
         logger.info("-" * 80)
@@ -468,9 +478,6 @@ def main(argv=None):
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         return -1
-
-    with open(args.sample, "rb") as f:
-        taste = f.read(8)
 
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"

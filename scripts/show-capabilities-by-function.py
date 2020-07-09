@@ -57,6 +57,8 @@ import capa.render.utils as rutils
 import capa.features.freeze
 import capa.features.extractors.viv
 
+from capa.helpers import get_file_taste
+
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
 
@@ -145,6 +147,12 @@ def main(argv=None):
         # disable vivisect-related logging, it's verbose and not relevant for capa users
         capa.main.set_vivisect_log_level(logging.CRITICAL)
 
+        try:
+            taste = get_file_taste(args.sample)
+        except IOError as e:
+            logger.error("%s", str(e))
+            return -1
+
         # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
         # tqdm bails when trying to render the progress bar in this setup.
         # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
@@ -156,7 +164,7 @@ def main(argv=None):
         if args.rules == "(embedded rules)":
             logger.info("-" * 80)
             logger.info(" Using default embedded rules.")
-            logger.info(" To provide your own rules, use the form `capa.exe  ./path/to/rules/  /path/to/mal.exe`.")
+            logger.info(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
             logger.info(" You can see the current default rule set here:")
             logger.info("     https://github.com/fireeye/capa-rules")
             logger.info("-" * 80)
@@ -177,9 +185,6 @@ def main(argv=None):
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             logger.error("%s", str(e))
             return -1
-
-        with open(args.sample, "rb") as f:
-            taste = f.read(8)
 
         if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
             format = "freeze"
