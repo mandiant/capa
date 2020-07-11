@@ -1,7 +1,7 @@
 # capa
 
 capa detects capabilities in executable files.
-You run it against a .exe or .dll and it tells you what it thinks the program can do.
+You run it against a PE file or shellcode and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
 ```
@@ -52,9 +52,9 @@ $ capa.exe suspicious.exe
 +-------------------------------------------------------+-------------------------------------------------+
 ```
 
-# download
+# download and usage
 
-Download stable releases of the standalone capa binaries [here](/releases). You can run the standalone binaries without installation. See [doc/installation.md](doc/installation.md) for details on using capa as a library in another project.
+Download stable releases of the standalone capa binaries [here](/releases). You can run the standalone binaries without installation.
 
 Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
 - Windows 64bit: TODO
@@ -73,7 +73,7 @@ contains an embedded PE, writes to a file, and spawns a new process.
 Taken together, this makes us think that `suspicious.exe` could be a dropper or backdoor.
 Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the payload.
 
-By passing the `-vv` flag (for Very Verbose), capa reports exactly where it found evidence of these capabilities.
+By passing the `-vv` flag (for very verbose), capa reports exactly where it found evidence of these capabilities.
 This is useful for at least two reasons:
 
   - it helps explain why we should trust the results, and enables us to verify the conclusions, and
@@ -81,6 +81,7 @@ This is useful for at least two reasons:
 
 ```
 λ capa.exe suspicious.exe -vv
+...
 execute shell command and capture output
 namespace   c2/shell
 author      matthew.williams@fireeye.com
@@ -114,35 +115,30 @@ In some regards, capa rules are a mixture of the OpenIOC, Yara, and YAML formats
 
 Here's an example rule used by capa:
 
-```
-───────┬──────────────────────────────────────────────────────────────────────────
-       │ File: rules/data-manipulation/checksum/crc32/checksum-data-with-crc32.yml
-───────┼──────────────────────────────────────────────────────────────────────────
-   1   │ rule:
-   2   │   meta:
-   3   │     name: checksum data with CRC32
-   4   │     namespace: data-manipulation/checksum/crc32
-   5   │     author: moritz.raabe@fireeye.com
-   6   │     scope: function
-   7   │     examples:
-   8   │       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
-   9   │       - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
-  10   │   features:
-  11   │     - or:
-  12   │       - and:
-  13   │         - mnemonic: shr
-  14   │         - number: 0xEDB88320
-  15   │         - number: 8
-  16   │         - characteristic(nzxor): true
-  17   │       - api: RtlComputeCrc32
-──────────────────────────────────────────────────────────────────────────────────
+```yaml
+rule:
+  meta:
+    name: hash data with CRC32
+    namespace: data-manipulation/checksum/crc32
+    author: moritz.raabe@fireeye.com
+    scope: function
+    examples:
+      - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
+      - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
+  features:
+    - or:
+      - and:
+        - mnemonic: shr
+        - number: 0xEDB88320
+        - number: 8
+        - characteristic: nzxor
+      - api: RtlComputeCrc32
 ```
 
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
 # further information
-  - [doc/usage.md](doc/usage.md)
-  - [doc/installation.md](doc/installation.md)
-  - [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules)
-  - [doc/rule format.md](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
+  - [capa documentation](doc/)
+  - [capa-rules repository](https://github.com/fireeye/capa-rules)
+  - [capa-rules documentation](https://github.com/fireeye/capa-rules/tree/master/doc)
