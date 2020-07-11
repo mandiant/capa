@@ -4,7 +4,9 @@ You can install capa in a few different ways. First, if you simply want to use c
 ## Method 1: Standalone installation
 If you simply want to use capa, use the standalone binaries we host on GitHub: https://github.com/fireeye/capa/releases. These binary executable files contain all the source code, Python interpreter, and associated resources needed to make capa run. This means you can run it without any installation! Just invoke the file using your terminal shell to see the help documentation.
 
-We used PyInstaller to create these packages.
+We use PyInstaller to create these packages.
+
+The capa [README](../README.md#download) also links to nightly builds of standalone binaries from the latest development branch.
 
 ## Method 2: Using capa as a Python library
 To install capa as a Python library, you'll need to install a few dependencies, and then use `pip` to fetch the capa module.
@@ -28,19 +30,29 @@ First, install the requirements.
 `$ pip install https://github.com/williballenthin/vivisect/zipball/master`
 
 ### 2. Check out source code
-Next, clone the capa git repository. We use submodules to separate code, rules, and test data. To get all data at once use the `--recurse-submodules` option shown below. To only get the source code and our provided rules (common), follow these steps:
-- `$ git clone https://github.com/fireeye/capa.git /local/path/to/src`
+Next, clone the capa git repository. We use submodules to separate code, rules, and test data. See below to get all data at once. To only get the source code and our provided rules (common), follow these steps:
+- clone repository
+  - `$ git clone https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
+  - `$ git clone git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 - `$ cd /local/path/to/src`
 - `$ git submodule init`
 - `$ git submodule update rules`
 
-#### HTTPS
-`$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src`
+#### capa-testfiles
+The [capa-testfiles](https://github.com/fireeye/capa-testfiles) repository (`/local/path/to/src/tests/data`) contains a large collection of malware and benign test files. *In most cases you will not need to check it out on your local system.*
+
+To update the testfiles you can use the following command:
+- `$ git submodule update tests/data`
+
+To get all data at once use the `--recurse-submodules` option:
+
+- `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
+- `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 
 ### 3. Install the local source code
 Finally, use `pip` to install the source code in "editable" mode. This means that Python will load the capa module from the local directory rather than copying it to `site-packages` or `dist-packages`. This is good because it is easy to modify files and see the effects reflected immediately. But, be careful not to remove this directory unless uninstalling capa.
 
-`$ pip install -e ./local/path/to/src`
+`$ pip install -e /local/path/to/src`
 
 You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your path now invoke the capa binary from this directory.
 
@@ -52,14 +64,14 @@ We use the following tools to ensure consistent code style and formatting:
 
 To install these development dependencies, run:
 
-`$ pip install -e ./local/path/to/src[dev]`
+`$ pip install -e /local/path/to/src[dev]`
 
-Note that some development dependencies (including the black code formatter) require Python3.
+Note that some development dependencies (including the black code formatter) require Python 3.
 
 ### 4. Setup hooks [optional]
 
 If you plan to contribute to capa, you may want to setup the hooks.
 Run `scripts/setup-hooks.sh` to set the following hooks up:
-- The `post-commit` hook runs the linter after every `git commit`, letting you know if there are code style or rule linter offenses you need to fix.
-- The `pre-push` hook runs the linter and the tests and block the `git push` if they do not succeed.
-  This way you realize if everything is alright without the need of sending a PR.
+- The `post-commit` hook runs checks after every `git commit`, letting you know if there are code style or rule linter offenses you need to fix.
+- The `pre-push` hook runs various style and lint checks as well as the tests. If they do not succeed `git push` is blocked.
+  This way you can ensure everything is alright before sending a pull request.
