@@ -46,16 +46,6 @@ We need more practical use cases and test samples to justify the additional work
 
 
 # ATT&CK, MAEC, MBC, and other capability tagging
-capa uses a custom category tagging that assigns capabilities with objective, behavior, and technique (see https://github.com/fireeye/capa#meta-block).
+capa uses namespaces to group capabilities (see https://github.com/fireeye/capa-rules/tree/master#namespace-organization).
 
-The category tagging is loosely based on the ELWUN/Nucleus capability tags.
-
-While exploring other tagging mechanisms we discovered the following shortcomings:
-
-- ATT&CK: does not cover all the capabilities we are trying to express and is intended for a different purpose (general adversary tactics and techniques)
-- MAEC: the ELWUN tags are related to the MAEC format, but express capabilities more appropriately for us
-- MBC: this is the right scope, but a rather new project, if there's more support and demand in the community for this schema further work in this direction could be promising
-
-Adding tags from a new schema to the existing rules is a cumbersome process. We will hold on to amending rules until we have identified an appropriate schema.
-
-Additionally, if we choose to support a public standard, we would like to provide expertise back to the community.
+The `rule.meta` field also supports `att&ck`, `mbc`, and `maec` fields to associate rules with the respective taxonomy (see https://github.com/fireeye/capa-rules/blob/master/doc/format.md#meta-block).
