@@ -1,34 +1,6 @@
 # capa usage
 
-```
-usage: capa [-h] [-r RULES] [-t TAG] [--version] [-j] [-v] [-vv] [-d] [-q]
-            [-f {auto,pe,sc32,sc64,freeze}]
-            sample
-
-detect capabilities in programs.
-
-positional arguments:
-  sample                Path to sample to analyze
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -r RULES, --rules RULES
-                        Path to rule file or directory, use embedded rules by
-                        default
-  -t TAG, --tag TAG     Filter on rule meta field values
-  --version             Print the executable version and exit
-  -j, --json            Emit JSON instead of text
-  -v, --verbose         Enable verbose result document (no effect with --json)
-  -vv, --vverbose       Enable very verbose result document (no effect with
-                        --json)
-  -d, --debug           Enable debugging output on STDERR
-  -q, --quiet           Disable all output but errors
-  -f {auto,pe,sc32,sc64,freeze}, --format {auto,pe,sc32,sc64,freeze}
-                        Select sample format, auto: (default) detect file type
-                        automatically, pe: Windows PE file, sc32: 32-bit
-                        shellcode, sc64: 64-bit shellcode, freeze: features
-                        previously frozen by capa
-```
+See `capa -h` for all supported arguments and usage examples.
 
 ## tips and tricks
 
@@ -37,7 +9,7 @@ optional arguments:
   - [IDA Pro rule generator](#rule-generator)
 
 ### only run selected rules
-Use the `-t` option to run rules with the given metadata value (see therule  fields `rule.meta.*`).
+Use the `-t` option to run rules with the given metadata value (see the rule  fields `rule.meta.*`).
 For example, `capa -t william.ballenthin@mandiant.com` runs rules that reference Willi's email address (probably as the author), or
 `capa -t communication` runs rules with the namespace `communication`.
 
