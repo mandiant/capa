@@ -9,7 +9,7 @@ See `capa -h` for all supported arguments and usage examples.
   - [IDA Pro rule generator](#rule-generator)
 
 ### only run selected rules
-Use the `-t` option to run rules with the given metadata value (see the rule  fields `rule.meta.*`).
+Use the `-t` option to run rules with the given metadata value (see the rule fields `rule.meta.*`).
 For example, `capa -t william.ballenthin@mandiant.com` runs rules that reference Willi's email address (probably as the author), or
 `capa -t communication` runs rules with the namespace `communication`.
 
@@ -29,7 +29,7 @@ The capa explorer allows you to interactively display and browse capabilities ca
 As you select rules or logic, capa will highlight the addresses that support its analysis conclusions.
 We like to use capa to help find the most interesting parts of a program, such as where the C2 mechanism might be.
 
-![capa explorer](capa_explorer.png)
+![capa explorer](img/capa_explorer.png)
 
 #### rule generator
 The rule generator helps you to easily write new rules based on the function you are currently analyzing in your IDA disassembly view.
