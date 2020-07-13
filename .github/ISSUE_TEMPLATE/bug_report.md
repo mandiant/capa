@@ -6,7 +6,7 @@ about: Create a report to help us improve
 
 <!--
 
-Have you read Capa's Code of Conduct? By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/fireeye/capa/blob/master/.github/CODE_OF_CONDUCT.md
+Have you read capa's Code of Conduct? By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/fireeye/capa/blob/master/.github/CODE_OF_CONDUCT.md
 -->
 
 ### Prerequisites
@@ -39,6 +39,7 @@ Have you read Capa's Code of Conduct? By filing an Issue, you are expected to co
 ### Versions
 
 <!-- You can get this information from copy and pasting the output of `capa --version` from the command line.
+ Please specify the component you're using (e.g. standalone tool or IDA Pro integration) and your Python version.
  Also, please include the OS and what version of the OS you're running. -->
 
 ### Additional Information
