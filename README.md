@@ -139,6 +139,11 @@ The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repos
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
 # further information
-  - [capa documentation](doc/)
-  - [capa-rules repository](https://github.com/fireeye/capa-rules)
-  - [capa-rules documentation](https://github.com/fireeye/capa-rules/tree/master/doc)
+## capa
+- [doc/installation](doc/installation.md)
+- [doc/usage](doc/usage.md)
+- [doc/limitations](doc/limitations.md)
+
+## capa rules
+- [capa-rules repository](https://github.com/fireeye/capa-rules)
+- [capa-rules rule format](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
