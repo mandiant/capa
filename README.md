@@ -1,4 +1,4 @@
-# capa
+![capa](.github/logo.png)
 
 [![Number of rules](https://img.shields.io/badge/rules-261-blue.svg)](https://github.com/fireeye/capa-rules)
 
