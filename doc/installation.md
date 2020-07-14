@@ -10,6 +10,7 @@ The capa [README](../README.md#download) also links to nightly builds of standal
 
 ## Method 2: Using capa as a Python library
 To install capa as a Python library, you'll need to install a few dependencies, and then use `pip` to fetch the capa module.
+Note: this technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r`.
 
 ### 1. Install requirements
 First, install the requirements.
