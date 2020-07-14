@@ -22,7 +22,7 @@ IDA's analysis is generally a bit faster and more thorough than vivisect's, so y
 When run under IDA, capa supports both Python 2 and Python 3 interpreters.
 If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
 
-Additionally, capa comes with two IDA Pro plugins located in the `capa/ida` directory: the explorer and the rule generator.
+Additionally, capa comes with an IDA Pro plugin located in the `capa/ida` directory: the explorer.
 
 #### capa explorer
 The capa explorer allows you to interactively display and browse capabilities capa identified in a binary.
@@ -31,7 +31,10 @@ We like to use capa to help find the most interesting parts of a program, such a
 
 ![capa explorer](img/capa_explorer.png)
 
-#### rule generator
-The rule generator helps you to easily write new rules based on the function you are currently analyzing in your IDA disassembly view.
-It shows the features that capa can extract from the function, and lets you quickly pull these into a rule template.
-You'll still have to provide the logic structures (`and`, `or`, `not`, etc.) but the features will be prepared for you.
+To install the plugin, you'll need to be running IDA Pro 7.4 or 7.5 with either Python 2 or Python 3.
+Next make sure pip commands are run using the Python install that is configured for your IDA install:
+
+  1. Only if running Python 2.7, run command `$ pip install https://github.com/williballenthin/vivisect/zipball/master`
+  2. Run `$ pip install .` from capa root directory
+  3. Open IDA and navigate to `File > Script file…` or `Alt+F7`
+  4. Navigate to `<capa_install_dir>\capa\ida\` and choose `ida_capa_explorer.py`

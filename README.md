@@ -70,10 +70,10 @@ For more information about how to use capa, including running it as an IDA scrip
 # example
 
 In the above sample output, we ran capa against an unknown binary (`suspicious.exe`),
-and the tool reported that the program can decode data via XOR,
-contains an embedded PE, writes to a file, and spawns a new process.
-Taken together, this makes us think that `suspicious.exe` could be a dropper or backdoor.
-Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the payload.
+and the tool reported that the program can send HTTP requests, decode data via XOR and Base64,
+install services, and spawn new processes.
+Taken together, this makes us think that `suspicious.exe` could be a persistent backdoor.
+Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the command and control server.
 
 By passing the `-vv` flag (for very verbose), capa reports exactly where it found evidence of these capabilities.
 This is useful for at least two reasons:
@@ -140,11 +140,19 @@ rule:
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
+If you use IDA Pro, then you use can use the [IDA Pro plugin for capa](./capa/ida/ida_capa_explorer.py).
+This script adds new user interface elements to IDA, including an interactive tree view of rule matches and their locations within the current database.
+As you select the checkboxes, the plugin will highlight the addresses associated with the features.
+We use this plugin all the time to quickly jump to interesting parts of a program.
+
+![capa + IDA Pro integration](.github/capa-ida.jpg)
+
 # further information
 ## capa
 - [doc/installation](doc/installation.md)
 - [doc/usage](doc/usage.md)
 - [doc/limitations](doc/limitations.md)
+- [Contributing Guide](.github/CONTRIBUTING.md)
 
 ## capa rules
 - [capa-rules repository](https://github.com/fireeye/capa-rules)
