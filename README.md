@@ -70,10 +70,10 @@ For more information about how to use capa, including running it as an IDA scrip
 # example
 
 In the above sample output, we ran capa against an unknown binary (`suspicious.exe`),
-and the tool reported that the program can decode data via XOR,
-contains an embedded PE, writes to a file, and spawns a new process.
-Taken together, this makes us think that `suspicious.exe` could be a dropper or backdoor.
-Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the payload.
+and the tool reported that the program can decode data via XOR and Base64,
+send HTTP requests, install a service, and spawn a new process.
+Taken together, this makes us think that `suspicious.exe` could be a backdoor.
+Therefore, our next analysis step might be to run `suspicious.exe` in a sandbox and try to recover the command and control server.
 
 By passing the `-vv` flag (for very verbose), capa reports exactly where it found evidence of these capabilities.
 This is useful for at least two reasons:
