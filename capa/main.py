@@ -387,11 +387,11 @@ def main(argv=None):
         By default, capa uses a default set of embedded rules.
         You can see the rule set here:
           https://github.com/fireeye/capa-rules
-            
+
         To provide your own rule set, use the `-r` flag:
           capa  --rules /path/to/rules  suspicious.exe
           capa  -r      /path/to/rules  suspicious.exe
-        
+
         examples:
           identify capabilities in a binary
             capa suspicous.exe
