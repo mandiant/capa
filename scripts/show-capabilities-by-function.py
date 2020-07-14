@@ -56,7 +56,6 @@ import capa.features
 import capa.render.utils as rutils
 import capa.features.freeze
 import capa.features.extractors.viv
-
 from capa.helpers import get_file_taste
 
 logger = logging.getLogger("capa.show-capabilities-by-function")

@@ -383,26 +383,29 @@ def main(argv=None):
     ]
     format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
 
-    epilog = textwrap.dedent("""
-                examples:
-                  identify capabilities in a binary
-                    capa suspicous.exe
+    epilog = textwrap.dedent(
+        """
+        examples:
+          identify capabilities in a binary
+            capa suspicous.exe
 
-                  identify capabilities in 32-bit shellcode, see `-f` for all supported formats
-                    capa -f sc32 shellcode.bin
+          identify capabilities in 32-bit shellcode, see `-f` for all supported formats
+            capa -f sc32 shellcode.bin
 
-                  report match locations
-                    capa -v suspicous.exe
+          report match locations
+            capa -v suspicous.exe
 
-                  report all feature match details
-                    capa -vv suspicious.exe
+          report all feature match details
+            capa -vv suspicious.exe
 
-                  filter rules by meta fields, e.g. rule name or namespace
-                    capa -t <rule name> suspicious.exe
-                 """)
+          filter rules by meta fields, e.g. rule name or namespace
+            capa -t <rule name> suspicious.exe
+         """
+    )
 
-    parser = argparse.ArgumentParser(description=__doc__, epilog=epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("sample", type=str, help="Path to sample to analyze")
     parser.add_argument(
         "-r",
