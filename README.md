@@ -145,6 +145,7 @@ Please learn to write rules and contribute new entries as you find interesting t
 - [doc/installation](doc/installation.md)
 - [doc/usage](doc/usage.md)
 - [doc/limitations](doc/limitations.md)
+- [Contributing Guide](.github/CONTRIBUTING.md)
 
 ## capa rules
 - [capa-rules repository](https://github.com/fireeye/capa-rules)
