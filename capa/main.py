@@ -491,6 +491,11 @@ def main(argv=None):
             logger.debug("detected running from source")
             rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
             logger.debug("default rule path (source method): %s", rules_path)
+
+        if not os.path.exists(rules_path):
+            logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
+            logger.error("provide your own rule set via the `-r` option.")
+            return -1
     else:
         rules_path = args.rules
         logger.debug("using rules path: %s", rules_path)
