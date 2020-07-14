@@ -1,5 +1,7 @@
 # capa
 
+[![Number of rules](https://img.shields.io/badge/rules-261-blue.svg)](https://github.com/fireeye/capa-rules)
+
 capa detects capabilities in executable files.
 You run it against a PE file or shellcode and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
