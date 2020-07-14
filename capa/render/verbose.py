@@ -69,6 +69,7 @@ def render_rules(ostream, doc):
         matches      0x10003A13
                      0x10003797
     """
+    had_match = False
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -77,6 +78,7 @@ def render_rules(ostream, doc):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
 
         ostream.writeln(capability)
+        had_match = True
 
         rows = []
         for key in ("namespace", "description", "scope"):
@@ -94,6 +96,9 @@ def render_rules(ostream, doc):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
+
+    if not had_match:
+        ostream.writeln(rutils.bold("no capabilities found"))
 
 
 def render_verbose(doc):

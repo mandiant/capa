@@ -47,8 +47,11 @@ def render_capabilities(doc, ostream):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
         rows.append((capability, rule["meta"]["namespace"]))
 
-    ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql"))
-    ostream.write("\n")
+    if rows:
+        ostream.write(tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql"))
+        ostream.write("\n")
+    else:
+        ostream.writeln(rutils.bold("no capabilities found"))
 
 
 def render_attack(doc, ostream):
@@ -95,10 +98,12 @@ def render_attack(doc, ostream):
             else:
                 raise RuntimeError("unexpected ATT&CK spec format")
         rows.append((rutils.bold(tactic.upper()), "\n".join(inner_rows),))
-    ostream.write(
-        tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql")
-    )
-    ostream.write("\n")
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql")
+        )
+        ostream.write("\n")
 
 
 def render_default(doc):

@@ -158,6 +158,7 @@ def render_rules(ostream, doc):
             api: kernel32.GetLastError @ 0x10004A87
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
+    had_match = False
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
         if count == 1:
@@ -166,6 +167,7 @@ def render_rules(ostream, doc):
             capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
 
         ostream.writeln(capability)
+        had_match = True
 
         rows = []
         for key in capa.rules.META_KEYS:
@@ -197,6 +199,9 @@ def render_rules(ostream, doc):
                 ostream.writeln(rutils.hex(location))
                 render_match(ostream, match, indent=1)
         ostream.write("\n")
+
+    if not had_match:
+        ostream.writeln(rutils.bold("no capabilities found"))
 
 
 def render_vverbose(doc):
