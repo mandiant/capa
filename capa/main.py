@@ -243,7 +243,7 @@ class UnsupportedFormatError(ValueError):
 def get_workspace(path, format):
     import viv_utils
 
-    logger.info("generating vivisect workspace for: %s", path)
+    logger.debug("generating vivisect workspace for: %s", path)
     if format == "auto":
         if not is_supported_file_type(path):
             raise UnsupportedFormatError()
@@ -254,7 +254,7 @@ def get_workspace(path, format):
         vw = get_shellcode_vw(path, arch="i386")
     elif format == "sc64":
         vw = get_shellcode_vw(path, arch="amd64")
-    logger.info("%s", get_meta_str(vw))
+    logger.debug("%s", get_meta_str(vw))
     return vw
 
 
@@ -320,7 +320,6 @@ def get_rules(rule_path):
 
     rules = []
     for rule_path in rule_paths:
-        logger.debug("reading rule file: %s", rule_path)
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
@@ -331,7 +330,7 @@ def get_rules(rule_path):
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
-            logger.debug("rule: %s scope: %s", rule.name, rule.scope)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
 
     return rules
 
@@ -486,15 +485,15 @@ def main(argv=None):
             logger.debug("default rule path (source method): %s", rules_path)
     else:
         rules_path = args.rules
-        logger.info("using rules path: %s", rules_path)
+        logger.debug("using rules path: %s", rules_path)
 
     try:
         rules = get_rules(rules_path)
         rules = capa.rules.RuleSet(rules)
-        logger.info("successfully loaded %s rules", len(rules))
+        logger.debug("successfully loaded %s rules", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
-            logger.info("selected %s rules", len(rules))
+            logger.debug("selected %s rules", len(rules))
             for i, r in enumerate(rules.rules, 1):
                 # TODO don't display subscope rules?
                 logger.debug(" %d. %s", i, r)
@@ -565,7 +564,7 @@ def main(argv=None):
         print(capa.render.render_default(meta, rules, capabilities))
     colorama.deinit()
 
-    logger.info("done.")
+    logger.debug("done.")
 
     return 0
 
