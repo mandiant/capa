@@ -493,6 +493,10 @@ def main(argv=None):
             logger.debug("default rule path (source method): %s", rules_path)
 
         if not os.path.exists(rules_path):
+            # when a users installs capa via pip,
+            # this pulls down just the source code - not the default rules.
+            # i'm not sure the default rules should even be written to the library directory,
+            # so in this case, we require the user to use -r to specify the rule directory.
             logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
             logger.error("provide your own rule set via the `-r` option.")
             return -1
