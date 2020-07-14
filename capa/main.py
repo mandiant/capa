@@ -384,6 +384,14 @@ def main(argv=None):
 
     epilog = textwrap.dedent(
         """
+        By default, capa uses a default set of embedded rules.
+        You can see the rule set here:
+          https://github.com/fireeye/capa-rules
+            
+        To provide your own rule set, use the `-r` flag:
+          capa  --rules /path/to/rules  suspicious.exe
+          capa  -r      /path/to/rules  suspicious.exe
+        
         examples:
           identify capabilities in a binary
             capa suspicous.exe
@@ -398,7 +406,7 @@ def main(argv=None):
             capa -vv suspicious.exe
 
           filter rules by meta fields, e.g. rule name or namespace
-            capa -t <rule name> suspicious.exe
+            capa -t "create TCP socket" suspicious.exe
          """
     )
 
@@ -468,12 +476,12 @@ def main(argv=None):
     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
 
     if args.rules == RULES_PATH_DEFAULT_STRING:
-        logger.info("-" * 80)
-        logger.info(" Using default embedded rules.")
-        logger.info(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
-        logger.info(" You can see the current default rule set here:")
-        logger.info("     https://github.com/fireeye/capa-rules")
-        logger.info("-" * 80)
+        logger.debug("-" * 80)
+        logger.debug(" Using default embedded rules.")
+        logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+        logger.debug(" You can see the current default rule set here:")
+        logger.debug("     https://github.com/fireeye/capa-rules")
+        logger.debug("-" * 80)
 
         if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
             logger.debug("detected running under PyInstaller")
@@ -579,12 +587,12 @@ def ida_main():
     if not capa.ida.helpers.is_supported_file_type():
         return -1
 
-    logger.info("-" * 80)
-    logger.info(" Using default embedded rules.")
-    logger.info(" ")
-    logger.info(" You can see the current default rule set here:")
-    logger.info("     https://github.com/fireeye/capa-rules")
-    logger.info("-" * 80)
+    logger.debug("-" * 80)
+    logger.debug(" Using default embedded rules.")
+    logger.debug(" ")
+    logger.debug(" You can see the current default rule set here:")
+    logger.debug("     https://github.com/fireeye/capa-rules")
+    logger.debug("-" * 80)
 
     if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
         logger.debug("detected running under PyInstaller")
