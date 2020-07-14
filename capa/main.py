@@ -439,8 +439,8 @@ def main(argv=None):
         return 0
 
     if args.quiet:
-        logging.basicConfig(level=logging.ERROR)
-        logging.getLogger().setLevel(logging.ERROR)
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
     elif args.debug:
         logging.basicConfig(level=logging.DEBUG)
         logging.getLogger().setLevel(logging.DEBUG)
