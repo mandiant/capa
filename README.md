@@ -144,6 +144,7 @@ If you use IDA Pro, then you use can use the [IDA Pro plugin for capa](./capa/id
 This script adds new user interface elements to IDA, including an interactive tree view of rule matches and their locations within the current database.
 As you select the checkboxes, the plugin will highlight the addresses associated with the features.
 We use this plugin all the time to quickly jump to interesting parts of a program.
+
 ![capa + IDA Pro integration](.github/capa-ida.jpg)
 
 # further information
