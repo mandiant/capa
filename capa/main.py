@@ -413,40 +413,36 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("sample", type=str, help="Path to sample to analyze")
+    parser.add_argument("sample", type=str, help="path to sample to analyze")
+    parser.add_argument("--version", action="version", version='%(prog)s {:s}'.format(capa.version.__version__))
     parser.add_argument(
         "-r",
         "--rules",
         type=str,
         default=RULES_PATH_DEFAULT_STRING,
-        help="Path to rule file or directory, use embedded rules by default",
-    )
-    parser.add_argument("-t", "--tag", type=str, help="Filter on rule meta field values")
-    parser.add_argument("--version", action="store_true", help="Print the executable version and exit")
-    parser.add_argument("-j", "--json", action="store_true", help="Emit JSON instead of text")
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose result document (no effect with --json)"
+        help="path to rule file or directory, use embedded rules by default",
     )
     parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="Enable very verbose result document (no effect with --json)"
+        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
     )
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
+    parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
+    parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+    )
+    parser.add_argument(
+        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+    )
+    parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
+    parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
     parser.add_argument(
         "--color",
         type=str,
         choices=("auto", "always", "never"),
         default="auto",
-        help="Enable ANSI color codes in results, default: only during interactive session",
-    )
-    parser.add_argument(
-        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
+        help="enable ANSI color codes in results, default: only during interactive session",
     )
     args = parser.parse_args(args=argv)
-
-    if args.version:
-        print(capa.version.__version__)
-        return 0
 
     if args.quiet:
         logging.basicConfig(level=logging.WARNING)
