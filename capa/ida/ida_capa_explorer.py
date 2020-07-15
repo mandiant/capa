@@ -1,6 +1,7 @@
 import os
 import logging
 import collections
+import json
 
 import idaapi
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -80,6 +81,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.parent = None
         self.ida_hooks = None
+        self.doc = None
 
         # models
         self.model_data = None
@@ -252,14 +254,25 @@ class CapaExplorerForm(idaapi.PluginForm):
         actions = (
             ("Reset view", "Reset plugin view", self.reset),
             ("Run analysis", "Run capa analysis on current database", self.reload),
+            ("Export results...", "Export capa results as JSON file", self.export_json)
         )
 
         menu = self.view_menu_bar.addMenu("File")
-
         for (name, _, handle) in actions:
             action = QtWidgets.QAction(name, self.parent)
             action.triggered.connect(handle)
             menu.addAction(action)
+
+    def export_json(self):
+        """ export capa results as JSON file """
+        if not self.doc:
+            idaapi.info("No capa results to export.")
+            return
+        path = idaapi.ask_file(True, "*.json", "Choose file")
+        if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
+            return
+        with open(path, "w") as export_file:
+            json.dump(self.doc, export_file, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder)
 
     def load_ida_hooks(self):
         """ load IDA Pro UI hooks """
@@ -375,11 +388,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         logger.info("analysis completed.")
 
-        doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
+        self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
-        self.model_data.render_capa_doc(doc)
-        self.render_capa_doc_summary(doc)
-        self.render_capa_doc_mitre_summary(doc)
+        self.model_data.render_capa_doc(self.doc)
+        self.render_capa_doc_summary()
+        self.render_capa_doc_mitre_summary()
 
         self.set_view_tree_default_sort_order()
 
@@ -389,12 +402,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ set capa tree view default sort order """
         self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
 
-    def render_capa_doc_summary(self, doc):
-        """ render capa summary results
-
-            @param doc: capa doc
-        """
-        for (row, rule) in enumerate(rutils.capability_rules(doc)):
+    def render_capa_doc_summary(self):
+        """ render capa summary results """
+        for (row, rule) in enumerate(rutils.capability_rules(self.doc)):
             count = len(rule["matches"])
 
             if count == 1:
@@ -410,14 +420,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         # resize columns to content
         self.view_summary.resizeColumnsToContents()
 
-    def render_capa_doc_mitre_summary(self, doc):
-        """ render capa MITRE ATT&CK results
-
-            @param doc: capa doc
-        """
+    def render_capa_doc_mitre_summary(self):
+        """ render capa MITRE ATT&CK results """
         tactics = collections.defaultdict(set)
 
-        for rule in rutils.capability_rules(doc):
+        for rule in rutils.capability_rules(self.doc):
             if not rule["meta"].get("att&ck"):
                 continue
 
