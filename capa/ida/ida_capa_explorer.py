@@ -271,8 +271,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         path = idaapi.ask_file(True, "*.json", "Choose file")
         if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
             return
-        with open(path, "w") as export_file:
-            json.dump(self.doc, export_file, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder)
+        with open(path, "wb") as export_file:
+            export_file.write(json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode('utf-8'))
 
     def load_ida_hooks(self):
         """ load IDA Pro UI hooks """
