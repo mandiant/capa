@@ -39,6 +39,8 @@ Example::
       - set socket configuration
       - connect TCP socket
     ...
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import os
 import sys

@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 """
 identify capabilities in programs.
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import os
 import sys

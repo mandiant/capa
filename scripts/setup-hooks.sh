@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 
 set -euo pipefail
 

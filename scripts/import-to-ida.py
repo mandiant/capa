@@ -19,6 +19,8 @@ and then select the existing capa report from the file system.
 
 This script will verify that the report matches the workspace.
 Check the output window for any errors, and/or the summary of changes.
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import json
 import logging

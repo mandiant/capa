@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 import idc
 import idaapi
 from PyQt5 import QtGui, QtCore, QtWidgets

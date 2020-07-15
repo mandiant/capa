@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 # doesn't matter if this gets repeated later on in a hooks file
 
 # Use a console with emojis support for a better experience

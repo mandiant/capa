@@ -5,6 +5,8 @@ migrate rules and their namespaces.
 example:
 
     $ python scripts/migrate-rules.py migration.csv ./rules ./new-rules
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import os
 import csv

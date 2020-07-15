@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 from PyQt5 import QtCore
 
 from capa.ida.explorer.model import CapaExplorerDataModel

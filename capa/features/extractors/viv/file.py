@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 import PE.carve as pe_carve  # vivisect PE
 
 import capa.features.extractors.strings

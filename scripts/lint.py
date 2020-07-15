@@ -4,6 +4,8 @@ Check the given capa rules for style issues.
 Usage:
 
    $ python scripts/lint.py rules/
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import os
 import sys

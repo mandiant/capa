@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 from PyInstaller.utils.hooks import copy_metadata
 
 # in order for viv-utils to use pkg_resources to fetch

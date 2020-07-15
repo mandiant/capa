@@ -5,6 +5,8 @@ Use the -i flag to update the rule in-place.
 Usage:
 
    $ python capafmt.py -i foo.yml
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import sys
 import logging
