@@ -8,6 +8,9 @@ class BasicBlock(Feature):
     def __str__(self):
         return "basic block"
 
+    def get_value_str(self):
+        return ""
+
     def freeze_serialize(self):
         return (self.__class__.__name__, [])
 
