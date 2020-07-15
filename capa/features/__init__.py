@@ -99,7 +99,7 @@ class Regex(String):
             raise ValueError(
                 "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
             )
-        self.match = ""
+        self.match = None
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
