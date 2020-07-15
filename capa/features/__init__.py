@@ -39,10 +39,13 @@ class Feature(object):
         return self.value
 
     def __str__(self):
-        if self.description:
-            return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
+        if self.value:
+            if self.description:
+                return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
+            else:
+                return "%s(%s)" % (self.name, self.get_value_str())
         else:
-            return "%s(%s)" % (self.name, self.get_value_str())
+            return "%s" % self.name
 
     def __repr__(self):
         return str(self)

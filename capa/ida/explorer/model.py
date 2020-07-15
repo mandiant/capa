@@ -467,10 +467,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
                 bytes(01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_ShellLink)
         """
-        if feature.get("description", ""):
-            return "%s(%s = %s)" % (feature["type"], feature[feature["type"]], feature["description"])
+        if feature[feature["type"]]:
+            if feature.get("description", ""):
+                return "%s(%s = %s)" % (feature["type"], feature[feature["type"]], feature["description"])
+            else:
+                return "%s(%s)" % (feature["type"], feature[feature["type"]])
         else:
-            return "%s(%s)" % (feature["type"], feature[feature["type"]])
+            return "%s" % feature["type"]
 
     def render_capa_doc_feature_node(self, parent, feature, locations, doc):
         """ process capa doc feature node
