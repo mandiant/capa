@@ -416,7 +416,7 @@ def main(argv=None):
         description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("sample", type=str, help="path to sample to analyze")
-    parser.add_argument("--version", action="version", version='%(prog)s {:s}'.format(capa.version.__version__))
+    parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
         "-r",
         "--rules",
