@@ -70,11 +70,6 @@ def render_statement(ostream, match, statement, indent=0):
     elif statement["type"] == "subscope":
         ostream.write(statement["subscope"])
         ostream.writeln(":")
-    elif statement["type"] == "regex":
-        # regex is a `Statement` not a `Feature`
-        # this is because it doesn't get extracted, but applies to all strings in scope.
-        # so we have to handle it here
-        ostream.writeln("string: %s" % (statement["match"]))
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
 
@@ -82,11 +77,17 @@ def render_statement(ostream, match, statement, indent=0):
 def render_feature(ostream, match, feature, indent=0):
     ostream.write("  " * indent)
 
-    ostream.write(feature["type"])
+    key = feature["type"]
+    value = feature[feature["type"]]
+    if key == "regex":
+        key = "string"  # render string for regex to mirror the rule source
+        value = feature["match"]  # the match provides more information than the value for regex
+
+    ostream.write(key)
     ostream.write(": ")
 
-    if feature[feature["type"]]:
-        ostream.write(rutils.bold2(feature[feature["type"]]))
+    if value:
+        ostream.write(rutils.bold2(value))
 
         if "description" in feature:
             ostream.write(capa.rules.DESCRIPTION_SEPARATOR)

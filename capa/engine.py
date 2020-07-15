@@ -1,6 +1,5 @@
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 
-import re
 import sys
 import copy
 import collections
@@ -174,39 +173,6 @@ class Range(Statement):
             return "range(%s, min=%d, max=infinity)" % (str(self.child), self.min)
         else:
             return "range(%s, min=%d, max=%d)" % (str(self.child), self.min, self.max)
-
-
-class Regex(Statement):
-    """match if the given pattern matches a String feature."""
-
-    def __init__(self, pattern):
-        super(Regex, self).__init__()
-        self.pattern = pattern
-        pat = self.pattern[len("/") : -len("/")]
-        flags = re.DOTALL
-        if pattern.endswith("/i"):
-            pat = self.pattern[len("/") : -len("/i")]
-            flags |= re.IGNORECASE
-        self.re = re.compile(pat, flags)
-        self.match = ""
-
-    def evaluate(self, ctx):
-        for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.String,)):
-                continue
-
-            # `re.search` finds a match anywhere in the given string
-            # which implies leading and/or trailing whitespace.
-            # using this mode cleans is more convenient for rule authors,
-            # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
-            if self.re.search(feature.value):
-                self.match = feature.value
-                return Result(True, self, [], locations=locations)
-
-        return Result(False, self, [])
-
-    def __str__(self):
-        return 'regex(string =~ %s, matched = "%s")' % (self.pattern, self.match)
 
 
 class Subscope(Statement):

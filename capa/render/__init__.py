@@ -46,13 +46,6 @@ def convert_statement_to_result_document(statement):
             "max": statement.max,
             "child": convert_feature_to_result_document(statement.child),
         }
-    elif isinstance(statement, capa.engine.Regex):
-        return {
-            "type": "regex",
-            "pattern": statement.pattern,
-            # the string that was matched
-            "match": statement.match,
-        }
     elif isinstance(statement, capa.engine.Subscope):
         return {
             "type": "subscope",
@@ -90,7 +83,8 @@ def convert_feature_to_result_document(feature):
     result = {"type": feature.name, feature.name: feature.get_value_str()}
     if feature.description:
         result["description"] = feature.description
-
+    if feature.name == "regex":
+        result["match"] = feature.match
     return result
 
 
