@@ -36,7 +36,8 @@ def extract_function_loop(f):
 
     # construct control flow graph
     for bb in idaapi.FlowChart(f):
-        map(lambda s: edges.append((bb.start_ea, s.start_ea)), bb.succs())
+        for succ in bb.succs():
+            edges.append((bb.start_ea, succ.start_ea))
 
     if loops.has_loop(edges):
         yield Characteristic("loop"), f.start_ea
