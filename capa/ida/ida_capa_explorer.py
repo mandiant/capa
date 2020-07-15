@@ -1,7 +1,7 @@
 import os
+import json
 import logging
 import collections
-import json
 
 import idaapi
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -254,7 +254,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         actions = (
             ("Reset view", "Reset plugin view", self.reset),
             ("Run analysis", "Run capa analysis on current database", self.reload),
-            ("Export results...", "Export capa results as JSON file", self.export_json)
+            ("Export results...", "Export capa results as JSON file", self.export_json),
         )
 
         menu = self.view_menu_bar.addMenu("File")
@@ -272,7 +272,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
             return
         with open(path, "wb") as export_file:
-            export_file.write(json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode('utf-8'))
+            export_file.write(
+                json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode("utf-8")
+            )
 
     def load_ida_hooks(self):
         """ load IDA Pro UI hooks """
