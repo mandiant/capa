@@ -373,11 +373,6 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return parent2
         elif statement["type"] == "subscope":
             return CapaExplorerSubscopeItem(parent, statement[statement["type"]])
-        elif statement["type"] == "regex":
-            # regex is a `Statement` not a `Feature`
-            # this is because it doesn't get extracted, but applies to all strings in scope.
-            # so we have to handle it here
-            return CapaExplorerFeatureItem(parent, "regex(%s)" % statement["pattern"], details=statement["match"])
         else:
             raise RuntimeError("unexpected match statement type: " + str(statement))
 
@@ -496,7 +491,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if len(locations) == 1:
             # only one location for feature so no need to nest children
-            parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display)
+            parent2 = self.render_capa_doc_feature(
+                parent, feature, next(iter(locations)), doc, display=display,
+            )
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
@@ -538,6 +535,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return CapaExplorerRuleMatchItem(
                 parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
             )
+
+        if feature["type"] == "regex":
+            return CapaExplorerFeatureItem(parent, display, location, details=feature["match"])
 
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)

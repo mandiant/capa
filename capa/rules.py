@@ -184,7 +184,7 @@ def parse_feature(key):
     if key == "api":
         return capa.features.insn.API
     elif key == "string":
-        return capa.features.String
+        return capa.features.StringFactory
     elif key == "bytes":
         return capa.features.Bytes
     elif key == "number":
@@ -348,19 +348,13 @@ def build_statements(d, scope):
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], six.string_types):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
-    elif key == "string" and d[key].startswith("/") and (d[key].endswith("/") or d[key].endswith("/i")):
-        try:
-            return Regex(d[key])
-        except re.error:
-            if d[key].endswith("/i"):
-                d[key] = d[key][: -len("i")]
-            raise InvalidRule(
-                "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % d[key]
-            )
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
-        feature = Feature(value, description)
+        try:
+            feature = Feature(value, description)
+        except ValueError as e:
+            raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 

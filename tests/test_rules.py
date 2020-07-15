@@ -74,12 +74,22 @@ def test_rule_yaml_descriptions():
                     - number: 1 = This is the number 1
                     - string: This program cannot be run in DOS mode.
                       description: MS-DOS stub message
+                    - string: '/SELECT.*FROM.*WHERE/i'
+                      description: SQL WHERE Clause
                     - count(number(2 = AF_INET/SOCK_DGRAM)): 2
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
     assert (
-        r.evaluate({Number(1): {1}, Number(2): {2, 3}, String("This program cannot be run in DOS mode."): {4}}) == True
+        r.evaluate(
+            {
+                Number(1): {1},
+                Number(2): {2, 3},
+                String("This program cannot be run in DOS mode."): {4},
+                String("SELECT password FROM hidden_table WHERE user == admin"): {5},
+            }
+        )
+        == True
     )
 
 

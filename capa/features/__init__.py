@@ -1,5 +1,6 @@
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 
+import re
 import sys
 import codecs
 import logging
@@ -80,6 +81,50 @@ class Characteristic(Feature):
 class String(Feature):
     def __init__(self, value, description=None):
         super(String, self).__init__(value, description)
+
+
+class Regex(String):
+    def __init__(self, value, description=None):
+        super(Regex, self).__init__(value, description)
+        pat = self.value[len("/") : -len("/")]
+        flags = re.DOTALL
+        if value.endswith("/i"):
+            pat = self.value[len("/") : -len("/i")]
+            flags |= re.IGNORECASE
+        try:
+            self.re = re.compile(pat, flags)
+        except re.error:
+            if value.endswith("/i"):
+                value = value[: -len("i")]
+            raise ValueError(
+                "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
+            )
+        self.match = None
+
+    def evaluate(self, ctx):
+        for feature, locations in ctx.items():
+            if not isinstance(feature, (capa.features.String,)):
+                continue
+
+            # `re.search` finds a match anywhere in the given string
+            # which implies leading and/or trailing whitespace.
+            # using this mode cleans is more convenient for rule authors,
+            # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
+            if self.re.search(feature.value):
+                self.match = feature.value
+                return capa.engine.Result(True, self, [], locations=locations)
+
+        return capa.engine.Result(False, self, [])
+
+    def __str__(self):
+        return 'regex(string =~ %s, matched = "%s")' % (self.value, self.match)
+
+
+class StringFactory(object):
+    def __new__(self, value, description):
+        if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
+            return Regex(value, description)
+        return String(value, description)
 
 
 class Bytes(Feature):
