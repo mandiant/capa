@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 import codecs
 
 from capa.features.extractors import helpers

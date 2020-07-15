@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 from networkx import nx
 from networkx.algorithms.components import strongly_connected_components
 

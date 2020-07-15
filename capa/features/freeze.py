@@ -39,6 +39,8 @@ json format:
         ],
       }
     }
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import json
 import zlib

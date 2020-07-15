@@ -1,4 +1,4 @@
-# Copyright (C) 2017 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 #
 # strings code from FLOSS, https://github.com/fireeye/flare-floss
 #

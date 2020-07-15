@@ -13,6 +13,8 @@ example::
                  0x10003a13
                  0x10003415
                  0x10003797
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import tabulate
 

@@ -55,6 +55,8 @@ Example::
     insn: 0x10001027: number(0x1)
     insn: 0x10001027: mnemonic(shl)
     ...
+
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import sys
 import logging

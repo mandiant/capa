@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 import collections
 
 import tabulate
@@ -44,12 +46,15 @@ def render_statement(ostream, match, statement, indent=0):
         # so, we have to inline some of the feature rendering here.
 
         child = statement["child"]
-        value = rutils.bold2(child[child["type"]])
 
-        if child.get("description"):
-            ostream.write("count(%s(%s = %s)): " % (child["type"], value, child["description"]))
+        if child[child["type"]]:
+            value = rutils.bold2(child[child["type"]])
+            if child.get("description"):
+                ostream.write("count(%s(%s = %s)): " % (child["type"], value, child["description"]))
+            else:
+                ostream.write("count(%s(%s)): " % (child["type"], value))
         else:
-            ostream.write("count(%s(%s)): " % (child["type"], value))
+            ostream.write("count(%s): " % child["type"])
 
         if statement["max"] == statement["min"]:
             ostream.write("%d" % (statement["min"]))
@@ -79,11 +84,13 @@ def render_feature(ostream, match, feature, indent=0):
 
     ostream.write(feature["type"])
     ostream.write(": ")
-    ostream.write(rutils.bold2(feature[feature["type"]]))
 
-    if "description" in feature:
-        ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
-        ostream.write(feature["description"])
+    if feature[feature["type"]]:
+        ostream.write(rutils.bold2(feature[feature["type"]]))
+
+        if "description" in feature:
+            ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
+            ostream.write(feature["description"])
 
     render_locations(ostream, match)
     ostream.write("\n")

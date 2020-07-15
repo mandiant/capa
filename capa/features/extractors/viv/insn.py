@@ -1,3 +1,5 @@
+# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+
 import envi.memory
 import vivisect.const
 import envi.archs.i386.disasm
