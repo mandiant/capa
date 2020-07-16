@@ -1,6 +1,7 @@
 ![capa](.github/logo.png)
 
 [![Number of rules](https://img.shields.io/badge/rules-261-blue.svg)](https://github.com/fireeye/capa-rules)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
 You run it against a PE file or shellcode and it tells you what it thinks the program can do.
