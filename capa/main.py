@@ -9,12 +9,12 @@ import sys
 import hashlib
 import logging
 import os.path
+import argparse
 import datetime
 import textwrap
 import collections
 
 import tqdm
-import argparse
 import colorama
 
 import capa.rules

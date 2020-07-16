@@ -59,7 +59,7 @@ You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your 
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter, with `-l 120`
-  - [isort](https://pypi.org/project/isort/) code formatter, with `--length-sort --line-width 120`
+  - [isort 5](https://pypi.org/project/isort/) code formatter, with `--profile black --length-sort --line-width 120`
   - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
   - [capafmt](https://github.com/fireeye/capa/blob/master/scripts/capafmt.py) rule formatter
 
