@@ -45,9 +45,9 @@ Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 import os
 import sys
 import logging
+import argparse
 import collections
 
-import argparse
 import colorama
 
 import capa.main

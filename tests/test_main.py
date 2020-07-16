@@ -2,12 +2,13 @@
 
 import textwrap
 
+from fixtures import *
+
 import capa.main
 import capa.rules
 import capa.engine
 import capa.features
 import capa.features.extractors.viv
-from fixtures import *
 from capa.engine import *
 
 
