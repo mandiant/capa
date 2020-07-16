@@ -309,6 +309,12 @@ def get_rules(rule_path):
     elif os.path.isdir(rule_path):
         logger.debug("reading rules from directory %s", rule_path)
         for root, dirs, files in os.walk(rule_path):
+            if ".github" in root:
+                # the .github directory contains CI config in capa-rules
+                # this includes some .yml files
+                # these are not rules
+                continue
+
             for file in files:
                 if not file.endswith(".yml"):
                     if not (file.endswith(".md") or file.endswith(".git")):
