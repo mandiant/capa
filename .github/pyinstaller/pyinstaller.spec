@@ -9,8 +9,16 @@ import wcwidth
 # when invoking pyinstaller from the project root,
 # this gets run from the project root.
 with open('./capa/version.py', 'wb') as f:
-    f.write("__version__ = '%s'"
-            % subprocess.check_output(["git", "describe", "--always"]).strip())
+    # git output will look like:
+    #
+    #     tags/v1.0.0-0-g3af38dc
+    #         ------- tag
+    #                 - commits since
+    #                   g------- git hash fragment
+    version = (subprocess.check_output(["git", "describe", "--always", "--tags", "--long"])
+               .strip()
+               .replace("tags/", ""))
+    f.write("__version__ = '%s'" % version)
 
 a = Analysis(
     # when invoking pyinstaller from the project root,
