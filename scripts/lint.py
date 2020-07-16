@@ -13,10 +13,9 @@ import string
 import hashlib
 import logging
 import os.path
+import argparse
 import itertools
 import posixpath
-
-import argparse
 
 import capa.main
 import capa.engine

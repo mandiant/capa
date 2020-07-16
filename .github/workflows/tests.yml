@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  code_style:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout capa
+      uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: pip install 'isort==5.*' black
+    - name: Lint with isort
+      run: isort --profile black --length-sort --line-width 120 -c .
+    - name: Lint with black
+      run: black -l 120 --check .
+

@@ -13,9 +13,8 @@ import csv
 import sys
 import logging
 import os.path
-import collections
-
 import argparse
+import collections
 
 import capa.rules
 

@@ -245,8 +245,8 @@ def render_verbose(meta, rules, capabilities):
 
 def render_default(meta, rules, capabilities):
     # break import loop
-    import capa.render.verbose
     import capa.render.default
+    import capa.render.verbose
 
     doc = convert_capabilities_to_result_document(meta, rules, capabilities)
     return capa.render.default.render_default(doc)

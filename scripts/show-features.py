@@ -60,7 +60,6 @@ Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 """
 import sys
 import logging
-
 import argparse
 
 import capa.main

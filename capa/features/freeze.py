@@ -205,6 +205,7 @@ def load(buf):
 def main(argv=None):
     import sys
     import argparse
+
     import capa.main
 
     if argv is None:
