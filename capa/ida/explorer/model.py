@@ -491,9 +491,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if len(locations) == 1:
             # only one location for feature so no need to nest children
-            parent2 = self.render_capa_doc_feature(
-                parent, feature, next(iter(locations)), doc, display=display,
-            )
+            parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display,)
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
