@@ -21,6 +21,8 @@ def width(s, character_count):
 def render_meta(doc, ostream):
     rows = [
         (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
+        (width("sha1", 22), width(doc["meta"]["sample"]["sha1"], 82)),
+        (width("sha256", 22), width(doc["meta"]["sample"]["sha256"], 82)),
         ("path", doc["meta"]["sample"]["path"]),
     ]
 
