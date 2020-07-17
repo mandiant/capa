@@ -136,10 +136,12 @@ class MissingExampleOffset(Lint):
 
     def check_rule(self, ctx, rule):
         if rule.meta.get("scope") in ("function", "basic block"):
-            for example in rule.meta.get("examples", []):
-                if example and ":" not in example:
-                    logger.debug("example: %s", example)
-                    return True
+            examples = rule.meta.get("examples")
+            if isinstance(examples, list):
+                for example in examples:
+                    if example and ":" not in example:
+                        logger.debug("example: %s", example)
+                        return True
 
 
 class ExampleFileDNE(Lint):

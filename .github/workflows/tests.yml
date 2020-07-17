@@ -23,3 +23,20 @@ jobs:
     - name: Lint with black
       run: black -l 120 --check .
 
+  rule_linter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout capa with rules submodule
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    # We don't need vivisect, so we can install capa using Python3
+    - name: Install capa
+      run: pip install -e .
+    - name: Run rule linter
+      run: python scripts/lint.py rules/
+
