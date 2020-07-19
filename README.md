@@ -1,7 +1,7 @@
 ![capa](.github/logo.png)
 
 [![Code style checkers status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3A%22CI%22)
-[![Number of rules](https://img.shields.io/badge/rules-261-blue.svg)](https://github.com/fireeye/capa-rules)
+[![Number of rules](https://img.shields.io/badge/rules-262-blue.svg)](https://github.com/fireeye/capa-rules)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
