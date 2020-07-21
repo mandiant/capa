@@ -40,3 +40,20 @@ jobs:
     - name: Run rule linter
       run: python scripts/lint.py rules/
 
+  tests:
+    runs-on: ubuntu-latest
+    needs: [code_style, rule_linter]
+    steps:
+    - name: Checkout capa with submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 2.7
+    - name: Install capa
+      run: pip install -e .[dev]
+    - name: Run tests
+      run: pytest tests/
+
