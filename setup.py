@@ -25,7 +25,7 @@ with open(os.path.join("capa", "version.py"), "rb") as f:
 
 
 setuptools.setup(
-    name="capa",
+    name="flare-capa",
     version=__version__,
     description="The FLARE team's open-source tool to identify capabilities in executable files.",
     long_description="",
