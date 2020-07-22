@@ -60,7 +60,7 @@ $ capa.exe suspicious.exe
 
 # download and usage
 
-Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation.
+Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
 
 <!--
 Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
