@@ -1,6 +1,7 @@
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 
 import viv_utils
+from fixtures import *
 
 import capa.features
 import capa.features.file
@@ -10,7 +11,6 @@ import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
-from fixtures import *
 
 
 def extract_file_features(vw, path):

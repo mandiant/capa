@@ -8,6 +8,12 @@ We use PyInstaller to create these packages.
 
 The capa [README](../README.md#download) also links to nightly builds of standalone binaries from the latest development branch.
 
+### MacOS Standalone installation
+
+By default, on MacOS Catalina or greater, Gatekeeper will block execution of the standalone binary. To resolve this, simply try to execute it once on the command-line and then go to `System Preferences` / `Security & Privacy` / `General` and approve the application:
+
+![approve dialog](img/approve.png)
+
 ## Method 2: Using capa as a Python library
 To install capa as a Python library, you'll need to install a few dependencies, and then use `pip` to fetch the capa module.
 Note: this technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r`.
@@ -59,7 +65,7 @@ You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your 
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter, with `-l 120`
-  - [isort](https://pypi.org/project/isort/) code formatter, with `--length-sort --line-width 120`
+  - [isort 5](https://pypi.org/project/isort/) code formatter, with `--profile black --length-sort --line-width 120`
   - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
   - [capafmt](https://github.com/fireeye/capa/blob/master/scripts/capafmt.py) rule formatter
 

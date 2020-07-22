@@ -1,10 +1,14 @@
 ![capa](.github/logo.png)
 
-[![Number of rules](https://img.shields.io/badge/rules-261-blue.svg)](https://github.com/fireeye/capa-rules)
+[![Code style checkers status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3A%22CI%22)
+[![Number of rules](https://img.shields.io/badge/rules-262-blue.svg)](https://github.com/fireeye/capa-rules)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
 You run it against a PE file or shellcode and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
+
+Check out the overview in our first [capa blog post](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
 
 ```
 $ capa.exe suspicious.exe
@@ -56,12 +60,14 @@ $ capa.exe suspicious.exe
 
 # download and usage
 
-Download stable releases of the standalone capa binaries [here](/releases). You can run the standalone binaries without installation.
+Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
 
+<!--
 Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
 - Windows 64bit: TODO
 - Linux: TODO
 - OSX: TODO
+-->
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](doc/installation.md) for further setup instructions.
 
