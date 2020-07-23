@@ -1,7 +1,5 @@
 #!/usr/bin/env python2
 """
-identify capabilities in programs.
-
 Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -396,6 +394,7 @@ def main(argv=None):
     ]
     format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
 
+    desc = "The FLARE team's open-source tool to identify capabilities in executable files."
     epilog = textwrap.dedent(
         """
         By default, capa uses a default set of embedded rules.
@@ -408,13 +407,13 @@ def main(argv=None):
 
         examples:
           identify capabilities in a binary
-            capa suspicous.exe
+            capa suspicious.exe
 
           identify capabilities in 32-bit shellcode, see `-f` for all supported formats
             capa -f sc32 shellcode.bin
 
           report match locations
-            capa -v suspicous.exe
+            capa -v suspicious.exe
 
           report all feature match details
             capa -vv suspicious.exe
@@ -425,7 +424,7 @@ def main(argv=None):
     )
 
     parser = argparse.ArgumentParser(
-        description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("sample", type=str, help="path to sample to analyze")
     parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
