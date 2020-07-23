@@ -410,6 +410,11 @@ def lint_rule(ctx, rule):
                 % ("    " if is_nursery_rule(rule) else "", level, violation.name, violation.recommendation,)
             )
 
+    elif len(violations) == 0 and is_nursery_rule(rule):
+        print("")
+        print("%s%s" % ("    (nursery) ", rule.name))
+        print("%s  %s: %s: %s" % ("    ", "WARN", "no violations", "Graduate the rule"))
+
     return len(violations) > 0 and not is_nursery_rule(rule)
 
 
