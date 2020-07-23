@@ -78,7 +78,9 @@ def extract_function_loop(f):
     for bb in f.basic_blocks:
         if len(bb.instructions) > 0:
             for bva, bflags in bb.instructions[-1].getBranches():
-                if bflags & vivisect.envi.BR_COND or bflags & vivisect.envi.BR_FALL or bflags & vivisect.envi.BR_TABLE:
+                # vivisect does not set branch flags for non-conditional jmp so add explicit check
+                if bflags & vivisect.envi.BR_COND or bflags & vivisect.envi.BR_FALL or bflags & vivisect.envi.BR_TABLE \
+                        or bb.instructions[-1].mnem == "jmp":
                     edges.append((bb.va, bva))
 
     if edges and loops.has_loop(edges):
