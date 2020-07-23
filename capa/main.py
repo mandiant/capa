@@ -212,7 +212,7 @@ def is_supported_file_type(sample):
 SHELLCODE_BASE = 0x690000
 
 
-def get_shellcode_vw(sample, arch="auto"):
+def get_shellcode_vw(sample, arch="auto", should_save=True):
     """
     Return shellcode workspace using explicit arch or via auto detect
     """
@@ -224,12 +224,14 @@ def get_shellcode_vw(sample, arch="auto"):
         # choose arch with most functions, idea by Jay G.
         vw_cands = []
         for arch in ["i386", "amd64"]:
-            vw_cands.append(viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE))
+            vw_cands.append(
+                viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+            )
         if not vw_cands:
             raise ValueError("could not generate vivisect workspace")
         vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
     else:
-        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE)
+        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
     return vw
 
 
@@ -248,20 +250,20 @@ class UnsupportedFormatError(ValueError):
     pass
 
 
-def get_workspace(path, format):
+def get_workspace(path, format, should_save=True):
     import viv_utils
 
     logger.debug("generating vivisect workspace for: %s", path)
     if format == "auto":
         if not is_supported_file_type(path):
             raise UnsupportedFormatError()
-        vw = viv_utils.getWorkspace(path)
+        vw = viv_utils.getWorkspace(path, should_save=should_save)
     elif format == "pe":
-        vw = viv_utils.getWorkspace(path)
+        vw = viv_utils.getWorkspace(path, should_save=should_save)
     elif format == "sc32":
-        vw = get_shellcode_vw(path, arch="i386")
+        vw = get_shellcode_vw(path, arch="i386", should_save=should_save)
     elif format == "sc64":
-        vw = get_shellcode_vw(path, arch="amd64")
+        vw = get_shellcode_vw(path, arch="amd64", should_save=should_save)
     logger.debug("%s", get_meta_str(vw))
     return vw
 
@@ -269,7 +271,14 @@ def get_workspace(path, format):
 def get_extractor_py2(path, format):
     import capa.features.extractors.viv
 
-    vw = get_workspace(path, format)
+    vw = get_workspace(path, format, should_save=False)
+
+    try:
+        vw.saveWorkspace()
+    except IOError:
+        # see #168 for discussion around how to handle non-writable directories
+        logger.info("source directory is not writable, won't save intermediate workspace")
+
     return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
