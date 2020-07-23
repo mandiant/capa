@@ -36,31 +36,25 @@ You can now import the `capa` module from a Python script or use the IDA Pro plu
 If you'd like to review and modify the capa source code, you'll need to check it out from GitHub and install it locally. By following these instructions, you'll maintain a local directory of source code that you can modify and run easily. 
 
 ### 1. Check out source code
-Next, clone the capa git repository. We use submodules to separate code, rules, and test data. See below to get all data at once. To only get the source code and our provided rules (common), follow these steps:
+Next, clone the capa git repository.
+We use submodules to separate [code](https://github.com/fireeye/capa), [rules](https://github.com/fireeye/capa-rules), and [test data](https://github.com/fireeye/capa-testfiles).
+To clone everything use the `--recurse-submodules` option:
+- `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
+- `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
+
+To only get the source code and our provided rules (common), follow these steps:
 - clone repository
   - `$ git clone https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
   - `$ git clone git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 - `$ cd /local/path/to/src`
-- `$ git submodule init`
 - `$ git submodule update rules`
-
-#### capa-testfiles
-The [capa-testfiles](https://github.com/fireeye/capa-testfiles) repository (`/local/path/to/src/tests/data`) contains a large collection of malware and benign test files. *In most cases you will not need to check it out on your local system.*
-
-To update the testfiles you can use the following command:
-- `$ git submodule update tests/data`
-
-To get all data at once use the `--recurse-submodules` option:
-
-- `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
-- `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 
 ### 2. Install the local source code
 Use `pip` to install the source code in "editable" mode. This means that Python will load the capa module from the local directory rather than copying it to `site-packages` or `dist-packages`. This is good because it is easy to modify files and see the effects reflected immediately. But, be careful not to remove this directory unless uninstalling capa.
 
 `$ pip install -e /local/path/to/src`
 
-You'll find that the `capa.exe` (Windows) or `capa` (Linux) executables in your path now invoke the capa binary from this directory.
+You'll find that the `capa.exe` (Windows) or `capa` (Linux/MacOS) executables in your path now invoke the capa binary from this directory.
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter, with `-l 120`
