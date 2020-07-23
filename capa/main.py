@@ -321,7 +321,7 @@ def get_rules(rule_path):
 
             for file in files:
                 if not file.endswith(".yml"):
-                    if not (file.endswith(".md") or file.endswith(".git")):
+                    if not (file.endswith(".md") or file.endswith(".git") or file.endswith(".txt")):
                         # expect to see readme.md, format.md, and maybe a .git directory
                         # other things maybe are rules, but are mis-named.
                         logger.warning("skipping non-.yml file: %s", file)
