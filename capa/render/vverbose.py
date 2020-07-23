@@ -43,7 +43,7 @@ def render_statement(ostream, match, statement, indent=0):
         # this statement is handled specially in `render_match` using the MODE_SUCCESS/MODE_FAILURE flags.
         ostream.writeln("not:")
     elif statement["type"] == "some":
-        ostream.write(statement["count"] + " or more")
+        ostream.write("%d or more" % (statement["count"]))
         ostream.writeln(":")
     elif statement["type"] == "range":
         # `range` is a weird node, its almost a hybrid of statement+feature.
@@ -204,7 +204,7 @@ def render_rules(ostream, doc):
                 # because we do the file-scope evaluation a single time.
                 # but i'm not 100% sure if this is/will always be true.
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
-                raise RuntimeError("unexpected file scope match count: " + len(matches))
+                raise RuntimeError("unexpected file scope match count: %d" % (len(matches)))
             render_match(ostream, matches[0], indent=0)
         else:
             for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
