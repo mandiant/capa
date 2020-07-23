@@ -59,6 +59,7 @@ class FilenameDoesntMatchRuleName(Lint):
         expected = expected.replace(")", "")
         expected = expected.replace("+", "")
         expected = expected.replace("/", "")
+        expected = expected.replace(".", "")
         expected = expected + ".yml"
 
         found = os.path.basename(rule.meta["capa/path"])
