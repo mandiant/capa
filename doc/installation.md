@@ -8,6 +8,13 @@ We use PyInstaller to create these packages.
 
 The capa [README](../README.md#download) also links to nightly builds of standalone binaries from the latest development branch.
 
+### Linux Standalone installation
+
+The Linux Standalone binary has been built using GLIB 2.26.
+Consequently it works when using GLIB >= 2.26.
+This requirement is satisfied by default in most newer distribution such as Ubuntu >= 18, Debian >= 10, openSUSE >= 15.1 and CentOS >= 8.
+But the binary may not work in older distributions.
+
 ### MacOS Standalone installation
 
 By default, on MacOS Catalina or greater, Gatekeeper will block execution of the standalone binary. To resolve this, simply try to execute it once on the command-line and then go to `System Preferences` / `Security & Privacy` / `General` and approve the application:
