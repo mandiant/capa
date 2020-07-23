@@ -193,7 +193,7 @@ def read_memory(vw, va, size):
         if va >= mva and va < mmaxva:
             mva, msize, mperms, mfname = mmap
             offset = va - mva
-            return mbytes[offset:offset+size]
+            return mbytes[offset : offset + size]
     raise envi.SegmentationViolation(va)
 
 
