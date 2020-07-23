@@ -49,7 +49,8 @@ class NameCasing(Lint):
 
 class FilenameDoesntMatchRuleName(Lint):
     name = "filename doesn't match the rule name"
-    recommendation = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
+    recommendation = "Rename rule file to match the rule name"
+    recommendation_template = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
 
     def check_rule(self, ctx, rule):
         expected = rule.name
@@ -64,7 +65,7 @@ class FilenameDoesntMatchRuleName(Lint):
 
         found = os.path.basename(rule.meta["capa/path"])
 
-        self.recommendation = self.recommendation.format(expected, found)
+        self.recommendation = self.recommendation_template.format(expected, found)
 
         return expected != found
 
@@ -201,7 +202,8 @@ class DoesntMatchExample(Lint):
 
 class UnusualMetaField(Lint):
     name = "unusual meta field"
-    recommendation = 'Remove the meta field: "{:s}"'
+    recommendation = "Remove the meta field"
+    recommendation_template = 'Remove the meta field: "{:s}"'
 
     def check_rule(self, ctx, rule):
         for key in rule.meta.keys():
@@ -209,7 +211,7 @@ class UnusualMetaField(Lint):
                 continue
             if key in capa.rules.HIDDEN_META_KEYS:
                 continue
-            self.recommendation = self.recommendation.format(key)
+            self.recommendation = self.recommendation_template.format(key)
             return True
 
         return False
@@ -255,7 +257,8 @@ class FeatureStringTooShort(Lint):
 
 class FeatureNegativeNumberOrOffset(Lint):
     name = "feature value is negative"
-    recommendation = (
+    recommendation = "specify the number's two's complement representation"
+    recommendation_template = (
         "capa treats all numbers as unsigned values; you may specify the number's two's complement "
         'representation; will not match on "{:d}"'
     )
@@ -264,7 +267,7 @@ class FeatureNegativeNumberOrOffset(Lint):
         for feature in features:
             if isinstance(feature, (capa.features.insn.Number, capa.features.insn.Offset)):
                 if feature.value < 0:
-                    self.recommendation = self.recommendation.format(feature.value)
+                    self.recommendation = self.recommendation_template.format(feature.value)
                     return True
         return False
 
