@@ -232,6 +232,9 @@ def get_shellcode_vw(sample, arch="auto", should_save=True):
         vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
     else:
         vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+
+    vw.setMeta("StorageName", "%s.viv" % sample)
+
     return vw
 
 
