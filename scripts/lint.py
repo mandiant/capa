@@ -180,7 +180,11 @@ class DoesntMatchExample(Lint):
         if not ctx["is_thorough"]:
             return False
 
-        for example in rule.meta.get("examples", []):
+        examples = rule.meta.get("examples", [])
+        if not examples:
+            return False
+
+        for example in examples:
             example_id = example.partition(":")[0]
             try:
                 path = ctx["samples"][example_id]
