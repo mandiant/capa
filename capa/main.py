@@ -570,7 +570,7 @@ def main(argv=None):
 
     meta = collect_metadata(argv, args.sample, args.rules, format, extractor)
 
-    capabilities, counts = find_capabilities(rules, extractor)
+    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities):
