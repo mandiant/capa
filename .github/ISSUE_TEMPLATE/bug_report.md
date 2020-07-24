@@ -3,16 +3,19 @@ name: Bug report
 about: Create a report to help us improve
 
 ---
-
 <!--
+# Is your bug report related to capa rules (for example a false positive)?
+We use sybmodules to separate code, rules and test data. If your issue is related to capa rules, please report it at https://github.com/fireeye/capa-rules/issues.
 
-Have you read capa's Code of Conduct? By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/fireeye/capa/blob/master/.github/CODE_OF_CONDUCT.md
+# Have you checked that your issue isn't already filed?
+Please search if there is a similar issue at https://github.com/fireeye/capa/issues. If there is already a similar issue, please add more details there instead of opening a new one.
+
+# Have you read capa's Code of Conduct?
+By filing an Issue, you are expected to comply with it, including treating everyone with respect: https://github.com/fireeye/capa/blob/master/.github/CODE_OF_CONDUCT.md
+
+# Have you read capa's CONTRIBUTING guide?
+It contains helpful information about how to contribute to capa. Check https://github.com/fireeye/capa/blob/master/.github/CONTRIBUTING.md#reporting-bugs
 -->
-
-### Prerequisites
-
-* [ ] Put an X between the brackets on this line if you have done all of the following:
-    * Checked that your issue isn't already filed: [search](https://github.com/fireeye/capa/issues?q=is%3Aissue+is%3Aopen+)
 
 ### Description
 
@@ -20,9 +23,9 @@ Have you read capa's Code of Conduct? By filing an Issue, you are expected to co
 
 ### Steps to Reproduce
 
-1. <!-- First Step -->
-2. <!-- Second Step -->
-3. <!-- and so on… -->
+<!-- 1. First Step -->
+<!-- 2. Second Step -->
+<!-- 3. and so on… -->
 
 **Expected behavior:**
 
@@ -31,10 +34,6 @@ Have you read capa's Code of Conduct? By filing an Issue, you are expected to co
 **Actual behavior:**
 
 <!-- What actually happens -->
-
-**Reproduces how often:**
-
-<!-- What percentage of the time does it reproduce? -->
 
 ### Versions
 
@@ -45,3 +44,4 @@ Have you read capa's Code of Conduct? By filing an Issue, you are expected to co
 ### Additional Information
 
 <!-- Any additional information, configuration or data that might be necessary to reproduce the issue. -->
+
