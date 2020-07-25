@@ -1,4 +1,4 @@
-j"""
+"""
 Binary Ninja plugin that imports a capa report,
 produced via `capa --json /path/to/sample`,
 into the current database.
