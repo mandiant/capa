@@ -47,7 +47,7 @@ def append_func_cmt(bv, va, cmt):
 def load_analysis(bv):
     shortname = os.path.splitext(os.path.basename(bv.file.filename))[0]
     dirname = os.path.dirname(bv.file.filename)
-    log_info(f'dirname: {dirname}\nshortname: {shortname}\n')
+    log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
     if os.access(os.path.join(dirname, shortname + ".js"), os.R_OK):
         path = os.path.join(dirname, shortname + ".js")
     elif os.access(os.path.join(dirname, shortname + ".json"), os.R_OK):
@@ -67,8 +67,8 @@ def load_analysis(bv):
         return -1
 
     a = doc["meta"]["sample"]["md5"].lower()
-    md5=Transform['MD5']
-    rawhex=Transform['RawHex']
+    md5 = Transform["MD5"]
+    rawhex = Transform["RawHex"]
     b = rawhex.encode(md5.encode(bv.parent_view.read(bv.parent_view.start, bv.parent_view.end))).decode("utf-8")
     if not a == b:
         log_error("sample mismatch")
