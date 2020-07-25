@@ -149,6 +149,9 @@ def extract_insn_offset_features(f, bb, insn):
             #   mov esi, dword_1005B148[esi]
             continue
 
+        # I believe that IDA encodes all offsets as two's complement in a u32.
+        # a 64-bit displacement isn't a thing, see:
+        # https://stackoverflow.com/questions/31853189/x86-64-assembly-why-displacement-not-64-bits
         op_off = capa.features.extractors.helpers.twos_complement(op_off, 32)
 
         yield Offset(op_off), insn.ea

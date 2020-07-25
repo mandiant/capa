@@ -273,7 +273,7 @@ def test_basic_block_count():
 if __name__ == "__main__":
     print("-" * 80)
 
-    # invoke all functions in this module that start with `parse_`
+    # invoke all functions in this module that start with `test_`
     for name in dir(sys.modules[__name__]):
         if not name.startswith("test_"):
             continue
