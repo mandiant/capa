@@ -10,7 +10,6 @@ import capa.features.file
 import capa.features.insn
 import capa.features.basicblock
 
-
 logger = logging.getLogger("test_ida_features")
 
 
