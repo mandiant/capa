@@ -144,8 +144,6 @@ def extract_insn_offset_features(f, bb, insn):
             continue
         p_info = capa.features.extractors.ida.helpers.get_op_phrase_info(op)
         op_off = p_info.get("offset", 0)
-        if 0 == op_off:
-            continue
         if idaapi.is_mapped(op_off):
             # Ignore:
             #   mov esi, dword_1005B148[esi]
