@@ -47,7 +47,7 @@ To only get the source code and our provided rules (common), follow these steps:
   - `$ git clone https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
   - `$ git clone git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 - `$ cd /local/path/to/src`
-- `$ git submodule update rules`
+- `$ git submodule update --init rules`
 
 ### 2. Install the local source code
 Use `pip` to install the source code in "editable" mode. This means that Python will load the capa module from the local directory rather than copying it to `site-packages` or `dist-packages`. This is good because it is easy to modify files and see the effects reflected immediately. But, be careful not to remove this directory unless uninstalling capa.
