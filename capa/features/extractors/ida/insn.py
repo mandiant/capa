@@ -150,6 +150,9 @@ def extract_insn_offset_features(f, bb, insn):
             # Ignore:
             #   mov esi, dword_1005B148[esi]
             continue
+
+        op_off = capa.features.extractors.helpers.twos_complement(op_off, 32)
+
         yield Offset(op_off), insn.ea
 
 

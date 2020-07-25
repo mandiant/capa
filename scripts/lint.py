@@ -259,17 +259,17 @@ class FeatureStringTooShort(Lint):
         return False
 
 
-class FeatureNegativeNumberOrOffset(Lint):
+class FeatureNegativeNumber(Lint):
     name = "feature value is negative"
     recommendation = "specify the number's two's complement representation"
     recommendation_template = (
-        "capa treats all numbers as unsigned values; you may specify the number's two's complement "
+        "capa treats number features as unsigned values; you may specify the number's two's complement "
         'representation; will not match on "{:d}"'
     )
 
     def check_features(self, ctx, features):
         for feature in features:
-            if isinstance(feature, (capa.features.insn.Number, capa.features.insn.Offset)):
+            if isinstance(feature, (capa.features.insn.Number,)):
                 if feature.value < 0:
                     self.recommendation = self.recommendation_template.format(feature.value)
                     return True
@@ -327,7 +327,7 @@ def lint_meta(ctx, rule):
 
 FEATURE_LINTS = (
     FeatureStringTooShort(),
-    FeatureNegativeNumberOrOffset(),
+    FeatureNegativeNumber(),
 )
 
 

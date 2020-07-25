@@ -265,6 +265,8 @@ def extract_insn_offset_features(f, bb, insn):
         if oper.reg == envi.archs.amd64.disasm.REG_RBP:
             continue
 
+        # viv already decodes offsets as signed
+
         yield Offset(oper.disp), insn.va
 
 

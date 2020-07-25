@@ -67,3 +67,18 @@ def generate_api_features(apiname, va):
 
 def all_zeros(bytez):
     return all(b == 0 for b in builtins.bytes(bytez))
+
+
+def twos_complement(val, bits):
+    """
+    compute the 2's complement of int value val
+
+    from: https://stackoverflow.com/a/9147327/87207
+    """
+    # if sign bit is set e.g., 8bit: 128-255
+    if (val & (1 << (bits - 1))) != 0:
+        # compute negative value
+        return val - (1 << bits)
+    else:
+        # return positive value as is
+        return val
