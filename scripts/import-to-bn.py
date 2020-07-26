@@ -1,4 +1,4 @@
-"""
+j"""
 Binary Ninja plugin that imports a capa report,
 produced via `capa --json /path/to/sample`,
 into the current database.
@@ -16,13 +16,15 @@ It will mark up functions with their capa matches, like:
 To use, invoke from the Binary Ninja Tools menu, or from the 
 command-palette.
 
+Adapted for Binary Ninja by @psifertex
+
 This script will verify that the report matches the workspace.
 Check the log window for any errors, and/or the summary of changes.
 
 Derived from: https://github.com/fireeye/capa/blob/master/scripts/import-to-ida.py
 """
-import json
 import os
+import json
 
 from binaryninja import *
 
@@ -43,8 +45,7 @@ def append_func_cmt(bv, va, cmt):
 
 
 def load_analysis(bv):
-    #not that I expect many files with multiple periods but why not
-    shortname = '.'.join(os.path.basename(bv.file.filename).split(".")[0:-1]) 
+    shortname = os.path.splitext(os.path.basename(bv.file.filename))[0]
     dirname = os.path.dirname(bv.file.filename)
     log_info(f'dirname: {dirname}\nshortname: {shortname}\n')
     if os.access(os.path.join(dirname, shortname + ".js"), os.R_OK):
@@ -108,4 +109,4 @@ def load_analysis(bv):
     log_info("ok")
 
 
-PluginCommand.register("Load CAPA file", "Loads an analysis file from capa", load_analysis)
+PluginCommand.register("Load capa file", "Loads an analysis file from capa", load_analysis)
