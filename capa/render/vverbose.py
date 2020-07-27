@@ -38,9 +38,15 @@ def render_statement(ostream, match, statement, indent=0):
     ostream.write("  " * indent)
     if statement["type"] in ("and", "or", "optional", "not", "subscope"):
         ostream.write(statement["type"])
-        ostream.writeln(":")
+        ostream.write(":")
+        if statement.get("description"):
+            ostream.write(" = %s" % statement["description"])
+        ostream.writeln("")
     elif statement["type"] == "some":
-        ostream.writeln("%d or more:" % (statement["count"]))
+        ostream.write("%d or more:" % (statement["count"]))
+        if statement.get("description"):
+            ostream.write(" = %s" % statement["description"])
+        ostream.writeln("")
     elif statement["type"] == "range":
         # `range` is a weird node, its almost a hybrid of statement+feature.
         # it is a specific feature repeated multiple times.
@@ -67,6 +73,8 @@ def render_statement(ostream, match, statement, indent=0):
         else:
             ostream.write("between %d and %d" % (statement["min"], statement["max"]))
 
+        if statement.get("description"):
+            ostream.write(" = %s" % statement["description"])
         render_locations(ostream, match)
         ostream.writeln("")
     else:
