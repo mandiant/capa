@@ -26,39 +26,21 @@ def convert_statement_to_result_document(statement):
             "type": "range"
         },
     """
-    if isinstance(statement, capa.engine.And):
-        return {
-            "type": "and",
-        }
-    elif isinstance(statement, capa.engine.Or):
-        return {
-            "type": "or",
-        }
-    elif isinstance(statement, capa.engine.Not):
-        return {
-            "type": "not",
-        }
-    elif isinstance(statement, capa.engine.Some) and statement.count == 0:
-        return {"type": "optional"}
-    elif isinstance(statement, capa.engine.Some) and statement.count > 0:
-        return {
-            "type": "some",
-            "count": statement.count,
-        }
-    elif isinstance(statement, capa.engine.Range):
-        return {
-            "type": "range",
-            "min": statement.min,
-            "max": statement.max,
-            "child": convert_feature_to_result_document(statement.child),
-        }
-    elif isinstance(statement, capa.engine.Subscope):
-        return {
-            "type": "subscope",
-            "subscope": statement.scope,
-        }
-    else:
-        raise RuntimeError("unexpected match statement type: " + str(statement))
+    statement_type = statement.name.lower()
+    result = {"type": statement_type}
+
+    if statement_type == "some" and statement.count == 0:
+        result["type"] = "optional"
+    elif statement_type == "some":
+        result["count"] = statement.count
+    elif statement_type == "range":
+        result["min"] = statement.min
+        result["max"] = statement.max
+        result["child"] = convert_feature_to_result_document(statement.child)
+    elif statement_type == "subscope":
+        result["subscope"] = statement.scope
+
+    return result
 
 
 def convert_feature_to_result_document(feature):
