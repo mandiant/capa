@@ -104,9 +104,9 @@ class Result(object):
 class And(Statement):
     """match if all of the children evaluate to True."""
 
-    def __init__(self, *children):
+    def __init__(self, children):
         super(And, self).__init__()
-        self.children = list(children)
+        self.children = children
 
     def evaluate(self, ctx):
         results = [child.evaluate(ctx) for child in self.children]
@@ -117,9 +117,9 @@ class And(Statement):
 class Or(Statement):
     """match if any of the children evaluate to True."""
 
-    def __init__(self, *children):
+    def __init__(self, children):
         super(Or, self).__init__()
-        self.children = list(children)
+        self.children = children
 
     def evaluate(self, ctx):
         results = [child.evaluate(ctx) for child in self.children]
@@ -143,7 +143,7 @@ class Not(Statement):
 class Some(Statement):
     """match if at least N of the children evaluate to True."""
 
-    def __init__(self, count, *children):
+    def __init__(self, count, children):
         super(Some, self).__init__()
         self.count = count
         self.children = list(children)
