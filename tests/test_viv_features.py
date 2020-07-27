@@ -117,6 +117,13 @@ def test_offset_features(mimikatz):
     assert capa.features.insn.Offset(0x8) not in features
     assert capa.features.insn.Offset(0x10) not in features
 
+    # this function has the following negative offsets
+    # movzx   ecx, byte ptr [eax-1]
+    # movzx   eax, byte ptr [eax-2]
+    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x4011FB))
+    assert capa.features.insn.Offset(-0x1) in features
+    assert capa.features.insn.Offset(-0x2) in features
+
 
 def test_nzxor_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x410DFC))

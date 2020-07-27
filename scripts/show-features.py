@@ -132,7 +132,11 @@ def main(argv=None):
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, va in extractor.extract_insn_features(f, bb, insn):
-                    print("insn: 0x%08x: %s" % (va, feature))
+                    try:
+                        print("insn: 0x%08x: %s" % (va, feature))
+                    except UnicodeEncodeError:
+                        # may be an issue while piping to less and encountering non-ascii characters
+                        continue
 
     return 0
 
