@@ -36,15 +36,11 @@ def render_locations(ostream, match):
 
 def render_statement(ostream, match, statement, indent=0):
     ostream.write("  " * indent)
-    if statement["type"] in ("and", "or", "optional"):
+    if statement["type"] in ("and", "or", "optional", "not", "subscope"):
         ostream.write(statement["type"])
         ostream.writeln(":")
-    elif statement["type"] == "not":
-        # this statement is handled specially in `render_match` using the MODE_SUCCESS/MODE_FAILURE flags.
-        ostream.writeln("not:")
     elif statement["type"] == "some":
-        ostream.write("%d or more" % (statement["count"]))
-        ostream.writeln(":")
+        ostream.writeln("%d or more:" % (statement["count"]))
     elif statement["type"] == "range":
         # `range` is a weird node, its almost a hybrid of statement+feature.
         # it is a specific feature repeated multiple times.
@@ -72,10 +68,7 @@ def render_statement(ostream, match, statement, indent=0):
             ostream.write("between %d and %d" % (statement["min"], statement["max"]))
 
         render_locations(ostream, match)
-        ostream.write("\n")
-    elif statement["type"] == "subscope":
-        ostream.write(statement["subscope"])
-        ostream.writeln(":")
+        ostream.writeln("")
     else:
         raise RuntimeError("unexpected match statement type: " + str(statement))
 
