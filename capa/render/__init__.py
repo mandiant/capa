@@ -28,6 +28,8 @@ def convert_statement_to_result_document(statement):
     """
     statement_type = statement.name.lower()
     result = {"type": statement_type}
+    if statement.description:
+        result["description"] = statement.description
 
     if statement_type == "some" and statement.count == 0:
         result["type"] = "optional"
