@@ -22,7 +22,10 @@ def bold2(s):
 
 def hex(n):
     """render the given number using upper case hex, like: 0x123ABC"""
-    return "0x%X" % n
+    if n < 0:
+        return "-0x%X" % (-n)
+    else:
+        return "0x%X" % n
 
 
 def capability_rules(doc):
