@@ -22,21 +22,21 @@ def test_number():
 
 
 def test_and():
-    assert And(Number(1)).evaluate({Number(0): {1}}) == False
-    assert And(Number(1)).evaluate({Number(1): {1}}) == True
-    assert And(Number(1), Number(2)).evaluate({Number(0): {1}}) == False
-    assert And(Number(1), Number(2)).evaluate({Number(1): {1}}) == False
-    assert And(Number(1), Number(2)).evaluate({Number(2): {1}}) == False
-    assert And(Number(1), Number(2)).evaluate({Number(1): {1}, Number(2): {2}}) == True
+    assert And([Number(1)]).evaluate({Number(0): {1}}) == False
+    assert And([Number(1)]).evaluate({Number(1): {1}}) == True
+    assert And([Number(1), Number(2)]).evaluate({Number(0): {1}}) == False
+    assert And([Number(1), Number(2)]).evaluate({Number(1): {1}}) == False
+    assert And([Number(1), Number(2)]).evaluate({Number(2): {1}}) == False
+    assert And([Number(1), Number(2)]).evaluate({Number(1): {1}, Number(2): {2}}) == True
 
 
 def test_or():
-    assert Or(Number(1)).evaluate({Number(0): {1}}) == False
-    assert Or(Number(1)).evaluate({Number(1): {1}}) == True
-    assert Or(Number(1), Number(2)).evaluate({Number(0): {1}}) == False
-    assert Or(Number(1), Number(2)).evaluate({Number(1): {1}}) == True
-    assert Or(Number(1), Number(2)).evaluate({Number(2): {1}}) == True
-    assert Or(Number(1), Number(2)).evaluate({Number(1): {1}, Number(2): {2}}) == True
+    assert Or([Number(1)]).evaluate({Number(0): {1}}) == False
+    assert Or([Number(1)]).evaluate({Number(1): {1}}) == True
+    assert Or([Number(1), Number(2)]).evaluate({Number(0): {1}}) == False
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}}) == True
+    assert Or([Number(1), Number(2)]).evaluate({Number(2): {1}}) == True
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}, Number(2): {2}}) == True
 
 
 def test_not():
@@ -45,20 +45,20 @@ def test_not():
 
 
 def test_some():
-    assert Some(0, Number(1)).evaluate({Number(0): {1}}) == True
-    assert Some(1, Number(1)).evaluate({Number(0): {1}}) == False
+    assert Some(0, [Number(1)]).evaluate({Number(0): {1}}) == True
+    assert Some(1, [Number(1)]).evaluate({Number(0): {1}}) == False
 
-    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}}) == False
-    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}}) == False
-    assert Some(2, Number(1), Number(2), Number(3)).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
+    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}}) == False
+    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}, Number(1): {1}}) == False
+    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
     assert (
-        Some(2, Number(1), Number(2), Number(3)).evaluate(
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
             {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}
         )
         == True
     )
     assert (
-        Some(2, Number(1), Number(2), Number(3)).evaluate(
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
             {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}, Number(4): {1},}
         )
         == True
@@ -66,11 +66,11 @@ def test_some():
 
 
 def test_complex():
-    assert True == Or(And(Number(1), Number(2)), Or(Number(3), Some(2, Number(4), Number(5), Number(6))),).evaluate(
-        {Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}
-    )
+    assert True == Or(
+        [And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]
+    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
 
-    assert False == Or(And(Number(1), Number(2)), Or(Number(3), Some(2, Number(4), Number(5)))).evaluate(
+    assert False == Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate(
         {Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}
     )
 

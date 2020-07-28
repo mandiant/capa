@@ -20,12 +20,16 @@ class Statement(object):
      and to declare the interface method `evaluate`
     """
 
-    def __init__(self):
+    def __init__(self, description=None):
         super(Statement, self).__init__()
         self.name = self.__class__.__name__
+        self.description = description
 
     def __str__(self):
-        return "%s(%s)" % (self.name.lower(), ",".join(map(str, self.get_children())))
+        if self.description:
+            return "%s(%s = %s)" % (self.name.lower(), ",".join(map(str, self.get_children())), self.description)
+        else:
+            return "%s(%s)" % (self.name.lower(), ",".join(map(str, self.get_children())))
 
     def __repr__(self):
         return str(self)
@@ -104,9 +108,9 @@ class Result(object):
 class And(Statement):
     """match if all of the children evaluate to True."""
 
-    def __init__(self, *children):
-        super(And, self).__init__()
-        self.children = list(children)
+    def __init__(self, children, description=None):
+        super(And, self).__init__(description=description)
+        self.children = children
 
     def evaluate(self, ctx):
         results = [child.evaluate(ctx) for child in self.children]
@@ -117,9 +121,9 @@ class And(Statement):
 class Or(Statement):
     """match if any of the children evaluate to True."""
 
-    def __init__(self, *children):
-        super(Or, self).__init__()
-        self.children = list(children)
+    def __init__(self, children, description=None):
+        super(Or, self).__init__(description=description)
+        self.children = children
 
     def evaluate(self, ctx):
         results = [child.evaluate(ctx) for child in self.children]
@@ -130,8 +134,8 @@ class Or(Statement):
 class Not(Statement):
     """match only if the child evaluates to False."""
 
-    def __init__(self, child):
-        super(Not, self).__init__()
+    def __init__(self, child, description=None):
+        super(Not, self).__init__(description=description)
         self.child = child
 
     def evaluate(self, ctx):
@@ -143,10 +147,10 @@ class Not(Statement):
 class Some(Statement):
     """match if at least N of the children evaluate to True."""
 
-    def __init__(self, count, *children):
-        super(Some, self).__init__()
+    def __init__(self, count, children, description=None):
+        super(Some, self).__init__(description=description)
         self.count = count
-        self.children = list(children)
+        self.children = children
 
     def evaluate(self, ctx):
         results = [child.evaluate(ctx) for child in self.children]
@@ -161,8 +165,8 @@ class Some(Statement):
 class Range(Statement):
     """match if the child is contained in the ctx set with a count in the given range."""
 
-    def __init__(self, child, min=None, max=None):
-        super(Range, self).__init__()
+    def __init__(self, child, min=None, max=None, description=None):
+        super(Range, self).__init__(description=description)
         self.child = child
         self.min = min if min is not None else 0
         self.max = max if max is not None else (1 << 64 - 1)

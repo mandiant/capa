@@ -83,6 +83,16 @@ def test_rule_yaml_descriptions():
                     - string: '/SELECT.*FROM.*WHERE/i'
                       description: SQL WHERE Clause
                     - count(number(2 = AF_INET/SOCK_DGRAM)): 2
+                    - or:
+                        - and:
+                            - offset: 0x50 = IMAGE_NT_HEADERS.OptionalHeader.SizeOfImage
+                            - offset: 0x34 = IMAGE_NT_HEADERS.OptionalHeader.ImageBase
+                          description: 32-bits
+                        - and:
+                            - offset: 0x50 = IMAGE_NT_HEADERS64.OptionalHeader.SizeOfImage
+                            - offset: 0x30 = IMAGE_NT_HEADERS64.OptionalHeader.ImageBase
+                          description: 64-bits
+                      description: PE headers offsets
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
@@ -93,6 +103,8 @@ def test_rule_yaml_descriptions():
                 Number(2): {2, 3},
                 String("This program cannot be run in DOS mode."): {4},
                 String("SELECT password FROM hidden_table WHERE user == admin"): {5},
+                Offset(0x50): {6},
+                Offset(0x30): {7},
             }
         )
         == True
