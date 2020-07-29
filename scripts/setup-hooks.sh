@@ -23,6 +23,6 @@ create_hook() {
   chmod +x .git/hooks/"$1";
 }
 
-printf '\n#### Copying hooks into .git/hooks';
+printf 'Copying hooks into .git/hooks';
 create_hook 'post-commit';
 create_hook 'pre-push';
