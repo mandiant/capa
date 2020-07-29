@@ -13,7 +13,7 @@
 
 # Stash uncommited changes
 MSG="pre-push-$(date +%s)";
-git stash push -kqum "$MSG";
+git stash push -kum "$MSG" &>/dev/null ;
 STASH_LIST=$(git stash list);
 if [[ "$STASH_LIST" == *"$MSG"* ]]; then
   echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
@@ -21,7 +21,7 @@ fi
 
 restore_stashed() {
   if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-    git stash pop -q --index;
+    git stash pop --index &>/dev/null ;
     echo "Stashed changes '$MSG' restored";
   fi
 }
