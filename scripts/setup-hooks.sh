@@ -19,10 +19,10 @@ create_hook() {
   if [[ ! -e .git/hooks/$1 ]]; then
     echo "#!/usr/bin/env bash" > ".git/hooks/$1";
   fi
-  cat scripts/hooks/"$1" >> ".git/hooks/$1";
+  echo "scripts/ci.sh ${2:-}" >> ".git/hooks/$1";
   chmod +x .git/hooks/"$1";
 }
 
-printf 'Copying hooks into .git/hooks';
-create_hook 'post-commit';
+printf 'Adding scripts/ci.sh to .git/hooks/';
+create_hook 'pre-commit' 'no_tests';
 create_hook 'pre-push';

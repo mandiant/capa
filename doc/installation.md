@@ -68,10 +68,17 @@ To install these development dependencies, run:
 
 Note that some development dependencies (including the black code formatter) require Python 3.
 
+To check the code style, formatting and run the tests you can run the script `scripts/ci.sh`.
+You can run it with the argument `no_tests` to skip the tests and only run the code style and formatting: `scripts/ci.sh no_tests`
+
 ### 3. Setup hooks [optional]
 
 If you plan to contribute to capa, you may want to setup the hooks.
 Run `scripts/setup-hooks.sh` to set the following hooks up:
-- The `post-commit` hook runs checks after every `git commit`, letting you know if there are code style or rule linter offenses you need to fix.
-- The `pre-push` hook runs various style and lint checks as well as the tests. If they do not succeed `git push` is blocked.
+- The `pre-commit` hook runs checks before every `git commit`.
+  It runs `scripts/ci.sh no_tests` aborting the commit if there are code style or rule linter offenses you need to fix.
+  You can skip this check by using the `--no-verify` git option.
+- The `pre-push` hook runs checks before every `git push`.
+  It runs `scripts/ci.sh` aborting the push if there are code style or rule linter offenses or if the tests fail.
   This way you can ensure everything is alright before sending a pull request.
+

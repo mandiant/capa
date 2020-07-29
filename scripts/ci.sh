@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -37,7 +39,7 @@ python_3 'isort --profile black --length-sort --line-width 120 -c .' 'isort-outp
 if [ $? == 0 ]; then
   echo 'isort succeeded!! 💖';
 else
-  echo 'isort failed 😭';
+  echo 'isort FAILED! 😭';
   echo 'Check isort-output.log for details';
   restore_stashed;
   exit 1;
@@ -48,7 +50,7 @@ python_3 'black -l 120 --check .' 'black-output.log';
 if [ $? == 0 ]; then
   echo 'black succeeded!! 💝';
 else
-  echo 'black failed 😭';
+  echo 'black FAILED! 😭';
   echo 'Check black-output.log for details';
   restore_stashed;
   exit 2;
@@ -59,24 +61,26 @@ python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1;
 if [ $? == 0 ]; then
   echo 'Rule linter succeeded!! 💘';
 else
-  echo 'Rule linter failed 😭';
+  echo 'Rule linter FAILED! 😭';
   echo 'Check rule-linter-output.log for details';
   restore_stashed;
   exit 3;
 fi
 
-# Run tests
-echo 'Running tests, please wait ⌛';
-pytest tests/ --maxfail=1;
-if [ $? == 0 ]; then
-  echo 'Tests succeed!! 🎉';
-else
-  echo 'Tests failed 😓 PUSH ABORTED';
-  echo 'Run `pytest -v --cov=capa test/` if you need more details';
-  restore_stashed;
-  exit 4;
+# Run tests except if first argument is no_tests
+if [ "$1" != 'no_tests' ]; then
+  echo 'Running tests, please wait ⌛';
+  pytest tests/ --maxfail=1;
+  if [ $? == 0 ]; then
+    echo 'Tests succeed!! 🎉';
+  else
+    echo 'Tests FAILED! 😓';
+    echo 'Run `pytest -v --cov=capa test/` if you need more details';
+    restore_stashed;
+    exit 4;
+  fi
 fi
 
-echo 'PUSH SUCCEEDED 🎉🎉';
-
 restore_stashed;
+echo 'SUCCEEDED 🎉🎉';
+
