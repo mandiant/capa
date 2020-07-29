@@ -26,26 +26,46 @@ restore_stashed() {
   fi
 }
 
-# Run style checker and print state
-pycodestyle --config=./.github/tox.ini ./capa/ > style-checker-output.log 2>&1;
+python_3() {
+  case "$(uname -s)" in
+   CYGWIN*|MINGW32*|MSYS*|MINGW*)
+     py -3 -m $1 > $2 2>&1;;
+   *)
+     python3 -m $1 > $2 2>&1;;
+  esac
+}
+
+# Run isort and print state
+python_3 'isort --profile black --length-sort --line-width 120 -c .' 'isort-output.log';
 if [ $? == 0 ]; then
-  echo 'Style checker succeeds!! 💘';
+  echo 'isort succeeded!! 💖';
 else
-  echo 'Style checker failed 😭 PUSH ABORTED';
-  echo 'Check style-checker-output.log for details';
+  echo 'isort failed 😭';
+  echo 'Check isort-output.log for details';
   restore_stashed;
   exit 1;
+fi
+
+# Run black and print state
+python_3 'black -l 120 --check .' 'black-output.log';
+if [ $? == 0 ]; then
+  echo 'black succeeded!! 💝';
+else
+  echo 'black failed 😭';
+  echo 'Check black-output.log for details';
+  restore_stashed;
+  exit 2;
 fi
 
 # Run rule linter and print state
 python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Rule linter succeeds!! 💖';
+  echo 'Rule linter succeeded!! 💘';
 else
-  echo 'Rule linter failed 😭 PUSH ABORTED';
+  echo 'Rule linter failed 😭';
   echo 'Check rule-linter-output.log for details';
   restore_stashed;
-  exit 2;
+  exit 3;
 fi
 
 # Run tests
@@ -57,7 +77,7 @@ else
   echo 'Tests failed 😓 PUSH ABORTED';
   echo 'Run `pytest -v --cov=capa test/` if you need more details';
   restore_stashed;
-  exit 3;
+  exit 4;
 fi
 
 echo 'PUSH SUCCEEDED 🎉🎉';

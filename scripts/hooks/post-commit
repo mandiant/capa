@@ -19,19 +19,37 @@ if [[ "$STASH_LIST" == *"$MSG"* ]]; then
   echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
 fi
 
-# Run style checker and print state (it doesn't block the commit)
-pycodestyle --config=./.github/tox.ini ./capa/ > style-checker-output.log 2>&1;
+python_3() {
+  case "$(uname -s)" in
+   CYGWIN*|MINGW32*|MSYS*|MINGW*)
+     py -3 -m $1 > $2 2>&1;;
+   *)
+     python3 -m $1 > $2 2>&1;;
+  esac
+}
+
+# Run isort and print state (it doesn't block the commit)
+python_3 'isort --profile black --length-sort --line-width 120 -c .' 'isort-output.log';
 if [ $? == 0 ]; then
-  echo 'Style checker succeeds!! 💘';
+  echo 'isort succeeded!! 💖';
 else
-  echo 'Style checker failed 😭';
-  echo 'Check style-checker-output.log for details';
+  echo 'isort failed 😭';
+  echo 'Check isort-output.log for details';
+fi
+
+# Run black and print state (it doesn't block the commit)
+python_3 'black -l 120 --check .' 'black-output.log';
+if [ $? == 0 ]; then
+  echo 'black succeeded!! 💝';
+else
+  echo 'black failed 😭';
+  echo 'Check black-output.log for details';
 fi
 
 # Run rule linter and print state (it doesn't block the commit)
 python ./scripts/lint.py ./rules/ > rule-linter-output.log 2>&1;
 if [ $? == 0 ]; then
-  echo 'Rule linter succeeds!! 💖';
+  echo 'Rule linter succeeded!! 💘';
 else
   echo 'Rule linter failed 😭';
   echo 'Check rule-linter-output.log for details';

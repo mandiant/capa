@@ -111,5 +111,6 @@ venv.bak/
 !rules/lib
 
 # hooks output
-style-checker-output.log
+isort-output.log
+black-output.log
 rule-linter-output.log
