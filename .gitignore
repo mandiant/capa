@@ -110,6 +110,7 @@ venv.bak/
 *.i64
 !rules/lib
 
-# hooks output
-style-checker-output.log
+# hooks/ci.sh output
+isort-output.log
+black-output.log
 rule-linter-output.log
