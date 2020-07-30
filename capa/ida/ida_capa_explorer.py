@@ -25,14 +25,6 @@ from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
 
 PLUGIN_NAME = "capa explorer"
 
-SUPPORTED_IDA_VERSIONS = [
-    "7.1",
-    "7.2",
-    "7.3",
-    "7.4",
-    "7.5",
-]
-
 logger = logging.getLogger("capa")
 
 
@@ -553,24 +545,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tree.resize_columns_to_content()
 
 
-def is_supported_ida_version():
-    version = idaapi.get_kernel_version()
-    if version not in SUPPORTED_IDA_VERSIONS:
-        warning_msg = "This plugin does not support your IDA Pro version"
-        logger.warning(warning_msg)
-        logger.warning(
-            "Your IDA Pro version is: %s. Supported versions are: %s." % (version, ", ".join(SUPPORTED_IDA_VERSIONS))
-        )
-        capa.ida.helpers.inform_user_ida_ui(warning_msg)
-        return False
-    return True
-
-
 def main():
     """ TODO: move to idaapi.plugin_t class """
     logging.basicConfig(level=logging.INFO)
 
-    if not is_supported_ida_version():
+    if not capa.ida.helpers.is_supported_ida_version():
         return -1
 
     if not capa.ida.helpers.is_supported_file_type():

@@ -614,6 +614,9 @@ def ida_main():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
 
+    if not capa.ida.helpers.is_supported_ida_version():
+        return -1
+
     if not capa.ida.helpers.is_supported_file_type():
         return -1
 
@@ -636,7 +639,7 @@ def ida_main():
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 
-    meta = collect_metadata([], "", rules_path, format, "IdaExtractor")
+    meta = capa.ida.helpers.collect_metadata()
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
     meta["analysis"].update(counts)
@@ -644,6 +647,7 @@ def ida_main():
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
+    colorama.init(strip=True)
     print(capa.render.render_default(meta, rules, capabilities))
 
 
