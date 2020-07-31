@@ -10,12 +10,21 @@ import logging
 import datetime
 
 import idc
+import six
 import idaapi
 import idautils
 
 import capa
 
 logger = logging.getLogger("capa")
+
+SUPPORTED_IDA_VERSIONS = [
+    "7.1",
+    "7.2",
+    "7.3",
+    "7.4",
+    "7.5",
+]
 
 # file type names as returned by idaapi.get_file_type_name()
 SUPPORTED_FILE_TYPES = [
@@ -27,6 +36,19 @@ SUPPORTED_FILE_TYPES = [
 
 def inform_user_ida_ui(message):
     idaapi.info("%s. Please refer to IDA Output window for more information." % message)
+
+
+def is_supported_ida_version():
+    version = idaapi.get_kernel_version()
+    if version not in SUPPORTED_IDA_VERSIONS:
+        warning_msg = "This plugin does not support your IDA Pro version"
+        logger.warning(warning_msg)
+        logger.warning(
+            "Your IDA Pro version is: %s. Supported versions are: %s." % (version, ", ".join(SUPPORTED_IDA_VERSIONS))
+        )
+        capa.ida.helpers.inform_user_ida_ui(warning_msg)
+        return False
+    return True
 
 
 def is_supported_file_type():
@@ -63,13 +85,21 @@ def get_func_start_ea(ea):
 
 
 def collect_metadata():
+    md5 = idautils.GetInputFileMD5()
+    if not isinstance(md5, six.string_types):
+        md5 = capa.features.bytes_to_str(md5)
+
+    sha256 = idaapi.retrieve_input_file_sha256()
+    if not isinstance(sha256, six.string_types):
+        sha256 = capa.features.bytes_to_str(sha256)
+
     return {
         "timestamp": datetime.datetime.now().isoformat(),
         # "argv" is not relevant here
         "sample": {
-            "md5": capa.features.bytes_to_str(idautils.GetInputFileMD5()),
-            # "sha1" not easily accessible
-            "sha256": capa.features.bytes_to_str(idaapi.retrieve_input_file_sha256()),
+            "md5": md5,
+            "sha1": "",  # not easily accessible
+            "sha256": sha256,
             "path": idaapi.get_input_file_path(),
         },
         "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida",},

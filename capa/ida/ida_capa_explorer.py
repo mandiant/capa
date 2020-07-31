@@ -549,6 +549,9 @@ def main():
     """ TODO: move to idaapi.plugin_t class """
     logging.basicConfig(level=logging.INFO)
 
+    if not capa.ida.helpers.is_supported_ida_version():
+        return -1
+
     if not capa.ida.helpers.is_supported_file_type():
         return -1
 
