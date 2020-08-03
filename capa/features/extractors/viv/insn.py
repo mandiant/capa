@@ -167,6 +167,44 @@ def derefs(vw, p):
         p = next
 
 
+def read_memory(vw, va, size):
+    # as documented in #176, vivisect will not readMemory() when the section is not marked readable.
+    #
+    # but here, we don't care about permissions.
+    # so, copy the viv implementation of readMemory and remove the permissions check.
+    #
+    # this is derived from:
+    #   https://github.com/vivisect/vivisect/blob/5eb4d237bddd4069449a6bc094d332ceed6f9a96/envi/memory.py#L453-L462
+    for mva, mmaxva, mmap, mbytes in vw._map_defs:
+        if va >= mva and va < mmaxva:
+            mva, msize, mperms, mfname = mmap
+            offset = va - mva
+            return mbytes[offset : offset + size]
+    raise envi.SegmentationViolation(va)
+
+
+def read_bytes(vw, va):
+    """
+    read up to MAX_BYTES_FEATURE_SIZE from the given address.
+
+    raises:
+      envi.SegmentationViolation: if the given address is not valid.
+    """
+    segm = vw.getSegment(va)
+    if not segm:
+        raise envi.SegmentationViolation()
+
+    segm_end = segm[0] + segm[1]
+    try:
+        # Do not read beyond the end of a segment
+        if va + MAX_BYTES_FEATURE_SIZE > segm_end:
+            return read_memory(vw, va, segm_end - va)
+        else:
+            return read_memory(vw, va, MAX_BYTES_FEATURE_SIZE)
+    except envi.SegmentationViolation:
+        raise
+
+
 def extract_insn_bytes_features(f, bb, insn):
     """
     parse byte sequence features from the given instruction.
@@ -175,7 +213,6 @@ def extract_insn_bytes_features(f, bb, insn):
     """
     for oper in insn.opers:
         if insn.mnem == "call":
-            # ignore call instructions
             continue
 
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
@@ -194,38 +231,15 @@ def extract_insn_bytes_features(f, bb, insn):
             continue
 
         for v in derefs(f.vw, v):
-            segm = f.vw.getSegment(v)
-            if not segm:
+            try:
+                buf = read_bytes(f.vw, v)
+            except envi.SegmentationViolation:
                 continue
 
-            segm_end = segm[0] + segm[1]
-            try:
-                # Do not read beyond the end of a segment
-                if v + MAX_BYTES_FEATURE_SIZE > segm_end:
-                    extracted_bytes = f.vw.readMemory(v, segm_end - v)
-                else:
-                    extracted_bytes = f.vw.readMemory(v, MAX_BYTES_FEATURE_SIZE)
-            except envi.SegmentationViolation:
-                pass
-            else:
-                if not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-                    yield Bytes(extracted_bytes), insn.va
+            if capa.features.extractors.helpers.all_zeros(buf):
+                continue
 
-
-def read_memory(vw, va, size):
-    # as documented in #176, vivisect will not readMemory() when the section is not marked readable.
-    #
-    # but here, we don't care about permissions.
-    # so, copy the viv implementation of readMemory and remove the permissions check.
-    #
-    # this is derived from:
-    #   https://github.com/vivisect/vivisect/blob/5eb4d237bddd4069449a6bc094d332ceed6f9a96/envi/memory.py#L453-L462
-    for mva, mmaxva, mmap, mbytes in vw._map_defs:
-        if va >= mva and va < mmaxva:
-            mva, msize, mperms, mfname = mmap
-            offset = va - mva
-            return mbytes[offset : offset + size]
-    raise envi.SegmentationViolation(va)
+            yield Bytes(buf), insn.va
 
 
 def read_string(vw, offset):
