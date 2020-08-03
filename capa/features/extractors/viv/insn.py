@@ -140,6 +140,33 @@ def extract_insn_number_features(f, bb, insn):
         yield Number(v), insn.va
 
 
+def derefs(vw, p):
+    """
+    recursively follow the given pointer, yielding the valid memory addresses along the way.
+    useful when you may have a pointer to string, or pointer to pointer to string, etc.
+
+    this is a "do what i mean" type of helper function.
+    """
+    depth = 0
+    while True:
+        if not vw.isValidPointer(p):
+            return
+        yield p
+
+        next = vw.readMemoryPtr(p)
+
+        # sanity: pointer points to self
+        if next == p:
+            return
+
+        # sanity: avoid chains of pointers that are unreasonably deep
+        depth += 1
+        if depth > 10:
+            return
+
+        p = next
+
+
 def extract_insn_bytes_features(f, bb, insn):
     """
     parse byte sequence features from the given instruction.
@@ -157,28 +184,32 @@ def extract_insn_bytes_features(f, bb, insn):
             # handle case like:
             #   movzx   ecx, ds:byte_423258[eax]
             v = oper.disp
+        elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
+            # like 0x401000 in `mov eax, 0x401000[2 * ebx]`
+            v = oper.imm
         elif isinstance(oper, envi.archs.amd64.disasm.Amd64RipRelOper):
             # see: Lab21-01.exe_:0x1400010D3
             v = oper.getOperAddr(insn)
         else:
             continue
 
-        segm = f.vw.getSegment(v)
-        if not segm:
-            continue
+        for v in derefs(f.vw, v):
+            segm = f.vw.getSegment(v)
+            if not segm:
+                continue
 
-        segm_end = segm[0] + segm[1]
-        try:
-            # Do not read beyond the end of a segment
-            if v + MAX_BYTES_FEATURE_SIZE > segm_end:
-                extracted_bytes = f.vw.readMemory(v, segm_end - v)
+            segm_end = segm[0] + segm[1]
+            try:
+                # Do not read beyond the end of a segment
+                if v + MAX_BYTES_FEATURE_SIZE > segm_end:
+                    extracted_bytes = f.vw.readMemory(v, segm_end - v)
+                else:
+                    extracted_bytes = f.vw.readMemory(v, MAX_BYTES_FEATURE_SIZE)
+            except envi.SegmentationViolation:
+                pass
             else:
-                extracted_bytes = f.vw.readMemory(v, MAX_BYTES_FEATURE_SIZE)
-        except envi.SegmentationViolation:
-            pass
-        else:
-            if not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-                yield Bytes(extracted_bytes), insn.va
+                if not capa.features.extractors.helpers.all_zeros(extracted_bytes):
+                    yield Bytes(extracted_bytes), insn.va
 
 
 def read_memory(vw, va, size):
@@ -229,20 +260,25 @@ def extract_insn_string_features(f, bb, insn):
     # example:
     #
     #     push    offset aAcr     ; "ACR  > "
+
     for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
             v = oper.getOperValue(oper)
+        elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
+            # like 0x401000 in `mov eax, 0x401000[2 * ebx]`
+            v = oper.imm
         elif isinstance(oper, envi.archs.amd64.disasm.Amd64RipRelOper):
             v = oper.getOperAddr(insn)
         else:
             continue
 
-        try:
-            s = read_string(f.vw, v)
-        except ValueError:
-            continue
-        else:
-            yield String(s.rstrip("\x00")), insn.va
+        for v in derefs(f.vw, v):
+            try:
+                s = read_string(f.vw, v)
+            except ValueError:
+                continue
+            else:
+                yield String(s.rstrip("\x00")), insn.va
 
 
 def extract_insn_offset_features(f, bb, insn):
