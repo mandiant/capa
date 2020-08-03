@@ -11,13 +11,21 @@ import vivisect.const
 import envi.archs.i386.disasm
 
 import capa.features.extractors.helpers
-from capa.features import MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
+from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
+
+
+def get_arch(vw):
+    arch = vw.getMeta("Architecture")
+    if arch == "i386":
+        return ARCH_X32
+    elif arch == "amd64":
+        return ARCH_X64
 
 
 def interface_extract_instruction_XXX(f, bb, insn):
@@ -138,6 +146,7 @@ def extract_insn_number_features(f, bb, insn):
             return
 
         yield Number(v), insn.va
+        yield Number(v, arch=get_arch(f.vw)), insn.va
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -266,8 +275,10 @@ def extract_insn_offset_features(f, bb, insn):
             continue
 
         # viv already decodes offsets as signed
+        v = oper.disp
 
-        yield Offset(oper.disp), insn.va
+        yield Offset(v), insn.va
+        yield Offset(v, arch=get_arch(f.vw)), insn.va
 
 
 def is_security_cookie(f, bb, insn):

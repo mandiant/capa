@@ -12,10 +12,21 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features import MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
+from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 
 _file_imports_cache = None
+
+
+def get_arch():
+    # https://reverseengineering.stackexchange.com/a/11398/17194
+    info = idaapi.get_inf_structure()
+    if info.is_64bit():
+        return ARCH_X64
+    elif info.is_32bit():
+        return ARCH_X32
+    else:
+        raise ValueError("unexpected architecture")
 
 
 def get_imports():
@@ -88,6 +99,7 @@ def extract_insn_number_features(f, bb, insn):
         const = capa.features.extractors.ida.helpers.mask_op_val(op)
         if not idaapi.is_mapped(const):
             yield Number(const), insn.ea
+            yield Number(const, arch=get_arch()), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -155,6 +167,7 @@ def extract_insn_offset_features(f, bb, insn):
         op_off = capa.features.extractors.helpers.twos_complement(op_off, 32)
 
         yield Offset(op_off), insn.ea
+        yield Offset(op_off, arch=get_arch()), insn.ea
 
 
 def contains_stack_cookie_keywords(s):

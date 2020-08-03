@@ -17,6 +17,7 @@ import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
+from capa.features import ARCH_X32, ARCH_X64
 
 
 def extract_file_features(vw, path):
@@ -108,6 +109,13 @@ def test_number_features(mimikatz):
     assert capa.features.insn.Number(0x10) not in features
 
 
+def test_number_arch_features(mimikatz):
+    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x40105D))
+    assert capa.features.insn.Number(0xFF) in features
+    assert capa.features.insn.Number(0xFF, arch=ARCH_X32) in features
+    assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
+
+
 def test_offset_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x40105D))
     assert capa.features.insn.Offset(0x0) in features
@@ -123,6 +131,13 @@ def test_offset_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x4011FB))
     assert capa.features.insn.Offset(-0x1) in features
     assert capa.features.insn.Offset(-0x2) in features
+
+
+def test_offset_arch_features(mimikatz):
+    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x40105D))
+    assert capa.features.insn.Offset(0x0) in features
+    assert capa.features.insn.Offset(0x0, arch=ARCH_X32) in features
+    assert capa.features.insn.Offset(0x0, arch=ARCH_X64) not in features
 
 
 def test_nzxor_features(mimikatz):

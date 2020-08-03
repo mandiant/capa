@@ -195,8 +195,14 @@ def parse_feature(key):
         return capa.features.Bytes
     elif key == "number":
         return capa.features.insn.Number
+    elif key.startswith("number/"):
+        arch = key.partition("/")[2]
+        return lambda *args, **kwargs: capa.features.insn.Number(*args, arch=arch, **kwargs)
     elif key == "offset":
         return capa.features.insn.Offset
+    elif key.startswith("offset/"):
+        arch = key.partition("/")[2]
+        return lambda *args, **kwargs: capa.features.insn.Offset(*args, arch=arch, **kwargs)
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
@@ -325,7 +331,7 @@ def build_statements(d, scope):
             #     count(number(0x100 = description))
             if term != "string":
                 value, description = parse_description(arg, term)
-                feature = Feature(value, description)
+                feature = Feature(value, description=description)
             else:
                 # arg is string (which doesn't support inline descriptions), like:
                 #
@@ -358,7 +364,7 @@ def build_statements(d, scope):
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
         try:
-            feature = Feature(value, description)
+            feature = Feature(value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)

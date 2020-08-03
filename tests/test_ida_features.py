@@ -1,5 +1,6 @@
 # run this script from within IDA with ./tests/data/mimikatz.exe open
 import logging
+import binascii
 import traceback
 import collections
 
@@ -9,6 +10,7 @@ import capa.features
 import capa.features.file
 import capa.features.insn
 import capa.features.basicblock
+from capa.features import ARCH_X32, ARCH_X64
 
 logger = logging.getLogger("test_ida_features")
 
@@ -17,9 +19,14 @@ def check_input_file():
     import idautils
 
     wanted = "5f66b82558ca92e54e77f216ef4c066c"
-    # some versions of IDA return a truncated version of the MD5.
+    # some versions (7.4) of IDA return a truncated version of the MD5.
     # https://github.com/idapython/bin/issues/11
-    found = idautils.GetInputFileMD5().rstrip(b"\x00").decode("ascii").lower()
+    try:
+        found = idautils.GetInputFileMD5()[:31].decode("ascii").lower()
+    except UnicodeDecodeError:
+        # in IDA 7.5 or so, GetInputFileMD5 started returning raw binary
+        # rather than the hex digest
+        found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
     if not wanted.startswith(found):
         raise RuntimeError("please run the tests against `mimikatz.exe`")
 
@@ -123,6 +130,17 @@ def test_number_features():
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
+def test_number_arch_features():
+    import idaapi
+
+    f = idaapi.get_func(0x40105D)
+    features = extract_function_features(f)
+    assert capa.features.insn.Number(0xFF) in features
+    assert capa.features.insn.Number(0xFF, arch=ARCH_X32) in features
+    assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
+
+
+@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_offset_features():
     import idaapi
 
@@ -142,6 +160,17 @@ def test_offset_features():
     features = extract_function_features(f)
     assert capa.features.insn.Offset(-0x1) in features
     assert capa.features.insn.Offset(-0x2) in features
+
+
+@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
+def test_offset_arch_features(mimikatz):
+    import idaapi
+
+    f = idaapi.get_func(0x40105D)
+    features = extract_function_features(f)
+    assert capa.features.insn.Offset(0x0) in features
+    assert capa.features.insn.Offset(0x0, arch=ARCH_X32) in features
+    assert capa.features.insn.Offset(0x0, arch=ARCH_X64) not in features
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
