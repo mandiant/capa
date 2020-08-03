@@ -52,8 +52,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 2.7
-    - name: Install pytest-xdist
-      run: pip install pytest-xdist
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
