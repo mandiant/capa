@@ -1,7 +1,8 @@
 name: build
 
 on:
-  release: [created, edited]
+  release:
+    types: [created, edited]
 
 
 jobs:
