@@ -19,7 +19,7 @@ if sys.version_info >= (3, 0):
 else:
     # py2
     requirements.append("enum34")
-    requirements.append("vivisect @ https://github.com/williballenthin/vivisect/tarball/v0.0.20200708#egg=vivisect")
+    requirements.append("vivisect @ https://github.com/williballenthin/vivisect/tarball/v0.0.20200804#egg=vivisect")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
 
