@@ -14,6 +14,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-16.04
+            # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: capa-linux
           - os: windows-latest
@@ -38,7 +39,7 @@ jobs:
     - name: Build standalone executable
       run: pyinstaller .github/pyinstaller/pyinstaller.spec
     - name: Does it run?
-      run: dist/capa dist/capa
+      run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
     - uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.asset_name }}
