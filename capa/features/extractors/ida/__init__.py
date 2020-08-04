@@ -65,7 +65,7 @@ class IdaFeatureExtractor(FeatureExtractor):
             yield add_ea_int_cast(f)
 
     @staticmethod
-    def get_function(self, ea):
+    def get_function(ea):
         f = idaapi.get_func(ea)
         setattr(f, "ctx", {})
         return add_ea_int_cast(f)
