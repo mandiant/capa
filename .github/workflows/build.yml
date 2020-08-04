@@ -4,7 +4,6 @@ on:
   release:
     types: [created, edited]
 
-
 jobs:
   build:
     name: PyInstaller for ${{ matrix.os }}
