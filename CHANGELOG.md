@@ -11,6 +11,8 @@ We received contributions from eight reverse engineers, including four new ones:
   - @bitsofbinary
   - @threathive
   
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+  
 ### New features
 
   - import: add Binary Ninja import script #205 #207 @psifertex
