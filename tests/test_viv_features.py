@@ -86,11 +86,7 @@ def test_string_features(mimikatz):
 
 
 def test_string_pointer_features(mimikatz):
-    # viv doesn't identify this function, because its only referenced by vtable
-    # but thats not the point of this test
-    mimikatz.vw.makeFunction(0x44EE5A)
-
-    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x44EE5A))
+    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x44EDEF))
     assert capa.features.String("INPUTEVENT") in features
 
 
@@ -109,11 +105,7 @@ def test_byte_features64(sample_lab21_01):
 
 
 def test_bytes_pointer_features(mimikatz):
-    # viv doesn't identify this function, because its only referenced by vtable
-    # but thats not the point of this test
-    mimikatz.vw.makeFunction(0x44EE5A)
-
-    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x44EE5A))
+    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x44EDEF))
     assert capa.features.Bytes("INPUTEVENT".encode("utf-16le")).evaluate(features) == True
 
 
