@@ -11,7 +11,7 @@ import sys
 
 import setuptools
 
-requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "ruamel.yaml"]
+requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "ruamel.yaml", "wcwidth"]
 
 if sys.version_info >= (3, 0):
     # py3
