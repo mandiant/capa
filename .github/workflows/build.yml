@@ -18,7 +18,7 @@ jobs:
             asset_name: capa-linux
           - os: windows-latest
             artifact_name: capa.exe
-            asset_name: capa-windows
+            asset_name: capa-windows.exe
           - os: macos-latest
             artifact_name: capa
             asset_name: capa-macos
@@ -36,4 +36,4 @@ jobs:
     - name: Build standalone executable
       run: pyinstaller .github/pyinstaller/pyinstaller.spec
     - name: Does it run?
-      run: dist/capa --help
+      run: dist/capa dist/capa
