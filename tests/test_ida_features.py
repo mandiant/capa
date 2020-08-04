@@ -150,7 +150,7 @@ def test_offset_features():
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_offset_arch_features(mimikatz):
+def test_offset_arch_features():
     f = get_extractor().get_function(0x40105D)
     features = extract_function_features(f)
     assert capa.features.insn.Offset(0x0) in features
