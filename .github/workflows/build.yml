@@ -37,3 +37,7 @@ jobs:
       run: pyinstaller .github/pyinstaller/pyinstaller.spec
     - name: Does it run?
       run: dist/capa dist/capa
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.asset_name }}
+        path: dist/${{ matrix.artifact_name }}
