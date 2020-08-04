@@ -1,10 +1,8 @@
 name: build
 
 on:
-  # TODO: change to "release"
-  push:
-    # TODO: change to `master
-    branches: [ fix-178 ]
+  release: [created, edited]
+
 
 jobs:
   build:
@@ -44,3 +42,10 @@ jobs:
       with:
         name: ${{ matrix.asset_name }}
         path: dist/${{ matrix.artifact_name }}
+    - name: Upload binaries to GH Release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.CAPA_TOKEN }}
+        file: dist/${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
