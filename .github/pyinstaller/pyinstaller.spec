@@ -33,8 +33,6 @@ a = Analysis(
         # i.e. ./.github/pyinstaller
         ('../../rules', 'rules'),
 
-        ('rules', 'rules'),
-
         # capa.render.default uses tabulate that depends on wcwidth.
         # it seems wcwidth uses a json file `version.json`
         # and this doesn't get picked up by pyinstaller automatically.
