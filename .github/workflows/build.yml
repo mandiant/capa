@@ -7,8 +7,21 @@ on:
     branches: [ fix-178 ]
 
 jobs:
-  pyinstaller-linux:
-    runs-on: ubuntu-16.04
+  build:
+    name: PyInstaller for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-16.04
+            artifact_name: capa
+            asset_name: capa-linux
+          - os: windows-latest
+            artifact_name: capa.exe
+            asset_name: capa-windows
+          - os: macos-latest
+            artifact_name: capa
+            asset_name: capa-macos
     steps:
     - name: Checkout capa
       uses: actions/checkout@v2
