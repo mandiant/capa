@@ -11,7 +11,7 @@ import textwrap
 import pytest
 
 import capa.rules
-from capa.features import String
+from capa.features import ARCH_X32, ARCH_X64, String
 from capa.features.insn import Number, Offset
 
 
@@ -380,10 +380,10 @@ def test_number_symbol():
     children = list(r.statement.get_children())
     assert (Number(1) in children) == True
     assert (Number(0xFFFFFFFF) in children) == True
-    assert (Number(2, "symbol name") in children) == True
-    assert (Number(3, "symbol name") in children) == True
-    assert (Number(4, "symbol name = another name") in children) == True
-    assert (Number(0x100, "symbol name") in children) == True
+    assert (Number(2, description="symbol name") in children) == True
+    assert (Number(3, description="symbol name") in children) == True
+    assert (Number(4, description="symbol name = another name") in children) == True
+    assert (Number(0x100, description="symbol name") in children) == True
 
 
 def test_count_number_symbol():
@@ -403,8 +403,8 @@ def test_count_number_symbol():
     assert r.evaluate({Number(2): {}}) == False
     assert r.evaluate({Number(2): {1}}) == True
     assert r.evaluate({Number(2): {1, 2}}) == False
-    assert r.evaluate({Number(0x100, "symbol name"): {1}}) == False
-    assert r.evaluate({Number(0x100, "symbol name"): {1, 2, 3}}) == True
+    assert r.evaluate({Number(0x100, description="symbol name"): {1}}) == False
+    assert r.evaluate({Number(0x100, description="symbol name"): {1, 2, 3}}) == True
 
 
 def test_invalid_number():
@@ -448,6 +448,24 @@ def test_invalid_number():
         )
 
 
+def test_number_arch():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - number/x32: 2
+            """
+        )
+    )
+    assert r.evaluate({Number(2, arch=ARCH_X32): {1}}) == True
+
+    assert r.evaluate({Number(2): {1}}) == False
+    assert r.evaluate({Number(2, arch=ARCH_X64): {1}}) == False
+
+
 def test_offset_symbol():
     rule = textwrap.dedent(
         """
@@ -466,10 +484,10 @@ def test_offset_symbol():
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
     assert (Offset(1) in children) == True
-    assert (Offset(2, "symbol name") in children) == True
-    assert (Offset(3, "symbol name") in children) == True
-    assert (Offset(4, "symbol name = another name") in children) == True
-    assert (Offset(0x100, "symbol name") in children) == True
+    assert (Offset(2, description="symbol name") in children) == True
+    assert (Offset(3, description="symbol name") in children) == True
+    assert (Offset(4, description="symbol name = another name") in children) == True
+    assert (Offset(0x100, description="symbol name") in children) == True
 
 
 def test_count_offset_symbol():
@@ -489,8 +507,67 @@ def test_count_offset_symbol():
     assert r.evaluate({Offset(2): {}}) == False
     assert r.evaluate({Offset(2): {1}}) == True
     assert r.evaluate({Offset(2): {1, 2}}) == False
-    assert r.evaluate({Offset(0x100, "symbol name"): {1}}) == False
-    assert r.evaluate({Offset(0x100, "symbol name"): {1, 2, 3}}) == True
+    assert r.evaluate({Offset(0x100, description="symbol name"): {1}}) == False
+    assert r.evaluate({Offset(0x100, description="symbol name"): {1, 2, 3}}) == True
+
+
+def test_offset_arch():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - offset/x32: 2
+            """
+        )
+    )
+    assert r.evaluate({Offset(2, arch=ARCH_X32): {1}}) == True
+
+    assert r.evaluate({Offset(2): {1}}) == False
+    assert r.evaluate({Offset(2, arch=ARCH_X64): {1}}) == False
+
+
+def test_invalid_offset():
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - offset: "this is a string"
+                """
+            )
+        )
+
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - offset: 2=
+                """
+            )
+        )
+
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - offset: symbol name = 2
+                """
+            )
+        )
 
 
 def test_invalid_string_values_int():
@@ -564,47 +641,6 @@ def test_regex_values_always_string():
         capa.engine.topologically_order_rules(rules), {capa.features.String("0x123"): {1}}, 0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
-
-
-def test_invalid_offset():
-    with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - offset: "this is a string"
-                """
-            )
-        )
-
-    with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - offset: 2=
-                """
-            )
-        )
-
-    with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - offset: symbol name = 2
-                """
-            )
-        )
 
 
 def test_filter_rules():

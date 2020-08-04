@@ -16,6 +16,12 @@ import capa.engine
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
 
+# identifiers for supported architectures names that tweak a feature
+# for example, offset/x32
+ARCH_X32 = "x32"
+ARCH_X64 = "x64"
+VALID_ARCH = (ARCH_X32, ARCH_X64)
+
 
 def bytes_to_str(b):
     if sys.version_info[0] >= 3:
@@ -30,21 +36,41 @@ def hex_string(h):
 
 
 class Feature(object):
-    def __init__(self, value, description=None):
+    def __init__(self, value, arch=None, description=None):
+        """
+        Args:
+          value (any): the value of the feature, such as the number or string.
+          arch (str): one of the VALID_ARCH values, or None.
+            When None, then the feature applies to any architecture.
+            Modifies the feature name from `feature` to `feature/arch`, like `offset/x32`.
+          description (str): a human-readable description that explains the feature value.
+        """
         super(Feature, self).__init__()
-        self.name = self.__class__.__name__.lower()
+
+        if arch is not None:
+            if arch not in VALID_ARCH:
+                raise ValueError("arch '%s' must be one of %s" % (arch, VALID_ARCH))
+            self.name = self.__class__.__name__.lower() + "/" + arch
+        else:
+            self.name = self.__class__.__name__.lower()
+
         self.value = value
+        self.arch = arch
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, self.value))
+        return hash((self.name, self.value, self.arch))
 
     def __eq__(self, other):
-        return self.name == other.name and self.value == other.value
+        return self.name == other.name and self.value == other.value and self.arch == other.arch
 
-    # Used to overwrite the rendering of the feature value in `__str__` and the
-    # json output
     def get_value_str(self):
+        """
+        render the value of this feature, for use by `__str__` and friends.
+        subclasses should override to customize the rendering.
+
+        Returns: any
+        """
         return self.value
 
     def __str__(self):
@@ -62,36 +88,44 @@ class Feature(object):
     def evaluate(self, ctx):
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
-    def serialize(self):
-        return self.__dict__
-
     def freeze_serialize(self):
-        return (self.__class__.__name__, [self.value])
+        if self.arch is not None:
+            return (self.__class__.__name__, [self.value, {"arch": self.arch}])
+        else:
+            return (self.__class__.__name__, [self.value])
 
     @classmethod
     def freeze_deserialize(cls, args):
-        return cls(*args)
+        # as you can see below in code,
+        # if the last argument is a dictionary,
+        # consider it to be kwargs passed to the feature constructor.
+        if len(args) == 1:
+            return cls(*args)
+        elif isinstance(args[-1], dict):
+            kwargs = args[-1]
+            args = args[:-1]
+            return cls(*args, **kwargs)
 
 
 class MatchedRule(Feature):
     def __init__(self, value, description=None):
-        super(MatchedRule, self).__init__(value, description)
+        super(MatchedRule, self).__init__(value, description=description)
         self.name = "match"
 
 
 class Characteristic(Feature):
     def __init__(self, value, description=None):
-        super(Characteristic, self).__init__(value, description)
+        super(Characteristic, self).__init__(value, description=description)
 
 
 class String(Feature):
     def __init__(self, value, description=None):
-        super(String, self).__init__(value, description)
+        super(String, self).__init__(value, description=description)
 
 
 class Regex(String):
     def __init__(self, value, description=None):
-        super(Regex, self).__init__(value, description)
+        super(Regex, self).__init__(value, description=description)
         pat = self.value[len("/") : -len("/")]
         flags = re.DOTALL
         if value.endswith("/i"):
@@ -129,13 +163,13 @@ class Regex(String):
 class StringFactory(object):
     def __new__(self, value, description):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
-            return Regex(value, description)
-        return String(value, description)
+            return Regex(value, description=description)
+        return String(value, description=description)
 
 
 class Bytes(Feature):
     def __init__(self, value, description=None):
-        super(Bytes, self).__init__(value, description)
+        super(Bytes, self).__init__(value, description=description)
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
