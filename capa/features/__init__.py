@@ -49,7 +49,6 @@ class Feature(object):
 
         if arch is not None:
             if arch not in VALID_ARCH:
-                print(value, arch, description)
                 raise ValueError("arch '%s' must be one of %s" % (arch, VALID_ARCH))
             self.name = self.__class__.__name__.lower() + "/" + arch
         else:

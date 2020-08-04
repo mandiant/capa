@@ -10,6 +10,7 @@ import uuid
 import codecs
 import logging
 import binascii
+import functools
 
 import six
 import ruamel.yaml
@@ -197,12 +198,18 @@ def parse_feature(key):
         return capa.features.insn.Number
     elif key.startswith("number/"):
         arch = key.partition("/")[2]
-        return lambda *args, **kwargs: capa.features.insn.Number(*args, arch=arch, **kwargs)
+        # the other handlers here return constructors for features,
+        # and we want to as well,
+        # however, we need to preconfigure one of the arguments (`arch`).
+        # so, instead we return a partially-applied function that
+        #  provides `arch` to the feature constructor.
+        # it forwards any other arguments provided to the closure along to the constructor.
+        return functools.partial(capa.features.insn.Number, arch=arch)
     elif key == "offset":
         return capa.features.insn.Offset
     elif key.startswith("offset/"):
         arch = key.partition("/")[2]
-        return lambda *args, **kwargs: capa.features.insn.Offset(*args, arch=arch, **kwargs)
+        return functools.partial(capa.features.insn.Offset, arch=arch)
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":

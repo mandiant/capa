@@ -19,7 +19,13 @@ _file_imports_cache = None
 
 
 def get_arch():
-    # https://reverseengineering.stackexchange.com/a/11398/17194
+    """
+    fetch the ARCH_* constant for the currently open workspace.
+    we expect this routine to be pretty lightweight, so we don't cache it.
+
+    via Tamir Bahar/@tmr232
+    https://reverseengineering.stackexchange.com/a/11398/17194
+    """
     info = idaapi.get_inf_structure()
     if info.is_64bit():
         return ARCH_X64
