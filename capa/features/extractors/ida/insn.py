@@ -15,41 +15,38 @@ import capa.features.extractors.ida.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 
-_file_imports_cache = None
 
-
-def get_arch():
+def get_arch(ctx):
     """
     fetch the ARCH_* constant for the currently open workspace.
-    we expect this routine to be pretty lightweight, so we don't cache it.
 
     via Tamir Bahar/@tmr232
     https://reverseengineering.stackexchange.com/a/11398/17194
     """
-    info = idaapi.get_inf_structure()
-    if info.is_64bit():
-        return ARCH_X64
-    elif info.is_32bit():
-        return ARCH_X32
-    else:
-        raise ValueError("unexpected architecture")
+    if "arch" not in ctx:
+        info = idaapi.get_inf_structure()
+        if info.is_64bit():
+            ctx["arch"] = ARCH_X64
+        elif info.is_32bit():
+            ctx["arch"] = ARCH_X32
+        else:
+            raise ValueError("unexpected architecture")
+    return ctx["arch"]
 
 
-def get_imports():
-    """ """
-    global _file_imports_cache
-    if _file_imports_cache is None:
-        _file_imports_cache = capa.features.extractors.ida.helpers.get_file_imports()
-    return _file_imports_cache
+def get_imports(ctx):
+    if "imports_cache" not in ctx:
+        ctx["imports_cache"] = capa.features.extractors.ida.helpers.get_file_imports()
+    return ctx["imports_cache"]
 
 
-def check_for_api_call(insn):
+def check_for_api_call(ctx, insn):
     """ check instruction for API call """
     if not idaapi.is_call_insn(insn):
         return
 
     for ref in idautils.CodeRefsFrom(insn.ea, False):
-        info = get_imports().get(ref, ())
+        info = get_imports(ctx).get(ref, ())
         if info:
             yield "%s.%s" % (info[0], info[1])
         else:
@@ -59,7 +56,7 @@ def check_for_api_call(insn):
             if f and (f.flags & idaapi.FUNC_THUNK):
                 for thunk_ref in idautils.DataRefsFrom(ref):
                     # TODO: always data ref for thunk??
-                    info = get_imports().get(thunk_ref, ())
+                    info = get_imports(ctx).get(thunk_ref, ())
                     if info:
                         yield "%s.%s" % (info[0], info[1])
 
@@ -75,7 +72,7 @@ def extract_insn_api_features(f, bb, insn):
         example:
             call dword [0x00473038]
     """
-    for api in check_for_api_call(insn):
+    for api in check_for_api_call(f.ctx, insn):
         for (feature, ea) in capa.features.extractors.helpers.generate_api_features(api, insn.ea):
             yield feature, ea
 
@@ -105,7 +102,7 @@ def extract_insn_number_features(f, bb, insn):
         const = capa.features.extractors.ida.helpers.mask_op_val(op)
         if not idaapi.is_mapped(const):
             yield Number(const), insn.ea
-            yield Number(const, arch=get_arch()), insn.ea
+            yield Number(const, arch=get_arch(f.ctx)), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -173,7 +170,7 @@ def extract_insn_offset_features(f, bb, insn):
         op_off = capa.features.extractors.helpers.twos_complement(op_off, 32)
 
         yield Offset(op_off), insn.ea
-        yield Offset(op_off, arch=get_arch()), insn.ea
+        yield Offset(op_off, arch=get_arch(f.ctx)), insn.ea
 
 
 def contains_stack_cookie_keywords(s):
@@ -322,7 +319,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
             insn (IDA insn_t)
     """
     for ref in idautils.CodeRefsFrom(insn.ea, False):
-        if ref in get_imports().keys():
+        if ref in get_imports(f.ctx).keys():
             # ignore API calls
             continue
         if not idaapi.getseg(ref):
