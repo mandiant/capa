@@ -1,0 +1,26 @@
+name: build
+
+on:
+  # TODO: change to "release"
+  push:
+    # TODO: change to `master
+    branches: [ fix-178 ]
+
+jobs:
+  pyinstaller-linux:
+    runs-on: ubuntu-16.04
+    steps:
+    - name: Checkout capa
+      uses: actions/checkout@v2
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 2.7
+    - name: Install PyInstaller
+      run: pip install pyinstaller
+    - name: Install capa
+      run: pip install -e .
+    - name: Build standalone executable
+      run: pyinstaller .github/pyinstaller/pyinstaller.spec
+    - name: Does it run?
+      run: dist/capa --help
