@@ -2,7 +2,7 @@
 
 ## v1.1.0 (2020-08-05)
 
-This release brings new rule format updates, such as adding `offset/x86` and negative offsets,
+This release brings new rule format updates, such as adding `offset/x32` and negative offsets,
 fixes some bugs identified by the community, and 28 (!) new rules.
 We received contributions from eight reverse engineers, including four new ones:
 
