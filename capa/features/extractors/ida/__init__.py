@@ -55,9 +55,20 @@ class IdaFeatureExtractor(FeatureExtractor):
     def get_functions(self):
         import capa.features.extractors.ida.helpers as ida_helpers
 
+        # data structure shared across functions yielded here.
+        # useful for caching analysis relevant across a single workspace.
+        ctx = {}
+
         # ignore library functions and thunk functions as identified by IDA
         for f in ida_helpers.get_functions(skip_thunks=True, skip_libs=True):
+            setattr(f, "ctx", ctx)
             yield add_ea_int_cast(f)
+
+    @staticmethod
+    def get_function(ea):
+        f = idaapi.get_func(ea)
+        setattr(f, "ctx", {})
+        return add_ea_int_cast(f)
 
     def extract_function_features(self, f):
         for (feature, ea) in capa.features.extractors.ida.function.extract_features(f):
