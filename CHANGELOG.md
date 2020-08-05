@@ -38,15 +38,15 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
   - hash data using sha1 via x86 extensions @re-fox
   - hash data using sha256 via x86 extensions @re-fox
   - capture network configuration via ipconfig @re-fox
-  - hash data via WinCrypt @michael-hunhoff
-  - get file attributes @michael-hunhoff
-  - allocate thread local storage @michael-hunhoff
-  - get thread local storage value @michael-hunhoff
-  - set thread local storage @michael-hunhoff
-  - get session integrity level @michael-hunhoff
-  - add file to cabinet file @michael-hunhoff
-  - flush cabinet file @michael-hunhoff
-  - open cabinet file @michael-hunhoff
+  - hash data via WinCrypt @mike-hunhoff
+  - get file attributes @mike-hunhoff
+  - allocate thread local storage @mike-hunhoff
+  - get thread local storage value @mike-hunhoff
+  - set thread local storage @mike-hunhoff
+  - get session integrity level @mike-hunhoff
+  - add file to cabinet file @mike-hunhoff
+  - flush cabinet file @mike-hunhoff
+  - open cabinet file @mike-hunhoff
   - gather firefox profile information @re-fox
   - encrypt data using skipjack @re-fox
   - encrypt data using camellia @re-fox
