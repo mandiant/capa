@@ -38,7 +38,10 @@ def is_mov_imm_to_stack(insn):
     if src[OPERAND_TYPE] != OPERAND_TYPE_IMMEDIATE:
         return False
 
-    if not dst[OPERAND_TYPE] != OPERAND_TYPE_MEMORY:
+    if src[IMMEDIATE_OPERAND_VALUE] < 0:
+        return False
+
+    if dst[OPERAND_TYPE] != OPERAND_TYPE_MEMORY:
         return False
 
     if dst[MEMORY_OPERAND_BASE] not in ("ebp", "rbp", "esp", "rsp"):
@@ -89,6 +92,7 @@ def _bb_has_stackstring(ws, bb):
     for insn in bb.instructions:
         if is_mov_imm_to_stack(insn):
             # add number of operand bytes
+            print(hex(insn.address))
             src = insn.operands[1]
             count += get_printable_len(src)
 
@@ -101,7 +105,7 @@ def _bb_has_stackstring(ws, bb):
 def extract_stackstring(ws, bb):
     """ check basic block for stackstring indicators """
     if _bb_has_stackstring(ws, bb):
-        yield Characteristic("stack string"), bb.va
+        yield Characteristic("stack string"), bb.address
 
 
 def extract_basic_block_features(ws, bb):
