@@ -173,15 +173,25 @@ def scope(request):
             True,
             marks=pytest.mark.xfail(reason="characteristic(calls to) not implemented yet"),
         ),
-        # function/characteristic(tight loop)
+        # bb/characteristic(tight loop)
         ("mimikatz", "function=0x402EC4", capa.features.Characteristic("tight loop"), True),
         ("mimikatz", "function=0x401000", capa.features.Characteristic("tight loop"), False),
-        # function/characteristic(stack string)
+        # bb/characteristic(stack string)
         ("mimikatz", "function=0x4556E5", capa.features.Characteristic("stack string"), True),
         ("mimikatz", "function=0x401000", capa.features.Characteristic("stack string"), False),
         # bb/characteristic(tight loop)
         ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.Characteristic("tight loop"), True),
         ("mimikatz", "function=0x401000,bb=0x401000", capa.features.Characteristic("tight loop"), False),
+        # insn/number
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
+        # insn/number: stack adjustments
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
+        # insn/number: arch flavors
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -250,22 +260,6 @@ def test_byte_features64(sample_lab21_01):
 def test_bytes_pointer_features(mimikatz):
     features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x44EDEF))
     assert capa.features.Bytes("INPUTEVENT".encode("utf-16le")).evaluate(features) == True
-
-
-def test_number_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.insn.Number(0xFF) in features
-    assert capa.features.insn.Number(0x3136B0) in features
-    # the following are stack adjustments
-    assert capa.features.insn.Number(0xC) not in features
-    assert capa.features.insn.Number(0x10) not in features
-
-
-def test_number_arch_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.insn.Number(0xFF) in features
-    assert capa.features.insn.Number(0xFF, arch=ARCH_X32) in features
-    assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
 
 
 def test_offset_features(mimikatz):
