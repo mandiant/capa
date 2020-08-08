@@ -24,7 +24,10 @@ class Number(Feature):
         super(Number, self).__init__(value, arch=arch, description=description)
 
     def get_value_str(self):
-        return "0x%X" % self.value
+        if self.value < 0:
+            return "-0x%X" % (-self.value)
+        else:
+            return "0x%X" % self.value
 
 
 class Offset(Feature):
