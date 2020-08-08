@@ -30,16 +30,6 @@ from capa.features import ARCH_X32, ARCH_X64
 CD = os.path.dirname(__file__)
 
 
-@pytest.fixture
-def mimikatz():
-    return os.path.join(CD, "data", "mimikatz.exe_")
-
-
-@pytest.fixture
-def kernel32():
-    return os.path.join(CD, "data", "kernel32.dll_")
-
-
 @lru_cache
 def extract_file_features(extractor):
     features = set([])
@@ -49,26 +39,26 @@ def extract_file_features(extractor):
 
 
 @lru_cache
-def extract_function_features(f):
+def extract_function_features(extractor, f):
     features = collections.defaultdict(set)
-    for bb in f.basic_blocks:
-        for insn in bb.instructions:
-            for feature, va in capa.features.extractors.lancelot.insn.extract_features(f, bb, insn):
+    for bb in extractor.get_basic_blocks(f):
+        for insn in extractor.get_instructions(f, bb):
+            for feature, va in extractor.extract_insn_features(f, bb, insn):
                 features[feature].add(va)
-        for feature, va in capa.features.extractors.lancelot.basicblock.extract_features(f, bb):
+        for feature, va in extractor.extract_basic_block_features(f, bb):
             features[feature].add(va)
-    for feature, va in capa.features.extractors.lancelot.function.extract_features(f):
+    for feature, va in extractor.extract_function_features(f):
         features[feature].add(va)
     return features
 
 
 @lru_cache
-def extract_basic_block_features(f, bb):
+def extract_basic_block_features(extractor, f, bb):
     features = set({})
-    for insn in bb.instructions:
-        for feature, _ in capa.features.extractors.lancelot.insn.extract_features(f, bb, insn):
+    for insn in extractor.get_instructions(f, bb):
+        for feature, _ in extractor.extract_insn_features(f, bb, insn):
             features.add(feature)
-    for feature, _ in capa.features.extractors.lancelot.basicblock.extract_features(f, bb):
+    for feature, _ in extractor.extract_basic_block_features(f, bb):
         features.add(feature)
     return features
 
@@ -87,14 +77,51 @@ def sample(request):
         return os.path.join(CD, "data", "mimikatz.exe_")
     elif request.param == "kernel32":
         return os.path.join(CD, "data", "kernel32.dll_")
+    elif request.param == "pma12-04":
+        return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
     else:
         raise ValueError("unexpected sample fixture")
+
+
+def get_function(extractor, fva):
+    for f in extractor.get_functions():
+        if f.__int__() == fva:
+            return f
+    raise ValueError("function not found")
+
+
+def get_basic_block(extractor, f, va):
+    for bb in extractor.get_basic_blocks(f):
+        if bb.__int__() == va:
+            return bb
+    raise ValueError("basic block not found")
 
 
 @pytest.fixture
 def scope(request):
     if request.param == "file":
         return extract_file_features
+    elif "bb=" in request.param:
+        # like `function=0x401000,bb=0x40100A`
+        fspec, _, bbspec = request.param.partition(",")
+        fva = int(fspec.partition("=")[2], 0x10)
+        bbva = int(bbspec.partition("=")[2], 0x10)
+
+        def inner(extractor):
+            f = get_function(extractor, fva)
+            bb = get_basic_block(extractor, f, bbva)
+            return extract_basic_block_features(extractor, f, bb)
+
+        return inner
+    elif request.param.startswith("function"):
+        # like `function=0x401000`
+        va = int(request.param.partition("=")[2], 0x10)
+
+        def inner(extractor):
+            f = get_function(extractor, va)
+            return extract_function_features(extractor, f)
+
+        return inner
     else:
         raise ValueError("unexpected scope fixture")
 
@@ -102,15 +129,22 @@ def scope(request):
 @pytest.mark.parametrize(
     "sample,scope,feature,expected",
     [
-        # sections
+        # file/characteristic("embedded pe")
+        ("pma12-04", "file", capa.features.Characteristic("embedded pe"), True),
+        # file/string
+        ("mimikatz", "file", capa.features.String("SCardControl"), True),
+        ("mimikatz", "file", capa.features.String("SCardTransmit"), True),
+        ("mimikatz", "file", capa.features.String("ACR  > "), True),
+        ("mimikatz", "file", capa.features.String("nope"), False),
+        # file/sections
         ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
         ("mimikatz", "file", capa.features.file.Section(".text"), True),
         ("mimikatz", "file", capa.features.file.Section(".nope"), False),
-        # exports
+        # file/exports
         ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
         ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
         ("kernel32", "file", capa.features.file.Export("nope"), False),
-        # imports
+        # file/imports
         ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
@@ -119,10 +153,39 @@ def scope(request):
         ("mimikatz", "file", capa.features.file.Import("#11"), False),
         ("mimikatz", "file", capa.features.file.Import("#nope"), False),
         ("mimikatz", "file", capa.features.file.Import("nope"), False),
+        # function/characteristic(loop)
+        ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
+        ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
+        # function/characteristic(switch)
+        pytest.param(
+            "mimikatz",
+            "function=0x409411",
+            capa.features.Characteristic("switch"),
+            True,
+            marks=pytest.mark.xfail(reason="characteristic(switch) not implemented yet"),
+        ),
+        ("mimikatz", "function=0x401000", capa.features.Characteristic("switch"), False),
+        # function/characteristic(calls to)
+        pytest.param(
+            "mimikatz",
+            "function=0x401000",
+            capa.features.Characteristic("calls to"),
+            True,
+            marks=pytest.mark.xfail(reason="characteristic(calls to) not implemented yet"),
+        ),
+        # function/characteristic(tight loop)
+        ("mimikatz", "function=0x402EC4", capa.features.Characteristic("tight loop"), True),
+        ("mimikatz", "function=0x401000", capa.features.Characteristic("tight loop"), False),
+        # function/characteristic(stack string)
+        ("mimikatz", "function=0x4556E5", capa.features.Characteristic("stack string"), True),
+        ("mimikatz", "function=0x401000", capa.features.Characteristic("stack string"), False),
+        # bb/characteristic(tight loop)
+        ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.Characteristic("tight loop"), True),
+        ("mimikatz", "function=0x401000,bb=0x401000", capa.features.Characteristic("tight loop"), False),
     ],
     indirect=["sample", "scope"],
 )
-def test_file_section_features(sample, scope, feature, expected):
+def test_lancelot_features(sample, scope, feature, expected):
     extractor = get_lancelot_extractor(sample)
     features = scope(extractor)
     assert (feature in features) == expected
@@ -313,14 +376,6 @@ def test_thunk_features(sample_9324d1a8ae37a36ae560c37448c9705a):
     assert capa.features.insn.API("CreateToolhelp32Snapshot") in features
 
 
-def test_file_embedded_pe(pma_lab_12_04):
-    features = extract_file_features(pma_lab_12_04.ws, pma_lab_12_04.path)
-    assert capa.features.Characteristic("embedded pe") in features
-
-
-def test_stackstring_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x4556E5))
-    assert capa.features.Characteristic("stack string") in features
 
 
 def test_switch_features(mimikatz):

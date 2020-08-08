@@ -8,11 +8,7 @@
 
 import types
 
-import file
-import insn
-import function
 import viv_utils
-import basicblock
 
 import capa.features.extractors
 import capa.features.extractors.viv.file

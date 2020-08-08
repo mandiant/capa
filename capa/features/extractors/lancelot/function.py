@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 def extract_function_switch(ws, f):
-    return []
+    raise NotImplementedError()
 
 
 def extract_function_calls_to(ws, f):
-    return []
+    raise NotImplementedError()
 
 
 def extract_function_loop(ws, f):
