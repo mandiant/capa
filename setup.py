@@ -22,6 +22,7 @@ else:
     requirements.append("vivisect @ https://github.com/williballenthin/vivisect/tarball/v0.0.20200804#egg=vivisect")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
+    requirements.append("backports.functools-lru-cache")
 
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
@@ -52,7 +53,7 @@ setuptools.setup(
             "pycodestyle",
             "black ; python_version>'3.0'",
             "isort",
-        ]
+        ],
     },
     zip_safe=False,
     keywords="capa",
