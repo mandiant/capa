@@ -126,7 +126,21 @@ def scope(request):
         raise ValueError("unexpected scope fixture")
 
 
-@pytest.mark.parametrize(
+def parametrize(params, values, **kwargs):
+    """
+    extend `pytest.mark.parametrize` to pretty-print features.
+    by default, it renders objects as an opaque value.
+    ref: https://docs.pytest.org/en/2.9.0/example/parametrize.html#different-options-for-test-ids
+
+    rendered ID might look something like:
+
+        mimikatz-function=0x403BAC-api(CryptDestroyKey)-True
+    """
+    ids = ["-".join(map(str, vs)) for vs in values]
+    return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
+
+
+@parametrize(
     "sample,scope,feature,expected",
     [
         # file/characteristic("embedded pe")
@@ -192,6 +206,19 @@ def scope(request):
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
+        # insn/api
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptImportKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptDestroyKey"), True),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -202,20 +229,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 """
-def test_api_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x403BAC))
-    assert capa.features.insn.API("advapi32.CryptAcquireContextW") in features
-    assert capa.features.insn.API("advapi32.CryptAcquireContext") in features
-    assert capa.features.insn.API("advapi32.CryptGenKey") in features
-    assert capa.features.insn.API("advapi32.CryptImportKey") in features
-    assert capa.features.insn.API("advapi32.CryptDestroyKey") in features
-    assert capa.features.insn.API("CryptAcquireContextW") in features
-    assert capa.features.insn.API("CryptAcquireContext") in features
-    assert capa.features.insn.API("CryptGenKey") in features
-    assert capa.features.insn.API("CryptImportKey") in features
-    assert capa.features.insn.API("CryptDestroyKey") in features
-
-
 def test_api_features_64_bit(sample_a198216798ca38f280dc413f8c57f2c2):
     features = extract_function_features(lancelot_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.ws, 0x4011B0))
     assert capa.features.insn.API("kernel32.GetStringTypeA") in features
