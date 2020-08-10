@@ -197,6 +197,12 @@ def parametrize(params, values, **kwargs):
         # bb/characteristic(tight loop)
         ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.Characteristic("tight loop"), True),
         ("mimikatz", "function=0x401000,bb=0x401000", capa.features.Characteristic("tight loop"), False),
+        # insn/mnemonic
+        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("push"), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("movzx"), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
         # insn/number
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
@@ -326,14 +332,6 @@ def test_is_security_cookie(mimikatz):
         assert capa.features.extractors.lancelot.insn.is_security_cookie(f, bb, insn) == True
 
 
-def test_mnemonic_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.insn.Mnemonic("push") in features
-    assert capa.features.insn.Mnemonic("movzx") in features
-    assert capa.features.insn.Mnemonic("xor") in features
-
-    assert capa.features.insn.Mnemonic("in") not in features
-    assert capa.features.insn.Mnemonic("out") not in features
 
 
 def test_peb_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):

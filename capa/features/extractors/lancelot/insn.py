@@ -22,7 +22,7 @@ from lancelot import (
 
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64
-from capa.features.insn import Number, Offset
+from capa.features.insn import Number, Offset, Mnemonic
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +140,11 @@ def extract_insn_api_features(xtor, insn):
     raise NotImplementedError()
 
 
+def extract_insn_mnemonic_features(xtor, insn):
+    """parse mnemonic features from the given instruction."""
+    yield Mnemonic(insn.mnemonic), insn.address
+
+
 def extract_insn_number_features(xtor, insn):
     """parse number features from the given instruction."""
     operands = insn.operands
@@ -232,11 +237,6 @@ def extract_insn_nzxor_characteristic_features(xtor, insn):
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
     """
-    raise NotImplementedError()
-
-
-def extract_insn_mnemonic_features(xtor, insn):
-    """parse mnemonic features from the given instruction."""
     raise NotImplementedError()
 
 
