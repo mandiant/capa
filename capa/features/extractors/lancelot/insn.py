@@ -1,14 +1,26 @@
 import logging
 
+import pefile
+
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
 from lancelot import (
     OPERAND_TYPE,
     PERMISSION_READ,
+    MEMORY_OPERAND_BASE,
+    MEMORY_OPERAND_DISP,
+    OPERAND_TYPE_MEMORY,
     OPERAND_TYPE_REGISTER,
     OPERAND_TYPE_IMMEDIATE,
     IMMEDIATE_OPERAND_VALUE,
     REGISTER_OPERAND_REGISTER,
+    IMMEDIATE_OPERAND_IS_RELATIVE,
 )
 
+import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64
 from capa.features.insn import Number
 
@@ -29,17 +41,106 @@ def get_arch(ws):
         raise ValueError("unexpected architecture")
 
 
-def get_imports(ws):
-    """caching accessor"""
-    raise NotImplementedError()
+@lru_cache
+def get_imports(xtor):
+    pe = pefile.PE(data=xtor.buf)
+
+    imports = {}
+    for entry in pe.DIRECTORY_ENTRY_IMPORT:
+        libname = entry.dll.decode("ascii").lower().partition(".")[0]
+        for imp in entry.imports:
+            if imp.ordinal:
+                imports[imp.address] = "%s.#%s" % (libname, imp.ordinal)
+            else:
+                impname = imp.name.decode("ascii")
+                imports[imp.address] = "%s.%s" % (libname, impname)
+    return imports
 
 
-def extract_insn_api_features(ws, insn):
+@lru_cache
+def get_thunks(xtor):
+    thunks = {}
+    for va in xtor.ws.get_functions():
+        try:
+            insn = xtor.ws.read_insn(va)
+        except ValueError:
+            continue
+
+        if insn.mnemonic != "jmp":
+            continue
+
+        op0 = insn.operands[0]
+
+        if op0[OPERAND_TYPE] == OPERAND_TYPE_MEMORY:
+            target = op0[MEMORY_OPERAND_DISP]
+
+            # direct, x64, rip relative
+            # 180020570 FF 25 DA 83 05 00       jmp     cs:RtlCaptureContext_0
+            if op0[MEMORY_OPERAND_BASE] == "rip":
+                target = op0[MEMORY_OPERAND_DISP] + insn.address + insn.length
+
+            # direct, x32
+            # mimikatz:.text:0046AE12 FF 25 54 30 47 00  jmp     ds:__imp_LsaQueryInformationPolicy
+            elif op0[MEMORY_OPERAND_BASE] == None:
+                target = op0[MEMORY_OPERAND_DISP]
+
+            else:
+                continue
+
+            imports = get_imports(xtor)
+            if target not in imports:
+                continue
+
+            thunks[va] = imports[target]
+            continue
+
+    return thunks
+
+
+def extract_insn_api_features(xtor, insn):
     """parse API features from the given instruction."""
+
+    if insn.mnemonic != "call":
+        return
+
+    op0 = insn.operands[0]
+
+    if op0[OPERAND_TYPE] == OPERAND_TYPE_MEMORY:
+
+        # call direct, x64
+        # rip relative
+        # kernel32-64:180001041    call    cs:__imp_RtlVirtualUnwind_0
+        if op0[MEMORY_OPERAND_BASE] == "rip":
+            target = op0[MEMORY_OPERAND_DISP] + insn.address + insn.length
+
+        # call direct, x32
+        # mimikatz:0x403BD3  call    ds:CryptAcquireContextW
+        elif op0[MEMORY_OPERAND_BASE] == None:
+            target = op0[MEMORY_OPERAND_DISP]
+
+        else:
+            return
+
+        imports = get_imports(xtor)
+        if target in imports:
+            for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.address):
+                yield feature, va
+
+    # call via thunk
+    # mimikatz:0x455A41  call    LsaQueryInformationPolicy
+    elif op0[OPERAND_TYPE] == OPERAND_TYPE_IMMEDIATE and op0[IMMEDIATE_OPERAND_IS_RELATIVE]:
+        target = op0[IMMEDIATE_OPERAND_VALUE] + insn.address + insn.length
+        thunks = get_thunks(xtor)
+        if target in thunks:
+            for feature, va in capa.features.extractors.helpers.generate_api_features(thunks[target], insn.address):
+                yield feature, va
+
+    # call on x64
+
     raise NotImplementedError()
 
 
-def extract_insn_number_features(ws, insn):
+def extract_insn_number_features(xtor, insn):
     """parse number features from the given instruction."""
     operands = insn.operands
 
@@ -49,7 +150,7 @@ def extract_insn_number_features(ws, insn):
 
         v = oper[IMMEDIATE_OPERAND_VALUE]
 
-        if ws.probe(v) & PERMISSION_READ:
+        if xtor.ws.probe(v) & PERMISSION_READ:
             # v is a valid address
             # therefore, assume its not also a constant.
             continue
@@ -66,7 +167,7 @@ def extract_insn_number_features(ws, insn):
             return
 
         yield Number(v), insn.address
-        yield Number(v, arch=get_arch(ws)), insn.address
+        yield Number(v, arch=get_arch(xtor.ws)), insn.address
 
 
 def derefs(ws, p):
@@ -85,7 +186,7 @@ def read_bytes(ws, va):
     raise NotImplementedError()
 
 
-def extract_insn_bytes_features(ws, insn):
+def extract_insn_bytes_features(xtor, insn):
     """
     parse byte sequence features from the given instruction.
     """
@@ -96,12 +197,12 @@ def read_string(ws, va):
     raise NotImplementedError()
 
 
-def extract_insn_string_features(ws, insn):
+def extract_insn_string_features(xtor, insn):
     """parse string features from the given instruction."""
     raise NotImplementedError()
 
 
-def extract_insn_offset_features(ws, insn):
+def extract_insn_offset_features(xtor, insn):
     """parse structure offset features from the given instruction."""
     raise NotImplementedError()
 
@@ -113,7 +214,7 @@ def is_security_cookie(ws, insn):
     raise NotImplementedError()
 
 
-def extract_insn_nzxor_characteristic_features(ws, insn):
+def extract_insn_nzxor_characteristic_features(xtor, insn):
     """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
@@ -121,24 +222,24 @@ def extract_insn_nzxor_characteristic_features(ws, insn):
     raise NotImplementedError()
 
 
-def extract_insn_mnemonic_features(ws, insn):
+def extract_insn_mnemonic_features(xtor, insn):
     """parse mnemonic features from the given instruction."""
     raise NotImplementedError()
 
 
-def extract_insn_peb_access_characteristic_features(ws, insn):
+def extract_insn_peb_access_characteristic_features(xtor, insn):
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
     raise NotImplementedError()
 
 
-def extract_insn_segment_access_features(ws, insn):
+def extract_insn_segment_access_features(xtor, insn):
     """ parse the instruction for access to fs or gs """
     raise NotImplementedError()
 
 
-def extract_insn_cross_section_cflow(ws, insn):
+def extract_insn_cross_section_cflow(xtor, insn):
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
@@ -147,13 +248,13 @@ def extract_insn_cross_section_cflow(ws, insn):
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_calls_from(ws, insn):
+def extract_function_calls_from(xtor, insn):
     raise NotImplementedError()
 
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_indirect_call_characteristic_features(ws, insn):
+def extract_function_indirect_call_characteristic_features(xtor, insn):
     """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
@@ -164,10 +265,10 @@ def extract_function_indirect_call_characteristic_features(ws, insn):
 _not_implemented = set([])
 
 
-def extract_insn_features(ws, insn):
+def extract_insn_features(xtor, insn):
     for insn_handler in INSTRUCTION_HANDLERS:
         try:
-            for feature, va in insn_handler(ws, insn):
+            for feature, va in insn_handler(xtor, insn):
                 yield feature, va
         except NotImplementedError:
             if insn_handler.__name__ not in _not_implemented:

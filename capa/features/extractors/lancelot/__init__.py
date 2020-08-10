@@ -52,6 +52,7 @@ class LancelotFeatureExtractor(capa.features.extractors.FeatureExtractor):
         super(LancelotFeatureExtractor, self).__init__()
         self.buf = buf
         self.ws = lancelot.from_bytes(buf)
+        self.ctx = {}
 
     def get_base_address(self):
         return self.ws.base_address
@@ -86,5 +87,5 @@ class LancelotFeatureExtractor(capa.features.extractors.FeatureExtractor):
         return bb.instructions
 
     def extract_insn_features(self, f, bb, insn):
-        for feature, va in capa.features.extractors.lancelot.insn.extract_insn_features(self.ws, insn):
+        for feature, va in capa.features.extractors.lancelot.insn.extract_insn_features(self, insn):
             yield feature, va

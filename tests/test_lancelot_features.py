@@ -12,7 +12,6 @@ import collections
 try:
     from functools import lru_cache
 except ImportError:
-    # pip install backports.functools-lru-cache
     from backports.functools_lru_cache import lru_cache
 
 import pytest
@@ -77,6 +76,8 @@ def sample(request):
         return os.path.join(CD, "data", "mimikatz.exe_")
     elif request.param == "kernel32":
         return os.path.join(CD, "data", "kernel32.dll_")
+    elif request.param == "kernel32-64":
+        return os.path.join(CD, "data", "kernel32-64.dll_")
     elif request.param == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
     else:
@@ -219,6 +220,25 @@ def parametrize(params, values, **kwargs):
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptDestroyKey"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
+        # insn/api: thunk
+        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
+        ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
+        # insn/api: x64
+        (
+            "kernel32-64",
+            "function=0x180001010",
+            capa.features.insn.API("api-ms-win-core-rtlsupport-l1-1-0.RtlVirtualUnwind"),
+            True,
+        ),
+        ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
+        # insn/api: x64 thunk
+        (
+            "kernel32-64",
+            "function=0x1800202B0",
+            capa.features.insn.API("api-ms-win-core-rtlsupport-l1-1-0.RtlCaptureContext"),
+            True,
+        ),
+        ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
     ],
     indirect=["sample", "scope"],
 )
