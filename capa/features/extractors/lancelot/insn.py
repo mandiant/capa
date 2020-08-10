@@ -22,7 +22,7 @@ from lancelot import (
 
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64
-from capa.features.insn import Number
+from capa.features.insn import Number, Offset
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +170,24 @@ def extract_insn_number_features(xtor, insn):
         yield Number(v, arch=get_arch(xtor.ws)), insn.address
 
 
+def extract_insn_offset_features(xtor, insn):
+    """parse structure offset features from the given instruction."""
+    operands = insn.operands
+
+    for oper in operands:
+        if oper[OPERAND_TYPE] != OPERAND_TYPE_MEMORY:
+            continue
+
+        if oper[MEMORY_OPERAND_BASE] in ("esp", "ebp", "rbp"):
+            continue
+
+        # lancelot provides `None` when the displacement is not present.
+        v = oper[MEMORY_OPERAND_DISP] or 0
+
+        yield Offset(v), insn.address
+        yield Offset(v, arch=get_arch(xtor.ws)), insn.address
+
+
 def derefs(ws, p):
     """
     recursively follow the given pointer, yielding the valid memory addresses along the way.
@@ -199,11 +217,6 @@ def read_string(ws, va):
 
 def extract_insn_string_features(xtor, insn):
     """parse string features from the given instruction."""
-    raise NotImplementedError()
-
-
-def extract_insn_offset_features(xtor, insn):
-    """parse structure offset features from the given instruction."""
     raise NotImplementedError()
 
 

@@ -207,6 +207,20 @@ def parametrize(params, values, **kwargs):
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
+        # insn/offset
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
+        # insn/offset: stack references
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
+        # insn/offset: negative
+        ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
+        ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
+        # insn/offset: arch flavors
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X64), False),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
@@ -282,28 +296,6 @@ def test_bytes_pointer_features(mimikatz):
     assert capa.features.Bytes("INPUTEVENT".encode("utf-16le")).evaluate(features) == True
 
 
-def test_offset_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.insn.Offset(0x0) in features
-    assert capa.features.insn.Offset(0x4) in features
-    assert capa.features.insn.Offset(0xC) in features
-    # the following are stack references
-    assert capa.features.insn.Offset(0x8) not in features
-    assert capa.features.insn.Offset(0x10) not in features
-
-    # this function has the following negative offsets
-    # movzx   ecx, byte ptr [eax-1]
-    # movzx   eax, byte ptr [eax-2]
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x4011FB))
-    assert capa.features.insn.Offset(-0x1) in features
-    assert capa.features.insn.Offset(-0x2) in features
-
-
-def test_offset_arch_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.insn.Offset(0x0) in features
-    assert capa.features.insn.Offset(0x0, arch=ARCH_X32) in features
-    assert capa.features.insn.Offset(0x0, arch=ARCH_X64) not in features
 
 
 def test_nzxor_features(mimikatz):
