@@ -101,12 +101,26 @@ def test_string_features():
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
+def test_string_pointer_features():
+    f = get_extractor().get_function(0x0044EDEF)
+    features = extract_function_features(f)
+    assert capa.features.String("INPUTEVENT") in features
+
+
+@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_byte_features():
     f = get_extractor().get_function(0x40105D)
     features = extract_function_features(f)
     wanted = capa.features.Bytes("SCardControl".encode("utf-16le"))
     # use `==` rather than `is` because the result is not `True` but a truthy value.
     assert wanted.evaluate(features) == True
+
+
+@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
+def test_bytes_pointer_features():
+    f = get_extractor().get_function(0x0044EDEF)
+    features = extract_function_features(f)
+    assert capa.features.Bytes("INPUTEVENT".encode("utf-16le")).evaluate(features) == True
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")

@@ -116,11 +116,8 @@ def extract_insn_bytes_features(f, bb, insn):
         example:
             push    offset iid_004118d4_IShellLinkA ; riid
     """
-    if idaapi.is_call_insn(insn):
-        # ignore call instructions
-        return
-
-    for ref in idautils.DataRefsFrom(insn.ea):
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    if ref != insn.ea:
         extracted_bytes = capa.features.extractors.ida.helpers.read_bytes_at(ref, MAX_BYTES_FEATURE_SIZE)
         if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
             yield Bytes(extracted_bytes), insn.ea
@@ -137,7 +134,8 @@ def extract_insn_string_features(f, bb, insn):
         example:
             push offset aAcr     ; "ACR  > "
     """
-    for ref in idautils.DataRefsFrom(insn.ea):
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    if ref != insn.ea:
         found = capa.features.extractors.ida.helpers.find_string_at(ref)
         if found:
             yield String(found), insn.ea
