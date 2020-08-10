@@ -249,19 +249,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 """
-def test_api_features_64_bit(sample_a198216798ca38f280dc413f8c57f2c2):
-    features = extract_function_features(lancelot_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.ws, 0x4011B0))
-    assert capa.features.insn.API("kernel32.GetStringTypeA") in features
-    assert capa.features.insn.API("kernel32.GetStringTypeW") not in features
-    assert capa.features.insn.API("kernel32.GetStringType") in features
-    assert capa.features.insn.API("GetStringTypeA") in features
-    assert capa.features.insn.API("GetStringType") in features
-    # call via thunk in IDA Pro
-    features = extract_function_features(lancelot_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.ws, 0x401CB0))
-    assert capa.features.insn.API("msvcrt.vfprintf") in features
-    assert capa.features.insn.API("vfprintf") in features
-
-
 def test_string_features(mimikatz):
     features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
     assert capa.features.String("SCardControl") in features
@@ -397,14 +384,6 @@ def test_segment_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
     assert capa.features.Characteristic("fs access") in features
 
 
-def test_thunk_features(sample_9324d1a8ae37a36ae560c37448c9705a):
-    features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x407970))
-    assert capa.features.insn.API("kernel32.CreateToolhelp32Snapshot") in features
-    assert capa.features.insn.API("CreateToolhelp32Snapshot") in features
-
-
-
-
 def test_switch_features(mimikatz):
     features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x409411))
     assert capa.features.Characteristic("switch") in features
@@ -435,14 +414,6 @@ def test_loop_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f534
         lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10007250)
     )
     assert capa.features.Characteristic("loop") not in features
-
-
-def test_file_string_features(sample_bfb9b5391a13d0afd787e87ab90f14f5):
-    features = extract_file_features(
-        sample_bfb9b5391a13d0afd787e87ab90f14f5.ws, sample_bfb9b5391a13d0afd787e87ab90f14f5.path,
-    )
-    assert capa.features.String("WarStop") in features  # ASCII, offset 0x40EC
-    assert capa.features.String("cimage/png") in features  # UTF-16 LE, offset 0x350E
 
 
 def test_function_calls_to(sample_9324d1a8ae37a36ae560c37448c9705a):
