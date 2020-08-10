@@ -1,4 +1,5 @@
 import logging
+import itertools
 
 import pefile
 
@@ -271,12 +272,32 @@ def extract_insn_bytes_features(xtor, insn):
     """
     parse byte sequence features from the given instruction.
     """
-    if insn.mnemonic == "call":
+    if insn.mnemonic == (
+        "call",
+        "jb",
+        "jbe",
+        "jcxz",
+        "jecxz",
+        "jknzd",
+        "jkzd",
+        "jl",
+        "jle",
+        "jmp",
+        "jnb",
+        "jnbe",
+        "jnl",
+        "jnle",
+        "jno",
+        "jnp",
+        "jns",
+        "jnz",
+        "jo",
+        "jp",
+        "jrcxz",
+        "js",
+        "jz",
+    ):
         return
-
-    if insn.address == 0x401089:
-        print(insn)
-        print(insn.operands)
 
     for operand in insn.operands:
         try:
@@ -285,36 +306,35 @@ def extract_insn_bytes_features(xtor, insn):
             continue
 
         for ptr in derefs(xtor, target):
-            if insn.address == 0x401089:
-                print(hex(ptr))
-
             try:
                 buf = read_bytes(xtor, ptr)
             except ValueError:
-                if insn.address == 0x401089:
-                    print("err")
                 continue
 
             if capa.features.extractors.helpers.all_zeros(buf):
-                if insn.address == 0x401089:
-                    print("zeros")
                 continue
-
-            if insn.address == 0x401089:
-                import hexdump
-
-                hexdump.hexdump(buf)
 
             yield Bytes(buf), insn.address
 
 
-def read_string(ws, va):
-    raise NotImplementedError()
+def first(s):
+    """enumerate the first element in the sequence"""
+    for i in s:
+        yield i
+        break
 
 
 def extract_insn_string_features(xtor, insn):
     """parse string features from the given instruction."""
-    raise NotImplementedError()
+    for bytez, va in extract_insn_bytes_features(xtor, insn):
+        buf = bytez.value
+
+        for s in itertools.chain(
+            first(capa.features.extractors.strings.extract_ascii_strings(buf)),
+            first(capa.features.extractors.strings.extract_unicode_strings(buf)),
+        ):
+            if s.offset == 0:
+                yield String(s.s), va
 
 
 def is_security_cookie(ws, insn):
