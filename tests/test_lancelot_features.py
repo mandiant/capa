@@ -31,9 +31,9 @@ CD = os.path.dirname(__file__)
 
 @lru_cache
 def extract_file_features(extractor):
-    features = set([])
+    features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
-        features.add(feature)
+        features[feature].add(va)
     return features
 
 
@@ -53,12 +53,12 @@ def extract_function_features(extractor, f):
 
 @lru_cache
 def extract_basic_block_features(extractor, f, bb):
-    features = set({})
+    features = collections.defaultdict(set)
     for insn in extractor.get_instructions(f, bb):
-        for feature, _ in extractor.extract_insn_features(f, bb, insn):
-            features.add(feature)
-    for feature, _ in extractor.extract_basic_block_features(f, bb):
-        features.add(feature)
+        for feature, va in extractor.extract_insn_features(f, bb, insn):
+            features[feature].add(va)
+    for feature, va in extractor.extract_basic_block_features(f, bb):
+        features[feature].add(va)
     return features
 
 
@@ -259,29 +259,30 @@ def parametrize(params, values, **kwargs):
             True,
         ),
         ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
+        # insn/string
+        ("mimikatz", "function=0x40105D", capa.features.String("SCardControl"), True),
+        ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
+        ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
+        ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
+        # insn/string, pointer to string
+        ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
+        # insn/bytes
+        ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardControl".encode("utf-16le")), True),
+        ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardTransmit".encode("utf-16le")), True),
+        ("mimikatz", "function=0x40105D", capa.features.Bytes("ACR  > ".encode("utf-16le")), True),
+        ("mimikatz", "function=0x40105D", capa.features.Bytes("nope".encode("ascii")), False),
+        # insn/bytes, pointer to bytes
+        ("mimikatz", "function=0x44EDEF", capa.features.Bytes("INPUTEVENT".encode("utf-16le")), True),
     ],
     indirect=["sample", "scope"],
 )
 def test_lancelot_features(sample, scope, feature, expected):
     extractor = get_lancelot_extractor(sample)
     features = scope(extractor)
-    assert (feature in features) == expected
+    assert feature.evaluate(features) == expected
 
 
 """
-def test_string_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x40105D))
-    assert capa.features.String("SCardControl") in features
-    assert capa.features.String("SCardTransmit") in features
-    assert capa.features.String("ACR  > ") in features
-    # other strings not in this function
-    assert capa.features.String("bcrypt.dll") not in features
-
-
-def test_string_pointer_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x44EDEF))
-    assert capa.features.String("INPUTEVENT") in features
-
 
 def test_byte_features(sample_9324d1a8ae37a36ae560c37448c9705a):
     features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x406F60))

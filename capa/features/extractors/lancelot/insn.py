@@ -21,7 +21,7 @@ from lancelot import (
 )
 
 import capa.features.extractors.helpers
-from capa.features import ARCH_X32, ARCH_X64
+from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String
 from capa.features.insn import Number, Offset, Mnemonic
 
 logger = logging.getLogger(__name__)
@@ -42,8 +42,13 @@ def get_arch(ws):
 
 
 @lru_cache
+def get_pefile(xtor):
+    return pefile.PE(data=xtor.buf)
+
+
+@lru_cache
 def get_imports(xtor):
-    pe = pefile.PE(data=xtor.buf)
+    pe = get_pefile(xtor)
 
     imports = {}
     for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -135,10 +140,6 @@ def extract_insn_api_features(xtor, insn):
             for feature, va in capa.features.extractors.helpers.generate_api_features(thunks[target], insn.address):
                 yield feature, va
 
-    # call on x64
-
-    raise NotImplementedError()
-
 
 def extract_insn_mnemonic_features(xtor, insn):
     """parse mnemonic features from the given instruction."""
@@ -149,11 +150,11 @@ def extract_insn_number_features(xtor, insn):
     """parse number features from the given instruction."""
     operands = insn.operands
 
-    for oper in operands:
-        if oper[OPERAND_TYPE] != OPERAND_TYPE_IMMEDIATE:
+    for operand in operands:
+        if operand[OPERAND_TYPE] != OPERAND_TYPE_IMMEDIATE:
             continue
 
-        v = oper[IMMEDIATE_OPERAND_VALUE]
+        v = operand[IMMEDIATE_OPERAND_VALUE]
 
         if xtor.ws.probe(v) & PERMISSION_READ:
             # v is a valid address
@@ -179,41 +180,132 @@ def extract_insn_offset_features(xtor, insn):
     """parse structure offset features from the given instruction."""
     operands = insn.operands
 
-    for oper in operands:
-        if oper[OPERAND_TYPE] != OPERAND_TYPE_MEMORY:
+    for operand in operands:
+        if operand[OPERAND_TYPE] != OPERAND_TYPE_MEMORY:
             continue
 
-        if oper[MEMORY_OPERAND_BASE] in ("esp", "ebp", "rbp"):
+        if operand[MEMORY_OPERAND_BASE] in ("esp", "ebp", "rbp"):
             continue
 
         # lancelot provides `None` when the displacement is not present.
-        v = oper[MEMORY_OPERAND_DISP] or 0
+        v = operand[MEMORY_OPERAND_DISP] or 0
 
         yield Offset(v), insn.address
         yield Offset(v, arch=get_arch(xtor.ws)), insn.address
 
 
-def derefs(ws, p):
+def derefs(xtor, p):
     """
     recursively follow the given pointer, yielding the valid memory addresses along the way.
     useful when you may have a pointer to string, or pointer to pointer to string, etc.
     this is a "do what i mean" type of helper function.
     """
-    raise NotImplementedError()
+
+    depth = 0
+    while True:
+        if not xtor.ws.probe(p) & PERMISSION_READ:
+            return
+        yield p
+
+        next = xtor.ws.read_pointer(p)
+
+        # sanity: pointer points to self
+        if next == p:
+            return
+
+        # sanity: avoid chains of pointers that are unreasonably deep
+        depth += 1
+        if depth > 10:
+            return
+
+        p = next
 
 
-def read_bytes(ws, va):
+def get_operand_target(insn, op):
+    if op[OPERAND_TYPE] == OPERAND_TYPE_MEMORY:
+        # call direct, x64
+        # rip relative
+        # kernel32-64:180001041    call    cs:__imp_RtlVirtualUnwind_0
+        if op[MEMORY_OPERAND_BASE] == "rip":
+            return op[MEMORY_OPERAND_DISP] + insn.address + insn.length
+
+        # call direct, x32
+        # mimikatz:0x403BD3  call    ds:CryptAcquireContextW
+        elif op[MEMORY_OPERAND_BASE] == None:
+            return op[MEMORY_OPERAND_DISP]
+
+    # call via thunk
+    # mimikatz:0x455A41  call    LsaQueryInformationPolicy
+    elif op[OPERAND_TYPE] == OPERAND_TYPE_IMMEDIATE and op[IMMEDIATE_OPERAND_IS_RELATIVE]:
+        return op[IMMEDIATE_OPERAND_VALUE] + insn.address + insn.length
+
+    elif op[OPERAND_TYPE] == OPERAND_TYPE_IMMEDIATE:
+        return op[IMMEDIATE_OPERAND_VALUE]
+
+    raise ValueError("memory operand has no target")
+
+
+def read_bytes(xtor, va):
     """
     read up to MAX_BYTES_FEATURE_SIZE from the given address.
+
+    raises:
+      ValueError: if the given address is not valid.
     """
-    raise NotImplementedError()
+    start = va
+    end = va + MAX_BYTES_FEATURE_SIZE
+    pe = get_pefile(xtor)
+
+    for section in pe.sections:
+        section_start = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
+        section_end = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + section.Misc_VirtualSize
+
+        if section_start <= start < section_end:
+            end = min(end, section_end)
+            return xtor.ws.read_bytes(start, end - start)
+
+    raise ValueError("invalid address")
 
 
 def extract_insn_bytes_features(xtor, insn):
     """
     parse byte sequence features from the given instruction.
     """
-    raise NotImplementedError()
+    if insn.mnemonic == "call":
+        return
+
+    if insn.address == 0x401089:
+        print(insn)
+        print(insn.operands)
+
+    for operand in insn.operands:
+        try:
+            target = get_operand_target(insn, operand)
+        except ValueError:
+            continue
+
+        for ptr in derefs(xtor, target):
+            if insn.address == 0x401089:
+                print(hex(ptr))
+
+            try:
+                buf = read_bytes(xtor, ptr)
+            except ValueError:
+                if insn.address == 0x401089:
+                    print("err")
+                continue
+
+            if capa.features.extractors.helpers.all_zeros(buf):
+                if insn.address == 0x401089:
+                    print("zeros")
+                continue
+
+            if insn.address == 0x401089:
+                import hexdump
+
+                hexdump.hexdump(buf)
+
+            yield Bytes(buf), insn.address
 
 
 def read_string(ws, va):
