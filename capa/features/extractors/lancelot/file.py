@@ -43,13 +43,12 @@ def extract_file_import_names(buf, pe):
     for entry in pe.DIRECTORY_ENTRY_IMPORT:
         libname = entry.dll.decode("ascii").lower().partition(".")[0]
         for imp in entry.imports:
-            impaddr = base_address + imp.address
             if imp.ordinal:
-                yield Import("%s.#%s" % (libname, imp.ordinal)), impaddr
+                yield Import("%s.#%s" % (libname, imp.ordinal)), imp.address
             else:
                 impname = imp.name.decode("ascii")
-                yield Import("%s.%s" % (libname, impname)), impaddr
-                yield Import("%s" % (impname)), impaddr
+                yield Import("%s.%s" % (libname, impname)), imp.address
+                yield Import("%s" % (impname)), imp.address
 
 
 def extract_file_section_names(buf, pe):

@@ -92,7 +92,6 @@ def _bb_has_stackstring(ws, bb):
     for insn in bb.instructions:
         if is_mov_imm_to_stack(insn):
             # add number of operand bytes
-            print(hex(insn.address))
             src = insn.operands[1]
             count += get_printable_len(src)
 
