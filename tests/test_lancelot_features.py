@@ -80,6 +80,10 @@ def sample(request):
         return os.path.join(CD, "data", "kernel32-64.dll_")
     elif request.param == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
+    elif request.param.startswith("a1982"):
+        return os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
+    elif request.param.startswith("39c05"):
+        return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -281,6 +285,14 @@ def parametrize(params, values, **kwargs):
         # insn/characteristic(gs access)
         ("kernel32-64", "function=0x180001068", capa.features.Characteristic("gs access"), True),
         ("mimikatz", "function=0x46B67A", capa.features.Characteristic("gs access"), False),
+        # insn/characteristic(cross section flow)
+        ("a1982...", "function=0x4014D0", capa.features.Characteristic("cross section flow"), True),
+        # insn/characteristic(cross section flow): imports don't count
+        ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("cross section flow"), False),
+        # insn/characteristic(recursive call)
+        ("39c05...", "function=0x10003100", capa.features.Characteristic("recursive call"), True),
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("recursive call"), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -295,49 +307,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 """
-def test_tight_loop_features(mimikatz):
-    f = lancelot_utils.Function(mimikatz.ws, 0x402EC4)
-    for bb in f.basic_blocks:
-        if bb.va != 0x402F8E:
-            continue
-        features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic("tight loop") in features
-        assert capa.features.basicblock.BasicBlock() in features
-
-
-def test_tight_loop_bb_features(mimikatz):
-    f = lancelot_utils.Function(mimikatz.ws, 0x402EC4)
-    for bb in f.basic_blocks:
-        if bb.va != 0x402F8E:
-            continue
-        features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic("tight loop") in features
-        assert capa.features.basicblock.BasicBlock() in features
-
-
-def test_cross_section_flow_features(sample_a198216798ca38f280dc413f8c57f2c2):
-    features = extract_function_features(lancelot_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.ws, 0x4014D0))
-    assert capa.features.Characteristic("cross section flow") in features
-
-    # this function has calls to some imports,
-    # which should not trigger cross-section flow characteristic
-    features = extract_function_features(lancelot_utils.Function(sample_a198216798ca38f280dc413f8c57f2c2.ws, 0x401563))
-    assert capa.features.Characteristic("cross section flow") not in features
-
-
-def test_segment_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
-    features = extract_function_features(lancelot_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.ws, 0xABA6FEC))
-    assert capa.features.Characteristic("fs access") in features
-
-
-def test_switch_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x409411))
-    assert capa.features.Characteristic("switch") in features
-
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x409393))
-    assert capa.features.Characteristic("switch") not in features
-
-
 def test_recursive_call_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
     features = extract_function_features(
         lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10003100)

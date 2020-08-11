@@ -269,11 +269,9 @@ def read_bytes(xtor, va):
     raise ValueError("invalid address")
 
 
-def extract_insn_bytes_features(xtor, f, bb, insn):
-    """
-    parse byte sequence features from the given instruction.
-    """
-    if insn.mnemonic == (
+# these are mnemonics that may flow (jump) elsewhere
+FLOW_MNEMONICS = set(
+    [
         "call",
         "jb",
         "jbe",
@@ -297,7 +295,15 @@ def extract_insn_bytes_features(xtor, f, bb, insn):
         "jrcxz",
         "js",
         "jz",
-    ):
+    ]
+)
+
+
+def extract_insn_bytes_features(xtor, f, bb, insn):
+    """
+    parse byte sequence features from the given instruction.
+    """
+    if insn.mnemonic in FLOW_MNEMONICS:
         return
 
     for operand in insn.operands:
@@ -411,17 +417,58 @@ def extract_insn_segment_access_features(xtor, f, bb, insn):
             yield Characteristic("fs access"), insn.address
 
 
+def get_section(xtor, va):
+    pe = get_pefile(xtor)
+
+    for i, section in enumerate(pe.sections):
+        section_start = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
+        section_end = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + section.Misc_VirtualSize
+
+        if section_start <= va < section_end:
+            return i
+
+    raise ValueError("invalid address")
+
+
 def extract_insn_cross_section_cflow(xtor, f, bb, insn):
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
-    raise NotImplementedError()
+    if insn.mnemonic not in FLOW_MNEMONICS:
+        return
+
+    try:
+        target = get_operand_target(insn, insn.operands[0])
+    except ValueError:
+        return
+
+    if target in get_imports(xtor):
+        return
+
+    try:
+        if get_section(xtor, insn.address) != get_section(xtor, target):
+            yield Characteristic("cross section flow"), insn.address
+    except ValueError:
+        return
 
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
 def extract_function_calls_from(xtor, f, bb, insn):
-    raise NotImplementedError()
+    if insn.mnemonic != "call":
+        return
+
+    try:
+        target = get_operand_target(insn, insn.operands[0])
+    except ValueError:
+        return
+
+    if target in get_imports(xtor):
+        return
+
+    yield Characteristic("calls from"), target
+    if target == f:
+        yield Characteristic("recursive call"), target
 
 
 # this is a feature that's most relevant at the function or basic block scope,
