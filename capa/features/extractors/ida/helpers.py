@@ -333,26 +333,27 @@ def is_basic_block_tight_loop(bb):
     return False
 
 
-def find_data_reference_from_insn_helper(ea, max_depth=10):
-    """ recursive search for data reference, if exists, from instruction by resolving nested pointers, if exist """
-    if 0 == max_depth:
-        # return when max depth reached
-        return ea
+def find_data_reference_from_insn(insn, max_depth=10):
+    """ search for data reference from instruction, return address of instruction if no reference exists """
+    depth = 0
+    ea = insn.ea
 
-    data_refs = list(idautils.DataRefsFrom(ea))
+    while True:
+        data_refs = list(idautils.DataRefsFrom(ea))
 
-    if len(data_refs) != 1:
-        # return if no refs or more than one ref (assume nested pointers only have one data reference)
-        return ea
+        if len(data_refs) != 1:
+            # break if no refs or more than one ref (assume nested pointers only have one data reference)
+            break
 
-    if ea == data_refs[0]:
-        # return if circular reference
-        return ea
+        if ea == data_refs[0]:
+            # break if circular reference
+            break
 
-    # continue searching
-    return find_data_reference_from_insn_helper(data_refs[0], max_depth - 1)
+        depth += 1
+        if depth > max_depth:
+            # break if max depth
+            break
 
+        ea = data_refs[0]
 
-def find_data_reference_from_insn(insn):
-    """ return address of data reference, if exists, otherwise address of instruction """
-    return find_data_reference_from_insn_helper(insn.ea)
+    return ea
