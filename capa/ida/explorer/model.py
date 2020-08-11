@@ -45,7 +45,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
     def __init__(self, parent=None):
         """ """
         super(CapaExplorerDataModel, self).__init__(parent)
-        self.root_node = CapaExplorerDataItem(None, ["Rule Information", "Address", "Details"])
+        self.root_node = CapaExplorerDataItem(
+            None, ["Rule Information", "Address", "Details"]
+        )
 
     def reset(self):
         """ """
@@ -53,7 +55,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # TODO: make less hacky
         for idx in range(self.root_node.childCount()):
             root_index = self.index(idx, 0, QtCore.QModelIndex())
-            for model_index in self.iterateChildrenIndexFromRootIndex(root_index, ignore_root=False):
+            for model_index in self.iterateChildrenIndexFromRootIndex(
+                root_index, ignore_root=False
+            ):
                 model_index.internalPointer().setChecked(False)
                 self.reset_ida_highlighting(model_index.internalPointer(), False)
                 self.dataChanged.emit(model_index, model_index)
@@ -102,7 +106,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # show tooltip containing rule source
             return item.source
 
-        if role == QtCore.Qt.CheckStateRole and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION:
+        if (
+            role == QtCore.Qt.CheckStateRole
+            and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
+        ):
             # inform view how to display content of checkbox - un/checked
             return QtCore.Qt.Checked if item.isChecked() else QtCore.Qt.Unchecked
 
@@ -136,7 +143,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             font.setBold(True)
             return font
 
-        if role == QtCore.Qt.ForegroundRole and column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
+        if (
+            role == QtCore.Qt.ForegroundRole
+            and column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS
+        ):
             # set color for virtual address column
             return QtGui.QColor(88, 139, 174)
 
@@ -254,7 +264,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             @param checked: indicates item is or not checked
         """
         if not isinstance(
-            item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem, CapaExplorerByteViewItem)
+            item,
+            (
+                CapaExplorerStringViewItem,
+                CapaExplorerInstructionViewItem,
+                CapaExplorerByteViewItem,
+            ),
         ):
             # ignore other item types
             return
@@ -288,10 +303,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if (
             role == QtCore.Qt.CheckStateRole
-            and model_index.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
+            and model_index.column()
+            == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
             # user un/checked box - un/check parent and children
-            for child_index in self.iterateChildrenIndexFromRootIndex(model_index, ignore_root=False):
+            for child_index in self.iterateChildrenIndexFromRootIndex(
+                model_index, ignore_root=False
+            ):
                 child_index.internalPointer().setChecked(value)
                 self.reset_ida_highlighting(child_index.internalPointer(), value)
                 self.dataChanged.emit(child_index, child_index)
@@ -300,7 +318,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if (
             role == QtCore.Qt.EditRole
             and value
-            and model_index.column() == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
+            and model_index.column()
+            == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
             and isinstance(model_index.internalPointer(), CapaExplorerFunctionItem)
         ):
             # user renamed function - update IDA database and data model
@@ -353,13 +372,15 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # TODO: do we display 'not'
             pass
         elif statement["type"] == "some":
-            return CapaExplorerDefaultItem(parent, statement["count"] + " or more")
+            return CapaExplorerDefaultItem(parent, str(statement["count"]) + " or more")
         elif statement["type"] == "range":
             # `range` is a weird node, its almost a hybrid of statement + feature.
             # it is a specific feature repeated multiple times.
             # there's no additional logic in the feature part, just the existence of a feature.
             # so, we have to inline some of the feature rendering here.
-            display = "count(%s): " % self.capa_doc_feature_to_display(statement["child"])
+            display = "count(%s): " % self.capa_doc_feature_to_display(
+                statement["child"]
+            )
 
             if statement["max"] == statement["min"]:
                 display += "%d" % (statement["min"])
@@ -439,9 +460,16 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         self.beginResetModel()
 
         for rule in rutils.capability_rules(doc):
-            parent = CapaExplorerRuleItem(self.root_node, rule["meta"]["name"], len(rule["matches"]), rule["source"])
+            parent = CapaExplorerRuleItem(
+                self.root_node,
+                rule["meta"]["name"],
+                len(rule["matches"]),
+                rule["source"],
+            )
 
-            for (location, match) in doc["rules"][rule["meta"]["name"]]["matches"].items():
+            for (location, match) in doc["rules"][rule["meta"]["name"]][
+                "matches"
+            ].items():
                 if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
                     parent2 = parent
                 elif rule["meta"]["scope"] == capa.rules.FUNCTION_SCOPE:
@@ -449,7 +477,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 elif rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
                     parent2 = CapaExplorerBlockItem(parent, location)
                 else:
-                    raise RuntimeError("unexpected rule scope: " + str(rule["meta"]["scope"]))
+                    raise RuntimeError(
+                        "unexpected rule scope: " + str(rule["meta"]["scope"])
+                    )
 
                 self.render_capa_doc_match(parent2, match, doc)
 
@@ -472,7 +502,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """
         if feature[feature["type"]]:
             if feature.get("description", ""):
-                return "%s(%s = %s)" % (feature["type"], feature[feature["type"]], feature["description"])
+                return "%s(%s = %s)" % (
+                    feature["type"],
+                    feature[feature["type"]],
+                    feature["description"],
+                )
             else:
                 return "%s(%s)" % (feature["type"], feature[feature["type"]])
         else:
@@ -497,7 +531,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if len(locations) == 1:
             # only one location for feature so no need to nest children
-            parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display,)
+            parent2 = self.render_capa_doc_feature(
+                parent, feature, next(iter(locations)), doc, display=display,
+            )
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
@@ -528,7 +564,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             if feature[feature["type"]] in ("embedded pe",):
                 return CapaExplorerByteViewItem(parent, display, location)
 
-            if feature[feature["type"]] in ("loop", "recursive call", "tight loop", "switch"):
+            if feature[feature["type"]] in (
+                "loop",
+                "recursive call",
+                "tight loop",
+                "switch",
+            ):
                 return CapaExplorerFeatureItem(parent, display=display)
 
             # default to instruction view for all other characteristics
@@ -537,16 +578,30 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if feature["type"] == "match":
             # display content of rule for all rule matches
             return CapaExplorerRuleMatchItem(
-                parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
+                parent,
+                display,
+                source=doc["rules"].get(feature[feature["type"]], {}).get("source", ""),
             )
 
         if feature["type"] == "regex":
-            return CapaExplorerFeatureItem(parent, display, location, details=feature["match"])
+            return CapaExplorerFeatureItem(
+                parent, display, location, details=feature["match"]
+            )
 
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)
 
-        if feature["type"] in ("bytes", "api", "mnemonic", "number", "offset"):
+        if feature["type"] in (
+            "bytes",
+            "api",
+            "mnemonic",
+            "number",
+            "offset",
+            "number/x32",
+            "number/x64",
+            "offset/x32",
+            "offset/x64",
+        ):
             # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)
 
@@ -578,7 +633,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         # recursive search for all instances of old function name
         for model_index in self.match(
-            root_index, QtCore.Qt.DisplayRole, old_name, hits=-1, flags=QtCore.Qt.MatchRecursive
+            root_index,
+            QtCore.Qt.DisplayRole,
+            old_name,
+            hits=-1,
+            flags=QtCore.Qt.MatchRecursive,
         ):
             if not isinstance(model_index.internalPointer(), CapaExplorerFunctionItem):
                 continue
