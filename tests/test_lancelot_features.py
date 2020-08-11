@@ -296,6 +296,9 @@ def parametrize(params, values, **kwargs):
         # insn/characteristic(indirect call)
         ("mimikatz", "function=0x4175FF", capa.features.Characteristic("indirect call"), True),
         ("mimikatz", "function=0x46B67A", capa.features.Characteristic("indirect call"), False),
+        # insn/characteristic(calls from)
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("calls from"), True),
+        ("mimikatz", "function=0x40E51B", capa.features.Characteristic("calls from"), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -309,19 +312,23 @@ def test_lancelot_features(sample, scope, feature, expected):
     assert feature.evaluate(features) == expected, msg
 
 
+@parametrize(
+    "sample,scope,feature,expected",
+    [
+        ("mimikatz", "function=0x40E51B", capa.features.basicblock.BasicBlock(), 1),
+        ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
+        ("mimikatz", "function=0x40E5C2", capa.features.Characteristic("calls from"), 3),
+    ],
+    indirect=["sample", "scope"],
+)
+def test_lancelot_feature_counts(sample, scope, feature, expected):
+    extractor = get_lancelot_extractor(sample)
+    features = scope(extractor)
+    msg = "%s should be found %d times in %s" % (str(feature), expected, scope.__name__)
+    assert len(features[feature]) == expected, msg
+
+
 """
-def test_loop_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
-    features = extract_function_features(
-        lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10003D30)
-    )
-    assert capa.features.Characteristic("loop") in features
-
-    features = extract_function_features(
-        lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10007250)
-    )
-    assert capa.features.Characteristic("loop") not in features
-
-
 def test_function_calls_to(sample_9324d1a8ae37a36ae560c37448c9705a):
     features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x406F60))
     assert capa.features.Characteristic("calls to") in features
@@ -332,23 +339,6 @@ def test_function_calls_to64(sample_lab21_01):
     features = extract_function_features(lancelot_utils.Function(sample_lab21_01.ws, 0x1400052D0))  # memcpy
     assert capa.features.Characteristic("calls to") in features
     assert len(features[capa.features.Characteristic("calls to")]) == 8
-
-
-def test_function_calls_from(sample_9324d1a8ae37a36ae560c37448c9705a):
-    features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x406F60))
-    assert capa.features.Characteristic("calls from") in features
-    assert len(features[capa.features.Characteristic("calls from")]) == 23
-
-
-def test_basic_block_count(sample_9324d1a8ae37a36ae560c37448c9705a):
-    features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x406F60))
-    assert len(features[capa.features.basicblock.BasicBlock()]) == 26
-
-
-def test_indirect_call_features(sample_a933a1a402775cfa94b6bee0963f4b46):
-    features = extract_function_features(lancelot_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.ws, 0xABA68A0))
-    assert capa.features.Characteristic("indirect call") in features
-    assert len(features[capa.features.Characteristic("indirect call")]) == 3
 
 
 def test_indirect_calls_resolved(sample_c91887d861d9bd4a5872249b641bc9f9):
