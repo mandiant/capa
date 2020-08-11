@@ -14,6 +14,7 @@ from lancelot import (
     MEMORY_OPERAND_BASE,
     MEMORY_OPERAND_DISP,
     OPERAND_TYPE_MEMORY,
+    MEMORY_OPERAND_INDEX,
     OPERAND_TYPE_REGISTER,
     MEMORY_OPERAND_SEGMENT,
     OPERAND_TYPE_IMMEDIATE,
@@ -478,7 +479,16 @@ def extract_function_indirect_call_characteristic_features(xtor, f, bb, insn):
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
     """
-    raise NotImplementedError()
+    if insn.mnemonic != "call":
+        return
+
+    op0 = insn.operands[0]
+    if op0[OPERAND_TYPE] == OPERAND_TYPE_REGISTER:
+        yield Characteristic("indirect call"), insn.address
+    elif op0[OPERAND_TYPE] == OPERAND_TYPE_MEMORY and op0[MEMORY_OPERAND_BASE] is not None:
+        yield Characteristic("indirect call"), insn.address
+    elif op0[OPERAND_TYPE] == OPERAND_TYPE_MEMORY and op0[MEMORY_OPERAND_INDEX] is not None:
+        yield Characteristic("indirect call"), insn.address
 
 
 _not_implemented = set([])

@@ -293,6 +293,9 @@ def parametrize(params, values, **kwargs):
         # insn/characteristic(recursive call)
         ("39c05...", "function=0x10003100", capa.features.Characteristic("recursive call"), True),
         ("mimikatz", "function=0x46B67A", capa.features.Characteristic("recursive call"), False),
+        # insn/characteristic(indirect call)
+        ("mimikatz", "function=0x4175FF", capa.features.Characteristic("indirect call"), True),
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("indirect call"), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -307,18 +310,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 """
-def test_recursive_call_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
-    features = extract_function_features(
-        lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10003100)
-    )
-    assert capa.features.Characteristic("recursive call") in features
-
-    features = extract_function_features(
-        lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10007B00)
-    )
-    assert capa.features.Characteristic("recursive call") not in features
-
-
 def test_loop_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
     features = extract_function_features(
         lancelot_utils.Function(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.ws, 0x10003D30)
