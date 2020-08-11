@@ -128,10 +128,13 @@ def extract_insn_number_features(f, bb, insn):
     #     push    3136B0h         ; dwControlCode
     for oper in insn.opers:
         # this is for both x32 and x64
-        if not isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
+        if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
             continue
 
-        v = oper.getOperValue(oper)
+        if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
+            v = oper.getOperValue(oper)
+        else:
+            v = oper.getOperAddr(oper)
 
         if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
             # this is a valid address

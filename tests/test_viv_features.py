@@ -126,6 +126,11 @@ def test_number_arch_features(mimikatz):
     assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
 
 
+def test_unmapped_immediate_memory_reference_features(sample_al_khaser_x86):
+    features = extract_function_features(viv_utils.Function(sample_al_khaser_x86.vw, 0x41AAB4))
+    assert capa.features.insn.Number(0x7FFE02D4) in features
+
+
 def test_offset_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x40105D))
     assert capa.features.insn.Offset(0x0) in features

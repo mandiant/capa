@@ -98,8 +98,11 @@ def extract_insn_number_features(f, bb, insn):
         #   .text:00401145 add esp, 0Ch
         return
 
-    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm,)):
-        const = capa.features.extractors.ida.helpers.mask_op_val(op)
+    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm, idaapi.o_mem)):
+        if op.type == idaapi.o_imm:
+            const = capa.features.extractors.ida.helpers.mask_op_val(op)
+        else:
+            const = op.addr
         if not idaapi.is_mapped(const):
             yield Number(const), insn.ea
             yield Number(const, arch=get_arch(f.ctx)), insn.ea
