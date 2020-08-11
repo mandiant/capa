@@ -251,20 +251,10 @@ def parametrize(params, values, **kwargs):
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
         # insn/api: x64
-        (
-            "kernel32-64",
-            "function=0x180001010",
-            capa.features.insn.API("api-ms-win-core-rtlsupport-l1-1-0.RtlVirtualUnwind"),
-            True,
-        ),
+        ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True,),
         ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
         # insn/api: x64 thunk
-        (
-            "kernel32-64",
-            "function=0x1800202B0",
-            capa.features.insn.API("api-ms-win-core-rtlsupport-l1-1-0.RtlCaptureContext"),
-            True,
-        ),
+        ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True,),
         ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
         # insn/string
         ("mimikatz", "function=0x40105D", capa.features.String("SCardControl"), True),
