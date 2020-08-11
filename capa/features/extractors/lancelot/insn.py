@@ -15,6 +15,7 @@ from lancelot import (
     MEMORY_OPERAND_DISP,
     OPERAND_TYPE_MEMORY,
     OPERAND_TYPE_REGISTER,
+    MEMORY_OPERAND_SEGMENT,
     OPERAND_TYPE_IMMEDIATE,
     IMMEDIATE_OPERAND_VALUE,
     REGISTER_OPERAND_REGISTER,
@@ -384,12 +385,30 @@ def extract_insn_peb_access_characteristic_features(xtor, f, bb, insn):
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
-    raise NotImplementedError()
+    for operand in insn.operands:
+        if (
+            operand[OPERAND_TYPE] == OPERAND_TYPE_MEMORY
+            and operand[MEMORY_OPERAND_SEGMENT] == "gs"
+            and operand[MEMORY_OPERAND_DISP] == 0x60
+        ):
+            yield Characteristic("peb access"), insn.address
+
+        if (
+            operand[OPERAND_TYPE] == OPERAND_TYPE_MEMORY
+            and operand[MEMORY_OPERAND_SEGMENT] == "fs"
+            and operand[MEMORY_OPERAND_DISP] == 0x30
+        ):
+            yield Characteristic("peb access"), insn.address
 
 
 def extract_insn_segment_access_features(xtor, f, bb, insn):
     """ parse the instruction for access to fs or gs """
-    raise NotImplementedError()
+    for operand in insn.operands:
+        if operand[OPERAND_TYPE] == OPERAND_TYPE_MEMORY and operand[MEMORY_OPERAND_SEGMENT] == "gs":
+            yield Characteristic("gs access"), insn.address
+
+        if operand[OPERAND_TYPE] == OPERAND_TYPE_MEMORY and operand[MEMORY_OPERAND_SEGMENT] == "fs":
+            yield Characteristic("fs access"), insn.address
 
 
 def extract_insn_cross_section_cflow(xtor, f, bb, insn):

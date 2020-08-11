@@ -285,6 +285,12 @@ def parametrize(params, values, **kwargs):
         ("mimikatz", "function=0x40105D", capa.features.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): no security cookies
         ("mimikatz", "function=0x46B67A", capa.features.Characteristic("nzxor"), False),
+        # insn/characteristic(peb access)
+        ("kernel32-64", "function=0x180001068", capa.features.Characteristic("peb access"), True),
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("peb access"), False),
+        # insn/characteristic(gs access)
+        ("kernel32-64", "function=0x180001068", capa.features.Characteristic("gs access"), True),
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("gs access"), False),
     ],
     indirect=["sample", "scope"],
 )
@@ -299,16 +305,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 """
-
-def test_nzxor_features(mimikatz):
-    features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x410DFC))
-    assert capa.features.Characteristic("nzxor") in features  # 0x0410F0B
-
-def test_peb_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
-    features = extract_function_features(lancelot_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.ws, 0xABA6FEC))
-    assert capa.features.Characteristic("peb access") in features
-
-
 def test_tight_loop_features(mimikatz):
     f = lancelot_utils.Function(mimikatz.ws, 0x402EC4)
     for bb in f.basic_blocks:
