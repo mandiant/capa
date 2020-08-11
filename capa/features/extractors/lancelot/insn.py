@@ -464,9 +464,6 @@ def extract_function_calls_from(xtor, f, bb, insn):
     except ValueError:
         return
 
-    if target in get_imports(xtor):
-        return
-
     yield Characteristic("calls from"), target
     if target == f:
         yield Characteristic("recursive call"), target
