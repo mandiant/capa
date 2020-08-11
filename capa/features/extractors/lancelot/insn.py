@@ -22,7 +22,7 @@ from lancelot import (
 )
 
 import capa.features.extractors.helpers
-from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String
+from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 
 logger = logging.getLogger(__name__)
@@ -337,34 +337,62 @@ def extract_insn_string_features(xtor, f, bb, insn):
                 yield String(s.s), va
 
 
-def is_security_cookie(ws, insn):
+def is_security_cookie(xtor, f, bb, insn):
     """
     check if an instruction is related to security cookie checks
     """
-    raise NotImplementedError()
+    op1 = insn.operands[1]
+    if op1[OPERAND_TYPE] == OPERAND_TYPE_REGISTER and op1[REGISTER_OPERAND_REGISTER] not in (
+        "esp",
+        "ebp",
+        "rbp",
+        "rsp",
+    ):
+        return False
+
+    # expect security cookie init in first basic block within first bytes (instructions)
+    if f == bb.address and insn.address < (bb.address + SECURITY_COOKIE_BYTES_DELTA):
+        return True
+
+    # ... or within last bytes (instructions) before a return
+    insns = list(xtor.get_instructions(f, bb))
+    if insns[-1].mnemonic in ("ret", "retn") and insn.address > (bb.address + bb.length - SECURITY_COOKIE_BYTES_DELTA):
+        return True
+
+    return False
 
 
-def extract_insn_nzxor_characteristic_features(xtor, insn):
+def extract_insn_nzxor_characteristic_features(xtor, f, bb, insn):
     """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
     """
-    raise NotImplementedError()
+    if insn.mnemonic != "xor":
+        return
+
+    operands = insn.operands
+    if operands[0] == operands[1]:
+        return
+
+    if is_security_cookie(xtor, f, bb, insn):
+        return
+
+    yield Characteristic("nzxor"), insn.address
 
 
-def extract_insn_peb_access_characteristic_features(xtor, insn):
+def extract_insn_peb_access_characteristic_features(xtor, f, bb, insn):
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
     raise NotImplementedError()
 
 
-def extract_insn_segment_access_features(xtor, insn):
+def extract_insn_segment_access_features(xtor, f, bb, insn):
     """ parse the instruction for access to fs or gs """
     raise NotImplementedError()
 
 
-def extract_insn_cross_section_cflow(xtor, insn):
+def extract_insn_cross_section_cflow(xtor, f, bb, insn):
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
