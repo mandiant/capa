@@ -87,5 +87,5 @@ class LancelotFeatureExtractor(capa.features.extractors.FeatureExtractor):
         return bb.instructions
 
     def extract_insn_features(self, f, bb, insn):
-        for feature, va in capa.features.extractors.lancelot.insn.extract_insn_features(self, insn):
+        for feature, va in capa.features.extractors.lancelot.insn.extract_insn_features(self, f, bb, insn):
             yield feature, va

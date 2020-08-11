@@ -103,7 +103,7 @@ def get_thunks(xtor):
     return thunks
 
 
-def extract_insn_api_features(xtor, insn):
+def extract_insn_api_features(xtor, f, bb, insn):
     """parse API features from the given instruction."""
 
     if insn.mnemonic != "call":
@@ -142,12 +142,12 @@ def extract_insn_api_features(xtor, insn):
                 yield feature, va
 
 
-def extract_insn_mnemonic_features(xtor, insn):
+def extract_insn_mnemonic_features(xtor, f, bb, insn):
     """parse mnemonic features from the given instruction."""
     yield Mnemonic(insn.mnemonic), insn.address
 
 
-def extract_insn_number_features(xtor, insn):
+def extract_insn_number_features(xtor, f, bb, insn):
     """parse number features from the given instruction."""
     operands = insn.operands
 
@@ -177,7 +177,7 @@ def extract_insn_number_features(xtor, insn):
         yield Number(v, arch=get_arch(xtor.ws)), insn.address
 
 
-def extract_insn_offset_features(xtor, insn):
+def extract_insn_offset_features(xtor, f, bb, insn):
     """parse structure offset features from the given instruction."""
     operands = insn.operands
 
@@ -268,7 +268,7 @@ def read_bytes(xtor, va):
     raise ValueError("invalid address")
 
 
-def extract_insn_bytes_features(xtor, insn):
+def extract_insn_bytes_features(xtor, f, bb, insn):
     """
     parse byte sequence features from the given instruction.
     """
@@ -324,9 +324,9 @@ def first(s):
         break
 
 
-def extract_insn_string_features(xtor, insn):
+def extract_insn_string_features(xtor, f, bb, insn):
     """parse string features from the given instruction."""
-    for bytez, va in extract_insn_bytes_features(xtor, insn):
+    for bytez, va in extract_insn_bytes_features(xtor, f, bb, insn):
         buf = bytez.value
 
         for s in itertools.chain(
@@ -373,13 +373,13 @@ def extract_insn_cross_section_cflow(xtor, insn):
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_calls_from(xtor, insn):
+def extract_function_calls_from(xtor, f, bb, insn):
     raise NotImplementedError()
 
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_indirect_call_characteristic_features(xtor, insn):
+def extract_function_indirect_call_characteristic_features(xtor, f, bb, insn):
     """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
@@ -390,10 +390,10 @@ def extract_function_indirect_call_characteristic_features(xtor, insn):
 _not_implemented = set([])
 
 
-def extract_insn_features(xtor, insn):
+def extract_insn_features(xtor, f, bb, insn):
     for insn_handler in INSTRUCTION_HANDLERS:
         try:
-            for feature, va in insn_handler(xtor, insn):
+            for feature, va in insn_handler(xtor, f, bb, insn):
                 yield feature, va
         except NotImplementedError:
             if insn_handler.__name__ not in _not_implemented:
