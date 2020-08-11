@@ -36,7 +36,7 @@ class BB(object):
     @property
     def instructions(self):
         va = self.address
-        while va <= self.address + self.length:
+        while va < self.address + self.length:
             try:
                 insn = self.ws.read_insn(va)
             except ValueError:
