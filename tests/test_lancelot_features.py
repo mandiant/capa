@@ -101,7 +101,12 @@ def get_basic_block(extractor, f, va):
 @pytest.fixture
 def scope(request):
     if request.param == "file":
-        return extract_file_features
+
+        def inner(extractor):
+            return extract_file_features(extractor)
+
+        inner.__name__ = request.param
+        return inner
     elif "bb=" in request.param:
         # like `function=0x401000,bb=0x40100A`
         fspec, _, bbspec = request.param.partition(",")
@@ -113,6 +118,7 @@ def scope(request):
             bb = get_basic_block(extractor, f, bbva)
             return extract_basic_block_features(extractor, f, bb)
 
+        inner.__name__ = request.param
         return inner
     elif request.param.startswith("function"):
         # like `function=0x401000`
@@ -122,6 +128,7 @@ def scope(request):
             f = get_function(extractor, va)
             return extract_function_features(extractor, f)
 
+        inner.__name__ = request.param
         return inner
     else:
         raise ValueError("unexpected scope fixture")
@@ -273,13 +280,22 @@ def parametrize(params, values, **kwargs):
         ("mimikatz", "function=0x40105D", capa.features.Bytes("nope".encode("ascii")), False),
         # insn/bytes, pointer to bytes
         ("mimikatz", "function=0x44EDEF", capa.features.Bytes("INPUTEVENT".encode("utf-16le")), True),
+        # insn/characteristic(nzxor)
+        ("mimikatz", "function=0x410DFC", capa.features.Characteristic("nzxor"), True),
+        ("mimikatz", "function=0x40105D", capa.features.Characteristic("nzxor"), False),
+        # insn/characteristic(nzxor): no security cookies
+        ("mimikatz", "function=0x46B67A", capa.features.Characteristic("nzxor"), False),
     ],
     indirect=["sample", "scope"],
 )
 def test_lancelot_features(sample, scope, feature, expected):
     extractor = get_lancelot_extractor(sample)
     features = scope(extractor)
-    assert feature.evaluate(features) == expected
+    if expected:
+        msg = "%s should be found in %s" % (str(feature), scope.__name__)
+    else:
+        msg = "%s should not be found in %s" % (str(feature), scope.__name__)
+    assert feature.evaluate(features) == expected, msg
 
 
 """
@@ -287,32 +303,6 @@ def test_lancelot_features(sample, scope, feature, expected):
 def test_nzxor_features(mimikatz):
     features = extract_function_features(lancelot_utils.Function(mimikatz.ws, 0x410DFC))
     assert capa.features.Characteristic("nzxor") in features  # 0x0410F0B
-
-
-def get_bb_insn(f, va):
-    # fetch the BasicBlock and Instruction instances for the given VA in the given function.
-    for bb in f.basic_blocks:
-        for insn in bb.instructions:
-            if insn.va == va:
-                return (bb, insn)
-    raise KeyError(va)
-
-
-def test_is_security_cookie(mimikatz):
-    # not a security cookie check
-    f = lancelot_utils.Function(mimikatz.ws, 0x410DFC)
-    for va in [0x0410F0B]:
-        bb, insn = get_bb_insn(f, va)
-        assert capa.features.extractors.lancelot.insn.is_security_cookie(f, bb, insn) == False
-
-    # security cookie initial set and final check
-    f = lancelot_utils.Function(mimikatz.ws, 0x46C54A)
-    for va in [0x46C557, 0x46C63A]:
-        bb, insn = get_bb_insn(f, va)
-        assert capa.features.extractors.lancelot.insn.is_security_cookie(f, bb, insn) == True
-
-
-
 
 def test_peb_access_features(sample_a933a1a402775cfa94b6bee0963f4b46):
     features = extract_function_features(lancelot_utils.Function(sample_a933a1a402775cfa94b6bee0963f4b46.ws, 0xABA6FEC))
