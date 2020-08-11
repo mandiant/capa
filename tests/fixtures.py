@@ -83,3 +83,9 @@ def sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41():
 def sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32():
     path = os.path.join(CD, "data", "499c2a85f6e8142c3f48d4251c9c7cd6.raw32")
     return Sample(viv_utils.getShellcodeWorkspace(path), path)
+
+
+@pytest.fixture
+def sample_al_khaser_x86():
+    path = os.path.join(CD, "data", "al-khaser_x86.exe_")
+    return Sample(viv_utils.getWorkspace(path), path)
