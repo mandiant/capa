@@ -331,3 +331,29 @@ def is_basic_block_tight_loop(bb):
             if ref == bb.start_ea:
                 return True
     return False
+
+
+def find_data_reference_from_insn(insn, max_depth=10):
+    """ search for data reference from instruction, return address of instruction if no reference exists """
+    depth = 0
+    ea = insn.ea
+
+    while True:
+        data_refs = list(idautils.DataRefsFrom(ea))
+
+        if len(data_refs) != 1:
+            # break if no refs or more than one ref (assume nested pointers only have one data reference)
+            break
+
+        if ea == data_refs[0]:
+            # break if circular reference
+            break
+
+        depth += 1
+        if depth > max_depth:
+            # break if max depth
+            break
+
+        ea = data_refs[0]
+
+    return ea
