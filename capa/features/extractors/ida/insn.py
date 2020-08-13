@@ -98,8 +98,11 @@ def extract_insn_number_features(f, bb, insn):
         #   .text:00401145 add esp, 0Ch
         return
 
-    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm,)):
-        const = capa.features.extractors.ida.helpers.mask_op_val(op)
+    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm, idaapi.o_mem)):
+        if op.type == idaapi.o_imm:
+            const = capa.features.extractors.ida.helpers.mask_op_val(op)
+        else:
+            const = op.addr
         if not idaapi.is_mapped(const):
             yield Number(const), insn.ea
             yield Number(const, arch=get_arch(f.ctx)), insn.ea
@@ -116,11 +119,8 @@ def extract_insn_bytes_features(f, bb, insn):
         example:
             push    offset iid_004118d4_IShellLinkA ; riid
     """
-    if idaapi.is_call_insn(insn):
-        # ignore call instructions
-        return
-
-    for ref in idautils.DataRefsFrom(insn.ea):
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    if ref != insn.ea:
         extracted_bytes = capa.features.extractors.ida.helpers.read_bytes_at(ref, MAX_BYTES_FEATURE_SIZE)
         if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
             yield Bytes(extracted_bytes), insn.ea
@@ -137,7 +137,8 @@ def extract_insn_string_features(f, bb, insn):
         example:
             push offset aAcr     ; "ACR  > "
     """
-    for ref in idautils.DataRefsFrom(insn.ea):
+    ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
+    if ref != insn.ea:
         found = capa.features.extractors.ida.helpers.find_string_at(ref)
         if found:
             yield String(found), insn.ea

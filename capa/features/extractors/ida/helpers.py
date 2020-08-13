@@ -300,22 +300,6 @@ def is_function_recursive(f):
     return False
 
 
-def is_function_switch_statement(f):
-    """ check a function for switch statement indicators
-
-        adapted from:
-        https://reverseengineering.stackexchange.com/questions/17548/calc-switch-cases-in-idapython-cant-iterate-over-results?rq=1
-
-        arg:
-            f (IDA func_t)
-    """
-    for (start, end) in idautils.Chunks(f.start_ea):
-        for head in idautils.Heads(start, end):
-            if idaapi.get_switch_info(head):
-                return True
-    return False
-
-
 def is_basic_block_tight_loop(bb):
     """ check basic block loops to self
 
@@ -331,3 +315,29 @@ def is_basic_block_tight_loop(bb):
             if ref == bb.start_ea:
                 return True
     return False
+
+
+def find_data_reference_from_insn(insn, max_depth=10):
+    """ search for data reference from instruction, return address of instruction if no reference exists """
+    depth = 0
+    ea = insn.ea
+
+    while True:
+        data_refs = list(idautils.DataRefsFrom(ea))
+
+        if len(data_refs) != 1:
+            # break if no refs or more than one ref (assume nested pointers only have one data reference)
+            break
+
+        if ea == data_refs[0]:
+            # break if circular reference
+            break
+
+        depth += 1
+        if depth > max_depth:
+            # break if max depth
+            break
+
+        ea = data_refs[0]
+
+    return ea

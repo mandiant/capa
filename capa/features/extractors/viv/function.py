@@ -25,45 +25,6 @@ def interface_extract_function_XXX(f):
     yield NotImplementedError("feature"), NotImplementedError("virtual address")
 
 
-def get_switches(vw):
-    """
-    caching accessor to vivisect workspace switch constructs.
-    """
-    if "switches" in vw.metadata:
-        return vw.metadata["switches"]
-    else:
-        # addresses of switches in the program
-        switches = set()
-
-        for case_va, _ in filter(lambda t: "case" in t[1], vw.getNames()):
-            # assume that the xref to a case location is a switch construct
-            for switch_va, _, _, _ in vw.getXrefsTo(case_va):
-                switches.add(switch_va)
-
-        vw.metadata["switches"] = switches
-        return switches
-
-
-def get_functions_with_switch(vw):
-    if "functions_with_switch" in vw.metadata:
-        return vw.metadata["functions_with_switch"]
-    else:
-        functions = set()
-        for switch in get_switches(vw):
-            functions.add(vw.getFunction(switch))
-        vw.metadata["functions_with_switch"] = functions
-        return functions
-
-
-def extract_function_switch(f):
-    """
-    parse if a function contains a switch statement based on location names
-    method can be optimized
-    """
-    if f.va in get_functions_with_switch(f.vw):
-        yield Characteristic("switch"), f.va
-
-
 def extract_function_calls_to(f):
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
         yield Characteristic("calls to"), src
@@ -106,4 +67,4 @@ def extract_features(f):
             yield feature, va
 
 
-FUNCTION_HANDLERS = (extract_function_switch, extract_function_calls_to, extract_function_loop)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop)

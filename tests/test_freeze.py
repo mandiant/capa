@@ -23,7 +23,7 @@ EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
         "file features": [(0x402345, capa.features.Characteristic("embedded pe")),],
         "functions": {
             0x401000: {
-                "features": [(0x401000, capa.features.Characteristic("switch")),],
+                "features": [(0x401000, capa.features.Characteristic("indirect call")),],
                 "basic blocks": {
                     0x401000: {
                         "features": [(0x401000, capa.features.Characteristic("tight loop")),],

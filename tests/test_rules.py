@@ -267,7 +267,7 @@ def test_subscope_rules():
                                 - function:
                                     - and:
                                         - characteristic: nzxor
-                                        - characteristic: switch
+                                        - characteristic: loop
                     """
                 )
             )

@@ -353,7 +353,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # TODO: do we display 'not'
             pass
         elif statement["type"] == "some":
-            return CapaExplorerDefaultItem(parent, statement["count"] + " or more")
+            return CapaExplorerDefaultItem(parent, str(statement["count"]) + " or more")
         elif statement["type"] == "range":
             # `range` is a weird node, its almost a hybrid of statement + feature.
             # it is a specific feature repeated multiple times.
@@ -528,7 +528,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             if feature[feature["type"]] in ("embedded pe",):
                 return CapaExplorerByteViewItem(parent, display, location)
 
-            if feature[feature["type"]] in ("loop", "recursive call", "tight loop", "switch"):
+            if feature[feature["type"]] in ("loop", "recursive call", "tight loop"):
                 return CapaExplorerFeatureItem(parent, display=display)
 
             # default to instruction view for all other characteristics
@@ -546,7 +546,17 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)
 
-        if feature["type"] in ("bytes", "api", "mnemonic", "number", "offset"):
+        if feature["type"] in (
+            "bytes",
+            "api",
+            "mnemonic",
+            "number",
+            "offset",
+            "number/x32",
+            "number/x64",
+            "offset/x32",
+            "offset/x64",
+        ):
             # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)
 

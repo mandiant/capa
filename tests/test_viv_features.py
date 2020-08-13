@@ -128,6 +128,11 @@ def test_number_arch_features(mimikatz):
     assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
 
 
+def test_unmapped_immediate_memory_reference_features(sample_al_khaser_x86):
+    features = extract_function_features(viv_utils.Function(sample_al_khaser_x86.vw, 0x41AAB4))
+    assert capa.features.insn.Number(0x7FFE02D4) in features
+
+
 def test_offset_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x40105D))
     assert capa.features.insn.Offset(0x0) in features
@@ -267,14 +272,6 @@ def test_file_embedded_pe(pma_lab_12_04):
 def test_stackstring_features(mimikatz):
     features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x4556E5))
     assert capa.features.Characteristic("stack string") in features
-
-
-def test_switch_features(mimikatz):
-    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x409411))
-    assert capa.features.Characteristic("switch") in features
-
-    features = extract_function_features(viv_utils.Function(mimikatz.vw, 0x409393))
-    assert capa.features.Characteristic("switch") not in features
 
 
 def test_recursive_call_feature(sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41):
