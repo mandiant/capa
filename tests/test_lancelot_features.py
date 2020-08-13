@@ -182,15 +182,6 @@ def parametrize(params, values, **kwargs):
         # function/characteristic(loop)
         ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
         ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
-        # function/characteristic(switch)
-        pytest.param(
-            "mimikatz",
-            "function=0x409411",
-            capa.features.Characteristic("switch"),
-            True,
-            marks=pytest.mark.xfail(reason="characteristic(switch) not implemented yet"),
-        ),
-        ("mimikatz", "function=0x401000", capa.features.Characteristic("switch"), False),
         # function/characteristic(calls to)
         pytest.param(
             "mimikatz",
@@ -299,6 +290,10 @@ def parametrize(params, values, **kwargs):
         # insn/characteristic(calls from)
         ("mimikatz", "function=0x46B67A", capa.features.Characteristic("calls from"), True),
         ("mimikatz", "function=0x40E51B", capa.features.Characteristic("calls from"), False),
+        # function/characteristic(calls to)
+        ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
+        ("mimikatz", "function=0x46C0D2", capa.features.Characteristic("calls to"), False),
+        ("mimikatz", "function=0x40E51B", capa.features.Characteristic("calls to"), False),
     ],
     indirect=["sample", "scope"],
 )

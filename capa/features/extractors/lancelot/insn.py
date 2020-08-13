@@ -26,6 +26,7 @@ from lancelot import (
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
+from capa.features.extractors.lancelot.function import get_call_graph
 
 logger = logging.getLogger(__name__)
 
@@ -430,9 +431,17 @@ def extract_insn_cross_section_cflow(xtor, f, bb, insn):
         return
 
 
-# this is a feature that's most relevant at the function scope,
-# however, its most efficient to extract at the instruction scope.
 def extract_function_calls_from(xtor, f, bb, insn):
+    cg = get_call_graph(xtor.ws)
+
+    for callee in cg.calls_from.get(insn.address, []):
+        yield Characteristic("calls from"), callee
+
+        if callee == f:
+            yield Characteristic("recursive call"), insn.address
+
+    # lancelot doesn't count API calls when constructing the call graph
+    # so we still have to scan for calls to an import
     if insn.mnemonic != "call":
         return
 
@@ -441,9 +450,9 @@ def extract_function_calls_from(xtor, f, bb, insn):
     except ValueError:
         return
 
-    yield Characteristic("calls from"), target
-    if target == f:
-        yield Characteristic("recursive call"), target
+    imports = get_imports(xtor)
+    if target in imports:
+        yield Characteristic("calls from"), target
 
 
 # this is a feature that's most relevant at the function or basic block scope,

@@ -1,5 +1,10 @@
 import logging
 
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
 from lancelot import (
     FLOW_VA,
     FLOW_TYPE,
@@ -14,12 +19,16 @@ from capa.features.extractors import loops
 logger = logging.getLogger(__name__)
 
 
-def extract_function_switch(ws, f):
-    raise NotImplementedError()
+@lru_cache
+def get_call_graph(ws):
+    return ws.build_call_graph()
 
 
 def extract_function_calls_to(ws, f):
-    raise NotImplementedError()
+    cg = get_call_graph(ws)
+
+    for caller in cg.calls_to.get(f, []):
+        yield Characteristic("calls to"), caller
 
 
 def extract_function_loop(ws, f):
@@ -38,7 +47,7 @@ def extract_function_loop(ws, f):
         yield Characteristic("loop"), f
 
 
-FUNCTION_HANDLERS = (extract_function_switch, extract_function_calls_to, extract_function_loop)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop)
 
 
 _not_implemented = set([])
