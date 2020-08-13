@@ -244,17 +244,6 @@ def test_stackstring_features():
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_switch_features():
-    f = get_extractor().get_function(0x409411)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("switch") in features
-
-    f = get_extractor().get_function(0x409393)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("switch") not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_function_calls_to():
     # this function is used in a function pointer
     f = get_extractor().get_function(0x4011FB)

@@ -69,7 +69,6 @@ SUPPORTED_FEATURES = {
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
         capa.features.basicblock.BasicBlock,
-        capa.features.Characteristic("switch"),
         capa.features.Characteristic("calls from"),
         capa.features.Characteristic("calls to"),
         capa.features.Characteristic("loop"),

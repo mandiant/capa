@@ -528,7 +528,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             if feature[feature["type"]] in ("embedded pe",):
                 return CapaExplorerByteViewItem(parent, display, location)
 
-            if feature[feature["type"]] in ("loop", "recursive call", "tight loop", "switch"):
+            if feature[feature["type"]] in ("loop", "recursive call", "tight loop"):
                 return CapaExplorerFeatureItem(parent, display=display)
 
             # default to instruction view for all other characteristics
