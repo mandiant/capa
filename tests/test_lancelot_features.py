@@ -84,6 +84,8 @@ def sample(request):
         return os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
     elif request.param.startswith("39c05"):
         return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
+    elif request.param.startswith("c9188"):
+        return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -182,14 +184,6 @@ def parametrize(params, values, **kwargs):
         # function/characteristic(loop)
         ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
         ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
-        # function/characteristic(calls to)
-        pytest.param(
-            "mimikatz",
-            "function=0x401000",
-            capa.features.Characteristic("calls to"),
-            True,
-            marks=pytest.mark.xfail(reason="characteristic(calls to) not implemented yet"),
-        ),
         # bb/characteristic(tight loop)
         ("mimikatz", "function=0x402EC4", capa.features.Characteristic("tight loop"), True),
         ("mimikatz", "function=0x401000", capa.features.Characteristic("tight loop"), False),
@@ -251,6 +245,11 @@ def parametrize(params, values, **kwargs):
         # insn/api: x64 thunk
         ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True,),
         ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
+        # insn/api: resolve indirect calls
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), True),
         # insn/string
         ("mimikatz", "function=0x40105D", capa.features.String("SCardControl"), True),
         ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
@@ -321,25 +320,3 @@ def test_lancelot_feature_counts(sample, scope, feature, expected):
     features = scope(extractor)
     msg = "%s should be found %d times in %s" % (str(feature), expected, scope.__name__)
     assert len(features[feature]) == expected, msg
-
-
-"""
-def test_function_calls_to(sample_9324d1a8ae37a36ae560c37448c9705a):
-    features = extract_function_features(lancelot_utils.Function(sample_9324d1a8ae37a36ae560c37448c9705a.ws, 0x406F60))
-    assert capa.features.Characteristic("calls to") in features
-    assert len(features[capa.features.Characteristic("calls to")]) == 1
-
-
-def test_function_calls_to64(sample_lab21_01):
-    features = extract_function_features(lancelot_utils.Function(sample_lab21_01.ws, 0x1400052D0))  # memcpy
-    assert capa.features.Characteristic("calls to") in features
-    assert len(features[capa.features.Characteristic("calls to")]) == 8
-
-
-def test_indirect_calls_resolved(sample_c91887d861d9bd4a5872249b641bc9f9):
-    features = extract_function_features(lancelot_utils.Function(sample_c91887d861d9bd4a5872249b641bc9f9.ws, 0x401A77))
-    assert capa.features.insn.API("kernel32.CreatePipe") in features
-    assert capa.features.insn.API("kernel32.SetHandleInformation") in features
-    assert capa.features.insn.API("kernel32.CloseHandle") in features
-    assert capa.features.insn.API("kernel32.WriteFile") in features
-"""

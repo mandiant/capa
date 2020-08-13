@@ -104,10 +104,18 @@ def extract_insn_api_features(xtor, f, bb, insn):
 
     op0 = insn.operands[0]
 
-    try:
-        target = get_operand_target(insn, op0)
-    except ValueError:
-        return
+    if op0[OPERAND_TYPE] == OPERAND_TYPE_REGISTER:
+        try:
+            (_, target) = resolve_indirect_call(xtor.ws, f, insn)
+        except NotFoundError:
+            return
+        if target is None:
+            return
+    else:
+        try:
+            target = get_operand_target(insn, op0)
+        except ValueError:
+            return
 
     imports = get_imports(xtor)
     if target in imports:
