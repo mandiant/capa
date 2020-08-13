@@ -106,7 +106,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
 
     meta = {"feature_counts": {"file": 0, "functions": {},}}
 
-    for f in tqdm.tqdm(extractor.get_functions(), disable=disable_progress, unit=" functions"):
+    for f in tqdm.tqdm(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
         meta["feature_counts"]["functions"][f.__int__()] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
@@ -332,7 +332,7 @@ def is_nursery_rule_path(path):
     return "nursery" in path
 
 
-def get_rules(rule_path):
+def get_rules(rule_path, disable_progress=False):
     if not os.path.exists(rule_path):
         raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
@@ -360,7 +360,8 @@ def get_rules(rule_path):
                 rule_paths.append(rule_path)
 
     rules = []
-    for rule_path in rule_paths:
+
+    for rule_path in tqdm.tqdm(list(rule_paths), disable=disable_progress, desc="loading ", unit="     rules"):
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
@@ -543,7 +544,7 @@ def main(argv=None):
         logger.debug("using rules path: %s", rules_path)
 
     try:
-        rules = get_rules(rules_path)
+        rules = get_rules(rules_path, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
         logger.debug("successfully loaded %s rules", len(rules))
         if args.tag:
