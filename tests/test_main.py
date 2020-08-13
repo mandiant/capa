@@ -73,7 +73,7 @@ def test_ruleset():
                             name: function rule
                             scope: function
                         features:
-                          - characteristic: switch
+                          - characteristic: tight loop
                     """
                 )
             ),

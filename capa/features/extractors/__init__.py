@@ -196,7 +196,7 @@ class NullFeatureExtractor(FeatureExtractor):
             'functions': {
                 0x401000: {
                     'features': [
-                        (0x401000, capa.features.Characteristic('switch')),
+                        (0x401000, capa.features.Characteristic('nzxor')),
                     ],
                     'basic blocks': {
                         0x401000: {

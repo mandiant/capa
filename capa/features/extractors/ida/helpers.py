@@ -300,22 +300,6 @@ def is_function_recursive(f):
     return False
 
 
-def is_function_switch_statement(f):
-    """ check a function for switch statement indicators
-
-        adapted from:
-        https://reverseengineering.stackexchange.com/questions/17548/calc-switch-cases-in-idapython-cant-iterate-over-results?rq=1
-
-        arg:
-            f (IDA func_t)
-    """
-    for (start, end) in idautils.Chunks(f.start_ea):
-        for head in idautils.Heads(start, end):
-            if idaapi.get_switch_info(head):
-                return True
-    return False
-
-
 def is_basic_block_tight_loop(bb):
     """ check basic block loops to self
 

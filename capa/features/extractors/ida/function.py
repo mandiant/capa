@@ -14,16 +14,6 @@ from capa.features import Characteristic
 from capa.features.extractors import loops
 
 
-def extract_function_switch(f):
-    """ extract switch indicators from a function
-
-        arg:
-            f (IDA func_t)
-    """
-    if capa.features.extractors.ida.helpers.is_function_switch_statement(f):
-        yield Characteristic("switch"), f.start_ea
-
-
 def extract_function_calls_to(f):
     """ extract callers to a function
 
@@ -72,7 +62,7 @@ def extract_features(f):
             yield feature, ea
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_switch, extract_function_loop, extract_recursive_call)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
 
 
 def main():
