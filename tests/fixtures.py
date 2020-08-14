@@ -224,9 +224,10 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "file", capa.features.String("ACR  > "), True),
     ("mimikatz", "file", capa.features.String("nope"), False),
     # file/sections
-    ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
     ("mimikatz", "file", capa.features.file.Section(".text"), True),
     ("mimikatz", "file", capa.features.file.Section(".nope"), False),
+    # IDA doesn't extract unmapped sections by default
+    # ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
     # file/exports
     ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
     ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
@@ -350,12 +351,15 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), False),
     # function/characteristic(calls to)
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
-    ("mimikatz", "function=0x46C0D2", capa.features.Characteristic("calls to"), False),
+    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("calls to"), False),
 ]
 
 FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
+    ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), 0),
     ("mimikatz", "function=0x40E5C2", capa.features.Characteristic("calls from"), 3),
+    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("calls to"), 0),
+    ("mimikatz", "function=0x40B1F1", capa.features.Characteristic("calls to"), 3),
 ]
 
 

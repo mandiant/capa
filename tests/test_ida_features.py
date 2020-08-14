@@ -29,8 +29,9 @@ def check_input_file(wanted):
         # in IDA 7.5 or so, GetInputFileMD5 started returning raw binary
         # rather than the hex digest
         found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
+
     if not wanted.startswith(found):
-        raise RuntimeError("please run the tests against `mimikatz.exe`")
+        raise RuntimeError("please run the tests against sample with MD5: `%s`" % (wanted))
 
 
 def get_ida_extractor(_path):
@@ -99,10 +100,6 @@ if __name__ == "__main__":
         test = getattr(sys.modules[__name__], name)
         logger.debug("invoking test: %s", name)
         sys.stderr.flush()
-        try:
-            test()
-        except AssertionError as e:
-            print("FAIL %s" % (name))
-            traceback.print_exc()
-        else:
-            print("OK   %s" % (name))
+        test()
+
+    print("DONE")
