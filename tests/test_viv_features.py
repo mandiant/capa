@@ -8,9 +8,6 @@
 
 from fixtures import *
 
-import capa.main
-import capa.features.extractors.viv
-
 
 @parametrize(
     "sample,scope,feature,expected", FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"],
@@ -22,5 +19,5 @@ def test_viv_features(sample, scope, feature, expected):
 @parametrize(
     "sample,scope,feature,expected", FEATURE_COUNT_TESTS, indirect=["sample", "scope"],
 )
-def do_test_viv_feature_counts(sample, scope, feature, expected):
-    test_feature_count(get_viv_extractor, sample, scope, feature, expected)
+def test_viv_feature_counts(sample, scope, feature, expected):
+    do_test_feature_count(get_viv_extractor, sample, scope, feature, expected)

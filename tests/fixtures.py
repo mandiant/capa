@@ -159,6 +159,10 @@ def scope(request):
         raise ValueError("unexpected scope fixture")
 
 
+def make_test_id(values):
+    return "-".join(map(str, values))
+
+
 def parametrize(params, values, **kwargs):
     """
     extend `pytest.mark.parametrize` to pretty-print features.
@@ -167,7 +171,7 @@ def parametrize(params, values, **kwargs):
     rendered ID might look something like:
         mimikatz-function=0x403BAC-api(CryptDestroyKey)-True
     """
-    ids = ["-".join(map(str, vs)) for vs in values]
+    ids = list(map(make_test_id, values))
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
@@ -310,7 +314,6 @@ FEATURE_PRESENCE_TESTS = [
 ]
 
 FEATURE_COUNT_TESTS = [
-    ("mimikatz", "function=0x40E51B", capa.features.basicblock.BasicBlock(), 1),
     ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
     ("mimikatz", "function=0x40E5C2", capa.features.Characteristic("calls from"), 3),
 ]
