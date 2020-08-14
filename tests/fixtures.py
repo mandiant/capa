@@ -104,9 +104,13 @@ def get_data_path_by_name(name):
         raise ValueError("unexpected sample fixture")
 
 
+def resolve_sample(sample):
+    return get_data_path_by_name(request.param)
+
+
 @pytest.fixture
 def sample(request):
-    return get_data_path_by_name(request.param)
+    return resolve_sample(request.param)
 
 
 def get_function(extractor, fva):
@@ -123,18 +127,17 @@ def get_basic_block(extractor, f, va):
     raise ValueError("basic block not found")
 
 
-@pytest.fixture
-def scope(request):
-    if request.param == "file":
+def resolve_scope(scope):
+    if scope == "file":
 
         def inner(extractor):
             return extract_file_features(extractor)
 
-        inner.__name__ = request.param
+        inner.__name__ = scope
         return inner
-    elif "bb=" in request.param:
+    elif "bb=" in scope:
         # like `function=0x401000,bb=0x40100A`
-        fspec, _, bbspec = request.param.partition(",")
+        fspec, _, bbspec = scope.partition(",")
         fva = int(fspec.partition("=")[2], 0x10)
         bbva = int(bbspec.partition("=")[2], 0x10)
 
@@ -143,20 +146,25 @@ def scope(request):
             bb = get_basic_block(extractor, f, bbva)
             return extract_basic_block_features(extractor, f, bb)
 
-        inner.__name__ = request.param
+        inner.__name__ = scope
         return inner
-    elif request.param.startswith("function"):
+    elif scope.startswith("function"):
         # like `function=0x401000`
-        va = int(request.param.partition("=")[2], 0x10)
+        va = int(scope.partition("=")[2], 0x10)
 
         def inner(extractor):
             f = get_function(extractor, va)
             return extract_function_features(extractor, f)
 
-        inner.__name__ = request.param
+        inner.__name__ = scope
         return inner
     else:
         raise ValueError("unexpected scope fixture")
+
+
+@pytest.fixture
+def scope(request):
+    return resolve_scope(request.param)
 
 
 def make_test_id(values):

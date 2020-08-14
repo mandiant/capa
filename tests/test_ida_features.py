@@ -1,17 +1,18 @@
 # run this script from within IDA with ./tests/data/mimikatz.exe open
+import sys
 import logging
+import os.path
 import binascii
-import traceback
-import collections
 
 import pytest
-from fixtures import *
 
-import capa.features
-import capa.features.file
-import capa.features.insn
-import capa.features.basicblock
-from capa.features import ARCH_X32, ARCH_X64
+try:
+    sys.path.append(os.path.dirname(__file__))
+    print(sys.path)
+    from fixtures import *
+finally:
+    sys.path.pop()
+
 
 logger = logging.getLogger("test_ida_features")
 
@@ -43,11 +44,9 @@ def get_ida_extractor(_path):
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_features():
     for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS:
-        # resolve sample
-        # resolve scope
-        pass
-
         id = make_test_id((sample, scope, feature, expected))
+        scope = resolve_scope(scope)
+        sample = resolve_sample(sample)
 
         try:
             do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
@@ -59,11 +58,19 @@ def test_ida_features():
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-@parametrize(
-    "sample,scope,feature,expected", FEATURE_COUNT_TESTS, indirect=["sample", "scope"],
-)
-def test_ida_feature_counts(sample, scope, feature, expected):
-    do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
+def test_ida_feature_counts():
+    for (sample, scope, feature, expected) in FEATURE_COUNT_TESTS:
+        id = make_test_id((sample, scope, feature, expected))
+        scope = resolve_scope(scope)
+        sample = resolve_sample(sample)
+
+        try:
+            do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
+        except AssertionError as e:
+            print("FAIL %s" % (id))
+            traceback.print_exc()
+        else:
+            print("OK   %s" % (id))
 
 
 if __name__ == "__main__":
