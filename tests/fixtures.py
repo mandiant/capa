@@ -48,7 +48,7 @@ def extract_file_features(extractor):
     return features
 
 
-@lru_cache()
+# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
 def extract_function_features(extractor, f):
     features = collections.defaultdict(set)
     for bb in extractor.get_basic_blocks(f):
@@ -62,7 +62,7 @@ def extract_function_features(extractor, f):
     return features
 
 
-@lru_cache()
+# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
 def extract_basic_block_features(extractor, f, bb):
     features = collections.defaultdict(set)
     for insn in extractor.get_instructions(f, bb):
