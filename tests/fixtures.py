@@ -105,7 +105,7 @@ def get_data_path_by_name(name):
 
 
 def resolve_sample(sample):
-    return get_data_path_by_name(request.param)
+    return get_data_path_by_name(sample)
 
 
 @pytest.fixture
