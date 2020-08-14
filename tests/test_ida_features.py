@@ -5,6 +5,7 @@ import traceback
 import collections
 
 import pytest
+from fixtures import *
 
 import capa.features
 import capa.features.file
@@ -15,10 +16,9 @@ from capa.features import ARCH_X32, ARCH_X64
 logger = logging.getLogger("test_ida_features")
 
 
-def check_input_file():
+def check_input_file(wanted):
     import idautils
 
-    wanted = "5f66b82558ca92e54e77f216ef4c066c"
     # some versions (7.4) of IDA return a truncated version of the MD5.
     # https://github.com/idapython/bin/issues/11
     try:
@@ -31,8 +31,8 @@ def check_input_file():
         raise RuntimeError("please run the tests against `mimikatz.exe`")
 
 
-def get_extractor():
-    check_input_file()
+def get_ida_extractor(_path):
+    check_input_file("5f66b82558ca92e54e77f216ef4c066c")
 
     # have to import import this inline so pytest doesn't bail outside of IDA
     import capa.features.extractors.ida
@@ -40,235 +40,30 @@ def get_extractor():
     return capa.features.extractors.ida.IdaFeatureExtractor()
 
 
-def extract_file_features():
-    extractor = get_extractor()
-    features = set([])
-    for feature, va in extractor.extract_file_features():
-        features.add(feature)
-    return features
+@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
+def test_ida_features():
+    for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS:
+        # resolve sample
+        # resolve scope
+        pass
 
+        id = make_test_id((sample, scope, feature, expected))
 
-def extract_function_features(f):
-    extractor = get_extractor()
-    features = collections.defaultdict(set)
-    for bb in extractor.get_basic_blocks(f):
-        for insn in extractor.get_instructions(f, bb):
-            for feature, va in extractor.extract_insn_features(f, bb, insn):
-                features[feature].add(va)
-        for feature, va in extractor.extract_basic_block_features(f, bb):
-            features[feature].add(va)
-    for feature, va in extractor.extract_function_features(f):
-        features[feature].add(va)
-    return features
-
-
-def extract_basic_block_features(f, bb):
-    extractor = get_extractor()
-    features = collections.defaultdict(set)
-    for insn in extractor.get_instructions(f, bb):
-        for feature, va in extractor.extract_insn_features(f, bb, insn):
-            features[feature].add(va)
-    for feature, va in extractor.extract_basic_block_features(f, bb):
-        features[feature].add(va)
-    return features
+        try:
+            do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
+        except AssertionError as e:
+            print("FAIL %s" % (id))
+            traceback.print_exc()
+        else:
+            print("OK   %s" % (id))
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_api_features():
-    f = get_extractor().get_function(0x403BAC)
-    features = extract_function_features(f)
-    assert capa.features.insn.API("advapi32.CryptAcquireContextW") in features
-    assert capa.features.insn.API("advapi32.CryptAcquireContext") in features
-    assert capa.features.insn.API("advapi32.CryptGenKey") in features
-    assert capa.features.insn.API("advapi32.CryptImportKey") in features
-    assert capa.features.insn.API("advapi32.CryptDestroyKey") in features
-    assert capa.features.insn.API("CryptAcquireContextW") in features
-    assert capa.features.insn.API("CryptAcquireContext") in features
-    assert capa.features.insn.API("CryptGenKey") in features
-    assert capa.features.insn.API("CryptImportKey") in features
-    assert capa.features.insn.API("CryptDestroyKey") in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_string_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.String("SCardControl") in features
-    assert capa.features.String("SCardTransmit") in features
-    assert capa.features.String("ACR  > ") in features
-    # other strings not in this function
-    assert capa.features.String("bcrypt.dll") not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_string_pointer_features():
-    f = get_extractor().get_function(0x0044EDEF)
-    features = extract_function_features(f)
-    assert capa.features.String("INPUTEVENT") in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_byte_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    wanted = capa.features.Bytes("SCardControl".encode("utf-16le"))
-    # use `==` rather than `is` because the result is not `True` but a truthy value.
-    assert wanted.evaluate(features) == True
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_bytes_pointer_features():
-    f = get_extractor().get_function(0x0044EDEF)
-    features = extract_function_features(f)
-    assert capa.features.Bytes("INPUTEVENT".encode("utf-16le")).evaluate(features) == True
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_number_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.insn.Number(0xFF) in features
-    assert capa.features.insn.Number(0x3136B0) in features
-    # the following are stack adjustments
-    assert capa.features.insn.Number(0xC) not in features
-    assert capa.features.insn.Number(0x10) not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_number_arch_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.insn.Number(0xFF) in features
-    assert capa.features.insn.Number(0xFF, arch=ARCH_X32) in features
-    assert capa.features.insn.Number(0xFF, arch=ARCH_X64) not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_offset_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.insn.Offset(0x0) in features
-    assert capa.features.insn.Offset(0x4) in features
-    assert capa.features.insn.Offset(0xC) in features
-    # the following are stack references
-    assert capa.features.insn.Offset(0x8) not in features
-    assert capa.features.insn.Offset(0x10) not in features
-
-    # this function has the following negative offsets
-    # movzx   ecx, byte ptr [eax-1]
-    # movzx   eax, byte ptr [eax-2]
-    f = get_extractor().get_function(0x4011FB)
-    features = extract_function_features(f)
-    assert capa.features.insn.Offset(-0x1) in features
-    assert capa.features.insn.Offset(-0x2) in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_offset_arch_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.insn.Offset(0x0) in features
-    assert capa.features.insn.Offset(0x0, arch=ARCH_X32) in features
-    assert capa.features.insn.Offset(0x0, arch=ARCH_X64) not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_nzxor_features():
-    f = get_extractor().get_function(0x410DFC)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("nzxor") in features  # 0x0410F0B
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_mnemonic_features():
-    f = get_extractor().get_function(0x40105D)
-    features = extract_function_features(f)
-    assert capa.features.insn.Mnemonic("push") in features
-    assert capa.features.insn.Mnemonic("movzx") in features
-    assert capa.features.insn.Mnemonic("xor") in features
-
-    assert capa.features.insn.Mnemonic("in") not in features
-    assert capa.features.insn.Mnemonic("out") not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_file_section_name_features():
-    features = extract_file_features()
-    assert capa.features.file.Section(".idata") in features
-    assert capa.features.file.Section(".text") in features
-    assert capa.features.file.Section(".nope") not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_tight_loop_features():
-    extractor = get_extractor()
-
-    f = extractor.get_function(0x402EC4)
-    for bb in extractor.get_basic_blocks(f):
-        if bb.__int__() != 0x402F8E:
-            continue
-        features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic("tight loop") in features
-        assert capa.features.basicblock.BasicBlock() in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_tight_loop_bb_features():
-    extractor = get_extractor()
-
-    f = extractor.get_function(0x402EC4)
-    for bb in extractor.get_basic_blocks(f):
-        if bb.__int__() != 0x402F8E:
-            continue
-        features = extract_basic_block_features(f, bb)
-        assert capa.features.Characteristic("tight loop") in features
-        assert capa.features.basicblock.BasicBlock() in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_file_import_name_features():
-    features = extract_file_features()
-    assert capa.features.file.Import("advapi32.CryptSetHashParam") in features
-    assert capa.features.file.Import("CryptSetHashParam") in features
-    assert capa.features.file.Import("kernel32.IsWow64Process") in features
-    assert capa.features.file.Import("msvcrt.exit") in features
-    assert capa.features.file.Import("cabinet.#11") in features
-    assert capa.features.file.Import("#11") not in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_stackstring_features():
-    f = get_extractor().get_function(0x4556E5)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("stack string") in features
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_function_calls_to():
-    # this function is used in a function pointer
-    f = get_extractor().get_function(0x4011FB)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("calls to") not in features
-
-    # __FindPESection is called once
-    f = get_extractor().get_function(0x470360)
-    features = extract_function_features(f)
-    assert len(features[capa.features.Characteristic("calls to")]) == 1
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_function_calls_from():
-    f = get_extractor().get_function(0x4011FB)
-    features = extract_function_features(f)
-    assert capa.features.Characteristic("calls from") in features
-    assert len(features[capa.features.Characteristic("calls from")]) == 3
-
-
-@pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
-def test_basic_block_count():
-    f = get_extractor().get_function(0x4011FB)
-    features = extract_function_features(f)
-    assert len(features[capa.features.basicblock.BasicBlock()]) == 15
+@parametrize(
+    "sample,scope,feature,expected", FEATURE_COUNT_TESTS, indirect=["sample", "scope"],
+)
+def test_ida_feature_counts(sample, scope, feature, expected):
+    do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
 
 
 if __name__ == "__main__":
