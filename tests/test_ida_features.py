@@ -3,6 +3,7 @@ import sys
 import logging
 import os.path
 import binascii
+import traceback
 
 import pytest
 
@@ -45,12 +46,19 @@ def get_ida_extractor(_path):
 def test_ida_features():
     for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS:
         id = make_test_id((sample, scope, feature, expected))
+
+        try:
+            check_input_file(get_sample_md5_by_name(sample))
+        except RuntimeError:
+            print("SKIP %s" % (id))
+            continue
+
         scope = resolve_scope(scope)
         sample = resolve_sample(sample)
 
         try:
             do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
-        except AssertionError as e:
+        except Exception as e:
             print("FAIL %s" % (id))
             traceback.print_exc()
         else:
@@ -61,12 +69,19 @@ def test_ida_features():
 def test_ida_feature_counts():
     for (sample, scope, feature, expected) in FEATURE_COUNT_TESTS:
         id = make_test_id((sample, scope, feature, expected))
+
+        try:
+            check_input_file(get_sample_md5_by_name(sample))
+        except RuntimeError:
+            print("SKIP %s" % (id))
+            continue
+
         scope = resolve_scope(scope)
         sample = resolve_sample(sample)
 
         try:
             do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
-        except AssertionError as e:
+        except Exception as e:
             print("FAIL %s" % (id))
             traceback.print_exc()
         else:

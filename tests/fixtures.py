@@ -104,6 +104,38 @@ def get_data_path_by_name(name):
         raise ValueError("unexpected sample fixture")
 
 
+def get_sample_md5_by_name(name):
+    """used by IDA tests to ensure the correct IDB is loaded"""
+    if name == "mimikatz":
+        return "5f66b82558ca92e54e77f216ef4c066c"
+    elif name == "kernel32":
+        return "e80758cf485db142fca1ee03a34ead05"
+    elif name == "kernel32-64":
+        return "a8565440629ac87f6fef7d588fe3ff0f"
+    elif name == "pma12-04":
+        return "56bed8249e7c2982a90e54e1e55391a2"
+    elif name == "pma21-01":
+        return "c8403fb05244e23a7931c766409b5e22"
+    elif name == "al-khaser x86":
+        return "db648cd247281954344f1d810c6fd590"
+    elif name.startswith("39c05"):
+        return "b7841b9d5dc1f511a93cc7576672ec0c"
+    elif name.startswith("499c2"):
+        return "499c2a85f6e8142c3f48d4251c9c7cd6"
+    elif name.startswith("9324d"):
+        return "9324d1a8ae37a36ae560c37448c9705a"
+    elif name.startswith("a1982"):
+        return "a198216798ca38f280dc413f8c57f2c2"
+    elif name.startswith("a933a"):
+        return "a933a1a402775cfa94b6bee0963f4b46"
+    elif name.startswith("bfb9b"):
+        return "bfb9b5391a13d0afd787e87ab90f14f5"
+    elif name.startswith("c9188"):
+        return "c91887d861d9bd4a5872249b641bc9f9"
+    else:
+        raise ValueError("unexpected sample fixture")
+
+
 def resolve_sample(sample):
     return get_data_path_by_name(sample)
 
