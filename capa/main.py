@@ -18,6 +18,7 @@ import datetime
 import textwrap
 import collections
 
+import halo
 import tqdm
 import colorama
 
@@ -106,7 +107,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
 
     meta = {"feature_counts": {"file": 0, "functions": {},}}
 
-    for f in tqdm.tqdm(extractor.get_functions(), disable=disable_progress, unit=" functions"):
+    for f in tqdm.tqdm(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
         meta["feature_counts"]["functions"][f.__int__()] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
@@ -269,16 +270,17 @@ def get_workspace(path, format, should_save=True):
     return vw
 
 
-def get_extractor_py2(path, format):
+def get_extractor_py2(path, format, disable_progress=False):
     import capa.features.extractors.viv
 
-    vw = get_workspace(path, format, should_save=False)
+    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        vw = get_workspace(path, format, should_save=False)
 
-    try:
-        vw.saveWorkspace()
-    except IOError:
-        # see #168 for discussion around how to handle non-writable directories
-        logger.info("source directory is not writable, won't save intermediate workspace")
+        try:
+            vw.saveWorkspace()
+        except IOError:
+            # see #168 for discussion around how to handle non-writable directories
+            logger.info("source directory is not writable, won't save intermediate workspace")
 
     return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
@@ -287,19 +289,19 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format):
+def get_extractor_py3(path, format, disable_progress=False):
     raise UnsupportedRuntimeError()
 
 
-def get_extractor(path, format):
+def get_extractor(path, format, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
     """
     if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format)
+        return get_extractor_py3(path, format, disable_progress=disable_progress)
     else:
-        return get_extractor_py2(path, format)
+        return get_extractor_py2(path, format, disable_progress=disable_progress)
 
 
 def is_nursery_rule_path(path):
@@ -315,7 +317,7 @@ def is_nursery_rule_path(path):
     return "nursery" in path
 
 
-def get_rules(rule_path):
+def get_rules(rule_path, disable_progress=False):
     if not os.path.exists(rule_path):
         raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
@@ -343,7 +345,8 @@ def get_rules(rule_path):
                 rule_paths.append(rule_path)
 
     rules = []
-    for rule_path in rule_paths:
+
+    for rule_path in tqdm.tqdm(list(rule_paths), disable=disable_progress, desc="loading ", unit="     rules"):
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
@@ -526,7 +529,7 @@ def main(argv=None):
         logger.debug("using rules path: %s", rules_path)
 
     try:
-        rules = get_rules(rules_path)
+        rules = get_rules(rules_path, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
         logger.debug("successfully loaded %s rules", len(rules))
         if args.tag:
@@ -546,7 +549,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format)
+            extractor = get_extractor(args.sample, args.format, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

@@ -165,7 +165,12 @@ def derefs(vw, p):
             return
         yield p
 
-        next = vw.readMemoryPtr(p)
+        try:
+            next = vw.readMemoryPtr(p)
+        except Exception:
+            # if not enough bytes can be read, such as end of the section.
+            # unfortunately, viv returns a plain old generic `Exception` for this.
+            return
 
         # sanity: pointer points to self
         if next == p:
