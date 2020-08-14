@@ -22,31 +22,31 @@ jobs:
             artifact_name: capa
             asset_name: capa-macos
     steps:
-    - name: Checkout capa
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up Python 2.7
-      uses: actions/setup-python@v2
-      with:
-        python-version: 2.7
-    - name: Install PyInstaller
-      run: pip install pyinstaller
-    - name: Install capa
-      run: pip install -e .
-    - name: Build standalone executable
-      run: pyinstaller .github/pyinstaller/pyinstaller.spec
-    - name: Does it run?
-      run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.asset_name }}
-        path: dist/${{ matrix.artifact_name }}
-    - name: Upload binaries to GH Release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: dist/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
-        tag: ${{ github.ref }}
+      - name: Checkout capa
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set up Python 2.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 2.7
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+      - name: Install capa
+        run: pip install -e .
+      - name: Build standalone executable
+        run: pyinstaller .github/pyinstaller/pyinstaller.spec
+      - name: Does it run?
+        run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.artifact_name }}
+      - name: Upload binaries to GH Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          tag: ${{ github.ref }}
 
