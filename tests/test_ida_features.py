@@ -9,7 +9,6 @@ import pytest
 
 try:
     sys.path.append(os.path.dirname(__file__))
-    print(sys.path)
     from fixtures import *
 finally:
     sys.path.pop()
