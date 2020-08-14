@@ -17,7 +17,7 @@ jobs:
             asset_name: capa-linux
           - os: windows-latest
             artifact_name: capa.exe
-            asset_name: capa-windows.exe
+            asset_name: capa-windows
           - os: macos-latest
             artifact_name: capa
             asset_name: capa-macos
@@ -42,11 +42,33 @@ jobs:
         with:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.artifact_name }}
-      - name: Upload binaries to GH Release
+
+  zip:
+    name: zip ${{ matrix.asset_name }}
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - asset_name: capa-linux
+            artifact_name: capa
+          - asset_name: capa-windows
+            artifact_name: capa.exe
+          - asset_name: capa-macos
+            artifact_name: capa
+    steps:
+      - name: Download ${{ matrix.asset_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+      - name: Set executable flag
+        run: chmod +x ${{ matrix.artifact_name }}
+      - name: Zip ${{ matrix.artifact_name }} into ${{ matrix.asset_name }}.zip
+        run: zip ${{ matrix.asset_name }}.zip ${{ matrix.artifact_name }}
+      - name: Upload ${{ matrix.asset_name }}.zip to GH Release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}
+          repo_token: ${{ secrets.GITHUB_TOKEN}}
+          file: ${{ matrix.asset_name }}.zip
           tag: ${{ github.ref }}
 
