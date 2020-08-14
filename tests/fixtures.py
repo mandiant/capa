@@ -12,6 +12,7 @@ import collections
 
 import pytest
 
+import capa.main
 import capa.features.file
 import capa.features.insn
 import capa.features.basicblock
@@ -24,6 +25,19 @@ except ImportError:
 
 
 CD = os.path.dirname(__file__)
+
+
+@lru_cache()
+def get_viv_extractor(path):
+    import capa.features.extractors.viv
+
+    if "raw32" in path:
+        vw = capa.main.get_workspace(path, "sc32", should_save=False)
+    elif "raw64" in path:
+        vw = capa.main.get_workspace(path, "sc64", should_save=False)
+    else:
+        vw = capa.main.get_workspace(path, "auto", should_save=True)
+    return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
 @lru_cache()
@@ -59,24 +73,40 @@ def extract_basic_block_features(extractor, f, bb):
     return features
 
 
-@pytest.fixture
-def sample(request):
-    if request.param == "mimikatz":
+def get_data_path_by_name(name):
+    if name == "mimikatz":
         return os.path.join(CD, "data", "mimikatz.exe_")
-    elif request.param == "kernel32":
+    elif name == "kernel32":
         return os.path.join(CD, "data", "kernel32.dll_")
-    elif request.param == "kernel32-64":
+    elif name == "kernel32-64":
         return os.path.join(CD, "data", "kernel32-64.dll_")
-    elif request.param == "pma12-04":
+    elif name == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
-    elif request.param.startswith("a1982"):
-        return os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
-    elif request.param.startswith("39c05"):
+    elif name == "pma21-01":
+        return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
+    elif name == "al-khaser x86":
+        return os.path.join(CD, "data", "al-khaser_x86.exe_")
+    elif name.startswith("39c05"):
         return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
-    elif request.param.startswith("c9188"):
+    elif name.startswith("499c2"):
+        return os.path.join(CD, "data", "499c2a85f6e8142c3f48d4251c9c7cd6.raw32")
+    elif name.startswith("9324d"):
+        return os.path.join(CD, "data", "9324d1a8ae37a36ae560c37448c9705a.exe_")
+    elif name.startswith("a1982"):
+        return os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
+    elif name.startswith("a933a"):
+        return os.path.join(CD, "data", "a933a1a402775cfa94b6bee0963f4b46.dll_")
+    elif name.startswith("bfb9b"):
+        return os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
+    elif name.startswith("c9188"):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
     else:
         raise ValueError("unexpected sample fixture")
+
+
+@pytest.fixture
+def sample(request):
+    return get_data_path_by_name(request.param)
 
 
 def get_function(extractor, fva):
@@ -303,88 +333,71 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     assert len(features[feature]) == expected, msg
 
 
-Sample = collections.namedtuple("Sample", ["vw", "path"])
+def get_extractor(path):
+    # decide here which extractor to load for tests.
+    # maybe check which python version we've loaded or if we're in IDA.
+    extractor = get_viv_extractor(path)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+    return extractor
 
 
 @pytest.fixture
-def mimikatz():
-    import viv_utils
-    path = os.path.join(CD, "data", "mimikatz.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def mimikatz_extractor():
+    return get_extractor(get_data_path_by_name("mimikatz"))
 
 
 @pytest.fixture
-def sample_a933a1a402775cfa94b6bee0963f4b46():
-    import viv_utils
-    path = os.path.join(CD, "data", "a933a1a402775cfa94b6bee0963f4b46.dll_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def a933a_extractor():
+    return get_extractor(get_data_path_by_name("a933a..."))
 
 
 @pytest.fixture
-def kernel32():
-    import viv_utils
-    path = os.path.join(CD, "data", "kernel32.dll_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def kernel32_extractor():
+    return get_extractor(get_data_path_by_name("kernel32"))
 
 
 @pytest.fixture
-def sample_a198216798ca38f280dc413f8c57f2c2():
-    import viv_utils
-    path = os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def a1982_extractor():
+    return get_extractor(get_data_path_by_name("a1982..."))
 
 
 @pytest.fixture
-def sample_9324d1a8ae37a36ae560c37448c9705a():
-    import viv_utils
-    path = os.path.join(CD, "data", "9324d1a8ae37a36ae560c37448c9705a.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def z9324d_extractor():
+    return get_extractor(get_data_path_by_name("9324d..."))
 
 
 @pytest.fixture
-def pma_lab_12_04():
-    import viv_utils
-    path = os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def pma12_04_extractor():
+    return get_extractor(get_data_path_by_name("pma12-04"))
 
 
 @pytest.fixture
-def sample_bfb9b5391a13d0afd787e87ab90f14f5():
-    import viv_utils
-    path = os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def bfb9b_extractor():
+    return get_extractor(get_data_path_by_name("bfb9b..."))
 
 
 @pytest.fixture
-def sample_lab21_01():
-    import viv_utils
-    path = os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def pma21_01_extractor():
+    return get_extractor(get_data_path_by_name("pma21-01"))
 
 
 @pytest.fixture
-def sample_c91887d861d9bd4a5872249b641bc9f9():
-    import viv_utils
-    path = os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def c9188_extractor():
+    return get_extractor(get_data_path_by_name("c9188..."))
 
 
 @pytest.fixture
-def sample_39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41():
-    import viv_utils
-    path = os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_",)
-    return Sample(viv_utils.getWorkspace(path), path)
+def z39c05_extractor():
+    return get_extractor(get_data_path_by_name("39c05..."))
 
 
 @pytest.fixture
-def sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32():
-    import viv_utils
-    path = os.path.join(CD, "data", "499c2a85f6e8142c3f48d4251c9c7cd6.raw32")
-    return Sample(viv_utils.getShellcodeWorkspace(path), path)
+def z499c2_extractor():
+    return get_extractor(get_data_path_by_name("499c2..."))
 
 
 @pytest.fixture
-def sample_al_khaser_x86():
-    import viv_utils
-    path = os.path.join(CD, "data", "al-khaser_x86.exe_")
-    return Sample(viv_utils.getWorkspace(path), path)
+def al_khaser_x86_extractor():
+    return get_extractor(get_data_path_by_name("al-khaser x86"))

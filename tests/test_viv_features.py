@@ -12,12 +12,6 @@ import capa.main
 import capa.features.extractors.viv
 
 
-@lru_cache()
-def get_viv_extractor(path):
-    vw = capa.main.get_workspace(path, "auto", should_save=True)
-    return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
-
-
 @parametrize(
     "sample,scope,feature,expected", FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"],
 )
