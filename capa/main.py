@@ -270,10 +270,10 @@ def get_workspace(path, format, should_save=True):
     return vw
 
 
-def get_extractor_py2(path, format):
+def get_extractor_py2(path, format, disable_progress=False):
     import capa.features.extractors.viv
 
-    with halo.Halo(text="analyzing program", spinner="simpleDots"):
+    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
         vw = get_workspace(path, format, should_save=False)
 
         try:
@@ -289,19 +289,19 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format):
+def get_extractor_py3(path, format, disable_progress=False):
     raise UnsupportedRuntimeError()
 
 
-def get_extractor(path, format):
+def get_extractor(path, format, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
     """
     if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format)
+        return get_extractor_py3(path, format, disable_progress=disable_progress)
     else:
-        return get_extractor_py2(path, format)
+        return get_extractor_py2(path, format, disable_progress=disable_progress)
 
 
 def is_nursery_rule_path(path):
@@ -549,7 +549,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format)
+            extractor = get_extractor(args.sample, args.format, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
