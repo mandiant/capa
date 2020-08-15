@@ -17,6 +17,7 @@ requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "r
 if sys.version_info >= (3, 0):
     # py3
     requirements.append("networkx")
+    requirements.append("pylancelot==0.2.1")
 else:
     # py2
     requirements.append("enum34")
