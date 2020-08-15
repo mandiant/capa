@@ -31,7 +31,8 @@ jobs:
         with:
           python-version: 2.7
       - name: Install PyInstaller
-        run: pip install pyinstaller
+        # pyinstaller 4 doesn't support Python 2.7
+        run: pip install 'pyinstaller==3.*'
       - name: Install capa
         run: pip install -e .
       - name: Build standalone executable
