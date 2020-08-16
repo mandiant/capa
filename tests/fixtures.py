@@ -80,16 +80,6 @@ def get_viv_extractor(path):
     return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-@lru_cache
-def get_lancelot_extractor(path):
-    import capa.features.extractors.lancelot
-
-    with open(path, "rb") as f:
-        buf = f.read()
-
-    return capa.features.extractors.lancelot.LancelotFeatureExtractor(buf)
-
-
 @lru_cache()
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
@@ -437,7 +427,7 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 
 def get_extractor(path):
     if sys.version_info >= (3, 0):
-        extractor = get_lancelot_extractor(path)
+        raise RuntimeError("no supported py3 backends yet")
     else:
         extractor = get_viv_extractor(path)
 
