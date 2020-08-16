@@ -169,18 +169,20 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("#11"))
 
 
-def test_freeze_sample(tmpdir, sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_freeze_sample(tmpdir, z9324d_extractor):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath
-    assert capa.features.freeze.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, o, "-v"]) == 0
+    path = z9324d_extractor.path
+    assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-def test_freeze_load_sample(tmpdir, sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_freeze_load_sample(tmpdir, z9324d_extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
-    viv_extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
+
     with open(o.strpath, "wb") as f:
-        f.write(capa.features.freeze.dump(viv_extractor))
-    null_extractor = capa.features.freeze.load(o.open("rb").read())
-    compare_extractors_viv_null(viv_extractor, null_extractor)
+        f.write(capa.features.freeze.dump(z9324d_extractor))
+
+    with open(o.strpath, "rb") as f:
+        null_extractor = capa.features.freeze.load(f.read())
+
+    compare_extractors_viv_null(z9324d_extractor, null_extractor)

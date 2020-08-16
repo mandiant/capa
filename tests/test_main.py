@@ -18,15 +18,16 @@ import capa.features.extractors.viv
 from capa.engine import *
 
 
-def test_main(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_main(z9324d_extractor):
     # tests rules can be loaded successfully and all output modes
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, "-vv"]) == 0
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, "-v"]) == 0
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, "-j"]) == 0
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path]) == 0
+    path = z9324d_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path]) == 0
 
 
-def test_main_single_rule(sample_9324d1a8ae37a36ae560c37448c9705a, tmpdir):
+def test_main_single_rule(z9324d_extractor, tmpdir):
     # tests a single rule can be loaded successfully
     RULE_CONTENT = textwrap.dedent(
         """
@@ -38,16 +39,18 @@ def test_main_single_rule(sample_9324d1a8ae37a36ae560c37448c9705a, tmpdir):
               - string: test
         """
     )
+    path = z9324d_extractor.path
     rule_file = tmpdir.mkdir("capa").join("rule.yml")
     rule_file.write(RULE_CONTENT)
-    assert capa.main.main([sample_9324d1a8ae37a36ae560c37448c9705a.path, "-v", "-r", rule_file.strpath,]) == 0
+    assert capa.main.main([path, "-v", "-r", rule_file.strpath,]) == 0
 
 
-def test_main_shellcode(sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32):
-    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, "-vv", "-f", "sc32"]) == 0
-    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, "-v", "-f", "sc32"]) == 0
-    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, "-j", "-f", "sc32"]) == 0
-    assert capa.main.main([sample_499c2a85f6e8142c3f48d4251c9c7cd6_raw32.path, "-f", "sc32"]) == 0
+def test_main_shellcode(z499c2_extractor):
+    path = z499c2_extractor.path
+    assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0
+    assert capa.main.main([path, "-v", "-f", "sc32"]) == 0
+    assert capa.main.main([path, "-j", "-f", "sc32"]) == 0
+    assert capa.main.main([path, "-f", "sc32"]) == 0
 
 
 def test_ruleset():
@@ -96,7 +99,7 @@ def test_ruleset():
     assert len(rules.basic_block_rules) == 1
 
 
-def test_match_across_scopes_file_function(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_match_across_scopes_file_function(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
             # this rule should match on a function (0x4073F0)
@@ -153,16 +156,13 @@ def test_match_across_scopes_file_function(sample_9324d1a8ae37a36ae560c37448c970
             ),
         ]
     )
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "install service" in capabilities
     assert ".text section" in capabilities
     assert ".text section and install service" in capabilities
 
 
-def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_match_across_scopes(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
             # this rule should match on a basic block (including at least 0x403685)
@@ -218,16 +218,13 @@ def test_match_across_scopes(sample_9324d1a8ae37a36ae560c37448c9705a):
             ),
         ]
     )
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "tight loop" in capabilities
     assert "kill thread loop" in capabilities
     assert "kill thread program" in capabilities
 
 
-def test_subscope_bb_rules(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_subscope_bb_rules(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
             capa.rules.Rule.from_yaml(
@@ -247,14 +244,11 @@ def test_subscope_bb_rules(sample_9324d1a8ae37a36ae560c37448c9705a):
         ]
     )
     # tight loop at 0x403685
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "test rule" in capabilities
 
 
-def test_byte_matching(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_byte_matching(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
             capa.rules.Rule.from_yaml(
@@ -272,15 +266,11 @@ def test_byte_matching(sample_9324d1a8ae37a36ae560c37448c9705a):
             )
         ]
     )
-
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "byte match test" in capabilities
 
 
-def test_count_bb(sample_9324d1a8ae37a36ae560c37448c9705a):
+def test_count_bb(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
             capa.rules.Rule.from_yaml(
@@ -299,9 +289,5 @@ def test_count_bb(sample_9324d1a8ae37a36ae560c37448c9705a):
             )
         ]
     )
-
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(
-        sample_9324d1a8ae37a36ae560c37448c9705a.vw, sample_9324d1a8ae37a36ae560c37448c9705a.path,
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, extractor)
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "count bb" in capabilities
