@@ -376,7 +376,12 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
-    msg = "%s should be found %d times in %s" % (str(feature), expected, scope.__name__)
+    msg = "%s should be found %d times in %s, found: %d" % (
+        str(feature),
+        expected,
+        scope.__name__,
+        len(features[feature]),
+    )
     assert len(features[feature]) == expected, msg
 
 
