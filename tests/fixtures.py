@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
+import sys
 import os.path
 import collections
 
@@ -38,6 +39,16 @@ def get_viv_extractor(path):
     else:
         vw = capa.main.get_workspace(path, "auto", should_save=True)
     return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+
+
+@lru_cache
+def get_lancelot_extractor(path):
+    import capa.features.extractors.lancelot
+
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    return capa.features.extractors.lancelot.LancelotFeatureExtractor(buf)
 
 
 @lru_cache()
@@ -386,9 +397,10 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 
 
 def get_extractor(path):
-    # decide here which extractor to load for tests.
-    # maybe check which python version we've loaded or if we're in IDA.
-    extractor = get_viv_extractor(path)
+    if sys.version_info >= (3, 0):
+        extractor = get_lancelot_extractor(path)
+    else:
+        extractor = get_viv_extractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path)

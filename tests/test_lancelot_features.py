@@ -10,16 +10,6 @@
 from fixtures import *
 
 
-@lru_cache
-def get_lancelot_extractor(path):
-    import capa.features.extractors.lancelot
-
-    with open(path, "rb") as f:
-        buf = f.read()
-
-    return capa.features.extractors.lancelot.LancelotFeatureExtractor(buf)
-
-
 @parametrize(
     "sample,scope,feature,expected", FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"],
 )

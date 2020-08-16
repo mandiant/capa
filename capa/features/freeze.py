@@ -101,7 +101,9 @@ def dumps(extractor):
             for feature, va in extractor.extract_basic_block_features(f, bb):
                 ret["scopes"]["basic block"].append(serialize_feature(feature) + (hex(va), (hex(f), hex(bb),)))
 
-            for insn, insnva in sorted([(insn, int(insn)) for insn in extractor.get_instructions(f, bb)]):
+            for insnva, insn in sorted(
+                [(insn.__int__(), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
+            ):
                 ret["functions"][hex(f)][hex(bb)].append(hex(insnva))
 
                 for feature, va in extractor.extract_insn_features(f, bb, insn):
@@ -245,12 +247,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    vw = capa.main.get_workspace(args.sample, args.format)
-
-    # don't import this at top level to support ida/py3 backend
-    import capa.features.extractors.viv
-
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, args.sample)
+    extractor = capa.main.get_extractor(args.sample, args.format)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 
