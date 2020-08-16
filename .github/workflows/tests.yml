@@ -70,7 +70,8 @@ jobs:
       with:
         python-version: 3.8
     - name: Install capa
-      run: pip install -e .[dev]
+      # TODO: remove `pefile` when we bump lancelot >= 0.3.7
+      run: pip install -e .[dev] pefile
     - name: Run tests
       run: pytest tests/
 
