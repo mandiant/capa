@@ -63,6 +63,7 @@ class LancelotFeatureExtractor(capa.features.extractors.FeatureExtractor):
 
     def get_functions(self):
         for va in self.ws.get_functions():
+            # this is just the address of the function
             yield va
 
     def extract_function_features(self, f):
