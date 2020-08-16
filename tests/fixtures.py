@@ -9,6 +9,7 @@
 import os
 import sys
 import os.path
+import contextlib
 import collections
 
 import pytest
@@ -26,6 +27,44 @@ except ImportError:
 
 
 CD = os.path.dirname(__file__)
+
+
+@contextlib.contextmanager
+def xfail(condition, reason=None):
+    """
+    context manager that wraps a block that is expected to fail in some cases.
+    when it does fail (and is expected), then mark this as pytest.xfail.
+    if its unexpected, raise an exception, so the test fails.
+
+    example::
+
+        # this test:
+        #  - passes on py3 if foo() works
+        #  - fails  on py3 if foo() fails
+        #  - xfails on py2 if foo() fails
+        #  - fails  on py2 if foo() works
+        with xfail(sys.version_info < (3, 0), reason="py3 doesn't foo"):
+            foo()
+    """
+    try:
+        # do the block
+        yield
+    except:
+        if condition:
+            # we expected the test to fail, so raise and register this via pytest
+            pytest.xfail(reason)
+        else:
+            # we don't expect an exception, so the test should fail
+            raise
+    else:
+        if not condition:
+            # here we expect the block to run successfully,
+            # and we've received no exception,
+            # so this is good
+            pass
+        else:
+            # we expected an exception, but didn't find one. that's an error.
+            raise RuntimeError("expected to fail, but didn't")
 
 
 @lru_cache()
