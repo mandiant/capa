@@ -6,9 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
+import textwrap
 
 import pytest
-import textwrap
+from fixtures import *
 
 import capa.main
 import capa.rules
@@ -16,7 +17,6 @@ import capa.engine
 import capa.features
 from capa.engine import *
 
-from fixtures import *
 
 @pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main(z9324d_extractor):
