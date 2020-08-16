@@ -14,11 +14,13 @@ from fixtures import *
     "sample,scope,feature,expected", FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"],
 )
 def test_lancelot_features(sample, scope, feature, expected):
-    do_test_feature_presence(get_lancelot_extractor, sample, scope, feature, expected)
+    with xfail(sys.version_info < (3, 0), reason="lancelot only works on py3"):
+        do_test_feature_presence(get_lancelot_extractor, sample, scope, feature, expected)
 
 
 @parametrize(
     "sample,scope,feature,expected", FEATURE_COUNT_TESTS, indirect=["sample", "scope"],
 )
 def test_lancelot_feature_counts(sample, scope, feature, expected):
-    do_test_feature_count(get_lancelot_extractor, sample, scope, feature, expected)
+    with xfail(sys.version_info < (3, 0), reason="lancelot only works on py3"):
+        do_test_feature_count(get_lancelot_extractor, sample, scope, feature, expected)
