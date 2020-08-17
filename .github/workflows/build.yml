@@ -14,38 +14,64 @@ jobs:
           - os: ubuntu-16.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
-            asset_name: capa-linux
+            asset_name: linux
           - os: windows-latest
             artifact_name: capa.exe
-            asset_name: capa-windows.exe
+            asset_name: windows
           - os: macos-latest
             artifact_name: capa
-            asset_name: capa-macos
+            asset_name: macos
     steps:
-    - name: Checkout capa
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Set up Python 2.7
-      uses: actions/setup-python@v2
-      with:
-        python-version: 2.7
-    - name: Install PyInstaller
-      run: pip install pyinstaller
-    - name: Install capa
-      run: pip install -e .
-    - name: Build standalone executable
-      run: pyinstaller .github/pyinstaller/pyinstaller.spec
-    - name: Does it run?
-      run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.asset_name }}
-        path: dist/${{ matrix.artifact_name }}
-    - name: Upload binaries to GH Release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.CAPA_TOKEN }}
-        file: dist/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
-        tag: ${{ github.ref }}
+      - name: Checkout capa
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Set up Python 2.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 2.7
+      - name: Install PyInstaller
+        # pyinstaller 4 doesn't support Python 2.7
+        run: pip install 'pyinstaller==3.*'
+      - name: Install capa
+        run: pip install -e .
+      - name: Build standalone executable
+        run: pyinstaller .github/pyinstaller/pyinstaller.spec
+      - name: Does it run?
+        run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.artifact_name }}
+
+  zip:
+    name: zip ${{ matrix.asset_name }}
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - asset_name: linux
+            artifact_name: capa
+          - asset_name: windows
+            artifact_name: capa.exe
+          - asset_name: macos
+            artifact_name: capa
+    steps:
+      - name: Download ${{ matrix.asset_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+      - name: Set executable flag
+        run: chmod +x ${{ matrix.artifact_name }}
+      - name: Set zip name
+        run: echo ::set-env name=zip_name::capa-${GITHUB_REF#refs/tags/}-${{ matrix.asset_name }}.zip
+      - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
+        run: zip ${{ env.zip_name }} ${{ matrix.artifact_name }}
+      - name: Upload ${{ env.zip_name }} to GH Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN}}
+          file: ${{ env.zip_name }}
+          tag: ${{ github.ref }}
+
