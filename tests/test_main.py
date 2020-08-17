@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
+import sys
 import textwrap
 
 import pytest
@@ -18,6 +18,7 @@ import capa.features
 from capa.engine import *
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main(z9324d_extractor):
     # tests rules can be loaded successfully and all output modes
     path = z9324d_extractor.path
@@ -27,6 +28,7 @@ def test_main(z9324d_extractor):
     assert capa.main.main([path]) == 0
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main_single_rule(z9324d_extractor, tmpdir):
     # tests a single rule can be loaded successfully
     RULE_CONTENT = textwrap.dedent(
@@ -100,6 +102,7 @@ def test_ruleset():
     assert len(rules.basic_block_rules) == 1
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_match_across_scopes_file_function(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -163,6 +166,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
     assert ".text section and install service" in capabilities
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_match_across_scopes(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -225,6 +229,7 @@ def test_match_across_scopes(z9324d_extractor):
     assert "kill thread program" in capabilities
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_subscope_bb_rules(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -249,6 +254,7 @@ def test_subscope_bb_rules(z9324d_extractor):
     assert "test rule" in capabilities
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_byte_matching(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -271,6 +277,7 @@ def test_byte_matching(z9324d_extractor):
     assert "byte match test" in capabilities
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_count_bb(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
