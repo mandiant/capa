@@ -398,7 +398,9 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
     if insn.mnem not in ["push", "mov"]:
         return
 
-    if "fs" in insn.getPrefixName():
+    prefix = insn.getPrefixName()
+
+    if "fs" in prefix:
         for oper in insn.opers:
             # examples
             #
@@ -411,10 +413,12 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
                 isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper) and oper.imm == 0x30
             ):
                 yield Characteristic("peb access"), insn.va
-    elif "gs" in insn.getPrefixName():
+    elif "gs" in prefix:
         for oper in insn.opers:
-            if (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60) or (
-                isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60
+            if (
+                (isinstance(oper, envi.archs.amd64.disasm.i386RegMemOper) and oper.disp == 0x60)
+                or (isinstance(oper, envi.archs.amd64.disasm.i386SibOper) and oper.imm == 0x60)
+                or (isinstance(oper, envi.archs.amd64.disasm.i386ImmMemOper) and oper.imm == 0x60)
             ):
                 yield Characteristic("peb access"), insn.va
     else:
