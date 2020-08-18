@@ -162,6 +162,23 @@ def test_rule_yaml_count_range():
     assert r.evaluate({Number(100): {1, 2, 3}}) == False
 
 
+def test_rule_yaml_count_string():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - count(string(foo)): 2
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    assert r.evaluate({String("foo"): {}}) == False
+    assert r.evaluate({String("foo"): {1}}) == False
+    assert r.evaluate({String("foo"): {1, 2}}) == True
+    assert r.evaluate({String("foo"): {1, 2, 3}}) == False
+
+
 def test_invalid_rule_feature():
     with pytest.raises(capa.rules.InvalidRule):
         capa.rules.Rule.from_yaml(

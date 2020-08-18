@@ -161,7 +161,7 @@ class Regex(String):
 
 
 class StringFactory(object):
-    def __new__(self, value, description):
+    def __new__(self, value, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
         return String(value, description=description)
