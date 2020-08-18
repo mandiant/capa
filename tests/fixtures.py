@@ -43,7 +43,7 @@ def xfail(condition, reason=None):
         #  - fails  on py3 if foo() fails
         #  - xfails on py2 if foo() fails
         #  - fails  on py2 if foo() works
-        with xfail(sys.version_info < (3, 0), reason="py3 doesn't foo"):
+        with xfail(sys.version_info < (3, 0), reason="py2 doesn't foo"):
             foo()
     """
     try:
