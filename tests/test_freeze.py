@@ -5,9 +5,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
+import sys
 import textwrap
 
+import pytest
 from fixtures import *
 
 import capa.main
@@ -104,17 +105,14 @@ def compare_extractors_viv_null(viv_ext, null_ext):
       viv_ext (capa.features.extractors.viv.VivisectFeatureExtractor)
       null_ext (capa.features.extractors.NullFeatureExtractor)
     """
-
-    # TODO: ordering of these things probably doesn't work yet
-
     assert list(viv_ext.extract_file_features()) == list(null_ext.extract_file_features())
-    assert to_int(list(viv_ext.get_functions())) == list(null_ext.get_functions())
+    assert list(map(to_int, viv_ext.get_functions())) == list(null_ext.get_functions())
     for f in viv_ext.get_functions():
-        assert to_int(list(viv_ext.get_basic_blocks(f))) == list(null_ext.get_basic_blocks(to_int(f)))
+        assert list(map(to_int, viv_ext.get_basic_blocks(f))) == list(null_ext.get_basic_blocks(to_int(f)))
         assert list(viv_ext.extract_function_features(f)) == list(null_ext.extract_function_features(to_int(f)))
 
         for bb in viv_ext.get_basic_blocks(f):
-            assert to_int(list(viv_ext.get_instructions(f, bb))) == list(
+            assert list(map(to_int, viv_ext.get_instructions(f, bb))) == list(
                 null_ext.get_instructions(to_int(f), to_int(bb))
             )
             assert list(viv_ext.extract_basic_block_features(f, bb)) == list(
@@ -129,10 +127,7 @@ def compare_extractors_viv_null(viv_ext, null_ext):
 
 def to_int(o):
     """helper to get int value of extractor items"""
-    if isinstance(o, list):
-        return map(lambda x: capa.helpers.oint(x), o)
-    else:
-        return capa.helpers.oint(o)
+    return capa.helpers.oint(o)
 
 
 def test_freeze_s_roundtrip():
@@ -169,6 +164,7 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("#11"))
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_freeze_sample(tmpdir, z9324d_extractor):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath
@@ -176,6 +172,7 @@ def test_freeze_sample(tmpdir, z9324d_extractor):
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_freeze_load_sample(tmpdir, z9324d_extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
 
