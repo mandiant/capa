@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import miasm.analysis.binary
+import miasm.analysis.machine
 
 import capa.features.extractors.miasm.file
 from capa.features.extractors import FeatureExtractor
@@ -18,6 +19,7 @@ class MiasmFeatureExtractor(FeatureExtractor):
         self.buf = buf
         self.container = miasm.analysis.binary.Container.from_string(buf)
         self.pe = self.container.executable
+        self.cfg = self._build_cfg()
 
     def get_base_address(self):
         return self.container.entry_point
@@ -43,3 +45,31 @@ class MiasmFeatureExtractor(FeatureExtractor):
 
     def extract_insn_features(self, f, bb, insn):
         raise NotImplementedError()
+
+    def _get_entry_points(self):
+        entry_points = {self.get_base_address()}
+
+        for _, va in miasm.jitter.loader.pe.get_export_name_addr_list(self.pe):
+            entry_points.add(va)
+
+        return entry_points
+
+    # This is more efficient that using the `blocks` argument in `dis_multiblock`
+    # See http://www.williballenthin.com/post/2020-01-12-miasm-part-2
+    # TODO: port this efficiency improvement to miasm
+    def _build_cfg(self):
+        machine = miasm.analysis.machine.Machine(self.container.arch)
+        loc_db = self.container.loc_db
+        disassembler = machine.dis_engine(self.container.bin_stream, follow_call=True, loc_db=loc_db)
+        job_done = set()
+        cfgs = {}
+
+        for va in self._get_entry_points():
+            cfgs[va] = disassembler.dis_multiblock(va, job_done=job_done)
+
+        complete_cfs = miasm.core.asmblock.AsmCFG(loc_db)
+        for cfg in cfgs.values():
+            complete_cfs.merge(cfg)
+
+        disassembler.apply_splitting(complete_cfs)
+        return complete_cfs
