@@ -28,8 +28,20 @@ class MiasmFeatureExtractor(FeatureExtractor):
         for feature, va in capa.features.extractors.miasm.file.extract_file_features(self.buf, self.pe):
             yield feature, va
 
+    # TODO: Improve this function (it just considers all loc_keys target of calls a function), port to miasm
     def get_functions(self):
-        raise NotImplementedError()
+        """
+        returns all loc_keys which are the argument of any call function
+        """
+        functions = set()
+
+        for block in self.cfg.blocks:
+            for line in block.lines:
+                if line.is_subcall() and line.args[0].is_loc():
+                    loc_key = line.args[0].loc_key
+                    if loc_key not in functions:
+                        functions.add(loc_key)
+                        yield loc_key
 
     def extract_function_features(self, f):
         raise NotImplementedError()
