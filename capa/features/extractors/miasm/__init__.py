@@ -54,6 +54,9 @@ class MiasmFeatureExtractor(FeatureExtractor):
     def block_offset(self, bb):
         return bb.lines[0].offset
 
+    def function_offset(self, f):
+        return self.cfg.loc_key_to_block(f).lines[0].offset
+
     def get_basic_blocks(self, loc_key):
         """
         get the basic blocks of the function represented by lock_key

@@ -8,6 +8,8 @@
 
 import abc
 
+from capa.helpers import oint
+
 
 class FeatureExtractor(object):
     """
@@ -34,6 +36,12 @@ class FeatureExtractor(object):
         # this base class doesn't know what to do with that info, though.
         #
         super(FeatureExtractor, self).__init__()
+
+    def block_offset(self, bb):
+        return oint(bb)
+
+    def function_offset(self, f):
+        return oint(f)
 
     @abc.abstractmethod
     def get_base_address(self):

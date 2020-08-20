@@ -242,14 +242,14 @@ def sample(request):
 
 def get_function(extractor, fva):
     for f in extractor.get_functions():
-        if f.__int__() == fva:
+        if extractor.function_offset(f) == fva:
             return f
     raise ValueError("function not found")
 
 
 def get_basic_block(extractor, f, va):
     for bb in extractor.get_basic_blocks(f):
-        if bb.__int__() == va:
+        if extractor.block_offset(bb) == va:
             return bb
     raise ValueError("basic block not found")
 
