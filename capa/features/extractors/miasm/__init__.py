@@ -10,6 +10,7 @@ import miasm.analysis.binary
 import miasm.analysis.machine
 
 import capa.features.extractors.miasm.file
+import capa.features.extractors.miasm.basicblock
 from capa.features.extractors import FeatureExtractor
 
 
@@ -59,8 +60,9 @@ class MiasmFeatureExtractor(FeatureExtractor):
         cfg = disassembler.dis_multiblock(self.block_offset(block))
         return cfg.blocks
 
-    def extract_basic_block_features(self, f, bb):
-        raise NotImplementedError()
+    def extract_basic_block_features(self, _, bb):
+        for feature, va in capa.features.extractors.miasm.basicblock.extract_features(bb):
+            yield feature, va
 
     def get_instructions(self, f, bb):
         raise NotImplementedError()
