@@ -10,6 +10,7 @@ import miasm.analysis.binary
 import miasm.analysis.machine
 
 import capa.features.extractors.miasm.file
+import capa.features.extractors.miasm.function
 import capa.features.extractors.miasm.basicblock
 from capa.features.extractors import FeatureExtractor
 
@@ -45,8 +46,9 @@ class MiasmFeatureExtractor(FeatureExtractor):
                         functions.add(loc_key)
                         yield loc_key
 
-    def extract_function_features(self, f):
-        raise NotImplementedError()
+    def extract_function_features(self, loc_key):
+        for feature, va in capa.features.extractors.miasm.function.extract_features(self, loc_key):
+            yield feature, va
 
     def block_offset(self, bb):
         return bb.lines[0].offset
