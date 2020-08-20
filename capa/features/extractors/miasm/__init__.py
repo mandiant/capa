@@ -19,6 +19,7 @@ class MiasmFeatureExtractor(FeatureExtractor):
         self.buf = buf
         self.container = miasm.analysis.binary.Container.from_string(buf)
         self.pe = self.container.executable
+        self.machine = miasm.analysis.machine.Machine(self.container.arch)
         self.cfg = self._build_cfg()
 
     def get_base_address(self):
@@ -46,8 +47,17 @@ class MiasmFeatureExtractor(FeatureExtractor):
     def extract_function_features(self, f):
         raise NotImplementedError()
 
-    def get_basic_blocks(self, f):
-        raise NotImplementedError()
+    def block_offset(self, bb):
+        return bb.lines[0].offset
+
+    def get_basic_blocks(self, loc_key):
+        """
+        get the basic blocks of the function represented by lock_key
+        """
+        block = self.cfg.loc_key_to_block(loc_key)
+        disassembler = self.machine.dis_engine(self.container.bin_stream, follow_call=False)
+        cfg = disassembler.dis_multiblock(self.block_offset(block))
+        return cfg.blocks
 
     def extract_basic_block_features(self, f, bb):
         raise NotImplementedError()
@@ -70,9 +80,8 @@ class MiasmFeatureExtractor(FeatureExtractor):
     # See http://www.williballenthin.com/post/2020-01-12-miasm-part-2
     # TODO: port this efficiency improvement to miasm
     def _build_cfg(self):
-        machine = miasm.analysis.machine.Machine(self.container.arch)
         loc_db = self.container.loc_db
-        disassembler = machine.dis_engine(self.container.bin_stream, follow_call=True, loc_db=loc_db)
+        disassembler = self.machine.dis_engine(self.container.bin_stream, follow_call=True, loc_db=loc_db)
         job_done = set()
         cfgs = {}
 
