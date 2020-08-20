@@ -304,19 +304,27 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor_py3(path, format, disable_progress=False):
-    from smda.SmdaConfig import SmdaConfig
-    from smda.Disassembler import Disassembler
+    if False:  # TODO: How to decide which backend to use?
+        from smda.SmdaConfig import SmdaConfig
+        from smda.Disassembler import Disassembler
 
-    import capa.features.extractors.smda
+        import capa.features.extractors.smda
 
-    smda_report = None
-    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        config = SmdaConfig()
-        config.STORE_BUFFER = True
-        smda_disasm = Disassembler(config)
-        smda_report = smda_disasm.disassembleFile(path)
+        smda_report = None
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            config = SmdaConfig()
+            config.STORE_BUFFER = True
+            smda_disasm = Disassembler(config)
+            smda_report = smda_disasm.disassembleFile(path)
 
-    return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+        return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+    else:
+        import capa.features.extractors.miasm
+
+        with open(path, "rb") as f:
+            buf = f.read()
+
+        return capa.features.extractors.miasm.MiasmFeatureExtractor(buf)
 
 
 def get_extractor(path, format, disable_progress=False):
