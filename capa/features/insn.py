@@ -37,4 +37,4 @@ class Offset(Feature):
 
 class Mnemonic(Feature):
     def __init__(self, value, description=None):
-        super(Mnemonic, self).__init__(value, description=description)
+        super(Mnemonic, self).__init__(value.lower(), description=description)
