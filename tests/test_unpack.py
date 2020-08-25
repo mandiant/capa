@@ -41,6 +41,6 @@ def test_aspack_unpack(aspack_extractor):
     with open(path, "rb") as f:
         buf = f.read()
 
-    unpacked = capa.unpack.unpack_pe(buf)
+    unpacked = capa.unpack.unpack_pe(capa.unpack.ASPACK, buf)
     assert b"This program cannot be run in DOS mode" in unpacked
     assert b"cmd.exe" in unpacked

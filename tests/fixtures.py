@@ -151,7 +151,7 @@ def get_data_path_by_name(name):
     elif name.startswith("c9188"):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
     elif name == "aspack":
-        return os.path.join(CD, "data", "ff75b4309eee3a49c5749d306")
+        return os.path.join(CD, "data", "2055994ff75b4309eee3a49c5749d306")
     else:
         raise ValueError("unexpected sample fixture")
 
