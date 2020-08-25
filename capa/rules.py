@@ -262,7 +262,7 @@ def parse_description(s, value_type, description=None):
                 raise InvalidRule(
                     "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
                 )
-        elif value_type in {"number", "offset"}:
+        elif value_type in ("number", "offset") or value_type.startswith(("number/", "offset/")):
             try:
                 value = parse_int(value)
             except ValueError:
