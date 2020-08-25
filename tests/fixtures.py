@@ -140,6 +140,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
     elif name.startswith("c9188"):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
+    elif name == "aspack":
+        return os.path.join(CD, "data", "ff75b4309eee3a49c5749d306")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -494,3 +496,8 @@ def z499c2_extractor():
 @pytest.fixture
 def al_khaser_x86_extractor():
     return get_extractor(get_data_path_by_name("al-khaser x86"))
+
+
+@pytest.fixture
+def aspack_extractor():
+    return get_extractor(get_data_path_by_name("aspack"))
