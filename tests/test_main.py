@@ -47,7 +47,7 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
     assert capa.main.main([path, "-v", "-r", rule_file.strpath,]) == 0
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="lancelot doesn't support shellcode workspaces")
 def test_main_shellcode(z499c2_extractor):
     path = z499c2_extractor.path
     assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0

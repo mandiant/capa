@@ -32,7 +32,7 @@ import capa.features.extractors
 from capa.helpers import oint, get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
-SUPPORTED_FILE_MAGIC = set(["MZ"])
+SUPPORTED_FILE_MAGIC = set([b"MZ"])
 
 
 logger = logging.getLogger("capa")
@@ -290,7 +290,24 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor_py3(path, format, disable_progress=False):
-    raise UnsupportedRuntimeError()
+    try:
+        import lancelot
+
+        import capa.features.extractors.lancelot
+    except ImportError:
+        logger.warning("lancelot not installed")
+        raise UnsupportedRuntimeError()
+
+    if format not in ("pe", "auto"):
+        raise UnsupportedFormatError(format)
+
+    if not is_supported_file_type(path):
+        raise UnsupportedFormatError()
+
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    return capa.features.extractors.lancelot.LancelotFeatureExtractor(buf)
 
 
 def get_extractor(path, format, disable_progress=False):
