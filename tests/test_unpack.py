@@ -14,7 +14,7 @@ from fixtures import *
 import capa.unpack
 
 
-@pytest.mark.xfail(sys.version_info <= (3, 0), reason="auto-unpack only works on py3")
+@pytest.mark.xfail(sys.version_info <= (3, 5), reason="auto-unpack only works on py3.6+")
 def test_aspack_is_packed(aspack_extractor):
     path = aspack_extractor.path
 
@@ -24,7 +24,7 @@ def test_aspack_is_packed(aspack_extractor):
     assert capa.unpack.is_packed(buf) is True
 
 
-@pytest.mark.xfail(sys.version_info <= (3, 0), reason="auto-unpack only works on py3")
+@pytest.mark.xfail(sys.version_info <= (3, 5), reason="auto-unpack only works on py3.6+")
 def test_aspack_detect(aspack_extractor):
     path = aspack_extractor.path
 
@@ -34,7 +34,7 @@ def test_aspack_detect(aspack_extractor):
     assert capa.unpack.detect_packer(buf) == capa.unpack.ASPACK
 
 
-@pytest.mark.xfail(sys.version_info <= (3, 0), reason="auto-unpack only works on py3")
+@pytest.mark.xfail(sys.version_info <= (3, 5), reason="auto-unpack only works on py3.6+")
 def test_aspack_unpack(aspack_extractor):
     path = aspack_extractor.path
 
