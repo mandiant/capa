@@ -43,4 +43,5 @@ def test_aspack_unpack(aspack_extractor):
 
     unpacked = capa.unpack.unpack_pe(capa.unpack.ASPACK, buf)
     assert b"This program cannot be run in DOS mode" in unpacked
-    assert b"cmd.exe" in unpacked
+    assert "(C) Copyright 1985-2000 Microsoft Corp.".encode("utf-16le") in unpacked
+    assert "CMD.EXE has halted. %0".encode("utf-16le") in unpacked
