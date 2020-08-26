@@ -80,8 +80,6 @@ INSN_POPA = 0x61
 class AspackUnpacker(speakeasy.Speakeasy):
     def __init__(self, buf, debug=False):
         super(AspackUnpacker, self).__init__(debug=debug)
-        self.buf = buf
-        self.pe = pefile.PE(data=buf)
         self.module = self.load_module(data=buf)
         load_module2(self, self.module)
 
@@ -120,7 +118,7 @@ class AspackUnpacker(speakeasy.Speakeasy):
         finally:
             self.remove_code_hook(handle)
 
-    def unpack(self):
+    def dump(self):
         # prime the emulator
         # this is derived from winemu::WindowsEmulator::start()
         self.emu.curr_run = Run()
@@ -180,10 +178,17 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
         mm = self.get_address_map(self.module.get_base())
         buf = self.mem_read(mm.get_base(), mm.get_size())
+        return buf, oep
 
+    def fixup(self, buf, oep):
         pe = pefile.PE(data=buf)
         pe.OPTIONAL_HEADER.AddressOfEntryPoint = oep - self.module.base
         return pe.write()
+
+    def unpack(self):
+        buf, oep = self.dump()
+        buf = self.fixup(buf, oep)
+        return buf
 
 
 def unpack_aspack(buf):

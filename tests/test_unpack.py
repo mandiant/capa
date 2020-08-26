@@ -44,7 +44,7 @@ def test_aspack_unpack(aspack_extractor):
     unpacked = capa.unpack.unpack_pe(capa.unpack.ASPACK, buf)
 
     pe = pefile.PE(data=unpacked)
-    assert pe.OPTIONAL_HEADER.AddressOfEntryPoint == 0x1a610
+    assert pe.OPTIONAL_HEADER.AddressOfEntryPoint == 0x1A610
     assert b"This program cannot be run in DOS mode" in unpacked
     assert "(C) Copyright 1985-2000 Microsoft Corp.".encode("utf-16le") in unpacked
     assert "CMD.EXE has halted. %0".encode("utf-16le") in unpacked
