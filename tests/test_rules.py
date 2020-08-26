@@ -483,6 +483,21 @@ def test_number_arch():
     assert r.evaluate({Number(2, arch=ARCH_X64): {1}}) == False
 
 
+def test_number_arch_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - number/x32: 2 = some constant
+            """
+        )
+    )
+    assert r.evaluate({Number(2, arch=ARCH_X32, description="some constant"): {1}}) == True
+
+
 def test_offset_symbol():
     rule = textwrap.dedent(
         """
@@ -544,6 +559,21 @@ def test_offset_arch():
 
     assert r.evaluate({Offset(2): {1}}) == False
     assert r.evaluate({Offset(2, arch=ARCH_X64): {1}}) == False
+
+
+def test_offset_arch_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - offset/x32: 2 = some constant
+            """
+        )
+    )
+    assert r.evaluate({Offset(2, arch=ARCH_X32, description="some constant"): {1}}) == True
 
 
 def test_invalid_offset():
