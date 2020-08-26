@@ -175,14 +175,15 @@ class AspackUnpacker(speakeasy.Speakeasy):
         with self.code_hook(until_section_hop(start, end)):
             self.emu.emu_eng.start(self.emu.get_pc())
 
-        logger.debug("OEP: 0x%x", self.emu.get_pc())
-
-        print(f"base: {self.module.get_base():x}")
-        for m in sorted(self.get_mem_maps(), key=lambda m: m.base):
-            print(f"{m.base:08x} {m.size:08x} {m.tag}")
+        oep = self.emu.get_pc()
+        logger.debug("OEP: 0x%x", oep)
 
         mm = self.get_address_map(self.module.get_base())
-        return self.mem_read(mm.get_base(), mm.get_size())
+        buf = self.mem_read(mm.get_base(), mm.get_size())
+
+        pe = pefile.PE(data=buf)
+        pe.OPTIONAL_HEADER.AddressOfEntryPoint = oep - self.module.base
+        return pe.write()
 
 
 def unpack_aspack(buf):
