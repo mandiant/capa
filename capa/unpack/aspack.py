@@ -6,22 +6,38 @@ import collections
 
 import pefile
 import speakeasy
-import speakeasy.common as common
-import speakeasy.windows.objman as objman
-from speakeasy.profiler import Run
+import speakeasy.common as se_common
+import speakeasy.profiler
+import speakeasy.windows.objman
 
 logger = logging.getLogger(__name__)
-ASPACK = "aspack"
 
 
-def load_module2(se, module):
+def pefile_get_section_by_name(pe, section_name):
+    for section in pe.sections:
+        try:
+            if section.Name.partition(b"\x00")[0].decode("ascii") == section_name:
+                return section
+        except:
+            continue
+    raise ValueError("section not found")
+
+
+def prepare_emu_context(se, module):
     """
-    prepare an WindowsEmulator for emulation, without running it.
+    prepare an Speakeasy instance for emulating the given module, without running it.
 
     this is useful when planning to manually control the emulator,
     such as via `Speakeasy.emu.emu_eng.start(...)`.
+    typically, Speakeasy expects to do "Run based" analysis,
+    which doesn't give us too much control.
 
     much of this was derived from win32::Win32Emulator::run_module.
+    hopefully this can eventually be merged into Speakeasy.
+
+    args:
+      se (speakeasy.Speakeasy): the instance to prepare
+      module (speakeasy.Module): the module that will be emulated
     """
     se._init_hooks()
 
@@ -39,10 +55,10 @@ def load_module2(se, module):
 
     # Create an empty process object for the module if none is supplied
     if len(se.emu.processes) == 0:
-        p = objman.Process(se.emu, path=module.get_emu_path(), base=module.base, pe=module)
+        p = speakeasy.windows.objman.Process(se.emu, path=module.get_emu_path(), base=module.base, pe=module)
         se.emu.curr_process = p
 
-    t = objman.Thread(se.emu, stack_base=se.emu.stack_base, stack_commit=module.stack_commit)
+    t = speakeasy.windows.objman.Thread(se.emu, stack_base=se.emu.stack_base, stack_commit=module.stack_commit)
 
     se.emu.om.objects.update({t.address: t})
     se.emu.curr_process.threads.append(t)
@@ -62,13 +78,13 @@ class AspackUnpacker(speakeasy.Speakeasy):
     def __init__(self, buf, debug=False):
         super(AspackUnpacker, self).__init__(debug=debug)
         self.module = self.load_module(data=buf)
-        load_module2(self, self.module)
+        prepare_emu_context(self, self.module)
 
     @staticmethod
     def detect_aspack(buf):
         """
         return True if the given buffer contains an ASPack'd PE file.
-        we detect aspack by looking at the section names for .aspack or .adata.
+        we detect aspack by looking at the section names for .aspack.
         the unpacking routine contains further validation and will raise an exception if necessary.
 
         args:
@@ -81,14 +97,12 @@ class AspackUnpacker(speakeasy.Speakeasy):
         except:
             return False
 
-        for section in pe.sections:
-            try:
-                section_name = section.Name.partition(b"\x00")[0].decode("ascii")
-            except:
-                continue
-
-            if section_name in (".aspack", ".adata"):
-                return True
+        try:
+            pefile_get_section_by_name(pe, ".aspack")
+        except ValueError:
+            pass
+        else:
+            return True
 
         return False
 
@@ -116,7 +130,7 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     def remove_mem_read_hook(self, hook_handle):
         # TODO: this should be part of speakeasy
-        self.remove_hook(common.HOOK_MEM_READ, hook_handle)
+        self.remove_hook(se_common.HOOK_MEM_READ, hook_handle)
 
     @contextlib.contextmanager
     def mem_read_hook(self, hook):
@@ -141,7 +155,7 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     def remove_code_hook(self, hook_handle):
         # TODO: this should be part of speakeasy
-        self.remove_hook(common.HOOK_CODE, hook_handle)
+        self.remove_hook(se_common.HOOK_CODE, hook_handle)
 
     @contextlib.contextmanager
     def code_hook(self, hook):
@@ -162,6 +176,11 @@ class AspackUnpacker(speakeasy.Speakeasy):
             yield
         finally:
             self.remove_code_hook(handle)
+
+    def read_ptr(self, va):
+        endian = "little"
+        val = self.mem_read(va, self.emu.ptr_size)
+        return int.from_bytes(val, endian)
 
     def dump(self):
         """
@@ -189,7 +208,7 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
         # prime the emulator.
         # this is derived from winemu::WindowsEmulator::start()
-        self.emu.curr_run = Run()
+        self.emu.curr_run = speakeasy.profiler.Run()
         self.emu.curr_mod = self.module
         self.emu.set_hooks()
         self.emu._set_emu_hooks()
@@ -253,51 +272,70 @@ class AspackUnpacker(speakeasy.Speakeasy):
         return buf, oep
 
     def fixup(self, buf, oep):
-        # it seems the .adata section (last section) may not be present.
-        # we need this to be around because we're going to place the import table here.
-        # so pad this out with NULL bytes.
-        pe = pefile.PE(data=buf, fast_load=True)
-        last_section = pe.sections[-1]
-        expected_size = last_section.VirtualAddress + last_section.Misc_VirtualSize
-        if len(buf) < expected_size:
-            buf += b"\x00" * (expected_size - len(buf))
+        """
+        fixup a PE image that's been dumped from memory after unpacking aspack.
 
+        there are two big fixes that need to happen:
+          1. update the section pointers and sizes
+          2. rebuild the import table
+
+        for (1) updating the section pointers, we'll just update the
+        physical pointers to match the virtual pointers, since this is a loaded image.
+
+        for (2) rebuilding the import table, we'll:
+          (a) inspect the emulation results for resolved imports, which tells us dll/symbol names
+          (b) scan the dumped image for the unpacked import thunks (Import Address Table/Thunk Table)
+          (c) match the import thunks with resolved imports
+          (d) build the import table structures
+          (e) write the reconstructed table into the .aspack section
+
+        since the .aspack section contains the unpacking stub, which is no longer used,
+        then we'll write the reconstructed IAT there. hopefully its big enough.
+        """
         pe = pefile.PE(data=buf)
+
         pe.OPTIONAL_HEADER.AddressOfEntryPoint = oep - self.module.base
 
-        # since we're just pulling a big chunk from memory,
-        # update the sections to point to their virtual layout.
+        # 1. update section pointers and sizes.
         for section in pe.sections:
             section.PointerToRawData = section.VirtualAddress
             section.SizeOfRawData = section.Misc_VirtualSize
 
-        # mapping from virtual address to (dll name, symbol name).
-        # the virtual address is generated by speakeasy and is not mapped.
+        # 2. rebuild the import table
+
+        # place the reconstructed import table in the .aspack section (unpacking stub)
+        reconstruction_target = pefile_get_section_by_name(pe, ".aspack").VirtualAddress
+
+        # mapping from import pointer to (dll name, symbol name).
+        # the import pointer is generated by speakeasy and is not mapped.
         # it often looks something like 0xfeedf008.
         # as we encounter pointers with values like this, we can resolve the symbol.
         imports = {}
+
+        # 2a. find resolved imports
         for addr, (dll, sym) in self.module.import_table.items():
             # these are items in the original import table.
             logger.debug(f"found static import  {dll}.{sym}")
             imports[addr] = (dll, sym)
-
         for (addr, dll, sym) in self.emu.dyn_imps:
             # these are imports that have been resolved at runtime by the unpacking stub.
             logger.debug(f"found dynamic import {dll}.{sym}")
             imports[addr] = (dll, sym)
 
-        # find the existing thunk tables
-        # these are pointer-aligned tables of import pointers
+        # 2b. find the existing thunk tables
+        # these are pointer-aligned tables of import pointers.
+        # in my test sample, its found at the start of the first section.
 
         # ordered list of tuples (VA, import pointer)
         # look up the symbol using the import pointer and the `imports` mapping.
         thunks = []
 
-        # aspack puts the import table at the start of the first section?
-        # or maybe its just the sample i'm looking at.
-        for va in range(pe.sections[0].VirtualAddress + self.module.base, 0xFFFFFFFFFFFFFFFF, self.emu.get_ptr_size()):
+        # scan from the start of the first section
+        # until we reach values that don't look like thunk tables.
+        for va in range(pe.sections[0].VirtualAddress + self.module.base, 0xFFFFFFFFFFFFFFFF, self.emu.ptr_size):
             ptr = self.read_ptr(va)
             if ptr == 0:
+                # probably padding/terminating entry
                 continue
 
             if ptr in imports:
@@ -305,7 +343,39 @@ class AspackUnpacker(speakeasy.Speakeasy):
                 logger.debug(f"found import thunk at {va:08x} to {ptr:08x} for {imports[ptr][0]}\t{imports[ptr][1]}")
                 continue
 
+            # otherwise, at the end of the thunk tables
             break
+
+        # collect the thunk entries into contiguous tables, grouped by dll name.
+        #
+        # list of thunk tuples that are contiguous and have the same dll name:
+        #   (VA, import pointer, dll name, symbol name)
+        curr_idt_table = []
+        # list of list of thunk tuples, like above
+        idt_tables = []
+        for thunk in thunks:
+            va, imp = thunk
+            dll, sym = imports[imp]
+
+            if not curr_idt_table:
+                curr_idt_table.append((va, imp, dll, sym))
+            elif curr_idt_table[0][2] == dll:
+                curr_idt_table.append((va, imp, dll, sym))
+            else:
+                idt_tables.append(curr_idt_table)
+                curr_idt_table = [(va, imp, dll, sym)]
+        idt_tables.append(curr_idt_table)
+
+        # 2d. build the import table structures
+
+        # mapping from the data identifier to its RVA (which will be found within the reconstruction blob)
+        locations = {}
+        # the raw bytes of the reconstructed import structures.
+        # it will have the following layout:
+        #   1. DLL name strings and Hint/Name table entries
+        #   2. Import Lookup Tables (points into (1))
+        #   3. Import Directory Tables (points into (1), (2), and original Thunk Tables)
+        reconstruction = io.BytesIO()
 
         # list of dll names
         dlls = list(sorted(set(map(lambda pair: pair[0], imports.values()))))
@@ -313,35 +383,18 @@ class AspackUnpacker(speakeasy.Speakeasy):
         symbols = collections.defaultdict(set)
         for dll, sym in imports.values():
             symbols[dll].add(sym)
-        for dll, syms in list(symbols.items()):
-            symbols[dll] = list(sorted(syms))
-
-        adata_rva = 0x0
-        for section in pe.sections:
-            try:
-                section_name = section.Name.partition(b"\x00")[0].decode("ascii")
-            except:
-                continue
-
-            if section_name == ".adata":
-                adata_rva = section.VirtualAddress
-                break
-        assert adata_rva != 0x0
-        # assume .adata is big enough
-        reconstruction_target = adata_rva
-
-        # mapping from the data identifier to its RVA (and found within the reconstruction blob)
-        locations = {}
-        reconstruction = io.BytesIO()
 
         # emit strings into the reconstruction blob
         for dll in dlls:
             locations[("dll", dll)] = reconstruction_target + reconstruction.tell()
             reconstruction.write(dll.encode("ascii") + b"\x00")
+            if reconstruction.tell() % 2 == 1:
+                # padding
+                reconstruction.write(b"\x00")
 
-            for sym in symbols[dll]:
+            for sym in sorted(symbols[dll]):
                 locations[("hint", dll, sym)] = reconstruction_target + reconstruction.tell()
-                # hint == 0
+                # export name pointer table hint == 0
                 reconstruction.write(b"\x00\x00")
                 # name
                 reconstruction.write(sym.encode("ascii") + b"\x00")
@@ -349,37 +402,20 @@ class AspackUnpacker(speakeasy.Speakeasy):
                     # padding
                     reconstruction.write(b"\x00")
 
-        # list of thunk tuples from thunks that are contiguous and have the same dll name.
-        # (VA, import pointer, dll name, symbol name)
-        curr_idt_entry = []
-        # list of list of thunk tuples, like above
-        idt_entries = []
-        for thunk in thunks:
-            va, imp = thunk
-            dll, sym = imports[imp]
-
-            if not curr_idt_entry:
-                curr_idt_entry.append((va, imp, dll, sym))
-            elif curr_idt_entry[0][2] == dll:
-                curr_idt_entry.append((va, imp, dll, sym))
-            else:
-                idt_entries.append(curr_idt_entry)
-                curr_idt_entry = [(va, imp, dll, sym)]
-        idt_entries.append(curr_idt_entry)
-
-        # emit name tables for each IDT/dll
-        ptr_format = "<I" if self.emu.get_ptr_size() == 4 else "<Q"
-        for i, idt_entry in enumerate(idt_entries):
+        # emit Import Lookup Tables for each recovered thunk table
+        ptr_format = "<I" if self.emu.ptr_size == 4 else "<Q"
+        for i, idt_entry in enumerate(idt_tables):
             locations[("import lookup table", i)] = reconstruction_target + reconstruction.tell()
             for (va, imp, dll, sym) in idt_entry:
                 reconstruction.write(struct.pack(ptr_format, locations[("hint", dll, sym)]))
             reconstruction.write(b"\x00" * 8)
 
-        # emit IDTs
-        for i, idt_entry in enumerate(idt_entries):
+        # emit Import Descriptor Tables for each recovered thunk table
+        IDT_ENTRY_SIZE = 0x20
+        for i, idt_entry in enumerate(idt_tables):
             va, _, dll, _ = idt_entry[0]
             rva = va - self.module.base
-            locations[("idt", i)] = reconstruction_target + reconstruction.tell()
+            locations[("import descriptor table", i)] = reconstruction_target + reconstruction.tell()
 
             # import lookup table rva
             reconstruction.write(struct.pack("<I", locations[("import lookup table", i)]))
@@ -391,24 +427,18 @@ class AspackUnpacker(speakeasy.Speakeasy):
             reconstruction.write(struct.pack("<I", locations[("dll", dll)]))
             # import address table rva
             reconstruction.write(struct.pack("<I", rva))
+        # empty last entry
+        reconstruction.write(b"\x00" * IDT_ENTRY_SIZE)
 
-        reconstruction.write(b"\x00\x00\x00\x00" * 5)
-
-        IDT_ENTRY_SIZE = 0x20
-
-        # TODO assert size is ok
-        # and/or extend .adata
+        # if the reconstructed import structures are larger than the unpacking stub...
+        # i'm not sure what we'll do. probably need to add a section.
+        assert len(reconstruction.getvalue()) <= pefile_get_section_by_name(pe, ".aspack").Misc_VirtualSize
 
         pe.set_bytes_at_rva(reconstruction_target, reconstruction.getvalue())
-        pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].VirtualAddress = locations[("idt", 0)]
-        pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].Size = IDT_ENTRY_SIZE * len(idt_entries)
+        pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].VirtualAddress = locations[("import descriptor table", 0)]
+        pe.OPTIONAL_HEADER.DATA_DIRECTORY[1].Size = IDT_ENTRY_SIZE * len(idt_tables)
 
         return pe.write()
-
-    def read_ptr(self, va):
-        endian = "little"
-        val = self.mem_read(va, self.emu.get_ptr_size())
-        return int.from_bytes(val, endian)
 
     def unpack(self):
         buf, oep = self.dump()
