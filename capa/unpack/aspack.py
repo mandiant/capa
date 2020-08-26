@@ -66,7 +66,16 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     @staticmethod
     def detect_aspack(buf):
-        """return True if the given buffer contains an ASPack'd PE file"""
+        """
+        return True if the given buffer contains an ASPack'd PE file.
+        we detect aspack by looking at the section names for .aspack or .adata.
+        the unpacking routine contains further validation and will raise an exception if necessary.
+
+        args:
+          buf (bytes): the contents of a PE file.
+
+        returns: bool
+        """
         try:
             pe = pefile.PE(data=buf, fast_load=True)
         except:
@@ -85,7 +94,16 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     @classmethod
     def unpack_pe(cls, buf):
-        unpacker = AspackUnpacker(buf)
+        """
+        unpack the given buffer that contains an ASPack'd PE file.
+        return the contents of a reconstructed PE file.
+
+        args:
+          buf (bytes): the contents of an ASPack'd PE file.
+
+        returns: bytes
+        """
+        unpacker = cls(buf)
         return unpacker.unpack()
 
     def stepi(self):
@@ -102,6 +120,17 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     @contextlib.contextmanager
     def mem_read_hook(self, hook):
+        """
+        context manager for temporarily installing a hook on the emulator.
+
+        example:
+
+            with self.mem_read_hook(lambda emu, access, addr, size, ctx: emu.stop()):
+                self.emu.emu_eng.start(0x401000)
+
+        args:
+          hook (speakeasy.common.MemReadHook): the hook to install
+        """
         handle = self.add_mem_read_hook(hook)
         # if this fails, then there's still an unfixed bug in Speakeasy
         assert handle.handle != 0
@@ -116,6 +145,17 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
     @contextlib.contextmanager
     def code_hook(self, hook):
+        """
+        context manager for temporarily installing a hook on the emulator.
+
+        example:
+
+            with self.code_hook(lambda emu, addr, size, ctx: emu.stop()):
+                self.emu.emu_eng.start(0x401000)
+
+        args:
+          hook (speakeasy.common.CodeHook): the hook to install
+        """
         handle = self.add_code_hook(hook)
         assert handle.handle != 0
         try:
@@ -124,22 +164,50 @@ class AspackUnpacker(speakeasy.Speakeasy):
             self.remove_code_hook(handle)
 
     def dump(self):
-        # prime the emulator
+        """
+        emulate the loaded module, pausing after an appropriate section hop.
+        then, dump and return the module's memory and OEP.
+
+        this routine is specific to aspack. it makes the following assumptions:
+          - aspack starts with a PUSHA to save off the CPU context
+          - aspeck then runs its unpacking stub
+          - aspeck executes POPA to restore the CPU context
+          - aspack section hops to the OEP
+
+        we'll emulate in a few phases:
+          1. single step over PUSHA at the entrypoint
+          2. extract the address of the saved CPU context
+          3. emulate until the saved CPU context is read
+          4. assert this is a POPA instruction
+          5. emulate until a section hop
+          6. profit!
+
+        return the module's memory segment and the OEP.
+
+        returns: Tuple[byte, int]
+        """
+
+        # prime the emulator.
         # this is derived from winemu::WindowsEmulator::start()
         self.emu.curr_run = Run()
         self.emu.curr_mod = self.module
         self.emu.set_hooks()
         self.emu._set_emu_hooks()
 
+        # 0. sanity checking: assert entrypoint is a PUSHA instruction
         entrypoint = self.module.base + self.module.ep
         opcode = self.emu.mem_read(entrypoint, 1)[0]
         if opcode != INSN_PUSHA:
             raise ValueError("not packed with supported ASPack")
 
-        # PUSHA
+        # 1. single step over PUSHA
         self.emu.set_pc(entrypoint)
         self.stepi()
 
+        # 2. extract address of saved CPU context
+        saved_cpu_context = self.emu.get_stack_ptr()
+
+        # 3. emulate until saved CPU context is accessed
         def until_read(target):
             """return a mem_read hook that stops the emulator when an address is read."""
 
@@ -150,21 +218,18 @@ class AspackUnpacker(speakeasy.Speakeasy):
 
             return inner
 
-        # break on read of the saved context
-        sp = self.emu.get_stack_ptr()
-        with self.mem_read_hook(until_read(sp)):
+        with self.mem_read_hook(until_read(saved_cpu_context)):
             self.emu.emu_eng.start(self.emu.get_pc())
 
-        # assert it is a POPA
+        # 4. assert this is a POPA instruction
         opcode = self.emu.mem_read(self.emu.get_pc(), 1)[0]
         if opcode != INSN_POPA:
             raise ValueError("not packed with supported ASPack")
-
         logger.debug("POPA: 0x%x", self.emu.get_pc())
 
-        # now emulate to the next section hop
+        # 5. emulate until a section hop
         aspack_section = self.module.get_section_by_name(".aspack")
-        start = self.module.get_base() + aspack_section.VirtualAddress
+        start = self.module.base + aspack_section.VirtualAddress
         end = start + aspack_section.Misc_VirtualSize
 
         def until_section_hop(start, end):
@@ -178,11 +243,13 @@ class AspackUnpacker(speakeasy.Speakeasy):
         with self.code_hook(until_section_hop(start, end)):
             self.emu.emu_eng.start(self.emu.get_pc())
 
+        # 6. dump and return
         oep = self.emu.get_pc()
         logger.debug("OEP: 0x%x", oep)
 
-        mm = self.get_address_map(self.module.get_base())
-        buf = self.mem_read(mm.get_base(), mm.get_size())
+        mm = self.get_address_map(self.module.base)
+        buf = self.mem_read(mm.base, mm.size)
+
         return buf, oep
 
     def fixup(self, buf, oep):
@@ -311,7 +378,7 @@ class AspackUnpacker(speakeasy.Speakeasy):
         # emit IDTs
         for i, idt_entry in enumerate(idt_entries):
             va, _, dll, _ = idt_entry[0]
-            rva = va - self.module.get_base()
+            rva = va - self.module.base
             locations[("idt", i)] = reconstruction_target + reconstruction.tell()
 
             # import lookup table rva
