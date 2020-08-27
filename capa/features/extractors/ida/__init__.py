@@ -75,7 +75,7 @@ class IdaFeatureExtractor(FeatureExtractor):
             yield feature, ea
 
     def get_basic_blocks(self, f):
-        for bb in idaapi.FlowChart(f, flags=idaapi.FC_PREDS):
+        for bb in capa.features.extractors.ida.helpers.get_function_blocks(f):
             yield add_ea_int_cast(bb)
 
     def extract_basic_block_features(self, f, bb):
