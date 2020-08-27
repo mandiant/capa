@@ -15,6 +15,10 @@ import capa.features.extractors.ida.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
 from capa.features.insn import Number, Offset, Mnemonic
 
+# security cookie checks may perform non-zeroing XORs, these are expected within a certain
+# byte range within the first and returning basic blocks, this helps to reduce FP features
+SECURITY_COOKIE_BYTES_DELTA = 0x40
+
 
 def get_arch(ctx):
     """
@@ -223,11 +227,36 @@ def bb_stack_cookie_registers(bb):
                     yield op.reg
 
 
+def is_nzxor_stack_cookie_delta(f, bb, insn):
+    """ check if nzxor exists within stack cookie delta """
+    # security cookie check should use SP or BP
+    if not capa.features.extractors.ida.helpers.is_frame_register(insn.Op2.reg):
+        return False
+
+    f_bbs = tuple(capa.features.extractors.ida.helpers.get_function_blocks(f))
+
+    # expect security cookie init in first basic block within first bytes (instructions)
+    if capa.features.extractors.ida.helpers.is_basic_block_equal(bb, f_bbs[0]) and insn.ea < (
+        bb.start_ea + SECURITY_COOKIE_BYTES_DELTA
+    ):
+        return True
+
+    # ... or within last bytes (instructions) before a return
+    if capa.features.extractors.ida.helpers.is_basic_block_return(bb) and insn.ea > (
+        bb.start_ea + capa.features.extractors.ida.helpers.basic_block_size(bb) - SECURITY_COOKIE_BYTES_DELTA
+    ):
+        return True
+
+    return False
+
+
 def is_nzxor_stack_cookie(f, bb, insn):
     """ check if nzxor is related to stack cookie """
     if contains_stack_cookie_keywords(idaapi.get_cmt(insn.ea, False)):
         # Example:
         #   xor     ecx, ebp        ; StackCookie
+        return True
+    if is_nzxor_stack_cookie_delta(f, bb, insn):
         return True
     stack_cookie_regs = tuple(bb_stack_cookie_registers(bb))
     if any(op_reg in stack_cookie_regs for op_reg in (insn.Op1.reg, insn.Op2.reg)):

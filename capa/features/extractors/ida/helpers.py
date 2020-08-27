@@ -341,3 +341,21 @@ def find_data_reference_from_insn(insn, max_depth=10):
         ea = data_refs[0]
 
     return ea
+
+
+def get_function_blocks(f):
+    """yield basic blocks contained in specified function
+
+    args:
+        f (IDA func_t)
+    yield:
+        block (IDA BasicBlock)
+    """
+    # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
+    for block in idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT)):
+        yield block
+
+
+def is_basic_block_return(bb):
+    """ check if basic block is return block """
+    return bb.type == idaapi.fcb_ret
