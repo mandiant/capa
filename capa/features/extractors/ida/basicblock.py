@@ -20,10 +20,10 @@ from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 
 
 def get_printable_len(op):
-    """ Return string length if all operand bytes are ascii or utf16-le printable
+    """Return string length if all operand bytes are ascii or utf16-le printable
 
-        args:
-            op (IDA op_t)
+    args:
+        op (IDA op_t)
     """
     op_val = capa.features.extractors.ida.helpers.mask_op_val(op)
 
@@ -62,10 +62,10 @@ def get_printable_len(op):
 
 
 def is_mov_imm_to_stack(insn):
-    """ verify instruction moves immediate onto stack
+    """verify instruction moves immediate onto stack
 
-        args:
-            insn (IDA insn_t)
+    args:
+        insn (IDA insn_t)
     """
     if insn.Op2.type != idaapi.o_imm:
         return False
@@ -80,13 +80,13 @@ def is_mov_imm_to_stack(insn):
 
 
 def bb_contains_stackstring(f, bb):
-    """ check basic block for stackstring indicators
+    """check basic block for stackstring indicators
 
-        true if basic block contains enough moves of constant bytes to the stack
+    true if basic block contains enough moves of constant bytes to the stack
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
     """
     count = 0
     for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
@@ -98,33 +98,33 @@ def bb_contains_stackstring(f, bb):
 
 
 def extract_bb_stackstring(f, bb):
-    """ extract stackstring indicators from basic block
+    """extract stackstring indicators from basic block
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
     """
     if bb_contains_stackstring(f, bb):
         yield Characteristic("stack string"), bb.start_ea
 
 
 def extract_bb_tight_loop(f, bb):
-    """ extract tight loop indicators from a basic block
+    """extract tight loop indicators from a basic block
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
     """
     if capa.features.extractors.ida.helpers.is_basic_block_tight_loop(bb):
         yield Characteristic("tight loop"), bb.start_ea
 
 
 def extract_features(f, bb):
-    """ extract basic block features
+    """extract basic block features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
     """
     for bb_handler in BASIC_BLOCK_HANDLERS:
         for (feature, ea) in bb_handler(f, bb):

@@ -13,8 +13,7 @@ It will mark up functions with their capa matches, like:
     UninstallService proc near
     ...
 
-To use, invoke from the Binary Ninja Tools menu, or from the 
-command-palette.
+To use, invoke from the Binary Ninja Tools menu, or from the command-palette.
 
 Adapted for Binary Ninja by @psifertex
 
@@ -31,7 +30,7 @@ from binaryninja import *
 
 def append_func_cmt(bv, va, cmt):
     """
-    add the given comment to the given function, 
+    add the given comment to the given function,
     if it doesn't already exist.
     """
     func = bv.get_function_at(va)

@@ -42,7 +42,11 @@ setuptools.setup(
     url="https://www.github.com/fireeye/capa",
     packages=setuptools.find_packages(exclude=["tests"]),
     package_dir={"capa": "capa"},
-    entry_points={"console_scripts": ["capa=capa.main:main",]},
+    entry_points={
+        "console_scripts": [
+            "capa=capa.main:main",
+        ]
+    },
     include_package_data=True,
     install_requires=requirements,
     extras_require={

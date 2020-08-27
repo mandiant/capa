@@ -65,11 +65,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         self.endResetModel()
 
     def columnCount(self, model_index):
-        """ get the number of columns for the children of the given parent
+        """get the number of columns for the children of the given parent
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
 
-            @retval column count
+        @retval column count
         """
         if model_index.isValid():
             return model_index.internalPointer().columnCount()
@@ -77,12 +77,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return self.root_node.columnCount()
 
     def data(self, model_index, role):
-        """ get data stored under the given role for the item referred to by the index
+        """get data stored under the given role for the item referred to by the index
 
-            @param model_index: QModelIndex*
-            @param role: QtCore.Qt.*
+        @param model_index: QModelIndex*
+        @param role: QtCore.Qt.*
 
-            @retval data to be displayed
+        @retval data to be displayed
         """
         if not model_index.isValid():
             return None
@@ -151,11 +151,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return None
 
     def flags(self, model_index):
-        """ get item flags for given index
+        """get item flags for given index
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
 
-            @retval QtCore.Qt.ItemFlags
+        @retval QtCore.Qt.ItemFlags
         """
         if not model_index.isValid():
             return QtCore.Qt.NoItemFlags
@@ -163,13 +163,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return model_index.internalPointer().flags
 
     def headerData(self, section, orientation, role):
-        """ get data for the given role and section in the header with the specified orientation
+        """get data for the given role and section in the header with the specified orientation
 
-            @param section: int
-            @param orientation: QtCore.Qt.Orientation
-            @param role: QtCore.Qt.DisplayRole
+        @param section: int
+        @param orientation: QtCore.Qt.Orientation
+        @param role: QtCore.Qt.DisplayRole
 
-            @retval header data list()
+        @retval header data list()
         """
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self.root_node.data(section)
@@ -177,13 +177,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return None
 
     def index(self, row, column, parent):
-        """ get index of the item in the model specified by the given row, column and parent index
+        """get index of the item in the model specified by the given row, column and parent index
 
-            @param row: int
-            @param column: int
-            @param parent: QModelIndex*
+        @param row: int
+        @param column: int
+        @param parent: QModelIndex*
 
-            @retval QModelIndex*
+        @retval QModelIndex*
         """
         if not self.hasIndex(row, column, parent):
             return QtCore.QModelIndex()
@@ -201,13 +201,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return QtCore.QModelIndex()
 
     def parent(self, model_index):
-        """ get parent of the model item with the given index
+        """get parent of the model item with the given index
 
-            if the item has no parent, an invalid QModelIndex* is returned
+        if the item has no parent, an invalid QModelIndex* is returned
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
 
-            @retval QModelIndex*
+        @retval QModelIndex*
         """
         if not model_index.isValid():
             return QtCore.QModelIndex()
@@ -221,12 +221,12 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return self.createIndex(parent.row(), 0, parent)
 
     def iterateChildrenIndexFromRootIndex(self, model_index, ignore_root=True):
-        """ depth-first traversal of child nodes
+        """depth-first traversal of child nodes
 
-            @param model_index: QModelIndex*
-            @param ignore_root: if set, do not return root index
+        @param model_index: QModelIndex*
+        @param ignore_root: if set, do not return root index
 
-            @retval yield QModelIndex*
+        @retval yield QModelIndex*
         """
         visited = set()
         stack = deque((model_index,))
@@ -248,10 +248,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     stack.append(child_index.child(idx, 0))
 
     def reset_ida_highlighting(self, item, checked):
-        """ reset IDA highlight for an item
+        """reset IDA highlight for an item
 
-            @param item: capa explorer item
-            @param checked: indicates item is or not checked
+        @param item: capa explorer item
+        @param checked: indicates item is or not checked
         """
         if not isinstance(
             item, (CapaExplorerStringViewItem, CapaExplorerInstructionViewItem, CapaExplorerByteViewItem)
@@ -275,13 +275,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 idc.set_color(item.location, idc.CIC_ITEM, item.ida_highlight)
 
     def setData(self, model_index, value, role):
-        """ set the role data for the item at index to value
+        """set the role data for the item at index to value
 
-            @param model_index: QModelIndex*
-            @param value: QVariant*
-            @param role: QtCore.Qt.EditRole
+        @param model_index: QModelIndex*
+        @param value: QVariant*
+        @param role: QtCore.Qt.EditRole
 
-            @retval True/False
+        @retval True/False
         """
         if not model_index.isValid():
             return False
@@ -316,14 +316,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return False
 
     def rowCount(self, model_index):
-        """ get the number of rows under the given parent
+        """get the number of rows under the given parent
 
-            when the parent is valid it means that is returning the number of
-            children of parent
+        when the parent is valid it means that is returning the number of
+        children of parent
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
 
-            @retval row count
+        @retval row count
         """
         if model_index.column() > 0:
             return 0
@@ -336,16 +336,16 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return item.childCount()
 
     def render_capa_doc_statement_node(self, parent, statement, locations, doc):
-        """ render capa statement read from doc
+        """render capa statement read from doc
 
-            @param parent: parent to which new child is assigned
-            @param statement: statement read from doc
-            @param locations: locations of children (applies to range only?)
-            @param doc: capa result doc
+        @param parent: parent to which new child is assigned
+        @param statement: statement read from doc
+        @param locations: locations of children (applies to range only?)
+        @param doc: capa result doc
 
-            "statement": {
-                "type": "or"
-            },
+        "statement": {
+            "type": "or"
+        },
         """
         if statement["type"] in ("and", "or", "optional"):
             return CapaExplorerDefaultItem(parent, statement["type"])
@@ -383,28 +383,28 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             raise RuntimeError("unexpected match statement type: " + str(statement))
 
     def render_capa_doc_match(self, parent, match, doc):
-        """ render capa match read from doc
+        """render capa match read from doc
 
-            @param parent: parent node to which new child is assigned
-            @param match: match read from doc
-            @param doc: capa result doc
+        @param parent: parent node to which new child is assigned
+        @param match: match read from doc
+        @param doc: capa result doc
 
-            "matches": {
-                "0": {
-                    "children": [],
-                    "locations": [
-                        4317184
-                    ],
-                    "node": {
-                        "feature": {
-                            "section": ".rsrc",
-                            "type": "section"
-                        },
-                        "type": "feature"
+        "matches": {
+            "0": {
+                "children": [],
+                "locations": [
+                    4317184
+                ],
+                "node": {
+                    "feature": {
+                        "section": ".rsrc",
+                        "type": "section"
                     },
-                    "success": true
-                }
-            },
+                    "type": "feature"
+                },
+                "success": true
+            }
+        },
         """
         if not match["success"]:
             # TODO: display failed branches at some point? Help with debugging rules?
@@ -431,9 +431,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             self.render_capa_doc_match(parent2, child, doc)
 
     def render_capa_doc(self, doc):
-        """ render capa features specified in doc
+        """render capa features specified in doc
 
-            @param doc: capa result doc
+        @param doc: capa result doc
         """
         # inform model that changes are about to occur
         self.beginResetModel()
@@ -457,18 +457,18 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         self.endResetModel()
 
     def capa_doc_feature_to_display(self, feature):
-        """ convert capa doc feature type string to display string for ui
+        """convert capa doc feature type string to display string for ui
 
-            @param feature: capa feature read from doc
+        @param feature: capa feature read from doc
 
-            Example:
-                "feature": {
-                    "bytes": "01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46",
-                    "description": "CLSID_ShellLink",
-                    "type": "bytes"
-                }
+        Example:
+            "feature": {
+                "bytes": "01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46",
+                "description": "CLSID_ShellLink",
+                "type": "bytes"
+            }
 
-                bytes(01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_ShellLink)
+            bytes(01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_ShellLink)
         """
         if feature[feature["type"]]:
             if feature.get("description", ""):
@@ -479,25 +479,31 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return "%s" % feature["type"]
 
     def render_capa_doc_feature_node(self, parent, feature, locations, doc):
-        """ process capa doc feature node
+        """process capa doc feature node
 
-            @param parent: parent node to which child is assigned
-            @param feature: capa doc feature node
-            @param locations: locations identified for feature
-            @param doc: capa doc
+        @param parent: parent node to which child is assigned
+        @param feature: capa doc feature node
+        @param locations: locations identified for feature
+        @param doc: capa doc
 
-            Example:
-              "feature": {
-                "description": "FILE_WRITE_DATA",
-                "number": "0x2",
-                "type": "number"
-              }
+        Example:
+          "feature": {
+            "description": "FILE_WRITE_DATA",
+            "number": "0x2",
+            "type": "number"
+          }
         """
         display = self.capa_doc_feature_to_display(feature)
 
         if len(locations) == 1:
             # only one location for feature so no need to nest children
-            parent2 = self.render_capa_doc_feature(parent, feature, next(iter(locations)), doc, display=display,)
+            parent2 = self.render_capa_doc_feature(
+                parent,
+                feature,
+                next(iter(locations)),
+                doc,
+                display=display,
+            )
         else:
             # feature has multiple children, nest  under one parent feature node
             parent2 = CapaExplorerFeatureItem(parent, display)
@@ -508,20 +514,20 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         return parent2
 
     def render_capa_doc_feature(self, parent, feature, location, doc, display="-"):
-        """ render capa feature read from doc
+        """render capa feature read from doc
 
-            @param parent: parent node to which new child is assigned
-            @param feature: feature read from doc
-            @param doc: capa feature doc
-            @param location: address of feature
-            @param display: text to display in plugin ui
+        @param parent: parent node to which new child is assigned
+        @param feature: feature read from doc
+        @param doc: capa feature doc
+        @param location: address of feature
+        @param display: text to display in plugin ui
 
-            Example:
-              "feature": {
-                "description": "FILE_WRITE_DATA",
-                "number": "0x2",
-                "type": "number"
-              }
+        Example:
+          "feature": {
+            "description": "FILE_WRITE_DATA",
+            "number": "0x2",
+            "type": "number"
+          }
         """
         # special handling for characteristic pending type
         if feature["type"] == "characteristic":
@@ -575,10 +581,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         raise RuntimeError("unexpected feature type: " + str(feature["type"]))
 
     def update_function_name(self, old_name, new_name):
-        """ update all instances of old function name with new function name
+        """update all instances of old function name with new function name
 
-            @param old_name: previous function name
-            @param new_name: new function name
+        @param old_name: previous function name
+        @param new_name: new function name
         """
         # create empty root index for search
         root_index = self.index(0, 0, QtCore.QModelIndex())

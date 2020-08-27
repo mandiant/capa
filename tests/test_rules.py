@@ -680,12 +680,16 @@ def test_regex_values_always_string():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules), {capa.features.String("123"): {1}}, 0x0,
+        capa.engine.topologically_order_rules(rules),
+        {capa.features.String("123"): {1}},
+        0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules), {capa.features.String("0x123"): {1}}, 0x0,
+        capa.engine.topologically_order_rules(rules),
+        {capa.features.String("0x123"): {1}},
+        0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
 

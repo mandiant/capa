@@ -15,13 +15,13 @@ from capa.ida.explorer.model import CapaExplorerDataModel
 
 
 class CapaExplorerQtreeView(QtWidgets.QTreeView):
-    """ capa explorer QTreeView implementation
+    """capa explorer QTreeView implementation
 
-        view controls UI action responses and displays data from
-        CapaExplorerDataModel
+    view controls UI action responses and displays data from
+    CapaExplorerDataModel
 
-        view does not modify CapaExplorerDataModel directly - data
-        modifications should be implemented in CapaExplorerDataModel
+    view does not modify CapaExplorerDataModel directly - data
+    modifications should be implemented in CapaExplorerDataModel
     """
 
     def __init__(self, model, parent=None):
@@ -54,10 +54,10 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
     def reset(self):
-        """ reset user interface changes
+        """reset user interface changes
 
-            called when view should reset any user interface changes
-            made since the last reset e.g. IDA window highlighting
+        called when view should reset any user interface changes
+        made since the last reset e.g. IDA window highlighting
         """
         self.collapseAll()
         self.resize_columns_to_content()
@@ -67,31 +67,31 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
 
     def map_index_to_source_item(self, model_index):
-        """ map proxy model index to source model item
+        """map proxy model index to source model item
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
 
-            @retval QObject*
+        @retval QObject*
         """
         return self.model.mapToSource(model_index).internalPointer()
 
     def send_data_to_clipboard(self, data):
-        """ copy data to the clipboard
+        """copy data to the clipboard
 
-            @param data: data to be copied
+        @param data: data to be copied
         """
         clip = QtWidgets.QApplication.clipboard()
         clip.clear(mode=clip.Clipboard)
         clip.setText(data, mode=clip.Clipboard)
 
     def new_action(self, display, data, slot):
-        """ create action for context menu
+        """create action for context menu
 
-            @param display: text displayed to user in context menu
-            @param data: data passed to slot
-            @param slot: slot to connect
+        @param display: text displayed to user in context menu
+        @param data: data passed to slot
+        @param slot: slot to connect
 
-            @retval QAction*
+        @retval QAction*
         """
         action = QtWidgets.QAction(display, self.parent)
         action.setData(data)
@@ -100,11 +100,11 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         return action
 
     def load_default_context_menu_actions(self, data):
-        """ yield actions specific to function custom context menu
+        """yield actions specific to function custom context menu
 
-            @param data: tuple
+        @param data: tuple
 
-            @yield QAction*
+        @yield QAction*
         """
         default_actions = (
             ("Copy column", data, self.slot_copy_column),
@@ -116,11 +116,11 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             yield self.new_action(*action)
 
     def load_function_context_menu_actions(self, data):
-        """ yield actions specific to function custom context menu
+        """yield actions specific to function custom context menu
 
-            @param data: tuple
+        @param data: tuple
 
-            @yield QAction*
+        @yield QAction*
         """
         function_actions = (("Rename function", data, self.slot_rename_function),)
 
@@ -133,15 +133,15 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             yield action
 
     def load_default_context_menu(self, pos, item, model_index):
-        """ create default custom context menu
+        """create default custom context menu
 
-            creates custom context menu containing default actions
+        creates custom context menu containing default actions
 
-            @param pos: TODO
-            @param item: TODO
-            @param model_index: TODO
+        @param pos: TODO
+        @param item: TODO
+        @param model_index: TODO
 
-            @retval QMenu*
+        @retval QMenu*
         """
         menu = QtWidgets.QMenu()
 
@@ -151,16 +151,16 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         return menu
 
     def load_function_item_context_menu(self, pos, item, model_index):
-        """ create function custom context menu
+        """create function custom context menu
 
-            creates custom context menu containing actions specific to functions
-            and the default actions
+        creates custom context menu containing actions specific to functions
+        and the default actions
 
-            @param pos: TODO
-            @param item: TODO
-            @param model_index: TODO
+        @param pos: TODO
+        @param item: TODO
+        @param model_index: TODO
 
-            @retval QMenu*
+        @retval QMenu*
         """
         menu = QtWidgets.QMenu()
 
@@ -170,43 +170,43 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         return menu
 
     def show_custom_context_menu(self, menu, pos):
-        """ display custom context menu in view
+        """display custom context menu in view
 
-            @param menu: TODO
-            @param pos: TODO
+        @param menu: TODO
+        @param pos: TODO
         """
         if menu:
             menu.exec_(self.viewport().mapToGlobal(pos))
 
     def slot_copy_column(self, action):
-        """ slot connected to custom context menu
+        """slot connected to custom context menu
 
-            allows user to select a column and copy the data
-            to clipboard
+        allows user to select a column and copy the data
+        to clipboard
 
-            @param action: QAction*
+        @param action: QAction*
         """
         _, item, model_index = action.data()
         self.send_data_to_clipboard(item.data(model_index.column()))
 
     def slot_copy_row(self, action):
-        """ slot connected to custom context menu
+        """slot connected to custom context menu
 
-            allows user to select a row and copy the space-delimited
-            data to clipboard
+        allows user to select a row and copy the space-delimited
+        data to clipboard
 
-            @param action: QAction*
+        @param action: QAction*
         """
         _, item, _ = action.data()
         self.send_data_to_clipboard(str(item))
 
     def slot_rename_function(self, action):
-        """ slot connected to custom context menu
+        """slot connected to custom context menu
 
-            allows user to select a edit a function name and push
-            changes to IDA
+        allows user to select a edit a function name and push
+        changes to IDA
 
-            @param action: QAction*
+        @param action: QAction*
         """
         _, item, model_index = action.data()
 
@@ -216,12 +216,12 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         item.setIsEditable(False)
 
     def slot_custom_context_menu_requested(self, pos):
-        """ slot connected to custom context menu request
+        """slot connected to custom context menu request
 
-            displays custom context menu to user containing action
-            relevant to the data item selected
+        displays custom context menu to user containing action
+        relevant to the data item selected
 
-            @param pos: TODO
+        @param pos: TODO
         """
         model_index = self.indexAt(pos)
 
@@ -243,9 +243,9 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.show_custom_context_menu(menu, pos)
 
     def slot_double_click(self, model_index):
-        """ slot connected to double click event
+        """slot connected to double click event
 
-            @param model_index: QModelIndex*
+        @param model_index: QModelIndex*
         """
         if not model_index.isValid():
             return

@@ -105,7 +105,12 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     all_function_matches = collections.defaultdict(list)
     all_bb_matches = collections.defaultdict(list)
 
-    meta = {"feature_counts": {"file": 0, "functions": {},}}
+    meta = {
+        "feature_counts": {
+            "file": 0,
+            "functions": {},
+        }
+    }
 
     for f in tqdm.tqdm(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)

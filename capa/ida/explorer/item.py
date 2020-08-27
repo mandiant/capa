@@ -17,9 +17,9 @@ import capa.ida.helpers
 
 
 def info_to_name(display):
-    """ extract root value from display name
+    """extract root value from display name
 
-        e.g. function(my_function) => my_function
+    e.g. function(my_function) => my_function
     """
     try:
         return display.split("(")[1].rstrip(")")
@@ -68,16 +68,16 @@ class CapaExplorerDataItem(object):
         return self._checked
 
     def appendChild(self, item):
-        """ add child item
+        """add child item
 
-            @param item: CapaExplorerDataItem*
+        @param item: CapaExplorerDataItem*
         """
         self.children.append(item)
 
     def child(self, row):
-        """ get child row
+        """get child row
 
-            @param row: TODO
+        @param row: TODO
         """
         return self.children[row]
 
