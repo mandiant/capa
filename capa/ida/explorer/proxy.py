@@ -17,12 +17,12 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         super(CapaExplorerSortFilterProxyModel, self).__init__(parent)
 
     def lessThan(self, left, right):
-        """ true if the value of the left item is less than value of right item
+        """true if the value of the left item is less than value of right item
 
-            @param left: QModelIndex*
-            @param right: QModelIndex*
+        @param left: QModelIndex*
+        @param right: QModelIndex*
 
-            @retval True/False
+        @retval True/False
         """
         ldata = left.internalPointer().data(left.column())
         rdata = right.internalPointer().data(right.column())
@@ -40,13 +40,13 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
             return ldata.lower() < rdata.lower()
 
     def filterAcceptsRow(self, row, parent):
-        """ true if the item in the row indicated by the given row and parent
-            should be included in the model; otherwise returns false
+        """true if the item in the row indicated by the given row and parent
+        should be included in the model; otherwise returns false
 
-            @param row: int
-            @param parent: QModelIndex*
+        @param row: int
+        @param parent: QModelIndex*
 
-            @retval True/False
+        @retval True/False
         """
         if self.filter_accepts_row_self(row, parent):
             return True
@@ -63,10 +63,10 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
     def add_single_string_filter(self, column, string):
-        """ add fixed string filter
+        """add fixed string filter
 
-            @param column: key column
-            @param string: string to sort
+        @param column: key column
+        @param string: string to sort
         """
         self.setFilterKeyColumn(column)
         self.setFilterFixedString(string)

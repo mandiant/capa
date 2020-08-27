@@ -30,10 +30,10 @@ logger = logging.getLogger("capa")
 
 class CapaExplorerIdaHooks(idaapi.UI_Hooks):
     def __init__(self, screen_ea_changed_hook, action_hooks):
-        """ facilitate IDA UI hooks
+        """facilitate IDA UI hooks
 
-            @param screen_ea_changed_hook: function hook for IDA screen ea changed
-            @param action_hooks: dict of IDA action handles
+        @param screen_ea_changed_hook: function hook for IDA screen ea changed
+        @param action_hooks: dict of IDA action handles
         """
         super(CapaExplorerIdaHooks, self).__init__()
 
@@ -43,11 +43,11 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
         self.process_action_meta = {}
 
     def preprocess_action(self, name):
-        """ called prior to action completed
+        """called prior to action completed
 
-            @param name: name of action defined by idagui.cfg
+        @param name: name of action defined by idagui.cfg
 
-            @retval must be 0
+        @retval must be 0
         """
         self.process_action_handle = self.process_action_hooks.get(name, None)
 
@@ -66,10 +66,10 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
         self.reset()
 
     def screen_ea_changed(self, curr_ea, prev_ea):
-        """ called after screen location is changed
+        """called after screen location is changed
 
-            @param curr_ea: current location
-            @param prev_ea: prev location
+        @param curr_ea: current location
+        @param prev_ea: prev location
         """
         self.screen_ea_changed_hook(idaapi.get_current_widget(), curr_ea, prev_ea)
 
@@ -300,13 +300,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.ida_hooks.unhook()
 
     def ida_hook_rename(self, meta, post=False):
-        """ hook for IDA rename action
+        """hook for IDA rename action
 
-            called twice, once before action and once after
-            action completes
+        called twice, once before action and once after
+        action completes
 
-            @param meta: metadata cache
-            @param post: indicates pre or post action
+        @param meta: metadata cache
+        @param post: indicates pre or post action
         """
         location = idaapi.get_screen_ea()
         if not location or not capa.ida.helpers.is_func_start(location):
@@ -322,12 +322,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             meta["prev_name"] = curr_name
 
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
-        """ hook for IDA screen ea changed
+        """hook for IDA screen ea changed
 
-            @param widget: IDA widget type
-            @param new_ea: destination ea
-            @param old_ea: source ea
-         """
+        @param widget: IDA widget type
+        @param new_ea: destination ea
+        @param old_ea: source ea
+        """
         if not self.view_limit_results_by_function.isChecked():
             # ignore if checkbox not selected
             return
@@ -508,9 +508,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         idaapi.info("%s reload completed." % PLUGIN_NAME)
 
     def reset(self):
-        """ reset UI elements
+        """reset UI elements
 
-            e.g. checkboxes and IDA highlighting
+        e.g. checkboxes and IDA highlighting
         """
         self.ida_reset()
 
@@ -518,21 +518,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         idaapi.info("%s reset completed." % PLUGIN_NAME)
 
     def slot_menu_bar_hovered(self, action):
-        """ display menu action tooltip
+        """display menu action tooltip
 
-            @param action: QtWidgets.QAction*
+        @param action: QtWidgets.QAction*
 
-            @reference: https://stackoverflow.com/questions/21725119/why-wont-qtooltips-appear-on-qactions-within-a-qmenu
+        @reference: https://stackoverflow.com/questions/21725119/why-wont-qtooltips-appear-on-qactions-within-a-qmenu
         """
         QtWidgets.QToolTip.showText(
             QtGui.QCursor.pos(), action.toolTip(), self.view_menu_bar, self.view_menu_bar.actionGeometry(action)
         )
 
     def slot_checkbox_limit_by_changed(self):
-        """ slot activated if checkbox clicked
+        """slot activated if checkbox clicked
 
-            if checked, configure function filter if screen location is located
-            in function, otherwise clear filter
+        if checked, configure function filter if screen location is located
+        in function, otherwise clear filter
         """
         match = ""
         if self.view_limit_results_by_function.isChecked():

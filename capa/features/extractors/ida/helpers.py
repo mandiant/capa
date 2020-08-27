@@ -15,12 +15,12 @@ import idautils
 
 
 def find_byte_sequence(start, end, seq):
-    """ find byte sequence
+    """find byte sequence
 
-        args:
-            start: min virtual address
-            end: max virtual address
-            seq: bytes to search e.g. b'\x01\x03'
+    args:
+        start: min virtual address
+        end: max virtual address
+        seq: bytes to search e.g. b'\x01\x03'
     """
     if sys.version_info[0] >= 3:
         return idaapi.find_binary(start, end, " ".join(["%02x" % b for b in seq]), 0, idaapi.SEARCH_DOWN)
@@ -29,14 +29,14 @@ def find_byte_sequence(start, end, seq):
 
 
 def get_functions(start=None, end=None, skip_thunks=False, skip_libs=False):
-    """ get functions, range optional
+    """get functions, range optional
 
-        args:
-            start: min virtual address
-            end: max virtual address
+    args:
+        start: min virtual address
+        end: max virtual address
 
-        ret:
-            yield func_t*
+    ret:
+        yield func_t*
     """
     for ea in idautils.Functions(start=start, end=end):
         f = idaapi.get_func(ea)
@@ -45,10 +45,10 @@ def get_functions(start=None, end=None, skip_thunks=False, skip_libs=False):
 
 
 def get_segments(skip_header_segments=False):
-    """ get list of segments (sections) in the binary image
+    """get list of segments (sections) in the binary image
 
-        args:
-            skip_header_segments: IDA may load header segments - skip if set
+    args:
+        skip_header_segments: IDA may load header segments - skip if set
     """
     for n in range(idaapi.get_segm_qty()):
         seg = idaapi.getnseg(n)
@@ -57,9 +57,9 @@ def get_segments(skip_header_segments=False):
 
 
 def get_segment_buffer(seg):
-    """ return bytes stored in a given segment
+    """return bytes stored in a given segment
 
-        decrease buffer size until IDA is able to read bytes from the segment
+    decrease buffer size until IDA is able to read bytes from the segment
     """
     buff = b""
     sz = seg.end_ea - seg.start_ea
@@ -97,13 +97,13 @@ def get_file_imports():
 
 
 def get_instructions_in_range(start, end):
-    """ yield instructions in range
+    """yield instructions in range
 
-        args:
-            start: virtual address (inclusive)
-            end: virtual address (exclusive)
-        yield:
-            (insn_t*)
+    args:
+        start: virtual address (inclusive)
+        end: virtual address (exclusive)
+    yield:
+        (insn_t*)
     """
     for head in idautils.Heads(start, end):
         insn = idautils.DecodeInstruction(head)
@@ -183,10 +183,10 @@ def find_string_at(ea, min=4):
 
 
 def get_op_phrase_info(op):
-    """ parse phrase features from operand
+    """parse phrase features from operand
 
-        Pretty much dup of sark's implementation:
-            https://github.com/tmr232/Sark/blob/master/sark/code/instruction.py#L28-L73
+    Pretty much dup of sark's implementation:
+        https://github.com/tmr232/Sark/blob/master/sark/code/instruction.py#L28-L73
     """
     if op.type not in (idaapi.o_phrase, idaapi.o_displ):
         return {}
@@ -269,15 +269,15 @@ def is_op_stack_var(ea, index):
 
 
 def mask_op_val(op):
-    """ mask value by data type
+    """mask value by data type
 
-        necessary due to a bug in AMD64
+    necessary due to a bug in AMD64
 
-        Example:
-            .rsrc:0054C12C mov [ebp+var_4], 0FFFFFFFFh
+    Example:
+        .rsrc:0054C12C mov [ebp+var_4], 0FFFFFFFFh
 
-            insn.Op2.dtype == idaapi.dt_dword
-            insn.Op2.value == 0xffffffffffffffff
+        insn.Op2.dtype == idaapi.dt_dword
+        insn.Op2.value == 0xffffffffffffffff
     """
     masks = {
         idaapi.dt_byte: 0xFF,
@@ -289,10 +289,10 @@ def mask_op_val(op):
 
 
 def is_function_recursive(f):
-    """ check if function is recursive
+    """check if function is recursive
 
-        args:
-            f (IDA func_t)
+    args:
+        f (IDA func_t)
     """
     for ref in idautils.CodeRefsTo(f.start_ea, True):
         if f.contains(ref):
@@ -301,13 +301,13 @@ def is_function_recursive(f):
 
 
 def is_basic_block_tight_loop(bb):
-    """ check basic block loops to self
+    """check basic block loops to self
 
-        true if last instruction in basic block branches to basic block start
+    true if last instruction in basic block branches to basic block start
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
     """
     bb_end = idc.prev_head(bb.end_ea)
     if bb.start_ea < bb_end:

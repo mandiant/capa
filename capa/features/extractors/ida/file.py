@@ -20,13 +20,13 @@ from capa.features.file import Export, Import, Section
 
 
 def check_segment_for_pe(seg):
-    """ check segment for embedded PE
+    """check segment for embedded PE
 
-        adapted for IDA from:
-        https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
+    adapted for IDA from:
+    https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
 
-        args:
-            seg (IDA segment_t)
+    args:
+        seg (IDA segment_t)
     """
     seg_max = seg.end_ea
     mz_xor = [
@@ -67,11 +67,11 @@ def check_segment_for_pe(seg):
 
 
 def extract_file_embedded_pe():
-    """ extract embedded PE features
+    """extract embedded PE features
 
-        IDA must load resource sections for this to be complete
-            - '-R' from console
-            - Check 'Load resource sections' when opening binary in IDA manually
+    IDA must load resource sections for this to be complete
+        - '-R' from console
+        - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for (ea, _) in check_segment_for_pe(seg):
@@ -85,15 +85,15 @@ def extract_file_export_names():
 
 
 def extract_file_import_names():
-    """ extract function imports
+    """extract function imports
 
-        1. imports by ordinal:
-         - modulename.#ordinal
+    1. imports by ordinal:
+     - modulename.#ordinal
 
-        2. imports by name, results in two features to support importname-only
-           matching:
-         - modulename.importname
-         - importname
+    2. imports by name, results in two features to support importname-only
+       matching:
+     - modulename.importname
+     - importname
     """
     for (ea, info) in capa.features.extractors.ida.helpers.get_file_imports().items():
         if info[1]:
@@ -104,22 +104,22 @@ def extract_file_import_names():
 
 
 def extract_file_section_names():
-    """ extract section names
+    """extract section names
 
-        IDA must load resource sections for this to be complete
-            - '-R' from console
-            - Check 'Load resource sections' when opening binary in IDA manually
+    IDA must load resource sections for this to be complete
+        - '-R' from console
+        - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         yield Section(idaapi.get_segm_name(seg)), seg.start_ea
 
 
 def extract_file_strings():
-    """ extract ASCII and UTF-16 LE strings
+    """extract ASCII and UTF-16 LE strings
 
-        IDA must load resource sections for this to be complete
-            - '-R' from console
-            - Check 'Load resource sections' when opening binary in IDA manually
+    IDA must load resource sections for this to be complete
+        - '-R' from console
+        - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)

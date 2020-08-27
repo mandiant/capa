@@ -11,14 +11,14 @@ from networkx.algorithms.components import strongly_connected_components
 
 
 def has_loop(edges, threshold=2):
-    """ check if a list of edges representing a directed graph contains a loop
+    """check if a list of edges representing a directed graph contains a loop
 
-        args:
-            edges: list of edge sets representing a directed graph i.e. [(1, 2), (2, 1)]
-            threshold: min number of nodes contained in loop
+    args:
+        edges: list of edge sets representing a directed graph i.e. [(1, 2), (2, 1)]
+        threshold: min number of nodes contained in loop
 
-        returns:
-            bool
+    returns:
+        bool
     """
     g = nx.DiGraph()
     g.add_edges_from(edges)

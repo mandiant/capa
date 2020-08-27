@@ -109,7 +109,12 @@ def render_attack(doc, ostream):
                 inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
             else:
                 raise RuntimeError("unexpected ATT&CK spec format")
-        rows.append((rutils.bold(tactic.upper()), "\n".join(inner_rows),))
+        rows.append(
+            (
+                rutils.bold(tactic.upper()),
+                "\n".join(inner_rows),
+            )
+        )
 
     if rows:
         ostream.write(

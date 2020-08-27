@@ -44,7 +44,17 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
     path = z9324d_extractor.path
     rule_file = tmpdir.mkdir("capa").join("rule.yml")
     rule_file.write(RULE_CONTENT)
-    assert capa.main.main([path, "-v", "-r", rule_file.strpath,]) == 0
+    assert (
+        capa.main.main(
+            [
+                path,
+                "-v",
+                "-r",
+                rule_file.strpath,
+            ]
+        )
+        == 0
+    )
 
 
 @pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")

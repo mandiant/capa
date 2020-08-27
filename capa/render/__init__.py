@@ -16,15 +16,15 @@ import capa.engine
 
 def convert_statement_to_result_document(statement):
     """
-        "statement": {
-            "type": "or"
-        },
+    "statement": {
+        "type": "or"
+    },
 
-        "statement": {
-            "max": 9223372036854775808,
-            "min": 2,
-            "type": "range"
-        },
+    "statement": {
+        "max": 9223372036854775808,
+        "min": 2,
+        "type": "range"
+    },
     """
     statement_type = statement.name.lower()
     result = {"type": statement_type}
@@ -47,28 +47,28 @@ def convert_statement_to_result_document(statement):
 
 def convert_feature_to_result_document(feature):
     """
-        "feature": {
-            "number": 6,
-            "type": "number"
-        },
+    "feature": {
+        "number": 6,
+        "type": "number"
+    },
 
-        "feature": {
-            "api": "ws2_32.WSASocket",
-            "type": "api"
-        },
+    "feature": {
+        "api": "ws2_32.WSASocket",
+        "type": "api"
+    },
 
-        "feature": {
-            "match": "create TCP socket",
-            "type": "match"
-        },
+    "feature": {
+        "match": "create TCP socket",
+        "type": "match"
+    },
 
-        "feature": {
-            "characteristic": [
-                "loop",
-                true
-            ],
-            "type": "characteristic"
-        },
+    "feature": {
+        "characteristic": [
+            "loop",
+            true
+        ],
+        "type": "characteristic"
+    },
     """
     result = {"type": feature.name, feature.name: feature.get_value_str()}
     if feature.description:
@@ -80,15 +80,15 @@ def convert_feature_to_result_document(feature):
 
 def convert_node_to_result_document(node):
     """
-        "node": {
-            "type": "statement",
-            "statement": { ... }
-        },
+    "node": {
+        "type": "statement",
+        "statement": { ... }
+    },
 
-        "node": {
-            "type": "feature",
-            "feature": { ... }
-        },
+    "node": {
+        "type": "feature",
+        "feature": { ... }
+    },
     """
 
     if isinstance(node, capa.engine.Statement):
@@ -152,7 +152,10 @@ def convert_match_to_result_document(rules, capabilities, result):
             scope = rule.meta["scope"]
             doc["node"] = {
                 "type": "statement",
-                "statement": {"type": "subscope", "subscope": scope,},
+                "statement": {
+                    "type": "subscope",
+                    "subscope": scope,
+                },
             }
 
         for location in doc["locations"]:
@@ -257,5 +260,7 @@ class CapaJsonObjectEncoder(json.JSONEncoder):
 
 def render_json(meta, rules, capabilities):
     return json.dumps(
-        convert_capabilities_to_result_document(meta, rules, capabilities), cls=CapaJsonObjectEncoder, sort_keys=True,
+        convert_capabilities_to_result_document(meta, rules, capabilities),
+        cls=CapaJsonObjectEncoder,
+        sort_keys=True,
     )

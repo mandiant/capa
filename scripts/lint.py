@@ -399,7 +399,11 @@ def lint_rule(ctx, rule):
         print("")
         print(
             "%s%s %s"
-            % ("    (nursery) " if is_nursery_rule(rule) else "", rule.name, ("(%s)" % category) if category else "",)
+            % (
+                "    (nursery) " if is_nursery_rule(rule) else "",
+                rule.name,
+                ("(%s)" % category) if category else "",
+            )
         )
 
         level = "WARN" if is_nursery_rule(rule) else "FAIL"
@@ -407,7 +411,12 @@ def lint_rule(ctx, rule):
         for violation in violations:
             print(
                 "%s  %s: %s: %s"
-                % ("    " if is_nursery_rule(rule) else "", level, violation.name, violation.recommendation,)
+                % (
+                    "    " if is_nursery_rule(rule) else "",
+                    level,
+                    violation.name,
+                    violation.recommendation,
+                )
             )
 
     elif len(violations) == 0 and is_nursery_rule(rule):
@@ -487,7 +496,9 @@ def main(argv=None):
     parser.add_argument("rules", type=str, help="Path to rules")
     parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
     parser.add_argument(
-        "--thorough", action="store_true", help="Enable thorough linting - takes more time, but does a better job",
+        "--thorough",
+        action="store_true",
+        help="Enable thorough linting - takes more time, but does a better job",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")

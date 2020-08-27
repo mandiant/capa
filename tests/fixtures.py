@@ -340,10 +340,20 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
     ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
     # insn/api: x64
-    ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True,),
+    (
+        "kernel32-64",
+        "function=0x180001010",
+        capa.features.insn.API("RtlVirtualUnwind"),
+        True,
+    ),
     ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
     # insn/api: x64 thunk
-    ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True,),
+    (
+        "kernel32-64",
+        "function=0x1800202B0",
+        capa.features.insn.API("RtlCaptureContext"),
+        True,
+    ),
     ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
     # insn/api: resolve indirect calls
     ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),

@@ -71,22 +71,22 @@ logger = logging.getLogger("capa.show-capabilities-by-function")
 
 def render_matches_by_function(doc):
     """
-        like:
+    like:
 
-            function at 0x1000321a with 33 features:
-              - get hostname
-              - initialize Winsock library
-            function at 0x10003286 with 63 features:
-              - create thread
-              - terminate thread
-            function at 0x10003415 with 116 features:
-              - write file
-              - send data
-              - link function at runtime
-              - create HTTP request
-              - get common file path
-              - send HTTP request
-              - connect to HTTP server
+        function at 0x1000321a with 33 features:
+          - get hostname
+          - initialize Winsock library
+        function at 0x10003286 with 63 features:
+          - create thread
+          - terminate thread
+        function at 0x10003415 with 116 features:
+          - write file
+          - send data
+          - link function at runtime
+          - create HTTP request
+          - get common file path
+          - send HTTP request
+          - connect to HTTP server
     """
     ostream = rutils.StringIO()
 
