@@ -19,7 +19,7 @@ if sys.version_info >= (3, 0):
     requirements.append("networkx")
 else:
     # py2
-    requirements.append("enum34")
+    requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
     requirements.append("vivisect @ https://github.com/williballenthin/vivisect/tarball/v0.0.20200804#egg=vivisect")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
