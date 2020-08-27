@@ -348,12 +348,18 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         },
         """
         if statement["type"] in ("and", "or", "optional"):
-            return CapaExplorerDefaultItem(parent, statement["type"])
+            display = statement["type"]
+            if statement.get("description"):
+                display += " (%s)" % statement["description"]
+            return CapaExplorerDefaultItem(parent, display)
         elif statement["type"] == "not":
             # TODO: do we display 'not'
             pass
         elif statement["type"] == "some":
-            return CapaExplorerDefaultItem(parent, str(statement["count"]) + " or more")
+            display = "%d or more" % statement["count"]
+            if statement.get("description"):
+                display += " (%s)" % statement["description"]
+            return CapaExplorerDefaultItem(parent, display)
         elif statement["type"] == "range":
             # `range` is a weird node, its almost a hybrid of statement + feature.
             # it is a specific feature repeated multiple times.
@@ -370,6 +376,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             else:
                 display += "between %d and %d" % (statement["min"], statement["max"])
 
+            if statement.get("description"):
+                display += " (%s)" % statement["description"]
+
             parent2 = CapaExplorerFeatureItem(parent, display=display)
 
             for location in locations:
@@ -378,7 +387,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
             return parent2
         elif statement["type"] == "subscope":
-            return CapaExplorerSubscopeItem(parent, statement[statement["type"]])
+            display = statement[statement["type"]]
+            if statement.get("description"):
+                display += " (%s)" % statement["description"]
+            return CapaExplorerSubscopeItem(parent, display)
         else:
             raise RuntimeError("unexpected match statement type: " + str(statement))
 
