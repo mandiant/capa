@@ -8,7 +8,7 @@
 
 from PyQt5 import QtCore
 
-from capa.ida.explorer.model import CapaExplorerDataModel
+from capa.ida.plugin.model import CapaExplorerDataModel
 
 
 class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):

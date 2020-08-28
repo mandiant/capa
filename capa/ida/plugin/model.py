@@ -9,13 +9,12 @@
 from collections import deque
 
 import idc
-import six
 import idaapi
-from PyQt5 import Qt, QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 
 import capa.ida.helpers
 import capa.render.utils as rutils
-from capa.ida.explorer.item import (
+from capa.ida.plugin.item import (
     CapaExplorerDataItem,
     CapaExplorerRuleItem,
     CapaExplorerBlockItem,
