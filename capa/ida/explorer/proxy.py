@@ -16,6 +16,9 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         """ """
         super(CapaExplorerSortFilterProxyModel, self).__init__(parent)
 
+        self.min_ea = None
+        self.max_ea = None
+
     def lessThan(self, left, right):
         """true if the value of the left item is less than value of right item
 
@@ -62,15 +65,6 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
 
         return False
 
-    def add_single_string_filter(self, column, string):
-        """add fixed string filter
-
-        @param column: key column
-        @param string: string to sort
-        """
-        self.setFilterKeyColumn(column)
-        self.setFilterFixedString(string)
-
     def index_has_accepted_children(self, row, parent):
         """ """
         model_index = self.sourceModel().index(row, 0, parent)
@@ -86,4 +80,33 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
 
     def filter_accepts_row_self(self, row, parent):
         """ """
-        return super(CapaExplorerSortFilterProxyModel, self).filterAcceptsRow(row, parent)
+        # filter not set
+        if self.min_ea is None and self.max_ea is None:
+            return True
+
+        index = self.sourceModel().index(row, 0, parent)
+        data = index.internalPointer().data(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS)
+
+        if not data:
+            return False
+
+        ea = int(data, 16)
+
+        if self.min_ea <= ea and ea < self.max_ea:
+            return True
+
+        return False
+
+    def add_address_range_filter(self, min_ea, max_ea):
+        """ """
+        self.min_ea = min_ea
+        self.max_ea = max_ea
+
+        self.setFilterKeyColumn(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS)
+        self.invalidateFilter()
+
+    def reset_address_range_filter(self):
+        """ """
+        self.min_ea = None
+        self.max_ea = None
+        self.invalidateFilter()
