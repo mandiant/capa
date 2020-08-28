@@ -324,35 +324,25 @@ class CapaExplorerForm(idaapi.PluginForm):
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
         """hook for IDA screen ea changed
 
+        this hook is currently only relevant for limiting results displayed in the UI
+
         @param widget: IDA widget type
         @param new_ea: destination ea
         @param old_ea: source ea
         """
         if not self.view_limit_results_by_function.isChecked():
-            # ignore if checkbox not selected
+            # ignore if limit checkbox not selected
             return
 
         if idaapi.get_widget_type(widget) != idaapi.BWN_DISASM:
-            # ignore views other than asm
+            # ignore views not the assembly view
             return
 
-        # attempt to map virtual addresses to function start addresses
-        new_func_start = capa.ida.helpers.get_func_start_ea(new_ea)
-        old_func_start = capa.ida.helpers.get_func_start_ea(old_ea)
-
-        if new_func_start and new_func_start == old_func_start:
-            # navigated within the same function - do nothing
+        if idaapi.get_func(new_ea) == idaapi.get_func(old_ea):
+            # user navigated same function - ignore
             return
 
-        if new_func_start:
-            # navigated to new function - filter for function start virtual address
-            match = capa.ida.explorer.item.location_to_hex(new_func_start)
-        else:
-            # navigated to virtual address not in valid function - clear filter
-            match = ""
-
-        # filter on virtual address to avoid updating filter string if function name is changed
-        self.model_proxy.add_single_string_filter(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, match)
+        self.limit_results_to_function(idaapi.get_func(new_ea))
         self.view_tree.resize_columns_to_content()
 
     def load_capa_results(self):
@@ -534,15 +524,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         if checked, configure function filter if screen location is located
         in function, otherwise clear filter
         """
-        match = ""
         if self.view_limit_results_by_function.isChecked():
-            location = capa.ida.helpers.get_func_start_ea(idaapi.get_screen_ea())
-            if location:
-                match = capa.ida.explorer.item.location_to_hex(location)
-
-        self.model_proxy.add_single_string_filter(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS, match)
+            self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
+        else:
+            self.model_proxy.reset_address_range_filter()
 
         self.view_tree.resize_columns_to_content()
+
+    def limit_results_to_function(self, f):
+        """add filter to limit results to current function
+
+        @param f: (IDA func_t)
+        """
+        if f:
+            self.model_proxy.add_address_range_filter(f.start_ea, f.end_ea)
+        else:
+            # if function not exists don't display any results (address should not be -1)
+            self.model_proxy.add_address_range_filter(-1, -1)
 
 
 def main():
