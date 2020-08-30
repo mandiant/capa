@@ -1,3 +1,4 @@
+import sys
 import logging
 
 try:
@@ -11,6 +12,11 @@ logger = logging.getLogger(__name__)
 class NotPackedError(ValueError):
     def __init__(self):
         super(NotPackedError, self).__init__("not packed")
+
+
+def can_unpack():
+    # the unpacking backend is based on Speakeasy, which supports python 3.6+
+    return sys.version_info >= (3, 6)
 
 
 @lru_cache
