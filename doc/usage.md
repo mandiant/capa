@@ -34,7 +34,6 @@ We like to use capa to help find the most interesting parts of a program, such a
 To install the plugin, you'll need to be running IDA Pro 7.4 or 7.5 with either Python 2 or Python 3.
 Next make sure pip commands are run using the Python install that is configured for your IDA install:
 
-  1. Only if running Python 2.7, run command `$ pip install https://github.com/williballenthin/vivisect/zipball/master`
-  2. Run `$ pip install .` from capa root directory
-  3. Open IDA and navigate to `File > Script file…` or `Alt+F7`
-  4. Navigate to `<capa_install_dir>\capa\ida\` and choose `ida_capa_explorer.py`
+  1. Run `$ pip install .` from capa root directory
+  2. Open IDA and navigate to `File > Script file…` or `Alt+F7`
+  3. Navigate to `<capa_install_dir>\capa\ida\` and choose `ida_capa_explorer.py`
