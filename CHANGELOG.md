@@ -6,11 +6,12 @@ This release brings UI enhancements, especially for the IDA Pro plugin,
 investment towards py3 support,
 fixes some bugs identified by the community, 
 and 46 (!) new rules.
-We received contributions from nine reverse engineers, including four new ones:
+We received contributions from ten reverse engineers, including five new ones:
 
   - @agithubuserlol
   - @recvfrom
   - @D4nch3n
+  - @edeca
   - @winniepe 
   
 Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/).
@@ -33,7 +34,7 @@ and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/)
   - check if process is running under wine @re-fox
   - validate credit card number using luhn algorithm @re-fox
   - validate credit card number using luhn algorithm with no lookup table @re-fox
-  - hash data using FNV @mr-tz
+  - hash data using FNV @edeca @mr-tz
   - link many functions at runtime @mr-tz
   - reference public RSA key @mr-tz
   - packed with ASPack @williballenthin
