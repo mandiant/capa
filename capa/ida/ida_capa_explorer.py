@@ -529,7 +529,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         else:
             self.model_proxy.reset_address_range_filter()
 
-        self.view_tree.resize_columns_to_content()
+        self.view_tree.reset()
 
     def limit_results_to_function(self, f):
         """add filter to limit results to current function

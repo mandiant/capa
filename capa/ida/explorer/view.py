@@ -65,7 +65,6 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
     def resize_columns_to_content(self):
         """ reset view columns to contents """
         self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
-        self.expandToDepth(0)
 
     def map_index_to_source_item(self, model_index):
         """map proxy model index to source model item
