@@ -6,11 +6,12 @@ This release brings UI enhancements, especially for the IDA Pro plugin,
 investment towards py3 support,
 fixes some bugs identified by the community, 
 and 46 (!) new rules.
-We received contributions from eight reverse engineers, including three new ones:
+We received contributions from nine reverse engineers, including four new ones:
 
   - @agithubuserlol
   - @recvfrom
   - @D4nch3n
+  - @winniepe 
   
 Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/).
 Report issues on our [issue tracker](https://github.com/fireeye/capa/issues)
@@ -84,6 +85,7 @@ and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/)
 
 ### Changes
 
+  - ida plugin: better default display showing first level nesting @winniepe
   - remove unused `characteristic(switch)` feature @ana06
   - prepare testing infrastructure for multiple backends/py3 @williballenthin
   - ci: zip build artifacts @ana06
