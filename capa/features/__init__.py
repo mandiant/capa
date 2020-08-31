@@ -151,8 +151,8 @@ class Regex(String):
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
                 # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
-                # this is because `self` may match on many strings, so we can't stuff the matched into it.
-                # instead, return a new instance that has a reference to the regex and the matched value.
+                # this is because `self` may match on many strings, so we can't stuff the matched value into it.
+                # instead, return a new instance that has a reference to both the regex and the matched value.
                 # see #262.
                 return capa.engine.Result(True, _MatchedRegex(self, feature.value), [], locations=locations)
 
@@ -164,9 +164,10 @@ class Regex(String):
 
 class _MatchedRegex(Regex):
     """
-    this represents a specific instances of a regular expression feature match.
-    treat it the same as a `Regex` except you also have the `match` field.
-    this should only ever be constructed by `Regex.evaluate()`.
+    this represents a specific instance of a regular expression feature match.
+    treat it the same as a `Regex` except it has the `match` field that contains the complete string that matched.
+
+    note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
     def __init__(self, regex, match):
