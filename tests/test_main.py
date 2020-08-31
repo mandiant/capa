@@ -309,3 +309,14 @@ def test_count_bb(z9324d_extractor):
     )
     capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "count bb" in capabilities
+
+
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
+def test_fix262(pma16_01_extractor, capsys):
+    # tests rules can be loaded successfully and all output modes
+    path = pma16_01_extractor.path
+    assert capa.main.main([path, "-vv", "-t", "send HTTP request", "-q"]) == 0
+
+    std = capsys.readouterr()
+    assert "HTTP/1.0" in std.out
+    assert "www.practicalmalwareanalysis.com" not in std.out

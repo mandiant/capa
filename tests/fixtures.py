@@ -488,6 +488,11 @@ def pma12_04_extractor():
 
 
 @pytest.fixture
+def pma16_01_extractor():
+    return get_extractor(get_data_path_by_name("pma16-01"))
+
+
+@pytest.fixture
 def bfb9b_extractor():
     return get_extractor(get_data_path_by_name("bfb9b..."))
 
