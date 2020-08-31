@@ -9,6 +9,7 @@
 import sys
 import builtins
 
+from capa.features.file import Import
 from capa.features.insn import API
 
 MIN_STACKSTRING_LEN = 8
@@ -63,6 +64,34 @@ def generate_api_features(apiname, va):
         if is_aw_function(impname):
             # (CreateFile, 0x401000)
             yield API(impname[:-1]), va
+
+
+def is_ordinal(symbol):
+    return symbol[0] == "#"
+
+
+def generate_import_features(dll, symbol, va):
+    """
+    for a given dll, symbol, and address, generate import features.
+    we over-generate features to make matching easier.
+    these include:
+      - kernel32.CreateFileA
+      - kernel32.CreateFile
+      - CreateFileA
+      - CreateFile
+    """
+    # (kernel32.CreateFileA, 0x401000)
+    yield Import(dll + "." + symbol), va
+    # (CreateFileA, 0x401000)
+    if not is_ordinal(symbol):
+        yield Import(symbol), va
+
+    if is_aw_function(symbol):
+        # (kernel32.CreateFile, 0x401000)
+        yield Import(dll + "." + symbol[:-1]), va
+        # (CreateFile, 0x401000)
+        if not is_ordinal(symbol):
+            yield Import(symbol[:-1]), va
 
 
 def all_zeros(bytez):

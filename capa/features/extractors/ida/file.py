@@ -97,10 +97,16 @@ def extract_file_import_names():
     """
     for (ea, info) in capa.features.extractors.ida.helpers.get_file_imports().items():
         if info[1]:
-            yield Import("%s.%s" % (info[0], info[1])), ea
-            yield Import(info[1]), ea
-        if info[2]:
-            yield Import("%s.#%s" % (info[0], str(info[2]))), ea
+            dll = info[0]
+            symbol = info[1]
+        elif info[2]:
+            dll = info[0]
+            symbol = "#%d" % (info[2])
+        else:
+            continue
+
+        for feature, ea in capa.features.extractors.helpers.generate_import_features(dll, symbol, ea):
+            yield feature, ea
 
 
 def extract_file_section_names():
