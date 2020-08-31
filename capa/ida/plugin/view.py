@@ -7,11 +7,10 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import idc
-import idaapi
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
-from capa.ida.explorer.item import CapaExplorerRuleItem, CapaExplorerFunctionItem
-from capa.ida.explorer.model import CapaExplorerDataModel
+from capa.ida.plugin.item import CapaExplorerFunctionItem
+from capa.ida.plugin.model import CapaExplorerDataModel
 
 
 class CapaExplorerQtreeView(QtWidgets.QTreeView):

@@ -19,73 +19,21 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
-from capa.ida.explorer.view import CapaExplorerQtreeView
-from capa.ida.explorer.model import CapaExplorerDataModel
-from capa.ida.explorer.proxy import CapaExplorerSortFilterProxyModel
-
-PLUGIN_NAME = "capa explorer"
+from capa.ida.plugin.view import CapaExplorerQtreeView
+from capa.ida.plugin.hooks import CapaExplorerIdaHooks
+from capa.ida.plugin.model import CapaExplorerDataModel
+from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
 
 logger = logging.getLogger("capa")
 
 
-class CapaExplorerIdaHooks(idaapi.UI_Hooks):
-    def __init__(self, screen_ea_changed_hook, action_hooks):
-        """facilitate IDA UI hooks
-
-        @param screen_ea_changed_hook: function hook for IDA screen ea changed
-        @param action_hooks: dict of IDA action handles
-        """
-        super(CapaExplorerIdaHooks, self).__init__()
-
-        self.screen_ea_changed_hook = screen_ea_changed_hook
-        self.process_action_hooks = action_hooks
-        self.process_action_handle = None
-        self.process_action_meta = {}
-
-    def preprocess_action(self, name):
-        """called prior to action completed
-
-        @param name: name of action defined by idagui.cfg
-
-        @retval must be 0
-        """
-        self.process_action_handle = self.process_action_hooks.get(name, None)
-
-        if self.process_action_handle:
-            self.process_action_handle(self.process_action_meta)
-
-        # must return 0 for IDA
-        return 0
-
-    def postprocess_action(self):
-        """ called after action completed """
-        if not self.process_action_handle:
-            return
-
-        self.process_action_handle(self.process_action_meta, post=True)
-        self.reset()
-
-    def screen_ea_changed(self, curr_ea, prev_ea):
-        """called after screen location is changed
-
-        @param curr_ea: current location
-        @param prev_ea: prev location
-        """
-        self.screen_ea_changed_hook(idaapi.get_current_widget(), curr_ea, prev_ea)
-
-    def reset(self):
-        """ reset internal state """
-        self.process_action_handle = None
-        self.process_action_meta.clear()
-
-
 class CapaExplorerForm(idaapi.PluginForm):
-    def __init__(self):
+    def __init__(self, name):
         """ """
         super(CapaExplorerForm, self).__init__()
 
-        self.form_title = PLUGIN_NAME
-        self.file_loc = __file__
+        self.form_title = name
+        self.rule_path = ""
 
         self.parent = None
         self.ida_hooks = None
@@ -116,6 +64,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def Show(self):
         """ """
+        logger.info("form show.")
         return idaapi.PluginForm.Show(
             self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
         )
@@ -124,7 +73,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ form is closed """
         self.unload_ida_hooks()
         self.ida_reset()
-
         logger.info("form closed.")
 
     def load_interface(self):
@@ -262,6 +210,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         actions = (
             ("Reset view", "Reset plugin view", self.reset),
             ("Run analysis", "Run capa analysis on current database", self.reload),
+            ("Change rules directory...", "Select new rules directory", self.change_rules_dir),
             ("Export results...", "Export capa results as JSON file", self.export_json),
         )
 
@@ -276,9 +225,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not self.doc:
             idaapi.info("No capa results to export.")
             return
+
         path = idaapi.ask_file(True, "*.json", "Choose file")
+
+        if not path:
+            return
+
         if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
             return
+
         with open(path, "wb") as export_file:
             export_file.write(
                 json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode("utf-8")
@@ -347,16 +302,29 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_capa_results(self):
         """ run capa analysis and render results in UI """
+        if not self.rule_path:
+            rule_path = self.ask_user_directory()
+            if not rule_path:
+                capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
+                logger.warning("no rules directory selected. nothing to do.")
+                return
+            self.rule_path = rule_path
+
         logger.info("-" * 80)
-        logger.info(" Using default embedded rules.")
+        logger.info(" Using rules from %s." % self.rule_path)
         logger.info(" ")
         logger.info(" You can see the current default rule set here:")
         logger.info("     https://github.com/fireeye/capa-rules")
         logger.info("-" * 80)
 
-        rules_path = os.path.join(os.path.dirname(self.file_loc), "../..", "rules")
-        rules = capa.main.get_rules(rules_path)
-        rules = capa.rules.RuleSet(rules)
+        try:
+            rules = capa.main.get_rules(self.rule_path)
+            rules = capa.rules.RuleSet(rules)
+        except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+            capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
+            logger.error("failed to load rules from %s (%s)" % (self.rule_path, e))
+            self.rule_path = ""
+            return
 
         meta = capa.ida.helpers.collect_metadata()
 
@@ -495,9 +463,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_capa_results()
 
         logger.info("reload complete.")
-        idaapi.info("%s reload completed." % PLUGIN_NAME)
+        idaapi.info("%s reload completed." % self.form_title)
 
-    def reset(self):
+    def reset(self, checked):
         """reset UI elements
 
         e.g. checkboxes and IDA highlighting
@@ -505,7 +473,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.ida_reset()
 
         logger.info("reset completed.")
-        idaapi.info("%s reset completed." % PLUGIN_NAME)
+        idaapi.info("%s reset completed." % self.form_title)
 
     def slot_menu_bar_hovered(self, action):
         """display menu action tooltip
@@ -518,13 +486,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             QtGui.QCursor.pos(), action.toolTip(), self.view_menu_bar, self.view_menu_bar.actionGeometry(action)
         )
 
-    def slot_checkbox_limit_by_changed(self):
+    def slot_checkbox_limit_by_changed(self, state):
         """slot activated if checkbox clicked
 
         if checked, configure function filter if screen location is located
         in function, otherwise clear filter
         """
-        if self.view_limit_results_by_function.isChecked():
+        if state == QtCore.Qt.Checked:
             self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
         else:
             self.model_proxy.reset_address_range_filter()
@@ -542,30 +510,16 @@ class CapaExplorerForm(idaapi.PluginForm):
             # if function not exists don't display any results (address should not be -1)
             self.model_proxy.add_address_range_filter(-1, -1)
 
+    def ask_user_directory(self):
+        """ create Qt dialog to ask user for a directory """
+        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory"))
 
-def main():
-    """ TODO: move to idaapi.plugin_t class """
-    logging.basicConfig(level=logging.INFO)
-
-    if not capa.ida.helpers.is_supported_ida_version():
-        return -1
-
-    if not capa.ida.helpers.is_supported_file_type():
-        return -1
-
-    global CAPA_EXPLORER_FORM
-
-    try:
-        # there is an instance, reload it
-        CAPA_EXPLORER_FORM
-        CAPA_EXPLORER_FORM.Close()
-        CAPA_EXPLORER_FORM = CapaExplorerForm()
-    except Exception:
-        # there is no instance yet
-        CAPA_EXPLORER_FORM = CapaExplorerForm()
-
-    CAPA_EXPLORER_FORM.Show()
-
-
-if __name__ == "__main__":
-    main()
+    def change_rules_dir(self):
+        """ allow user to change rules directory """
+        rule_path = self.ask_user_directory()
+        if not rule_path:
+            logger.warning("no rules directory selected. nothing to do.")
+            return
+        self.rule_path = rule_path
+        if 1 == idaapi.ask_yn(1, "Run analysis now?"):
+            self.reload()
