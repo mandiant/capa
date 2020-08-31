@@ -8,32 +8,31 @@
 
 import os
 import json
+import logging
 import collections
 
-from PyQt5 import QtGui, QtCore, QtWidgets
-
 import idaapi
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
-
 from capa.ida.plugin.view import CapaExplorerQtreeView
+from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
-from capa.ida.plugin.hooks import CapaExplorerIdaHooks
+
+logger = logging.getLogger("capa")
 
 
 class CapaExplorerForm(idaapi.PluginForm):
-    def __init__(self, name, logger):
+    def __init__(self, name):
         """ """
         super(CapaExplorerForm, self).__init__()
 
         self.form_title = name
-        self.logger = logger
-
         self.rule_path = ""
 
         self.parent = None
@@ -61,11 +60,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_tree.reset()
 
-        self.logger.info("form created.")
+        logger.info("form created.")
 
     def Show(self):
         """ """
-        self.logger.info("form show.")
+        logger.info("form show.")
         return idaapi.PluginForm.Show(
             self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
         )
@@ -74,7 +73,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ form is closed """
         self.unload_ida_hooks()
         self.ida_reset()
-        self.logger.info("form closed.")
+        logger.info("form closed.")
 
     def load_interface(self):
         """ load user interface """
@@ -307,23 +306,23 @@ class CapaExplorerForm(idaapi.PluginForm):
             rule_path = self.ask_user_directory()
             if not rule_path:
                 capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
-                self.logger.warning("no rules directory selected. nothing to do.")
+                logger.warning("no rules directory selected. nothing to do.")
                 return
             self.rule_path = rule_path
 
-        self.logger.info("-" * 80)
-        self.logger.info(" Using rules from %s." % self.rule_path)
-        self.logger.info(" ")
-        self.logger.info(" You can see the current default rule set here:")
-        self.logger.info("     https://github.com/fireeye/capa-rules")
-        self.logger.info("-" * 80)
+        logger.info("-" * 80)
+        logger.info(" Using rules from %s." % self.rule_path)
+        logger.info(" ")
+        logger.info(" You can see the current default rule set here:")
+        logger.info("     https://github.com/fireeye/capa-rules")
+        logger.info("-" * 80)
 
         try:
             rules = capa.main.get_rules(self.rule_path)
             rules = capa.rules.RuleSet(rules)
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
-            self.logger.error("failed to load rules from %s (%s)" % (self.rule_path, e))
+            logger.error("failed to load rules from %s (%s)" % (self.rule_path, e))
             self.rule_path = ""
             return
 
@@ -338,26 +337,24 @@ class CapaExplorerForm(idaapi.PluginForm):
         # warn user binary file is loaded but still allow capa to process it
         # TODO: check specific architecture of binary files based on how user configured IDA processors
         if idaapi.get_file_type_name() == "Binary file":
-            self.logger.warning("-" * 80)
-            self.logger.warning(" Input file appears to be a binary file.")
-            self.logger.warning(" ")
-            self.logger.warning(
+            logger.warning("-" * 80)
+            logger.warning(" Input file appears to be a binary file.")
+            logger.warning(" ")
+            logger.warning(
                 " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
             )
-            self.logger.warning(
+            logger.warning(
                 " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
             )
-            self.logger.warning(
-                " If you don't know the input file type, you can try using the `file` utility to guess it."
-            )
-            self.logger.warning("-" * 80)
+            logger.warning(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+            logger.warning("-" * 80)
 
             capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
         if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
             capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-        self.logger.info("analysis completed.")
+        logger.info("analysis completed.")
 
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
@@ -367,7 +364,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.set_view_tree_default_sort_order()
 
-        self.logger.info("render views completed.")
+        logger.info("render views completed.")
 
     def set_view_tree_default_sort_order(self):
         """ set capa tree view default sort order """
@@ -465,7 +462,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_summary.setRowCount(0)
         self.load_capa_results()
 
-        self.logger.info("reload complete.")
+        logger.info("reload complete.")
         idaapi.info("%s reload completed." % self.form_title)
 
     def reset(self, checked):
@@ -475,7 +472,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         self.ida_reset()
 
-        self.logger.info("reset completed.")
+        logger.info("reset completed.")
         idaapi.info("%s reset completed." % self.form_title)
 
     def slot_menu_bar_hovered(self, action):
@@ -521,7 +518,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ allow user to change rules directory """
         rule_path = self.ask_user_directory()
         if not rule_path:
-            self.logger.warning("no rules directory selected. nothing to do.")
+            logger.warning("no rules directory selected. nothing to do.")
             return
         self.rule_path = rule_path
         if 1 == idaapi.ask_yn(1, "Run analysis now?"):

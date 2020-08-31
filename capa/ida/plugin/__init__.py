@@ -20,7 +20,7 @@ class CapaExplorerPlugin(idaapi.plugin_t):
 
     # Mandatory definitions
     PLUGIN_NAME = "capa explorer"
-    PLUGIN_VERSION = "0.0.1"
+    PLUGIN_VERSION = "1.0.0"
     PLUGIN_AUTHORS = ""
 
     wanted_name = PLUGIN_NAME
@@ -61,6 +61,6 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """
         called when IDA is running the plugin as a script
         """
-        self.form = CapaExplorerForm(self.PLUGIN_NAME, logger)
+        self.form = CapaExplorerForm(self.PLUGIN_NAME)
         self.form.Show()
         return True
