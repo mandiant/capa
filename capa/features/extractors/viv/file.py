@@ -9,8 +9,9 @@
 import PE.carve as pe_carve  # vivisect PE
 
 import capa.features.extractors.strings
+import capa.features.extractors.helpers
 from capa.features import String, Characteristic
-from capa.features.file import Export, Import, Section
+from capa.features.file import Export, Section
 
 
 def extract_file_embedded_pe(vw, file_path):
@@ -41,11 +42,9 @@ def extract_file_import_names(vw, file_path):
         if is_viv_ord_impname(impname):
             # replace ord prefix with #
             impname = "#%s" % impname[len("ord") :]
-            tinfo = "%s.%s" % (modname, impname)
-            yield Import(tinfo), va
-        else:
-            yield Import(tinfo), va
-            yield Import(impname), va
+
+        for feature, va in capa.features.extractors.helpers.generate_import_features(modname, impname, va):
+            yield feature, va
 
 
 def is_viv_ord_impname(impname):
