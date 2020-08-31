@@ -631,7 +631,13 @@ class Rule(object):
         #       - string: foo
         #         description: bar
         #
-        # we want the `description` horizontally aligned with the start of the `string`.
+        # we want the `description` horizontally aligned with the start of the `string` (like above).
+        # however, ruamel will give us (which I don't think is even valid yaml):
+        #
+        #     and:
+        #       - string: foo
+        #      description: bar
+        #
         # tweaking `ruamel.indent()` doesn't quite give us the control we want.
         # so, add the two extra spaces that we've determined we need through experimentation.
         # see #263
