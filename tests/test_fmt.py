@@ -117,6 +117,7 @@ def test_rule_reformat_meta_update():
 
 
 def test_rule_reformat_string_description():
+    # the `description` should be aligned with the preceding feature name.
     # see #263
     src = textwrap.dedent(
         """
@@ -130,7 +131,7 @@ def test_rule_reformat_string_description():
               - string: foo
                 description: bar
         """
-    )
+    ).lstrip()
 
     rule = capa.rules.Rule.from_yaml(src)
     assert rule.to_yaml() == src
