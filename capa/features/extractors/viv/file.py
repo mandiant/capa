@@ -8,8 +8,8 @@
 
 import PE.carve as pe_carve  # vivisect PE
 
-import capa.features.extractors.strings
 import capa.features.extractors.helpers
+import capa.features.extractors.strings
 from capa.features import String, Characteristic
 from capa.features.file import Export, Section
 
