@@ -122,6 +122,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "kernel32-64.dll_")
     elif name == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
+    elif name == "pma16-01":
+        return os.path.join(CD, "data", "Practical Malware Analysis Lab 16-01.exe_")
     elif name == "pma21-01":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
     elif name == "al-khaser x86":
@@ -154,6 +156,8 @@ def get_sample_md5_by_name(name):
         return "a8565440629ac87f6fef7d588fe3ff0f"
     elif name == "pma12-04":
         return "56bed8249e7c2982a90e54e1e55391a2"
+    elif name == "pma16-01":
+        return "7faafc7e4a5c736ebfee6abbbc812d80"
     elif name == "pma21-01":
         return "c8403fb05244e23a7931c766409b5e22"
     elif name == "al-khaser x86":
@@ -365,6 +369,9 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
     ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
     ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
+    # insn/regex, issue #262
+    ("pma16-01", "function=0x4021B0", capa.features.Regex("HTTP/1.0"), True),
+    ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
     # insn/string, pointer to string
     ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
     # insn/bytes
