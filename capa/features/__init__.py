@@ -139,7 +139,6 @@ class Regex(String):
             raise ValueError(
                 "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
             )
-        self.match = None
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
@@ -151,10 +150,38 @@ class Regex(String):
             # using this mode cleans is more convenient for rule authors,
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
-                self.match = feature.value
-                return capa.engine.Result(True, self, [], locations=locations)
+                # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
+                # this is because `self` may match on many strings, so we can't stuff the matched value into it.
+                # instead, return a new instance that has a reference to both the regex and the matched value.
+                # see #262.
+                return capa.engine.Result(True, _MatchedRegex(self, feature.value), [], locations=locations)
 
-        return capa.engine.Result(False, self, [])
+        return capa.engine.Result(False, _MatchedRegex(self, None), [])
+
+    def __str__(self):
+        return "regex(string =~ %s)" % self.value
+
+
+class _MatchedRegex(Regex):
+    """
+    this represents a specific instance of a regular expression feature match.
+    treat it the same as a `Regex` except it has the `match` field that contains the complete string that matched.
+
+    note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
+    """
+
+    def __init__(self, regex, match):
+        """
+        args:
+          regex (Regex): the regex feature that matches
+          match (string|None): the matching string or None if it doesn't match
+        """
+        super(_MatchedRegex, self).__init__(regex.value, description=regex.description)
+        # we want this to collide with the name of `Regex` above,
+        # so that it works nicely with the renderers.
+        self.name = "regex"
+        # this may be None if the regex doesn't match
+        self.match = match
 
     def __str__(self):
         return 'regex(string =~ %s, matched = "%s")' % (self.value, self.match)
