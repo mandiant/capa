@@ -142,6 +142,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
     elif name.startswith("c9188"):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
+    elif name.startswith("64d9f"):
+        return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -176,6 +178,8 @@ def get_sample_md5_by_name(name):
         return "bfb9b5391a13d0afd787e87ab90f14f5"
     elif name.startswith("c9188"):
         return "c91887d861d9bd4a5872249b641bc9f9"
+    elif name.startswith("64d9f"):
+        return "64d9f7d96b99467f36e22fada623c3bb"
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -321,6 +325,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
+    # insn/offset, issue #276
+    ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
     # insn/offset: stack references
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
