@@ -318,25 +318,38 @@ def extract_insn_offset_features(f, bb, insn):
     #
     #     .text:0040112F    cmp     [esi+4], ebx
     for oper in insn.opers:
+
         # this is for both x32 and x64
-        if not isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
-            continue
+        # like [esi + 4]
+        #       reg   ^
+        #             disp
+        if isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
+            if oper.reg == envi.archs.i386.disasm.REG_ESP:
+                continue
 
-        if oper.reg == envi.archs.i386.disasm.REG_ESP:
-            continue
+            if oper.reg == envi.archs.i386.disasm.REG_EBP:
+                continue
 
-        if oper.reg == envi.archs.i386.disasm.REG_EBP:
-            continue
+            # TODO: do x64 support for real.
+            if oper.reg == envi.archs.amd64.disasm.REG_RBP:
+                continue
 
-        # TODO: do x64 support for real.
-        if oper.reg == envi.archs.amd64.disasm.REG_RBP:
-            continue
+            # viv already decodes offsets as signed
+            v = oper.disp
 
-        # viv already decodes offsets as signed
-        v = oper.disp
+            yield Offset(v), insn.va
+            yield Offset(v, arch=get_arch(f.vw)), insn.va
 
-        yield Offset(v), insn.va
-        yield Offset(v, arch=get_arch(f.vw)), insn.va
+        # like: [esi + ecx + 16384]
+        #        reg   ^     ^
+        #              index ^
+        #                    disp
+        elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
+            # viv already decodes offsets as signed
+            v = oper.disp
+
+            yield Offset(v), insn.va
+            yield Offset(v, arch=get_arch(f.vw)), insn.va
 
 
 def is_security_cookie(f, bb, insn):
