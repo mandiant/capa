@@ -90,8 +90,10 @@ class CapaExplorerPlugin(idaapi.plugin_t):
 #  receive notications after IDA has created an action for each plugin.
 # so, create this hook, wait for capa plugin to load, set the icon, and unhook.
 
+
 class OnUpdatedActionsHook(ida_kernwin.UI_Hooks):
     """register a callback to be invoked each time the UI actions are updated"""
+
     def __init__(self, cb):
         super(OnUpdatedActionsHook, self).__init__()
         self.cb = cb
