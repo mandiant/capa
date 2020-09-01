@@ -22,57 +22,32 @@ def xor_static(data, i):
         return "".join(chr(ord(c) ^ i) for c in data)
 
 
-def is_aw_function(function_name):
+def is_aw_function(symbol):
     """
     is the given function name an A/W function?
     these are variants of functions that, on Windows, accept either a narrow or wide string.
     """
-    if len(function_name) < 2:
+    if len(symbol) < 2:
         return False
 
     # last character should be 'A' or 'W'
-    if function_name[-1] not in ("A", "W"):
+    if symbol[-1] not in ("A", "W"):
         return False
 
     # second to last character should be lowercase letter
-    return "a" <= function_name[-2] <= "z" or "0" <= function_name[-2] <= "9"
-
-
-def generate_api_features(apiname, va):
-    """
-    for a given function name and address, generate API names.
-    we over-generate features to make matching easier.
-    these include:
-      - kernel32.CreateFileA
-      - kernel32.CreateFile
-      - CreateFileA
-      - CreateFile
-    """
-    # (kernel32.CreateFileA, 0x401000)
-    yield API(apiname), va
-
-    if is_aw_function(apiname):
-        # (kernel32.CreateFile, 0x401000)
-        yield API(apiname[:-1]), va
-
-    if "." in apiname:
-        modname, impname = apiname.split(".")
-        # strip modname to support importname-only matching
-        # (CreateFileA, 0x401000)
-        yield API(impname), va
-
-        if is_aw_function(impname):
-            # (CreateFile, 0x401000)
-            yield API(impname[:-1]), va
+    return "a" <= symbol[-2] <= "z" or "0" <= symbol[-2] <= "9"
 
 
 def is_ordinal(symbol):
+    """
+    is the given symbol an ordinal that is prefixed by "#"?
+    """
     return symbol[0] == "#"
 
 
-def generate_import_features(dll, symbol, va):
+def generate_symbols(dll, symbol):
     """
-    for a given dll, symbol, and address, generate import features.
+    for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
     these include:
       - kernel32.CreateFileA
@@ -80,18 +55,20 @@ def generate_import_features(dll, symbol, va):
       - CreateFileA
       - CreateFile
     """
-    # (kernel32.CreateFileA, 0x401000)
-    yield Import(dll + "." + symbol), va
-    # (CreateFileA, 0x401000)
+    # kernel32.CreateFileA
+    yield "%s.%s" % (dll, symbol)
+
     if not is_ordinal(symbol):
-        yield Import(symbol), va
+        # CreateFileA
+        yield symbol
 
     if is_aw_function(symbol):
-        # (kernel32.CreateFile, 0x401000)
-        yield Import(dll + "." + symbol[:-1]), va
-        # (CreateFile, 0x401000)
+        # kernel32.CreateFile
+        yield "%s.%s" % (dll, symbol[:-1])
+
         if not is_ordinal(symbol):
-            yield Import(symbol[:-1]), va
+            # CreateFile
+            yield symbol[:-1]
 
 
 def all_zeros(bytez):

@@ -13,7 +13,7 @@ import idautils
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
-from capa.features.insn import Number, Offset, Mnemonic
+from capa.features.insn import Number, Offset, Mnemonic, API
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -77,8 +77,9 @@ def extract_insn_api_features(f, bb, insn):
         call dword [0x00473038]
     """
     for api in check_for_api_call(f.ctx, insn):
-        for (feature, ea) in capa.features.extractors.helpers.generate_api_features(api, insn.ea):
-            yield feature, ea
+        dll, _, symbol = api.rpartition(".")
+        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+            yield API(name), insn.ea
 
 
 def extract_insn_number_features(f, bb, insn):

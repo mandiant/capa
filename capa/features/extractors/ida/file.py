@@ -105,8 +105,8 @@ def extract_file_import_names():
         else:
             continue
 
-        for feature, ea in capa.features.extractors.helpers.generate_import_features(dll, symbol, ea):
-            yield feature, ea
+        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+            yield Import(name), ea
 
 
 def extract_file_section_names():
