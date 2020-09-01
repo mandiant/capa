@@ -92,6 +92,8 @@ def test_rule_reformat_order():
 
 
 def test_rule_reformat_meta_update():
+    # test updating the rule content after parsing
+
     rule = textwrap.dedent(
         """
         rule:
@@ -112,3 +114,24 @@ def test_rule_reformat_meta_update():
     rule = capa.rules.Rule.from_yaml(rule)
     rule.name = "test rule"
     assert rule.to_yaml() == EXPECTED
+
+
+def test_rule_reformat_string_description():
+    # the `description` should be aligned with the preceding feature name.
+    # see #263
+    src = textwrap.dedent(
+        """
+        rule:
+          meta:
+            name: test rule
+            author: user@domain.com
+            scope: function
+          features:
+            - and:
+              - string: foo
+                description: bar
+        """
+    ).lstrip()
+
+    rule = capa.rules.Rule.from_yaml(src)
+    assert rule.to_yaml() == src
