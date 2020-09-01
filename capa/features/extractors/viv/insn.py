@@ -12,7 +12,7 @@ import envi.archs.i386.disasm
 
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
-from capa.features.insn import Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -47,11 +47,15 @@ def get_imports(vw):
     """
     caching accessor to vivisect workspace imports
     avoids performance issues in vivisect when collecting locations
+
+    returns: Dict[int, Tuple[str, str]]
     """
     if "imports" in vw.metadata:
         return vw.metadata["imports"]
     else:
-        imports = {p[0]: p[3] for p in vw.getImports()}
+        imports = {
+            p[0]: (p[3].rpartition(".")[0], p[3].replace(".ord", ".#").rpartition(".")[2]) for p in vw.getImports()
+        }
         vw.metadata["imports"] = imports
         return imports
 
@@ -72,9 +76,10 @@ def extract_insn_api_features(f, bb, insn):
         target = oper.getOperAddr(insn)
 
         imports = get_imports(f.vw)
-        if target in imports.keys():
-            for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.va):
-                yield feature, va
+        if target in imports:
+            dll, symbol = imports[target]
+            for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                yield API(name), insn.va
 
     # call via thunk on x86,
     # see 9324d1a8ae37a36ae560c37448c9705a at 0x407985
@@ -90,8 +95,11 @@ def extract_insn_api_features(f, bb, insn):
             return
         else:
             if thunk:
-                for feature, va in capa.features.extractors.helpers.generate_api_features(thunk, insn.va):
-                    yield feature, va
+                dll, _, symbol = thunk.rpartition(".")
+                if symbol.startswith("ord"):
+                    symbol = "#" + symbol[len("ord") :]
+                for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                    yield API(name), insn.va
 
     # call via import on x64
     # see Lab21-01.exe_:0x14000118C
@@ -100,9 +108,10 @@ def extract_insn_api_features(f, bb, insn):
         target = op.getOperAddr(insn)
 
         imports = get_imports(f.vw)
-        if target in imports.keys():
-            for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.va):
-                yield feature, va
+        if target in imports:
+            dll, symbol = imports[target]
+            for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                yield API(name), insn.va
 
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper):
         try:
@@ -116,9 +125,10 @@ def extract_insn_api_features(f, bb, insn):
             return
 
         imports = get_imports(f.vw)
-        if target in imports.keys():
-            for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.va):
-                yield feature, va
+        if target in imports:
+            dll, symbol = imports[target]
+            for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                yield API(name), insn.va
 
 
 def extract_insn_number_features(f, bb, insn):

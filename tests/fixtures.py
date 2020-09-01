@@ -289,6 +289,10 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "file", capa.features.file.Import("#11"), False),
     ("mimikatz", "file", capa.features.file.Import("#nope"), False),
     ("mimikatz", "file", capa.features.file.Import("nope"), False),
+    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
+    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
+    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
+    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
     # function/characteristic(loop)
     ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
     ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
