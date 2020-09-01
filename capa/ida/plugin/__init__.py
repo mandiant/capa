@@ -13,22 +13,22 @@ import idaapi
 from capa.ida.helpers import is_supported_file_type, is_supported_ida_version
 from capa.ida.plugin.form import CapaExplorerForm
 
-logger = logging.getLogger("capa")
+logger = logging.getLogger(__name__)
 
 
 class CapaExplorerPlugin(idaapi.plugin_t):
 
     # Mandatory definitions
-    PLUGIN_NAME = "capa explorer"
+    PLUGIN_NAME = "FLARE capa plugin"
     PLUGIN_VERSION = "1.0.0"
-    PLUGIN_AUTHORS = ""
+    PLUGIN_AUTHORS = "michael.hunhoff@mandiant.com, william.ballenthin@mandiant.com, moritz.raabe@mandiant.com"
 
     wanted_name = PLUGIN_NAME
-    comment = "IDA plugin for capa analysis framework"
+    wanted_hotkey = "ALT-F5"
+    comment = "IDA Pro plugin for the FLARE team's capa tool to identify capabilities in executable files."
+    website = "https://github.com/fireeye/capa"
+    help = "See https://github.com/fireeye/capa/blob/master/doc/usage.md"
     version = ""
-    website = ""
-    help = ""
-    wanted_hotkey = ""
     flags = 0
 
     def __init__(self):
@@ -41,13 +41,13 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """
         logging.basicConfig(level=logging.INFO)
 
-        # check IDA version and database compat
+        # check IDA version and database compatibility
         if not is_supported_ida_version():
             return idaapi.PLUGIN_SKIP
         if not is_supported_file_type():
             return idaapi.PLUGIN_SKIP
 
-        logger.info("plugin initialized.")
+        logger.debug("plugin initialized")
 
         return idaapi.PLUGIN_KEEP
 
@@ -55,7 +55,7 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """
         called when IDA is unloading the plugin
         """
-        logger.info("plugin closed.")
+        logger.debug("plugin terminated")
 
     def run(self, arg):
         """
