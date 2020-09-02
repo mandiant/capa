@@ -320,3 +320,29 @@ def test_fix262(pma16_01_extractor, capsys):
     std = capsys.readouterr()
     assert "HTTP/1.0" in std.out
     assert "www.practicalmalwareanalysis.com" not in std.out
+
+
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
+def test_not_render_rules_also_matched(z9324d_extractor, capsys):
+    # rules that are also matched by other rules should not get rendered by default.
+    # this cuts down on the amount of output while giving approx the same detail.
+    # see #224
+    path = z9324d_extractor.path
+
+    # `act as TCP client` matches on
+    # `connect TCP client` matches on
+    # `create TCP socket`
+    #
+    # so only `act as TCP client` should be displayed
+    assert capa.main.main([path]) == 0
+    std = capsys.readouterr()
+    assert "act as TCP client" in std.out
+    assert "connect TCP socket" not in std.out
+    assert "create TCP socket" not in std.out
+
+    # this strategy only applies to the default renderer, not any verbose renderer
+    assert capa.main.main([path, "-v"]) == 0
+    std = capsys.readouterr()
+    assert "act as TCP client" in std.out
+    assert "connect TCP socket" in std.out
+    assert "create TCP socket" in std.out
