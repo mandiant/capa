@@ -104,6 +104,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         # load menu bar and sub menus
         self.load_view_menu_bar()
         self.load_file_menu()
+        self.load_rules_menu()
+        self.load_view_menu()
 
         # load parent view
         self.load_view_parent()
@@ -211,15 +213,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "MITRE")
 
     def load_file_menu(self):
-        """ load file menu actions """
         actions = (
-            ("Reset view", "Reset plugin view", self.reset),
-            ("Run analysis", "Run capa analysis on current database", self.reload),
-            ("Change rules directory...", "Select new rules directory", self.change_rules_dir),
+            ("Rerun analysis", "Rerun capa analysis on current database", self.reload),
             ("Export results...", "Export capa results as JSON file", self.export_json),
         )
+        self.load_menu("File", actions)
 
-        menu = self.view_menu_bar.addMenu("File")
+    def load_rules_menu(self):
+        actions = (("Change rules directory...", "Select new rules directory", self.change_rules_dir),)
+        self.load_menu("Rules", actions)
+
+    def load_view_menu(self):
+        actions = (("Reset view", "Reset plugin view", self.reset),)
+        self.load_menu("View", actions)
+
+    def load_menu(self, title, actions):
+        """ load menu actions """
+        menu = self.view_menu_bar.addMenu(title)
         for (name, _, handle) in actions:
             action = QtWidgets.QAction(name, self.parent)
             action.triggered.connect(handle)
@@ -249,6 +259,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         action_hooks = {
             "MakeName": self.ida_hook_rename,
             "EditFunction": self.ida_hook_rename,
+            "RebaseProgram": self.ida_hook_rebase,
         }
 
         self.ida_hooks = CapaExplorerIdaHooks(self.ida_hook_screen_ea_changed, action_hooks)
@@ -304,6 +315,19 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.limit_results_to_function(idaapi.get_func(new_ea))
         self.view_tree.resize_columns_to_content()
+
+    def ida_hook_rebase(self, meta, post=False):
+        """hook for IDA rebase action
+
+        called twice, once before action and once after
+        action completes
+
+        @param meta: metadata cache
+        @param post: indicates pre or post action
+        """
+        if post:
+            capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
+            self.reload()
 
     def load_capa_results(self):
         """ run capa analysis and render results in UI """
@@ -521,7 +545,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ask_user_directory(self):
         """ create Qt dialog to ask user for a directory """
-        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory"))
+        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
 
     def change_rules_dir(self):
         """ allow user to change rules directory """
