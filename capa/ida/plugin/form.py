@@ -51,7 +51,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_limit_results_by_function = None
         self.view_search_bar = None
         self.view_tree = None
-        self.view_summary = None
         self.view_attack = None
         self.view_tabs = None
         self.view_menu_bar = None
@@ -94,20 +93,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.search_model_proxy = CapaExplorerSearchProxyModel()
         self.search_model_proxy.setSourceModel(self.range_model_proxy)
 
-        # load tree
         self.view_tree = CapaExplorerQtreeView(self.search_model_proxy, self.parent)
-
-        # load summary table
-        self.load_view_summary()
         self.load_view_attack()
 
         # load parent tab and children tab views
         self.load_view_tabs()
         self.load_view_checkbox_limit_by()
         self.load_view_search_bar()
-        self.load_view_summary_tab()
-        self.load_view_attack_tab()
         self.load_view_tree_tab()
+        self.load_view_attack_tab()
 
         # load menu bar and sub menus
         self.load_view_menu_bar()
@@ -127,28 +121,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ load menu bar """
         bar = QtWidgets.QMenuBar()
         self.view_menu_bar = bar
-
-    def load_view_summary(self):
-        """ load capa summary table """
-        table_headers = [
-            "Capability",
-            "Namespace",
-        ]
-
-        table = QtWidgets.QTableWidget()
-
-        table.setColumnCount(len(table_headers))
-        table.verticalHeader().setVisible(False)
-        table.setSortingEnabled(False)
-        table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        table.setFocusPolicy(QtCore.Qt.NoFocus)
-        table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-        table.setHorizontalHeaderLabels(table_headers)
-        table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft)
-        table.setShowGrid(False)
-        table.setStyleSheet("QTableWidget::item { padding: 25px; }")
-
-        self.view_summary = table
 
     def load_view_attack(self):
         """ load MITRE ATT&CK table """
@@ -208,16 +180,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         tab.setLayout(layout)
 
         self.view_tabs.addTab(tab, "Tree View")
-
-    def load_view_summary_tab(self):
-        """ load capa summary tab view """
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.view_summary)
-
-        tab = QtWidgets.QWidget()
-        tab.setLayout(layout)
-
-        self.view_tabs.addTab(tab, "Summary")
 
     def load_view_attack_tab(self):
         """ load MITRE ATT&CK tab view """
@@ -409,7 +371,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
         self.model_data.render_capa_doc(self.doc)
-        self.render_capa_doc_summary()
         self.render_capa_doc_mitre_summary()
 
         self.set_view_tree_default_sort_order()
@@ -419,24 +380,6 @@ class CapaExplorerForm(idaapi.PluginForm):
     def set_view_tree_default_sort_order(self):
         """ set capa tree view default sort order """
         self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
-
-    def render_capa_doc_summary(self):
-        """ render capa summary results """
-        for (row, rule) in enumerate(rutils.capability_rules(self.doc)):
-            count = len(rule["matches"])
-
-            if count == 1:
-                capability = rule["meta"]["name"]
-            else:
-                capability = "%s (%d matches)" % (rule["meta"]["name"], count)
-
-            self.view_summary.setRowCount(row + 1)
-
-            self.view_summary.setItem(row, 0, self.render_new_table_header_item(capability))
-            self.view_summary.setItem(row, 1, QtWidgets.QTableWidgetItem(rule["meta"]["namespace"]))
-
-        # resize columns to content
-        self.view_summary.resizeColumnsToContents()
 
     def render_capa_doc_mitre_summary(self):
         """ render capa MITRE ATT&CK results """
@@ -511,7 +454,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
         self.model_data.clear()
-        self.view_summary.setRowCount(0)
         self.load_capa_results()
 
         logger.debug("%s reload completed", self.form_title)

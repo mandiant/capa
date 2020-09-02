@@ -116,7 +116,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
 class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
     """A SortFilterProxyModel that accepts rows with a substring match for a configurable query.
 
-    Looks for matches in the RULE_INFORMATION column (e.g. column 0).
+    Looks for matches in the text of all rows.
     Displays the entire tree row if any of the tree branches,
      that is, you can filter by rule name, or also
      filter by "characteristic(nzxor)" to filter matches with some feature.
@@ -175,17 +175,25 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
 
         source_model = self.sourceModel()
 
-        index = source_model.index(row, 0, parent)
-        data = source_model.data(index, Qt.DisplayRole)
+        for column in (
+            CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION,
+            CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS,
+            CapaExplorerDataModel.COLUMN_INDEX_DETAILS,
+        ):
+            index = source_model.index(row, column, parent)
+            data = source_model.data(index, Qt.DisplayRole)
 
-        if not data:
-            return False
+            if not data:
+                continue
 
-        if not isinstance(data, str):
-            # sanity check: should already be a string, but double check
-            return False
+            if not isinstance(data, str):
+                # sanity check: should already be a string, but double check
+                continue
 
-        return self.query in data
+            if self.query in data:
+                return True
+
+        return False
 
     def set_query(self, query):
         self.query = query

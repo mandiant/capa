@@ -450,7 +450,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         self.beginResetModel()
 
         for rule in rutils.capability_rules(doc):
-            parent = CapaExplorerRuleItem(self.root_node, rule["meta"]["name"], len(rule["matches"]), rule["source"])
+            rule_name = rule["meta"]["name"]
+            rule_namespace = rule["meta"].get("namespace")
+            parent = CapaExplorerRuleItem(
+                self.root_node, rule_name, rule_namespace, len(rule["matches"]), rule["source"]
+            )
 
             for (location, match) in doc["rules"][rule["meta"]["name"]]["matches"].items():
                 if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
