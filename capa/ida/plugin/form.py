@@ -12,6 +12,7 @@ import logging
 import collections
 
 import idaapi
+import ida_settings
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
@@ -25,6 +26,7 @@ from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
 
 logger = logging.getLogger("capa")
+settings = ida_settings.IDASettings("capa")
 
 
 class CapaExplorerForm(idaapi.PluginForm):
@@ -303,12 +305,16 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_capa_results(self):
         """ run capa analysis and render results in UI """
         if not self.rule_path:
-            rule_path = self.ask_user_directory()
-            if not rule_path:
-                capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
-                logger.warning("no rules directory selected. nothing to do.")
-                return
-            self.rule_path = rule_path
+            if "rule_path" in settings:
+                self.rule_path = settings["rule_path"]
+            else:
+                rule_path = self.ask_user_directory()
+                if not rule_path:
+                    capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
+                    logger.warning("no rules directory selected. nothing to do.")
+                    return
+                self.rule_path = rule_path
+                settings.user["rule_path"] = rule_path
 
         logger.info("-" * 80)
         logger.info(" Using rules from %s." % self.rule_path)
@@ -520,6 +526,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not rule_path:
             logger.warning("no rules directory selected. nothing to do.")
             return
+
         self.rule_path = rule_path
+        settings.user["rule_path"] = rule_path
+
         if 1 == idaapi.ask_yn(1, "Run analysis now?"):
             self.reload()

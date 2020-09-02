@@ -12,7 +12,18 @@ import sys
 import setuptools
 
 # halo==0.0.30 is the last version to support py2.7
-requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "ruamel.yaml", "wcwidth", "halo==0.0.30"]
+requirements = [
+    "six",
+    "tqdm",
+    "pyyaml",
+    "tabulate",
+    "colorama",
+    "termcolor",
+    "ruamel.yaml",
+    "wcwidth",
+    "halo==0.0.30",
+    "ida-settings==1.0.1",
+]
 
 if sys.version_info >= (3, 0):
     # py3
