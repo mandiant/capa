@@ -20,6 +20,7 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
+from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import CapaExplorerQtreeView
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
@@ -27,8 +28,6 @@ from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
 
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
-
-ICON_PATH = os.path.join(os.path.dirname(__file__), "img", "capa_icon.png")
 
 
 class CapaExplorerForm(idaapi.PluginForm):
@@ -58,7 +57,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def OnCreate(self, form):
         """ """
         self.parent = self.FormToPyQtWidget(form)
-        self.parent.setWindowIcon(QtGui.QIcon(ICON_PATH))
+        self.parent.setWindowIcon(QICON)
         self.load_interface()
         self.load_capa_results()
         self.load_ida_hooks()
