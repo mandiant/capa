@@ -177,10 +177,10 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
         source_model = self.sourceModel()
 
         for column in (
-                CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION,
-                CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS,
-                CapaExplorerDataModel.COLUMN_INDEX_DETAILS,
-                ):
+            CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION,
+            CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS,
+            CapaExplorerDataModel.COLUMN_INDEX_DETAILS,
+        ):
             index = source_model.index(row, column, parent)
             data = source_model.data(index, Qt.DisplayRole)
 
