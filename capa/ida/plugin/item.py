@@ -147,10 +147,10 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
 
     fmt = "%s (%d matches)"
 
-    def __init__(self, parent, display, count, source):
+    def __init__(self, parent, name, namespace, count, source):
         """ """
-        display = self.fmt % (display, count) if count > 1 else display
-        super(CapaExplorerRuleItem, self).__init__(parent, [display, "", ""])
+        display = self.fmt % (name, count) if count > 1 else name
+        super(CapaExplorerRuleItem, self).__init__(parent, [display, "", namespace])
         self._source = source
 
     @property
