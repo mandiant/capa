@@ -36,6 +36,34 @@ def render_meta(doc, ostream):
     ostream.write("\n")
 
 
+def find_subrule_matches(doc):
+    """
+    collect the rule names that have been matched as a subrule match.
+    this way we can avoid displaying entries for things that are too specific.
+    """
+    matches = set([])
+
+    def rec(node):
+        if not node["success"]:
+            # there's probably a bug here for rules that do `not: match: ...`
+            # but we don't have any examples of this yet
+            return
+
+        elif node["node"]["type"] == "statement":
+            for child in node["children"]:
+                rec(child)
+
+        elif node["node"]["type"] == "feature":
+            if node["node"]["feature"]["type"] == "match":
+                matches.add(node["node"]["feature"]["match"])
+
+    for rule in rutils.capability_rules(doc):
+        for node in rule["matches"].values():
+            rec(node)
+
+    return matches
+
+
 def render_capabilities(doc, ostream):
     """
     example::
@@ -48,8 +76,16 @@ def render_capabilities(doc, ostream):
         | ...                                                   | ...                                             |
         +-------------------------------------------------------+-------------------------------------------------+
     """
+    subrule_matches = find_subrule_matches(doc)
+
     rows = []
     for rule in rutils.capability_rules(doc):
+        if rule["meta"]["name"] in subrule_matches:
+            # rules that are also matched by other rules should not get rendered by default.
+            # this cuts down on the amount of output while giving approx the same detail.
+            # see #224
+            continue
+
         count = len(rule["matches"])
         if count == 1:
             capability = rutils.bold(rule["meta"]["name"])
