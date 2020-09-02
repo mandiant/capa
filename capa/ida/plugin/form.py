@@ -24,8 +24,7 @@ from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import CapaExplorerQtreeView
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
-from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel
-from capa.ida.plugin.proxy import CapaExplorerSearchProxyModel
+from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
 
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")

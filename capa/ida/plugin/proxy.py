@@ -121,6 +121,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
      that is, you can filter by rule name, or also
      filter by "characteristic(nzsor)" to filter matches with some feature.
     """
+
     def __init__(self, parent=None):
         """ """
         super(CapaExplorerSearchProxyModel, self).__init__(parent)
