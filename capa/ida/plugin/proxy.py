@@ -7,14 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 
-class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
+class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerSortFilterProxyModel, self).__init__(parent)
+        super(CapaExplorerRangeProxyModel, self).__init__(parent)
 
         self.min_ea = None
         self.max_ea = None
@@ -110,3 +111,85 @@ class CapaExplorerSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         self.min_ea = None
         self.max_ea = None
         self.invalidateFilter()
+
+
+class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
+    """A SortFilterProxyModel that accepts rows with a substring match for a configurable query.
+
+    Looks for matches in the RULE_INFORMATION column (e.g. column 0).
+    Displays the entire tree row if any of the tree branches,
+     that is, you can filter by rule name, or also
+     filter by "characteristic(nzsor)" to filter matches with some feature.
+    """
+    def __init__(self, parent=None):
+        """ """
+        super(CapaExplorerSearchProxyModel, self).__init__(parent)
+        self.query = ""
+        self.setFilterKeyColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION)
+        self.setDynamicSortFilter(True)
+
+    def filterAcceptsRow(self, row, parent):
+        """true if the item in the row indicated by the given row and parent
+        should be included in the model; otherwise returns false
+
+        @param row: int
+        @param parent: QModelIndex*
+
+        @retval True/False
+        """
+        # this row matches, accept it
+        if self.filter_accepts_row_self(row, parent):
+            return True
+
+        # the parent of this row matches, accept it
+        alpha = parent
+        while alpha.isValid():
+            if self.filter_accepts_row_self(alpha.row(), alpha.parent()):
+                return True
+            alpha = alpha.parent()
+
+        # this row is a parent, and a child matches, accept it
+        if self.index_has_accepted_children(row, parent):
+            return True
+
+        return False
+
+    def index_has_accepted_children(self, row, parent):
+        """returns True if the given row or its children should be accepted"""
+        source_model = self.sourceModel()
+        model_index = source_model.index(row, 0, parent)
+
+        if model_index.isValid():
+            for idx in range(source_model.rowCount(model_index)):
+                if self.filter_accepts_row_self(idx, model_index):
+                    return True
+                if self.index_has_accepted_children(idx, model_index):
+                    return True
+
+        return False
+
+    def filter_accepts_row_self(self, row, parent):
+        """returns True if the given row should be accepted"""
+        if self.query == "":
+            return True
+
+        source_model = self.sourceModel()
+
+        index = source_model.index(row, 0, parent)
+        data = source_model.data(index, Qt.DisplayRole)
+
+        if not data:
+            return False
+
+        if not isinstance(data, str):
+            # sanity check: should already be a string, but double check
+            return False
+
+        return self.query in data
+
+    def set_query(self, query):
+        self.query = query
+        self.invalidateFilter()
+
+    def reset_query(self):
+        self.set_query("")
