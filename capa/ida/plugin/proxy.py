@@ -119,7 +119,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
     Looks for matches in the text of all rows.
     Displays the entire tree row if any of the tree branches,
      that is, you can filter by rule name, or also
-     filter by "characteristic(nzsor)" to filter matches with some feature.
+     filter by "characteristic(nzxor)" to filter matches with some feature.
     """
 
     def __init__(self, parent=None):
