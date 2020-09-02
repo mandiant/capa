@@ -125,8 +125,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
         """ """
         super(CapaExplorerSearchProxyModel, self).__init__(parent)
         self.query = ""
-        self.setFilterKeyColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION)
-        self.setDynamicSortFilter(True)
+        self.setFilterKeyColumn(-1)  # all columns
 
     def filterAcceptsRow(self, row, parent):
         """true if the item in the row indicated by the given row and parent
