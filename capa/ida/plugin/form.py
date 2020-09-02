@@ -24,7 +24,7 @@ from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import CapaExplorerQtreeView
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
-from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
+from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
 
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
@@ -44,10 +44,12 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # models
         self.model_data = None
-        self.model_proxy = None
+        self.range_model_proxy = None
+        self.search_model_proxy = None
 
         # user interface elements
         self.view_limit_results_by_function = None
+        self.view_search_bar = None
         self.view_tree = None
         self.view_summary = None
         self.view_attack = None
@@ -83,11 +85,17 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ load user interface """
         # load models
         self.model_data = CapaExplorerDataModel()
-        self.model_proxy = CapaExplorerSortFilterProxyModel()
-        self.model_proxy.setSourceModel(self.model_data)
+
+        # model <- filter range <- filter search <- view
+
+        self.range_model_proxy = CapaExplorerRangeProxyModel()
+        self.range_model_proxy.setSourceModel(self.model_data)
+
+        self.search_model_proxy = CapaExplorerSearchProxyModel()
+        self.search_model_proxy.setSourceModel(self.range_model_proxy)
 
         # load tree
-        self.view_tree = CapaExplorerQtreeView(self.model_proxy, self.parent)
+        self.view_tree = CapaExplorerQtreeView(self.search_model_proxy, self.parent)
 
         # load summary table
         self.load_view_summary()
@@ -96,6 +104,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         # load parent tab and children tab views
         self.load_view_tabs()
         self.load_view_checkbox_limit_by()
+        self.load_view_search_bar()
         self.load_view_summary_tab()
         self.load_view_attack_tab()
         self.load_view_tree_tab()
@@ -171,6 +180,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_limit_results_by_function = check
 
+    def load_view_search_bar(self):
+        """ load the search bar control """
+        line = QtWidgets.QLineEdit()
+        line.setPlaceholderText("search...")
+        line.textChanged.connect(self.search_model_proxy.set_query)
+
+        self.view_search_bar = line
+
     def load_view_parent(self):
         """ load view parent """
         layout = QtWidgets.QVBoxLayout()
@@ -184,6 +201,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ load capa tree tab view """
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.view_limit_results_by_function)
+        layout.addWidget(self.view_search_bar)
         layout.addWidget(self.view_tree)
 
         tab = QtWidgets.QWidget()
@@ -484,12 +502,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.reset()
         self.view_tree.reset()
         self.view_limit_results_by_function.setChecked(False)
+        self.view_search_bar.setText("")
         self.set_view_tree_default_sort_order()
 
     def reload(self):
         """ reload views and re-run capa analysis """
         self.ida_reset()
-        self.model_proxy.invalidate()
+        self.range_model_proxy.invalidate()
+        self.search_model_proxy.invalidate()
         self.model_data.clear()
         self.view_summary.setRowCount(0)
         self.load_capa_results()
@@ -527,7 +547,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if state == QtCore.Qt.Checked:
             self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
         else:
-            self.model_proxy.reset_address_range_filter()
+            self.range_model_proxy.reset_address_range_filter()
 
         self.view_tree.reset()
 
@@ -537,10 +557,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param f: (IDA func_t)
         """
         if f:
-            self.model_proxy.add_address_range_filter(f.start_ea, f.end_ea)
+            self.range_model_proxy.add_address_range_filter(f.start_ea, f.end_ea)
         else:
             # if function not exists don't display any results (address should not be -1)
-            self.model_proxy.add_address_range_filter(-1, -1)
+            self.range_model_proxy.add_address_range_filter(-1, -1)
 
     def ask_user_directory(self):
         """ create Qt dialog to ask user for a directory """

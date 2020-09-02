@@ -72,7 +72,24 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
         @retval QObject*
         """
-        return self.model.mapToSource(model_index).internalPointer()
+        # assume that self.model here is either:
+        #  - CapaExplorerDataModel, or
+        #  - QSortFilterProxyModel subclass
+        #
+        # The ProxyModels may be chained,
+        #  so keep resolving the index the CapaExplorerDataModel.
+
+        model = self.model
+        while not isinstance(model, CapaExplorerDataModel):
+            if not model_index.isValid():
+                raise ValueError("invalid index")
+
+            model_index = model.mapToSource(model_index)
+            model = model.sourceModel()
+
+        if not model_index.isValid():
+            raise ValueError("invalid index")
+        return model_index.internalPointer()
 
     def send_data_to_clipboard(self, data):
         """copy data to the clipboard
@@ -223,11 +240,8 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         @param pos: TODO
         """
         model_index = self.indexAt(pos)
-
-        if not model_index.isValid():
-            return
-
         item = self.map_index_to_source_item(model_index)
+
         column = model_index.column()
         menu = None
 
