@@ -20,12 +20,13 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.extractors.ida
+from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import CapaExplorerQtreeView
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerSortFilterProxyModel
 
-logger = logging.getLogger("capa")
+logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
 
 
@@ -56,17 +57,18 @@ class CapaExplorerForm(idaapi.PluginForm):
     def OnCreate(self, form):
         """ """
         self.parent = self.FormToPyQtWidget(form)
+        self.parent.setWindowIcon(QICON)
         self.load_interface()
         self.load_capa_results()
         self.load_ida_hooks()
 
         self.view_tree.reset()
 
-        logger.info("form created.")
+        logger.debug("form created")
 
     def Show(self):
         """ """
-        logger.info("form show.")
+        logger.debug("form show")
         return idaapi.PluginForm.Show(
             self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
         )
@@ -75,7 +77,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ form is closed """
         self.unload_ida_hooks()
         self.ida_reset()
-        logger.info("form closed.")
+        logger.debug("form closed")
 
     def load_interface(self):
         """ load user interface """
@@ -101,6 +103,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         # load menu bar and sub menus
         self.load_view_menu_bar()
         self.load_file_menu()
+        self.load_rules_menu()
+        self.load_view_menu()
 
         # load parent view
         self.load_view_parent()
@@ -208,15 +212,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "MITRE")
 
     def load_file_menu(self):
-        """ load file menu actions """
         actions = (
-            ("Reset view", "Reset plugin view", self.reset),
-            ("Run analysis", "Run capa analysis on current database", self.reload),
-            ("Change rules directory...", "Select new rules directory", self.change_rules_dir),
+            ("Rerun analysis", "Rerun capa analysis on current database", self.reload),
             ("Export results...", "Export capa results as JSON file", self.export_json),
         )
+        self.load_menu("File", actions)
 
-        menu = self.view_menu_bar.addMenu("File")
+    def load_rules_menu(self):
+        actions = (("Change rules directory...", "Select new rules directory", self.change_rules_dir),)
+        self.load_menu("Rules", actions)
+
+    def load_view_menu(self):
+        actions = (("Reset view", "Reset plugin view", self.reset),)
+        self.load_menu("View", actions)
+
+    def load_menu(self, title, actions):
+        """ load menu actions """
+        menu = self.view_menu_bar.addMenu(title)
         for (name, _, handle) in actions:
             action = QtWidgets.QAction(name, self.parent)
             action.triggered.connect(handle)
@@ -246,6 +258,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         action_hooks = {
             "MakeName": self.ida_hook_rename,
             "EditFunction": self.ida_hook_rename,
+            "RebaseProgram": self.ida_hook_rebase,
         }
 
         self.ida_hooks = CapaExplorerIdaHooks(self.ida_hook_screen_ea_changed, action_hooks)
@@ -302,6 +315,19 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.limit_results_to_function(idaapi.get_func(new_ea))
         self.view_tree.resize_columns_to_content()
 
+    def ida_hook_rebase(self, meta, post=False):
+        """hook for IDA rebase action
+
+        called twice, once before action and once after
+        action completes
+
+        @param meta: metadata cache
+        @param post: indicates pre or post action
+        """
+        if post:
+            capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
+            self.reload()
+
     def load_capa_results(self):
         """ run capa analysis and render results in UI """
         if not self.rule_path:
@@ -316,19 +342,19 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.rule_path = rule_path
                 settings.user["rule_path"] = rule_path
 
-        logger.info("-" * 80)
-        logger.info(" Using rules from %s." % self.rule_path)
-        logger.info(" ")
-        logger.info(" You can see the current default rule set here:")
-        logger.info("     https://github.com/fireeye/capa-rules")
-        logger.info("-" * 80)
+        logger.debug("-" * 80)
+        logger.debug(" Using rules from %s.", self.rule_path)
+        logger.debug(" ")
+        logger.debug(" You can see the current default rule set here:")
+        logger.debug("     https://github.com/fireeye/capa-rules")
+        logger.debug("-" * 80)
 
         try:
             rules = capa.main.get_rules(self.rule_path)
             rules = capa.rules.RuleSet(rules)
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
-            logger.error("failed to load rules from %s (%s)" % (self.rule_path, e))
+            logger.error("failed to load rules from %s (%s)", self.rule_path, e)
             self.rule_path = ""
             return
 
@@ -360,7 +386,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
             capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-        logger.info("analysis completed.")
+        logger.debug("analysis completed.")
 
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
@@ -370,7 +396,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.set_view_tree_default_sort_order()
 
-        logger.info("render views completed.")
+        logger.debug("render views completed.")
 
     def set_view_tree_default_sort_order(self):
         """ set capa tree view default sort order """
@@ -468,7 +494,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_summary.setRowCount(0)
         self.load_capa_results()
 
-        logger.info("reload complete.")
+        logger.debug("%s reload completed", self.form_title)
         idaapi.info("%s reload completed." % self.form_title)
 
     def reset(self, checked):
@@ -478,8 +504,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         self.ida_reset()
 
-        logger.info("reset completed.")
-        idaapi.info("%s reset completed." % self.form_title)
+        logger.debug("%s reset completed", self.form_title)
+        idaapi.info("%s reset completed" % self.form_title)
 
     def slot_menu_bar_hovered(self, action):
         """display menu action tooltip
@@ -518,7 +544,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ask_user_directory(self):
         """ create Qt dialog to ask user for a directory """
-        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory"))
+        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
 
     def change_rules_dir(self):
         """ allow user to change rules directory """
