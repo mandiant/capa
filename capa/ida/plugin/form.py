@@ -106,9 +106,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_tabs()
         self.load_view_checkbox_limit_by()
         self.load_view_search_bar()
-        self.load_view_summary_tab()
-        self.load_view_attack_tab()
         self.load_view_tree_tab()
+        self.load_view_attack_tab()
+        self.load_view_summary_tab()
 
         # load menu bar and sub menus
         self.load_view_menu_bar()
