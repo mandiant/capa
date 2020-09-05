@@ -12,6 +12,7 @@ import string
 import idc
 import idaapi
 import idautils
+import ida_bytes
 
 
 def find_byte_sequence(start, end, seq):
@@ -227,6 +228,12 @@ def is_op_write(insn, op):
 def is_op_read(insn, op):
     """ Check if an operand is read from (source operand) """
     return idaapi.has_cf_use(insn.get_canon_feature(), op.n)
+
+
+def is_op_offset(insn, op):
+    """ Check is an operand has been marked as an offset (by auto-analysis or manually) """
+    flags = idaapi.get_flags(insn.ea)
+    return ida_bytes.is_off(flags, op.n)
 
 
 def is_sp_modified(insn):
