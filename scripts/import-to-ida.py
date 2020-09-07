@@ -33,6 +33,7 @@ import logging
 
 import idc
 import idautils
+import ida_funcs
 import ida_idaapi
 import ida_kernwin
 
