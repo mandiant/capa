@@ -23,7 +23,10 @@ By default, on MacOS Catalina or greater, Gatekeeper will block execution of the
 
 ## Method 2: Using capa as a Python library
 To install capa as a Python library, you'll need to install a few dependencies, and then use `pip` to fetch the capa module.
-Note: this technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r`.
+
+#### *Note*:
+This method is appropriate for integrating capa in an existing project. It is not the right choice for local tool usage, such as within IDA Pro - see Method 3, instead.
+That's because this technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r`.
 
 ### 1. Install capa module
 Second, use `pip` to install the capa module to your local Python environment. This fetches the library code to your computer but does not keep editable source files around for you to hack on. If you'd like to edit the source files, see below.
