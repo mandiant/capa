@@ -51,7 +51,7 @@ jobs:
           - python: 3.6
           - python: 3.7
           - python: 3.8
-          - python: '3.9.0-alpha - 3.9.x' # Python latest
+          - python: '3.9.0-rc.1' # Python latest
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
