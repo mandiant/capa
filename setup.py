@@ -22,7 +22,7 @@ requirements = [
     "ruamel.yaml",
     "wcwidth",
     "halo==0.0.30",
-    "ida-settings==1.0.1",
+    "ida-settings==2.0.1",
 ]
 
 if sys.version_info >= (3, 0):
