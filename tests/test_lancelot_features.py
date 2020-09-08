@@ -11,7 +11,9 @@ from fixtures import *
 
 
 @parametrize(
-    "sample,scope,feature,expected", FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"],
+    "sample,scope,feature,expected",
+    FEATURE_PRESENCE_TESTS,
+    indirect=["sample", "scope"],
 )
 def test_lancelot_features(sample, scope, feature, expected):
     with xfail(sys.version_info < (3, 0), reason="lancelot only works on py3"):
@@ -19,7 +21,9 @@ def test_lancelot_features(sample, scope, feature, expected):
 
 
 @parametrize(
-    "sample,scope,feature,expected", FEATURE_COUNT_TESTS, indirect=["sample", "scope"],
+    "sample,scope,feature,expected",
+    FEATURE_COUNT_TESTS,
+    indirect=["sample", "scope"],
 )
 def test_lancelot_feature_counts(sample, scope, feature, expected):
     with xfail(sys.version_info < (3, 0), reason="lancelot only works on py3"):

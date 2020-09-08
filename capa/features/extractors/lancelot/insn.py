@@ -27,7 +27,7 @@ from lancelot import (
 
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
-from capa.features.insn import Number, Offset, Mnemonic, API
+from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.extractors.lancelot.helpers import get_operand_target
 from capa.features.extractors.lancelot.function import get_call_graph
 from capa.features.extractors.lancelot.indirect_calls import NotFoundError, resolve_indirect_call
