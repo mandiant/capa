@@ -21,13 +21,19 @@ import capa.features.extractors
 EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
     {
         "base address": 0x401000,
-        "file features": [(0x402345, capa.features.Characteristic("embedded pe")),],
+        "file features": [
+            (0x402345, capa.features.Characteristic("embedded pe")),
+        ],
         "functions": {
             0x401000: {
-                "features": [(0x401000, capa.features.Characteristic("indirect call")),],
+                "features": [
+                    (0x401000, capa.features.Characteristic("indirect call")),
+                ],
                 "basic blocks": {
                     0x401000: {
-                        "features": [(0x401000, capa.features.Characteristic("tight loop")),],
+                        "features": [
+                            (0x401000, capa.features.Characteristic("tight loop")),
+                        ],
                         "instructions": {
                             0x401000: {
                                 "features": [
@@ -35,7 +41,11 @@ EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
                                     (0x401000, capa.features.Characteristic("nzxor")),
                                 ],
                             },
-                            0x401002: {"features": [(0x401002, capa.features.insn.Mnemonic("mov")),],},
+                            0x401002: {
+                                "features": [
+                                    (0x401002, capa.features.insn.Mnemonic("mov")),
+                                ],
+                            },
                         },
                     },
                 },

@@ -46,7 +46,6 @@ def is_supported_ida_version():
         logger.warning(
             "Your IDA Pro version is: %s. Supported versions are: %s." % (version, ", ".join(SUPPORTED_IDA_VERSIONS))
         )
-        capa.ida.helpers.inform_user_ida_ui(warning_msg)
         return False
     return True
 
@@ -62,7 +61,6 @@ def is_supported_file_type():
         )
         logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
         logger.error("-" * 80)
-        inform_user_ida_ui("capa does not support the format of this file")
         return False
     return True
 
@@ -102,6 +100,9 @@ def collect_metadata():
             "sha256": sha256,
             "path": idaapi.get_input_file_path(),
         },
-        "analysis": {"format": idaapi.get_file_type_name(), "extractor": "ida",},
+        "analysis": {
+            "format": idaapi.get_file_type_name(),
+            "extractor": "ida",
+        },
         "version": capa.version.__version__,
     }

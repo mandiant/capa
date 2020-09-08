@@ -12,7 +12,18 @@ import sys
 import setuptools
 
 # halo==0.0.30 is the last version to support py2.7
-requirements = ["six", "tqdm", "pyyaml", "tabulate", "colorama", "termcolor", "ruamel.yaml", "wcwidth", "halo==0.0.30"]
+requirements = [
+    "six",
+    "tqdm",
+    "pyyaml",
+    "tabulate",
+    "colorama",
+    "termcolor",
+    "ruamel.yaml",
+    "wcwidth",
+    "halo==0.0.30",
+    "ida-settings==2.0.1",
+]
 
 if sys.version_info >= (3, 0):
     # py3
@@ -20,8 +31,8 @@ if sys.version_info >= (3, 0):
     requirements.append("pylancelot~=0.3.6")
 else:
     # py2
-    requirements.append("enum34")
-    requirements.append("vivisect @ https://github.com/williballenthin/vivisect/tarball/v0.0.20200804#egg=vivisect")
+    requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
+    requirements.append("vivisect==0.1.0rc3")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
     requirements.append("backports.functools-lru-cache")
@@ -43,7 +54,11 @@ setuptools.setup(
     url="https://www.github.com/fireeye/capa",
     packages=setuptools.find_packages(exclude=["tests"]),
     package_dir={"capa": "capa"},
-    entry_points={"console_scripts": ["capa=capa.main:main",]},
+    entry_points={
+        "console_scripts": [
+            "capa=capa.main:main",
+        ]
+    },
     include_package_data=True,
     install_requires=requirements,
     extras_require={

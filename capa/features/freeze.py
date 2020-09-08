@@ -84,7 +84,16 @@ def dumps(extractor):
     returns:
       str: the serialized features.
     """
-    ret = {"version": 1, "functions": {}, "scopes": {"file": [], "function": [], "basic block": [], "instruction": [],}}
+    ret = {
+        "version": 1,
+        "functions": {},
+        "scopes": {
+            "file": [],
+            "function": [],
+            "basic block": [],
+            "instruction": [],
+        },
+    }
 
     for feature, va in extractor.extract_file_features():
         ret["scopes"]["file"].append(serialize_feature(feature) + (hex(va), ()))
@@ -99,7 +108,16 @@ def dumps(extractor):
             ret["functions"][hex(f)][hex(bb)] = []
 
             for feature, va in extractor.extract_basic_block_features(f, bb):
-                ret["scopes"]["basic block"].append(serialize_feature(feature) + (hex(va), (hex(f), hex(bb),)))
+                ret["scopes"]["basic block"].append(
+                    serialize_feature(feature)
+                    + (
+                        hex(va),
+                        (
+                            hex(f),
+                            hex(bb),
+                        ),
+                    )
+                )
 
             for insnva, insn in sorted(
                 [(insn.__int__(), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
@@ -108,7 +126,15 @@ def dumps(extractor):
 
                 for feature, va in extractor.extract_insn_features(f, bb, insn):
                     ret["scopes"]["instruction"].append(
-                        serialize_feature(feature) + (hex(va), (hex(f), hex(bb), hex(insnva),))
+                        serialize_feature(feature)
+                        + (
+                            hex(va),
+                            (
+                                hex(f),
+                                hex(bb),
+                                hex(insnva),
+                            ),
+                        )
                     )
     return json.dumps(ret)
 

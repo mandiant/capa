@@ -1,6 +1,6 @@
 [submodule "rules"]
 	path = rules
-	url = git@github.com:fireeye/capa-rules.git
+	url = ../capa-rules.git
 [submodule "tests/data"]
 	path = tests/data
-	url = git@github.com:fireeye/capa-testfiles.git
+	url = ../capa-testfiles.git

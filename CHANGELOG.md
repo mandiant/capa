@@ -1,5 +1,103 @@
 # Change Log
 
+## v1.2.0 (2020-08-31)
+
+This release brings UI enhancements, especially for the IDA Pro plugin, 
+investment towards py3 support,
+fixes some bugs identified by the community, 
+and 46 (!) new rules.
+We received contributions from ten reverse engineers, including five new ones:
+
+  - @agithubuserlol
+  - @recvfrom
+  - @D4nch3n
+  - @edeca
+  - @winniepe 
+  
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/).
+Report issues on our [issue tracker](https://github.com/fireeye/capa/issues)
+and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+ 
+### New features
+
+  - ida plugin: display arch flavors @mike-hunhoff
+  - ida plugin: display block descriptions @mike-hunhoff
+  - ida backend: extract features from nested pointers @mike-hunhoff
+  - main: show more progress output @williballenthin
+  - core: pin dependency versions #258 @recvfrom
+
+### New rules
+  - bypass UAC via AppInfo ALPC @agithubuserlol
+  - bypass UAC via token manipulation @agithubuserlol
+  - check for sandbox and av modules @re-fox
+  - check for sandbox username @re-fox
+  - check if process is running under wine @re-fox
+  - validate credit card number using luhn algorithm @re-fox
+  - validate credit card number using luhn algorithm with no lookup table @re-fox
+  - hash data using FNV @edeca @mr-tz
+  - link many functions at runtime @mr-tz
+  - reference public RSA key @mr-tz
+  - packed with ASPack @williballenthin
+  - delete internet cache @mike-hunhoff
+  - enumerate internet cache @mike-hunhoff
+  - send ICMP echo request @mike-hunhoff
+  - check for debugger via API @mike-hunhoff
+  - check for hardware breakpoints @mike-hunhoff
+  - check for kernel debugger via shared user data structure @mike-hunhoff
+  - check for protected handle exception @mike-hunhoff
+  - check for software breakpoints @mike-hunhoff
+  - check for trap flag exception @mike-hunhoff
+  - check for unexpected memory writes @mike-hunhoff
+  - check process job object @mike-hunhoff
+  - reference anti-VM strings targeting Parallels @mike-hunhoff
+  - reference anti-VM strings targeting Qemu @mike-hunhoff
+  - reference anti-VM strings targeting VirtualBox @mike-hunhoff
+  - reference anti-VM strings targeting VirtualPC @mike-hunhoff
+  - reference anti-VM strings targeting VMWare @mike-hunhoff
+  - reference anti-VM strings targeting Xen @mike-hunhoff
+  - reference analysis tools strings @mike-hunhoff
+  - reference WMI statements @mike-hunhoff
+  - get number of processor cores @mike-hunhoff
+  - get number of processors @mike-hunhoff
+  - enumerate disk properties @mike-hunhoff
+  - get disk size @mike-hunhoff
+  - get process heap flags @mike-hunhoff
+  - get process heap force flags @mike-hunhoff
+  - get Explorer PID @mike-hunhoff
+  - delay execution @mike-hunhoff
+  - check for process debug object @mike-hunhoff
+  - check license value @mike-hunhoff
+  - check ProcessDebugFlags @mike-hunhoff
+  - check ProcessDebugPort @mike-hunhoff
+  - check SystemKernelDebuggerInformation @mike-hunhoff
+  - check thread yield allowed @mike-hunhoff
+  - enumerate system firmware tables @mike-hunhoff
+  - get system firmware table @mike-hunhoff
+  - hide thread from debugger @mike-hunhoff
+
+### Bug fixes
+
+  - ida backend: extract unmapped immediate number features @mike-hunhoff
+  - ida backend: fix stack cookie check #257 @mike-hunhoff
+  - viv backend: better extract gs segment access @williballenthin
+  - core: enable counting of string features #241 @D4nch3n @williballenthin
+  - core: enable descriptions on feature with arch flavors @mike-hunhoff
+  - core: update git links for non-SSH access #259 @recvfrom
+
+### Changes
+
+  - ida plugin: better default display showing first level nesting @winniepe
+  - remove unused `characteristic(switch)` feature @ana06
+  - prepare testing infrastructure for multiple backends/py3 @williballenthin
+  - ci: zip build artifacts @ana06
+  - ci: build all supported python versions @ana06
+  - code style and formatting @mr-tz
+
+### Raw diffs
+
+  - [capa v1.1.0...v1.2.0](https://github.com/fireeye/capa/compare/v1.1.0...v1.2.0)
+  - [capa-rules v1.1.0...v1.2.0](https://github.com/fireeye/capa-rules/compare/v1.1.0...v1.2.0)
+
 ## v1.1.0 (2020-08-05)
 
 This release brings new rule format updates, such as adding `offset/x32` and negative offsets,

@@ -132,6 +132,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "kernel32-64.dll_")
     elif name == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
+    elif name == "pma16-01":
+        return os.path.join(CD, "data", "Practical Malware Analysis Lab 16-01.exe_")
     elif name == "pma21-01":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
     elif name == "al-khaser x86":
@@ -150,6 +152,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
     elif name.startswith("c9188"):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
+    elif name.startswith("64d9f"):
+        return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -164,6 +168,8 @@ def get_sample_md5_by_name(name):
         return "a8565440629ac87f6fef7d588fe3ff0f"
     elif name == "pma12-04":
         return "56bed8249e7c2982a90e54e1e55391a2"
+    elif name == "pma16-01":
+        return "7faafc7e4a5c736ebfee6abbbc812d80"
     elif name == "pma21-01":
         return "c8403fb05244e23a7931c766409b5e22"
     elif name == "al-khaser x86":
@@ -182,6 +188,8 @@ def get_sample_md5_by_name(name):
         return "bfb9b5391a13d0afd787e87ab90f14f5"
     elif name.startswith("c9188"):
         return "c91887d861d9bd4a5872249b641bc9f9"
+    elif name.startswith("64d9f"):
+        return "64d9f7d96b99467f36e22fada623c3bb"
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -291,6 +299,10 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "file", capa.features.file.Import("#11"), False),
     ("mimikatz", "file", capa.features.file.Import("#nope"), False),
     ("mimikatz", "file", capa.features.file.Import("nope"), False),
+    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
+    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
+    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
+    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
     # function/characteristic(loop)
     ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
     ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
@@ -323,6 +335,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
+    # insn/offset, issue #276
+    ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
     # insn/offset: stack references
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
     ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
@@ -350,10 +364,20 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
     ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
     # insn/api: x64
-    ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True,),
+    (
+        "kernel32-64",
+        "function=0x180001010",
+        capa.features.insn.API("RtlVirtualUnwind"),
+        True,
+    ),
     ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
     # insn/api: x64 thunk
-    ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True,),
+    (
+        "kernel32-64",
+        "function=0x1800202B0",
+        capa.features.insn.API("RtlCaptureContext"),
+        True,
+    ),
     ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
     # insn/api: resolve indirect calls
     ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
@@ -365,6 +389,9 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
     ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
     ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
+    # insn/regex, issue #262
+    ("pma16-01", "function=0x4021B0", capa.features.Regex("HTTP/1.0"), True),
+    ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
     # insn/string, pointer to string
     ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
     # insn/bytes
@@ -474,6 +501,11 @@ def z9324d_extractor():
 @pytest.fixture
 def pma12_04_extractor():
     return get_extractor(get_data_path_by_name("pma12-04"))
+
+
+@pytest.fixture
+def pma16_01_extractor():
+    return get_extractor(get_data_path_by_name("pma16-01"))
 
 
 @pytest.fixture

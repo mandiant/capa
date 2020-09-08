@@ -262,7 +262,7 @@ def parse_description(s, value_type, description=None):
                 raise InvalidRule(
                     "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
                 )
-        elif value_type in {"number", "offset"}:
+        elif value_type in ("number", "offset") or value_type.startswith(("number/", "offset/")):
             try:
                 value = parse_int(value)
             except ValueError:
@@ -624,7 +624,25 @@ class Rule(object):
                 continue
             meta[key] = value
 
-        return ostream.getvalue().decode("utf-8").rstrip("\n") + "\n"
+        doc = ostream.getvalue().decode("utf-8").rstrip("\n") + "\n"
+        # when we have something like:
+        #
+        #     and:
+        #       - string: foo
+        #         description: bar
+        #
+        # we want the `description` horizontally aligned with the start of the `string` (like above).
+        # however, ruamel will give us (which I don't think is even valid yaml):
+        #
+        #     and:
+        #       - string: foo
+        #      description: bar
+        #
+        # tweaking `ruamel.indent()` doesn't quite give us the control we want.
+        # so, add the two extra spaces that we've determined we need through experimentation.
+        # see #263
+        doc = doc.replace("  description:", "    description:")
+        return doc
 
 
 def get_rules_with_scope(rules, scope):

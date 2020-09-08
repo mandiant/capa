@@ -44,7 +44,6 @@ a = Analysis(
     hiddenimports=[
         # vivisect does manual/runtime importing of its modules,
         # so declare the things that could be imported here.
-        "pycparser",
         "vivisect",
         "vivisect.analysis",
         "vivisect.analysis.amd64",
@@ -92,11 +91,13 @@ a = Analysis(
         "vivisect.impapi.windows",
         "vivisect.impapi.windows.amd64",
         "vivisect.impapi.windows.i386",
+        "vivisect.impapi.winkern.i386",
+        "vivisect.impapi.winkern.amd64",
         "vivisect.parsers.blob",
         "vivisect.parsers.elf",
         "vivisect.parsers.ihex",
         "vivisect.parsers.macho",
-        "vivisect.parsers.parse_pe",
+        "vivisect.parsers.PE",
         "vivisect.parsers.utils",
         "vivisect.storage",
         "vivisect.storage.basicfile",

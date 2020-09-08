@@ -483,6 +483,21 @@ def test_number_arch():
     assert r.evaluate({Number(2, arch=ARCH_X64): {1}}) == False
 
 
+def test_number_arch_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - number/x32: 2 = some constant
+            """
+        )
+    )
+    assert r.evaluate({Number(2, arch=ARCH_X32, description="some constant"): {1}}) == True
+
+
 def test_offset_symbol():
     rule = textwrap.dedent(
         """
@@ -544,6 +559,21 @@ def test_offset_arch():
 
     assert r.evaluate({Offset(2): {1}}) == False
     assert r.evaluate({Offset(2, arch=ARCH_X64): {1}}) == False
+
+
+def test_offset_arch_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - offset/x32: 2 = some constant
+            """
+        )
+    )
+    assert r.evaluate({Offset(2, arch=ARCH_X32, description="some constant"): {1}}) == True
 
 
 def test_invalid_offset():
@@ -650,12 +680,16 @@ def test_regex_values_always_string():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules), {capa.features.String("123"): {1}}, 0x0,
+        capa.engine.topologically_order_rules(rules),
+        {capa.features.String("123"): {1}},
+        0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules), {capa.features.String("0x123"): {1}}, 0x0,
+        capa.engine.topologically_order_rules(rules),
+        {capa.features.String("0x123"): {1}},
+        0x0,
     )
     assert capa.features.MatchedRule("test rule") in features
 

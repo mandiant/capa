@@ -13,7 +13,11 @@ import idautils
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
-from capa.features.insn import Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic
+
+# security cookie checks may perform non-zeroing XORs, these are expected within a certain
+# byte range within the first and returning basic blocks, this helps to reduce FP features
+SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
 def get_arch(ctx):
@@ -62,31 +66,32 @@ def check_for_api_call(ctx, insn):
 
 
 def extract_insn_api_features(f, bb, insn):
-    """ parse instruction API features
+    """parse instruction API features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
 
-        example:
-            call dword [0x00473038]
+    example:
+        call dword [0x00473038]
     """
     for api in check_for_api_call(f.ctx, insn):
-        for (feature, ea) in capa.features.extractors.helpers.generate_api_features(api, insn.ea):
-            yield feature, ea
+        dll, _, symbol = api.rpartition(".")
+        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+            yield API(name), insn.ea
 
 
 def extract_insn_number_features(f, bb, insn):
-    """ parse instruction number features
+    """parse instruction number features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
 
-        example:
-            push    3136B0h         ; dwControlCode
+    example:
+        push    3136B0h         ; dwControlCode
     """
     if idaapi.is_ret_insn(insn):
         # skip things like:
@@ -99,25 +104,30 @@ def extract_insn_number_features(f, bb, insn):
         return
 
     for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm, idaapi.o_mem)):
+        # skip things like:
+        #   .text:00401100 shr eax, offset loc_C
+        if capa.features.extractors.ida.helpers.is_op_offset(insn, op):
+            continue
+
         if op.type == idaapi.o_imm:
             const = capa.features.extractors.ida.helpers.mask_op_val(op)
         else:
             const = op.addr
-        if not idaapi.is_mapped(const):
-            yield Number(const), insn.ea
-            yield Number(const, arch=get_arch(f.ctx)), insn.ea
+
+        yield Number(const), insn.ea
+        yield Number(const, arch=get_arch(f.ctx)), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
-    """ parse referenced byte sequences
+    """parse referenced byte sequences
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
 
-        example:
-            push    offset iid_004118d4_IShellLinkA ; riid
+    example:
+        push    offset iid_004118d4_IShellLinkA ; riid
     """
     ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
     if ref != insn.ea:
@@ -127,15 +137,15 @@ def extract_insn_bytes_features(f, bb, insn):
 
 
 def extract_insn_string_features(f, bb, insn):
-    """ parse instruction string features
+    """parse instruction string features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
 
-        example:
-            push offset aAcr     ; "ACR  > "
+    example:
+        push offset aAcr     ; "ACR  > "
     """
     ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
     if ref != insn.ea:
@@ -145,15 +155,15 @@ def extract_insn_string_features(f, bb, insn):
 
 
 def extract_insn_offset_features(f, bb, insn):
-    """ parse instruction structure offset features
+    """parse instruction structure offset features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
 
-        example:
-            .text:0040112F cmp [esi+4], ebx
+    example:
+        .text:0040112F cmp [esi+4], ebx
     """
     for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_phrase, idaapi.o_displ)):
         if capa.features.extractors.ida.helpers.is_op_stack_var(insn.ea, op.n):
@@ -175,11 +185,11 @@ def extract_insn_offset_features(f, bb, insn):
 
 
 def contains_stack_cookie_keywords(s):
-    """ check if string contains stack cookie keywords
+    """check if string contains stack cookie keywords
 
-        Examples:
-            xor     ecx, ebp ; StackCookie
-            mov     eax, ___security_cookie
+    Examples:
+        xor     ecx, ebp ; StackCookie
+        mov     eax, ___security_cookie
     """
     if not s:
         return False
@@ -190,30 +200,30 @@ def contains_stack_cookie_keywords(s):
 
 
 def bb_stack_cookie_registers(bb):
-    """ scan basic block for stack cookie operations
+    """scan basic block for stack cookie operations
 
-        yield registers ids that may have been used for stack cookie operations
+    yield registers ids that may have been used for stack cookie operations
 
-        assume instruction that sets stack cookie and nzxor exist in same block
-        and stack cookie register is not modified prior to nzxor
+    assume instruction that sets stack cookie and nzxor exist in same block
+    and stack cookie register is not modified prior to nzxor
 
-        Example:
-            .text:004062DA mov     eax, ___security_cookie <-- stack cookie
-            .text:004062DF mov     ecx, eax
-            .text:004062E1 mov     ebx, [esi]
-            .text:004062E3 and     ecx, 1Fh
-            .text:004062E6 mov     edi, [esi+4]
-            .text:004062E9 xor     ebx, eax
-            .text:004062EB mov     esi, [esi+8]
-            .text:004062EE xor     edi, eax <-- ignore
-            .text:004062F0 xor     esi, eax <-- ignore
-            .text:004062F2 ror     edi, cl
-            .text:004062F4 ror     esi, cl
-            .text:004062F6 ror     ebx, cl
-            .text:004062F8 cmp     edi, esi
-            .text:004062FA jnz     loc_40639D
+    Example:
+        .text:004062DA mov     eax, ___security_cookie <-- stack cookie
+        .text:004062DF mov     ecx, eax
+        .text:004062E1 mov     ebx, [esi]
+        .text:004062E3 and     ecx, 1Fh
+        .text:004062E6 mov     edi, [esi+4]
+        .text:004062E9 xor     ebx, eax
+        .text:004062EB mov     esi, [esi+8]
+        .text:004062EE xor     edi, eax <-- ignore
+        .text:004062F0 xor     esi, eax <-- ignore
+        .text:004062F2 ror     edi, cl
+        .text:004062F4 ror     esi, cl
+        .text:004062F6 ror     ebx, cl
+        .text:004062F8 cmp     edi, esi
+        .text:004062FA jnz     loc_40639D
 
-        TODO: this is expensive, but necessary?...
+    TODO: this is expensive, but necessary?...
     """
     for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
         if contains_stack_cookie_keywords(idc.GetDisasm(insn.ea)):
@@ -223,11 +233,36 @@ def bb_stack_cookie_registers(bb):
                     yield op.reg
 
 
+def is_nzxor_stack_cookie_delta(f, bb, insn):
+    """ check if nzxor exists within stack cookie delta """
+    # security cookie check should use SP or BP
+    if not capa.features.extractors.ida.helpers.is_frame_register(insn.Op2.reg):
+        return False
+
+    f_bbs = tuple(capa.features.extractors.ida.helpers.get_function_blocks(f))
+
+    # expect security cookie init in first basic block within first bytes (instructions)
+    if capa.features.extractors.ida.helpers.is_basic_block_equal(bb, f_bbs[0]) and insn.ea < (
+        bb.start_ea + SECURITY_COOKIE_BYTES_DELTA
+    ):
+        return True
+
+    # ... or within last bytes (instructions) before a return
+    if capa.features.extractors.ida.helpers.is_basic_block_return(bb) and insn.ea > (
+        bb.start_ea + capa.features.extractors.ida.helpers.basic_block_size(bb) - SECURITY_COOKIE_BYTES_DELTA
+    ):
+        return True
+
+    return False
+
+
 def is_nzxor_stack_cookie(f, bb, insn):
     """ check if nzxor is related to stack cookie """
     if contains_stack_cookie_keywords(idaapi.get_cmt(insn.ea, False)):
         # Example:
         #   xor     ecx, ebp        ; StackCookie
+        return True
+    if is_nzxor_stack_cookie_delta(f, bb, insn):
         return True
     stack_cookie_regs = tuple(bb_stack_cookie_registers(bb))
     if any(op_reg in stack_cookie_regs for op_reg in (insn.Op1.reg, insn.Op2.reg)):
@@ -239,14 +274,14 @@ def is_nzxor_stack_cookie(f, bb, insn):
 
 
 def extract_insn_nzxor_characteristic_features(f, bb, insn):
-    """ parse instruction non-zeroing XOR instruction
+    """parse instruction non-zeroing XOR instruction
 
-        ignore expected non-zeroing XORs, e.g. security cookies
+    ignore expected non-zeroing XORs, e.g. security cookies
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     if insn.itype != idaapi.NN_xor:
         return
@@ -258,23 +293,23 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
 
 
 def extract_insn_mnemonic_features(f, bb, insn):
-    """ parse instruction mnemonic features
+    """parse instruction mnemonic features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     yield Mnemonic(insn.get_canon_mnem()), insn.ea
 
 
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
-    """ parse instruction peb access
+    """parse instruction peb access
 
-        fs:[0x30] on x86, gs:[0x60] on x64
+    fs:[0x30] on x86, gs:[0x60] on x64
 
-        TODO:
-            IDA should be able to do this..
+    TODO:
+        IDA should be able to do this..
     """
     if insn.itype not in (idaapi.NN_push, idaapi.NN_mov):
         return
@@ -291,10 +326,10 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
 
 
 def extract_insn_segment_access_features(f, bb, insn):
-    """ parse instruction fs or gs access
+    """parse instruction fs or gs access
 
-        TODO:
-            IDA should be able to do this...
+    TODO:
+        IDA should be able to do this...
     """
     if all(map(lambda op: op.type != idaapi.o_mem, insn.ops)):
         # try to optimize for only memory references
@@ -312,12 +347,12 @@ def extract_insn_segment_access_features(f, bb, insn):
 
 
 def extract_insn_cross_section_cflow(f, bb, insn):
-    """ inspect the instruction for a CALL or JMP that crosses section boundaries
+    """inspect the instruction for a CALL or JMP that crosses section boundaries
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     for ref in idautils.CodeRefsFrom(insn.ea, False):
         if ref in get_imports(f.ctx).keys():
@@ -332,14 +367,14 @@ def extract_insn_cross_section_cflow(f, bb, insn):
 
 
 def extract_function_calls_from(f, bb, insn):
-    """ extract functions calls from features
+    """extract functions calls from features
 
-        most relevant at the function scope, however, its most efficient to extract at the instruction scope
+    most relevant at the function scope, however, its most efficient to extract at the instruction scope
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     if idaapi.is_call_insn(insn):
         for ref in idautils.CodeRefsFrom(insn.ea, False):
@@ -347,28 +382,28 @@ def extract_function_calls_from(f, bb, insn):
 
 
 def extract_function_indirect_call_characteristic_features(f, bb, insn):
-    """ extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
-        does not include calls like => call ds:dword_ABD4974
+    """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
+    does not include calls like => call ds:dword_ABD4974
 
-        most relevant at the function or basic block scope;
-        however, its most efficient to extract at the instruction scope
+    most relevant at the function or basic block scope;
+    however, its most efficient to extract at the instruction scope
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     if idaapi.is_call_insn(insn) and idc.get_operand_type(insn.ea, 0) in (idc.o_reg, idc.o_phrase, idc.o_displ):
         yield Characteristic("indirect call"), insn.ea
 
 
 def extract_features(f, bb, insn):
-    """ extract instruction features
+    """extract instruction features
 
-        args:
-            f (IDA func_t)
-            bb (IDA BasicBlock)
-            insn (IDA insn_t)
+    args:
+        f (IDA func_t)
+        bb (IDA BasicBlock)
+        insn (IDA insn_t)
     """
     for inst_handler in INSTRUCTION_HANDLERS:
         for (feature, ea) in inst_handler(f, bb, insn):

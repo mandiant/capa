@@ -1,7 +1,7 @@
 ![capa](.github/logo.png)
 
 [![CI status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
-[![Number of rules](https://img.shields.io/badge/rules-302-blue.svg)](https://github.com/fireeye/capa-rules)
+[![Number of rules](https://img.shields.io/badge/rules-345-blue.svg)](https://github.com/fireeye/capa-rules)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
@@ -146,7 +146,7 @@ rule:
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you use can use the [IDA Pro plugin for capa](./capa/ida/ida_capa_explorer.py).
+If you use IDA Pro, then you use can use the [IDA Pro plugin for capa](capa/ida/plugin/).
 This script adds new user interface elements to IDA, including an interactive tree view of rule matches and their locations within the current database.
 As you select the checkboxes, the plugin will highlight the addresses associated with the features.
 We use this plugin all the time to quickly jump to interesting parts of a program.

@@ -6,20 +6,12 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from networkx import nx
-from networkx.algorithms.components import strongly_connected_components
+from capa.ida.plugin import CapaExplorerPlugin
 
 
-def has_loop(edges, threshold=2):
-    """check if a list of edges representing a directed graph contains a loop
+def PLUGIN_ENTRY():
+    """mandatory entry point for IDAPython plugins
 
-    args:
-        edges: list of edge sets representing a directed graph i.e. [(1, 2), (2, 1)]
-        threshold: min number of nodes contained in loop
-
-    returns:
-        bool
+    copy this script to your IDA plugins directory and start the plugin by navigating to Edit > Plugins in IDA Pro
     """
-    g = nx.DiGraph()
-    g.add_edges_from(edges)
-    return any(len(comp) >= threshold for comp in strongly_connected_components(g))
+    return CapaExplorerPlugin()
