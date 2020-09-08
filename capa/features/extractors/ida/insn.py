@@ -104,13 +104,18 @@ def extract_insn_number_features(f, bb, insn):
         return
 
     for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm, idaapi.o_mem)):
+        # skip things like:
+        #   .text:00401100 shr eax, offset loc_C
+        if capa.features.extractors.ida.helpers.is_op_offset(insn, op):
+            continue
+
         if op.type == idaapi.o_imm:
             const = capa.features.extractors.ida.helpers.mask_op_val(op)
         else:
             const = op.addr
-        if not idaapi.is_mapped(const):
-            yield Number(const), insn.ea
-            yield Number(const, arch=get_arch(f.ctx)), insn.ea
+
+        yield Number(const), insn.ea
+        yield Number(const, arch=get_arch(f.ctx)), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
