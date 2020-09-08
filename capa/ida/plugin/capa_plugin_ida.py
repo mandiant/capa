@@ -10,5 +10,8 @@ from capa.ida.plugin import CapaExplorerPlugin
 
 
 def PLUGIN_ENTRY():
-    """ Mandatory entry point for IDAPython plugins """
+    """mandatory entry point for IDAPython plugins
+
+    copy this script to your IDA plugins directory and start the plugin by navigating to Edit > Plugins in IDA Pro
+    """
     return CapaExplorerPlugin()

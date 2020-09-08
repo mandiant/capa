@@ -31,8 +31,10 @@ settings = ida_settings.IDASettings("capa")
 
 
 class CapaExplorerForm(idaapi.PluginForm):
+    """form element for plugin interface"""
+
     def __init__(self, name):
-        """ """
+        """initialize form elements"""
         super(CapaExplorerForm, self).__init__()
 
         self.form_title = name
@@ -56,9 +58,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_menu_bar = None
 
     def OnCreate(self, form):
-        """ """
+        """called when plugin form is created"""
         self.parent = self.FormToPyQtWidget(form)
         self.parent.setWindowIcon(QICON)
+
+        # load interface elements
         self.load_interface()
         self.load_capa_results()
         self.load_ida_hooks()
@@ -68,20 +72,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         logger.debug("form created")
 
     def Show(self):
-        """ """
+        """creates form if not already create, else brings plugin to front"""
         logger.debug("form show")
         return idaapi.PluginForm.Show(
             self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
         )
 
     def OnClose(self, form):
-        """ form is closed """
+        """called when form is closed
+
+        ensure any plugin modifications (e.g. hooks and UI changes) are reset before the plugin is closed
+        """
         self.unload_ida_hooks()
         self.ida_reset()
         logger.debug("form closed")
 
     def load_interface(self):
-        """ load user interface """
+        """load user interface"""
         # load models
         self.model_data = CapaExplorerDataModel()
 
@@ -113,17 +120,17 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_parent()
 
     def load_view_tabs(self):
-        """ load tabs """
+        """load tabs"""
         tabs = QtWidgets.QTabWidget()
         self.view_tabs = tabs
 
     def load_view_menu_bar(self):
-        """ load menu bar """
+        """load menu bar"""
         bar = QtWidgets.QMenuBar()
         self.view_menu_bar = bar
 
     def load_view_attack(self):
-        """ load MITRE ATT&CK table """
+        """load MITRE ATT&CK table"""
         table_headers = [
             "ATT&CK Tactic",
             "ATT&CK Technique ",
@@ -145,7 +152,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_attack = table
 
     def load_view_checkbox_limit_by(self):
-        """ load limit results by function checkbox """
+        """load limit results by function checkbox"""
         check = QtWidgets.QCheckBox("Limit results to current function")
         check.setChecked(False)
         check.stateChanged.connect(self.slot_checkbox_limit_by_changed)
@@ -153,7 +160,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_limit_results_by_function = check
 
     def load_view_search_bar(self):
-        """ load the search bar control """
+        """load the search bar control"""
         line = QtWidgets.QLineEdit()
         line.setPlaceholderText("search...")
         line.textChanged.connect(self.search_model_proxy.set_query)
@@ -161,7 +168,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_search_bar = line
 
     def load_view_parent(self):
-        """ load view parent """
+        """load view parent"""
         layout = QtWidgets.QVBoxLayout()
 
         layout.addWidget(self.view_tabs)
@@ -170,7 +177,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.parent.setLayout(layout)
 
     def load_view_tree_tab(self):
-        """ load capa tree tab view """
+        """load tree view tab"""
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.view_limit_results_by_function)
         layout.addWidget(self.view_search_bar)
@@ -182,7 +189,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "Tree View")
 
     def load_view_attack_tab(self):
-        """ load MITRE ATT&CK tab view """
+        """load MITRE ATT&CK view tab"""
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.view_attack)
 
@@ -192,6 +199,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tabs.addTab(tab, "MITRE")
 
     def load_file_menu(self):
+        """load file menu controls"""
         actions = (
             ("Rerun analysis", "Rerun capa analysis on current database", self.reload),
             ("Export results...", "Export capa results as JSON file", self.export_json),
@@ -199,15 +207,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_menu("File", actions)
 
     def load_rules_menu(self):
+        """load rules menu controls"""
         actions = (("Change rules directory...", "Select new rules directory", self.change_rules_dir),)
         self.load_menu("Rules", actions)
 
     def load_view_menu(self):
+        """load view menu controls"""
         actions = (("Reset view", "Reset plugin view", self.reset),)
         self.load_menu("View", actions)
 
     def load_menu(self, title, actions):
-        """ load menu actions """
+        """load menu actions
+
+        @param title: menu name displayed in UI
+        @param actions: tuple of tuples containing action name, tooltip, and slot function
+        """
         menu = self.view_menu_bar.addMenu(title)
         for (name, _, handle) in actions:
             action = QtWidgets.QAction(name, self.parent)
@@ -215,16 +229,18 @@ class CapaExplorerForm(idaapi.PluginForm):
             menu.addAction(action)
 
     def export_json(self):
-        """ export capa results as JSON file """
+        """export capa results as JSON file"""
         if not self.doc:
             idaapi.info("No capa results to export.")
             return
 
         path = idaapi.ask_file(True, "*.json", "Choose file")
 
+        # user cancelled, entered blank input, etc.
         if not path:
             return
 
+        # check file exists, ask to override
         if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
             return
 
@@ -234,7 +250,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             )
 
     def load_ida_hooks(self):
-        """ load IDA Pro UI hooks """
+        """load IDA UI hooks"""
+
+        # map named action (defined in idagui.cfg) to Python function
         action_hooks = {
             "MakeName": self.ida_hook_rename,
             "EditFunction": self.ida_hook_rename,
@@ -245,18 +263,20 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.ida_hooks.hook()
 
     def unload_ida_hooks(self):
-        """ unload IDA Pro UI hooks """
+        """unload IDA Pro UI hooks
+
+        must be called before plugin is completely destroyed
+        """
         if self.ida_hooks:
             self.ida_hooks.unhook()
 
     def ida_hook_rename(self, meta, post=False):
-        """hook for IDA rename action
+        """function hook for IDA "MakeName" and "EditFunction" actions
 
-        called twice, once before action and once after
-        action completes
+        called twice, once before action and once after action completes
 
-        @param meta: metadata cache
-        @param post: indicates pre or post action
+        @param meta: dict of key/value pairs set when action first called (may be empty)
+        @param post: False if action first call, True if action second call
         """
         location = idaapi.get_screen_ea()
         if not location or not capa.ida.helpers.is_func_start(location):
@@ -272,9 +292,10 @@ class CapaExplorerForm(idaapi.PluginForm):
             meta["prev_name"] = curr_name
 
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
-        """hook for IDA screen ea changed
+        """function hook for IDA "screen ea changed" action
 
-        this hook is currently only relevant for limiting results displayed in the UI
+        called twice, once before action and once after action completes. this hook is currently only relevant
+        for limiting results displayed in the UI
 
         @param widget: IDA widget type
         @param new_ea: destination ea
@@ -296,20 +317,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_tree.resize_columns_to_content()
 
     def ida_hook_rebase(self, meta, post=False):
-        """hook for IDA rebase action
+        """function hook for IDA "RebaseProgram" action
 
-        called twice, once before action and once after
-        action completes
+        called twice, once before action and once after action completes
 
-        @param meta: metadata cache
-        @param post: indicates pre or post action
+        @param meta: dict of key/value pairs set when action first called (may be empty)
+        @param post: False if action first call, True if action second call
         """
         if post:
             capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
             self.reload()
 
     def load_capa_results(self):
-        """ run capa analysis and render results in UI """
+        """run capa analysis and render results in UI"""
+
+        # resolve rules directory - check self and settings first, then ask user
         if not self.rule_path:
             if "rule_path" in settings:
                 self.rule_path = settings["rule_path"]
@@ -370,6 +392,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
 
+        # render views
         self.model_data.render_capa_doc(self.doc)
         self.render_capa_doc_mitre_summary()
 
@@ -378,11 +401,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         logger.debug("render views completed.")
 
     def set_view_tree_default_sort_order(self):
-        """ set capa tree view default sort order """
+        """set tree view default sort order"""
         self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
 
     def render_capa_doc_mitre_summary(self):
-        """ render capa MITRE ATT&CK results """
+        """render MITRE ATT&CK results"""
         tactics = collections.defaultdict(set)
 
         for rule in rutils.capability_rules(self.doc):
@@ -419,29 +442,32 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_attack.setRowCount(max(len(column_one), len(column_two)))
 
-        for row, value in enumerate(column_one):
+        for (row, value) in enumerate(column_one):
             self.view_attack.setItem(row, 0, self.render_new_table_header_item(value))
 
-        for row, value in enumerate(column_two):
+        for (row, value) in enumerate(column_two):
             self.view_attack.setItem(row, 1, QtWidgets.QTableWidgetItem(value))
 
         # resize columns to content
         self.view_attack.resizeColumnsToContents()
 
     def render_new_table_header_item(self, text):
-        """ create new table header item with default style """
+        """create new table header item with our style
+
+        @param text: header text to display
+        """
         item = QtWidgets.QTableWidgetItem(text)
         item.setForeground(QtGui.QColor(88, 139, 174))
-
         font = QtGui.QFont()
         font.setBold(True)
-
         item.setFont(font)
-
         return item
 
     def ida_reset(self):
-        """ reset IDA UI """
+        """reset plugin UI
+
+        called when user selects plugin reset from menu
+        """
         self.model_data.reset()
         self.view_tree.reset()
         self.view_limit_results_by_function.setChecked(False)
@@ -449,7 +475,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.set_view_tree_default_sort_order()
 
     def reload(self):
-        """ reload views and re-run capa analysis """
+        """re-run capa analysis and reload UI controls
+
+        called when user selects plugin reload from menu
+        """
         self.ida_reset()
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
@@ -483,8 +512,9 @@ class CapaExplorerForm(idaapi.PluginForm):
     def slot_checkbox_limit_by_changed(self, state):
         """slot activated if checkbox clicked
 
-        if checked, configure function filter if screen location is located
-        in function, otherwise clear filter
+        if checked, configure function filter if screen location is located in function, otherwise clear filter
+
+        @param state: checked state
         """
         if state == QtCore.Qt.Checked:
             self.limit_results_to_function(idaapi.get_func(idaapi.get_screen_ea()))
@@ -496,20 +526,26 @@ class CapaExplorerForm(idaapi.PluginForm):
     def limit_results_to_function(self, f):
         """add filter to limit results to current function
 
+        adds new address range filter to include function bounds, allowing basic blocks matched within a function
+        to be included in the results
+
         @param f: (IDA func_t)
         """
         if f:
             self.range_model_proxy.add_address_range_filter(f.start_ea, f.end_ea)
         else:
-            # if function not exists don't display any results (address should not be -1)
+            # if function not exists don't display any results (assume address never -1)
             self.range_model_proxy.add_address_range_filter(-1, -1)
 
     def ask_user_directory(self):
-        """ create Qt dialog to ask user for a directory """
+        """create Qt dialog to ask user for a directory"""
         return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
 
     def change_rules_dir(self):
-        """ allow user to change rules directory """
+        """allow user to change rules directory
+
+        user selection stored in settings for future runs
+        """
         rule_path = self.ask_user_directory()
         if not rule_path:
             logger.warning("no rules directory selected. nothing to do.")

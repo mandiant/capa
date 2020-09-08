@@ -13,20 +13,25 @@ from capa.ida.plugin.model import CapaExplorerDataModel
 
 
 class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
-    def __init__(self, parent=None):
-        """ """
-        super(CapaExplorerRangeProxyModel, self).__init__(parent)
+    """filter results based on virtual address range as seen by IDA
 
+    implements filtering for "limit results by current function" checkbox in plugin UI
+
+    minimum and maximum virtual addresses are used to filter results to a specific address range. this allows
+    basic blocks to be included when limiting results to a specific function
+    """
+
+    def __init__(self, parent=None):
+        """initialize proxy filter"""
+        super(CapaExplorerRangeProxyModel, self).__init__(parent)
         self.min_ea = None
         self.max_ea = None
 
     def lessThan(self, left, right):
-        """true if the value of the left item is less than value of right item
+        """return True if left item is less than right item, else False
 
-        @param left: QModelIndex*
-        @param right: QModelIndex*
-
-        @retval True/False
+        @param left: QModelIndex of left
+        @param right: QModelIndex of right
         """
         ldata = left.internalPointer().data(left.column())
         rdata = right.internalPointer().data(right.column())
@@ -44,13 +49,11 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
             return ldata.lower() < rdata.lower()
 
     def filterAcceptsRow(self, row, parent):
-        """true if the item in the row indicated by the given row and parent
-        should be included in the model; otherwise returns false
+        """return true if the item in the row indicated by the given row and parent should be included in the model;
+        otherwise return false
 
-        @param row: int
-        @param parent: QModelIndex*
-
-        @retval True/False
+        @param row: row number
+        @param parent: QModelIndex of parent
         """
         if self.filter_accepts_row_self(row, parent):
             return True
@@ -67,7 +70,11 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
     def index_has_accepted_children(self, row, parent):
-        """ """
+        """return True if parent has one or more children that match filter, else False
+
+        @param row: row number
+        @param parent: QModelIndex of parent
+        """
         model_index = self.sourceModel().index(row, 0, parent)
 
         if model_index.isValid():
@@ -80,7 +87,11 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
     def filter_accepts_row_self(self, row, parent):
-        """ """
+        """return True if filter accepts row, else False
+
+        @param row: row number
+        @param parent: QModelIndex of parent
+        """
         # filter not set
         if self.min_ea is None and self.max_ea is None:
             return True
@@ -88,9 +99,11 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         index = self.sourceModel().index(row, 0, parent)
         data = index.internalPointer().data(CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS)
 
+        # virtual address may be empty
         if not data:
             return False
 
+        # convert virtual address str to int
         ea = int(data, 16)
 
         if self.min_ea <= ea and ea < self.max_ea:
@@ -99,7 +112,13 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
     def add_address_range_filter(self, min_ea, max_ea):
-        """ """
+        """add new address range filter
+
+        called when user checks "limit results by current function" in plugin UI
+
+        @param min_ea: minimum virtual address as seen by IDA
+        @param max_ea: maximum virtual address as seen by IDA
+        """
         self.min_ea = min_ea
         self.max_ea = max_ea
 
@@ -107,7 +126,10 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         self.invalidateFilter()
 
     def reset_address_range_filter(self):
-        """ """
+        """remove address range filter (accept all results)
+
+        called when user un-checks "limit results by current function" in plugin UI
+        """
         self.min_ea = None
         self.max_ea = None
         self.invalidateFilter()
