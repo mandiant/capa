@@ -1,6 +1,7 @@
 import pefile
 
 import capa.features.extractors.strings
+import capa.features.extractors.helpers
 from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section
 
@@ -44,11 +45,12 @@ def extract_file_import_names(buf, pe):
         libname = entry.dll.decode("ascii").lower().partition(".")[0]
         for imp in entry.imports:
             if imp.ordinal:
-                yield Import("%s.#%s" % (libname, imp.ordinal)), imp.address
+                for name in capa.features.extractors.helpers.generate_symbols(libname, "#" + str(imp.ordinal)):
+                    yield Import(name), imp.address
             else:
                 impname = imp.name.decode("ascii")
-                yield Import("%s.%s" % (libname, impname)), imp.address
-                yield Import("%s" % (impname)), imp.address
+                for name in capa.features.extractors.helpers.generate_symbols(libname, impname):
+                    yield Import(name), imp.address
 
 
 def extract_file_section_names(buf, pe):

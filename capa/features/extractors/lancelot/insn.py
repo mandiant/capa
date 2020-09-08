@@ -3,6 +3,8 @@ import itertools
 
 import pefile
 
+from capa.features.file import Import
+
 try:
     from functools import lru_cache
 except ImportError:
@@ -25,7 +27,7 @@ from lancelot import (
 
 import capa.features.extractors.helpers
 from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
-from capa.features.insn import Number, Offset, Mnemonic
+from capa.features.insn import Number, Offset, Mnemonic, API
 from capa.features.extractors.lancelot.helpers import get_operand_target
 from capa.features.extractors.lancelot.function import get_call_graph
 from capa.features.extractors.lancelot.indirect_calls import NotFoundError, resolve_indirect_call
@@ -61,17 +63,17 @@ def get_imports(xtor):
         libname = entry.dll.decode("ascii").lower().partition(".")[0]
         for imp in entry.imports:
             if imp.ordinal:
-                imports[imp.address] = "%s.#%s" % (libname, imp.ordinal)
+                imports[imp.address] = (libname, "#" + str(imp.ordinal))
             else:
                 impname = imp.name.decode("ascii")
-                imports[imp.address] = "%s.%s" % (libname, impname)
+                imports[imp.address] = (libname, impname)
     return imports
 
 
 @lru_cache
 def get_thunks(xtor):
     thunks = {}
-    for va in xtor.ws.get_functions():
+    for va in xtor.ws.get_thunks():
         try:
             insn = xtor.ws.read_insn(va)
         except ValueError:
@@ -119,14 +121,14 @@ def extract_insn_api_features(xtor, f, bb, insn):
 
     imports = get_imports(xtor)
     if target in imports:
-        for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.address):
-            yield feature, va
+        for name in capa.features.extractors.helpers.generate_symbols(*imports[target]):
+            yield API(name), insn.address
         return
 
     thunks = get_thunks(xtor)
     if target in thunks:
-        for feature, va in capa.features.extractors.helpers.generate_api_features(thunks[target], insn.address):
-            yield feature, va
+        for name in capa.features.extractors.helpers.generate_symbols(*thunks[target]):
+            yield API(name), insn.address
 
 
 def extract_insn_mnemonic_features(xtor, f, bb, insn):
