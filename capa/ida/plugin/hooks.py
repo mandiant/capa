@@ -39,7 +39,7 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
         return 0
 
     def postprocess_action(self):
-        """ called after action completed """
+        """called after action completed"""
         if not self.process_action_handle:
             return
 
@@ -55,6 +55,6 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
         self.screen_ea_changed_hook(idaapi.get_current_widget(), curr_ea, prev_ea)
 
     def reset(self):
-        """ reset internal state """
+        """reset internal state"""
         self.process_action_handle = None
         self.process_action_meta.clear()
