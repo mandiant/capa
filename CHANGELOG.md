@@ -2,13 +2,14 @@
 
 ## v1.3.0 (2020-09-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
 
-This release brings newly updated mappings to the [Malware Behavior Catalog version 2.0](https://github.com/MBCProject/mbc-markdown), many enhancements to the IDA Pro plugin, [flare-capa on PyPI](https://pypi.org/project/flare-capa/), a bunch of bug fixes to improve feature extraction, and four new rules. We received contributions from eleven reverse engineers, including five new ones:
+This release brings newly updated mappings to the [Malware Behavior Catalog version 2.0](https://github.com/MBCProject/mbc-markdown), many enhancements to the IDA Pro plugin, [flare-capa on PyPI](https://pypi.org/project/flare-capa/), a bunch of bug fixes to improve feature extraction, and four new rules. We received contributions from nine reverse engineers, including six new ones:
 
   - @dzbeck
   - @recvfrom
   - @toomanybananas
   - @cclauss 
   - @adamprescott91 
+  - @weslambert
   
 Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
 
@@ -46,6 +47,7 @@ How to get this new version? Its easy: download [capa_plugin_ida.py](https://raw
   - formatter: correctly format descriptions in two-line syntax @williballenthin @recvfrom #263 
   - viv: better extract offsets from SibOper operands @williballenthin @edeca #276 
   - import-to-ida: fix import error @cclauss 
+  - viv: don't write settings to ~/.viv/viv.json @williballenthin @rakuy0 @weslambert #244
 
 ### Changes
 
