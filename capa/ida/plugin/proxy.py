@@ -212,6 +212,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
                 # sanity check: should already be a string, but double check
                 continue
 
+            # case in-sensitive matching
             if self.query.lower() in data.lower():
                 return True
 

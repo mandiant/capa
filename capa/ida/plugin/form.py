@@ -49,13 +49,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.range_model_proxy = None
         self.search_model_proxy = None
 
-        # user interface elements
+        # UI controls
         self.view_limit_results_by_function = None
         self.view_search_bar = None
         self.view_tree = None
         self.view_attack = None
         self.view_tabs = None
         self.view_menu_bar = None
+        self.view_rules_label = None
 
     def OnCreate(self, form):
         """called when plugin form is created"""
@@ -67,7 +68,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_capa_results()
         self.load_ida_hooks()
 
-        self.view_tree.reset()
+        self.view_tree.reset_ui()
 
         logger.debug("form created")
 
@@ -109,6 +110,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_search_bar()
         self.load_view_tree_tab()
         self.load_view_attack_tab()
+        self.load_view_rules_label()
 
         # load menu bar and sub menus
         self.load_view_menu_bar()
@@ -159,11 +161,18 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_limit_results_by_function = check
 
+    def load_view_rules_label(self):
+        """load rules label"""
+        label = QtWidgets.QLabel()
+        label.setAlignment(QtCore.Qt.AlignLeft)
+
+        self.view_rules_label = label
+
     def load_view_search_bar(self):
         """load the search bar control"""
         line = QtWidgets.QLineEdit()
         line.setPlaceholderText("search...")
-        line.textChanged.connect(self.search_model_proxy.set_query)
+        line.textChanged.connect(self.slot_limit_results_to_search)
 
         self.view_search_bar = line
 
@@ -172,6 +181,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout = QtWidgets.QVBoxLayout()
 
         layout.addWidget(self.view_tabs)
+        layout.addWidget(self.view_rules_label)
         layout.setMenuBar(self.view_menu_bar)
 
         self.parent.setLayout(layout)
@@ -201,19 +211,19 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_file_menu(self):
         """load file menu controls"""
         actions = (
-            ("Rerun analysis", "Rerun capa analysis on current database", self.reload),
-            ("Export results...", "Export capa results as JSON file", self.export_json),
+            ("Rerun analysis", "Rerun capa analysis on current database", self.slot_reload),
+            ("Export results...", "Export capa results as JSON file", self.slot_export_json),
         )
         self.load_menu("File", actions)
 
     def load_rules_menu(self):
         """load rules menu controls"""
-        actions = (("Change rules directory...", "Select new rules directory", self.change_rules_dir),)
+        actions = (("Change rules directory...", "Select new rules directory", self.slot_change_rules_dir),)
         self.load_menu("Rules", actions)
 
     def load_view_menu(self):
         """load view menu controls"""
-        actions = (("Reset view", "Reset plugin view", self.reset),)
+        actions = (("Reset view", "Reset plugin view", self.slot_reset),)
         self.load_menu("View", actions)
 
     def load_menu(self, title, actions):
@@ -223,12 +233,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param actions: tuple of tuples containing action name, tooltip, and slot function
         """
         menu = self.view_menu_bar.addMenu(title)
-        for (name, _, handle) in actions:
+        for (name, _, slot) in actions:
             action = QtWidgets.QAction(name, self.parent)
-            action.triggered.connect(handle)
+            action.triggered.connect(slot)
             menu.addAction(action)
 
-    def export_json(self):
+    def slot_export_json(self):
         """export capa results as JSON file"""
         if not self.doc:
             idaapi.info("No capa results to export.")
@@ -314,7 +324,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         self.limit_results_to_function(idaapi.get_func(new_ea))
-        self.view_tree.resize_columns_to_content()
+        self.view_tree.reset_ui()
 
     def ida_hook_rebase(self, meta, post=False):
         """function hook for IDA "RebaseProgram" action
@@ -326,7 +336,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         if post:
             capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
-            self.reload()
+            self.slot_reload()
 
     def load_capa_results(self):
         """run capa analysis and render results in UI"""
@@ -353,12 +363,16 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         try:
             rules = capa.main.get_rules(self.rule_path)
+            rule_count = len(rules)
             rules = capa.rules.RuleSet(rules)
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
             logger.error("failed to load rules from %s (%s)", self.rule_path, e)
             self.rule_path = ""
+            self.set_view_rules_label_default()
             return
+
+        self.set_view_rules_label_loaded(self.rule_path, rule_count)
 
         meta = capa.ida.helpers.collect_metadata()
 
@@ -396,13 +410,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.render_capa_doc(self.doc)
         self.render_capa_doc_mitre_summary()
 
-        self.set_view_tree_default_sort_order()
-
         logger.debug("render views completed.")
-
-    def set_view_tree_default_sort_order(self):
-        """set tree view default sort order"""
-        self.view_tree.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
 
     def render_capa_doc_mitre_summary(self):
         """render MITRE ATT&CK results"""
@@ -463,32 +471,44 @@ class CapaExplorerForm(idaapi.PluginForm):
         item.setFont(font)
         return item
 
+    def set_view_rules_label_default(self):
+        """set view rules label to default default text"""
+        self.view_rules_label.setText("No rules loaded")
+
+    def set_view_rules_label_loaded(self, path, count):
+        """set view rules label to rule path/count
+
+        @param path: rule path
+        @param count: number of rules loaded from path
+        """
+        self.view_rules_label.setText("Loaded %d rules from %s" % (count, path))
+
     def ida_reset(self):
         """reset plugin UI
 
         called when user selects plugin reset from menu
         """
-        self.model_data.reset()
-        self.view_tree.reset()
         self.view_limit_results_by_function.setChecked(False)
         self.view_search_bar.setText("")
-        self.set_view_tree_default_sort_order()
+        self.model_data.reset()
+        self.view_tree.reset_ui()
 
-    def reload(self):
+    def slot_reload(self):
         """re-run capa analysis and reload UI controls
 
         called when user selects plugin reload from menu
         """
-        self.ida_reset()
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
         self.model_data.clear()
         self.load_capa_results()
 
+        self.ida_reset()
+
         logger.debug("%s reload completed", self.form_title)
         idaapi.info("%s reload completed." % self.form_title)
 
-    def reset(self, checked):
+    def slot_reset(self, checked):
         """reset UI elements
 
         e.g. checkboxes and IDA highlighting
@@ -521,7 +541,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         else:
             self.range_model_proxy.reset_address_range_filter()
 
-        self.view_tree.reset()
+        self.view_tree.reset_ui()
 
     def limit_results_to_function(self, f):
         """add filter to limit results to current function
@@ -537,11 +557,19 @@ class CapaExplorerForm(idaapi.PluginForm):
             # if function not exists don't display any results (assume address never -1)
             self.range_model_proxy.add_address_range_filter(-1, -1)
 
+    def slot_limit_results_to_search(self, text):
+        """limit tree view results to search matches
+
+        reset view after filter to maintain level 1 expansion
+        """
+        self.search_model_proxy.set_query(text)
+        self.view_tree.reset_ui(should_sort=False)
+
     def ask_user_directory(self):
         """create Qt dialog to ask user for a directory"""
         return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
 
-    def change_rules_dir(self):
+    def slot_change_rules_dir(self):
         """allow user to change rules directory
 
         user selection stored in settings for future runs
@@ -555,4 +583,4 @@ class CapaExplorerForm(idaapi.PluginForm):
         settings.user["rule_path"] = rule_path
 
         if 1 == idaapi.ask_yn(1, "Run analysis now?"):
-            self.reload()
+            self.slot_reload()
