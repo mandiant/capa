@@ -13,6 +13,9 @@ from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 
+MAX_SECTION_SIZE = 750
+
+
 class CapaExplorerQtreeView(QtWidgets.QTreeView):
     """tree view used to display hierarchical capa results
 
@@ -31,6 +34,9 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         self.model = model
         self.parent = parent
 
+        # control when we resize columns
+        self.should_resize_columns = True
+
         # configure custom UI controls
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setExpandsOnDoubleClick(False)
@@ -41,9 +47,12 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         for idx in range(CapaExplorerDataModel.COLUMN_COUNT):
             self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
 
+        # disable stretch to enable horizontal scroll for last column, when needed
+        self.header().setStretchLastSection(False)
+
         # connect slots to resize columns when expanded or collapsed
-        self.expanded.connect(self.resize_columns_to_content)
-        self.collapsed.connect(self.resize_columns_to_content)
+        self.expanded.connect(self.slot_resize_columns_to_content)
+        self.collapsed.connect(self.slot_resize_columns_to_content)
 
         # connect slots
         self.customContextMenuRequested.connect(self.slot_custom_context_menu_requested)
@@ -51,17 +60,29 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
-    def reset(self):
+    def reset_ui(self, should_sort=True):
         """reset user interface changes
 
-        called when view should reset any user interface changes made since the last reset e.g. IDA window highlighting
-        """
-        self.expandToDepth(0)
-        self.resize_columns_to_content()
+        called when view should reset UI display e.g. expand items, resize columns
 
-    def resize_columns_to_content(self):
+        @param should_sort: True, sort results after reset, False don't sort results after reset
+        """
+        if should_sort:
+            self.sortByColumn(CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION, QtCore.Qt.AscendingOrder)
+
+        self.should_resize_columns = False
+        self.expandToDepth(0)
+        self.should_resize_columns = True
+
+        self.slot_resize_columns_to_content()
+
+    def slot_resize_columns_to_content(self):
         """reset view columns to contents"""
-        self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
+        if self.should_resize_columns:
+            self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
+
+            if self.header().sectionSize(0) > MAX_SECTION_SIZE:
+                self.header().resizeSection(0, MAX_SECTION_SIZE)
 
     def map_index_to_source_item(self, model_index):
         """map proxy model index to source model item

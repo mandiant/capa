@@ -137,7 +137,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             )
             and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
         ):
-            # set bold font for top-level rules
+            # set bold font for important items
             font = QtGui.QFont()
             font.setBold(True)
             return font
