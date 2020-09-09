@@ -12,7 +12,6 @@ from PyQt5 import QtCore, QtWidgets
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.ida.plugin.model import CapaExplorerDataModel
 
-
 MAX_SECTION_SIZE = 750
 
 
