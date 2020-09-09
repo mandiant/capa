@@ -22,7 +22,7 @@ requirements = [
     "ruamel.yaml",
     "wcwidth",
     "halo==0.0.30",
-    "ida-settings==2.0.1",
+    "ida-settings==2.1.0",
 ]
 
 if sys.version_info >= (3, 0):
@@ -31,7 +31,7 @@ if sys.version_info >= (3, 0):
 else:
     # py2
     requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
-    requirements.append("vivisect==0.1.0rc3")
+    requirements.append("vivisect==0.1.0")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
     requirements.append("backports.functools-lru-cache")
