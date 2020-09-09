@@ -333,7 +333,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # resolve rules directory - check self and settings first, then ask user
         if not self.rule_path:
-            if "rule_path" in settings:
+            if "rule_path" in settings and os.path.exists(settings["rule_path"]):
                 self.rule_path = settings["rule_path"]
             else:
                 rule_path = self.ask_user_directory()
