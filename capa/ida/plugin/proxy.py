@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
+import six
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 
@@ -208,11 +208,11 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
             if not data:
                 continue
 
-            if not isinstance(data, str):
+            if not isinstance(data, six.string_types):
                 # sanity check: should already be a string, but double check
                 continue
 
-            if self.query in data:
+            if self.query.lower() in data.lower():
                 return True
 
         return False
