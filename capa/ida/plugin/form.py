@@ -211,19 +211,19 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_file_menu(self):
         """load file menu controls"""
         actions = (
-            ("Rerun analysis", "Rerun capa analysis on current database", self.reload),
-            ("Export results...", "Export capa results as JSON file", self.export_json),
+            ("Rerun analysis", "Rerun capa analysis on current database", self.slot_reload),
+            ("Export results...", "Export capa results as JSON file", self.slot_export_json),
         )
         self.load_menu("File", actions)
 
     def load_rules_menu(self):
         """load rules menu controls"""
-        actions = (("Change rules directory...", "Select new rules directory", self.change_rules_dir),)
+        actions = (("Change rules directory...", "Select new rules directory", self.slot_change_rules_dir),)
         self.load_menu("Rules", actions)
 
     def load_view_menu(self):
         """load view menu controls"""
-        actions = (("Reset view", "Reset plugin view", self.reset),)
+        actions = (("Reset view", "Reset plugin view", self.slot_reset),)
         self.load_menu("View", actions)
 
     def load_menu(self, title, actions):
@@ -238,7 +238,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             action.triggered.connect(slot)
             menu.addAction(action)
 
-    def export_json(self):
+    def slot_export_json(self):
         """export capa results as JSON file"""
         if not self.doc:
             idaapi.info("No capa results to export.")
@@ -336,7 +336,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         if post:
             capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
-            self.reload()
+            self.slot_reload()
 
     def load_capa_results(self):
         """run capa analysis and render results in UI"""
@@ -493,7 +493,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.reset()
         self.view_tree.reset_ui()
 
-    def reload(self):
+    def slot_reload(self):
         """re-run capa analysis and reload UI controls
 
         called when user selects plugin reload from menu
@@ -508,7 +508,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         logger.debug("%s reload completed", self.form_title)
         idaapi.info("%s reload completed." % self.form_title)
 
-    def reset(self, checked):
+    def slot_reset(self, checked):
         """reset UI elements
 
         e.g. checkboxes and IDA highlighting
@@ -569,7 +569,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
 
-    def change_rules_dir(self):
+    def slot_change_rules_dir(self):
         """allow user to change rules directory
 
         user selection stored in settings for future runs
@@ -583,4 +583,4 @@ class CapaExplorerForm(idaapi.PluginForm):
         settings.user["rule_path"] = rule_path
 
         if 1 == idaapi.ask_yn(1, "Run analysis now?"):
-            self.reload()
+            self.slot_reload()

@@ -81,6 +81,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         if self.should_resize_columns:
             self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
 
+            # limit size of first section
             if self.header().sectionSize(0) > MAX_SECTION_SIZE:
                 self.header().resizeSection(0, MAX_SECTION_SIZE)
 
