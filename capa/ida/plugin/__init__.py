@@ -41,25 +41,20 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """called when IDA is loading the plugin"""
         logging.basicConfig(level=logging.INFO)
 
-        # check IDA version and database compatibility
+        # do not load plugin if IDA version/file type not supported
         if not is_supported_ida_version():
             return idaapi.PLUGIN_SKIP
         if not is_supported_file_type():
             return idaapi.PLUGIN_SKIP
-
-        logger.debug("plugin initialized")
-
-        # plugin is good, but don't keep us in memory
         return idaapi.PLUGIN_OK
 
     def term(self):
         """called when IDA is unloading the plugin"""
-        logger.debug("plugin terminated")
+        pass
 
     def run(self, arg):
         """called when IDA is running the plugin as a script"""
         self.form = CapaExplorerForm(self.PLUGIN_NAME)
-        self.form.Show()
         return True
 
 

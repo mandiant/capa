@@ -29,7 +29,7 @@ from capa.ida.plugin.item import (
 )
 
 # default highlight color used in IDA window
-DEFAULT_HIGHLIGHT = 0xD096FF
+DEFAULT_HIGHLIGHT = 0xE6C700
 
 
 class CapaExplorerDataModel(QtCore.QAbstractItemModel):
@@ -144,7 +144,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.ForegroundRole and column == CapaExplorerDataModel.COLUMN_INDEX_VIRTUAL_ADDRESS:
             # set color for virtual address column
-            return QtGui.QColor(88, 139, 174)
+            return QtGui.QColor(37, 147, 215)
 
         if (
             role == QtCore.Qt.ForegroundRole

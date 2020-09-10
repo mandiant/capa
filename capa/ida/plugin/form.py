@@ -56,27 +56,33 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_attack = None
         self.view_tabs = None
         self.view_menu_bar = None
-        self.view_rules_label = None
+        self.view_status_label = None
+        self.view_buttons = None
+        self.view_analyze_button = None
+        self.view_reset_button = None
+
+        self.Show()
 
     def OnCreate(self, form):
-        """called when plugin form is created"""
+        """called when plugin form is created
+
+        load interface and install hooks but do not analyze database
+        """
         self.parent = self.FormToPyQtWidget(form)
         self.parent.setWindowIcon(QICON)
-
-        # load interface elements
         self.load_interface()
-        self.load_capa_results()
         self.load_ida_hooks()
-
-        self.view_tree.reset_ui()
-
-        logger.debug("form created")
 
     def Show(self):
         """creates form if not already create, else brings plugin to front"""
-        logger.debug("form show")
-        return idaapi.PluginForm.Show(
-            self, self.form_title, options=(idaapi.PluginForm.WOPN_TAB | idaapi.PluginForm.WCLS_CLOSE_LATER)
+        return super(CapaExplorerForm, self).Show(
+            self.form_title,
+            options=(
+                idaapi.PluginForm.WOPN_TAB
+                | idaapi.PluginForm.WOPN_RESTORE
+                | idaapi.PluginForm.WCLS_CLOSE_LATER
+                | idaapi.PluginForm.WCLS_SAVE
+            ),
         )
 
     def OnClose(self, form):
@@ -86,7 +92,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         self.unload_ida_hooks()
         self.ida_reset()
-        logger.debug("form closed")
 
     def load_interface(self):
         """load user interface"""
@@ -110,16 +115,18 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_search_bar()
         self.load_view_tree_tab()
         self.load_view_attack_tab()
-        self.load_view_rules_label()
+        self.load_view_status_label()
+        self.load_view_buttons()
 
         # load menu bar and sub menus
         self.load_view_menu_bar()
         self.load_file_menu()
         self.load_rules_menu()
-        self.load_view_menu()
 
         # load parent view
         self.load_view_parent()
+
+        self.disable_controls()
 
     def load_view_tabs(self):
         """load tabs"""
@@ -161,12 +168,32 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_limit_results_by_function = check
 
-    def load_view_rules_label(self):
-        """load rules label"""
+    def load_view_status_label(self):
+        """load status label"""
         label = QtWidgets.QLabel()
         label.setAlignment(QtCore.Qt.AlignLeft)
+        label.setText("Analyze database to get started...")
 
-        self.view_rules_label = label
+        self.view_status_label = label
+
+    def load_view_buttons(self):
+        """load the button controls"""
+        analyze_button = QtWidgets.QPushButton("Analyze")
+        analyze_button.setToolTip("Run capa analysis on IDB")
+        reset_button = QtWidgets.QPushButton("Reset")
+        reset_button.setToolTip("Reset plugin and IDA user interfaces")
+
+        analyze_button.clicked.connect(self.slot_analyze)
+        reset_button.clicked.connect(self.slot_reset)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(analyze_button)
+        layout.addWidget(reset_button)
+        layout.addStretch(1)
+
+        self.view_analyze_button = analyze_button
+        self.view_reset_button = reset_button
+        self.view_buttons = layout
 
     def load_view_search_bar(self):
         """load the search bar control"""
@@ -181,7 +208,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout = QtWidgets.QVBoxLayout()
 
         layout.addWidget(self.view_tabs)
-        layout.addWidget(self.view_rules_label)
+        layout.addWidget(self.view_status_label)
+        layout.addLayout(self.view_buttons)
         layout.setMenuBar(self.view_menu_bar)
 
         self.parent.setLayout(layout)
@@ -210,21 +238,13 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_file_menu(self):
         """load file menu controls"""
-        actions = (
-            ("Rerun analysis", "Rerun capa analysis on current database", self.slot_reload),
-            ("Export results...", "Export capa results as JSON file", self.slot_export_json),
-        )
+        actions = (("Export results...", "Export capa results as JSON file", self.slot_export_json),)
         self.load_menu("File", actions)
 
     def load_rules_menu(self):
         """load rules menu controls"""
         actions = (("Change rules directory...", "Select new rules directory", self.slot_change_rules_dir),)
         self.load_menu("Rules", actions)
-
-    def load_view_menu(self):
-        """load view menu controls"""
-        actions = (("Reset view", "Reset plugin view", self.slot_reset),)
-        self.load_menu("View", actions)
 
     def load_menu(self, title, actions):
         """load menu actions
@@ -261,7 +281,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_ida_hooks(self):
         """load IDA UI hooks"""
-
         # map named action (defined in idagui.cfg) to Python function
         action_hooks = {
             "MakeName": self.ida_hook_rename,
@@ -336,10 +355,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         if post:
             capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
-            self.slot_reload()
+            self.slot_analyze()
 
     def load_capa_results(self):
         """run capa analysis and render results in UI"""
+        # new analysis, new doc
+        self.doc = None
 
         # resolve rules directory - check self and settings first, then ask user
         if not self.rule_path:
@@ -349,30 +370,24 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rule_path = self.ask_user_directory()
                 if not rule_path:
                     capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
-                    logger.warning("no rules directory selected. nothing to do.")
+                    logger.warning("no rules loaded. nothing to do")
+                    self.set_view_status_label("No rules loaded")
+                    self.disable_controls()
                     return
                 self.rule_path = rule_path
                 settings.user["rule_path"] = rule_path
 
-        logger.debug("-" * 80)
-        logger.debug(" Using rules from %s.", self.rule_path)
-        logger.debug(" ")
-        logger.debug(" You can see the current default rule set here:")
-        logger.debug("     https://github.com/fireeye/capa-rules")
-        logger.debug("-" * 80)
-
         try:
-            rules = capa.main.get_rules(self.rule_path)
+            rules = capa.main.get_rules(self.rule_path, True)
             rule_count = len(rules)
             rules = capa.rules.RuleSet(rules)
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
             logger.error("failed to load rules from %s (%s)", self.rule_path, e)
             self.rule_path = ""
-            self.set_view_rules_label_default()
+            self.set_view_status_label("No rules loaded")
+            self.disable_controls()
             return
-
-        self.set_view_rules_label_loaded(self.rule_path, rule_count)
 
         meta = capa.ida.helpers.collect_metadata()
 
@@ -402,15 +417,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
             capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
-        logger.debug("analysis completed.")
-
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
-
-        # render views
         self.model_data.render_capa_doc(self.doc)
         self.render_capa_doc_mitre_summary()
 
-        logger.debug("render views completed.")
+        self.enable_controls()
+        self.set_view_status_label("Loaded %d rules from %s" % (rule_count, self.rule_path))
 
     def render_capa_doc_mitre_summary(self):
         """render MITRE ATT&CK results"""
@@ -465,23 +477,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param text: header text to display
         """
         item = QtWidgets.QTableWidgetItem(text)
-        item.setForeground(QtGui.QColor(88, 139, 174))
+        item.setForeground(QtGui.QColor(37, 147, 215))
         font = QtGui.QFont()
         font.setBold(True)
         item.setFont(font)
         return item
-
-    def set_view_rules_label_default(self):
-        """set view rules label to default default text"""
-        self.view_rules_label.setText("No rules loaded")
-
-    def set_view_rules_label_loaded(self, path, count):
-        """set view rules label to rule path/count
-
-        @param path: rule path
-        @param count: number of rules loaded from path
-        """
-        self.view_rules_label.setText("Loaded %d rules from %s" % (count, path))
 
     def ida_reset(self):
         """reset plugin UI
@@ -493,8 +493,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.reset()
         self.view_tree.reset_ui()
 
-    def slot_reload(self):
-        """re-run capa analysis and reload UI controls
+    def slot_analyze(self):
+        """run capa analysis and reload UI controls
 
         called when user selects plugin reload from menu
         """
@@ -502,11 +502,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.search_model_proxy.invalidate()
         self.model_data.clear()
         self.load_capa_results()
-
         self.ida_reset()
-
-        logger.debug("%s reload completed", self.form_title)
-        idaapi.info("%s reload completed." % self.form_title)
+        logger.info("analysis complete")
 
     def slot_reset(self, checked):
         """reset UI elements
@@ -514,20 +511,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         e.g. checkboxes and IDA highlighting
         """
         self.ida_reset()
-
-        logger.debug("%s reset completed", self.form_title)
-        idaapi.info("%s reset completed" % self.form_title)
-
-    def slot_menu_bar_hovered(self, action):
-        """display menu action tooltip
-
-        @param action: QtWidgets.QAction*
-
-        @reference: https://stackoverflow.com/questions/21725119/why-wont-qtooltips-appear-on-qactions-within-a-qmenu
-        """
-        QtWidgets.QToolTip.showText(
-            QtGui.QCursor.pos(), action.toolTip(), self.view_menu_bar, self.view_menu_bar.actionGeometry(action)
-        )
+        logger.info("reset complete")
 
     def slot_checkbox_limit_by_changed(self, state):
         """slot activated if checkbox clicked
@@ -583,4 +567,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         settings.user["rule_path"] = rule_path
 
         if 1 == idaapi.ask_yn(1, "Run analysis now?"):
-            self.slot_reload()
+            self.slot_analyze()
+
+    def set_view_status_label(self, text):
+        """update status label control
+
+        @param text: updated text
+        """
+        self.view_status_label.setText(text)
+
+    def disable_controls(self):
+        """disable form controls"""
+        self.view_reset_button.setEnabled(False)
+        self.view_tabs.setTabEnabled(0, False)
+        self.view_tabs.setTabEnabled(1, False)
+
+    def enable_controls(self):
+        """enable form controls"""
+        self.view_reset_button.setEnabled(True)
+        self.view_tabs.setTabEnabled(0, True)
+        self.view_tabs.setTabEnabled(1, True)
