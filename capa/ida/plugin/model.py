@@ -522,7 +522,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             )
 
         if feature["type"] == "regex":
-            return CapaExplorerFeatureItem(parent, display, location, details=feature["match"])
+            return CapaExplorerStringViewItem(parent, display, location, feature["match"])
 
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)
@@ -547,7 +547,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if feature["type"] in ("string",):
             # display string preview
-            return CapaExplorerStringViewItem(parent, display, location)
+            return CapaExplorerStringViewItem(parent, display, location, feature[feature["type"]])
 
         if feature["type"] in ("import", "export"):
             # display no preview
