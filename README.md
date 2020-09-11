@@ -71,7 +71,7 @@ Alternatively, you can fetch a nightly build of a standalone binary from one of 
 
 To use capa as a library or integrate with another tool, see [doc/installation.md](doc/installation.md) for further setup instructions.
 
-For more information about how to use capa, including running it as an IDA script/plugin see [doc/usage.md](doc/usage.md).
+For more information about how to use capa, see [doc/usage.md](doc/usage.md).
 
 # example
 
@@ -151,7 +151,7 @@ This script adds new user interface elements to IDA, including an interactive tr
 As you select the checkboxes, the plugin will highlight the addresses associated with the features.
 We use this plugin all the time to quickly jump to interesting parts of a program.
 
-![capa + IDA Pro integration](.github/capa-ida.jpg)
+![capa + IDA Pro integration](doc/img/ida_plugin_intro.gif)
 
 # further information
 ## capa
