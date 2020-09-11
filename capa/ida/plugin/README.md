@@ -1,62 +1,100 @@
-FLARE capa plugin brings the program capabilities detection of [capa](https://github.com/fireeye/capa) to IDA. This plugin adds 
-new user interface elements including an interactive tree view of rule matches and their locations
-within the current database. You can use FLARE capa plugin to dissect capa rules at the assembly level or quickly jump to interesting parts of a program, 
-such as where the C2 mechanism might be.
+# capa explorer
 
-FLARE capa plugin consists of two components:
+capa explorer is an IDA Pro plugin that integrates the FLARE team's open-source framework 
+[capa](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html) with IDA. You can
+use capa explorer to quickly identify and navigate to interesting areas of a program and dissect capa rule matches at
+the assembly level.
 
-* A [feature extractor](https://github.com/fireeye/capa/tree/master/capa/features/extractors/ida) built on top of IDA's powerful binary analysis engine
-* An [interactive plugin](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rules matched against an IDA database
+For example, we run capa explorer against a suspicious executable loaded into IDA and see that capa detected a rule match
+for `self delete via COMSPEC environment variable`:
+
+![](../../../doc/img/ida_plugin_example_1.png)
+
+We can use capa explorer to navigate the IDA Disassembly view directly to the suspect function and get an assembly-level breakdown
+of why capa matched `self delete via COMSPEC environment variable` for this particular function.
+
+![](../../../doc/img/ida_plugin_example_2.png)
+
+## Features
 
 ![](../../../doc/img/ida_plugin_intro.gif)
 
-# requirements
-
-* IDA Pro 7.4+ with Python 2.7 or Python 3.x
-
-# supported file types
-
-* Windows `32-bit` and `64-bit` PE files
-* Windows `32-bit` and `64-bit` shellcode
-
-# installation
-
-## quick install
-1. Install capa for the Python interpreter used by your IDA installation:
-
-    ```
-    $ pip install flare-capa
-    ```
-   
-3. Copy [capa_plugin_ida.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_plugin_ida.py) to your IDA  plugins directory
-
-## development
-1. Install capa for the Python interpreter used by your IDA installation using method 3 of the instructions found [here](https://github.com/fireeye/capa/blob/master/doc/installation.md#method-3-inspecting-the-capa-source-code)
-2. Copy [capa_plugin_ida.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_plugin_ida.py) to your IDA plugins directory
-
-If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
-
-# usage
-1. Run IDA and analyze a supported file type (select `Manual Load` and `Load Resources` for best results)
-2. Open FLARE capa plugin in IDA by navigating to `Edit > Plugins > FLARE capa plugin` or using the keyboard shortcut `Alt+F5`
-3. Click `Analyze`
-
-When running the plugin for the first time you are prompted to select a file directory containing capa rules. The plugin conviently
-remembers your selection for future runs; you can change this selection by navigating to `Rules > Change rules directory...`. We recommend 
-downloading and using the [standard collection of capa rules](https://github.com/fireeye/capa-rules) when first getting familiar with the plugin but any
-file directory containing [valid capa rules](https://github.com/fireeye/capa-rules/blob/master/doc/format.md) can be used.
-
-# features
 * Display capa results in an interactive tree view of rule matches and their locations in the current database
 * Export results as formatted JSON by navigating to `File > Export results...`
-* Remember a user's `capa` rules directory for future runs; change `capa` rules directory by navigating to `Rules > Change rules directory...`
+* Remember a user's capa rules directory for future runs; change capa rules directory by navigating to `Rules > Change rules directory...`
 * Search for keywords or phrases found in the `Rule Information`, `Address`, or `Details` columns
 * Display rule source content when a user hovers their cursor over a rule match
 * Double-click `Address` column to view associated feature in the IDA Disassembly view
 * Limit tree view results to the function currently displayed in the IDA Disassembly view; update results as a user navigates to different functions
+* Sort results by column
 * Reset tree view and IDA Disassembly view highlighting by clicking `Reset`
 * Automatically re-analyze database when user performs a program rebase
 * Automatically update results when IDA is used to rename a function
 * Select one or more checkboxes to highlight the associated addresses in the IDA Disassembly view
 * Right-click a function match to rename it; the new function name is propagated to the current IDA database
 * Right-click to copy a result by column or by row
+
+## Getting Started
+
+### Requirements
+
+capa explorer supports the following IDA setups:
+
+* IDA Pro 7.4+ with Python 2.7 or Python 3.
+
+If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
+
+### Supported File Types
+
+capa explorer is limited to the file types supported by capa, which includes:
+
+* Windows 32-bit and 64-bit PE files
+* Windows 32-bit and 64-bit shellcode
+
+### Installation
+
+You can install capa explorer using the following steps:
+
+1. Install capa for the Python interpreter used by your IDA installation:
+    ```
+    $ pip install flare-capa
+    ```
+3. Copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
+
+### Usage
+
+1. Run IDA and analyze a supported file type (select `Manual Load` and `Load Resources` for best results)
+2. Open capa explorer in IDA by navigating to `Edit > Plugins > FLARE capa explorer` or using the keyboard shortcut `Alt+F5`
+3. Click `Analyze`
+
+When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
+remembers your selection for future runs; you can change this selection by navigating to `Rules > Change rules directory...`. We recommend 
+downloading and using the [standard collection of capa rules](https://github.com/fireeye/capa-rules) when getting started with the plugin.
+
+#### Tips
+
+* Start analysis by clicking `Analyze`
+* Reset the plugin user interface and remove highlighting from IDA disassembly view by clicking `Reset`
+* Change your capa rules directory by navigating to `Rules > Change rules directory...`
+* Hover your cursor over a rule match to view the source content of the rule
+* Double-click the `Address` column to navigate the IDA Disassembly view to the associated feature
+* Double-click a result in the `Rule Information` column to expand its children
+* Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in the IDA Dissasembly view
+
+## Development
+
+Because capa explorer is packaged with capa you will need to install capa locally for development.
+
+You can install capa locally by following the steps outlined in `Method 3: Inspecting the capa source code` of the [capa 
+installation guide](https://github.com/fireeye/capa/blob/ida_plugin_documentation/doc/installation.md). Once installed, copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) 
+to your IDA plugins directory to run the plugin in IDA.
+
+### Components
+
+capa explorer consists of two main components:
+
+* An IDA [feature extractor](https://github.com/fireeye/capa/tree/master/capa/features/extractors/ida) built on top of IDA's binary analysis engine
+  * This component uses IDAPython to extract [capa features](https://github.com/fireeye/capa-rules/blob/master/doc/format.md#extracted-features) from the IDA database such as strings, 
+disassembly, and control flow; these extracted features are used by capa to find feature combinations that result in a rule match
+* An [interactive plugin](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rule matches
+  * This component integrates the IDA feature extractor and capa, providing an interactive user interface to dissect rule matches found by capa using features extracted by the IDA feature extractor

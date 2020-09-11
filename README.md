@@ -146,10 +146,9 @@ rule:
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you use can use the [IDA Pro plugin for capa](capa/ida/plugin/).
-This script adds new user interface elements to IDA, including an interactive tree view of rule matches and their locations within the current database.
-As you select the checkboxes, the plugin will highlight the addresses associated with the features.
-We use this plugin all the time to quickly jump to interesting parts of a program.
+If you use IDA Pro, then you use can use the [capa explorer IDA plugin](capa/ida/plugin/).
+capa explorer lets you quickly identify and navigate to interesting areas of a program and dissect capa rule matches at
+the assembly level.
 
 ![capa + IDA Pro integration](doc/img/ida_plugin_intro.gif)
 
