@@ -21,9 +21,7 @@ The IDA Pro integration is now distributed as a real plugin, instead of a script
   - updates distributed PyPI/`pip install --upgrade` without touching your `%IDADIR%`
   - generally doing thing the "right way"
 
-How to get this new version? Its easy: download [capa_plugin_ida.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_plugin_ida.py) to your plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see it in the `Edit>Plugins>capa explorer` menu. Please open an issue in this repository if you notice anything weird.
-
-![image](https://user-images.githubusercontent.com/156560/92410275-d986b700-f100-11ea-9f93-efc83c2b7097.png)
+How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. Please open an issue in this repository if you notice anything weird.
  
 ### New features
 
@@ -32,6 +30,8 @@ How to get this new version? Its easy: download [capa_plugin_ida.py](https://raw
   - features: enable automatic A/W handling for imports @williballenthin @Ana06 #246 
   - ida plugin: persist rules directory setting via [ida-settings](https://github.com/williballenthin/ida-settings) @williballenthin #268
   - ida plugin: add search bar to results view @williballenthin #285
+  - ida plugin: add `Analyze` and `Reset` buttons to tree view @mike-hunhoff #304
+  - ida plugin: add status label to tree view @mike-hunhoff
 
 ### New rules
 
@@ -48,12 +48,17 @@ How to get this new version? Its easy: download [capa_plugin_ida.py](https://raw
   - viv: better extract offsets from SibOper operands @williballenthin @edeca #276 
   - import-to-ida: fix import error @cclauss 
   - viv: don't write settings to ~/.viv/viv.json @williballenthin @rakuy0 @weslambert #244
+  - ida plugin: remove dependency loop that resulted in unnecessary overhead @mike-hunhoff #303
+  - ida plugin: correctly highlight regex matches in IDA Disassembly view @mike-hunhoff #305
 
 ### Changes
 
   - rules: update meta mapping to MBC 2.0! @dzbeck
   - render: don't display rules that are also matched by other rules @williballenthin @Ana06 #224
-  - ida plugin: simplify tabs, removing summary and adding detail to results view @williballenthin #286  
+  - ida plugin: simplify tabs, removing summary and adding detail to results view @williballenthin #286
+  - ida plugin: analysis is no longer automatically started when plugin is first opened @mike-hunhoff #304
+  - ida plugin: user must manually select a capa rules directory before analysis can be performed @mike-hunhoff
+  - ida plugin: user interface controls are disabled until analysis is performed @mike-hunhoff #304
 
 ### Raw diffs
 
