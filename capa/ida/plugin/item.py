@@ -341,12 +341,12 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
 class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
     """store data for string match"""
 
-    def __init__(self, parent, display, location):
+    def __init__(self, parent, display, location, value):
         """initialize item
 
         @param parent: parent node
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location)
+        super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location, details=value)
         self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
