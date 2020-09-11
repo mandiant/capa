@@ -181,7 +181,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         analyze_button = QtWidgets.QPushButton("Analyze")
         analyze_button.setToolTip("Run capa analysis on IDB")
         reset_button = QtWidgets.QPushButton("Reset")
-        reset_button.setToolTip("Reset plugin and IDA user interfaces")
+        reset_button.setToolTip("Reset capa explorer and IDA user interfaces")
 
         analyze_button.clicked.connect(self.slot_analyze)
         reset_button.clicked.connect(self.slot_reset)
@@ -271,7 +271,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         # check file exists, ask to override
-        if os.path.exists(path) and 1 != idaapi.ask_yn(1, "File already exists. Overwrite?"):
+        if os.path.exists(path) and 1 != idaapi.ask_yn(1, "The selected file already exists. Overwrite?"):
             return
 
         with open(path, "wb") as export_file:
@@ -354,7 +354,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param post: False if action first call, True if action second call
         """
         if post:
-            capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after rebase")
+            capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after program rebase")
             self.slot_analyze()
 
     def load_capa_results(self):
@@ -369,9 +369,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             else:
                 rule_path = self.ask_user_directory()
                 if not rule_path:
-                    capa.ida.helpers.inform_user_ida_ui("You must select a rules directory to use for analysis.")
-                    logger.warning("no rules loaded. nothing to do")
-                    self.set_view_status_label("No rules loaded")
+                    capa.ida.helpers.inform_user_ida_ui(
+                        "You must select a file directory containing capa rules to start analysis"
+                    )
+                    logger.warning(
+                        "No rules loaded, cannot start analysis. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules."
+                    )
+                    self.set_view_status_label("No rules loaded.")
                     self.disable_controls()
                     return
                 self.rule_path = rule_path
@@ -382,9 +386,14 @@ class CapaExplorerForm(idaapi.PluginForm):
             rule_count = len(rules)
             rules = capa.rules.RuleSet(rules)
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-            capa.ida.helpers.inform_user_ida_ui("Failed to load rules from %s" % self.rule_path)
-            logger.error("failed to load rules from %s (%s)", self.rule_path, e)
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % self.rule_path)
+            logger.error(
+                "Failed to load rules from %s (%s). Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules.",
+                self.rule_path,
+                e,
+            )
             self.rule_path = ""
+            settings.user.del_value("rule_path")
             self.set_view_status_label("No rules loaded")
             self.disable_controls()
             return
@@ -412,17 +421,17 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.warning(" If you don't know the input file type, you can try using the `file` utility to guess it.")
             logger.warning("-" * 80)
 
-            capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
+            capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
 
         if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
-            capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
+            capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
 
         self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
         self.model_data.render_capa_doc(self.doc)
         self.render_capa_doc_mitre_summary()
 
         self.enable_controls()
-        self.set_view_status_label("Loaded %d rules from %s" % (rule_count, self.rule_path))
+        self.set_view_status_label("Loaded %d capa rules from %s" % (rule_count, self.rule_path))
 
     def render_capa_doc_mitre_summary(self):
         """render MITRE ATT&CK results"""
@@ -503,7 +512,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.clear()
         self.load_capa_results()
         self.ida_reset()
-        logger.info("analysis complete")
+        logger.info("Analysis completed.")
 
     def slot_reset(self, checked):
         """reset UI elements
@@ -511,7 +520,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         e.g. checkboxes and IDA highlighting
         """
         self.ida_reset()
-        logger.info("reset complete")
+        logger.info("Reset completed.")
 
     def slot_checkbox_limit_by_changed(self, state):
         """slot activated if checkbox clicked
@@ -551,7 +560,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ask_user_directory(self):
         """create Qt dialog to ask user for a directory"""
-        return str(QtWidgets.QFileDialog.getExistingDirectory(self.parent, "Select rules directory", self.rule_path))
+        return str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                self.parent, "Please select a file directory containing capa rules", self.rule_path
+            )
+        )
 
     def slot_change_rules_dir(self):
         """allow user to change rules directory
@@ -560,7 +573,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         rule_path = self.ask_user_directory()
         if not rule_path:
-            logger.warning("no rules directory selected. nothing to do.")
+            logger.warning("No rule directory selected, nothing to do.")
             return
 
         self.rule_path = rule_path
