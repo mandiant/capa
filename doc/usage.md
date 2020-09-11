@@ -32,7 +32,7 @@ We like to use capa to help find the most interesting parts of a program, such a
 ![capa explorer](img/capa_explorer.png)
 
 The plugin currently supports IDA Pro 7.1 through 7.5 with either Python 2 or Python 3. To use the plugin, install capa
-by following method 2 or 3 from the [installation guide](installation.md) and copy [capa_plugin_ida.py](../capa/ida/plugin/capa_plugin_ida.py)
+by following method 2 or 3 from the [installation guide](installation.md) and copy [capa_plugin_ida.py](../capa/ida/plugin/capa_explorer.py)
 to the plugins directory of your IDA Pro installation. Following these steps you can run capa explorer in IDA Pro by navigating 
 to `Edit > Plugins > capa explorer`. The plugin will prompt you to select a rules directory to use for analysis. You can 
 use the [default rule set](https://github.com/fireeye/capa-rules/) or point the plugin to your own directory of rules.
