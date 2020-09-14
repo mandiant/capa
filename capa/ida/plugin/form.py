@@ -12,6 +12,7 @@ import logging
 import collections
 
 import idaapi
+import ida_kernwin
 import ida_settings
 from PyQt5 import QtGui, QtCore, QtWidgets
 
@@ -28,6 +29,43 @@ from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearc
 
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
+
+
+class UserCancelledError(Exception):
+    pass
+
+
+class CapaExplorerProgressIndicator(QtCore.QObject):
+    progress = QtCore.pyqtSignal(str)
+
+    def __init__(self):
+        """ """
+        super(CapaExplorerProgressIndicator, self).__init__()
+
+    def update(self, text):
+        """ """
+        if ida_kernwin.user_cancelled():
+            raise UserCancelledError("user cancelled")
+        self.progress.emit("extracting features from %s" % text)
+
+
+class CapaExplorerFeatureExtractor(capa.features.extractors.ida.IdaFeatureExtractor):
+    def __init__(self, progress):
+        super(CapaExplorerFeatureExtractor, self).__init__()
+        self.progress = progress
+
+    def extract_function_features(self, f):
+        self.progress.update("function at 0x%x" % f.start_ea)
+        for (feature, ea) in capa.features.extractors.ida.function.extract_features(f):
+            yield feature, ea
+
+    def extract_basic_block_features(self, f, bb):
+        for (feature, ea) in capa.features.extractors.ida.basicblock.extract_features(f, bb):
+            yield feature, ea
+
+    def extract_insn_features(self, f, bb, insn):
+        for (feature, ea) in capa.features.extractors.ida.insn.extract_features(f, bb, insn):
+            yield feature, ea
 
 
 class CapaExplorerForm(idaapi.PluginForm):
@@ -361,74 +399,176 @@ class CapaExplorerForm(idaapi.PluginForm):
         """run capa analysis and render results in UI"""
         # new analysis, new doc
         self.doc = None
+        self.process_total = 0
+        self.process_count = 0
 
-        # resolve rules directory - check self and settings first, then ask user
-        if not self.rule_path:
-            if "rule_path" in settings and os.path.exists(settings["rule_path"]):
-                self.rule_path = settings["rule_path"]
-            else:
-                rule_path = self.ask_user_directory()
-                if not rule_path:
-                    capa.ida.helpers.inform_user_ida_ui(
-                        "You must select a file directory containing capa rules to start analysis"
-                    )
-                    logger.warning(
-                        "No rules loaded, cannot start analysis. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules."
-                    )
-                    self.set_view_status_label("No rules loaded.")
-                    self.disable_controls()
-                    return
-                self.rule_path = rule_path
-                settings.user["rule_path"] = rule_path
+        self.set_view_status_label("No rules loaded")
+        self.disable_controls()
+
+        def update_wait_box(text):
+            """ """
+            ida_kernwin.replace_wait_box("Processing; %s" % text)
+
+        def slot_progress_feature_extraction(text):
+            """ """
+            update_wait_box("%s (%d/%d)" % (text, self.process_count, self.process_total))
+            self.process_count += 1
+
+        progress = CapaExplorerProgressIndicator()
+        progress.progress.connect(slot_progress_feature_extraction)
+        extractor = CapaExplorerFeatureExtractor(progress)
+
+        update_wait_box("calculating analysis")
 
         try:
-            rules = capa.main.get_rules(self.rule_path, True)
-            rule_count = len(rules)
-            rules = capa.rules.RuleSet(rules)
-        except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % self.rule_path)
-            logger.error(
-                "Failed to load rules from %s (%s). Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules.",
-                self.rule_path,
-                e,
-            )
-            self.rule_path = ""
-            settings.user.del_value("rule_path")
-            self.set_view_status_label("No rules loaded")
-            self.disable_controls()
+            self.process_total += len(tuple(extractor.get_functions()))
+        except Exception as e:
+            logger.error("Failed to calculate analysis (Error: %s)." % e)
             return
 
-        meta = capa.ida.helpers.collect_metadata()
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return
 
-        capabilities, counts = capa.main.find_capabilities(
-            rules, capa.features.extractors.ida.IdaFeatureExtractor(), True
-        )
-        meta["analysis"].update(counts)
+        update_wait_box("loading rules")
 
-        # support binary files specifically for x86/AMD64 shellcode
-        # warn user binary file is loaded but still allow capa to process it
-        # TODO: check specific architecture of binary files based on how user configured IDA processors
-        if idaapi.get_file_type_name() == "Binary file":
-            logger.warning("-" * 80)
-            logger.warning(" Input file appears to be a binary file.")
-            logger.warning(" ")
-            logger.warning(
-                " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
+        try:
+            # resolve rules directory - check self and settings first, then ask user
+            if not self.rule_path:
+                if "rule_path" in settings and os.path.exists(settings["rule_path"]):
+                    self.rule_path = settings["rule_path"]
+                else:
+                    idaapi.info("You must select a file directory containing capa rules before running analysis.")
+                    rule_path = self.ask_user_directory()
+                    if not rule_path:
+                        logger.warning(
+                            "You must select a file directory containing capa rules before running analysis. The standard collection of capa rules can be downloaded from https://github.com/fireeye/capa-rules."
+                        )
+                        return
+                    self.rule_path = rule_path
+                    settings.user["rule_path"] = rule_path
+        except Exception as e:
+            logger.error("Failed to load capa rules (Error: %s)." % e)
+            return
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return
+
+        rule_path = self.rule_path
+
+        try:
+            if not os.path.exists(rule_path):
+                raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
+
+            rule_paths = []
+            if os.path.isfile(rule_path):
+                rule_paths.append(rule_path)
+            elif os.path.isdir(rule_path):
+                for root, dirs, files in os.walk(rule_path):
+                    if ".github" in root:
+                        # the .github directory contains CI config in capa-rules
+                        # this includes some .yml files
+                        # these are not rules
+                        continue
+                    for file in files:
+                        if not file.endswith(".yml"):
+                            if not (file.endswith(".md") or file.endswith(".git") or file.endswith(".txt")):
+                                # expect to see readme.md, format.md, and maybe a .git directory
+                                # other things maybe are rules, but are mis-named.
+                                logger.warning("skipping non-.yml file: %s", file)
+                            continue
+                        rule_path = os.path.join(root, file)
+                        rule_paths.append(rule_path)
+
+            rules = []
+            total_paths = len(rule_paths)
+            for (i, rule_path) in enumerate(rule_paths):
+                update_wait_box("loading rule %d/%d from %s" % (i + 1, total_paths, self.rule_path))
+                if ida_kernwin.user_cancelled():
+                    raise UserCancelledError("user cancelled")
+                try:
+                    rule = capa.rules.Rule.from_yaml_file(rule_path)
+                except capa.rules.InvalidRule:
+                    raise
+                else:
+                    rule.meta["capa/path"] = rule_path
+                    if capa.main.is_nursery_rule_path(rule_path):
+                        rule.meta["capa/nursery"] = True
+                    rules.append(rule)
+
+            rule_count = len(rules)
+            rules = capa.rules.RuleSet(rules)
+        except UserCancelledError:
+            logger.info("User cancelled analysis.")
+            return
+        except Exception as e:
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % self.rule_path)
+            logger.error("Failed to load rules from %s (Error: %s).", self.rule_path, e)
+            logger.error("Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules.")
+            self.rule_path = ""
+            settings.user.del_value("rule_path")
+            return
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return
+
+        ida_kernwin.replace_wait_box("Processing; extracting features")
+
+        try:
+            meta = capa.ida.helpers.collect_metadata()
+            capabilities, counts = capa.main.find_capabilities(
+                rules, extractor, disable_progress=True
             )
-            logger.warning(
-                " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
-            )
-            logger.warning(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-            logger.warning("-" * 80)
+            meta["analysis"].update(counts)
+        except UserCancelledError:
+            logger.info("User cancelled analysis.")
+            return
+        except Exception as e:
+            logger.error("Failed to extract capabilities from database (Error: %s)" % e)
+            return
 
-            capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
+        ida_kernwin.replace_wait_box("Processing; checking for file limitations")
 
-        if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
-            capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
+        try:
+            # support binary files specifically for x86/AMD64 shellcode
+            # warn user binary file is loaded but still allow capa to process it
+            # TODO: check specific architecture of binary files based on how user configured IDA processors
+            if idaapi.get_file_type_name() == "Binary file":
+                logger.warning("-" * 80)
+                logger.warning(" Input file appears to be a binary file.")
+                logger.warning(" ")
+                logger.warning(
+                    " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
+                )
+                logger.warning(
+                    " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
+                )
+                logger.warning(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+                logger.warning("-" * 80)
 
-        self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
-        self.model_data.render_capa_doc(self.doc)
-        self.render_capa_doc_mitre_summary()
+                capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
+
+            if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
+                capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
+        except Exception as e:
+            logger.error("Failed to check for file limitations (Error: %s)" % e)
+            return
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return
+
+        update_wait_box("Processing; rendering results")
+
+        try:
+            self.doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
+            self.model_data.render_capa_doc(self.doc)
+            self.render_capa_doc_mitre_summary()
+        except Exception as e:
+            logger.error("Failed to render results (Error: %s)" % e)
+            return
 
         self.enable_controls()
         self.set_view_status_label("Loaded %d capa rules from %s" % (rule_count, self.rule_path))
@@ -510,8 +650,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
         self.model_data.clear()
+
+        ida_kernwin.show_wait_box("Processing")
         self.load_capa_results()
+        ida_kernwin.hide_wait_box()
+
         self.ida_reset()
+
         logger.info("Analysis completed.")
 
     def slot_reset(self, checked):
@@ -562,7 +707,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a file directory containing capa rules", self.rule_path
+                self.parent, "Please select a capa rules directory", self.rule_path
             )
         )
 
