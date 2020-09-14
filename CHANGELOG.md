@@ -22,7 +22,11 @@ The IDA Pro integration is now distributed as a real plugin, instead of a script
   - updates distributed PyPI/`pip install --upgrade` without touching your `%IDADIR%`
   - generally doing thing the "right way"
 
-How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. Please open an issue in this repository if you notice anything weird.
+How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
+
+Please refer to the plugin [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md) for additional information on installing and using the IDA Pro plugin.
+
+Please open an issue in this repository if you notice anything weird.
  
 ### New features
 
@@ -33,6 +37,7 @@ How to get this new version? Its easy: download [capa_explorer.py](https://raw.g
   - ida plugin: add search bar to results view @williballenthin #285
   - ida plugin: add `Analyze` and `Reset` buttons to tree view @mike-hunhoff #304
   - ida plugin: add status label to tree view @mike-hunhoff
+  - ida plugin: add progress indicator @mike-hunhoff, @mr-tz
 
 ### New rules
 
