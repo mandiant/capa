@@ -21,7 +21,7 @@ for this particular function.
 ![](../../../doc/img/ida_plugin_example_2.png)
 
 Using the `Rule Information` and `Details` columns capa explorer shows us that the suspect function matched `self delete via COMSPEC environment variable` because it contains capa rule matches for `create process`, `get COMSPEC environment variable`,
-and `query environment variable`, references to the strings `COMSPEC`, ` > nul`, and `/c del`, and a call to the Windows API function `GetEnvironmentVariableA`.
+and `query environment variable`, references to the strings `COMSPEC`, ` > nul`, and `/c del`, and calls to the Windows API functions `GetEnvironmentVariableA` and `ShellExecuteEx`.
 
 For more information on the FLARE team's open-source framework, capa, check out the overview in our first [blog](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
 
