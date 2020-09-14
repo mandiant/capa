@@ -68,8 +68,7 @@ class CapaExplorerFeatureExtractor(capa.features.extractors.ida.IdaFeatureExtrac
 
     def extract_function_features(self, f):
         self.indicator.update("function at 0x%X" % f.start_ea)
-        for (feature, ea) in capa.features.extractors.ida.function.extract_features(f):
-            yield feature, ea
+        return super(CapaExplorerFeatureExtractor, self).extract_function_features(f)
 
 
 class CapaExplorerForm(idaapi.PluginForm):
