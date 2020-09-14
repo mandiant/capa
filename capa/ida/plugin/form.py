@@ -135,7 +135,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         ensure any plugin modifications (e.g. hooks and UI changes) are reset before the plugin is closed
         """
         self.unload_ida_hooks()
-        self.ida_reset()
+        self.model_data.reset()
 
     def load_interface(self):
         """load user interface"""
@@ -398,8 +398,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param post: False if action first call, True if action second call
         """
         if post:
-            capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after program rebase")
-            self.slot_analyze()
+            if idaapi.get_imagebase() != meta.get("prev_base", -1):
+                capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after program rebase")
+                self.slot_analyze()
+        else:
+            meta["prev_base"] = idaapi.get_imagebase()
+            self.model_data.reset()
 
     def load_capa_results(self):
         """run capa analysis and render results in UI
@@ -641,14 +645,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         item.setFont(font)
         return item
 
-    def ida_reset(self):
-        """reset plugin UI
+    def reset_view_tree(self):
+        """reset tree view UI controls
 
         called when user selects plugin reset from menu
         """
         self.view_limit_results_by_function.setChecked(False)
         self.view_search_bar.setText("")
-        self.model_data.reset()
         self.view_tree.reset_ui()
 
     def slot_analyze(self):
@@ -658,8 +661,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
+        self.model_data.reset()
         self.model_data.clear()
-
         self.disable_controls()
         self.set_view_status_label("Loading...")
 
@@ -667,19 +670,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         success = self.load_capa_results()
         ida_kernwin.hide_wait_box()
 
+        self.reset_view_tree()
+
         if not success:
             self.set_view_status_label("Click Analyze to get started...")
-
-        self.ida_reset()
-
-        logger.info("Analysis completed.")
+            logger.info("Analysis failed.")
+        else:
+            logger.info("Analysis completed.")
 
     def slot_reset(self, checked):
         """reset UI elements
 
         e.g. checkboxes and IDA highlighting
         """
-        self.ida_reset()
+        self.model_data.reset()
+        self.reset_view_tree()
         logger.info("Reset completed.")
 
     def slot_checkbox_limit_by_changed(self, state):
