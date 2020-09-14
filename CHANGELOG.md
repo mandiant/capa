@@ -1,5 +1,77 @@
 # Change Log
 
+## v1.3.0 (2020-09-14)
+
+This release brings newly updated mappings to the [Malware Behavior Catalog version 2.0](https://github.com/MBCProject/mbc-markdown), many enhancements to the IDA Pro plugin, [flare-capa on PyPI](https://pypi.org/project/flare-capa/), a bunch of bug fixes to improve feature extraction, and four new rules. We received contributions from ten reverse engineers, including seven new ones:
+
+  - @dzbeck
+  - @recvfrom
+  - @toomanybananas
+  - @cclauss 
+  - @adamprescott91 
+  - @weslambert
+  - @stevemk14ebr 
+  
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+
+### Key changes to IDA Plugin
+
+The IDA Pro integration is now distributed as a real plugin, instead of a script. This enables a few things:
+
+  - keyboard shortcuts and file menu integration
+  - updates distributed PyPI/`pip install --upgrade` without touching your `%IDADIR%`
+  - generally doing thing the "right way"
+
+How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
+
+Please refer to the plugin [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md) for additional information on installing and using the IDA Pro plugin.
+
+Please open an issue in this repository if you notice anything weird.
+ 
+### New features
+
+  - ida plugin: now a real plugin, not a script @mike-hunhoff 
+  - core: distributed via PyPI as [flare-capa](https://pypi.org/project/flare-capa/) @williballenthin 
+  - features: enable automatic A/W handling for imports @williballenthin @Ana06 #246 
+  - ida plugin: persist rules directory setting via [ida-settings](https://github.com/williballenthin/ida-settings) @williballenthin #268
+  - ida plugin: add search bar to results view @williballenthin #285
+  - ida plugin: add `Analyze` and `Reset` buttons to tree view @mike-hunhoff #304
+  - ida plugin: add status label to tree view @mike-hunhoff
+  - ida plugin: add progress indicator @mike-hunhoff, @mr-tz
+
+### New rules
+
+  - compiled with py2exe @re-fox
+  - resolve path using msvcrt @re-fox 
+  - decompress data using QuickLZ @edeca
+  - encrypt data using sosemanuk @recvfrom 
+
+### Bug fixes
+
+  - rule: reduce FP in DNS resolution @toomanybananas
+  - engine: report correct strings matched via regex @williballenthin #262 
+  - formatter: correctly format descriptions in two-line syntax @williballenthin @recvfrom #263 
+  - viv: better extract offsets from SibOper operands @williballenthin @edeca #276 
+  - import-to-ida: fix import error @cclauss 
+  - viv: don't write settings to ~/.viv/viv.json @williballenthin @rakuy0 @weslambert #244
+  - ida plugin: remove dependency loop that resulted in unnecessary overhead @mike-hunhoff #303
+  - ida plugin: correctly highlight regex matches in IDA Disassembly view @mike-hunhoff #305
+  - ida plugin: better handle rule directory prompt and failure case @stevemk14ebr @mike-hunhoff #309
+
+### Changes
+
+  - rules: update meta mapping to MBC 2.0! @dzbeck
+  - render: don't display rules that are also matched by other rules @williballenthin @Ana06 #224
+  - ida plugin: simplify tabs, removing summary and adding detail to results view @williballenthin #286
+  - ida plugin: analysis is no longer automatically started when plugin is first opened @mike-hunhoff #304
+  - ida plugin: user must manually select a capa rules directory before analysis can be performed @mike-hunhoff
+  - ida plugin: user interface controls are disabled until analysis is performed @mike-hunhoff #304
+
+### Raw diffs
+
+  - [capa v1.2.0...v1.3.0](https://github.com/fireeye/capa/compare/v1.2.0...v1.3.0)
+  - [capa-rules v1.2.0...v1.3.0](https://github.com/fireeye/capa-rules/compare/v1.2.0...v1.3.0)
+
 ## v1.2.0 (2020-08-31)
 
 This release brings UI enhancements, especially for the IDA Pro plugin, 
