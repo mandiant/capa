@@ -97,7 +97,7 @@ a = Analysis(
         "vivisect.parsers.elf",
         "vivisect.parsers.ihex",
         "vivisect.parsers.macho",
-        "vivisect.parsers.PE",
+        "vivisect.parsers.pe",
         "vivisect.parsers.utils",
         "vivisect.storage",
         "vivisect.storage.basicfile",
