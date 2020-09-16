@@ -108,6 +108,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
         if not model_index.isValid():
             raise ValueError("invalid index")
+
         return model_index.internalPointer()
 
     def send_data_to_clipboard(self, data):
@@ -254,6 +255,10 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
         @param pos: cursor position
         """
         model_index = self.indexAt(pos)
+
+        if not model_index.isValid():
+            return
+
         item = self.map_index_to_source_item(model_index)
 
         column = model_index.column()
