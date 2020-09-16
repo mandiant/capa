@@ -97,7 +97,7 @@ downloading and using the [standard collection of capa rules](https://github.com
 Because capa explorer is packaged with capa you will need to install capa locally for development.
 
 You can install capa locally by following the steps outlined in `Method 3: Inspecting the capa source code` of the [capa 
-installation guide](https://github.com/fireeye/capa/blob/ida_plugin_documentation/doc/installation.md#method-3-inspecting-the-capa-source-code). Once installed, copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) 
+installation guide](https://github.com/fireeye/capa/blob/master/doc/installation.md#method-3-inspecting-the-capa-source-code). Once installed, copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) 
 to your IDA plugins directory to run the plugin in IDA.
 
 ### Components
