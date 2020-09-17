@@ -413,7 +413,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         # new analysis, new doc
         self.doc = None
         self.process_total = 0
-        self.process_count = 0
+        self.process_count = 1
 
         def update_wait_box(text):
             """update the IDA wait box"""
