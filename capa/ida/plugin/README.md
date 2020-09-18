@@ -1,15 +1,15 @@
-# capa explorer
+![capa explorer](../../../.github/capa-explorer-logo.png)
 
-capa explorer is an IDA Pro plugin that integrates the FLARE team's open-source framework, capa, with IDA. capa is a framework that uses a well-defined collection of rules to 
+capa explorer is an IDA Pro plugin written in Python that integrates the FLARE team's open-source framework, capa, with IDA. capa is a framework that uses a well-defined collection of rules to 
 identify capabilities in a program. You can run capa against a PE file or shellcode and it tells you what it thinks the program can do. For example, it might suggest that 
-the program is a backdoor, can install services, or relies on HTTP to communicate. 
-
-The capa explorer IDA plugin brings capa's detection capabilities to IDA. You can use capa explorer to run capa directly on an IDA database without needing access
+the program is a backdoor, can install services, or relies on HTTP to communicate. You can use capa explorer to run capa directly on an IDA database without requiring access
 to the source binary. Once a database has been analyzed, capa explorer can be used to quickly identify and navigate to interesting areas of a program 
 and dissect capa rule matches at the assembly level.
 
-To illustrate, we use capa explorer to analyze Lab 14-02 from [Practical Malware Analysis](https://nostarch.com/malware) (PMA) available [here](https://practicalmalwareanalysis.com/labs/). Our
-goal is to understand the program's functionality.
+We love using capa explorer during malware analysis because it teaches us what parts of a program suggest a behavior. As we click on rows, capa explorer jumps directly 
+to important addresses in the IDA Pro database and highlights key features in the Disassembly view so they stand out visually. To illustrate, we use capa explorer to 
+analyze Lab 14-02 from [Practical Malware Analysis](https://nostarch.com/malware) (PMA) available [here](https://practicalmalwareanalysis.com/labs/). Our goal is to understand 
+the program's functionality.
 
 After loading Lab 14-02 into IDA and analyzing the database with capa explorer, we see that capa detected a rule match for `self delete via COMSPEC environment variable`:
 
@@ -65,7 +65,7 @@ capa explorer is limited to the file types supported by capa, which includes:
 
 You can install capa explorer using the following steps:
 
-1. Install capa for the Python interpreter used by your IDA installation:
+1. Install capa and its dependencies from PyPI for the Python interpreter used by your IDA installation:
     ```
     $ pip install flare-capa
     ```
@@ -74,9 +74,9 @@ You can install capa explorer using the following steps:
 
 ### Usage
 
-1. Run IDA and analyze a supported file type (select `Manual Load` and `Load Resources` for best results)
+1. Run IDA and analyze a supported file type (select the `Manual Load` and `Load Resources` options in IDA for best results)
 2. Open capa explorer in IDA by navigating to `Edit > Plugins > FLARE capa explorer` or using the keyboard shortcut `Alt+F5`
-3. Click `Analyze`
+3. Click the `Analyze` button
 
 When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
 remembers your selection for future runs; you can change this selection by navigating to `Rules > Change rules directory...`. We recommend 
@@ -84,9 +84,9 @@ downloading and using the [standard collection of capa rules](https://github.com
 
 #### Tips
 
-* Start analysis by clicking `Analyze`
-* Reset the plugin user interface and remove highlighting from IDA disassembly view by clicking `Reset`
-* Change your capa rules directory by navigating to `Rules > Change rules directory...`
+* Start analysis by clicking the `Analyze` button
+* Reset the plugin user interface and remove highlighting from IDA disassembly view by clicking the `Reset` button
+* Change your capa rules directory by navigating to `Rules > Change rules directory...` from the plugin menu
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate the IDA Disassembly view to the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
@@ -107,5 +107,5 @@ capa explorer consists of two main components:
 * An IDA [feature extractor](https://github.com/fireeye/capa/tree/master/capa/features/extractors/ida) built on top of IDA's binary analysis engine
   * This component uses IDAPython to extract [capa features](https://github.com/fireeye/capa-rules/blob/master/doc/format.md#extracted-features) from the IDA database such as strings, 
 disassembly, and control flow; these extracted features are used by capa to find feature combinations that result in a rule match
-* An [interactive plugin](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rule matches
+* An [interactive user interface](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rule matches
   * This component integrates the IDA feature extractor and capa, providing an interactive user interface to dissect rule matches found by capa using features extracted by the IDA feature extractor
