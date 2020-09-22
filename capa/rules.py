@@ -13,6 +13,7 @@ import binascii
 import functools
 
 import six
+import yaml
 import ruamel.yaml
 
 import capa.engine
@@ -385,26 +386,6 @@ def second(s):
     return s[1]
 
 
-# we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
-yaml = ruamel.yaml.YAML(typ="rt")
-
-
-# use block mode, not inline json-like mode
-yaml.default_flow_style = False
-
-
-# indent lists by two spaces below their parent
-#
-#     features:
-#       - or:
-#         - mnemonic: aesdec
-#         - mnemonic: vaesdec
-yaml.indent(sequence=2, offset=2)
-
-# avoid word wrapping
-yaml.width = 4096
-
-
 class Rule(object):
     def __init__(self, name, scope, statement, meta, definition=""):
         super(Rule, self).__init__()
@@ -555,7 +536,9 @@ class Rule(object):
 
     @classmethod
     def from_yaml(cls, s):
-        return cls.from_dict(yaml.load(s), s)
+        # use CLoader to be fast, see #306
+        doc = yaml.load(s, Loader=yaml.CLoader)
+        return cls.from_dict(doc, s)
 
     @classmethod
     def from_yaml_file(cls, path):
@@ -564,6 +547,29 @@ class Rule(object):
                 return cls.from_yaml(f.read().decode("utf-8"))
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
+
+    @staticmethod
+    def _get_ruamel_yaml_parser():
+        # use ruamel to enable nice formatting
+
+        # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
+        y = ruamel.yaml.YAML(typ="rt")
+
+        # use block mode, not inline json-like mode
+        y.default_flow_style = False
+
+        # indent lists by two spaces below their parent
+        #
+        #     features:
+        #       - or:
+        #         - mnemonic: aesdec
+        #         - mnemonic: vaesdec
+        y.indent(sequence=2, offset=2)
+
+        # avoid word wrapping
+        y.width = 4096
+
+        return y
 
     def to_yaml(self):
         # reformat the yaml document with a common style.
@@ -575,7 +581,7 @@ class Rule(object):
         # but not for rule logic.
         # programmatic generation of rules is not yet supported.
 
-        definition = yaml.load(self.definition)
+        definition = self._get_ruamel_yaml_parser().load(self.definition)
         # definition retains a reference to `meta`,
         # so we're updating that in place.
         definition["rule"]["meta"] = self.meta
@@ -617,7 +623,7 @@ class Rule(object):
             del meta[key]
 
         ostream = six.BytesIO()
-        yaml.dump(definition, ostream)
+        self._get_ruamel_yaml_parser().dump(definition, ostream)
 
         for key, value in hidden_meta.items():
             if value is None:
