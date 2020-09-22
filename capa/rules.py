@@ -536,8 +536,17 @@ class Rule(object):
 
     @classmethod
     def from_yaml(cls, s):
-        # use CLoader to be fast, see #306
-        doc = yaml.load(s, Loader=yaml.CLoader)
+        try:
+            # prefer to use CLoader to be fast, see #306
+            # on Linux, make sure you install libyaml-dev or similar
+            # on Windows, get whls from pyyaml.org
+            loader = yaml.CLoader
+            logger.debug("using libyaml CLoader.")
+        except:
+            loader = yaml.Loader
+            logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
+            logger.debug("this will be slower to load rules.")
+        doc = yaml.load(s, Loader=loader)
         return cls.from_dict(doc, s)
 
     @classmethod
