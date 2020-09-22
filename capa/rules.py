@@ -12,6 +12,11 @@ import logging
 import binascii
 import functools
 
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
 import six
 import yaml
 import ruamel.yaml
@@ -25,7 +30,6 @@ from capa.engine import *
 from capa.features import MAX_BYTES_FEATURE_SIZE
 
 logger = logging.getLogger(__name__)
-
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
@@ -534,28 +538,21 @@ class Rule(object):
 
         return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], s)
 
-    @classmethod
-    def from_yaml(cls, s):
+    @staticmethod
+    @lru_cache()
+    def _get_yaml_loader():
         try:
             # prefer to use CLoader to be fast, see #306
             # on Linux, make sure you install libyaml-dev or similar
-            # on Windows, get whls from pyyaml.org
+            # on Windows, get WHLs from pyyaml.org/pypi
             loader = yaml.CLoader
             logger.debug("using libyaml CLoader.")
         except:
             loader = yaml.Loader
             logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
-        doc = yaml.load(s, Loader=loader)
-        return cls.from_dict(doc, s)
 
-    @classmethod
-    def from_yaml_file(cls, path):
-        with open(path, "rb") as f:
-            try:
-                return cls.from_yaml(f.read().decode("utf-8"))
-            except InvalidRule as e:
-                raise InvalidRuleWithPath(path, str(e))
+        return loader
 
     @staticmethod
     def _get_ruamel_yaml_parser():
@@ -580,6 +577,20 @@ class Rule(object):
 
         return y
 
+    @classmethod
+    def from_yaml(cls, s):
+        # use pyyaml because it can be much faster than ruamel (pure python)
+        doc = yaml.load(s, Loader=cls._get_yaml_loader())
+        return cls.from_dict(doc, s)
+
+    @classmethod
+    def from_yaml_file(cls, path):
+        with open(path, "rb") as f:
+            try:
+                return cls.from_yaml(f.read().decode("utf-8"))
+            except InvalidRule as e:
+                raise InvalidRuleWithPath(path, str(e))
+
     def to_yaml(self):
         # reformat the yaml document with a common style.
         # this includes:
@@ -590,6 +601,8 @@ class Rule(object):
         # but not for rule logic.
         # programmatic generation of rules is not yet supported.
 
+        # use ruamel because it supports round tripping.
+        # pyyaml will lose the existing ordering of rule statements.
         definition = self._get_ruamel_yaml_parser().load(self.definition)
         # definition retains a reference to `meta`,
         # so we're updating that in place.
