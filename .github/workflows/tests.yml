@@ -61,6 +61,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python }}
+    - name: Install pyyaml
+      run: apt-get install -y libyaml-dev
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
