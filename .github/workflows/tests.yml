@@ -62,7 +62,7 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
     - name: Install pyyaml
-      run: apt-get install -y libyaml-dev
+      run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests

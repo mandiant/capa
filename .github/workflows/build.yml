@@ -31,8 +31,7 @@ jobs:
         with:
           python-version: 2.7
       - if: matrix.os == 'ubuntu-latest'
-        run: |
-          apt-get install -y libyaml-dev
+        run: sudo apt-get install -y libyaml-dev
       - name: Install PyInstaller
         # pyinstaller 4 doesn't support Python 2.7
         run: pip install 'pyinstaller==3.*'
