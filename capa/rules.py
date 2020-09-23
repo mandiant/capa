@@ -12,7 +12,13 @@ import logging
 import binascii
 import functools
 
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
 import six
+import yaml
 import ruamel.yaml
 
 import capa.engine
@@ -24,7 +30,6 @@ from capa.engine import *
 from capa.features import MAX_BYTES_FEATURE_SIZE
 
 logger = logging.getLogger(__name__)
-
 
 # these are the standard metadata fields, in the preferred order.
 # when reformatted, any custom keys will come after these.
@@ -385,26 +390,6 @@ def second(s):
     return s[1]
 
 
-# we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
-yaml = ruamel.yaml.YAML(typ="rt")
-
-
-# use block mode, not inline json-like mode
-yaml.default_flow_style = False
-
-
-# indent lists by two spaces below their parent
-#
-#     features:
-#       - or:
-#         - mnemonic: aesdec
-#         - mnemonic: vaesdec
-yaml.indent(sequence=2, offset=2)
-
-# avoid word wrapping
-yaml.width = 4096
-
-
 class Rule(object):
     def __init__(self, name, scope, statement, meta, definition=""):
         super(Rule, self).__init__()
@@ -533,7 +518,7 @@ class Rule(object):
         return self.statement.evaluate(features)
 
     @classmethod
-    def from_dict(cls, d, s):
+    def from_dict(cls, d, definition):
         name = d["rule"]["meta"]["name"]
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
@@ -551,11 +536,52 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
-        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], s)
+        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
+
+    @staticmethod
+    @lru_cache()
+    def _get_yaml_loader():
+        try:
+            # prefer to use CLoader to be fast, see #306
+            # on Linux, make sure you install libyaml-dev or similar
+            # on Windows, get WHLs from pyyaml.org/pypi
+            loader = yaml.CLoader
+            logger.debug("using libyaml CLoader.")
+        except:
+            loader = yaml.Loader
+            logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
+            logger.debug("this will be slower to load rules.")
+
+        return loader
+
+    @staticmethod
+    def _get_ruamel_yaml_parser():
+        # use ruamel to enable nice formatting
+
+        # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
+        y = ruamel.yaml.YAML(typ="rt")
+
+        # use block mode, not inline json-like mode
+        y.default_flow_style = False
+
+        # indent lists by two spaces below their parent
+        #
+        #     features:
+        #       - or:
+        #         - mnemonic: aesdec
+        #         - mnemonic: vaesdec
+        y.indent(sequence=2, offset=2)
+
+        # avoid word wrapping
+        y.width = 4096
+
+        return y
 
     @classmethod
     def from_yaml(cls, s):
-        return cls.from_dict(yaml.load(s), s)
+        # use pyyaml because it can be much faster than ruamel (pure python)
+        doc = yaml.load(s, Loader=cls._get_yaml_loader())
+        return cls.from_dict(doc, s)
 
     @classmethod
     def from_yaml_file(cls, path):
@@ -575,12 +601,25 @@ class Rule(object):
         # but not for rule logic.
         # programmatic generation of rules is not yet supported.
 
-        definition = yaml.load(self.definition)
-        # definition retains a reference to `meta`,
-        # so we're updating that in place.
-        definition["rule"]["meta"] = self.meta
-        meta = self.meta
+        # use ruamel because it supports round tripping.
+        # pyyaml will lose the existing ordering of rule statements.
+        definition = self._get_ruamel_yaml_parser().load(self.definition)
 
+        # we want to apply any updates that have been made to `meta`.
+        # so we would like to assigned it like this:
+        #
+        #     definition["rule"]["meta"] = self.meta
+        #
+        # however, `self.meta` is not ordered, its just a dict, so subsequent formatting doesn't work.
+        # so, we'll manually copy the keys over, re-using the existing ordereddict/CommentedMap
+        meta = definition["rule"]["meta"]
+        for k in meta.keys():
+            if k not in self.meta:
+                del meta[k]
+        for k, v in self.meta.items():
+            meta[k] = v
+
+        # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
         meta["scope"] = self.scope
 
@@ -617,7 +656,7 @@ class Rule(object):
             del meta[key]
 
         ostream = six.BytesIO()
-        yaml.dump(definition, ostream)
+        self._get_ruamel_yaml_parser().dump(definition, ostream)
 
         for key, value in hidden_meta.items():
             if value is None:
