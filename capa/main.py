@@ -536,7 +536,13 @@ def main(argv=None):
     try:
         rules = get_rules(rules_path, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
-        logger.debug("successfully loaded %s rules", len(rules))
+        logger.debug(
+            "successfully loaded %s rules",
+            # during the load of the RuleSet, we extract subscope statements into their own rules
+            # that are subsequently `match`ed upon. this inflates the total rule count.
+            # so, filter out the subscope rules when reporting total number of loaded rules.
+            len(filter(lambda r: "capa/subscope-rule" not in r.meta, rules.rules.values())),
+        )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
             logger.debug("selected %s rules", len(rules))
