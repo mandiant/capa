@@ -518,7 +518,7 @@ class Rule(object):
         return self.statement.evaluate(features)
 
     @classmethod
-    def from_dict(cls, d, s):
+    def from_dict(cls, d, definition):
         name = d["rule"]["meta"]["name"]
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
@@ -536,7 +536,7 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
-        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], s)
+        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
 
     @staticmethod
     @lru_cache()
@@ -604,11 +604,22 @@ class Rule(object):
         # use ruamel because it supports round tripping.
         # pyyaml will lose the existing ordering of rule statements.
         definition = self._get_ruamel_yaml_parser().load(self.definition)
-        # definition retains a reference to `meta`,
-        # so we're updating that in place.
-        definition["rule"]["meta"] = self.meta
-        meta = self.meta
 
+        # we want to apply any updates that have been made to `meta`.
+        # so we would like to assigned it like this:
+        #
+        #     definition["rule"]["meta"] = self.meta
+        #
+        # however, `self.meta` is not ordered, its just a dict, so subsequent formatting doesn't work.
+        # so, we'll manually copy the keys over, re-using the existing ordereddict/CommentedMap
+        meta = definition["rule"]["meta"]
+        for k in meta.keys():
+            if k not in self.meta:
+                del meta[k]
+        for k, v in self.meta.items():
+            meta[k] = v
+
+        # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
         meta["scope"] = self.scope
 
