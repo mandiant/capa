@@ -87,28 +87,64 @@ def test_rule_yaml_descriptions():
                         - and:
                             - offset: 0x50 = IMAGE_NT_HEADERS.OptionalHeader.SizeOfImage
                             - offset: 0x34 = IMAGE_NT_HEADERS.OptionalHeader.ImageBase
-                          description: 32-bits
+                            - description: 32-bits
                         - and:
+                            - description: 64-bits
                             - offset: 0x50 = IMAGE_NT_HEADERS64.OptionalHeader.SizeOfImage
                             - offset: 0x30 = IMAGE_NT_HEADERS64.OptionalHeader.ImageBase
-                          description: 64-bits
-                      description: PE headers offsets
+                        - description: PE headers offsets
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
     assert (
+        # TODO test descriptions are associated correctly
         r.evaluate(
             {
                 Number(1): {1},
-                Number(2): {2, 3},
-                String("This program cannot be run in DOS mode."): {4},
-                String("SELECT password FROM hidden_table WHERE user == admin"): {5},
-                Offset(0x50): {6},
-                Offset(0x30): {7},
+                Number(2): {1, 2},
+                String("This program cannot be run in DOS mode."): {1},
+                String("SELECT password FROM hidden_table WHERE user == admin"): {1},
+                Offset(0x50): {1},
+                Offset(0x30): {1},
             }
         )
         == True
     )
+
+
+def test_invalid_rule_statement_descriptions():
+    # statements can only have one description
+    with pytest.raises(capa.rules.InvalidRule):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                  meta:
+                    name: test rule
+                  features:
+                    - or:
+                      - number: 1 = This is the number 1
+                      - description: description
+                      - description: another description (invalid)
+                """
+            )
+        )
+
+    # TODO test previously supported syntax fails?
+    # with pytest.raises(capa.rules.InvalidRule):
+    #     capa.rules.Rule.from_yaml(
+    #         textwrap.dedent(
+    #             """
+    #             rule:
+    #               meta:
+    #                 name: test rule
+    #               features:
+    #                 - or:
+    #                   - number: 1 = This is the number 1
+    #                   description: an unsupported description
+    #             """
+    #         )
+    #     )
 
 
 def test_rule_yaml_not():

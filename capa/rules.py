@@ -282,21 +282,21 @@ def build_statements(d, scope):
 
     key = list(d.keys())[0]
     if key == "and":
-        return And([build_statements(dd, scope) for dd in d[key]], description=d.get("description"))
+        return And([build_statements(dd, scope) for dd in d[key]])
     elif key == "or":
-        return Or([build_statements(dd, scope) for dd in d[key]], description=d.get("description"))
+        return Or([build_statements(dd, scope) for dd in d[key]])
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
-        return Not(build_statements(d[key][0], scope), description=d.get("description"))
+        return Not(build_statements(d[key][0], scope))
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return Some(count, [build_statements(dd, scope) for dd in d[key]], description=d.get("description"))
+        return Some(count, [build_statements(dd, scope) for dd in d[key]])
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return Some(0, [build_statements(dd, scope) for dd in d[key]], description=d.get("description"))
+        return Some(0, [build_statements(dd, scope) for dd in d[key]])
 
     elif key == "function":
         if scope != FILE_SCOPE:
@@ -355,22 +355,24 @@ def build_statements(d, scope):
 
         count = d[key]
         if isinstance(count, int):
-            return Range(feature, min=count, max=count, description=d.get("description"))
+            return Range(feature, min=count, max=count)
         elif count.endswith(" or more"):
             min = parse_int(count[: -len(" or more")])
             max = None
-            return Range(feature, min=min, max=max, description=d.get("description"))
+            return Range(feature, min=min, max=max)
         elif count.endswith(" or fewer"):
             min = None
             max = parse_int(count[: -len(" or fewer")])
-            return Range(feature, min=min, max=max, description=d.get("description"))
+            return Range(feature, min=min, max=max)
         elif count.startswith("("):
             min, max = parse_range(count)
-            return Range(feature, min=min, max=max, description=d.get("description"))
+            return Range(feature, min=min, max=max)
         else:
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], six.string_types):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
+    elif key == "description":
+        return Description(d[key])
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
@@ -536,7 +538,10 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
-        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
+        try:
+            return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
+        except ValueError as e:
+            raise InvalidRule(e)
 
     @staticmethod
     @lru_cache()
