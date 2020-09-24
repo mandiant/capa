@@ -104,26 +104,10 @@ class Result(object):
         return self.success
 
 
-class Description(object):
-    def __init__(self, value=None):
-        super(Description, self).__init__()
-        self.name = self.__class__.__name__
-        self.value = value
-
-    def __str__(self):
-        return "%s" % (self.value)
-
-    def __repr__(self):
-        return str(self)
-
-
 class And(Statement):
     """match if all of the children evaluate to True."""
 
-    def __init__(self, children):
-        description = get_statement_description(children)
-        if description:
-            children.remove(description)
+    def __init__(self, children, description=None):
         super(And, self).__init__(description=description)
         self.children = children
 
@@ -136,10 +120,7 @@ class And(Statement):
 class Or(Statement):
     """match if any of the children evaluate to True."""
 
-    def __init__(self, children):
-        description = get_statement_description(children)
-        if description:
-            children.remove(description)
+    def __init__(self, children, description=None):
         super(Or, self).__init__(description=description)
         self.children = children
 
@@ -152,8 +133,8 @@ class Or(Statement):
 class Not(Statement):
     """match only if the child evaluates to False."""
 
-    def __init__(self, child):
-        super(Not, self).__init__()
+    def __init__(self, child, description=None):
+        super(Not, self).__init__(description=description)
         self.child = child
 
     def evaluate(self, ctx):
@@ -165,10 +146,7 @@ class Not(Statement):
 class Some(Statement):
     """match if at least N of the children evaluate to True."""
 
-    def __init__(self, count, children):
-        description = get_statement_description(children)
-        if description:
-            children.remove(description)
+    def __init__(self, count, children, description=None):
         super(Some, self).__init__(description=description)
         self.count = count
         self.children = children
@@ -186,8 +164,8 @@ class Some(Statement):
 class Range(Statement):
     """match if the child is contained in the ctx set with a count in the given range."""
 
-    def __init__(self, child, min=None, max=None):
-        super(Range, self).__init__()
+    def __init__(self, child, min=None, max=None, description=None):
+        super(Range, self).__init__(description=description)
         self.child = child
         self.min = min if min is not None else 0
         self.max = max if max is not None else (1 << 64 - 1)
@@ -219,16 +197,6 @@ class Subscope(Statement):
 
     def evaluate(self, ctx):
         raise ValueError("cannot evaluate a subscope directly!")
-
-
-def get_statement_description(children):
-    description = list(filter(lambda c: isinstance(c, Description), children))
-    if len(description) == 1:
-        return description[0]
-    elif len(description) > 1:
-        raise ValueError("statements can only have one description")
-    else:
-        return None
 
 
 def topologically_order_rules(rules):

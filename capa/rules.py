@@ -276,27 +276,66 @@ def parse_description(s, value_type, description=None):
     return value, description
 
 
+def get_statement_description_entry(d):
+    """
+    extracts the description for statements
+    a statement must only have one description
+
+    example:
+    the features definition
+      - or:
+        - description: statement description
+        - number: 1
+          description: feature description
+
+    becomes
+      <statement>: [
+        { "description": "statement description" },  <-- extracted here
+        { "number": 1, "description": "feature description" }
+      ]
+    """
+    if not isinstance(d, list):
+        return None
+
+    # identify child of form '{ "description": <description> }'
+    descriptions = list(filter(lambda c: isinstance(c, dict) and len(c) == 1 and "description" in c, d))
+    if len(descriptions) > 1:
+        raise InvalidRule("statements can only have one description")
+
+    if not descriptions:
+        return None
+
+    return descriptions[0]
+
+
 def build_statements(d, scope):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
 
     key = list(d.keys())[0]
+
+    description = get_statement_description_entry(d[key])
+    if description:
+        # remove description entry from the document and use statement description
+        d[key].remove(description)
+        description = description["description"]
+
     if key == "and":
-        return And([build_statements(dd, scope) for dd in d[key]])
+        return And([build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "or":
-        return Or([build_statements(dd, scope) for dd in d[key]])
+        return Or([build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
-        return Not(build_statements(d[key][0], scope))
+        return Not(build_statements(d[key][0], scope), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return Some(count, [build_statements(dd, scope) for dd in d[key]])
+        return Some(count, [build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return Some(0, [build_statements(dd, scope) for dd in d[key]])
+        return Some(0, [build_statements(dd, scope) for dd in d[key]], description=description)
 
     elif key == "function":
         if scope != FILE_SCOPE:
@@ -355,24 +394,22 @@ def build_statements(d, scope):
 
         count = d[key]
         if isinstance(count, int):
-            return Range(feature, min=count, max=count)
+            return Range(feature, min=count, max=count, description=description)
         elif count.endswith(" or more"):
             min = parse_int(count[: -len(" or more")])
             max = None
-            return Range(feature, min=min, max=max)
+            return Range(feature, min=min, max=max, description=description)
         elif count.endswith(" or fewer"):
             min = None
             max = parse_int(count[: -len(" or fewer")])
-            return Range(feature, min=min, max=max)
+            return Range(feature, min=min, max=max, description=description)
         elif count.startswith("("):
             min, max = parse_range(count)
-            return Range(feature, min=min, max=max)
+            return Range(feature, min=min, max=max, description=description)
         else:
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], six.string_types):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
-    elif key == "description":
-        return Description(d[key])
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
@@ -538,10 +575,7 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
-        try:
-            return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
-        except ValueError as e:
-            raise InvalidRule(e)
+        return cls(name, scope, build_statements(statements[0], scope), d["rule"]["meta"], definition)
 
     @staticmethod
     @lru_cache()
