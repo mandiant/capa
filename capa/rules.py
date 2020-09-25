@@ -276,10 +276,10 @@ def parse_description(s, value_type, description=None):
     return value, description
 
 
-def get_statement_description_entry(d):
+def pop_statement_description_entry(d):
     """
-    extracts the description for statements
-    a statement must only have one description
+    extracts the description for statements and removes the description entry from the document
+    a statement can only have one description
 
     example:
     the features definition
@@ -305,7 +305,10 @@ def get_statement_description_entry(d):
     if not descriptions:
         return None
 
-    return descriptions[0]
+    description = descriptions[0]
+    d.remove(description)
+
+    return description["description"]
 
 
 def build_statements(d, scope):
@@ -313,13 +316,7 @@ def build_statements(d, scope):
         raise InvalidRule("too many statements")
 
     key = list(d.keys())[0]
-
-    description = get_statement_description_entry(d[key])
-    if description:
-        # remove description entry from the document and use statement description
-        d[key].remove(description)
-        description = description["description"]
-
+    description = pop_statement_description_entry(d[key])
     if key == "and":
         return And([build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "or":

@@ -69,47 +69,44 @@ def test_rule_yaml_complex():
     assert r.evaluate({Number(6): {1}, Number(7): {1}, Number(8): {1}}) == False
 
 
-def test_rule_yaml_descriptions():
+def test_rule_descriptions():
     rule = textwrap.dedent(
         """
         rule:
-            meta:
-                name: test rule
-            features:
+          meta:
+            name: test rule
+          features:
+            - and:
+              - description: and description
+              - number: 1 = number description
+              - string: mystring
+                description: string description
+              - string: '/myregex/'
+                description: regex description
+              # TODO - count(number(2 = number description)): 2
+              - or:
+                - description: or description
                 - and:
-                    - number: 1 = This is the number 1
-                    - string: This program cannot be run in DOS mode.
-                      description: MS-DOS stub message
-                    - string: '/SELECT.*FROM.*WHERE/i'
-                      description: SQL WHERE Clause
-                    - count(number(2 = AF_INET/SOCK_DGRAM)): 2
-                    - or:
-                        - and:
-                            - offset: 0x50 = IMAGE_NT_HEADERS.OptionalHeader.SizeOfImage
-                            - offset: 0x34 = IMAGE_NT_HEADERS.OptionalHeader.ImageBase
-                            - description: 32-bits
-                        - and:
-                            - description: 64-bits
-                            - offset: 0x50 = IMAGE_NT_HEADERS64.OptionalHeader.SizeOfImage
-                            - offset: 0x30 = IMAGE_NT_HEADERS64.OptionalHeader.ImageBase
-                        - description: PE headers offsets
+                  - offset: 0x50 = offset description
+                  - offset: 0x34 = offset description
+                  - description: and description
+                - and:
+                  - description: and description
+                  - offset/x64: 0x50 = offset/x64 description
+                  - offset/x64: 0x30 = offset/x64 description
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert (
-        # TODO test descriptions are associated correctly
-        r.evaluate(
-            {
-                Number(1): {1},
-                Number(2): {1, 2},
-                String("This program cannot be run in DOS mode."): {1},
-                String("SELECT password FROM hidden_table WHERE user == admin"): {1},
-                Offset(0x50): {1},
-                Offset(0x30): {1},
-            }
-        )
-        == True
-    )
+
+    def rec(statement):
+        if isinstance(statement, capa.engine.Statement):
+            assert statement.description == statement.name.lower() + " description"
+            for child in statement.get_children():
+                rec(child)
+        else:
+            assert statement.description == statement.name + " description"
+
+    rec(r.statement)
 
 
 def test_invalid_rule_statement_descriptions():
@@ -129,22 +126,6 @@ def test_invalid_rule_statement_descriptions():
                 """
             )
         )
-
-    # TODO test previously supported syntax fails?
-    # with pytest.raises(capa.rules.InvalidRule):
-    #     capa.rules.Rule.from_yaml(
-    #         textwrap.dedent(
-    #             """
-    #             rule:
-    #               meta:
-    #                 name: test rule
-    #               features:
-    #                 - or:
-    #                   - number: 1 = This is the number 1
-    #                   description: an unsupported description
-    #             """
-    #         )
-    #     )
 
 
 def test_rule_yaml_not():
