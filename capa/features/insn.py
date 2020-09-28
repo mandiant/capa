@@ -13,7 +13,7 @@ class API(Feature):
     def __init__(self, name, description=None):
         # Downcase library name if given
         if "." in name:
-            modname, impname = name.split(".")
+            modname, _, impname = name.rpartition(".")
             name = modname.lower() + "." + impname
 
         super(API, self).__init__(name, description)
