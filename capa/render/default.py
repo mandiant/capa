@@ -161,12 +161,69 @@ def render_attack(doc, ostream):
         ostream.write("\n")
 
 
+def render_mbc(doc, ostream):
+    """
+    example::
+
+        +--------------------------+------------------------------------------------------------+
+        | MBC Objective            | MBC Behavior                                               |
+        |--------------------------+------------------------------------------------------------|
+        | ANTI-BEHAVIORAL ANALYSIS | Virtual Machine Detection::Instruction Testing [B0009.029] |
+        | COLLECTION               | Keylogging::Polling [F0002.002]                            |
+        | COMMUNICATION            | Interprocess Communication::Create Pipe [C0003.001]        |
+        |                          | Interprocess Communication::Write Pipe [C0003.004]         |
+        | IMPACT                   | Remote Access::Reverse Shell [B0022.001]                   |
+        +--------------------------+------------------------------------------------------------+
+    """
+    objectives = collections.defaultdict(set)
+    for rule in rutils.capability_rules(doc):
+        if not rule["meta"].get("mbc"):
+            continue
+
+        for mbc in rule["meta"]["mbc"]:
+            objective, _, rest = mbc.partition("::")
+            if "::" in rest:
+                behavior, _, rest = rest.partition("::")
+                method, _, id = rest.rpartition(" ")
+                objectives[objective].add((behavior, method, id))
+            else:
+                behavior, _, id = rest.rpartition(" ")
+                objectives[objective].add((behavior, id))
+
+    rows = []
+    for objective, behaviors in sorted(objectives.items()):
+        inner_rows = []
+        for spec in sorted(behaviors):
+            if len(spec) == 2:
+                behavior, id = spec
+                inner_rows.append("%s %s" % (rutils.bold(behavior), id))
+            elif len(spec) == 3:
+                behavior, method, id = spec
+                inner_rows.append("%s::%s %s" % (rutils.bold(behavior), method, id))
+            else:
+                raise RuntimeError("unexpected MBC spec format")
+        rows.append(
+            (
+                rutils.bold(objective.upper()),
+                "\n".join(inner_rows),
+            )
+        )
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="psql")
+        )
+        ostream.write("\n")
+
+
 def render_default(doc):
     ostream = rutils.StringIO()
 
     render_meta(doc, ostream)
     ostream.write("\n")
     render_attack(doc, ostream)
+    ostream.write("\n")
+    render_mbc(doc, ostream)
     ostream.write("\n")
     render_capabilities(doc, ostream)
 
