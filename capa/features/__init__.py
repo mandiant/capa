@@ -74,7 +74,7 @@ class Feature(object):
         return self.value
 
     def __str__(self):
-        if self.value:
+        if self.value is not None:
             if self.description:
                 return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
             else:
