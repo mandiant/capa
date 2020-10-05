@@ -37,11 +37,11 @@ def check_segment_for_pe(seg):
         )
         for i in range(256)
     ]
-    todo = [
-        (capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx), mzx, pex, i)
-        for mzx, pex, i in mz_xor
-    ]
-    todo = [(off, mzx, pex, i) for (off, mzx, pex, i) in todo if off != idaapi.BADADDR]
+
+    todo = []
+    for (mzx, pex, i) in mz_xor:
+        for off in capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx):
+            todo.append((off, mzx, pex, i))
 
     while len(todo):
         off, mzx, pex, i = todo.pop()
@@ -61,8 +61,7 @@ def check_segment_for_pe(seg):
         if idc.get_bytes(peoff, 2) == pex:
             yield (off, i)
 
-        nextres = capa.features.extractors.ida.helpers.find_byte_sequence(off + 1, seg.end_ea, mzx)
-        if nextres != -1:
+        for nextres in capa.features.extractors.ida.helpers.find_byte_sequence(off + 1, seg.end_ea, mzx):
             todo.append((nextres, mzx, pex, i))
 
 
