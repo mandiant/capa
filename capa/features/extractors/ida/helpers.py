@@ -16,17 +16,24 @@ import ida_bytes
 
 
 def find_byte_sequence(start, end, seq):
-    """find byte sequence
+    """yield all ea of a given byte sequence
 
     args:
         start: min virtual address
         end: max virtual address
-        seq: bytes to search e.g. b'\x01\x03'
+        seq: bytes to search e.g. b"\x01\x03"
     """
     if sys.version_info[0] >= 3:
-        return idaapi.find_binary(start, end, " ".join(["%02x" % b for b in seq]), 0, idaapi.SEARCH_DOWN)
+        seq = " ".join(["%02x" % b for b in seq])
     else:
-        return idaapi.find_binary(start, end, " ".join(["%02x" % ord(b) for b in seq]), 0, idaapi.SEARCH_DOWN)
+        seq = " ".join(["%02x" % ord(b) for b in seq])
+
+    while True:
+        ea = idaapi.find_binary(start, end, seq, 0, idaapi.SEARCH_DOWN)
+        if ea == idaapi.BADADDR:
+            break
+        start = ea + 1
+        yield ea
 
 
 def get_functions(start=None, end=None, skip_thunks=False, skip_libs=False):
