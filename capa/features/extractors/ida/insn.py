@@ -19,6 +19,10 @@ from capa.features.insn import API, Number, Offset, Mnemonic
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
+# thunks may be chained so we specify a delta here to control the depth to which these chains
+# are explored
+THUNK_CHAIN_DEPTH_DELTA = 0x5
+
 
 def get_arch(ctx):
     """
@@ -49,20 +53,31 @@ def check_for_api_call(ctx, insn):
     if not idaapi.is_call_insn(insn):
         return
 
-    for ref in idautils.CodeRefsFrom(insn.ea, False):
+    info = ()
+    ref = insn.ea
+
+    # attempt to resolve API calls by following chained thunks to a reasonable depth
+    for _ in range(THUNK_CHAIN_DEPTH_DELTA):
+        # assume only one code/data ref when resolving "call" or "jmp"
+        try:
+            ref = tuple(idautils.CodeRefsFrom(ref, False))[0]
+        except IndexError:
+            try:
+                # thunks may be marked as data refs
+                ref = tuple(idautils.DataRefsFrom(ref))[0]
+            except IndexError:
+                break
+
         info = get_imports(ctx).get(ref, ())
         if info:
-            yield "%s.%s" % (info[0], info[1])
-        else:
-            f = idaapi.get_func(ref)
-            # check if call to thunk
-            # TODO: first instruction might not always be the thunk
-            if f and (f.flags & idaapi.FUNC_THUNK):
-                for thunk_ref in idautils.DataRefsFrom(ref):
-                    # TODO: always data ref for thunk??
-                    info = get_imports(ctx).get(thunk_ref, ())
-                    if info:
-                        yield "%s.%s" % (info[0], info[1])
+            break
+
+        f = idaapi.get_func(ref)
+        if not (f.flags & idaapi.FUNC_THUNK):
+            break
+
+    if info:
+        yield "%s.%s" % (info[0], info[1])
 
 
 def extract_insn_api_features(f, bb, insn):
