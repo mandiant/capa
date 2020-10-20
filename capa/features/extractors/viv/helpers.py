@@ -5,16 +5,16 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from vivisect.const import REF_CODE
+from vivisect.const import XR_TO, REF_CODE
 
 
 def get_coderef_from(vw, va):
     """
     return first code `tova` whose origin is the specified va
-    vivisect xref tuple: (fromva, tova, reftype, rflags)
+    return None if no code reference is found
     """
     xrefs = vw.getXrefsFrom(va, REF_CODE)
     if len(xrefs) > 0:
-        return xrefs[0][1]
+        return xrefs[0][XR_TO]
     else:
         return None

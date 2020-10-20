@@ -111,7 +111,6 @@ def extract_insn_api_features(f, bb, insn):
             if target in imports:
                 dll, symbol = imports[target]
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-                    print("nested thunk starting at %X in %X (%d)" % (insn.va, f.va, _))
                     yield API(name), insn.va
 
             target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
