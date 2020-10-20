@@ -75,8 +75,12 @@ def extract_insn_api_features(f, bb, insn):
     #
     #    call dword [0x00473038]
 
-    if insn.mnem != "call":
+    if insn.mnem not in ("call", "jmp"):
         return
+
+    if insn.mnem == "jmp":
+        if f.vw.getFunctionMeta(f.va, "Thunk"):
+            return
 
     # traditional call via IAT
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):

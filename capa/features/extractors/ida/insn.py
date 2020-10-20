@@ -54,7 +54,7 @@ def get_imports(ctx):
 
 def check_for_api_call(ctx, insn):
     """ check instruction for API call """
-    if not idaapi.is_call_insn(insn):
+    if not insn.get_canon_mnem() in ("call", "jmp"):
         return
 
     info = ()

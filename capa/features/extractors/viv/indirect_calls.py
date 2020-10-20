@@ -132,7 +132,7 @@ def is_indirect_call(vw, va, insn=None):
     if insn is None:
         insn = vw.parseOpcode(va)
 
-    return insn.mnem == "call" and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
+    return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
 def resolve_indirect_call(vw, va, insn=None):
