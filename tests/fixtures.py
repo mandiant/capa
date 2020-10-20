@@ -144,6 +144,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
     elif name.startswith("64d9f"):
         return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
+    elif name.startswith("82bf6"):
+        return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -180,6 +182,8 @@ def get_sample_md5_by_name(name):
         return "c91887d861d9bd4a5872249b641bc9f9"
     elif name.startswith("64d9f"):
         return "64d9f7d96b99467f36e22fada623c3bb"
+    elif name.startswith("82bf6"):
+        return "82bf6347acf15e5d883715dc289d8a2b"
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -369,6 +373,8 @@ FEATURE_PRESENCE_TESTS = [
         True,
     ),
     ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
+    # insn/api: x64 nested thunk
+    ("82bf6", "function=0x140059342", capa.features.insn.API("ElfClearEventLogFile"), True),
     # insn/api: resolve indirect calls
     ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
     ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),

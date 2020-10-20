@@ -16,6 +16,9 @@ import capa.engine
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
 
+# thunks may be chained so we specify a delta to control the depth to which these chains are explored
+THUNK_CHAIN_DEPTH_DELTA = 5
+
 # identifiers for supported architectures names that tweak a feature
 # for example, offset/x32
 ARCH_X32 = "x32"

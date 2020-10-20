@@ -7,11 +7,19 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import envi.memory
-import vivisect.const
 import envi.archs.i386.disasm
 
 import capa.features.extractors.helpers
-from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
+import capa.features.extractors.viv.helpers
+from capa.features import (
+    ARCH_X32,
+    ARCH_X64,
+    MAX_BYTES_FEATURE_SIZE,
+    THUNK_CHAIN_DEPTH_DELTA,
+    Bytes,
+    String,
+    Characteristic,
+)
 from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -86,20 +94,29 @@ def extract_insn_api_features(f, bb, insn):
     #
     # this is also how calls to internal functions may be decoded on x64.
     # see Lab21-01.exe_:0x140001178
-    elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
-        target = insn.opers[0].getOperValue(insn)
+    #
+    # follow chained thunks, e.g. in 82bf6347acf15e5d883715dc289d8a2b at 0x14005E0FF in
+    # 0x140059342 (viv) / 0x14005E0C0 (IDA)
+    # 14005E0FF call    j_ElfClearEventLogFileW (14005AAF8)
+    #   14005AAF8 jmp     ElfClearEventLogFileW (14005E196)
+    #     14005E196 jmp     cs:__imp_ElfClearEventLogFileW
 
-        try:
-            thunk = f.vw.getFunctionMeta(target, "Thunk")
-        except vivisect.exc.InvalidFunction:
+    elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
+        imports = get_imports(f.vw)
+        target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, insn.va)
+        if not target:
             return
-        else:
-            if thunk:
-                dll, _, symbol = thunk.rpartition(".")
-                if symbol.startswith("ord"):
-                    symbol = "#" + symbol[len("ord") :]
+
+        for _ in range(THUNK_CHAIN_DEPTH_DELTA):
+            if target in imports:
+                dll, symbol = imports[target]
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                    print("nested thunk starting at %X in %X (%d)" % (insn.va, f.va, _))
                     yield API(name), insn.va
+
+            target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
+            if not target:
+                return
 
     # call via import on x64
     # see Lab21-01.exe_:0x14000118C
