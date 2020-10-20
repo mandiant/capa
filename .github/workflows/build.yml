@@ -67,7 +67,7 @@ jobs:
       - name: Set executable flag
         run: chmod +x ${{ matrix.artifact_name }}
       - name: Set zip name
-        run: echo ::set-env name=zip_name::capa-${GITHUB_REF#refs/tags/}-${{ matrix.asset_name }}.zip
+        run: echo "zip_name=capa-${GITHUB_REF#refs/tags/}-${{ matrix.asset_name }}.zip" >> $GITHUB_ENV
       - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
         run: zip ${{ env.zip_name }} ${{ matrix.artifact_name }}
       - name: Upload ${{ env.zip_name }} to GH Release
@@ -76,4 +76,3 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN}}
           file: ${{ env.zip_name }}
           tag: ${{ github.ref }}
-
