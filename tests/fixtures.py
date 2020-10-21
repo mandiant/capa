@@ -146,6 +146,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
     elif name.startswith("82bf6"):
         return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
+    elif name.startswith("ping"):
+        return os.path.join(CD, "data", "ping.exe_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -532,3 +534,8 @@ def z499c2_extractor():
 @pytest.fixture
 def al_khaser_x86_extractor():
     return get_extractor(get_data_path_by_name("al-khaser x86"))
+
+
+@pytest.fixture
+def ping_extractor():
+    return get_extractor(get_data_path_by_name("ping"))

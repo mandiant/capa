@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -55,6 +56,35 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
         )
         == 0
     )
+
+
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
+def test_main_non_ascii_filename(ping_extractor, tmpdir, capsys):
+    # on py2.7, need to be careful about str (which can hold bytes)
+    #  vs unicode (which is only unicode characters).
+    # on py3, this should not be needed.
+    #
+    # here we print a string with unicode characters in it
+    # (specifically, a byte string with utf-8 bytes in it, see file encoding)
+    NON_ASCII_FILENAME = "täst1.exe"
+    tmp_file_kernel32_copy = tmpdir.mkdir("capa").join(NON_ASCII_FILENAME)
+    import shutil
+
+    shutil.copy(ping_extractor.path, tmp_file_kernel32_copy.strpath)
+    assert capa.main.main(["-q", tmp_file_kernel32_copy.strpath]) == 0
+
+    std = capsys.readouterr()
+    # but here, we have to use a unicode instance,
+    # because capsys has decoded the output for us.
+    assert NON_ASCII_FILENAME.decode("utf-8") in std.out
+
+
+@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
+def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
+    NON_ASCII_FILENAME = "täst1.exe"
+    assert capa.main.main(["-q", NON_ASCII_FILENAME]) == -1
+
+    assert NON_ASCII_FILENAME.decode("utf-8") in caplog.text
 
 
 @pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
