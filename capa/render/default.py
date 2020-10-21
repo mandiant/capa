@@ -180,7 +180,11 @@ def render_mbc(doc, ostream):
         if not rule["meta"].get("mbc"):
             continue
 
-        for mbc in rule["meta"]["mbc"]:
+        mbcs = rule["meta"]["mbc"]
+        if not isinstance(mbcs, list):
+            raise ValueError("invalid rule: MBC mapping is not a list")
+
+        for mbc in mbcs:
             objective, _, rest = mbc.partition("::")
             if "::" in rest:
                 behavior, _, rest = rest.partition("::")
