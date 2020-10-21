@@ -1,5 +1,13 @@
 #!/usr/bin/env python2
 """
+Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+You may obtain a copy of the License at: [package root]/LICENSE.txt
+Unless required by applicable law or agreed to in writing, software distributed under the License
+ is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+
 show-features
 
 Show the features that capa extracts from the given sample,
@@ -55,14 +63,6 @@ Example::
     insn: 0x10001027: number(0x1)
     insn: 0x10001027: mnemonic(shl)
     ...
-
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
-You may obtain a copy of the License at: [package root]/LICENSE.txt
-Unless required by applicable law or agreed to in writing, software distributed under the License
- is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and limitations under the License.
 """
 import sys
 import logging
@@ -89,12 +89,12 @@ def main(argv=None):
     ]
     format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
 
-    parser = argparse.ArgumentParser(description="detect capabilities in programs.")
+    parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
     parser.add_argument("sample", type=str, help="Path to sample to analyze")
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
     )
-    parser.add_argument("-F", "--function", type=lambda x: int(x, 0), help="Show features for specific function")
+    parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
     args = parser.parse_args(args=argv)
 
     logging.basicConfig(level=logging.INFO)
@@ -122,6 +122,50 @@ def main(argv=None):
         else:
             functions = filter(lambda f: f.va == args.function, functions)
 
+            if args.function not in [f.va for f in functions]:
+                print("0x%X not a function, creating it" % args.function)
+                vw.makeFunction(args.function)
+                functions = extractor.get_functions()
+                functions = filter(lambda f: f.va == args.function, functions)
+
+        if len(functions) == 0:
+            print("0x%X not a function")
+            return -1
+
+    print_features(functions, extractor)
+
+    return 0
+
+
+def ida_main():
+    function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
+    print("getting features for current function 0x%X" % function)
+
+    extractor = capa.features.extractors.ida.IdaFeatureExtractor()
+
+    if not function:
+        for feature, va in extractor.extract_file_features():
+            if va:
+                print("file: 0x%08x: %s" % (va, feature))
+            else:
+                print("file: 0x00000000: %s" % (feature))
+        return
+
+    functions = extractor.get_functions()
+
+    if function:
+        functions = filter(lambda f: f.start_ea == function, functions)
+
+        if len(functions) == 0:
+            print("0x%X not a function" % function)
+            return -1
+
+    print_features(functions, extractor)
+
+    return 0
+
+
+def print_features(functions, extractor):
     for f in functions:
         for feature, va in extractor.extract_function_features(f):
             print("func: 0x%08x: %s" % (va, feature))
@@ -138,8 +182,9 @@ def main(argv=None):
                         # may be an issue while piping to less and encountering non-ascii characters
                         continue
 
-    return 0
-
 
 if __name__ == "__main__":
-    sys.exit(main())
+    if capa.main.is_runtime_ida():
+        ida_main()
+    else:
+        sys.exit(main())

@@ -12,16 +12,20 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features import ARCH_X32, ARCH_X64, MAX_BYTES_FEATURE_SIZE, Bytes, String, Characteristic
+from capa.features import (
+    ARCH_X32,
+    ARCH_X64,
+    MAX_BYTES_FEATURE_SIZE,
+    THUNK_CHAIN_DEPTH_DELTA,
+    Bytes,
+    String,
+    Characteristic,
+)
 from capa.features.insn import API, Number, Offset, Mnemonic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
-
-# thunks may be chained so we specify a delta here to control the depth to which these chains
-# are explored
-THUNK_CHAIN_DEPTH_DELTA = 0x5
 
 
 def get_arch(ctx):
@@ -73,7 +77,7 @@ def check_for_api_call(ctx, insn):
             break
 
         f = idaapi.get_func(ref)
-        if not (f.flags & idaapi.FUNC_THUNK):
+        if not f or not (f.flags & idaapi.FUNC_THUNK):
             break
 
     if info:
