@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -146,8 +147,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
     elif name.startswith("82bf6"):
         return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
-    elif name.startswith("ping"):
-        return os.path.join(CD, "data", "ping.exe_")
+    elif name.startswith("pingtaest"):
+        return os.path.join(CD, "data", "ping_täst.exe_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -537,5 +538,5 @@ def al_khaser_x86_extractor():
 
 
 @pytest.fixture
-def ping_extractor():
-    return get_extractor(get_data_path_by_name("ping"))
+def pingtaest_extractor():
+    return get_extractor(get_data_path_by_name("pingtaest"))
