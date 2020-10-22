@@ -427,6 +427,12 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("calls to"), False),
 ]
 
+FEATURE_PRESENCE_TESTS_IDA = [
+    # file/imports
+    # IDA can recover more names of APIs imported by ordinal
+    ("mimikatz", "file", capa.features.file.Import("cabinet.FCIAddFile"), True),
+]
+
 FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
     ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), 0),

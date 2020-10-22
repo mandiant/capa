@@ -44,7 +44,7 @@ def get_ida_extractor(_path):
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_features():
-    for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS:
+    for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS + FEATURE_PRESENCE_TESTS_IDA:
         id = make_test_id((sample, scope, feature, expected))
 
         try:
