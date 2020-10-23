@@ -2,7 +2,7 @@ name: build
 
 on:
   release:
-    types: [created, edited]
+    types: [created, edited, published]
 
 jobs:
   build:
@@ -32,6 +32,10 @@ jobs:
           python-version: 2.7
       - if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install -y libyaml-dev
+      - if: matrix.os == 'windows-latest'
+        run: |
+          choco install vcredist2008
+          choco install --ignore-dependencies vcpython27
       - name: Install PyInstaller
         # pyinstaller 4 doesn't support Python 2.7
         run: pip install 'pyinstaller==3.*'
