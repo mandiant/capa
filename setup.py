@@ -39,18 +39,30 @@ else:
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
 # and: http://stackoverflow.com/a/2073599/87207
-with open(os.path.join("capa", "version.py"), "rb") as f:
+with open(os.path.join("capa", "version.py"), "r") as f:
     exec(f.read())
+
+
+# via: https://packaging.python.org/guides/making-a-pypi-friendly-readme/
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, "README.md"), "r") as f:
+    long_description = f.read()
 
 
 setuptools.setup(
     name="flare-capa",
     version=__version__,
     description="The FLARE team's open-source tool to identify capabilities in executable files.",
-    long_description="",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Willi Ballenthin, Moritz Raabe",
     author_email="william.ballenthin@mandiant.com, moritz.raabe@mandiant.com",
     url="https://www.github.com/fireeye/capa",
+    project_urls={
+        "Documentation": "https://github.com/fireeye/capa/tree/master/doc",
+        "Rules": "https://github.com/fireeye/capa-rules",
+        "Rules Documentation": "https://github.com/fireeye/capa-rules/tree/master/doc",
+    },
     packages=setuptools.find_packages(exclude=["tests"]),
     package_dir={"capa": "capa"},
     entry_points={
@@ -72,12 +84,15 @@ setuptools.setup(
         ]
     },
     zip_safe=False,
-    keywords="capa",
+    keywords="capa malware analysis capability detection FLARE",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Topic :: Security",
     ],
 )
