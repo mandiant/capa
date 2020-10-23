@@ -1,5 +1,120 @@
 # Change Log
 
+## v1.4.0 (2020-10-23)
+
+This capa release includes changes to the rule parsing, enhanced feature extraction, various bug fixes, and improved capa scripts. Everyone should benefit from the improved functionality and performance. The community helped to add 69 new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. A special shout out to the following new project contributors:
+
+  - @mwilliams31
+  - @yt0ng
+
+@dzbeck added [Malware Behavior Catalog](https://github.com/MBCProject/mbc-markdown) (MBC) and ATT&CK mappings for 86 rules.
+
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+
+### New features
+
+  - script that demonstrates bulk processing @williballenthin #307
+  - main: render MBC table @mr-tz #332
+  - ida backend: improve detection of APIs called via two or more chained thunks @mike-hunhoff #340
+  - viv backend: improve detection of APIs called via two or more chained thunks @mr-tz #341
+  - features: extract APIs called via jmp instruction @mr-tz #337
+
+### New rules
+
+  - clear the Windows event log @mike-hunhoff
+  - crash the Windows event logging service @mike-hunhoff
+  - packed with kkrunchy @re-fox
+  - packed with nspack @re-fox
+  - packed with pebundle @re-fox
+  - packed with pelocknt @re-fox
+  - packed with peshield @re-fox
+  - packed with petite @re-fox
+  - packed with rlpack @re-fox
+  - packed with upack @re-fox
+  - packed with y0da crypter @re-fox
+  - compiled with rust @re-fox
+  - compute adler32 checksum @mwilliams31
+  - encrypt-data-using-hc-128 @recvfrom
+  - manipulate console @williballenthin
+  - references logon banner @re-fox
+  - terminate process via fastfail @re-fox
+  - delete volume shadow copies @mr-tz
+  - authenticate HMAC @mr-tz
+  - compiled from EPL @williballenthin
+  - compiled with Go @williballenthin
+  - create Restart Manager session @mike-hunhoff
+  - decode data using Base64 via WinAPI @mike-hunhoff
+  - empty recycle bin quietly @mwilliams31
+  - enumerate network shares @mike-hunhoff
+  - hook routines via microsoft detours @williballenthin
+  - hooked by API Override @williballenthin
+  - impersonate user @mike-hunhoff
+  - the @williballenthin packer detection package, thanks to Hexacorn for the data, see https://www.hexacorn.com/blog/2016/12/15/pe-section-names-re-visited/
+    - packed with CCG
+    - packed with Crunch
+    - packed with Dragon Armor
+    - packed with enigma
+    - packed with Epack
+    - packed with MaskPE
+    - packed with MEW
+    - packed with Mpress
+    - packed with Neolite
+    - packed with PECompact
+    - packed with Pepack
+    - packed with Perplex
+    - packed with ProCrypt
+    - packed with RPCrypt
+    - packed with SeauSFX
+    - packed with Shrinker
+    - packed with Simple Pack
+    - packed with StarForce
+    - packed with SVKP
+    - packed with Themida
+    - packed with TSULoader
+    - packed with VProtect
+    - packed with WWPACK
+    - rebuilt by ImpRec
+    - packaged as a Pintool
+    - packaged as a CreateInstall installer
+    - packaged as a WinZip self-extracting archive
+  - reference 114DNS DNS server @williballenthin
+  - reference AliDNS DNS server @williballenthin
+  - reference Cloudflare DNS server @williballenthin
+  - reference Comodo Secure DNS server @williballenthin
+  - reference Google Public DNS server @williballenthin
+  - reference Hurricane Electric DNS server @williballenthin
+  - reference kornet DNS server @williballenthin
+  - reference L3 DNS server @williballenthin
+  - reference OpenDNS DNS server @williballenthin
+  - reference Quad9 DNS server @williballenthin
+  - reference Verisign DNS server @williballenthin
+  - run as service @mike-hunhoff
+  - schedule task via ITaskService @mike-hunhoff
+  - references DNS over HTTPS endpoints @yt0ng
+
+### Bug fixes
+
+  - ida plugin: fix tree-view exception @mike-hunhoff #315
+  - ida plugin: fix feature count @mike-hunhoff
+  - main: fix reported total rule count @williballenthin #325
+  - features: fix handling of API names with multiple periods @mike-hunhoff #329
+  - ida backend: find all byte sequences instead of only first @mike-hunhoff #335
+  - features: display 0 value @mr-tz #338
+  - ida backend: extract ordinal and name imports @mr-tz #343
+  - show-features: improvements and support within IDA @mr-tz #342
+  - main: sanity check MBC rendering @williballenthin
+  - main: handle sample path that contains non-ASCII characters @mr-tz #328
+
+### Changes
+
+  - rules: use yaml.CLoader for better performance @williballenthin #306
+  - rules: parse descriptions for statements @mr-tz #312
+
+### Raw diffs
+
+  - [capa v1.3.0...v1.4.0](https://github.com/fireeye/capa/compare/v1.3.0...v1.4.0)
+  - [capa-rules v1.3.0...v1.4.0](https://github.com/fireeye/capa-rules/compare/v1.3.0...v1.4.0)
+
 ## v1.3.0 (2020-09-14)
 
 This release brings newly updated mappings to the [Malware Behavior Catalog version 2.0](https://github.com/MBCProject/mbc-markdown), many enhancements to the IDA Pro plugin, [flare-capa on PyPI](https://pypi.org/project/flare-capa/), a bunch of bug fixes to improve feature extraction, and four new rules. We received contributions from ten reverse engineers, including seven new ones:
