@@ -446,7 +446,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("sample", type=str, help="path to sample to analyze")
+    parser.add_argument(
+        # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
+        # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
+        # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
+        "sample",
+        type=lambda s: s.decode(sys.getfilesystemencoding()),
+        help="path to sample to analyze",
+    )
     parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
         "-r",
@@ -493,7 +500,9 @@ def main(argv=None):
     try:
         taste = get_file_taste(args.sample)
     except IOError as e:
-        logger.error("%s", str(e))
+        # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
+        # handle the IOError separately and reach into the args
+        logger.error("%s", e.args[0])
         return -1
 
     # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
