@@ -2,8 +2,6 @@ name: build
 
 on:
   push
-  release:
-    types: [created, edited, published]
 
 jobs:
   build:
