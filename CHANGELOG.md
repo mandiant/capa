@@ -1,5 +1,18 @@
 # Change Log
 
+## v1.4.1 (2020-10-23)
+
+This release fixes an issue building capa on our CI server, which prevented us from building standalone binaries for v1.4.1.
+
+### Bug Fixes
+
+  - install VC dependencies for Python 2.7 during Windows build
+  
+### Raw diffs
+
+  - [capa v1.4.0...v1.4.1](https://github.com/fireeye/capa/compare/v1.4.0...v1.4.1)
+  - [capa-rules v1.4.0...v1.4.1](https://github.com/fireeye/capa-rules/compare/v1.4.0...v1.4.1)  
+
 ## v1.4.0 (2020-10-23)
 
 This capa release includes changes to the rule parsing, enhanced feature extraction, various bug fixes, and improved capa scripts. Everyone should benefit from the improved functionality and performance. The community helped to add 69 new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. A special shout out to the following new project contributors:
