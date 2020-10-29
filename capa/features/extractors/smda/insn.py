@@ -54,8 +54,21 @@ def extract_insn_api_features(f, bb, insn):
         # reformat
         dll_name, api_name = api_entry.split("!")
         dll_name = dll_name.split(".")[0]
+        dll_name = dll_name.lower()
         for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
             yield API(name), insn.offset
+    elif insn.offset in f.outrefs:
+        for target in f.outrefs[insn.offset]:
+            target_function = f.smda_report.getFunction(target)
+            if target_function is not None and target_function.isThunkCall():
+                api_entry = target_function.apirefs[target] if target in target_function.apirefs else None
+                if api_entry:
+                    # reformat
+                    dll_name, api_name = api_entry.split("!")
+                    dll_name = dll_name.split(".")[0]
+                    dll_name = dll_name.lower()
+                    for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
+                        yield API(name), insn.offset
 
 
 def extract_insn_number_features(f, bb, insn):
@@ -64,17 +77,18 @@ def extract_insn_number_features(f, bb, insn):
     #
     #     push    3136B0h         ; dwControlCode
     operands = [o.strip() for o in insn.operands.split(",")]
+    if insn.mnemonic == "add" and operands[0] in ["esp", "rsp"]:
+        # skip things like:
+        #
+        #    .text:00401140                 call    sub_407E2B
+        #    .text:00401145                 add     esp, 0Ch
+        return
     for operand in operands:
-        if insn.mnemonic == "add" and operands[0] in ["esp", "rsp"]:
-            # skip things like:
-            #
-            #    .text:00401140                 call    sub_407E2B
-            #    .text:00401145                 add     esp, 0Ch
-            return
         try:
             yield Number(int(operand, 16)), insn.offset
+            yield Number(int(operand, 16), arch=get_arch(f.smda_report)), insn.offset
         except:
-            return
+            continue
 
 
 def read_bytes(smda_report, va, num_bytes=None):
@@ -168,7 +182,11 @@ def extract_insn_offset_features(f, bb, insn):
     #     mov eax, [esi + ecx + 16384]
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
-        number = None
+        if not "ptr" in operand:
+            continue
+        if "esp" in operand or "ebp" in operand or "rbp" in operand:
+            continue
+        number = 0
         number_hex = re.search(PATTERN_HEXNUM, operand)
         number_int = re.search(PATTERN_SINGLENUM, operand)
         if number_hex:
@@ -177,8 +195,8 @@ def extract_insn_offset_features(f, bb, insn):
         elif number_int:
             number = int(number_int.group("num"))
             number = -1 * number if number_int.group().startswith("-") else number
-        if not operand.startswith("0") and number is not None:
-            yield Offset(number), insn.offset
+        yield Offset(number), insn.offset
+        yield Offset(number, arch=get_arch(f.smda_report)), insn.offset
 
 
 def is_security_cookie(f, bb, insn):

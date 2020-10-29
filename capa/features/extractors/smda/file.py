@@ -67,7 +67,7 @@ def extract_file_export_names(smda_report, file_path):
     lief_binary = lief.parse(file_path)
     if lief_binary is not None:
         for function in lief_binary.exported_functions:
-            yield function.name, function.address
+            yield Export(function.name), function.address
 
 
 def extract_file_import_names(smda_report, file_path):
@@ -76,14 +76,16 @@ def extract_file_import_names(smda_report, file_path):
     if not isinstance(lief_binary, lief.PE.Binary):
         return
     for imported_library in lief_binary.imports:
+        library_name = imported_library.name.lower()
+        library_name = library_name[:-4] if library_name.endswith(".dll") else library_name
         for func in imported_library.entries:
             if func.name:
                 va = func.iat_address + smda_report.base_addr
-                for name in capa.features.extractors.helpers.generate_symbols(imported_library.name, func.name):
+                for name in capa.features.extractors.helpers.generate_symbols(library_name, func.name):
                     yield Import(name), va
             elif func.is_ordinal:
                 for name in capa.features.extractors.helpers.generate_symbols(
-                    imported_library.name, "#%s" % func.ordinal
+                    library_name, "#%s" % func.ordinal
                 ):
                     yield Import(name), va
 
