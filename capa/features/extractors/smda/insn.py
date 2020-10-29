@@ -18,9 +18,11 @@ from capa.features.insn import API, Number, Offset, Mnemonic
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
+PATTERN_HEXNUM = re.compile(r"[+\-] (?P<num>0x[a-fA-F0-9]+)")
+PATTERN_SINGLENUM = re.compile(r"[+\-] (?P<num>[0-9])")
 
 
-def get_arch(smda_report: SmdaReport):
+def get_arch(smda_report):
     if smda_report.architecture == "intel":
         if smda_report.bitness == 32:
             return ARCH_X32
@@ -52,8 +54,8 @@ def extract_insn_api_features(f, bb, insn):
         # reformat
         dll_name, api_name = api_entry.split("!")
         dll_name = dll_name.split(".")[0]
-        name = dll_name + "." + api_name
-        yield API(name), insn.offset
+        for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
+            yield API(name), insn.offset
 
 
 def extract_insn_number_features(f, bb, insn):
@@ -106,7 +108,7 @@ def extract_insn_bytes_features(f, bb, insn):
         yield Bytes(bytes_read), insn.offset
 
 
-def detectAsciiLen(smda_report, offset):
+def detect_ascii_len(smda_report, offset):
     if smda_report.buffer is None:
         return 0
     ascii_len = 0
@@ -121,7 +123,7 @@ def detectAsciiLen(smda_report, offset):
     return 0
 
 
-def detectUnicodeLen(smda_report, offset):
+def detect_unicode_len(smda_report, offset):
     if smda_report.buffer is None:
         return 0
     unicode_len = 0
@@ -139,10 +141,10 @@ def detectUnicodeLen(smda_report, offset):
 
 
 def read_string(smda_report, offset):
-    alen = detectAsciiLen(smda_report, offset)
+    alen = detect_ascii_len(smda_report, offset)
     if alen > 1:
         return read_bytes(smda_report, offset, alen).decode("utf-8")
-    ulen = detectUnicodeLen(smda_report, offset)
+    ulen = detect_unicode_len(smda_report, offset)
     if ulen > 2:
         return read_bytes(smda_report, offset, ulen).decode("utf-16")
 
@@ -167,8 +169,8 @@ def extract_insn_offset_features(f, bb, insn):
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
         number = None
-        number_hex = re.search(r"[+\-] (?P<num>0x[a-fA-F0-9]+)", operand)
-        number_int = re.search(r"[+\-] (?P<num>[0-9])", operand)
+        number_hex = re.search(PATTERN_HEXNUM, operand)
+        number_int = re.search(PATTERN_SINGLENUM, operand)
         if number_hex:
             number = int(number_hex.group("num"), 16)
             number = -1 * number if number_hex.group().startswith("-") else number
@@ -241,18 +243,10 @@ def extract_insn_segment_access_features(f, bb, insn):
     """ parse the instruction for access to fs or gs """
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
-        if "fs:" in operand and "0x30" in operand:
+        if "fs:" in operand:
             yield Characteristic("fs access"), insn.offset
-        elif "gs:" in operand and "0x60" in operand:
+        elif "gs:" in operand:
             yield Characteristic("gs access"), insn.offset
-
-
-def get_section(vw, va):
-    for start, length, _, __ in vw.getMemoryMaps():
-        if start <= va < start + length:
-            return start
-
-    raise KeyError(va)
 
 
 def extract_insn_cross_section_cflow(f, bb, insn):

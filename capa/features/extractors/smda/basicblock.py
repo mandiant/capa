@@ -68,6 +68,22 @@ def is_mov_imm_to_stack(smda_ins):
     return True
 
 
+def is_printable_ascii(chars):
+    if sys.version_info[0] >= 3:
+        return all(c < 127 and chr(c) in string.printable for c in chars)
+    else:
+        return all(ord(c) < 127 and c in string.printable for c in chars)
+
+
+def is_printable_utf16le(chars):
+    if sys.version_info[0] >= 3:
+        if all(c == 0x00 for c in chars[1::2]):
+            return is_printable_ascii(chars[::2])
+    else:
+        if all(c == "\x00" for c in chars[1::2]):
+            return is_printable_ascii(chars[::2])
+
+
 def get_printable_len(instr):
     """
     Return string length if all operand bytes are ascii or utf16-le printable
@@ -90,20 +106,6 @@ def get_printable_len(instr):
         chars = struct.pack("<Q", op_value & 0xFFFFFFFFFFFFFFFF)
     else:
         raise ValueError("Unhandled operand data type 0x%x." % instr.imm_size)
-
-    def is_printable_ascii(chars):
-        if sys.version_info[0] >= 3:
-            return all(c < 127 and chr(c) in string.printable for c in chars)
-        else:
-            return all(ord(c) < 127 and c in string.printable for c in chars)
-
-    def is_printable_utf16le(chars):
-        if sys.version_info[0] >= 3:
-            if all(c == 0x00 for c in chars[1::2]):
-                return is_printable_ascii(chars[::2])
-        else:
-            if all(c == "\x00" for c in chars[1::2]):
-                return is_printable_ascii(chars[::2])
 
     if is_printable_ascii(chars):
         return instr.imm_size
