@@ -19,7 +19,6 @@ import capa.features
 from capa.engine import *
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main(z9324d_extractor):
     # tests rules can be loaded successfully and all output modes
     path = z9324d_extractor.path
@@ -29,7 +28,6 @@ def test_main(z9324d_extractor):
     assert capa.main.main([path]) == 0
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main_single_rule(z9324d_extractor, tmpdir):
     # tests a single rule can be loaded successfully
     RULE_CONTENT = textwrap.dedent(
@@ -58,7 +56,6 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
     )
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
     # on py2.7, need to be careful about str (which can hold bytes)
     #  vs unicode (which is only unicode characters).
@@ -71,18 +68,22 @@ def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
     std = capsys.readouterr()
     # but here, we have to use a unicode instance,
     # because capsys has decoded the output for us.
-    assert pingtaest_extractor.path.decode("utf-8") in std.out
+    if sys.version_info >= (3, 0):
+        assert pingtaest_extractor.path in std.out
+    else:
+        assert pingtaest_extractor.path.decode("utf-8") in std.out
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
     NON_ASCII_FILENAME = "täst_not_there.exe"
     assert capa.main.main(["-q", NON_ASCII_FILENAME]) == -1
 
-    assert NON_ASCII_FILENAME.decode("utf-8") in caplog.text
+    if sys.version_info >= (3, 0):
+        assert NON_ASCII_FILENAME in caplog.text
+    else:
+        assert NON_ASCII_FILENAME.decode("utf-8") in caplog.text
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_main_shellcode(z499c2_extractor):
     path = z499c2_extractor.path
     assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0
@@ -137,7 +138,6 @@ def test_ruleset():
     assert len(rules.basic_block_rules) == 1
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_match_across_scopes_file_function(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -201,7 +201,6 @@ def test_match_across_scopes_file_function(z9324d_extractor):
     assert ".text section and install service" in capabilities
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_match_across_scopes(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -264,7 +263,6 @@ def test_match_across_scopes(z9324d_extractor):
     assert "kill thread program" in capabilities
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_subscope_bb_rules(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -289,7 +287,6 @@ def test_subscope_bb_rules(z9324d_extractor):
     assert "test rule" in capabilities
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_byte_matching(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -312,7 +309,6 @@ def test_byte_matching(z9324d_extractor):
     assert "byte match test" in capabilities
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_count_bb(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
@@ -336,7 +332,6 @@ def test_count_bb(z9324d_extractor):
     assert "count bb" in capabilities
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_fix262(pma16_01_extractor, capsys):
     # tests rules can be loaded successfully and all output modes
     path = pma16_01_extractor.path
@@ -347,7 +342,6 @@ def test_fix262(pma16_01_extractor, capsys):
     assert "www.practicalmalwareanalysis.com" not in std.out
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     # rules that are also matched by other rules should not get rendered by default.
     # this cuts down on the amount of output while giving approx the same detail.

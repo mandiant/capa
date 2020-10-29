@@ -82,6 +82,21 @@ def get_viv_extractor(path):
 
 
 @lru_cache()
+def get_smda_extractor(path):
+    from smda.SmdaConfig import SmdaConfig
+    from smda.Disassembler import Disassembler
+
+    import capa.features.extractors.smda
+
+    config = SmdaConfig()
+    config.STORE_BUFFER = True
+    disasm = Disassembler(config)
+    report = disasm.disassembleFile(path)
+
+    return capa.features.extractors.smda.SmdaFeatureExtractor(report, path)
+
+
+@lru_cache()
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
@@ -473,7 +488,7 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 
 def get_extractor(path):
     if sys.version_info >= (3, 0):
-        raise RuntimeError("no supported py3 backends yet")
+        extractor = get_smda_extractor(path)
     else:
         extractor = get_viv_extractor(path)
 
