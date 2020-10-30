@@ -68,7 +68,9 @@ def extract_insn_api_features(f, bb, insn):
                 referenced_function = current_function.smda_report.getFunction(target)
                 if referenced_function:
                     if referenced_function.isThunkCall():
-                        api_entry = referenced_function.apirefs[target] if target in referenced_function.apirefs else None
+                        api_entry = (
+                            referenced_function.apirefs[target] if target in referenced_function.apirefs else None
+                        )
                         if api_entry:
                             # reformat
                             dll_name, api_name = api_entry.split("!")
@@ -258,7 +260,9 @@ def is_security_cookie(f, bb, insn):
         if index == 0 and insn.offset < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
             return True
         # ... or within last bytes (instructions) before a return
-        if block_instructions[-1].mnemonic.startswith("ret") and insn.offset > (block_instructions[-1].offset - SECURITY_COOKIE_BYTES_DELTA):
+        if block_instructions[-1].mnemonic.startswith("ret") and insn.offset > (
+            block_instructions[-1].offset - SECURITY_COOKIE_BYTES_DELTA
+        ):
             return True
     return False
 

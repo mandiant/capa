@@ -84,9 +84,7 @@ def extract_file_import_names(smda_report, file_path):
                 for name in capa.features.extractors.helpers.generate_symbols(library_name, func.name):
                     yield Import(name), va
             elif func.is_ordinal:
-                for name in capa.features.extractors.helpers.generate_symbols(
-                    library_name, "#%s" % func.ordinal
-                ):
+                for name in capa.features.extractors.helpers.generate_symbols(library_name, "#%s" % func.ordinal):
                     yield Import(name), va
 
 
