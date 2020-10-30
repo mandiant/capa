@@ -57,18 +57,29 @@ def extract_insn_api_features(f, bb, insn):
         dll_name = dll_name.lower()
         for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
             yield API(name), insn.offset
+    # TODO SMDA: we want to check this recursively!
     elif insn.offset in f.outrefs:
-        for target in f.outrefs[insn.offset]:
-            target_function = f.smda_report.getFunction(target)
-            if target_function is not None and target_function.isThunkCall():
-                api_entry = target_function.apirefs[target] if target in target_function.apirefs else None
-                if api_entry:
-                    # reformat
-                    dll_name, api_name = api_entry.split("!")
-                    dll_name = dll_name.split(".")[0]
-                    dll_name = dll_name.lower()
-                    for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
-                        yield API(name), insn.offset
+        current_function = f
+        current_instruction = insn
+        for _ in range(THUNK_CHAIN_DEPTH_DELTA):
+            if len(current_function.outrefs[current_instruction.offset]) == 1:
+                target = current_function.outrefs[current_instruction.offset][0]
+                referenced_function = current_function.smda_report.getFunction(target)
+                if referenced_function:
+                    if referenced_function.isThunkCall():
+                        api_entry = referenced_function.apirefs[target] if target in referenced_function.apirefs else None
+                        if api_entry:
+                            # reformat
+                            dll_name, api_name = api_entry.split("!")
+                            dll_name = dll_name.split(".")[0]
+                            dll_name = dll_name.lower()
+                            for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
+                                yield API(name), insn.offset
+                    elif referenced_function.num_instructions == 1 and referenced_function.num_outrefs == 1:
+                        current_function = referenced_function
+                        current_instruction = [i for i in referenced_function.getInstructions()][0]
+                else:
+                    return
 
 
 def extract_insn_number_features(f, bb, insn):
@@ -205,14 +216,15 @@ def is_security_cookie(f, bb, insn):
     """
     # security cookie check should use SP or BP
     operands = [o.strip() for o in insn.operands.split(",")]
-    if operands[0] not in ["esp", "ebp", "rsp", "rbp"]:
+    if operands[1] not in ["esp", "ebp", "rsp", "rbp"]:
         return False
     for index, block in enumerate(f.getBlocks()):
         # expect security cookie init in first basic block within first bytes (instructions)
-        if index == 0 and insn.offset < (block[0].offset + SECURITY_COOKIE_BYTES_DELTA):
+        block_instructions = [i for i in block.getInstructions()]
+        if index == 0 and insn.offset < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
             return True
         # ... or within last bytes (instructions) before a return
-        if block[-1].mnemonic.startswith("ret") and insn.offset > (block[-1].offset - SECURITY_COOKIE_BYTES_DELTA):
+        if block_instructions[-1].mnemonic.startswith("ret") and insn.offset > (block_instructions[-1].offset - SECURITY_COOKIE_BYTES_DELTA):
             return True
     return False
 
@@ -275,13 +287,14 @@ def extract_insn_cross_section_cflow(f, bb, insn):
         if insn.offset in f.apirefs:
             return
 
+        smda_report = insn.smda_function.smda_report
         if insn.offset in f.outrefs:
             for target in f.outrefs[insn.offset]:
-                if not insn.smda_function.smda_report.isAddrWithinMemoryImage(target):
+                if smda_report.getSection(insn.offset) != smda_report.getSection(target):
                     yield Characteristic("cross section flow"), insn.offset
         elif insn.operands.startswith("0x"):
             target = int(insn.operands, 16)
-            if not insn.smda_function.smda_report.isAddrWithinMemoryImage(target):
+            if smda_report.getSection(insn.offset) != smda_report.getSection(target):
                 yield Characteristic("cross section flow"), insn.offset
 
 
@@ -299,6 +312,8 @@ def extract_function_calls_from(f, bb, insn):
                 # if we found a jump target and it's the function address
                 # mark as recursive
                 yield Characteristic("recursive call"), outref
+    if insn.offset in f.apirefs:
+        yield Characteristic("calls from"), f.apirefs[insn.offset]
 
 
 # this is a feature that's most relevant at the function or basic block scope,
