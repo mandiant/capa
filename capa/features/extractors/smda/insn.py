@@ -1,5 +1,6 @@
 import re
 import string
+import struct
 
 from smda.common.SmdaReport import SmdaReport
 
@@ -172,6 +173,18 @@ def extract_insn_string_features(f, bb, insn):
         string_read = read_string(f.smda_report, data_ref)
         if string_read:
             yield String(string_read.rstrip("\x00")), insn.offset
+            continue
+
+        # test to see if we're referencing a pointer and that points to a string
+        bytes_ = read_bytes(insn.smda_function.smda_report, data_ref, num_bytes=4)
+        val = struct.unpack("I", bytes_)[0]
+        if val and insn.smda_function.smda_report.isAddrWithinMemoryImage(val):
+            # it is a pointer, check if it points to a string
+            string_read = read_string(f.smda_report, val)
+            if string_read:
+                yield String(string_read.rstrip("\x00")), insn.offset
+                continue
+
 
 
 def extract_insn_offset_features(f, bb, insn):
