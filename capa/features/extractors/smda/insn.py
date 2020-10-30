@@ -1,5 +1,6 @@
 import re
 import string
+import struct
 
 from smda.common.SmdaReport import SmdaReport
 
@@ -118,6 +119,36 @@ def read_bytes(smda_report, va, num_bytes=None):
         return smda_report.buffer[rva : rva + max_bytes]
 
 
+def derefs(smda_report, p):
+    """
+    recursively follow the given pointer, yielding the valid memory addresses along the way.
+    useful when you may have a pointer to string, or pointer to pointer to string, etc.
+
+    this is a "do what i mean" type of helper function.
+
+    based on the implementation in viv/insn.py
+    """
+    depth = 0
+    while True:
+        if not smda_report.isAddrWithinMemoryImage(p):
+            return
+        yield p
+
+        bytes_ = read_bytes(smda_report, p, num_bytes=4)
+        val = struct.unpack("I", bytes_)[0]
+
+        # sanity: pointer points to self
+        if val == p:
+            return
+
+        # sanity: avoid chains of pointers that are unreasonably deep
+        depth += 1
+        if depth > 10:
+            return
+
+        p = val
+
+
 def extract_insn_bytes_features(f, bb, insn):
     """
     parse byte sequence features from the given instruction.
@@ -125,12 +156,14 @@ def extract_insn_bytes_features(f, bb, insn):
         #     push    offset iid_004118d4_IShellLinkA ; riid
     """
     for data_ref in insn.getDataRefs():
-        bytes_read = read_bytes(f.smda_report, data_ref)
-        if bytes_read is None:
-            continue
-        if capa.features.extractors.helpers.all_zeros(bytes_read):
-            continue
-        yield Bytes(bytes_read), insn.offset
+        for v in derefs(f.smda_report, data_ref):
+            bytes_read = read_bytes(f.smda_report, v)
+            if bytes_read is None:
+                continue
+            if capa.features.extractors.helpers.all_zeros(bytes_read):
+                continue
+
+            yield Bytes(bytes_read), insn.offset
 
 
 def detect_ascii_len(smda_report, offset):
@@ -180,9 +213,10 @@ def extract_insn_string_features(f, bb, insn):
     #
     #     push    offset aAcr     ; "ACR  > "
     for data_ref in insn.getDataRefs():
-        string_read = read_string(f.smda_report, data_ref)
-        if string_read:
-            yield String(string_read.rstrip("\x00")), insn.offset
+        for v in derefs(f.smda_report, data_ref):
+            string_read = read_string(f.smda_report, v)
+            if string_read:
+                yield String(string_read.rstrip("\x00")), insn.offset
 
 
 def extract_insn_offset_features(f, bb, insn):
