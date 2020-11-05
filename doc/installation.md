@@ -74,8 +74,20 @@ Note that some development dependencies (including the black code formatter) req
 To check the code style, formatting and run the tests you can run the script `scripts/ci.sh`.
 You can run it with the argument `no_tests` to skip the tests and only run the code style and formatting: `scripts/ci.sh no_tests`
 
-### 3. Setup hooks [optional]
+### 3. Compile binary using PyInstaller
+We compile capa standalone binaries using PyInstaller. To reproduce the build process check out the source code as described above and follow these steps.
 
+#### Install PyInstaller:
+For Python 2.7: `$ pip install 'pyinstaller==3.*'` (PyInstaller 4 doesn't support Python 2.7)
+
+For Python 3: `$ pip install 'pyinstaller`
+
+#### Run Pyinstaller
+`$ pyinstaller .github/pyinstaller/pyinstaller.spec`
+
+You can find the compiled binary in the created directory `dist/`.
+
+### 4. Setup hooks [optional]
 If you plan to contribute to capa, you may want to setup the hooks.
 Run `scripts/setup-hooks.sh` to set the following hooks up:
 - The `pre-commit` hook runs checks before every `git commit`.
@@ -84,4 +96,3 @@ Run `scripts/setup-hooks.sh` to set the following hooks up:
 - The `pre-push` hook runs checks before every `git push`.
   It runs `scripts/ci.sh` aborting the push if there are code style or rule linter offenses or if the tests fail.
   This way you can ensure everything is alright before sending a pull request.
-
