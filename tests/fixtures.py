@@ -144,6 +144,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
     elif name == "al-khaser x86":
         return os.path.join(CD, "data", "al-khaser_x86.exe_")
+    elif name == "al-khaser x64":
+        return os.path.join(CD, "data", "al-khaser_x64.exe_")
     elif name.startswith("39c05"):
         return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
     elif name.startswith("499c2"):
@@ -392,12 +394,7 @@ FEATURE_PRESENCE_TESTS = [
     ),
     ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
     # insn/api: x64 nested thunk
-    ("82bf6", "function=0x140059342", capa.features.insn.API("ElfClearEventLogFile"), True),
-    # TODO decide how to adjust the above test to make it compatible across disassemblers
-    # this is a test adjusted to the function entry point when disassembled by IDA/SMDA:
-    # ("82bf6", "function=14005E0C0", capa.features.insn.API("ElfClearEventLogFile"), True),
-    # this is another x64 nested thunk, but function is not recognized by vivisect:
-    # ("82bf6", "function=0x1400615c0", capa.features.insn.API("IsProcessorFeaturePresent"), True),
+    ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
     # insn/api: call via jmp
     ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
     ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
