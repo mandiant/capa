@@ -58,16 +58,16 @@ def extract_insn_api_features(f, bb, insn):
         dll_name = dll_name.lower()
         for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
             yield API(name), insn.offset
-    # TODO SMDA: we want to check this recursively!
     elif insn.offset in f.outrefs:
         current_function = f
         current_instruction = insn
-        for _ in range(THUNK_CHAIN_DEPTH_DELTA):
-            if len(current_function.outrefs[current_instruction.offset]) == 1:
+        for index in range(THUNK_CHAIN_DEPTH_DELTA):
+            if current_function and len(current_function.outrefs[current_instruction.offset]) == 1:
                 target = current_function.outrefs[current_instruction.offset][0]
                 referenced_function = current_function.smda_report.getFunction(target)
                 if referenced_function:
-                    if referenced_function.isThunkCall():
+                    # TODO SMDA: implement this function for both jmp and call, checking if function has 1 instruction which refs an API
+                    if referenced_function.isApiThunk():
                         api_entry = (
                             referenced_function.apirefs[target] if target in referenced_function.apirefs else None
                         )
