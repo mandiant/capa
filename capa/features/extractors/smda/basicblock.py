@@ -69,19 +69,12 @@ def is_mov_imm_to_stack(smda_ins):
 
 
 def is_printable_ascii(chars):
-    if sys.version_info[0] >= 3:
-        return all(c < 127 and chr(c) in string.printable for c in chars)
-    else:
-        return all(ord(c) < 127 and c in string.printable for c in chars)
+    return all(c < 127 and chr(c) in string.printable for c in chars)
 
 
 def is_printable_utf16le(chars):
-    if sys.version_info[0] >= 3:
-        if all(c == 0x00 for c in chars[1::2]):
-            return is_printable_ascii(chars[::2])
-    else:
-        if all(c == "\x00" for c in chars[1::2]):
-            return is_printable_ascii(chars[::2])
+    if all(c == 0x00 for c in chars[1::2]):
+        return is_printable_ascii(chars[::2])
 
 
 def get_printable_len(instr):
@@ -110,7 +103,7 @@ def get_printable_len(instr):
     if is_printable_ascii(chars):
         return instr.imm_size
     if is_printable_utf16le(chars):
-        return instr.imm_size / 2
+        return instr.imm_size // 2
 
     return 0
 

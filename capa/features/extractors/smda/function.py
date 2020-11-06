@@ -2,19 +2,6 @@ from capa.features import Characteristic
 from capa.features.extractors import loops
 
 
-def interface_extract_function_XXX(f):
-    """
-    parse features from the given function.
-
-    args:
-      f (viv_utils.Function): the function to process.
-
-    yields:
-      (Feature, int): the feature and the address at which its found.
-    """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
-
-
 def extract_function_calls_to(f):
     for inref in f.inrefs:
         yield Characteristic("calls to"), inref
@@ -38,7 +25,7 @@ def extract_features(f):
     extract features from the given function.
 
     args:
-      f (viv_utils.Function): the function from which to extract features
+      f (smda.common.SmdaFunction): the function from which to extract features
 
     yields:
       Feature, set[VA]: the features and their location found in this function.

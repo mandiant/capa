@@ -33,21 +33,6 @@ def get_arch(smda_report):
         raise NotImplementedError
 
 
-def interface_extract_instruction_XXX(f, bb, insn):
-    """
-    parse features from the given instruction.
-
-    args:
-      f (smda.common.SmdaFunction): the function to process.
-      bb (smda.common.SmdaBasicBlock): the basic block to process.
-      insn (smda.common.SmdaInstruction): the instruction to process.
-
-    yields:
-      (Feature, int): the feature and the address at which its found.
-    """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
-
-
 def extract_insn_api_features(f, bb, insn):
     """parse API features from the given instruction."""
     if insn.offset in f.apirefs:
