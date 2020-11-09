@@ -8,12 +8,15 @@ import capa.features.extractors.smda.file
 import capa.features.extractors.smda.insn
 import capa.features.extractors.smda.function
 import capa.features.extractors.smda.basicblock
+from capa.main import UnsupportedRuntimeError
 from capa.features.extractors import FeatureExtractor
 
 
 class SmdaFeatureExtractor(FeatureExtractor):
     def __init__(self, smda_report: SmdaReport, path):
         super(SmdaFeatureExtractor, self).__init__()
+        if sys.version_info < (3, 0):
+            raise UnsupportedRuntimeError("SMDA should only be used with Python 3.")
         self.smda_report = smda_report
         self.path = path
 
