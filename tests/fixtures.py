@@ -82,6 +82,21 @@ def get_viv_extractor(path):
 
 
 @lru_cache()
+def get_smda_extractor(path):
+    from smda.SmdaConfig import SmdaConfig
+    from smda.Disassembler import Disassembler
+
+    import capa.features.extractors.smda
+
+    config = SmdaConfig()
+    config.STORE_BUFFER = True
+    disasm = Disassembler(config)
+    report = disasm.disassembleFile(path)
+
+    return capa.features.extractors.smda.SmdaFeatureExtractor(report, path)
+
+
+@lru_cache()
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
@@ -129,6 +144,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
     elif name == "al-khaser x86":
         return os.path.join(CD, "data", "al-khaser_x86.exe_")
+    elif name == "al-khaser x64":
+        return os.path.join(CD, "data", "al-khaser_x64.exe_")
     elif name.startswith("39c05"):
         return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
     elif name.startswith("499c2"):
@@ -377,7 +394,7 @@ FEATURE_PRESENCE_TESTS = [
     ),
     ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
     # insn/api: x64 nested thunk
-    ("82bf6", "function=0x140059342", capa.features.insn.API("ElfClearEventLogFile"), True),
+    ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
     # insn/api: call via jmp
     ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
     ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
@@ -473,7 +490,7 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 
 def get_extractor(path):
     if sys.version_info >= (3, 0):
-        raise RuntimeError("no supported py3 backends yet")
+        extractor = get_smda_extractor(path)
     else:
         extractor = get_viv_extractor(path)
 

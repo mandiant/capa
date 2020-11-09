@@ -295,7 +295,19 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor_py3(path, format, disable_progress=False):
-    raise UnsupportedRuntimeError()
+    from smda.SmdaConfig import SmdaConfig
+    from smda.Disassembler import Disassembler
+
+    import capa.features.extractors.smda
+
+    smda_report = None
+    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        config = SmdaConfig()
+        config.STORE_BUFFER = True
+        smda_disasm = Disassembler(config)
+        smda_report = smda_disasm.disassembleFile(path)
+
+    return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
 
 
 def get_extractor(path, format, disable_progress=False):
@@ -446,14 +458,23 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
-        # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
-        # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
-        "sample",
-        type=lambda s: s.decode(sys.getfilesystemencoding()),
-        help="path to sample to analyze",
-    )
+
+    if sys.version_info >= (3, 0):
+        parser.add_argument(
+            # Python 3 str handles non-ASCII arguments correctly
+            "sample",
+            type=str,
+            help="path to sample to analyze",
+        )
+    else:
+        parser.add_argument(
+            # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
+            # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
+            # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
+            "sample",
+            type=lambda s: s.decode(sys.getfilesystemencoding()),
+            help="path to sample to analyze",
+        )
     parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
     parser.add_argument(
         "-r",
@@ -550,7 +571,7 @@ def main(argv=None):
             # during the load of the RuleSet, we extract subscope statements into their own rules
             # that are subsequently `match`ed upon. this inflates the total rule count.
             # so, filter out the subscope rules when reporting total number of loaded rules.
-            len(filter(lambda r: "capa/subscope-rule" not in r.meta, rules.rules.values())),
+            len([i for i in filter(lambda r: "capa/subscope-rule" not in r.meta, rules.rules.values())]),
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)

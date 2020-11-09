@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [code_style, rule_linter]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - python: 2.7
