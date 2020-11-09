@@ -16,7 +16,8 @@ from fixtures import *
     indirect=["sample", "scope"],
 )
 def test_smda_features(sample, scope, feature, expected):
-    do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
+    with xfail(sys.version_info < (3, 0), reason="SMDA only works on py3"):
+        do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
 
 
 @parametrize(
@@ -25,4 +26,5 @@ def test_smda_features(sample, scope, feature, expected):
     indirect=["sample", "scope"],
 )
 def test_smda_feature_counts(sample, scope, feature, expected):
-    do_test_feature_count(get_smda_extractor, sample, scope, feature, expected)
+    with xfail(sys.version_info < (3, 0), reason="SMDA only works on py3"):
+        do_test_feature_count(get_smda_extractor, sample, scope, feature, expected)

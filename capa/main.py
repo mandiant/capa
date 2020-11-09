@@ -458,12 +458,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    # TODO: decode won't work for python3
+
     if sys.version_info >= (3, 0):
         parser.add_argument(
-            # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
-            # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
-            # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
+            # Python 3 str handles non-ASCII arguments correctly
             "sample",
             type=str,
             help="path to sample to analyze",
