@@ -311,6 +311,10 @@ def read_string(vw, offset):
                 # vivisect seems to mis-detect the end unicode strings
                 # off by one, too short
                 ulen += 1
+            else:
+                # vivisect seems to mis-detect the end unicode strings
+                # off by two, too short
+                ulen += 2
             return read_memory(vw, offset, ulen).decode("utf-16")
 
     raise ValueError("not a string", offset)
