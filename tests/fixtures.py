@@ -166,6 +166,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
     elif name.startswith("pingtaest"):
         return os.path.join(CD, "data", "ping_täst.exe_")
+    elif name.startswith("773290"):
+        return os.path.join(CD, "data", "773290480d5445f11d3dc1b800728966.exe_")
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -204,6 +206,8 @@ def get_sample_md5_by_name(name):
         return "64d9f7d96b99467f36e22fada623c3bb"
     elif name.startswith("82bf6"):
         return "82bf6347acf15e5d883715dc289d8a2b"
+    elif name.startswith("773290"):
+        return "773290480d5445f11d3dc1b800728966"
     else:
         raise ValueError("unexpected sample fixture")
 
@@ -409,6 +413,7 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
     ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
     ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
+    ("773290...", "function=0x140001140", capa.features.String(r"%s:\\OfficePackagesForWDAG"), True),
     # insn/regex, issue #262
     ("pma16-01", "function=0x4021B0", capa.features.Regex("HTTP/1.0"), True),
     ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
