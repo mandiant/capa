@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 
 import json
+
 import capa.main
 import capa.rules
 import capa.engine
 import capa.features
 from capa.engine import *
 
-sample_path = "path/to/file"
+# edit this to set the path for file to analyze and rule directory
+SAMPLE_PATH = "path/to/file"
+RULES_PATH = "/tmp/capa/rules/"
 
-capa.main.RULES_PATH_DEFAULT_STRING = "/tmp/capa/rules/"
-rules = capa.main.get_rules(capa.main.RULES_PATH_DEFAULT_STRING, disable_progress=True)
+# load rules from disk
+rules = capa.main.get_rules(RULES_PATH, disable_progress=True)
 rules = capa.rules.RuleSet(rules)
 
-extractor = capa.main.get_extractor(sample_path, "auto", disable_progress=True)
-meta = capa.main.collect_metadata("", sample_path,capa.main.RULES_PATH_DEFAULT_STRING, "auto", extractor)
+# extract features and find capabilities
+extractor = capa.main.get_extractor(SAMPLE_PATH, "auto", disable_progress=True)
 capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+
+# collect metadata (used only to make rendering more complete)
+meta = capa.main.collect_metadata("", SAMPLE_PATH, RULES_PATH, "auto", extractor)
 meta["analysis"].update(counts)
 
+# render results
+# ...as json
 capa_json = json.loads(capa.render.render_json(meta, rules, capabilities))
+# ...as human readable text table
 capa_texttable = capa.render.render_default(meta, rules, capabilities)
