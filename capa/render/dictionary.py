@@ -72,12 +72,13 @@ def render_capabilities(doc, ostream):
         else:
             capability = "%s (%d matches)" % (rule["meta"]["name"], count)
 
-        ostream["CAPABILITY"].setdefault(capability, rule["meta"]["namespace"])
+        ostream["CAPABILITY"].setdefault(rule["meta"]["namespace"], list())
+        ostream["CAPABILITY"][rule["meta"]["namespace"]].append(capability)
 
 def render_attack(doc, ostream):
     """
     example::
-        {'ATT&CK': {'COLLECTION': ['Input Capture::Keylogging [T1056.001]'],
+        {'ATTCK': {'COLLECTION': ['Input Capture::Keylogging [T1056.001]'],
             'DEFENSE EVASION': ['Obfuscated Files or Information [T1027]',
                                 'Virtualization/Sandbox Evasion::System Checks '
                                 '[T1497.001]'],
@@ -87,7 +88,7 @@ def render_attack(doc, ostream):
             'EXECUTION': ['Shared Modules [T1129]']}
         }
     """
-    ostream["ATT&CK"] = dict()
+    ostream["ATTCK"] = dict()
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         if not rule["meta"].get("att&ck"):
@@ -114,7 +115,7 @@ def render_attack(doc, ostream):
                 inner_rows.append("%s::%s %s" % (technique, subtechnique, id))
             else:
                 raise RuntimeError("unexpected ATT&CK spec format")
-        ostream["ATT&CK"].setdefault(tactic.upper(), inner_rows)
+        ostream["ATTCK"].setdefault(tactic.upper(), inner_rows)
 
 
 def render_mbc(doc, ostream):

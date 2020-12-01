@@ -29,3 +29,5 @@ meta["analysis"].update(counts)
 capa_json = json.loads(capa.render.render_json(meta, rules, capabilities))
 # ...as human readable text table
 capa_texttable = capa.render.render_default(meta, rules, capabilities)
+# ...as python dictionary, simplified as textable but in dictionary
+capa_dict = capa.render.render_dictionary(meta, rules, capabilities)
