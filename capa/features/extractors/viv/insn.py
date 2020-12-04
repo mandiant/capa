@@ -329,6 +329,9 @@ def extract_insn_string_features(f, bb, insn):
     for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
             v = oper.getOperValue(oper)
+        elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
+            # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
+            v = oper.imm
         elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
             # like 0x401000 in `mov eax, 0x401000[2 * ebx]`
             v = oper.imm

@@ -169,7 +169,7 @@ def get_data_path_by_name(name):
     elif name.startswith("773290"):
         return os.path.join(CD, "data", "773290480d5445f11d3dc1b800728966.exe_")
     else:
-        raise ValueError("unexpected sample fixture")
+        raise ValueError("unexpected sample fixture: %s" % name)
 
 
 def get_sample_md5_by_name(name):
@@ -188,6 +188,8 @@ def get_sample_md5_by_name(name):
         return "c8403fb05244e23a7931c766409b5e22"
     elif name == "al-khaser x86":
         return "db648cd247281954344f1d810c6fd590"
+    elif name == "al-khaser x64":
+        return "3cb21ae76ff3da4b7e02d77ff76e82be"
     elif name.startswith("39c05"):
         return "b7841b9d5dc1f511a93cc7576672ec0c"
     elif name.startswith("499c2"):
@@ -209,7 +211,7 @@ def get_sample_md5_by_name(name):
     elif name.startswith("773290"):
         return "773290480d5445f11d3dc1b800728966"
     else:
-        raise ValueError("unexpected sample fixture")
+        raise ValueError("unexpected sample fixture: %s" % name)
 
 
 def resolve_sample(sample):
@@ -419,6 +421,8 @@ FEATURE_PRESENCE_TESTS = [
     ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
     # insn/string, pointer to string
     ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
+    # insn/string, direct memory reference
+    ("mimikatz", "function=0x46D6CE", capa.features.String("(null)"), True),
     # insn/bytes
     ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardControl".encode("utf-16le")), True),
     ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardTransmit".encode("utf-16le")), True),
