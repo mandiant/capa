@@ -11,7 +11,6 @@ import sys
 
 import setuptools
 
-# halo==0.0.30 is the last version to support py2.7
 requirements = [
     "six",
     "tqdm",
@@ -21,17 +20,18 @@ requirements = [
     "termcolor",
     "ruamel.yaml",
     "wcwidth",
-    "halo==0.0.30",
     "ida-settings==2.1.0",
 ]
 
 if sys.version_info >= (3, 0):
     # py3
+    requirements.append("halo")
     requirements.append("networkx")
     requirements.append("smda==1.5.9")
 else:
     # py2
     requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
+    requirements.append("halo==0.0.30")  # halo==0.0.30 is the last version to support py2.7
     requirements.append("vivisect==0.1.0")
     requirements.append("viv-utils")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
