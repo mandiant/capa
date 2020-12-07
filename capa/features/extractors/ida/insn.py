@@ -302,7 +302,7 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
         bb (IDA BasicBlock)
         insn (IDA insn_t)
     """
-    if insn.itype != idaapi.NN_xor:
+    if insn.itype not in (idaapi.NN_xor, idaapi.NN_xorpd, idaapi.NN_xorps, idaapi.NN_pxor):
         return
     if capa.features.extractors.ida.helpers.is_operand_equal(insn.Op1, insn.Op2):
         return
