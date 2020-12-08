@@ -42,7 +42,9 @@ def is_ordinal(symbol):
     """
     is the given symbol an ordinal that is prefixed by "#"?
     """
-    return symbol[0] == "#"
+    if symbol:
+        return symbol[0] == "#"
+    return False
 
 
 def generate_symbols(dll, symbol):
