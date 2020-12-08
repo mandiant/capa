@@ -25,6 +25,7 @@ def render_meta(doc, ostream):
     ostream["sha256"] = doc["meta"]["sample"]["sha256"]
     ostream["path"] = doc["meta"]["sample"]["path"]
 
+
 def find_subrule_matches(doc):
     """
     collect the rule names that have been matched as a subrule match.
@@ -82,6 +83,7 @@ def render_capabilities(doc, ostream):
 
         ostream["CAPABILITY"].setdefault(rule["meta"]["namespace"], list())
         ostream["CAPABILITY"][rule["meta"]["namespace"]].append(capability)
+
 
 def render_attack(doc, ostream):
     """
@@ -174,6 +176,7 @@ def render_mbc(doc, ostream):
                 raise RuntimeError("unexpected MBC spec format")
         ostream["MBC"].setdefault(objective.upper(), inner_rows)
 
+
 def render_dictionary(doc):
     ostream = dict()
     render_meta(doc, ostream)
@@ -183,8 +186,9 @@ def render_dictionary(doc):
 
     return ostream
 
+
 # ==== render dictionary helpers
-def capa_details(file_path: str,  output_format: str="dictionary") -> dict:
+def capa_details(file_path: str, output_format: str = "dictionary") -> dict:
 
     # extract features and find capabilities
     extractor = capa.main.get_extractor(file_path, "auto", disable_progress=True)

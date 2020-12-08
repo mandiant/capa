@@ -244,6 +244,7 @@ def render_default(meta, rules, capabilities):
     doc = convert_capabilities_to_result_document(meta, rules, capabilities)
     return capa.render.default.render_default(doc)
 
+
 class CapaJsonObjectEncoder(json.JSONEncoder):
     """JSON encoder that emits Python sets as sorted lists"""
 
