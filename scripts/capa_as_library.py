@@ -188,7 +188,7 @@ def render_dictionary(doc):
 
 
 # ==== render dictionary helpers
-def capa_details(file_path: str, output_format: str = "dictionary") -> dict:
+def capa_details(file_path, output_format="dictionary"):
 
     # extract features and find capabilities
     extractor = capa.main.get_extractor(file_path, "auto", disable_progress=True)
