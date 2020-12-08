@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-import json
 import collections
-import capa.main
-import capa.rules
+import json
+
 import capa.engine
 import capa.features
-from capa.engine import *
+import capa.main
 import capa.render.utils as rutils
+import capa.rules
+from capa.engine import *
 from capa.render import convert_capabilities_to_result_document
 
 # edit this to set the path for file to analyze and rule directory
