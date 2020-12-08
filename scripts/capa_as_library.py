@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-import collections
 import json
+import collections
 
+import capa.main
+import capa.rules
 import capa.engine
 import capa.features
-import capa.main
 import capa.render.utils as rutils
-import capa.rules
 from capa.engine import *
 from capa.render import convert_capabilities_to_result_document
 
@@ -18,7 +18,7 @@ RULES_PATH = "/tmp/capa/rules/"
 rules = capa.main.get_rules(RULES_PATH, disable_progress=True)
 rules = capa.rules.RuleSet(rules)
 
-# === Render ddictionary helpers
+# == Render ddictionary helpers
 def render_meta(doc, ostream):
     ostream["md5"] = doc["meta"]["sample"]["md5"]
     ostream["sha1"] = doc["meta"]["sample"]["sha1"]
@@ -183,7 +183,7 @@ def render_dictionary(doc):
 
     return ostream
 
-# === render dictionary helpers
+# ==== render dictionary helpers
 def capa_details(file_path: str,  output_format: str="dictionary") -> dict:
 
     # extract features and find capabilities
