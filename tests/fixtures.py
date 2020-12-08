@@ -78,7 +78,18 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", should_save=False)
     else:
         vw = capa.main.get_workspace(path, "auto", should_save=True)
-    return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+    fixup_viv(path, extractor)
+    return extractor
+
+
+def fixup_viv(path, extractor):
+    """
+    vivisect fixups to overcome differences between backends
+    """
+    if "3b13b" in path:
+        # vivisect only recognizes calling thunk function at 0x10001573
+        extractor.vw.makeFunction(0x10006860)
 
 
 @lru_cache()
@@ -166,8 +177,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
     elif name.startswith("pingtaest"):
         return os.path.join(CD, "data", "ping_täst.exe_")
-    elif name.startswith("773290"):
+    elif name.startswith("77329"):
         return os.path.join(CD, "data", "773290480d5445f11d3dc1b800728966.exe_")
+    elif name.startswith("3b13b"):
+        return os.path.join(CD, "data", "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -208,8 +221,11 @@ def get_sample_md5_by_name(name):
         return "64d9f7d96b99467f36e22fada623c3bb"
     elif name.startswith("82bf6"):
         return "82bf6347acf15e5d883715dc289d8a2b"
-    elif name.startswith("773290"):
+    elif name.startswith("77329"):
         return "773290480d5445f11d3dc1b800728966"
+    elif name.startswith("3b13b"):
+        # file name is SHA256 hash
+        return "56a6ffe6a02941028cc8235204eef31d"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -435,6 +451,9 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("nzxor"), False),
     # insn/characteristic(nzxor): no security cookies
     ("mimikatz", "function=0x46D534", capa.features.Characteristic("nzxor"), False),
+    # insn/characteristic(nzxor): xorps
+    # viv needs fixup to recognize function, see above
+    ("3b13b...", "function=0x10006860", capa.features.Characteristic("nzxor"), True),
     # insn/characteristic(peb access)
     ("kernel32-64", "function=0x1800017D0", capa.features.Characteristic("peb access"), True),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("peb access"), False),

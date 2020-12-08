@@ -422,7 +422,7 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
     """
-    if insn.mnem != "xor":
+    if insn.mnem not in ("xor", "xorpd", "xorps", "pxor"):
         return
 
     if insn.opers[0] == insn.opers[1]:

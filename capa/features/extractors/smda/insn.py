@@ -258,7 +258,7 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     ignore expected non-zeroing XORs, e.g. security cookies.
     """
 
-    if insn.mnemonic != "xor":
+    if insn.mnemonic not in ("xor", "xorpd", "xorps", "pxor"):
         return
 
     operands = [o.strip() for o in insn.operands.split(",")]
