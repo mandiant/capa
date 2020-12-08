@@ -40,8 +40,11 @@ logger = logging.getLogger("capa")
 
 def set_vivisect_log_level(level):
     logging.getLogger("vivisect").setLevel(level)
+    logging.getLogger("vivisect.base").setLevel(level)
+    logging.getLogger("vivisect.impemu").setLevel(level)
     logging.getLogger("vtrace").setLevel(level)
     logging.getLogger("envi").setLevel(level)
+    logging.getLogger("envi.codeflow").setLevel(level)
 
 
 def find_function_capabilities(ruleset, extractor, f):
