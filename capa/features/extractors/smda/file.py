@@ -67,7 +67,8 @@ def extract_file_export_names(smda_report, file_path):
     lief_binary = lief.parse(file_path)
     if lief_binary is not None:
         for function in lief_binary.exported_functions:
-            yield Export(function.name), function.address
+            if function and not isinstance(function, str):
+                yield Export(function.name), function.address
 
 
 def extract_file_import_names(smda_report, file_path):
