@@ -500,6 +500,7 @@ def main(argv=None):
         action="store_true",
         help="Enable thorough linting - takes more time, but does a better job",
     )
+    parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
@@ -521,10 +522,12 @@ def main(argv=None):
         rules = capa.main.get_rules(args.rules)
         rules = capa.rules.RuleSet(rules)
         logger.info("successfully loaded %s rules", len(rules))
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-    except capa.rules.InvalidRule as e:
+        if args.tag:
+            rules = rules.filter_rules_by_meta(args.tag)
+            logger.debug("selected %s rules", len(rules))
+            for i, r in enumerate(rules.rules, 1):
+                logger.debug(" %d. %s", i, r)
+    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         return -1
 
