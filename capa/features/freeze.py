@@ -5,6 +5,7 @@ json format:
 
     {
       'version': 1,
+      'base address': int(base address),
       'functions': {
         int(function va): {
           'basic blocks': {
@@ -86,6 +87,7 @@ def dumps(extractor):
     """
     ret = {
         "version": 1,
+        "base address": extractor.get_base_address(),
         "functions": {},
         "scopes": {
             "file": [],
@@ -147,6 +149,7 @@ def loads(s):
         raise ValueError("unsupported freeze format version: %d" % (doc.get("version")))
 
     features = {
+        "base address": doc.get("base address"),
         "file features": [],
         "functions": {},
     }
