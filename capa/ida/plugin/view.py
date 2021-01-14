@@ -128,6 +128,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         super(CapaExplorerRulgenEditor, self).dropEvent(e)
 
+        self.prune_expressions()
         self.update_preview()
         self.expandAll()
 
@@ -190,6 +191,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         else:
             self.load_custom_context_menu_feature(pos)
 
+        self.prune_expressions()
         self.update_preview()
 
     def update_preview(self):
@@ -206,32 +208,47 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def load_custom_context_menu_feature(self, pos):
         """ """
         actions = (
+            ("Remove selection", (), self.slot_remove_selected_features),
+        )
+
+        sub_actions = (
             ("and", ("- and:",), self.slot_nest_features),
             ("or", ("- or:",), self.slot_nest_features),
             ("not", ("- not:",), self.slot_nest_features),
             ("optional", ("- optional:",), self.slot_nest_features),
             ("basic block", ("- basic block:",), self.slot_nest_features),
-            ("Remove selection", (), self.slot_remove_selected_features),
         )
 
+        sub_menu = build_custom_context_menu(self.parent(), sub_actions)
+        sub_menu.setTitle("Nest feature%s" % ("" if len(self.selectedItems()) == 1 else "s"))
+
         menu = build_custom_context_menu(self.parent(), actions)
+        menu.addMenu(sub_menu)
+
         menu.exec_(self.viewport().mapToGlobal(pos))
 
     def load_custom_context_menu_expression(self, pos):
         """ """
-        actions = [
+        sub_actions = (
             ("and", ("- and:", self.itemAt(pos)), self.slot_edit_expression),
             ("or", ("- or:", self.itemAt(pos)), self.slot_edit_expression),
             ("not", ("- not:", self.itemAt(pos)), self.slot_edit_expression),
             ("optional", ("- optional:", self.itemAt(pos)), self.slot_edit_expression),
             ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
-        ]
+        )
 
-        # only add remove option if not root
+        actions = ()
+
+        sub_menu = build_custom_context_menu(self.parent(), sub_actions)
+        sub_menu.setTitle("Modify")
+
         if self.root != self.itemAt(pos):
-            actions.append(("Remove expression", (), self.slot_remove_selected_features))
+            # only add remove option if not root
+            actions = (("Remove expression", (), self.slot_remove_selected_features),)
 
         menu = build_custom_context_menu(self.parent(), actions)
+        menu.addMenu(sub_menu)
+
         menu.exec_(self.viewport().mapToGlobal(pos))
 
     def add_child_item(
@@ -284,6 +301,19 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             self.add_child_item(self.root, [r], edit_enabled=True, select_enabled=True, drag_enabled=True)
 
         self.update_preview()
+
+    def prune_expressions(self):
+        """ """
+        for o in iterate_tree(self):
+            if o == self.root:
+                # do not prune root
+                continue
+            if o.flags() & QtCore.Qt.ItemIsEditable:
+                # only expressions are not editable, so we use this flag to distinguish items
+                continue
+            if not o.childCount():
+                # if no children, prune
+                o.parent().removeChild(o)
 
 
 class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
