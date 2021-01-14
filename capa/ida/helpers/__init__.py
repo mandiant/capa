@@ -82,14 +82,26 @@ def get_func_start_ea(ea):
     return f if f is None else f.start_ea
 
 
-def collect_metadata():
+def get_file_md5():
+    """ """
     md5 = idautils.GetInputFileMD5()
     if not isinstance(md5, six.string_types):
         md5 = capa.features.bytes_to_str(md5)
+    return md5
 
+
+def get_file_sha256():
+    """ """
     sha256 = idaapi.retrieve_input_file_sha256()
     if not isinstance(sha256, six.string_types):
         sha256 = capa.features.bytes_to_str(sha256)
+    return sha256
+
+
+def collect_metadata():
+    """ """
+    md5 = get_file_md5()
+    sha256 = get_file_sha256()
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
