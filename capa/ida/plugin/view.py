@@ -20,6 +20,10 @@ from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750
 
+# default colors used in views
+COLOR_GREEN_RGB = (79, 121, 66)
+COLOR_BLUE_RGB = (37, 147, 215)
+
 
 def iterate_tree(o):
     """ """
@@ -33,8 +37,7 @@ def calc_item_depth(o):
     """ """
     depth = 0
     while True:
-        parent = o.parent()
-        if not parent:
+        if not o.parent():
             break
         depth += 1
         o = o.parent()
@@ -66,7 +69,7 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         """ """
         super(CapaExplorerRulgenPreview, self).__init__(parent)
 
-        self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Medium))
+        self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
 
     def reset_view(self):
         """ """
@@ -96,7 +99,10 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         self.preview = preview
 
-        self.setHeaderHidden(True)
+        self.setHeaderLabels(["Feature", "Description"])
+        self.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.setExpandsOnDoubleClick(False)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
@@ -109,9 +115,20 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         # connect slots
         self.itemChanged.connect(self.slot_item_changed)
         self.customContextMenuRequested.connect(self.slot_custom_context_menu_requested)
+        self.itemDoubleClicked.connect(self.slot_item_double_clicked)
 
         self.root = None
         self.reset_view()
+
+    @staticmethod
+    def get_column_feature_index():
+        """ """
+        return 0
+
+    @staticmethod
+    def get_column_description_index():
+        """ """
+        return 1
 
     def dragMoveEvent(self, e):
         """ """
@@ -141,7 +158,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         """ """
         self.update_preview()
 
-    def slot_remove_selected_features(self, action):
+    def slot_remove_selected(self, action):
         """ """
         for o in self.selectedItems():
             # do not remove root node from tree
@@ -151,26 +168,19 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def slot_nest_features(self, action):
         """ """
+        # create a new parent under root node, by default; new node added last position in tree
         new_parent = self.add_child_item(
             self.root,
-            [action.data()[0]],
+            (action.data()[0], ""),
             drop_enabled=True,
             select_enabled=True,
             drag_enabled=True,
+            has_children=True,
         )
 
-        for o in self.selectedItems():
-            if o.childCount():
-                # do not attempt to nest parents, may lead to bad tree
-                continue
-
-            # find item's parent, take child from parent by index
-            parent = o.parent()
-            idx = parent.indexOfChild(o)
-            item = parent.takeChild(idx)
-
-            # add child to its new parent
-            new_parent.addChild(item)
+        for o in self.get_features(selected=True):
+            # take child from its parent by index, add to new parent
+            new_parent.addChild(o.parent().takeChild(o.parent().indexOfChild(o)))
 
         # ensure new parent expanded
         new_parent.setExpanded(True)
@@ -178,21 +188,37 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_edit_expression(self, action):
         """ """
         expression, o = action.data()
-        o.setText(0, expression)
+        o.setText(CapaExplorerRulgenEditor.get_column_feature_index(), expression)
+
+    def slot_clear_all(self, action):
+        """ """
+        self.reset_view()
 
     def slot_custom_context_menu_requested(self, pos):
         """ """
         if not self.indexAt(pos).isValid():
-            return
-
-        if not (self.itemAt(pos).flags() & QtCore.Qt.ItemIsEditable):
-            # expression is no editable, so we use this property to choose menu type
+            # user selected invalid index
+            self.load_custom_context_menu_invalid_index(pos)
+        elif not self.itemAt(pos).flags() & QtCore.Qt.ItemIsEditable:
+            # user selected expression node
             self.load_custom_context_menu_expression(pos)
         else:
+            # user selected feature node
             self.load_custom_context_menu_feature(pos)
 
+        # refresh views
         self.prune_expressions()
         self.update_preview()
+
+    def slot_item_double_clicked(self, o, column):
+        """ """
+        if o.flags() & QtCore.Qt.ItemIsEditable:
+            self.editItem(o, column)
+        else:
+            if column == CapaExplorerRulgenEditor.get_column_description_index():
+                o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
+                self.editItem(o, column)
+                o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
 
     def update_preview(self):
         """ """
@@ -201,15 +227,36 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         rule_text += "\n"
 
         for o in iterate_tree(self):
-            rule_text += "%s%s\n" % (" " * ((calc_item_depth(o) * 2) + 4), o.text(0))
+            display = o.text(CapaExplorerRulgenEditor.get_column_feature_index())
+            description = o.text(CapaExplorerRulgenEditor.get_column_description_index())
+            depth_space = (calc_item_depth(o) * 2) + 4
+
+            if not description:
+                rule_text += "%s%s\n" % (" " * depth_space, display)
+            else:
+                if display.startswith(("- and", "- or", "- optional", "- basic block", "- not")):
+                    rule_text += "%s%s\n" % (" " * depth_space, display)
+                    rule_text += "%s- description: %s\n" % (" " * (depth_space + 2), description)
+                elif display.startswith("- string"):
+                    rule_text += "%s%s\n" % (" " * depth_space, display)
+                    rule_text += "%sdescription: %s\n" % (" " * (depth_space + 2), description)
+                else:
+                    rule_text += "%s%s = %s\n" % (" " * depth_space, display, description)
 
         self.preview.setPlainText(rule_text)
 
+    def load_custom_context_menu_invalid_index(self, pos):
+        """ """
+        actions = (("Remove all", (), self.slot_clear_all),)
+
+        menu = build_custom_context_menu(self.parent(), actions)
+        menu.exec_(self.viewport().mapToGlobal(pos))
+
     def load_custom_context_menu_feature(self, pos):
         """ """
-        actions = (
-            ("Remove selection", (), self.slot_remove_selected_features),
-        )
+        # sub_sub_actions = []
+
+        actions = (("Remove selection", (), self.slot_remove_selected),)
 
         sub_actions = (
             ("and", ("- and:",), self.slot_nest_features),
@@ -219,8 +266,19 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             ("basic block", ("- basic block:",), self.slot_nest_features),
         )
 
+        feature_count = len(tuple(self.get_features(selected=True)))
+
+        """
+        for i in range(feature_count + 1):
+            sub_sub_actions.append(("%d or more" % i, ("- %d or more:" % i,), self.slot_nest_features))
+
+        sub_sub_menu = build_custom_context_menu(self.parent(), sub_sub_actions)
+        sub_sub_menu.setTitle("N or more")
+        """
+
         sub_menu = build_custom_context_menu(self.parent(), sub_actions)
-        sub_menu.setTitle("Nest feature%s" % ("" if len(self.selectedItems()) == 1 else "s"))
+        sub_menu.setTitle("Nest feature%s" % ("" if feature_count == 1 else "s"))
+        # sub_menu.addMenu(sub_sub_menu)
 
         menu = build_custom_context_menu(self.parent(), actions)
         menu.addMenu(sub_menu)
@@ -237,19 +295,38 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
         )
 
-        actions = ()
+        actions = []
 
         sub_menu = build_custom_context_menu(self.parent(), sub_actions)
         sub_menu.setTitle("Modify")
 
         if self.root != self.itemAt(pos):
             # only add remove option if not root
-            actions = (("Remove expression", (), self.slot_remove_selected_features),)
+            actions.append(("Remove expression", (), self.slot_remove_selected))
 
         menu = build_custom_context_menu(self.parent(), actions)
         menu.addMenu(sub_menu)
 
         menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def style_parent_node(self, o):
+        """ """
+        font = QtGui.QFont()
+        font.setBold(True)
+
+        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
+
+    def style_child_node(self, o):
+        """ """
+        font = QtGui.QFont()
+        brush = QtGui.QBrush()
+
+        font.setFamily("Courier")
+        font.setWeight(QtGui.QFont.Medium)
+        brush.setColor(QtGui.QColor(*COLOR_GREEN_RGB))
+
+        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
+        o.setForeground(CapaExplorerRulgenEditor.get_column_feature_index(), brush)
 
     def add_child_item(
         self,
@@ -260,60 +337,81 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         edit_enabled=False,
         select_enabled=False,
         drag_enabled=False,
+        has_children=False,
     ):
         """ """
-        child = QtWidgets.QTreeWidgetItem(parent)
+        c = QtWidgets.QTreeWidgetItem(parent)
+
+        if has_children:
+            # adding expression node, set bold
+            self.style_parent_node(c)
+        else:
+            # adding feature node, set style, weight, and color
+            self.style_child_node(c)
 
         if not select_enabled:
-            child.setFlags(child.flags() & ~QtCore.Qt.ItemIsSelectable)
+            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsSelectable)
         if edit_enabled:
-            child.setFlags(child.flags() | QtCore.Qt.ItemIsTristate | QtCore.Qt.ItemIsEditable)
+            c.setFlags(c.flags() | QtCore.Qt.ItemIsTristate | QtCore.Qt.ItemIsEditable)
         if not drop_enabled:
-            child.setFlags(child.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsDropEnabled)
         if drag_enabled:
-            child.setFlags(child.flags() | QtCore.Qt.ItemIsDragEnabled)
+            c.setFlags(c.flags() | QtCore.Qt.ItemIsDragEnabled)
 
         for (i, v) in enumerate(values):
-            child.setText(i, v)
+            c.setText(i, v)
             if data:
-                child.setData(0, 0x100, data)
+                c.setData(0, 0x100, data)
 
-        return child
+        return c
 
     def update_features(self, features):
         """ """
         if not self.root:
-            self.root = self.add_child_item(self, ["- or:"], drop_enabled=True, select_enabled=True)
+            # root node does not exist, create default node, set expanded
+            self.root = self.add_child_item(
+                self, ("- or:", ""), drop_enabled=True, select_enabled=True, has_children=True
+            )
             self.root.setExpanded(True)
 
-        counted = list(
-            zip(Counter(features).keys(), Counter(features).values())  # equals to list(set(words))
-        )  # counts the elements' frequency
+        # build feature counts
+        counted = list(zip(Counter(features).keys(), Counter(features).values()))
 
         # single features
         for (k, v) in filter(lambda t: t[1] == 1, counted):
-            r = "- %s: %s" % (k.name.lower(), k.get_value_str())
-            self.add_child_item(self.root, [r], edit_enabled=True, select_enabled=True, drag_enabled=True)
+            display = "- %s: %s" % (k.name.lower(), k.get_value_str())
+            self.add_child_item(self.root, (display, ""), edit_enabled=True, select_enabled=True, drag_enabled=True)
 
-        # counted features
+        # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
-            r = "- count(%s): %d" % (str(k), v)
-            self.add_child_item(self.root, [r], edit_enabled=True, select_enabled=True, drag_enabled=True)
+            display = "- count(%s): %d" % (str(k), v)
+            self.add_child_item(self.root, (display, ""), edit_enabled=True, select_enabled=True, drag_enabled=True)
 
         self.update_preview()
 
     def prune_expressions(self):
         """ """
-        for o in iterate_tree(self):
-            if o == self.root:
-                # do not prune root
-                continue
-            if o.flags() & QtCore.Qt.ItemIsEditable:
-                # only expressions are not editable, so we use this flag to distinguish items
-                continue
+        for o in self.get_expressions(ignore=(self.root,)):
             if not o.childCount():
-                # if no children, prune
                 o.parent().removeChild(o)
+
+    def get_features(self, selected=False, ignore=()):
+        """ """
+        for feature in filter(lambda o: o.flags() & QtCore.Qt.ItemIsEditable, tuple(iterate_tree(self))):
+            if feature in ignore:
+                continue
+            if selected and not feature.isSelected():
+                continue
+            yield feature
+
+    def get_expressions(self, selected=False, ignore=()):
+        """ """
+        for expression in filter(lambda o: not o.flags() & QtCore.Qt.ItemIsEditable, tuple(iterate_tree(self))):
+            if expression in ignore:
+                continue
+            if selected and not expression.isSelected():
+                continue
+            yield expression
 
 
 class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
@@ -337,6 +435,16 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.customContextMenuRequested.connect(self.slot_custom_context_menu_requested)
 
         self.reset_view()
+
+    @staticmethod
+    def get_column_feature_index():
+        """ """
+        return 0
+
+    @staticmethod
+    def get_column_address_index():
+        """ """
+        return 1
 
     def reset_view(self):
         """ """
@@ -369,24 +477,46 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def slot_item_double_clicked(self, o, column):
         """ """
-        if column == 1:
+        if column == CapaExplorerRulegenFeatures.get_column_address_index() and o.text(column):
             idc.jumpto(int(o.text(column), 0x10))
-            return
 
-    def add_child_item(self, parent, values, feature=None, selectable=False):
+    def style_parent_node(self, o):
         """ """
-        child = QtWidgets.QTreeWidgetItem(parent)
-        child.setFlags(child.flags() | QtCore.Qt.ItemIsTristate)
+        font = QtGui.QFont()
+        font.setBold(True)
 
-        if not selectable:
-            child.setFlags(child.flags() & ~QtCore.Qt.ItemIsSelectable)
+        o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
+
+    def style_child_node(self, o):
+        """ """
+        font = QtGui.QFont("Courier", weight=QtGui.QFont.Bold)
+        brush = QtGui.QBrush()
+
+        o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
+        o.setFont(CapaExplorerRulegenFeatures.get_column_address_index(), font)
+
+        brush.setColor(QtGui.QColor(*COLOR_GREEN_RGB))
+        o.setForeground(CapaExplorerRulegenFeatures.get_column_feature_index(), brush)
+
+        brush.setColor(QtGui.QColor(*COLOR_BLUE_RGB))
+        o.setForeground(CapaExplorerRulegenFeatures.get_column_address_index(), brush)
+
+    def add_child_item(self, parent, values, feature=None, has_children=False):
+        """ """
+        c = QtWidgets.QTreeWidgetItem(parent)
+
+        if has_children:
+            self.style_parent_node(c)
+            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsSelectable)
+        else:
+            self.style_child_node(c)
 
         for (i, v) in enumerate(values):
-            child.setText(i, v)
+            c.setText(i, v)
             if feature:
-                child.setData(0, 0x100, feature)
+                c.setData(0, 0x100, feature)
 
-        return child
+        return c
 
     def load_features(self, features):
         """ """
@@ -395,25 +525,24 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
             # level 0
             if type(feature) not in self.parent_items:
-                self.parent_items[type(feature)] = self.add_child_item(self, [feature.name.lower()])
+                self.parent_items[type(feature)] = self.add_child_item(self, (feature.name.lower(),), has_children=True)
 
             # level 1
             if feature not in self.parent_items:
-                selectable = False if len(eas) > 1 else True
                 self.parent_items[feature] = self.add_child_item(
-                    self.parent_items[type(feature)], [str(feature)], selectable=selectable
+                    self.parent_items[type(feature)], (str(feature),), has_children=True if len(eas) > 1 else False
                 )
 
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
                     self.add_child_item(
-                        self.parent_items[feature], [str(feature), "0x%X" % ea], feature, selectable=True
+                        self.parent_items[feature], (str(feature), "%X" % ea), feature, has_children=False
                     )
             else:
                 ea = eas.pop()
                 self.parent_items[feature].setText(0, str(feature))
-                self.parent_items[feature].setText(1, "0x%X" % ea)
+                self.parent_items[feature].setText(1, "%X" % ea)
                 self.parent_items[feature].setData(0, 0x100, feature)
 
 

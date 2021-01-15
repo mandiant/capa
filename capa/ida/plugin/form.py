@@ -707,7 +707,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         f = idaapi.get_func(ea)
 
         if not f:
-            capa.ida.helpers.inform_user_ida_ui("Failed to find valid function to analyze")
+            capa.ida.helpers.inform_user_ida_ui("Invalid function")
             self.set_view_status_label("Click Analyze to get started...")
             logger.info(
                 "Please navigate to a valid function in the IDA disassembly view before starting function analysis."
@@ -726,7 +726,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         ruleset, rule_count = results
         extractor = capa.features.extractors.ida.IdaFeatureExtractor()
         f = extractor.get_function(ea)
-        f_name = idc.get_name(ea)
+        f_name = idc.get_name(f.start_ea)
 
         features = get_func_features(f, ruleset, extractor)
 
