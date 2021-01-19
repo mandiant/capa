@@ -86,7 +86,7 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
             "    scope: function",
             "    references: <insert_references>",
             "    examples:",
-            "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), capa.ida.helpers.get_func_start_ea(ea)),
+            "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea),
             "  features:",
         ]
         self.setText("\n".join(metadata_default))
@@ -120,6 +120,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         self.root = None
         self.reset_view()
 
+        self.is_editing = False
+
     @staticmethod
     def get_column_feature_index():
         """ """
@@ -145,7 +147,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         super(CapaExplorerRulgenEditor, self).dropEvent(e)
 
-        self.prune_expressions()
+        # self.prune_expressions()
         self.update_preview()
         self.expandAll()
 
@@ -156,7 +158,9 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def slot_item_changed(self, item, column):
         """ """
-        self.update_preview()
+        if self.is_editing:
+            self.update_preview()
+            self.is_editing = False
 
     def slot_remove_selected(self, action):
         """ """
@@ -177,7 +181,6 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             drag_enabled=True,
             has_children=True,
         )
-
         for o in self.get_features(selected=True):
             # take child from its parent by index, add to new parent
             new_parent.addChild(o.parent().takeChild(o.parent().indexOfChild(o)))
@@ -207,18 +210,20 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             self.load_custom_context_menu_feature(pos)
 
         # refresh views
-        self.prune_expressions()
+        # self.prune_expressions()
         self.update_preview()
 
     def slot_item_double_clicked(self, o, column):
         """ """
         if o.flags() & QtCore.Qt.ItemIsEditable:
             self.editItem(o, column)
+            self.is_editing = True
         else:
             if column == CapaExplorerRulgenEditor.get_column_description_index():
                 o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
                 self.editItem(o, column)
                 o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
+                self.is_editing = True
 
     def update_preview(self):
         """ """
