@@ -161,6 +161,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_features = None
         self.view_rulegen_editor = None
         self.view_rulegen_header_label = None
+        self.view_rulegen_search = None
 
         self.Show()
 
@@ -329,6 +330,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         label2.setText("Editor")
         label2.setFont(font)
 
+        self.view_rulegen_search = QtWidgets.QLineEdit()
+        self.view_rulegen_search.setPlaceholderText("search...")
+        self.view_rulegen_search.setClearButtonEnabled(True)
+        self.view_rulegen_search.textChanged.connect(self.slot_limit_rulegen_features_to_search)
+
         self.view_rulegen_header_label = QtWidgets.QLabel()
         self.view_rulegen_header_label.setAlignment(QtCore.Qt.AlignLeft)
         self.view_rulegen_header_label.setText("Function Features")
@@ -344,6 +350,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout1.addWidget(self.view_rulegen_editor, 65)
 
         layout2.addWidget(self.view_rulegen_header_label)
+        layout2.addWidget(self.view_rulegen_search)
         layout2.addWidget(self.view_rulegen_features)
 
         layout.addWidget(left, 40)
@@ -758,8 +765,13 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_features.reset_view()
         self.view_rulegen_editor.reset_view()
         self.view_rulegen_preview.reset_view()
+        self.view_rulegen_search.clear()
 
         logger.info("Reset completed.")
+
+    def slot_limit_rulegen_features_to_search(self, text):
+        """ """
+        self.view_rulegen_features.filter_items_by_text(text)
 
     def slot_analyze(self):
         """run capa analysis and reload UI controls

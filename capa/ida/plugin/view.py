@@ -360,8 +360,9 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         for (i, v) in enumerate(values):
             c.setText(i, v)
-            if data:
-                c.setData(0, 0x100, data)
+
+        if data:
+            c.setData(0, 0x100, data)
 
         return c
 
@@ -480,6 +481,25 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         if column == CapaExplorerRulegenFeatures.get_column_address_index() and o.text(column):
             idc.jumpto(int(o.text(column), 0x10))
 
+    def show_all_items(self):
+        """ """
+        for o in iterate_tree(self):
+            o.setHidden(False)
+            o.setExpanded(False)
+
+    def filter_items_by_text(self, text):
+        """ """
+        if not text:
+            self.show_all_items()
+        else:
+            for o in iterate_tree(self):
+                data = o.data(0, 0x100)
+                if data and text.lower() not in data.get_value_str().lower():
+                    o.setHidden(True)
+                    continue
+                o.setHidden(False)
+                o.setExpanded(True)
+
     def style_parent_node(self, o):
         """ """
         font = QtGui.QFont()
@@ -513,8 +533,9 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         for (i, v) in enumerate(values):
             c.setText(i, v)
-            if feature:
-                c.setData(0, 0x100, feature)
+
+        if feature:
+            c.setData(0, 0x100, feature)
 
         return c
 
@@ -530,14 +551,17 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             # level 1
             if feature not in self.parent_items:
                 self.parent_items[feature] = self.add_child_item(
-                    self.parent_items[type(feature)], (str(feature),), has_children=True if len(eas) > 1 else False
+                    self.parent_items[type(feature)],
+                    (str(feature),),
+                    feature=feature,
+                    has_children=True if len(eas) > 1 else False,
                 )
 
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
                     self.add_child_item(
-                        self.parent_items[feature], (str(feature), "%X" % ea), feature, has_children=False
+                        self.parent_items[feature], (str(feature), "%X" % ea), feature=feature, has_children=False
                     )
             else:
                 ea = eas.pop()
