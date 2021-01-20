@@ -258,6 +258,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_menu_bar()
         self.load_file_menu()
         self.load_rules_menu()
+        self.load_configure_menu()
 
         # load parent view
         self.load_view_parent()
@@ -413,6 +414,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         """load rules menu controls"""
         actions = (("Change rules directory...", "Select new rules directory", self.slot_change_rules_dir),)
         self.load_menu("Rules", actions)
+
+    def load_configure_menu(self):
+        """ """
+        actions = (
+            ("Default rule author...", "Set default rule author", self.slot_change_rule_author),
+            ("Default rule scope...", "Set default rule scope", self.slot_change_rule_scope),
+        )
+        self.load_menu("Configure", actions)
 
     def load_menu(self, title, actions):
         """load menu actions
@@ -795,7 +804,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                 func_features[capa.features.MatchedRule(name)].add(ea)
 
         # load preview and feature tree
-        self.view_rulegen_preview.load_preview_meta(f.start_ea)
+        self.view_rulegen_preview.load_preview_meta(
+            f.start_ea,
+            settings.user.get("rulegen_author", "<insert_author>"),
+            settings.user.get("rulegen_scope", "function"),
+        )
         self.view_rulegen_features.load_features(func_features)
 
         self.view_rulegen_header_label.setText("Function Features (%s)" % trim_function_name(f))
@@ -960,6 +973,18 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.parent, "Please select a capa rules directory", self.rule_path
             )
         )
+
+    def slot_change_rule_scope(self):
+        """ """
+        scope = idaapi.ask_str(settings.user.get("rulegen_scope", "function"), 0, "Enter default rule scope")
+        if scope:
+            settings.user["rulegen_scope"] = scope
+
+    def slot_change_rule_author(self):
+        """ """
+        author = idaapi.ask_str(settings.user.get("rulegen_author", ""), 0, "Enter default rule author")
+        if author:
+            settings.user["rulegen_author"] = author
 
     def slot_change_rules_dir(self):
         """allow user to change rules directory

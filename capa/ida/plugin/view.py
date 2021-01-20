@@ -75,15 +75,15 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         """ """
         self.clear()
 
-    def load_preview_meta(self, ea):
+    def load_preview_meta(self, ea, author, scope):
         """ """
         metadata_default = [
             "rule:",
             "  meta:",
             "    name: <insert_name>",
             "    namespace: <insert_namespace>",
-            "    author: <insert_author>",
-            "    scope: function",
+            "    author: %s" % author,
+            "    scope: %s" % scope,
             "    references: <insert_references>",
             "    examples:",
             "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea),
