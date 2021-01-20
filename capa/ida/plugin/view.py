@@ -78,6 +78,7 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
     def load_preview_meta(self, ea, author, scope):
         """ """
         metadata_default = [
+            "# generated using capa explorer for IDA Pro",
             "rule:",
             "  meta:",
             "    name: <insert_name>",
