@@ -1023,6 +1023,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         path = self.ask_user_directory()
         if path:
             settings.user["rule_path"] = path
+            self.rules_cache = None
+            self.ruleset_cache = None
             idaapi.info("Run analysis again for your changes to take effect.")
 
     def set_view_status_label(self, text):
