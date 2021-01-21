@@ -101,7 +101,6 @@ def find_func_matches(f, ruleset, func_features, bb_features):
     for (bb, features) in bb_features.items():
         _, matches = capa.engine.match(ruleset.basic_block_rules, features, bb)
         for (name, res) in matches.items():
-            name = trim_scope(name)
             bb_matches[name].extend(res)
             for (ea, _) in res:
                 func_features[capa.features.MatchedRule(name)].add(ea)
@@ -109,7 +108,6 @@ def find_func_matches(f, ruleset, func_features, bb_features):
     # find rule matches for function, function features include rule matches for basic blocks
     _, matches = capa.engine.match(ruleset.function_rules, func_features, capa.helpers.oint(f))
     for (name, res) in matches.items():
-        name = trim_scope(name)
         func_matches[name].extend(res)
 
     return func_matches, bb_matches
@@ -783,6 +781,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # add function and bb rule matches to function features, for display purposes
         for (name, res) in itertools.chain(func_matches.items(), bb_matches.items()):
+            rule = self.ruleset_cache[name]
+            if rule.meta.get("capa/subscope-rule"):
+                continue
             for (ea, _) in res:
                 func_features[capa.features.MatchedRule(name)].add(ea)
 
