@@ -41,6 +41,14 @@ logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
 
 
+def write_file(path, data):
+    """ """
+    if os.path.exists(path) and 1 != idaapi.ask_yn(1, "The file already exists. Overwrite?"):
+        return
+    with open(path, "wb") as save_file:
+        save_file.write(data)
+
+
 def trim_function_name(f, max_length=25):
     """ """
     n = idaapi.get_name(f.start_ea)
@@ -160,7 +168,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         super(CapaExplorerForm, self).__init__()
 
         self.form_title = name
-        self.rule_path = ""
         self.process_total = 0
         self.process_count = 0
 
@@ -185,6 +192,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_buttons = None
         self.view_analyze_button = None
         self.view_reset_button = None
+        self.view_save_button = None
 
         self.view_rulegen_preview = None
         self.view_rulegen_features = None
@@ -256,8 +264,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # load menu bar and sub menus
         self.load_view_menu_bar()
-        self.load_file_menu()
-        self.load_rules_menu()
         self.load_configure_menu()
 
         # load parent view
@@ -292,20 +298,22 @@ class CapaExplorerForm(idaapi.PluginForm):
     def load_view_buttons(self):
         """load the button controls"""
         analyze_button = QtWidgets.QPushButton("Analyze")
-        # analyze_button.setToolTip("Run capa analysis on IDB")
         reset_button = QtWidgets.QPushButton("Reset")
-        # reset_button.setToolTip("Reset capa explorer and IDA user interfaces")
+        save_button = QtWidgets.QPushButton("Save")
 
         analyze_button.clicked.connect(self.slot_analyze)
         reset_button.clicked.connect(self.slot_reset)
+        save_button.clicked.connect(self.slot_save)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(analyze_button)
         layout.addWidget(reset_button)
+        layout.addWidget(save_button)
         layout.addStretch(1)
 
         self.view_analyze_button = analyze_button
         self.view_reset_button = reset_button
+        self.view_save_button = save_button
         self.view_buttons = layout
 
     def load_view_search_bar(self):
@@ -405,23 +413,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_tabs.addTab(tab, "Rule Generator")
 
-    def load_file_menu(self):
-        """load file menu controls"""
-        actions = (("Export results...", "Export capa results as JSON file", self.slot_export_json),)
-        self.load_menu("File", actions)
-
-    def load_rules_menu(self):
-        """load rules menu controls"""
-        actions = (("Change rules directory...", "Select new rules directory", self.slot_change_rules_dir),)
-        self.load_menu("Rules", actions)
-
     def load_configure_menu(self):
         """ """
         actions = (
-            ("Default rule author...", "Set default rule author", self.slot_change_rule_author),
-            ("Default rule scope...", "Set default rule scope", self.slot_change_rule_scope),
+            ("Change default rules directory...", "Set default rules directory", self.slot_change_rules_dir),
+            ("Change default rule author...", "Set default rule author", self.slot_change_rule_author),
+            ("Change default rule scope...", "Set default rule scope", self.slot_change_rule_scope),
         )
-        self.load_menu("Configure", actions)
+        self.load_menu("Configuration", actions)
 
     def load_menu(self, title, actions):
         """load menu actions
@@ -434,27 +433,6 @@ class CapaExplorerForm(idaapi.PluginForm):
             action = QtWidgets.QAction(name, self.parent)
             action.triggered.connect(slot)
             menu.addAction(action)
-
-    def slot_export_json(self):
-        """export capa results as JSON file"""
-        if not self.doc:
-            idaapi.info("No capa results to export.")
-            return
-
-        path = idaapi.ask_file(True, "*.json", "Choose file")
-
-        # user cancelled, entered blank input, etc.
-        if not path:
-            return
-
-        # check file exists, ask to override
-        if os.path.exists(path) and 1 != idaapi.ask_yn(1, "The selected file already exists. Overwrite?"):
-            return
-
-        with open(path, "wb") as export_file:
-            export_file.write(
-                json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode("utf-8")
-            )
 
     def load_ida_hooks(self):
         """load IDA UI hooks"""
@@ -549,19 +527,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         try:
             # resolve rules directory - check self and settings first, then ask user
-            if not self.rule_path:
-                if "rule_path" in settings and os.path.exists(settings["rule_path"]):
-                    self.rule_path = settings["rule_path"]
-                else:
-                    idaapi.info("Please select a file directory containing capa rules.")
-                    rule_path = self.ask_user_directory()
-                    if not rule_path:
-                        logger.warning(
-                            "You must select a file directory containing capa rules before analysis can be run. The standard collection of capa rules can be downloaded from https://github.com/fireeye/capa-rules."
-                        )
-                        return ()
-                    self.rule_path = rule_path
-                    settings.user["rule_path"] = rule_path
+            if not os.path.exists(settings.user.get("rule_path", "")):
+                idaapi.info("Please select a file directory containing capa rules.")
+                path = self.ask_user_directory()
+                if not path:
+                    logger.warning(
+                        "You must select a file directory containing capa rules before analysis can be run. The standard collection of capa rules can be downloaded from https://github.com/fireeye/capa-rules."
+                    )
+                    return ()
+                settings.user["rule_path"] = path
         except Exception as e:
             logger.error("Failed to load capa rules (error: %s).", e)
             return ()
@@ -570,8 +544,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return ()
 
-        rule_path = self.rule_path
-
+        rule_path = settings.user["rule_path"]
         try:
             if not os.path.exists(rule_path):
                 raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
@@ -599,7 +572,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             rules = []
             total_paths = len(rule_paths)
             for (i, rule_path) in enumerate(rule_paths):
-                update_wait_box("loading capa rules from %s (%d of %d)" % (self.rule_path, i + 1, total_paths))
+                update_wait_box(
+                    "loading capa rules from %s (%d of %d)" % (settings.user["rule_path"], i + 1, total_paths)
+                )
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
                 try:
@@ -611,23 +586,21 @@ class CapaExplorerForm(idaapi.PluginForm):
                     if capa.main.is_nursery_rule_path(rule_path):
                         rule.meta["capa/nursery"] = True
                     rules.append(rule)
-            rule_count = len(rules)
             _rules = copy.deepcopy(rules)
             ruleset = capa.rules.RuleSet(_rules)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
             return ()
         except Exception as e:
-            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % self.rule_path)
-            logger.error("Failed to load rules from %s (error: %s).", self.rule_path, e)
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % settings.user["rule_path"])
+            logger.error("Failed to load rules from %s (error: %s).", settings.user["rule_path"], e)
             logger.error(
                 "Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules."
             )
-            self.rule_path = ""
-            settings.user.del_value("rule_path")
+            settings.user["rule_path"] = ""
             return ()
 
-        return ruleset, rules, rule_count
+        return ruleset, rules
 
     def load_capa_results(self):
         """run capa analysis and render results in UI
@@ -665,7 +638,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         results = self.load_capa_rules()
         if not results:
             return False
-        ruleset, _, rule_count = results
+        ruleset, rules = results
 
         if ida_kernwin.user_cancelled():
             logger.info("User cancelled analysis.")
@@ -722,7 +695,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             self.doc = capa.render.convert_capabilities_to_result_document(meta, ruleset, capabilities)
             self.model_data.render_capa_doc(self.doc)
-            self.set_view_status_label("capa rules directory: %s (%d rules)" % (self.rule_path, rule_count))
+            self.set_view_status_label("capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(rules)))
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e)
             return False
@@ -782,7 +755,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("Analysis failed.")
             return
 
-        ruleset, self.rulegen_rules, rule_count = results
+        ruleset, self.rulegen_rules = results
 
         # must use extractor to get function, as capa analysis requires casted object
         extractor = capa.features.extractors.ida.IdaFeatureExtractor()
@@ -812,7 +785,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_features.load_features(func_features)
 
         self.view_rulegen_header_label.setText("Function Features (%s)" % trim_function_name(f))
-        self.set_view_status_label("capa rules directory: %s (%d rules)" % (self.rule_path, rule_count))
+        self.set_view_status_label(
+            "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rulegen_rules))
+        )
 
         logger.info("Analysis completed.")
 
@@ -920,7 +895,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         elif self.view_tabs.currentIndex() == 1:
             self.analyze_function()
 
-    def slot_reset(self, checked):
+    def slot_reset(self):
         """reset UI elements
 
         e.g. checkboxes and IDA highlighting
@@ -929,6 +904,40 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.reset_program_analysis_views()
         elif self.view_tabs.currentIndex() == 1:
             self.reset_function_analysis_views()
+
+    def slot_save(self):
+        """ """
+        if self.view_tabs.currentIndex() == 0:
+            self.save_program_analysis()
+        elif self.view_tabs.currentIndex() == 1:
+            self.save_function_analysis()
+
+    def save_program_analysis(self):
+        """ """
+        if not self.doc:
+            idaapi.info("No program analysis to save.")
+            return
+
+        s = json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode("utf-8")
+
+        path = idaapi.ask_file(True, "*.json", "Choose file to save capa program analysis JSON")
+        if not path:
+            return
+
+        write_file(path, s)
+
+    def save_function_analysis(self):
+        """ """
+        s = self.view_rulegen_preview.toPlainText().encode("utf-8")
+        if not s:
+            idaapi.info("No rule to save.")
+            return
+
+        path = idaapi.ask_file(True, "*.yml", "Choose file to save capa rule")
+        if not path:
+            return
+
+        write_file(path, s)
 
     def slot_checkbox_limit_by_changed(self, state):
         """slot activated if checkbox clicked
@@ -970,7 +979,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", self.rule_path
+                self.parent, "Please select a capa rules directory", settings.user["rule_path"]
             )
         )
 
@@ -979,28 +988,24 @@ class CapaExplorerForm(idaapi.PluginForm):
         scope = idaapi.ask_str(settings.user.get("rulegen_scope", "function"), 0, "Enter default rule scope")
         if scope:
             settings.user["rulegen_scope"] = scope
+            idaapi.info("Run analysis again for your changes to take effect.")
 
     def slot_change_rule_author(self):
         """ """
         author = idaapi.ask_str(settings.user.get("rulegen_author", ""), 0, "Enter default rule author")
         if author:
             settings.user["rulegen_author"] = author
+            idaapi.info("Run analysis again for your changes to take effect.")
 
     def slot_change_rules_dir(self):
         """allow user to change rules directory
 
         user selection stored in settings for future runs
         """
-        rule_path = self.ask_user_directory()
-        if not rule_path:
-            logger.warning("No rule directory selected, nothing to do.")
-            return
-
-        self.rule_path = rule_path
-        settings.user["rule_path"] = rule_path
-
-        if 1 == idaapi.ask_yn(1, "Run analysis now?"):
-            self.slot_analyze()
+        path = self.ask_user_directory()
+        if path:
+            settings.user["rule_path"] = path
+            idaapi.info("Run analysis again for your changes to take effect.")
 
     def set_view_status_label(self, text):
         """update status label control
