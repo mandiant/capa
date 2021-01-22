@@ -52,8 +52,7 @@ jobs:
           - python: 3.6
           - python: 3.7
           - python: 3.8
-          #- python: '3.9.0-rc.1' # Python latest
-          # disabled due to LIEF, see #362
+          - python: 3.9.1
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
