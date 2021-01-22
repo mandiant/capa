@@ -95,7 +95,7 @@ def find_func_matches(f, ruleset, func_features, bb_features):
     bb_matches = collections.defaultdict(list)
 
     # create copy of function features, to add rule matches for basic blocks
-    func_features = collections.defaultdict(set, copy.deepcopy(func_features))
+    func_features = collections.defaultdict(set, copy.copy(func_features))
 
     # find rule matches for basic blocks
     for (bb, features) in bb_features.items():
@@ -589,7 +589,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     if capa.main.is_nursery_rule_path(rule_path):
                         rule.meta["capa/nursery"] = True
                     rules.append(rule)
-            _rules = copy.deepcopy(rules)
+            _rules = copy.copy(rules)
             ruleset = capa.rules.RuleSet(_rules)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
@@ -776,8 +776,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         func_matches, bb_matches = find_func_matches(f, self.ruleset_cache, func_features, bb_features)
 
         # cache features for use elsewhere
-        self.rulegen_func_features_cache = collections.defaultdict(set, copy.deepcopy(func_features))
-        self.rulegen_bb_features_cache = collections.defaultdict(dict, copy.deepcopy(bb_features))
+        self.rulegen_func_features_cache = collections.defaultdict(set, copy.copy(func_features))
+        self.rulegen_bb_features_cache = collections.defaultdict(dict, copy.copy(bb_features))
 
         # add function and bb rule matches to function features, for display purposes
         for (name, res) in itertools.chain(func_matches.items(), bb_matches.items()):
@@ -872,7 +872,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         # create deep copy of current rules, add our new rule
-        rules = copy.deepcopy(self.rules_cache)
+        rules = copy.copy(self.rules_cache)
         rules.append(rule)
 
         try:
@@ -1003,14 +1003,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def slot_change_rule_scope(self):
         """ """
-        scope = idaapi.ask_str(settings.user.get("rulegen_scope", "function"), 0, "Enter default rule scope")
+        scope = idaapi.ask_str(str(settings.user.get("rulegen_scope", "function")), 0, "Enter default rule scope")
         if scope:
             settings.user["rulegen_scope"] = scope
             idaapi.info("Run analysis again for your changes to take effect.")
 
     def slot_change_rule_author(self):
         """ """
-        author = idaapi.ask_str(settings.user.get("rulegen_author", ""), 0, "Enter default rule author")
+        author = idaapi.ask_str(str(settings.user.get("rulegen_author", "")), 0, "Enter default rule author")
         if author:
             settings.user["rulegen_author"] = author
             idaapi.info("Run analysis again for your changes to take effect.")
