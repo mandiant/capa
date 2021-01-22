@@ -834,6 +834,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.rules_cache = None
             self.ruleset_cache = None
 
+            self.set_view_status_label("Click Analyze to get started...")
+
         logger.info("Reset completed.")
 
     def set_rulegen_status(self, e):

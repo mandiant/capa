@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from collections import Counter, defaultdict
 import binascii
+import re
 
 import idc
 from PyQt5 import QtCore, QtWidgets, QtGui
@@ -243,11 +244,31 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
                 if display.startswith(("- and", "- or", "- optional", "- basic block", "- not")):
                     rule_text += "%s%s\n" % (" " * depth_space, display)
                     rule_text += "%s- description: %s\n" % (" " * (depth_space + 2), description)
+                    continue
                 elif display.startswith("- string"):
                     rule_text += "%s%s\n" % (" " * depth_space, display)
                     rule_text += "%sdescription: %s\n" % (" " * (depth_space + 2), description)
-                else:
-                    rule_text += "%s%s = %s\n" % (" " * depth_space, display, description)
+                    continue
+                elif display.startswith("- count"):
+                    # count is weird, we need to format description based on feature type, so we parse with regex
+                    # assume format - count(<feature_name>(<feature_value>)): <count>
+                    m = re.search(r"- count\(([a-zA-Z]+)\((.+)\)\): (.+)", display)
+                    if m:
+                        name, value, count = m.groups()
+                        if name in ("string",):
+                            rule_text += "%s%s\n" % (" " * depth_space, display)
+                            rule_text += "%sdescription: %s\n" % (" " * (depth_space + 2), description)
+                        else:
+                            rule_text += "%s- count(%s(%s = %s)): %s\n" % (
+                                " " * depth_space,
+                                name,
+                                value,
+                                description,
+                                count,
+                            )
+                        continue
+                # catchall
+                rule_text += "%s%s = %s\n" % (" " * depth_space, display, description)
 
         self.preview.setPlainText(rule_text)
 
