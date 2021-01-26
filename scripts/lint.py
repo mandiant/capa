@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import string
+import difflib
 import hashlib
 import logging
 import os.path
@@ -25,6 +26,7 @@ import itertools
 import posixpath
 
 import capa.main
+import capa.rules
 import capa.engine
 import capa.features
 import capa.features.insn
@@ -277,6 +279,38 @@ class FeatureNegativeNumber(Lint):
         return False
 
 
+class FormatSingleEmptyLineEOF(Lint):
+    name = "EOF format"
+    recommendation = "end file with a single empty line"
+
+    def check_rule(self, ctx, rule):
+        if rule.definition.endswith("\n") and not rule.definition.endswith("\n\n"):
+            return False
+        return True
+
+
+class FormatIncorrect(Lint):
+    name = "rule format incorrect"
+    recommendation_template = "use scripts/capafmt.py or adjust as follows\n{:s}"
+
+    def check_rule(self, ctx, rule):
+        actual = rule.definition
+        expected = capa.rules.Rule.from_yaml(rule.definition, use_ruamel=True).to_yaml()
+
+        # ignore different quote characters
+        actual = actual.replace("'", '"')
+        expected = expected.replace("'", '"')
+
+        diff = list(difflib.ndiff(actual.splitlines(1), expected.splitlines(1)))
+        # deltas begin with two-letter code; "  " means common line
+        difflen = len(list(filter(lambda l: not l.startswith("  "), diff)))
+        if difflen > 0:
+            self.recommendation = self.recommendation_template.format("".join(diff))
+            return True
+
+        return False
+
+
 def run_lints(lints, ctx, rule):
     for lint in lints:
         if lint.check_rule(ctx, rule):
@@ -332,13 +366,23 @@ FEATURE_LINTS = (
 )
 
 
-def get_normpath(path):
-    return posixpath.normpath(path).replace(os.sep, "/")
-
-
 def lint_features(ctx, rule):
     features = get_features(ctx, rule)
     return run_feature_lints(FEATURE_LINTS, ctx, features)
+
+
+FORMAT_LINTS = (
+    FormatSingleEmptyLineEOF(),
+    FormatIncorrect(),
+)
+
+
+def lint_format(ctx, rule):
+    return run_lints(FORMAT_LINTS, ctx, rule)
+
+
+def get_normpath(path):
+    return posixpath.normpath(path).replace(os.sep, "/")
 
 
 def get_features(ctx, rule):
@@ -391,6 +435,7 @@ def lint_rule(ctx, rule):
             lint_meta(ctx, rule),
             lint_logic(ctx, rule),
             lint_features(ctx, rule),
+            lint_format(ctx, rule),
         )
     )
 

@@ -614,16 +614,20 @@ class Rule(object):
         return y
 
     @classmethod
-    def from_yaml(cls, s):
-        # use pyyaml because it can be much faster than ruamel (pure python)
-        doc = yaml.load(s, Loader=cls._get_yaml_loader())
+    def from_yaml(cls, s, use_ruamel=False):
+        if use_ruamel:
+            # ruamel enables nice formatting and doc roundtripping with comments
+            doc = cls._get_ruamel_yaml_parser().load(s)
+        else:
+            # use pyyaml because it can be much faster than ruamel (pure python)
+            doc = yaml.load(s, Loader=cls._get_yaml_loader())
         return cls.from_dict(doc, s)
 
     @classmethod
-    def from_yaml_file(cls, path):
+    def from_yaml_file(cls, path, use_ruamel=False):
         with open(path, "rb") as f:
             try:
-                return cls.from_yaml(f.read().decode("utf-8"))
+                return cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
 
@@ -716,7 +720,10 @@ class Rule(object):
         # tweaking `ruamel.indent()` doesn't quite give us the control we want.
         # so, add the two extra spaces that we've determined we need through experimentation.
         # see #263
-        doc = doc.replace("  description:", "    description:")
+        # only do this for the features section, so the meta description doesn't get reformatted
+        # assumes features section always exists
+        features_offset = doc.find("features")
+        doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
         return doc
 
 

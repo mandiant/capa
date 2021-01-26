@@ -50,7 +50,7 @@ def main(argv=None):
     logging.basicConfig(level=level)
     logging.getLogger("capafmt").setLevel(level)
 
-    rule = capa.rules.Rule.from_yaml_file(args.path)
+    rule = capa.rules.Rule.from_yaml_file(args.path, use_ruamel=True)
     if args.in_place:
         with open(args.path, "wb") as f:
             f.write(rule.to_yaml().encode("utf-8"))
