@@ -866,7 +866,8 @@ class RuleSet(object):
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
 
-        don't include "lib" rules, unless they are dependencies of other rules.
+        don't include auto-generated "subscope"/"lib" rules.
+        we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
         scope_rules = set([])
 
@@ -875,7 +876,7 @@ class RuleSet(object):
         #  at lower scope, e.g. function scope.
         # so, we find all dependencies of all rules, and later will filter them down.
         for rule in rules:
-            if rule.meta.get("lib", False):
+            if rule.meta.get("capa/subscope-rule", False):
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
