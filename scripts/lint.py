@@ -14,7 +14,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import os
-import re
 import sys
 import time
 import string
@@ -297,12 +296,6 @@ class FormatIncorrect(Lint):
     def check_rule(self, ctx, rule):
         actual = rule.definition
         expected = capa.rules.Rule.from_yaml(rule.definition, use_ruamel=True).to_yaml()
-
-        # fix negative numbers
-        # - offset: -0x30
-        # instead of
-        # - offset: !!int '0x-30'
-        expected = re.sub(r"!!int '0x-([0-9a-fA-F]+)'", r"-0x\1", expected)
 
         if actual != expected:
             diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(1))

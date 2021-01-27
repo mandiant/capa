@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import re
 import uuid
 import codecs
 import logging
@@ -727,6 +728,14 @@ class Rule(object):
         # assumes features section always exists
         features_offset = doc.find("features")
         doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
+
+        # for negative hex numbers, yaml dump outputs:
+        # - offset: !!int '0x-30'
+        # we prefer:
+        # - offset: -0x30
+        # the below regex makes these adjustments and while ugly, we don't have to explore the ruamel.yaml insides
+        doc = re.sub(r"!!int '0x-([0-9a-fA-F]+)'", r"-0x\1", doc)
+
         return doc
 
 
