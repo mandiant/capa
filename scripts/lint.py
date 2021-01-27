@@ -301,10 +301,8 @@ class FormatIncorrect(Lint):
         actual = actual.replace("'", '"')
         expected = expected.replace("'", '"')
 
-        diff = list(difflib.ndiff(actual.splitlines(1), expected.splitlines(1)))
-        # deltas begin with two-letter code; "  " means common line
-        difflen = len(list(filter(lambda l: not l.startswith("  "), diff)))
-        if difflen > 0:
+        if actual != expected:
+            diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(1))
             self.recommendation = self.recommendation_template.format("".join(diff))
             return True
 
