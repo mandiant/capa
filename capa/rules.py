@@ -600,6 +600,9 @@ class Rule(object):
         # use block mode, not inline json-like mode
         y.default_flow_style = False
 
+        # leave quotes unchanged
+        y.preserve_quotes = True
+
         # indent lists by two spaces below their parent
         #
         #     features:
