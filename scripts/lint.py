@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import time
 import string
 import hashlib
 import logging
@@ -194,7 +195,7 @@ class DoesntMatchExample(Lint):
                 continue
 
             try:
-                extractor = capa.main.get_extractor(path, "auto")
+                extractor = capa.main.get_extractor(path, "auto", disable_progress=True)
                 capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
                 logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
@@ -232,7 +233,7 @@ class LibRuleNotInLibDirectory(Lint):
         if "lib" not in rule.meta:
             return False
 
-        return "/lib/" not in get_normpath(rule.meta["capa/path"])
+        return "lib/" not in get_normpath(rule.meta["capa/path"])
 
 
 class LibRuleHasNamespace(Lint):
@@ -518,8 +519,10 @@ def main(argv=None):
     capa.main.set_vivisect_log_level(logging.CRITICAL)
     logging.getLogger("capa").setLevel(logging.CRITICAL)
 
+    time0 = time.time()
+
     try:
-        rules = capa.main.get_rules(args.rules)
+        rules = capa.main.get_rules(args.rules, disable_progress=True)
         rules = capa.rules.RuleSet(rules)
         logger.info("successfully loaded %s rules", len(rules))
         if args.tag:
@@ -545,6 +548,10 @@ def main(argv=None):
     }
 
     did_violate = lint(ctx, rules)
+
+    diff = time.time() - time0
+    logger.debug("lint ran for ~ %02d:%02d", (diff // 60), diff)
+
     if not did_violate:
         logger.info("no suggestions, nice!")
         return 0

@@ -282,7 +282,8 @@ def test_lib_rules():
             ),
         ]
     )
-    assert len(rules.function_rules) == 1
+    # lib rules are added to the rule set
+    assert len(rules.function_rules) == 2
 
 
 def test_subscope_rules():
