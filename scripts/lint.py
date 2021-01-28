@@ -194,7 +194,7 @@ class DoesntMatchExample(Lint):
                 continue
 
             try:
-                extractor = capa.main.get_extractor(path, "auto")
+                extractor = capa.main.get_extractor(path, "auto", disable_progress=True)
                 capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
                 logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
@@ -226,6 +226,7 @@ class LibRuleNotInLibDirectory(Lint):
     recommendation = "Move the rule to the `lib` subdirectory of the rules path"
 
     def check_rule(self, ctx, rule):
+        logger.debug(rule.meta)
         if is_nursery_rule(rule):
             return False
 
