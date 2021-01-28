@@ -866,7 +866,7 @@ class RuleSet(object):
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
 
-        don't include auto-generated "subscope"/"lib" rules.
+        don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
         scope_rules = set([])
