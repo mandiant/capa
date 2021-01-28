@@ -16,7 +16,7 @@ class API(Feature):
             modname, _, impname = name.rpartition(".")
             name = modname.lower() + "." + impname
 
-        super(API, self).__init__(name, description)
+        super(API, self).__init__(name, description=description)
 
 
 class Number(Feature):
