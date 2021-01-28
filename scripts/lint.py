@@ -557,6 +557,7 @@ def main(argv=None):
 
     capa.main.set_vivisect_log_level(logging.CRITICAL)
     logging.getLogger("capa").setLevel(logging.CRITICAL)
+    logging.getLogger("viv_utils").setLevel(logging.CRITICAL)
 
     time0 = time.time()
 
@@ -588,8 +589,8 @@ def main(argv=None):
 
     did_violate = lint(ctx, rules)
 
-    diff = time.time() - time0
-    logger.debug("lint ran for ~ %02d:%02d", (diff // 60), diff)
+    min, sec = divmod(time.time() - time0, 60)
+    logger.debug("lints ran for ~ %02d:%02dm", min, sec)
 
     if not did_violate:
         logger.info("no suggestions, nice!")
