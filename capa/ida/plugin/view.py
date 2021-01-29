@@ -58,7 +58,7 @@ def parse_feature_for_node(feature):
         feature, _, comment = feature.partition("#")
         feature, _, description = feature.partition("=")
 
-    return map(str.strip, (feature, description, comment))
+    return map(lambda o: o.strip(), (feature, description, comment))
 
 
 def parse_node_for_feature(feature, description, comment, depth):
@@ -377,7 +377,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             rule_text += "\n  features:\n"
 
         for o in iterate_tree(self):
-            feature, description, comment = map(str.strip, tuple(o.text(i) for i in range(3)))
+            feature, description, comment = map(lambda o: o.strip(), tuple(o.text(i) for i in range(3)))
             rule_text += parse_node_for_feature(feature, description, comment, calc_item_depth(o))
 
         # FIXME we avoid circular update by disabling signals when updating
