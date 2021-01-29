@@ -298,8 +298,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(analyze_button)
         layout.addWidget(reset_button)
-        layout.addWidget(save_button)
-        layout.addStretch(1)
+        layout.addStretch(2)
+        layout.addWidget(save_button, alignment=QtCore.Qt.AlignRight)
 
         self.view_analyze_button = analyze_button
         self.view_reset_button = reset_button
@@ -319,8 +319,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout = QtWidgets.QVBoxLayout()
 
         layout.addWidget(self.view_tabs)
-        layout.addWidget(self.view_status_label)
         layout.addLayout(self.view_buttons)
+        layout.addWidget(self.view_status_label)
         layout.setMenuBar(self.view_menu_bar)
 
         self.parent.setLayout(layout)
@@ -342,9 +342,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout = QtWidgets.QHBoxLayout()
         layout1 = QtWidgets.QVBoxLayout()
         layout2 = QtWidgets.QVBoxLayout()
+        layout3 = QtWidgets.QVBoxLayout()
 
-        right = QtWidgets.QWidget()
-        right.setLayout(layout1)
+        right_top = QtWidgets.QWidget()
+        right_top.setLayout(layout1)
+        right_bottom = QtWidgets.QWidget()
+        right_bottom.setLayout(layout3)
 
         left = QtWidgets.QWidget()
         left.setLayout(layout2)
@@ -389,15 +392,25 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout1.addWidget(label1)
         layout1.addWidget(self.view_rulegen_preview, 45)
         layout1.addWidget(self.view_rulegen_status_label)
-        layout1.addWidget(label2)
-        layout1.addWidget(self.view_rulegen_editor, 65)
+        layout3.addWidget(label2)
+        layout3.addWidget(self.view_rulegen_editor, 65)
 
         layout2.addWidget(self.view_rulegen_header_label)
         layout2.addWidget(self.view_rulegen_search)
         layout2.addWidget(self.view_rulegen_features)
 
-        layout.addWidget(left, 40)
-        layout.addWidget(right, 60)
+        splitter2 = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        splitter2.addWidget(right_top)
+        splitter2.addWidget(right_bottom)
+
+        splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        splitter1.addWidget(left)
+        splitter1.addWidget(splitter2)
+
+        #layout.addWidget(left, 40)
+        #layout.addWidget(right, 60)
+
+        layout.addWidget(splitter1)
 
         tab = QtWidgets.QWidget()
         tab.setLayout(layout)
@@ -954,7 +967,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not s:
             idaapi.info("No rule to save.")
             return
-        
+
         path = self.ask_user_capa_rule_file()
         if not path:
             return
