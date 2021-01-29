@@ -166,6 +166,10 @@ def basic_block_size(bb):
 
 def read_bytes_at(ea, count):
     """ """
+    # check if byte has a value, see get_wide_byte doc
+    if not idc.is_loaded(ea):
+        return b""
+
     segm_end = idc.get_segm_end(ea)
     if ea + count > segm_end:
         return idc.get_bytes(ea, segm_end - ea)
