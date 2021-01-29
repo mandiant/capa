@@ -154,7 +154,7 @@ def calc_item_depth(o):
     return depth
 
 
-def build_custom_action(o, display, data, slot):
+def build_action(o, display, data, slot):
     """ """
     action = QtWidgets.QAction(display, o)
 
@@ -164,13 +164,16 @@ def build_custom_action(o, display, data, slot):
     return action
 
 
-def build_custom_context_menu(o, actions):
+def build_context_menu(o, actions):
     """ """
     menu = QtWidgets.QMenu()
 
     for action in actions:
-        menu.addAction(build_custom_action(o, *action))
-
+        if isinstance(action, QtWidgets.QMenu):
+            menu.addMenu(action)
+        else:
+            menu.addAction(build_action(o, *action))
+            
     return menu
 
 
@@ -390,7 +393,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         """ """
         actions = (("Remove all", (), self.slot_clear_all),)
 
-        menu = build_custom_context_menu(self.parent(), actions)
+        menu = build_context_menu(self.parent(), actions)
         menu.exec_(self.viewport().mapToGlobal(pos))
 
     def load_custom_context_menu_feature(self, pos):
@@ -405,34 +408,33 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             ("basic block", ("- basic block:",), self.slot_nest_features),
         )
 
-        feature_count = len(tuple(self.get_features(selected=True)))
+        # build submenu with modify actions
+        sub_menu = build_context_menu(self.parent(), sub_actions)
+        sub_menu.setTitle("Nest feature%s" % ("" if len(tuple(self.get_features(selected=True))) == 1 else "s"))
 
-        sub_menu = build_custom_context_menu(self.parent(), sub_actions)
-        sub_menu.setTitle("Nest feature%s" % ("" if feature_count == 1 else "s"))
-
-        menu = build_custom_context_menu(self.parent(), actions)
-        menu.addMenu(sub_menu)
+        # build main menu with submenu + main actions
+        menu = build_context_menu(self.parent(), (sub_menu,) + actions)
 
         menu.exec_(self.viewport().mapToGlobal(pos))
 
     def load_custom_context_menu_expression(self, pos):
         """ """
+        actions = (("Remove expression", (), self.slot_remove_selected),)
+
         sub_actions = (
             ("and", ("- and:", self.itemAt(pos)), self.slot_edit_expression),
             ("or", ("- or:", self.itemAt(pos)), self.slot_edit_expression),
             ("not", ("- not:", self.itemAt(pos)), self.slot_edit_expression),
             ("optional", ("- optional:", self.itemAt(pos)), self.slot_edit_expression),
             ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
-            ("Remove expression", (), self.slot_remove_selected),
         )
 
-        actions = (("Remove expression", (), self.slot_remove_selected),)
-
-        sub_menu = build_custom_context_menu(self.parent(), sub_actions)
+        # build submenu with modify actions
+        sub_menu = build_context_menu(self.parent(), sub_actions)
         sub_menu.setTitle("Modify")
 
-        menu = build_custom_context_menu(self.parent(), actions)
-        menu.addMenu(sub_menu)
+        # build main menu with submenu + main actions
+        menu = build_context_menu(self.parent(), (sub_menu,) + actions)
 
         menu.exec_(self.viewport().mapToGlobal(pos))
 
@@ -663,7 +665,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         actions.append((action_add_features_fmt, (), self.slot_add_selected_features))
 
-        menu = build_custom_context_menu(self.parent(), actions)
+        menu = build_context_menu(self.parent(), actions)
         menu.exec_(self.viewport().mapToGlobal(pos))
 
     def slot_item_double_clicked(self, o, column):
