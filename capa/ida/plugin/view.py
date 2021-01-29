@@ -11,6 +11,7 @@ import re
 import idc
 from PyQt5 import QtCore, QtWidgets, QtGui
 
+import capa.features.basicblock
 import capa.ida.helpers
 import capa.engine
 import capa.rules
@@ -173,7 +174,7 @@ def build_context_menu(o, actions):
             menu.addMenu(action)
         else:
             menu.addAction(build_action(o, *action))
-            
+
     return menu
 
 
@@ -529,6 +530,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def load_features_from_yaml(self, rule_text, update_preview=False):
         """ """
+
         def add_node(parent, node):
             if node.text(0).startswith("description:"):
                 if parent.childCount():
@@ -639,6 +641,16 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         """ """
         return 1
 
+    @staticmethod
+    def get_node_type_parent():
+        """ """
+        return 0
+
+    @staticmethod
+    def get_node_type_leaf():
+        """ """
+        return 1
+
     def reset_view(self):
         """ """
         self.clear()
@@ -672,6 +684,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         """ """
         if column == CapaExplorerRulegenFeatures.get_column_address_index() and o.text(column):
             idc.jumpto(int(o.text(column), 0x10))
+        elif o.capa_type == CapaExplorerRulegenFeatures.get_node_type_leaf():
+            self.editor.update_features([o.data(0, 0x100)])
 
     def show_all_items(self):
         """ """
@@ -681,9 +695,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
     def filter_items_by_text(self, text):
         """ """
-        if not text:
-            self.show_all_items()
-        else:
+        if text:
             for o in iterate_tree(self):
                 data = o.data(0, 0x100)
                 if data and text.lower() not in data.get_value_str().lower():
@@ -691,15 +703,17 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                     continue
                 o.setHidden(False)
                 o.setExpanded(True)
+        else:
+            self.show_all_items()
 
-    def set_expression_node(self, o):
+    def style_parent_node(self, o):
         """ """
         font = QtGui.QFont()
         font.setBold(True)
 
         o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
 
-    def style_feature_node(self, o):
+    def style_leaf_node(self, o):
         """ """
         font = QtGui.QFont("Courier", weight=QtGui.QFont.Bold)
         brush = QtGui.QBrush()
@@ -713,52 +727,74 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         brush.setColor(QtGui.QColor(*COLOR_BLUE_RGB))
         o.setForeground(CapaExplorerRulegenFeatures.get_column_address_index(), brush)
 
-    def add_child_item(self, parent, values, feature=None, has_children=False):
+    def set_parent_node(self, o):
         """ """
-        c = QtWidgets.QTreeWidgetItem(parent)
+        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsSelectable)
+        setattr(o, "capa_type", CapaExplorerRulegenFeatures.get_node_type_parent())
+        self.style_parent_node(o)
 
-        if has_children:
-            self.set_expression_node(c)
-            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsSelectable)
-        else:
-            self.style_feature_node(c)
+    def set_leaf_node(self, o):
+        """ """
+        setattr(o, "capa_type", CapaExplorerRulegenFeatures.get_node_type_leaf())
+        self.style_leaf_node(o)
 
-        for (i, v) in enumerate(values):
-            c.setText(i, v)
+    def new_parent_node(self, parent, data, feature=None):
+        """ """
+        o = QtWidgets.QTreeWidgetItem(parent)
 
+        self.set_parent_node(o)
+        for (i, v) in enumerate(data):
+            o.setText(i, v)
         if feature:
-            c.setData(0, 0x100, feature)
+            o.setData(0, 0x100, feature)
 
-        return c
+        return o
+
+    def new_leaf_node(self, parent, data, feature=None):
+        """ """
+        o = QtWidgets.QTreeWidgetItem(parent)
+
+        self.set_leaf_node(o)
+        for (i, v) in enumerate(data):
+            o.setText(i, v)
+        if feature:
+            o.setData(0, 0x100, feature)
+
+        return o
 
     def load_features(self, features):
         """ """
         self.parent_items = {}
 
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
+            if isinstance(feature, capa.features.basicblock.BasicBlock):
+                # filter basic blocks for now, we may want to add these back in some time
+                # in the future
+                continue
+
             # level 0
             if type(feature) not in self.parent_items:
-                self.parent_items[type(feature)] = self.add_child_item(self, (feature.name.lower(),), has_children=True)
+                self.parent_items[type(feature)] = self.new_parent_node(self, (feature.name.lower(),))
 
             # level 1
             if feature not in self.parent_items:
-                self.parent_items[feature] = self.add_child_item(
-                    self.parent_items[type(feature)],
-                    (str(feature),),
-                    feature=feature,
-                    has_children=True if len(eas) > 1 else False,
-                )
+                if len(eas) > 1:
+                    self.parent_items[feature] = self.new_parent_node(
+                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                    )
+                else:
+                    self.parent_items[feature] = self.new_leaf_node(
+                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                    )
 
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
-                    self.add_child_item(
-                        self.parent_items[feature], (str(feature), "%X" % ea), feature=feature, has_children=False
-                    )
+                    self.new_leaf_node(self.parent_items[feature], (str(feature), "%X" % ea), feature=feature)
             else:
                 ea = eas.pop()
-                self.parent_items[feature].setText(0, str(feature))
-                self.parent_items[feature].setText(1, "%X" % ea)
+                for (i, v) in enumerate((str(feature), "%X" % ea)):
+                    self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 
 
