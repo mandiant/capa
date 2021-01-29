@@ -7,15 +7,12 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
-import sys
 import json
-import types
 import copy
 import logging
 import itertools
 import collections
 
-import idc
 import idaapi
 import ida_kernwin
 import ida_settings
@@ -54,13 +51,6 @@ def trim_function_name(f, max_length=25):
     n = idaapi.get_name(f.start_ea)
     if len(n) > max_length:
         n = "%s..." % n[:max_length]
-    return n
-
-
-def trim_scope(n):
-    """ """
-    if "/" in n:
-        n = n.rpartition("/")[0]
     return n
 
 
@@ -392,6 +382,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_features = CapaExplorerRulegenFeatures(self.view_rulegen_editor, parent=self.parent)
 
         self.view_rulegen_preview.textChanged.connect(self.slot_rulegen_preview_update)
+        self.view_rulegen_editor.updated.connect(self.slot_rulegen_editor_update)
 
         self.set_rulegen_preview_border_neutral()
 
@@ -420,7 +411,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             ("Change default rule author...", "Set default rule author", self.slot_change_rule_author),
             ("Change default rule scope...", "Set default rule scope", self.slot_change_rule_scope),
         )
-        self.load_menu("Configuration", actions)
+        self.load_menu("Settings", actions)
 
     def load_menu(self, title, actions):
         """load menu actions
@@ -858,9 +849,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         self.view_rulegen_preview.setStyleSheet("border: 3px solid green")
 
-    def slot_rulegen_preview_update(self):
+    def update_rule_status(self, rule_text):
         """ """
-        if not self.view_rulegen_editor.root:
+        if self.view_rulegen_editor.root is None:
             self.set_rulegen_preview_border_neutral()
             self.view_rulegen_status_label.clear()
             return
@@ -868,7 +859,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.set_rulegen_preview_border_error()
 
         try:
-            rule = capa.rules.Rule.from_yaml(self.view_rulegen_preview.toPlainText())
+            rule = capa.rules.Rule.from_yaml(rule_text)
         except Exception as e:
             self.set_rulegen_status("Failed to compile rule! %s" % e)
             return
@@ -900,6 +891,17 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.set_rulegen_status(
                 "Rule compiled, but no match found for %s" % idaapi.get_name(self.rulegen_current_function.start_ea)
             )
+
+    def slot_rulegen_editor_update(self):
+        """ """
+        rule_text = self.view_rulegen_preview.toPlainText()
+        self.update_rule_status(rule_text)
+
+    def slot_rulegen_preview_update(self):
+        """ """
+        rule_text = self.view_rulegen_preview.toPlainText()
+        self.view_rulegen_editor.load_features_from_yaml(rule_text, False)
+        self.update_rule_status(rule_text)
 
     def slot_limit_rulegen_features_to_search(self, text):
         """ """
@@ -952,8 +954,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not s:
             idaapi.info("No rule to save.")
             return
-
-        path = idaapi.ask_file(True, "*.yml", "Choose file to save capa rule")
+        
+        path = self.ask_user_capa_rule_file()
         if not path:
             return
 
@@ -1002,6 +1004,12 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.parent, "Please select a capa rules directory", settings.user["rule_path"]
             )
         )
+
+    def ask_user_capa_rule_file(self):
+        """ """
+        return QtWidgets.QFileDialog.getSaveFileName(
+            None, "Please select a capa rule to edit", settings.user["rule_path"], "*.yml"
+        )[0]
 
     def slot_change_rule_scope(self):
         """ """

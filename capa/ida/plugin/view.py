@@ -5,8 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from collections import Counter, defaultdict
-import binascii
+from collections import Counter
 import re
 
 import idc
@@ -24,6 +23,116 @@ MAX_SECTION_SIZE = 750
 # default colors used in views
 COLOR_GREEN_RGB = (79, 121, 66)
 COLOR_BLUE_RGB = (37, 147, 215)
+
+
+def calc_level_by_indent(line, prev_level=0):
+    """ """
+    if not len(line.strip()):
+        # blank line, which may occur for comments so we simply use the last level
+        return prev_level
+    stripped = line.lstrip()
+    if stripped.startswith("description"):
+        # need to adjust two spaces when encountering string description
+        line = line[2:]
+    # calc line level based on preceding whitespace
+    return len(line) - len(stripped)
+
+
+def parse_feature_for_node(feature):
+    """ """
+    description = ""
+    comment = ""
+
+    if feature.startswith("- count"):
+        # count is weird, we need to handle special
+        # first, we need to grab the comment, if exists
+        # next, we need to check for an embedded description
+        feature, _, comment = feature.partition("#")
+        m = re.search(r"- count\(([a-zA-Z]+)\((.+)\s+=\s+(.+)\)\):\s*(.+)", feature)
+        if m:
+            # reconstruct count without description
+            feature, value, description, count = m.groups()
+            feature = "- count(%s(%s)): %s" % (feature, value, count)
+    elif not feature.startswith("#"):
+        feature, _, comment = feature.partition("#")
+        feature, _, description = feature.partition("=")
+
+    return map(str.strip, (feature, description, comment))
+
+
+def parse_node_for_feature(feature, description, comment, depth):
+    """ """
+    depth = (depth * 2) + 4
+    display = ""
+
+    if feature.startswith("#"):
+        display += "%s%s\n" % (" " * depth, feature)
+    elif description:
+        if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not")):
+            display += "%s%s" % (" " * depth, feature)
+            if comment:
+                display += " # %s" % comment
+            display += "\n%s- description: %s\n" % (" " * (depth + 2), description)
+        elif feature.startswith("- string"):
+            display += "%s%s" % (" " * depth, feature)
+            if comment:
+                display += " # %s" % comment
+            display += "\n%sdescription: %s\n" % (" " * (depth + 2), description)
+        elif feature.startswith("- count"):
+            # count is weird, we need to format description based on feature type, so we parse with regex
+            # assume format - count(<feature_name>(<feature_value>)): <count>
+            m = re.search(r"- count\(([a-zA-Z]+)\((.+)\)\): (.+)", feature)
+            if m:
+                name, value, count = m.groups()
+                if name in ("string",):
+                    display += "%s%s" % (" " * depth, feature)
+                    if comment:
+                        display += " # %s" % comment
+                    display += "\n%sdescription: %s\n" % (" " * (depth + 2), description)
+                else:
+                    display += "%s- count(%s(%s = %s)): %s" % (
+                        " " * depth,
+                        name,
+                        value,
+                        description,
+                        count,
+                    )
+                    if comment:
+                        display += " # %s\n" % comment
+        else:
+            display += "%s%s = %s" % (" " * depth, feature, description)
+            if comment:
+                display += " # %s\n" % comment
+    else:
+        display += "%s%s" % (" " * depth, feature)
+        if comment:
+            display += " # %s\n" % comment
+
+    return display if display.endswith("\n") else display + "\n"
+
+
+def yaml_to_nodes(s):
+    level = 0
+    for line in s.splitlines():
+        feature, description, comment = parse_feature_for_node(line.strip())
+
+        o = QtWidgets.QTreeWidgetItem(None)
+
+        # set node attributes
+        setattr(o, "capa_level", calc_level_by_indent(line, level))
+
+        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- optional:")):
+            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
+        elif feature.startswith("#"):
+            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
+        else:
+            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
+
+        # set node text
+        for (i, v) in enumerate((feature, description, comment)):
+            o.setText(i, v)
+
+        yield o
 
 
 def iterate_tree(o):
@@ -71,6 +180,8 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         super(CapaExplorerRulgenPreview, self).__init__(parent)
 
         self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
+        self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
 
     def reset_view(self):
         """ """
@@ -93,16 +204,27 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         ]
         self.setText("\n".join(metadata_default))
 
+    def keyPressEvent(self, e):
+        """ """
+        if e.key() == QtCore.Qt.Key_Tab:
+            self.insertPlainText(" " * 2)
+        else:
+            super(CapaExplorerRulgenPreview, self).keyPressEvent(e)
+
 
 class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
+
+    updated = QtCore.pyqtSignal()
+
     def __init__(self, preview, parent=None):
         """ """
         super(CapaExplorerRulgenEditor, self).__init__(parent)
 
         self.preview = preview
 
-        self.setHeaderLabels(["Feature", "Description"])
+        self.setHeaderLabels(["Feature", "Description", "Comment"])
         self.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.header().setStretchLastSection(False)
         self.setExpandsOnDoubleClick(False)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -133,6 +255,26 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def get_column_description_index():
         """ """
         return 1
+
+    @staticmethod
+    def get_column_comment_index():
+        """ """
+        return 2
+
+    @staticmethod
+    def get_node_type_expression():
+        """ """
+        return 0
+
+    @staticmethod
+    def get_node_type_feature():
+        """ """
+        return 1
+
+    @staticmethod
+    def get_node_type_comment():
+        """ """
+        return 2
 
     def dragMoveEvent(self, e):
         """ """
@@ -167,22 +309,17 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_remove_selected(self, action):
         """ """
         for o in self.selectedItems():
-            # do not remove root node from tree
             if o == self.root:
+                self.takeTopLevelItem(self.indexOfTopLevelItem(o))
+                self.root = None
                 continue
             o.parent().removeChild(o)
 
     def slot_nest_features(self, action):
         """ """
         # create a new parent under root node, by default; new node added last position in tree
-        new_parent = self.add_child_item(
-            self.root,
-            (action.data()[0], ""),
-            drop_enabled=True,
-            select_enabled=True,
-            drag_enabled=True,
-            has_children=True,
-        )
+        new_parent = self.new_expression_node(self.root, (action.data()[0], ""))
+
         for o in self.get_features(selected=True):
             # take child from its parent by index, add to new parent
             new_parent.addChild(o.parent().takeChild(o.parent().indexOfChild(o)))
@@ -204,73 +341,50 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         if not self.indexAt(pos).isValid():
             # user selected invalid index
             self.load_custom_context_menu_invalid_index(pos)
-        elif not self.itemAt(pos).flags() & QtCore.Qt.ItemIsEditable:
+        elif self.itemAt(pos).capa_type == CapaExplorerRulgenEditor.get_node_type_expression():
             # user selected expression node
             self.load_custom_context_menu_expression(pos)
         else:
             # user selected feature node
             self.load_custom_context_menu_feature(pos)
 
-        # refresh views
-        # self.prune_expressions()
         self.update_preview()
 
     def slot_item_double_clicked(self, o, column):
         """ """
-        if o.flags() & QtCore.Qt.ItemIsEditable:
+        if column in (
+            CapaExplorerRulgenEditor.get_column_comment_index(),
+            CapaExplorerRulgenEditor.get_column_description_index(),
+        ):
+            o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
             self.editItem(o, column)
+            o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
             self.is_editing = True
-        else:
-            if column == CapaExplorerRulgenEditor.get_column_description_index():
-                o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
-                self.editItem(o, column)
-                o.setFlags(o.flags() & ~QtCore.Qt.ItemIsEditable)
-                self.is_editing = True
 
     def update_preview(self):
         """ """
         rule_text = self.preview.toPlainText()
-        rule_text = rule_text[: rule_text.find("features:") + len("features:")]
-        rule_text += "\n"
+
+        if -1 != rule_text.find("features:"):
+            rule_text = rule_text[: rule_text.find("features:") + len("features:")]
+            rule_text += "\n"
+        else:
+            rule_text = rule_text.rstrip()
+            rule_text += "\n  features:\n"
 
         for o in iterate_tree(self):
-            display = o.text(CapaExplorerRulgenEditor.get_column_feature_index())
-            description = o.text(CapaExplorerRulgenEditor.get_column_description_index())
-            depth_space = (calc_item_depth(o) * 2) + 4
+            feature, description, comment = map(str.strip, tuple(o.text(i) for i in range(3)))
+            rule_text += parse_node_for_feature(feature, description, comment, calc_item_depth(o))
 
-            if not description:
-                rule_text += "%s%s\n" % (" " * depth_space, display)
-            else:
-                if display.startswith(("- and", "- or", "- optional", "- basic block", "- not")):
-                    rule_text += "%s%s\n" % (" " * depth_space, display)
-                    rule_text += "%s- description: %s\n" % (" " * (depth_space + 2), description)
-                    continue
-                elif display.startswith("- string"):
-                    rule_text += "%s%s\n" % (" " * depth_space, display)
-                    rule_text += "%sdescription: %s\n" % (" " * (depth_space + 2), description)
-                    continue
-                elif display.startswith("- count"):
-                    # count is weird, we need to format description based on feature type, so we parse with regex
-                    # assume format - count(<feature_name>(<feature_value>)): <count>
-                    m = re.search(r"- count\(([a-zA-Z]+)\((.+)\)\): (.+)", display)
-                    if m:
-                        name, value, count = m.groups()
-                        if name in ("string",):
-                            rule_text += "%s%s\n" % (" " * depth_space, display)
-                            rule_text += "%sdescription: %s\n" % (" " * (depth_space + 2), description)
-                        else:
-                            rule_text += "%s- count(%s(%s = %s)): %s\n" % (
-                                " " * depth_space,
-                                name,
-                                value,
-                                description,
-                                count,
-                            )
-                        continue
-                # catchall
-                rule_text += "%s%s = %s\n" % (" " * depth_space, display, description)
-
+        # FIXME we avoid circular update by disabling signals when updating
+        # the preview. Preferably we would refactor the code to avoid this
+        # in the first place
+        self.preview.blockSignals(True)
         self.preview.setPlainText(rule_text)
+        self.preview.blockSignals(False)
+
+        # emit signal so views can update
+        self.updated.emit()
 
     def load_custom_context_menu_invalid_index(self, pos):
         """ """
@@ -281,8 +395,6 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def load_custom_context_menu_feature(self, pos):
         """ """
-        # sub_sub_actions = []
-
         actions = (("Remove selection", (), self.slot_remove_selected),)
 
         sub_actions = (
@@ -295,17 +407,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         feature_count = len(tuple(self.get_features(selected=True)))
 
-        """
-        for i in range(feature_count + 1):
-            sub_sub_actions.append(("%d or more" % i, ("- %d or more:" % i,), self.slot_nest_features))
-
-        sub_sub_menu = build_custom_context_menu(self.parent(), sub_sub_actions)
-        sub_sub_menu.setTitle("N or more")
-        """
-
         sub_menu = build_custom_context_menu(self.parent(), sub_actions)
         sub_menu.setTitle("Nest feature%s" % ("" if feature_count == 1 else "s"))
-        # sub_menu.addMenu(sub_sub_menu)
 
         menu = build_custom_context_menu(self.parent(), actions)
         menu.addMenu(sub_menu)
@@ -320,30 +423,27 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             ("not", ("- not:", self.itemAt(pos)), self.slot_edit_expression),
             ("optional", ("- optional:", self.itemAt(pos)), self.slot_edit_expression),
             ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
+            ("Remove expression", (), self.slot_remove_selected),
         )
 
-        actions = []
+        actions = (("Remove expression", (), self.slot_remove_selected),)
 
         sub_menu = build_custom_context_menu(self.parent(), sub_actions)
         sub_menu.setTitle("Modify")
-
-        if self.root != self.itemAt(pos):
-            # only add remove option if not root
-            actions.append(("Remove expression", (), self.slot_remove_selected))
 
         menu = build_custom_context_menu(self.parent(), actions)
         menu.addMenu(sub_menu)
 
         menu.exec_(self.viewport().mapToGlobal(pos))
 
-    def style_parent_node(self, o):
+    def style_expression_node(self, o):
         """ """
         font = QtGui.QFont()
         font.setBold(True)
 
         o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
 
-    def style_child_node(self, o):
+    def style_feature_node(self, o):
         """ """
         font = QtGui.QFont()
         brush = QtGui.QBrush()
@@ -355,77 +455,138 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
         o.setForeground(CapaExplorerRulgenEditor.get_column_feature_index(), brush)
 
-    def add_child_item(
-        self,
-        parent,
-        values,
-        data=None,
-        drop_enabled=False,
-        edit_enabled=False,
-        select_enabled=False,
-        drag_enabled=False,
-        has_children=False,
-    ):
+    def style_comment_node(self, o):
         """ """
-        c = QtWidgets.QTreeWidgetItem(parent)
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setFamily("Courier")
 
-        if has_children:
-            # adding expression node, set bold
-            self.style_parent_node(c)
-        else:
-            # adding feature node, set style, weight, and color
-            self.style_child_node(c)
+        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
 
-        if not select_enabled:
-            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsSelectable)
-        if edit_enabled:
-            c.setFlags(c.flags() | QtCore.Qt.ItemIsTristate | QtCore.Qt.ItemIsEditable)
-        if not drop_enabled:
-            c.setFlags(c.flags() & ~QtCore.Qt.ItemIsDropEnabled)
-        if drag_enabled:
-            c.setFlags(c.flags() | QtCore.Qt.ItemIsDragEnabled)
+    def set_expression_node(self, o):
+        """ """
+        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
+        self.style_expression_node(o)
 
+    def set_feature_node(self, o):
+        """ """
+        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
+        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+        self.style_feature_node(o)
+
+    def set_comment_node(self, o):
+        """ """
+        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
+        o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
+
+        self.style_comment_node(o)
+
+    def new_expression_node(self, parent, values=()):
+        """ """
+        o = QtWidgets.QTreeWidgetItem(parent)
+        self.set_expression_node(o)
         for (i, v) in enumerate(values):
-            c.setText(i, v)
+            o.setText(i, v)
+        return o
 
-        if data:
-            c.setData(0, 0x100, data)
+    def new_feature_node(self, parent, values=()):
+        """ """
+        o = QtWidgets.QTreeWidgetItem(parent)
+        self.set_feature_node(o)
+        for (i, v) in enumerate(values):
+            o.setText(i, v)
+        return o
 
-        return c
+    def new_comment_node(self, parent, values=()):
+        """ """
+        o = QtWidgets.QTreeWidgetItem(parent)
+        self.set_comment_node(o)
+        for (i, v) in enumerate(values):
+            o.setText(i, v)
+        return o
 
     def update_features(self, features):
         """ """
         if not self.root:
             # root node does not exist, create default node, set expanded
-            self.root = self.add_child_item(
-                self, ("- or:", ""), drop_enabled=True, select_enabled=True, has_children=True
-            )
-            self.root.setExpanded(True)
+            self.root = self.new_expression_node(self, ("- or:", ""))
 
         # build feature counts
         counted = list(zip(Counter(features).keys(), Counter(features).values()))
 
         # single features
         for (k, v) in filter(lambda t: t[1] == 1, counted):
-            display = "- %s: %s" % (k.name.lower(), k.get_value_str())
-            self.add_child_item(self.root, (display, ""), edit_enabled=True, select_enabled=True, drag_enabled=True)
+            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), k.get_value_str()), ""))
 
         # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
-            display = "- count(%s): %d" % (str(k), v)
-            self.add_child_item(self.root, (display, ""), edit_enabled=True, select_enabled=True, drag_enabled=True)
+            self.new_feature_node(self.root, ("- count(%s): %d" % (str(k), v), ""))
 
+        self.expandAll()
         self.update_preview()
 
-    def prune_expressions(self):
+    def load_features_from_yaml(self, rule_text, update_preview=False):
         """ """
-        for o in self.get_expressions(ignore=(self.root,)):
-            if not o.childCount():
-                o.parent().removeChild(o)
+        def add_node(parent, node):
+            if node.text(0).startswith("description:"):
+                if parent.childCount():
+                    parent.child(parent.childCount() - 1).setText(1, node.text(0).lstrip("description:").lstrip())
+                else:
+                    parent.setText(1, node.text(0).lstrip("description:").lstrip())
+            elif node.text(0).startswith("- description:"):
+                parent.setText(1, node.text(0).lstrip("- description:").lstrip())
+            else:
+                parent.addChild(node)
+
+        def build(parent, nodes):
+            if nodes:
+                child_lvl = nodes[0].capa_level
+                while nodes:
+                    node = nodes.pop(0)
+                    if node.capa_level == child_lvl:
+                        add_node(parent, node)
+                    elif node.capa_level > child_lvl:
+                        nodes.insert(0, node)
+                        build(parent.child(parent.childCount() - 1), nodes)
+                    else:
+                        parent = parent.parent() if parent.parent() else parent
+                        add_node(parent, node)
+
+        self.reset_view()
+
+        # check for lack of features block
+        if -1 == rule_text.find("features:"):
+            return
+
+        rule_features = rule_text[rule_text.find("features:") + len("features:") :].strip()
+        rule_nodes = list(yaml_to_nodes(rule_features))
+
+        # check for lack of nodes
+        if not rule_nodes:
+            return
+
+        for o in rule_nodes:
+            (self.set_expression_node, self.set_feature_node, self.set_comment_node)[o.capa_type](o)
+
+        self.root = rule_nodes.pop(0)
+        self.addTopLevelItem(self.root)
+
+        if update_preview:
+            self.preview.blockSignals(True)
+            self.preview.setPlainText(rule_text)
+            self.preview.blockSignals(False)
+
+        build(self.root, rule_nodes)
+
+        self.expandAll()
 
     def get_features(self, selected=False, ignore=()):
         """ """
-        for feature in filter(lambda o: o.flags() & QtCore.Qt.ItemIsEditable, tuple(iterate_tree(self))):
+        for feature in filter(
+            lambda o: o.capa_type
+            in (CapaExplorerRulgenEditor.get_node_type_feature(), CapaExplorerRulgenEditor.get_node_type_comment()),
+            tuple(iterate_tree(self)),
+        ):
             if feature in ignore:
                 continue
             if selected and not feature.isSelected():
@@ -434,7 +595,9 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def get_expressions(self, selected=False, ignore=()):
         """ """
-        for expression in filter(lambda o: not o.flags() & QtCore.Qt.ItemIsEditable, tuple(iterate_tree(self))):
+        for expression in filter(
+            lambda o: o.capa_type == CapaExplorerRulgenEditor.get_node_type_expression(), tuple(iterate_tree(self))
+        ):
             if expression in ignore:
                 continue
             if selected and not expression.isSelected():
@@ -527,14 +690,14 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 o.setHidden(False)
                 o.setExpanded(True)
 
-    def style_parent_node(self, o):
+    def set_expression_node(self, o):
         """ """
         font = QtGui.QFont()
         font.setBold(True)
 
         o.setFont(CapaExplorerRulegenFeatures.get_column_feature_index(), font)
 
-    def style_child_node(self, o):
+    def style_feature_node(self, o):
         """ """
         font = QtGui.QFont("Courier", weight=QtGui.QFont.Bold)
         brush = QtGui.QBrush()
@@ -553,10 +716,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         c = QtWidgets.QTreeWidgetItem(parent)
 
         if has_children:
-            self.style_parent_node(c)
+            self.set_expression_node(c)
             c.setFlags(c.flags() & ~QtCore.Qt.ItemIsSelectable)
         else:
-            self.style_child_node(c)
+            self.style_feature_node(c)
 
         for (i, v) in enumerate(values):
             c.setText(i, v)
