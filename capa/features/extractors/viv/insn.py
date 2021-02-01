@@ -258,10 +258,10 @@ def extract_insn_bytes_features(f, bb, insn):
     example:
         #     push    offset iid_004118d4_IShellLinkA ; riid
     """
-    for oper in insn.opers:
-        if insn.mnem == "call":
-            continue
+    if insn.mnem == "call":
+        return
 
+    for oper in insn.opers:
         if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
             v = oper.getOperValue(oper)
         elif isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
