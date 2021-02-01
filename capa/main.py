@@ -115,7 +115,13 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         }
     }
 
-    for f in tqdm.tqdm(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
+    pbar = tqdm.tqdm
+    if disable_progress:
+        # do not use tqdm to avoid unnecessary side effects when caller intends
+        # to disable progress completely
+        pbar = lambda s, *args, **kwargs: s
+
+    for f in pbar(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
         meta["feature_counts"]["functions"][f.__int__()] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
@@ -366,7 +372,13 @@ def get_rules(rule_path, disable_progress=False):
 
     rules = []
 
-    for rule_path in tqdm.tqdm(list(rule_paths), disable=disable_progress, desc="loading ", unit="     rules"):
+    pbar = tqdm.tqdm
+    if disable_progress:
+        # do not use tqdm to avoid unnecessary side effects when caller intends
+        # to disable progress completely
+        pbar = lambda s, *args, **kwargs: s
+
+    for rule_path in pbar(list(rule_paths), disable=disable_progress, desc="loading ", unit="     rules"):
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
