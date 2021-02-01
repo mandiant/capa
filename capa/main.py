@@ -121,7 +121,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for f in pbar(list(extractor.get_functions()), disable=disable_progress, desc="matching", unit=" functions"):
+    for f in pbar(list(extractor.get_functions()), desc="matching", unit=" functions"):
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
         meta["feature_counts"]["functions"][f.__int__()] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
