@@ -378,7 +378,7 @@ def get_rules(rule_path, disable_progress=False):
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for rule_path in pbar(list(rule_paths), disable=disable_progress, desc="loading ", unit="     rules"):
+    for rule_path in pbar(list(rule_paths), desc="loading ", unit="     rules"):
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
