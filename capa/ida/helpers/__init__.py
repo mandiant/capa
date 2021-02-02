@@ -103,6 +103,7 @@ def collect_metadata():
         "analysis": {
             "format": idaapi.get_file_type_name(),
             "extractor": "ida",
+            "base_address": idaapi.get_imagebase(),
         },
         "version": capa.version.__version__,
     }
