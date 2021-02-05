@@ -15,28 +15,29 @@ from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section
 
 
-def extract_file_embedded_pe(buf, _):
+def extract_file_embedded_pe(extractor):
     """
     extract embedded PE features
     """
+    buf = extractor.buf
     for match in re.finditer(b"MZ", buf):
         offset = match.start()
-        subcontainer = miasm.analysis.binary.ContainerPE.from_string(buf[offset:])
+        subcontainer = miasm.analysis.binary.ContainerPE.from_string(buf[offset:], loc_db=extractor.loc_db)
         if isinstance(subcontainer, miasm.analysis.binary.ContainerPE):
             yield Characteristic("embedded pe"), offset
 
 
-def extract_file_export_names(_, pe):
+def extract_file_export_names(extractor):
     """
     extract file exports and their addresses
     """
-    for symbol, va in miasm.jitter.loader.pe.get_export_name_addr_list(pe):
+    for symbol, va in miasm.jitter.loader.pe.get_export_name_addr_list(extractor.pe):
         # Only use func names and not ordinals
         if isinstance(symbol, str):
             yield Export(symbol), va
 
 
-def extract_file_import_names(_, pe):
+def extract_file_import_names(extractor):
     """
     extract imported function names and their addresses
     1. imports by ordinal:
@@ -45,7 +46,7 @@ def extract_file_import_names(_, pe):
      - modulename.importname
      - importname
     """
-    for ((dll, symbol), va_set) in miasm.jitter.loader.pe.get_import_address_pe(pe).items():
+    for ((dll, symbol), va_set) in miasm.jitter.loader.pe.get_import_address_pe(extractor.pe).items():
         dll_name = dll[:-4]  # Remove .dll
         for va in va_set:
             if isinstance(symbol, int):
@@ -55,28 +56,28 @@ def extract_file_import_names(_, pe):
                 yield Import(symbol), va
 
 
-def extract_file_section_names(_, pe):
+def extract_file_section_names(extractor):
     """
     extract file sections and their addresses
     """
-    for section in pe.SHList.shlist:
+    for section in extractor.pe.SHList.shlist:
         name = section.name.partition(b"\x00")[0].decode("ascii")
         va = section.addr
         yield Section(name), va
 
 
-def extract_file_strings(buf, _):
+def extract_file_strings(extractor):
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
+    for s in capa.features.extractors.strings.extract_ascii_strings(extractor.buf):
         yield String(s.s), s.offset
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
+    for s in capa.features.extractors.strings.extract_unicode_strings(extractor.buf):
         yield String(s.s), s.offset
 
 
-def extract_file_features(buf, pe):
+def extract_file_features(extractor):
     """
     extract file features from given buffer and parsed binary
 
@@ -88,7 +89,7 @@ def extract_file_features(buf, pe):
       Tuple[Feature, VA]: a feature and its location.
     """
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(buf, pe):
+        for feature, va in file_handler(extractor):
             yield feature, va
 
 

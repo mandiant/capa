@@ -8,6 +8,7 @@
 
 import miasm.analysis.binary
 import miasm.analysis.machine
+from miasm.core.locationdb import LocationDB
 
 import capa.features.extractors.miasm.file
 import capa.features.extractors.miasm.insn
@@ -20,7 +21,8 @@ class MiasmFeatureExtractor(FeatureExtractor):
     def __init__(self, buf):
         super(MiasmFeatureExtractor, self).__init__()
         self.buf = buf
-        self.container = miasm.analysis.binary.Container.from_string(buf)
+        self.loc_db = LocationDB()
+        self.container = miasm.analysis.binary.Container.from_string(buf, self.loc_db)
         self.pe = self.container.executable
         self.machine = miasm.analysis.machine.Machine(self.container.arch)
         self.cfg = self._build_cfg()
@@ -29,7 +31,7 @@ class MiasmFeatureExtractor(FeatureExtractor):
         return self.container.entry_point
 
     def extract_file_features(self):
-        for feature, va in capa.features.extractors.miasm.file.extract_file_features(self.buf, self.pe):
+        for feature, va in capa.features.extractors.miasm.file.extract_file_features(self):
             yield feature, va
 
     # TODO: Improve this function (it just considers all loc_keys target of calls a function), port to miasm
@@ -62,7 +64,7 @@ class MiasmFeatureExtractor(FeatureExtractor):
         get the basic blocks of the function represented by lock_key
         """
         block = self.cfg.loc_key_to_block(loc_key)
-        disassembler = self.machine.dis_engine(self.container.bin_stream, follow_call=False)
+        disassembler = self.machine.dis_engine(self.container.bin_stream, loc_db=self.loc_db, follow_call=False)
         cfg = disassembler.dis_multiblock(self.block_offset(block))
         return cfg.blocks
 

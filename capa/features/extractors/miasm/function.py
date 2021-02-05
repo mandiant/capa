@@ -24,7 +24,9 @@ def extract_function_loop(extractor, loc_key):
     returns if the function has a loop
     """
     block = extractor.cfg.loc_key_to_block(loc_key)
-    disassembler = extractor.machine.dis_engine(extractor.container.bin_stream, follow_call=False)
+    disassembler = extractor.machine.dis_engine(
+        extractor.container.bin_stream, loc_db=extractor.loc_db, follow_call=False
+    )
     offset = extractor.block_offset(block)
     cfg = disassembler.dis_multiblock(offset)
     if cfg.has_loop():
