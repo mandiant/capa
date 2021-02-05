@@ -36,8 +36,9 @@ def extract_insn_api_features(extractor, _f, _bb, insn):
             target = int(arg.ptr)
             imports = get_imports(extractor.pe)
             if target in imports:
-                for feature, va in capa.features.extractors.helpers.generate_api_features(imports[target], insn.offset):
-                    yield feature, va
+                dll, _, symbol = imports[target].rpartition(".")
+                for feature in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                    yield feature, insn.offset
 
 
 def extract_insn_number_features(extractor, f, bb, insn):
