@@ -336,7 +336,7 @@ def extract_function_calls_from(f, bb, insn):
                 # mark as recursive
                 yield Characteristic("recursive call"), outref
     if insn.offset in f.apirefs:
-        yield Characteristic("calls from"), f.apirefs[insn.offset]
+        yield Characteristic("calls from"), insn.offset
 
 
 # this is a feature that's most relevant at the function or basic block scope,
