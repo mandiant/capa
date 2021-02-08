@@ -8,11 +8,7 @@
 
 import types
 
-import file
-import insn
-import function
 import viv_utils
-import basicblock
 
 import capa.features.extractors
 import capa.features.extractors.viv.file
@@ -42,7 +38,7 @@ def add_va_int_cast(o):
     this bit of skullduggery lets use cast viv-utils objects as ints.
     the correct way of doing this is to update viv-utils (or subclass the objects here).
     """
-    setattr(o, "__int__", types.MethodType(get_va, o, type(o)))
+    setattr(o, "__int__", types.MethodType(get_va, o))
     return o
 
 
