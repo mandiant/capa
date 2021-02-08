@@ -1,5 +1,103 @@
 # Change Log
 
+## v1.5.0 (2021-02-05)
+
+This release brings support for running capa under Python 3 via [SMDA](https://github.com/danielplohmann/smda), more thorough CI testing and linting, better extraction of strings and byte features, and 50 (!) new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. A special shout out to the following new project contributors:
+
+  - @johnk3r
+  - @doomedraven
+  - @stvemillertime
+  - @itreallynick
+  - @0x534a
+  
+@dzbeck also added [Malware Behavior Catalog](https://github.com/MBCProject/mbc-markdown) (MBC) and ATT&CK mappings for many rules.
+
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+
+
+### New Features
+
+  - py3 support via SMDA #355 @danielplohmann @jcrussell
+  - scripts: example of using capa as a library #372, #380 @doomedraven
+  - ci: enable dependabot #373 @mr-tz
+  - ci: lint rules @mr-tz
+  - ci: lint rule format #401 @mr-tz
+  - freeze: add base address #391 @mr-tz
+  - json: meta: add base address #412 @mr-tz
+
+### New Rules (50)
+
+  - 64-bit execution via heavens gate @recvfrom
+  - contain anti-disasm techniques @mr-tz
+  - check for microsoft office emulation @re-fox
+  - check for windows sandbox via device @re-fox
+  - check for windows sandbox via dns suffix @re-fox
+  - check for windows sandbox via genuine state @re-fox
+  - check for windows sandbox via process name @re-fox
+  - check for windows sandbox via registry @re-fox
+  - capture microphone audio @re-fox
+  - capture public ip @re-fox
+  - get domain trust relationships @johnk3r
+  - check HTTP status code @mr-tz
+  - compiled with perl2exe @re-fox
+  - compiled with ps2exe @re-fox
+  - compiled with pyarmor @stvemillertime, @itreallynick
+  - validate payment card number using luhn algorithm @re-fox
+  - hash data using fnv @re-fox @mr-tz
+  - generate random numbers via WinAPI @mike-hunhoff @johnk3r
+  - enumerate files recursively @re-fox
+  - get file system object information @mike-hunhoff
+  - read virtual disk @re-fox
+  - register minifilter driver @mike-hunhoff
+  - start minifilter driver @mike-hunhoff
+  - enumerate gui resources @johnk3r
+  - simulate CTRL ALT DEL @mike-hunhoff
+  - hijack thread execution @0x534a
+  - inject dll @0x534a
+  - inject pe @0x534a
+  - create or open registry key @mike-hunhoff
+  - delete registry value @mike-hunhoff
+  - query or enumerate registry key @mike-hunhoff
+  - query or enumerate registry value @mike-hunhoff
+  - resume thread @0x534a
+  - suspend thread @0x534a
+  - allocate memory @0x534a
+  - allocate RW memory @0x534a
+  - contain pusha popa sequence @mr-tz
+  - create or open file @mike-hunhoff
+  - open process @0x534a
+  - open thread @0x534a
+  - get kernel32 base address @mr-tz
+  - get ntdll base address @mr-tz
+  - encrypt or decrypt data via BCrypt @mike-hunhoff
+  - generate random numbers using the Delphi LCG @williballenthin
+  - hash data via BCrypt @mike-hunhoff
+  - migrate process to active window station @williballenthin
+  - patch process command line @williballenthin
+  - resolve function by hash @williballenthin
+  - persist via Winlogon Helper DLL registry key @0x534a
+  - schedule task via command line @0x534a
+
+### Bug Fixes
+
+  - doc: pyinstaller build process @mr-tz
+  - ida: better bytes extraction #409 @mike-hunhoff
+  - viv: better unicode string extraction #364 @mike-hunhoff
+  - viv: better unicode string extraction #378 @mr-tz
+  - viv: more xor instructions #379 @mr-tz
+  - viv: decrease logging verbosity #381 @mr-tz
+  - rules: fix api description syntax #403 @mike-hunhoff
+  - main: disable progress background thread #410 @mike-hunhoff
+  
+### Changes
+
+  - rules: return lib rules for scopes #398 @mr-tz
+  
+### Raw diffs
+
+  - [capa v1.4.1...v1.5.0](https://github.com/fireeye/capa/compare/v1.4.1...v1.5.0)
+  - [capa-rules v1.4.0...v1.5.0](https://github.com/fireeye/capa-rules/compare/v1.4.0...v1.5.0)
+
 ## v1.4.1 (2020-10-23)
 
 This release fixes an issue building capa on our CI server, which prevented us from building standalone binaries for v1.4.1.
