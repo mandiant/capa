@@ -32,7 +32,7 @@ import capa.features.extractors
 from capa.helpers import oint, get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
-SUPPORTED_FILE_MAGIC = set(["MZ"])
+SUPPORTED_FILE_MAGIC = set([b"MZ"])
 
 
 logger = logging.getLogger("capa")
@@ -304,19 +304,33 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor_py3(path, format, disable_progress=False):
-    from smda.SmdaConfig import SmdaConfig
-    from smda.Disassembler import Disassembler
+    if False:
+        from smda.SmdaConfig import SmdaConfig
+        from smda.Disassembler import Disassembler
 
-    import capa.features.extractors.smda
+        import capa.features.extractors.smda
 
-    smda_report = None
-    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        config = SmdaConfig()
-        config.STORE_BUFFER = True
-        smda_disasm = Disassembler(config)
-        smda_report = smda_disasm.disassembleFile(path)
+        smda_report = None
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            config = SmdaConfig()
+            config.STORE_BUFFER = True
+            smda_disasm = Disassembler(config)
+            smda_report = smda_disasm.disassembleFile(path)
 
-    return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+        return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+    else:
+        import capa.features.extractors.viv
+
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            vw = get_workspace(path, format, should_save=False)
+
+            try:
+                vw.saveWorkspace()
+            except IOError:
+                # see #168 for discussion around how to handle non-writable directories
+                logger.info("source directory is not writable, won't save intermediate workspace")
+
+        return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
 def get_extractor(path, format, disable_progress=False):

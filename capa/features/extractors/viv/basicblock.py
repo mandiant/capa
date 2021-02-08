@@ -125,11 +125,16 @@ def get_printable_len(oper):
 
 
 def is_printable_ascii(chars):
-    return all(ord(c) < 127 and c in string.printable for c in chars)
+    try:
+        chars_str = chars.decode("ascii")
+    except UnicodeDecodeError:
+        return False
+    else:
+        return all(c in string.printable for c in chars_str)
 
 
 def is_printable_utf16le(chars):
-    if all(c == "\x00" for c in chars[1::2]):
+    if all(c == b"\x00" for c in chars[1::2]):
         return is_printable_ascii(chars[::2])
 
 
