@@ -303,8 +303,8 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format, disable_progress=False):
-    if False:
+def get_extractor_py3(path, format, backend, disable_progress=False):
+    if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
 
@@ -333,13 +333,13 @@ def get_extractor_py3(path, format, disable_progress=False):
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-def get_extractor(path, format, disable_progress=False):
+def get_extractor(path, format, backend="vivisect", disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
     """
     if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format, disable_progress=disable_progress)
+        return get_extractor_py3(path, format, backend, disable_progress=disable_progress)
     else:
         return get_extractor_py2(path, format, disable_progress=disable_progress)
 
@@ -515,6 +515,14 @@ def main(argv=None):
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
     )
+    parser.add_argument(
+        "-b",
+        "--backend",
+        type=str,
+        help="select the backend to use in Python 3 (this option is ignored in Python 2)",
+        choices=("vivisect", "smda"),
+        default="vivisect",
+    )
     parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument(
@@ -619,7 +627,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
