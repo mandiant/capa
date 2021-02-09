@@ -16,8 +16,7 @@ from fixtures import *
     indirect=["sample", "scope"],
 )
 def test_viv_features(sample, scope, feature, expected):
-    with xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2"):
-        do_test_feature_presence(get_viv_extractor, sample, scope, feature, expected)
+    do_test_feature_presence(get_viv_extractor, sample, scope, feature, expected)
 
 
 @parametrize(
@@ -26,5 +25,4 @@ def test_viv_features(sample, scope, feature, expected):
     indirect=["sample", "scope"],
 )
 def test_viv_feature_counts(sample, scope, feature, expected):
-    with xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2"):
-        do_test_feature_count(get_viv_extractor, sample, scope, feature, expected)
+    do_test_feature_count(get_viv_extractor, sample, scope, feature, expected)

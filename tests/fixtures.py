@@ -522,6 +522,7 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 def get_extractor(path):
     if sys.version_info >= (3, 0):
         extractor = get_smda_extractor(path)
+        extractor = get_viv_extractor(path)
     else:
         extractor = get_viv_extractor(path)
 
