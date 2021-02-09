@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import re
 import uuid
 import codecs
 import logging
@@ -600,6 +601,9 @@ class Rule(object):
         # use block mode, not inline json-like mode
         y.default_flow_style = False
 
+        # leave quotes unchanged
+        y.preserve_quotes = True
+
         # indent lists by two spaces below their parent
         #
         #     features:
@@ -614,16 +618,20 @@ class Rule(object):
         return y
 
     @classmethod
-    def from_yaml(cls, s):
-        # use pyyaml because it can be much faster than ruamel (pure python)
-        doc = yaml.load(s, Loader=cls._get_yaml_loader())
+    def from_yaml(cls, s, use_ruamel=False):
+        if use_ruamel:
+            # ruamel enables nice formatting and doc roundtripping with comments
+            doc = cls._get_ruamel_yaml_parser().load(s)
+        else:
+            # use pyyaml because it can be much faster than ruamel (pure python)
+            doc = yaml.load(s, Loader=cls._get_yaml_loader())
         return cls.from_dict(doc, s)
 
     @classmethod
-    def from_yaml_file(cls, path):
+    def from_yaml_file(cls, path, use_ruamel=False):
         with open(path, "rb") as f:
             try:
-                return cls.from_yaml(f.read().decode("utf-8"))
+                return cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e))
 
@@ -716,7 +724,18 @@ class Rule(object):
         # tweaking `ruamel.indent()` doesn't quite give us the control we want.
         # so, add the two extra spaces that we've determined we need through experimentation.
         # see #263
-        doc = doc.replace("  description:", "    description:")
+        # only do this for the features section, so the meta description doesn't get reformatted
+        # assumes features section always exists
+        features_offset = doc.find("features")
+        doc = doc[:features_offset] + doc[features_offset:].replace("  description:", "    description:")
+
+        # for negative hex numbers, yaml dump outputs:
+        # - offset: !!int '0x-30'
+        # we prefer:
+        # - offset: -0x30
+        # the below regex makes these adjustments and while ugly, we don't have to explore the ruamel.yaml insides
+        doc = re.sub(r"!!int '0x-([0-9a-fA-F]+)'", r"-0x\1", doc)
+
         return doc
 
 

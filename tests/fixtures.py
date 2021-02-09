@@ -10,6 +10,7 @@
 import os
 import sys
 import os.path
+import binascii
 import contextlib
 import collections
 
@@ -444,6 +445,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardTransmit".encode("utf-16le")), True),
     ("mimikatz", "function=0x40105D", capa.features.Bytes("ACR  > ".encode("utf-16le")), True),
     ("mimikatz", "function=0x40105D", capa.features.Bytes("nope".encode("ascii")), False),
+    # IDA features included byte sequences read from invalid memory, fixed in #409
+    ("mimikatz", "function=0x44570F", capa.features.Bytes(binascii.unhexlify("FF" * 256)), False),
     # insn/bytes, pointer to bytes
     ("mimikatz", "function=0x44EDEF", capa.features.Bytes("INPUTEVENT".encode("utf-16le")), True),
     # insn/characteristic(nzxor)
