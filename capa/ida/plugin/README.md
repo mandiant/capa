@@ -23,10 +23,10 @@ for this particular function.
 Using the `Rule Information` and `Details` columns capa explorer shows us that the suspect function matched `self delete via COMSPEC environment variable` because it contains capa rule matches for `create process`, `get COMSPEC environment variable`,
 and `query environment variable`, references to the strings `COMSPEC`, ` > nul`, and `/c del`, and calls to the Windows API functions `GetEnvironmentVariableA` and `ShellExecuteEx`.
 
-You can also use capa explorer to build new rules out of the features extracted directly from your IDB. Open the `Rule Generator` tab, navigate to a function for which you would like to build a new rule,
-and click `Analyze`. capa explorer will extract features from the function currently displayed in the `Disassembly` view and display them in the `Function Features` window. You can start adding these features to your new rule
-by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` windows can be used to build your rule, including using the `Preview` window
-to modify the rule text directly and the `Editor` window to construct a hierarchy of statements and features. When you finish a rule you can it directly to a file by clicking `Save`.
+capa explorer also helps you build new capa rules. To start select the `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view,
+and click `Analyze`. capa explorer will extract features from this function and display them in the `Function Features` pane. You can add features listed in this pane to the `Editor` pane
+by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` panes can be used to edit your rule by either using the `Preview` pane
+to modify the rule text directly and the `Editor` pane to construct and rearrange your hierarchy of statements and features. When you finish a rule you can save it directly to a file by clicking `Save`.
 
 ![](../../../doc/img/rulegen_expanded.png)
 
@@ -64,13 +64,14 @@ You can install capa explorer using the following steps:
 
 1. Run IDA and analyze a supported file type (select the `Manual Load` and `Load Resources` options in IDA for best results)
 2. Open capa explorer in IDA by navigating to `Edit > Plugins > FLARE capa explorer` or using the keyboard shortcut `Alt+F5`
-3. Click the `Analyze` button
+3. Select the `Program Analysis` tab
+4. Click the `Analyze` button
 
 When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
 remembers your selection for future runs; you can change this selection by navigating to `Settings > Change default rules directory...`. We recommend 
 downloading and using the [standard collection of capa rules](https://github.com/fireeye/capa-rules) when getting started with the plugin.
 
-#### Tips Program Analysis
+#### Tips for Program Analysis
 
 * Start analysis by clicking the `Analyze` button
 * Reset the plugin user interface and remove highlighting from IDA disassembly view by clicking the `Reset` button
@@ -80,16 +81,16 @@ downloading and using the [standard collection of capa rules](https://github.com
 * Double-click a result in the `Rule Information` column to expand its children
 * Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in the IDA Dissasembly view
 
-#### Tips Rule Generator
+#### Tips for Rule Generator
 
 * Navigate to a function in the `Disassembly` view and click`Analyze` to get started
-* Double-click or multi-select + right-click in the `Function Features` window to add features to the `Editor` window
-* Right-click features in the `Editor` window to make modifications
-* Drag-and-drop (single click + multi-select support) features in the `Editor` window to quickly build a hierarchy of statements and features
-* Right-click anywhere in the `Editor` window not on a feature to quickly remove all features
-* Add descriptions/comments by placing editing the appropriate column in the `Editor` window
-* Directly edit rule text, including rule metadata fields using the `Preview` window
-* Change the default rule author and default scope displayed in the `Preview` window by navigating to `Settings`
+* Double-click or multi-select + right-click in the `Function Features` pane to add features to the `Editor` pane
+* Right-click features in the `Editor` pane to make modifications
+* Drag-and-drop (single click + multi-select support) features in the `Editor` pane to quickly build a hierarchy of statements and features
+* Right-click anywhere in the `Editor` pane not on a feature to quickly remove all features
+* Add descriptions/comments by placing editing the appropriate column in the `Editor` pane
+* Directly edit rule text, including rule metadata fields using the `Preview` pane
+* Change the default rule author and default scope displayed in the `Preview` pane by navigating to `Settings`
 
 ## Development
 
