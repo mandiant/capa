@@ -25,7 +25,7 @@ and `query environment variable`, references to the strings `COMSPEC`, ` > nul`,
 
 capa explorer also helps you build new capa rules. To start select the `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view,
 and click `Analyze`. capa explorer will extract features from this function and display them in the `Function Features` pane. You can add features listed in this pane to the `Editor` pane
-by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` panes can be used to edit your rule by either using the `Preview` pane
+by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` panes can be used to edit your rule using the `Preview` pane
 to modify the rule text directly and the `Editor` pane to construct and rearrange your hierarchy of statements and features. When you finish a rule you can save it directly to a file by clicking `Save`.
 
 ![](../../../doc/img/rulegen_expanded.png)
