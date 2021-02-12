@@ -7,8 +7,8 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
-import json
 import copy
+import json
 import logging
 import itertools
 import collections
@@ -26,9 +26,9 @@ import capa.features.extractors.ida
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
-    CapaExplorerRulegenFeatures,
     CapaExplorerRulgenEditor,
     CapaExplorerRulgenPreview,
+    CapaExplorerRulegenFeatures,
 )
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
@@ -406,9 +406,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         splitter1 = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         splitter1.addWidget(left)
         splitter1.addWidget(splitter2)
-
-        #layout.addWidget(left, 40)
-        #layout.addWidget(right, 60)
 
         layout.addWidget(splitter1)
 

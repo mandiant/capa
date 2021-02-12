@@ -5,17 +5,16 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from collections import Counter
 import re
+from collections import Counter
 
 import idc
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtGui, QtCore, QtWidgets
 
-import capa.features.basicblock
-import capa.ida.helpers
-import capa.engine
 import capa.rules
-
+import capa.engine
+import capa.ida.helpers
+import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.ida.plugin.model import CapaExplorerDataModel
 
@@ -771,6 +770,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 # filter basic blocks for now, we may want to add these back in some time
                 # in the future
                 continue
+
+            if isinstance(feature, capa.features.String):
+                # strip string for display
+                feature.value = feature.value.strip()
 
             # level 0
             if type(feature) not in self.parent_items:
