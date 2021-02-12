@@ -3,8 +3,8 @@
 capa explorer is an IDA Pro plugin written in Python that integrates the FLARE team's open-source framework, capa, with IDA. capa is a framework that uses a well-defined collection of rules to 
 identify capabilities in a program. You can run capa against a PE file or shellcode and it tells you what it thinks the program can do. For example, it might suggest that 
 the program is a backdoor, can install services, or relies on HTTP to communicate. You can use capa explorer to run capa directly on an IDA database without requiring access
-to the source binary. Once a database has been analyzed, capa explorer can be used to quickly identify and navigate to interesting areas of a program 
-and dissect capa rule matches at the assembly level.
+to or execution of the source binary. Once a database has been analyzed, capa explorer can be used to quickly identify and navigate to interesting areas of a program and manually build new capa rules out
+of the features extracted directly from your IDB.
 
 We love using capa explorer during malware analysis because it teaches us what parts of a program suggest a behavior. As we click on rows, capa explorer jumps directly 
 to important addresses in the IDA Pro database and highlights key features in the Disassembly view so they stand out visually. To illustrate, we use capa explorer to 
@@ -13,36 +13,24 @@ the program's functionality.
 
 After loading Lab 14-02 into IDA and analyzing the database with capa explorer, we see that capa detected a rule match for `self delete via COMSPEC environment variable`:
 
-![](../../../doc/img/ida_plugin_example_1.png)
+![](../../../doc/img/explorer_condensed.png)
 
 We can use capa explorer to navigate the IDA Disassembly view directly to the suspect function and get an assembly-level breakdown of why capa matched `self delete via COMSPEC environment variable` 
 for this particular function.
 
-![](../../../doc/img/ida_plugin_example_2.png)
+![](../../../doc/img/explorer_expanded.png)
 
 Using the `Rule Information` and `Details` columns capa explorer shows us that the suspect function matched `self delete via COMSPEC environment variable` because it contains capa rule matches for `create process`, `get COMSPEC environment variable`,
 and `query environment variable`, references to the strings `COMSPEC`, ` > nul`, and `/c del`, and calls to the Windows API functions `GetEnvironmentVariableA` and `ShellExecuteEx`.
 
+You can also use capa explorer to build new rules out of the features extracted directly from your IDB. Open the `Rule Generator` tab, navigate to a function for which you would like to build a new rule,
+and click `Analyze`. capa explorer will extract features from the function currently displayed in the `Disassembly` view and display them in the `Function Features` window. You can start adding these features to your new rule
+by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` windows can be used to build your rule, including using the `Preview` window
+to modify the rule text directly and the `Editor` window to construct a hierarchy of statements and features. When you finish a rule you can it directly to a file by clicking `Save`.
+
+![](../../../doc/img/rulegen_expanded.png)
+
 For more information on the FLARE team's open-source framework, capa, check out the overview in our first [blog](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
-
-## Features
-
-![](../../../doc/img/ida_plugin_intro.gif)
-
-* Display capa results in an interactive tree view of rule matches and their locations in the current database
-* Search for keywords or phrases found in the `Rule Information`, `Address`, or `Details` columns
-* Display rule source content when a user hovers their cursor over a rule match
-* Double-click `Address` column to view associated feature in the IDA Disassembly view
-* Limit tree view results to the function currently displayed in the IDA Disassembly view; update results as a user navigates to different functions
-* Export results as formatted JSON by navigating to `File > Export results...`
-* Remember a user's capa rules directory for future runs; change capa rules directory by navigating to `Rules > Change rules directory...`
-* Automatically re-analyze database when user performs a program rebase
-* Automatically update results when IDA is used to rename a function
-* Select one or more checkboxes to highlight the associated addresses in the IDA Disassembly view
-* Right-click a function match to rename it; the new function name is propagated to the current IDA database
-* Right-click to copy a result by column or by row
-* Sort results by column
-* Reset tree view and IDA Disassembly view highlighting by clicking `Reset`
 
 ## Getting Started
 
@@ -79,18 +67,29 @@ You can install capa explorer using the following steps:
 3. Click the `Analyze` button
 
 When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
-remembers your selection for future runs; you can change this selection by navigating to `Rules > Change rules directory...`. We recommend 
+remembers your selection for future runs; you can change this selection by navigating to `Settings > Change default rules directory...`. We recommend 
 downloading and using the [standard collection of capa rules](https://github.com/fireeye/capa-rules) when getting started with the plugin.
 
-#### Tips
+#### Tips Program Analysis
 
 * Start analysis by clicking the `Analyze` button
 * Reset the plugin user interface and remove highlighting from IDA disassembly view by clicking the `Reset` button
-* Change your capa rules directory by navigating to `Rules > Change rules directory...` from the plugin menu
+* Change your capa rules directory by navigating to `Settings > Change default rules directory...` from the plugin menu
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate the IDA Disassembly view to the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
 * Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in the IDA Dissasembly view
+
+#### Tips Rule Generator
+
+* Navigate to a function in the `Disassembly` view and click`Analyze` to get started
+* Double-click or multi-select + right-click in the `Function Features` window to add features to the `Editor` window
+* Right-click features in the `Editor` window to make modifications
+* Drag-and-drop (single click + multi-select support) features in the `Editor` window to quickly build a hierarchy of statements and features
+* Right-click anywhere in the `Editor` window not on a feature to quickly remove all features
+* Add descriptions/comments by placing editing the appropriate column in the `Editor` window
+* Directly edit rule text, including rule metadata fields using the `Preview` window
+* Change the default rule author and default scope displayed in the `Preview` window by navigating to `Settings`
 
 ## Development
 
