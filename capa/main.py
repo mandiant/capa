@@ -33,6 +33,8 @@ from capa.helpers import oint, get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
+BACKEND_VIV = "vivisect"
+BACKEND_SMDA = "smda"
 
 
 logger = logging.getLogger("capa")
@@ -333,7 +335,7 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-def get_extractor(path, format, backend="vivisect", disable_progress=False):
+def get_extractor(path, format, backend=BACKEND_VIV, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
@@ -520,8 +522,8 @@ def main(argv=None):
         "--backend",
         type=str,
         help="select the backend to use in Python 3 (this option is ignored in Python 2)",
-        choices=("vivisect", "smda"),
-        default="vivisect",
+        choices=(BACKEND_VIV, BACKEND_SMDA),
+        default=BACKEND_VIV,
     )
     parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
