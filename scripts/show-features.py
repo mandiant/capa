@@ -71,9 +71,11 @@ import argparse
 import capa.main
 import capa.rules
 import capa.engine
+import capa.helpers
 import capa.features
 import capa.features.freeze
-import capa.features.extractors.viv
+
+logger = logging.getLogger("capa.show-features")
 
 
 def main(argv=None):
@@ -95,17 +97,55 @@ def main(argv=None):
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
     )
     parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
 
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger().setLevel(logging.INFO)
+    if args.quiet:
+        logging.basicConfig(level=logging.ERROR)
+        logging.getLogger().setLevel(logging.ERROR)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
 
-    if args.format == "freeze":
+    # disable vivisect-related logging, it's verbose and not relevant for capa users
+    capa.main.set_vivisect_log_level(logging.CRITICAL)
+
+    try:
+        taste = capa.helpers.get_file_taste(args.sample)
+    except IOError as e:
+        logger.error("%s", str(e))
+        return -1
+
+    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
-        vw = capa.main.get_workspace(args.sample, args.format)
-        extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, args.sample)
+        try:
+            extractor = capa.main.get_extractor(args.sample, args.format)
+        except capa.main.UnsupportedFormatError:
+            logger.error("-" * 80)
+            logger.error(" Input file does not appear to be a PE file.")
+            logger.error(" ")
+            logger.error(
+                " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
+            )
+            logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+            logger.error("-" * 80)
+            return -1
+        except capa.main.UnsupportedRuntimeError:
+            logger.error("-" * 80)
+            logger.error(" Unsupported runtime or Python interpreter.")
+            logger.error(" ")
+            logger.error(" capa supports running under Python 2.7 using Vivisect for binary analysis.")
+            logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
+            logger.error(" ")
+            logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
+            logger.error("-" * 80)
+            return -1
 
     if not args.function:
         for feature, va in extractor.extract_file_features():
@@ -118,15 +158,13 @@ def main(argv=None):
 
     if args.function:
         if args.format == "freeze":
-            functions = filter(lambda f: f == args.function, functions)
+            functions = tuple(filter(lambda f: f == args.function, functions))
         else:
-            functions = filter(lambda f: f.va == args.function, functions)
+            functions = tuple(filter(lambda f: capa.helpers.oint(f) == args.function, functions))
 
-            if args.function not in [f.va for f in functions]:
-                print("0x%X not a function, creating it" % args.function)
-                vw.makeFunction(args.function)
-                functions = extractor.get_functions()
-                functions = filter(lambda f: f.va == args.function, functions)
+            if args.function not in [capa.helpers.oint(f) for f in functions]:
+                print("0x%X not a function" % args.function)
+                return -1
 
         if len(functions) == 0:
             print("0x%X not a function")
