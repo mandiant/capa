@@ -35,7 +35,11 @@ logger = logging.getLogger("capa.lint")
 
 
 class Lint(object):
+    WARN = "WARN"
+    FAIL = "FAIL"
+
     name = "lint"
+    level = FAIL
     recommendation = ""
 
     def check_rule(self, ctx, rule):
@@ -279,6 +283,24 @@ class FeatureNegativeNumber(Lint):
         return False
 
 
+class FeatureNtdllNtoskrnlApi(Lint):
+    name = "feature api may overlap with ntdll and ntoskrnl"
+    level = Lint.WARN
+    recommendation = (
+        "check if {:s} is exported by both ntdll and ntoskrnl; if true, consider removing {:s} "
+        "module requirement to improve detection"
+    )
+
+    def check_features(self, ctx, features):
+        for feature in features:
+            if isinstance(feature, capa.features.insn.API):
+                modname, _, impname = feature.value.rpartition(".")
+                if modname in ("ntdll", "ntoskrnl"):
+                    self.recommendation = self.recommendation.format(impname, modname)
+                    return True
+        return False
+
+
 class FormatSingleEmptyLineEOF(Lint):
     name = "EOF format"
     recommendation = "end file with a single empty line"
@@ -354,10 +376,7 @@ def lint_meta(ctx, rule):
     return run_lints(META_LINTS, ctx, rule)
 
 
-FEATURE_LINTS = (
-    FeatureStringTooShort(),
-    FeatureNegativeNumber(),
-)
+FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi())
 
 
 def lint_features(ctx, rule):
@@ -446,25 +465,28 @@ def lint_rule(ctx, rule):
             )
         )
 
-        level = "WARN" if is_nursery_rule(rule) else "FAIL"
-
         for violation in violations:
             print(
                 "%s  %s: %s: %s"
                 % (
                     "    " if is_nursery_rule(rule) else "",
-                    level,
+                    Lint.WARN if is_nursery_rule(rule) else violation.level,
                     violation.name,
                     violation.recommendation,
                 )
             )
 
-    elif len(violations) == 0 and is_nursery_rule(rule):
+        print("")
+
+    lints_failed = any(map(lambda v: v.level == Lint.FAIL, violations))
+
+    if not lints_failed and is_nursery_rule(rule):
         print("")
         print("%s%s" % ("    (nursery) ", rule.name))
-        print("%s  %s: %s: %s" % ("    ", "WARN", "no violations", "Graduate the rule"))
+        print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
+        print("")
 
-    return len(violations) > 0 and not is_nursery_rule(rule)
+    return lints_failed and not is_nursery_rule(rule)
 
 
 def lint(ctx, rules):
@@ -593,7 +615,7 @@ def main(argv=None):
     logger.debug("lints ran for ~ %02d:%02dm", min, sec)
 
     if not did_violate:
-        logger.info("no suggestions, nice!")
+        logger.info("no lints failed, nice!")
         return 0
     else:
         return 1
