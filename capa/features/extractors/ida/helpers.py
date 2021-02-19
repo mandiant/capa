@@ -351,6 +351,10 @@ def find_data_reference_from_insn(insn, max_depth=10):
             # break if circular reference
             break
 
+        if not idaapi.is_mapped(data_refs[0]):
+            # break if address is not mapped
+            break
+
         depth += 1
         if depth > max_depth:
             # break if max depth
