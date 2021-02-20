@@ -192,7 +192,7 @@ def ida_main():
     functions = extractor.get_functions()
 
     if function:
-        functions = filter(lambda f: f.start_ea == function, functions)
+        functions = tuple(filter(lambda f: f.start_ea == function, functions))
 
         if len(functions) == 0:
             print("0x%X not a function" % function)
