@@ -173,6 +173,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # UI controls
         self.view_limit_results_by_function = None
+        self.view_show_results_by_function = None
         self.view_search_bar = None
         self.view_tree = None
         self.view_rulegen = None
@@ -246,6 +247,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         # load parent tab and children tab views
         self.load_view_tabs()
         self.load_view_checkbox_limit_by()
+        self.load_view_checkbox_show_matches_by_function()
         self.load_view_search_bar()
         self.load_view_tree_tab()
         self.load_view_rulegen_tab()
@@ -276,6 +278,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         check.stateChanged.connect(self.slot_checkbox_limit_by_changed)
 
         self.view_limit_results_by_function = check
+
+    def load_view_checkbox_show_matches_by_function(self):
+        """load limit results by function checkbox"""
+        check = QtWidgets.QCheckBox("Show matches by function")
+        check.setChecked(False)
+        check.stateChanged.connect(self.slot_checkbox_show_results_by_function_changed)
+
+        self.view_show_results_by_function = check
 
     def load_view_status_label(self):
         """load status label"""
@@ -327,8 +337,15 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_view_tree_tab(self):
         """load tree view tab"""
+        layout2 = QtWidgets.QHBoxLayout()
+        layout2.addWidget(self.view_limit_results_by_function)
+        layout2.addWidget(self.view_show_results_by_function)
+
+        checkboxes = QtWidgets.QWidget()
+        checkboxes.setLayout(layout2)
+
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.view_limit_results_by_function)
+        layout.addWidget(checkboxes)
         layout.addWidget(self.view_search_bar)
         layout.addWidget(self.view_tree)
 
@@ -609,97 +626,103 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         return True
 
-    def load_capa_results(self):
+    def load_capa_results(self, use_cache=False):
         """run capa analysis and render results in UI
 
         note: this function must always return, exception or not, in order for plugin to safely close the IDA
         wait box
         """
-        # new analysis, new doc
-        self.doc = None
-        self.process_total = 0
-        self.process_count = 1
+        if not use_cache:
+            # new analysis, new doc
+            self.doc = None
+            self.process_total = 0
+            self.process_count = 1
 
-        def slot_progress_feature_extraction(text):
-            """slot function to handle feature extraction progress updates"""
-            update_wait_box("%s (%d of %d)" % (text, self.process_count, self.process_total))
-            self.process_count += 1
+            def slot_progress_feature_extraction(text):
+                """slot function to handle feature extraction progress updates"""
+                update_wait_box("%s (%d of %d)" % (text, self.process_count, self.process_total))
+                self.process_count += 1
 
-        extractor = CapaExplorerFeatureExtractor()
-        extractor.indicator.progress.connect(slot_progress_feature_extraction)
+            extractor = CapaExplorerFeatureExtractor()
+            extractor.indicator.progress.connect(slot_progress_feature_extraction)
 
-        update_wait_box("calculating analysis")
+            update_wait_box("calculating analysis")
+
+            try:
+                self.process_total += len(tuple(extractor.get_functions()))
+            except Exception as e:
+                logger.error("Failed to calculate analysis (error: %s).", e)
+                return False
+
+            if ida_kernwin.user_cancelled():
+                logger.info("User cancelled analysis.")
+                return False
+
+            update_wait_box("loading rules")
+
+            if not self.load_capa_rules():
+                return False
+
+            if ida_kernwin.user_cancelled():
+                logger.info("User cancelled analysis.")
+                return False
+
+            update_wait_box("extracting features")
+
+            try:
+                meta = capa.ida.helpers.collect_metadata()
+                capabilities, counts = capa.main.find_capabilities(self.ruleset_cache, extractor, disable_progress=True)
+                meta["analysis"].update(counts)
+            except UserCancelledError:
+                logger.info("User cancelled analysis.")
+                return False
+            except Exception as e:
+                logger.error("Failed to extract capabilities from database (error: %s)", e)
+                return False
+
+            update_wait_box("checking for file limitations")
+
+            try:
+                # support binary files specifically for x86/AMD64 shellcode
+                # warn user binary file is loaded but still allow capa to process it
+                # TODO: check specific architecture of binary files based on how user configured IDA processors
+                if idaapi.get_file_type_name() == "Binary file":
+                    logger.warning("-" * 80)
+                    logger.warning(" Input file appears to be a binary file.")
+                    logger.warning(" ")
+                    logger.warning(
+                        " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
+                    )
+                    logger.warning(
+                        " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
+                    )
+                    logger.warning(
+                        " If you don't know the input file type, you can try using the `file` utility to guess it."
+                    )
+                    logger.warning("-" * 80)
+
+                    capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
+
+                if capa.main.has_file_limitation(self.ruleset_cache, capabilities, is_standalone=False):
+                    capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
+            except Exception as e:
+                logger.error("Failed to check for file limitations (error: %s)", e)
+                return False
+
+            if ida_kernwin.user_cancelled():
+                logger.info("User cancelled analysis.")
+                return False
+
+            update_wait_box("rendering results")
+
+            try:
+                self.doc = capa.render.convert_capabilities_to_result_document(meta, self.ruleset_cache, capabilities)
+            except Exception as e:
+                logger.error("Failed to render results (error: %s)", e)
+                return False
 
         try:
-            self.process_total += len(tuple(extractor.get_functions()))
-        except Exception as e:
-            logger.error("Failed to calculate analysis (error: %s).", e)
-            return False
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        update_wait_box("loading rules")
-
-        if not self.load_capa_rules():
-            return False
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        update_wait_box("extracting features")
-
-        try:
-            meta = capa.ida.helpers.collect_metadata()
-            capabilities, counts = capa.main.find_capabilities(self.ruleset_cache, extractor, disable_progress=True)
-            meta["analysis"].update(counts)
-        except UserCancelledError:
-            logger.info("User cancelled analysis.")
-            return False
-        except Exception as e:
-            logger.error("Failed to extract capabilities from database (error: %s)", e)
-            return False
-
-        update_wait_box("checking for file limitations")
-
-        try:
-            # support binary files specifically for x86/AMD64 shellcode
-            # warn user binary file is loaded but still allow capa to process it
-            # TODO: check specific architecture of binary files based on how user configured IDA processors
-            if idaapi.get_file_type_name() == "Binary file":
-                logger.warning("-" * 80)
-                logger.warning(" Input file appears to be a binary file.")
-                logger.warning(" ")
-                logger.warning(
-                    " capa currently only supports analyzing binary files containing x86/AMD64 shellcode with IDA."
-                )
-                logger.warning(
-                    " This means the results may be misleading or incomplete if the binary file loaded in IDA is not x86/AMD64."
-                )
-                logger.warning(
-                    " If you don't know the input file type, you can try using the `file` utility to guess it."
-                )
-                logger.warning("-" * 80)
-
-                capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
-
-            if capa.main.has_file_limitation(self.ruleset_cache, capabilities, is_standalone=False):
-                capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
-        except Exception as e:
-            logger.error("Failed to check for file limitations (error: %s)", e)
-            return False
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        update_wait_box("rendering results")
-
-        try:
-            self.doc = capa.render.convert_capabilities_to_result_document(meta, self.ruleset_cache, capabilities)
-            self.model_data.render_capa_doc(self.doc)
+            self.model_data.render_capa_doc(self.doc, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
                 "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rules_cache))
             )
@@ -715,10 +738,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         called when user selects plugin reset from menu
         """
         self.view_limit_results_by_function.setChecked(False)
+        # self.view_show_results_by_function.setChecked(False)
         self.view_search_bar.setText("")
         self.view_tree.reset_ui()
 
-    def analyze_program(self):
+    def analyze_program(self, use_cache=False):
         """ """
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
@@ -727,7 +751,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.set_view_status_label("Loading...")
 
         ida_kernwin.show_wait_box("capa explorer")
-        success = self.load_capa_results()
+        success = self.load_capa_results(use_cache)
         ida_kernwin.hide_wait_box()
 
         self.reset_view_tree()
@@ -984,6 +1008,16 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.range_model_proxy.reset_address_range_filter()
 
         self.view_tree.reset_ui()
+
+    def slot_checkbox_show_results_by_function_changed(self, state):
+        """slot activated if checkbox clicked
+
+        if checked, configure function filter if screen location is located in function, otherwise clear filter
+
+        @param state: checked state
+        """
+        if self.doc:
+            self.analyze_program(use_cache=True)
 
     def limit_results_to_function(self, f):
         """add filter to limit results to current function
