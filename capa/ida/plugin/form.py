@@ -103,6 +103,24 @@ def find_func_matches(f, ruleset, func_features, bb_features):
     return func_matches, bb_matches
 
 
+def find_file_features(extractor):
+    """ """
+    file_features = collections.defaultdict(set)
+    for (feature, ea) in extractor.extract_file_features():
+        if ea:
+            file_features[feature].add(ea)
+        else:
+            if feature not in file_features:
+                file_features[feature] = set()
+    return file_features
+
+
+def find_file_matches(ruleset, file_features):
+    """ """
+    _, matches = capa.engine.match(ruleset.file_rules, file_features, 0x0)
+    return matches
+
+
 def update_wait_box(text):
     """update the IDA wait box"""
     ida_kernwin.replace_wait_box("capa explorer...%s" % text)
@@ -192,8 +210,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_header_label = None
         self.view_rulegen_search = None
         self.rulegen_current_function = None
-        self.rulegen_bb_features_cache = None
-        self.rulegen_func_features_cache = None
+        self.rulegen_bb_features_cache = {}
+        self.rulegen_func_features_cache = {}
+        self.rulegen_file_features_cache = {}
         self.view_rulegen_status_label = None
 
         self.Show()
@@ -394,7 +413,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_rulegen_header_label = QtWidgets.QLabel()
         self.view_rulegen_header_label.setAlignment(QtCore.Qt.AlignLeft)
-        self.view_rulegen_header_label.setText("Function Features")
+        self.view_rulegen_header_label.setText("Features")
         self.view_rulegen_header_label.setFont(font)
 
         self.view_rulegen_preview = CapaExplorerRulgenPreview(parent=self.parent)
@@ -762,70 +781,135 @@ class CapaExplorerForm(idaapi.PluginForm):
         else:
             logger.info("Analysis completed.")
 
+    def load_capa_function_results(self):
+        """ """
+        if not self.rules_cache or not self.ruleset_cache:
+            # only reload rules if caches are empty
+            if not self.load_capa_rules():
+                return False
+        else:
+            logger.info('Using cached ruleset, click "Reset" to reload rules from disk.')
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return False
+        update_wait_box("loading IDA extractor")
+
+        try:
+            # must use extractor to get function, as capa analysis requires casted object
+            extractor = CapaExplorerFeatureExtractor()
+        except Exception as e:
+            logger.error("Failed to load IDA feature extractor (error: %s)" % e)
+            return False
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return False
+        update_wait_box("extracting function features")
+
+        try:
+            f = idaapi.get_func(idaapi.get_screen_ea())
+            if f:
+                f = extractor.get_function(f.start_ea)
+                self.rulegen_current_function = f
+
+                func_features, bb_features = find_func_features(f, extractor)
+                self.rulegen_func_features_cache = collections.defaultdict(set, copy.copy(func_features))
+                self.rulegen_bb_features_cache = collections.defaultdict(dict, copy.copy(bb_features))
+
+                if ida_kernwin.user_cancelled():
+                    logger.info("User cancelled analysis.")
+                    return False
+                update_wait_box("matching function/basic block rule scope")
+
+                try:
+                    # add function and bb rule matches to function features, for display purposes
+                    func_matches, bb_matches = find_func_matches(f, self.ruleset_cache, func_features, bb_features)
+                    for (name, res) in itertools.chain(func_matches.items(), bb_matches.items()):
+                        rule = self.ruleset_cache[name]
+                        if rule.meta.get("capa/subscope-rule"):
+                            continue
+                        for (ea, _) in res:
+                            func_features[capa.features.MatchedRule(name)].add(ea)
+                except Exception as e:
+                    logger.error("Failed to match function/basic block rule scope (error: %s)" % e)
+                    return False
+            else:
+                func_features = {}
+        except UserCancelledError:
+            logger.info("User cancelled analysis.")
+            return False
+        except Exception as e:
+            logger.error("Failed to extract function features (error: %s)" % e)
+            return False
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return False
+        update_wait_box("extracting file features")
+
+        try:
+            file_features = find_file_features(extractor)
+            self.rulegen_file_features_cache = collections.defaultdict(dict, copy.copy(file_features))
+
+            if ida_kernwin.user_cancelled():
+                logger.info("User cancelled analysis.")
+                return False
+            update_wait_box("matching file rule scope")
+
+            try:
+                # add file matches to file features, for display purposes
+                for (name, res) in find_file_matches(self.ruleset_cache, file_features).items():
+                    rule = self.ruleset_cache[name]
+                    if rule.meta.get("capa/subscope-rule"):
+                        continue
+                    for (ea, _) in res:
+                        file_features[capa.features.MatchedRule(name)].add(ea)
+            except Exception as e:
+                logger.error("Failed to match file scope rules (error: %s)" % e)
+                return False
+        except Exception as e:
+            logger.error("Failed to extract file features (error: %s)" % e)
+            return False
+
+        if ida_kernwin.user_cancelled():
+            logger.info("User cancelled analysis.")
+            return False
+        update_wait_box("rendering views")
+
+        try:
+            # load preview and feature tree
+            self.view_rulegen_preview.load_preview_meta(
+                f.start_ea if f else None,
+                settings.user.get("rulegen_author", "<insert_author>"),
+                settings.user.get("rulegen_scope", "function"),
+            )
+            self.view_rulegen_features.load_features(file_features, func_features)
+
+            # self.view_rulegen_header_label.setText("Function Features (%s)" % trim_function_name(f))
+            self.set_view_status_label(
+                "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rules_cache))
+            )
+        except Exception as e:
+            logger.error("Failed to render views (error: %s)" % e)
+            return False
+
+        return True
+
     def analyze_function(self):
         """ """
         self.reset_function_analysis_views(is_analyze=True)
         self.set_view_status_label("Loading...")
 
-        f = idaapi.get_func(idaapi.get_screen_ea())
+        ida_kernwin.show_wait_box("capa explorer")
+        success = self.load_capa_function_results()
+        ida_kernwin.hide_wait_box()
 
-        if not f:
-            capa.ida.helpers.inform_user_ida_ui("Invalid function")
+        if not success:
             self.set_view_status_label("Click Analyze to get started...")
-            logger.info(
-                "Please navigate to a valid function in the IDA disassembly view before starting function analysis."
-            )
-            return
-
-        if not self.rules_cache or not self.ruleset_cache:
-            # only reload rules if caches are empty
-            ida_kernwin.show_wait_box("capa explorer")
-            loaded = self.load_capa_rules()
-            ida_kernwin.hide_wait_box()
-
-            if not loaded:
-                self.set_view_status_label("Click Analyze to get started...")
-                logger.info("Analysis failed.")
-                return
+            logger.info("Analysis failed.")
         else:
-            logger.info('Using cached ruleset, click "Reset" to reload rules from disk.')
-
-        # must use extractor to get function, as capa analysis requires casted object
-        extractor = capa.features.extractors.ida.IdaFeatureExtractor()
-        f = extractor.get_function(f.start_ea)
-
-        # cache current function for use elsewhere
-        self.rulegen_current_function = f
-
-        func_features, bb_features = find_func_features(f, extractor)
-        func_matches, bb_matches = find_func_matches(f, self.ruleset_cache, func_features, bb_features)
-
-        # cache features for use elsewhere
-        self.rulegen_func_features_cache = collections.defaultdict(set, copy.copy(func_features))
-        self.rulegen_bb_features_cache = collections.defaultdict(dict, copy.copy(bb_features))
-
-        # add function and bb rule matches to function features, for display purposes
-        for (name, res) in itertools.chain(func_matches.items(), bb_matches.items()):
-            rule = self.ruleset_cache[name]
-            if rule.meta.get("capa/subscope-rule"):
-                continue
-            for (ea, _) in res:
-                func_features[capa.features.MatchedRule(name)].add(ea)
-
-        # load preview and feature tree
-        self.view_rulegen_preview.load_preview_meta(
-            f.start_ea,
-            settings.user.get("rulegen_author", "<insert_author>"),
-            settings.user.get("rulegen_scope", "function"),
-        )
-        self.view_rulegen_features.load_features(func_features)
-
-        self.view_rulegen_header_label.setText("Function Features (%s)" % trim_function_name(f))
-        self.set_view_status_label(
-            "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rules_cache))
-        )
-
-        logger.info("Analysis completed.")
+            logger.info("Analysis completed.")
 
     def reset_program_analysis_views(self):
         """ """
@@ -843,15 +927,16 @@ class CapaExplorerForm(idaapi.PluginForm):
         """ """
         logger.info("Resetting rule generator views.")
 
-        self.view_rulegen_header_label.setText("Function Features")
+        # self.view_rulegen_header_label.setText("Features")
         self.view_rulegen_features.reset_view()
         self.view_rulegen_editor.reset_view()
         self.view_rulegen_preview.reset_view()
         self.view_rulegen_search.clear()
         self.set_rulegen_preview_border_neutral()
         self.rulegen_current_function = None
-        self.rulegen_func_features_cache = None
-        self.rulegen_bb_features_cache = None
+        self.rulegen_func_features_cache = {}
+        self.rulegen_bb_features_cache = {}
+        self.rulegen_file_features_cache = {}
         self.view_rulegen_status_label.clear()
 
         if not is_analyze:
@@ -895,7 +980,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             rule = capa.rules.Rule.from_yaml(rule_text)
         except Exception as e:
-            self.set_rulegen_status("Failed to compile rule! %s" % e)
+            self.set_rulegen_status("Failed to compile rule (%s)" % e)
             return
 
         # create deep copy of current rules, add our new rule
@@ -903,28 +988,41 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules.append(rule)
 
         try:
-            func_matches, bb_matches = find_func_matches(
-                self.rulegen_current_function,
-                capa.rules.RuleSet(list(capa.rules.get_rules_and_dependencies(rules, rule.name))),
-                self.rulegen_func_features_cache,
-                self.rulegen_bb_features_cache,
+            file_features = copy.copy(self.rulegen_file_features_cache)
+            if self.rulegen_current_function:
+                func_matches, bb_matches = find_func_matches(
+                    self.rulegen_current_function,
+                    capa.rules.RuleSet(list(capa.rules.get_rules_and_dependencies(rules, rule.name))),
+                    self.rulegen_func_features_cache,
+                    self.rulegen_bb_features_cache,
+                )
+                file_features.update(copy.copy(self.rulegen_func_features_cache))
+            else:
+                func_matches = {}
+                bb_matches = {}
+
+            _, file_matches = capa.engine.match(
+                capa.rules.RuleSet(list(capa.rules.get_rules_and_dependencies(rules, rule.name))).file_rules,
+                file_features,
+                0x0,
             )
         except Exception as e:
-            self.set_rulegen_status("Failed to match rule! %s" % e)
+            self.set_rulegen_status("Failed to match rule (%s)" % e)
             return
 
-        if tuple(filter(lambda m: m[0] == rule.name, itertools.chain(func_matches.items(), bb_matches.items()))):
+        if tuple(
+            filter(
+                lambda m: m[0] == rule.name,
+                itertools.chain(file_matches.items(), func_matches.items(), bb_matches.items()),
+            )
+        ):
             # made it here, rule compiled and match was found
             self.set_rulegen_preview_border_success()
-            self.set_rulegen_status(
-                "Rule compiled, match found for %s" % idaapi.get_name(self.rulegen_current_function.start_ea)
-            )
+            self.set_rulegen_status("Rule compiled and matched")
         else:
             # made it here, rule compiled but no match found, may be intended so we warn user
             self.set_rulegen_preview_border_warn()
-            self.set_rulegen_status(
-                "Rule compiled, but no match found for %s" % idaapi.get_name(self.rulegen_current_function.start_ea)
-            )
+            self.set_rulegen_status("Rule compiled, but not matched")
 
     def slot_rulegen_editor_update(self):
         """ """

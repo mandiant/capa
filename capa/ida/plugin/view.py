@@ -202,7 +202,9 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
             "    scope: %s" % scope,
             "    references: <insert_references>",
             "    examples:",
-            "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea),
+            "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea)
+            if ea
+            else "      - %s" % (capa.ida.helpers.get_file_md5().upper()),
             "  features:",
         ]
         self.setText("\n".join(metadata_default))
@@ -761,9 +763,18 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         return o
 
-    def load_features(self, features):
+    def load_features(self, file_features, func_features={}):
+        """ """
+        self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
+        if func_features:
+            self.parse_features_for_tree(self.new_parent_node(self, ("Function/Basic Block Scope",)), func_features)
+
+    def parse_features_for_tree(self, parent, features):
         """ """
         self.parent_items = {}
+
+        def format_address(e):
+            return "%X" % e if e else ""
 
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
@@ -777,7 +788,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
             # level 0
             if type(feature) not in self.parent_items:
-                self.parent_items[type(feature)] = self.new_parent_node(self, (feature.name.lower(),))
+                self.parent_items[type(feature)] = self.new_parent_node(parent, (feature.name.lower(),))
 
             # level 1
             if feature not in self.parent_items:
@@ -793,10 +804,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
-                    self.new_leaf_node(self.parent_items[feature], (str(feature), "%X" % ea), feature=feature)
+                    self.new_leaf_node(self.parent_items[feature], (str(feature), format_address(ea)), feature=feature)
             else:
                 ea = eas.pop()
-                for (i, v) in enumerate((str(feature), "%X" % ea)):
+                for (i, v) in enumerate((str(feature), format_address(ea))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 
