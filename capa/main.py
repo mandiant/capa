@@ -335,7 +335,7 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-def get_extractor(path, format, backend=BACKEND_VIV, disable_progress=False):
+def get_extractor(path, format, backend, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
