@@ -264,6 +264,14 @@ def main(argv=None):
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
     )
+    parser.add_argument(
+        "-b",
+        "--backend",
+        type=str,
+        help="select the backend to use in Python 3 (this option is ignored in Python 2)",
+        choices=(capa.main.BACKEND_VIV, capa.main.BACKEND_SMDA),
+        default=capa.main.BACKEND_VIV,
+    )
     args = parser.parse_args(args=argv)
 
     if args.quiet:
@@ -276,7 +284,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    extractor = capa.main.get_extractor(args.sample, args.format)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 
