@@ -499,6 +499,9 @@ def extract_insn_cross_section_cflow(f, bb, insn):
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
     for va, flags in insn.getBranches():
+        if va is None:
+            continue
+
         if flags & envi.BR_FALL:
             continue
 
