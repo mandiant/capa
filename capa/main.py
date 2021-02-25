@@ -517,14 +517,15 @@ def main(argv=None):
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
     )
-    parser.add_argument(
-        "-b",
-        "--backend",
-        type=str,
-        help="select the backend to use in Python 3 (this option is ignored in Python 2)",
-        choices=(BACKEND_VIV, BACKEND_SMDA),
-        default=BACKEND_VIV,
-    )
+    if sys.version_info >= (3, 0):
+        parser.add_argument(
+            "-b",
+            "--backend",
+            type=str,
+            help="select the backend to use",
+            choices=(BACKEND_VIV, BACKEND_SMDA),
+            default=BACKEND_VIV,
+        )
     parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument(
@@ -629,7 +630,8 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
+            backend = args.backend if sys.version_info > (3, 0) else None
+            extractor = get_extractor(args.sample, args.format, backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
