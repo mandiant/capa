@@ -123,10 +123,19 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for f in pbar(list(extractor.get_functions()), desc="matching", unit=" functions"):
+    functions = list(extractor.get_functions())
+
+    for f in pbar(functions, desc="matching", unit=" functions"):
+        function_address = f.__int__()
+
+        if extractor.is_library_function(function_address):
+            function_name = extractor.get_function_name(function_address)
+            logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
+            continue
+
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
-        meta["feature_counts"]["functions"][f.__int__()] = feature_count
-        logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
+        meta["feature_counts"]["functions"][function_address] = feature_count
+        logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
 
         for rule_name, res in function_matches.items():
             all_function_matches[rule_name].extend(res)
@@ -134,7 +143,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
             all_bb_matches[rule_name].extend(res)
 
     # mapping from matched rule feature to set of addresses at which it matched.
-    # schema: Dic[MatchedRule: Set[int]
+    # schema: Dict[MatchedRule: Set[int]
     function_features = {
         capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in all_function_matches.items()
