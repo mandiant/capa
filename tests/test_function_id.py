@@ -18,8 +18,4 @@ def test_function_id_spawnlp(pma16_01_extractor):
 def test_function_id_api_feature(pma16_01_extractor):
     f = get_function(pma16_01_extractor, 0x4011D0)
     features = extract_function_features(pma16_01_extractor, f)
-
-    for feature in features.keys():
-        print(feature)
-
     assert capa.features.insn.API("__alloca_probe") in features

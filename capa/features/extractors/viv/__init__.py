@@ -132,19 +132,82 @@ class VivisectFeatureExtractor(FeatureExtractor):
             yield feature, va
 
     def is_library_function(self, va):
-        return self.vw.funcmeta.get(va, {}).get("capa/library", False)
+        return is_library_function(self.vw, va)
 
     def get_function_name(self, va):
         return viv_utils.get_function_name(self.vw, va)
 
 
-def add_function_flirt_match(vw, va, name):
+# vivisect funcmeta key for a bool to indicate if a function is recognized from a library.
+# not expecting anyone to use this, aka private symbol.
+_LIBRARY_META_KEY = "is-library"
+
+
+def is_library_function(vw, va):
+    """
+    is the function at the given address a library function?
+    this may be determined by a signature matching backend.
+    if there's no function at the given address, `False` is returned.
+
+    note: if its a library function, it should also have a name set.
+
+    args:
+      vw (vivisect.Workspace):
+      va (int): the virtual address of a function.
+
+    returns:
+      bool: if the function is recognized as from a library.
+    """
+    return vw.funcmeta.get(va, {}).get(_LIBRARY_META_KEY, False)
+
+
+def make_library_function(vw, va):
+    """
+    mark the function with the given address a library function.
+    the associated accessor is `is_library_function`.
+
+    if there's no function at the given address, this routine has no effect.
+
+    note: if its a library function, it should also have a name set.
+    its up to the caller to do this part.
+
+    args:
+      vw (vivisect.Workspace):
+      va (int): the virtual address of a function.
+    """
     fmeta = vw.funcmeta.get(va, {})
-    fmeta["capa/library"] = True
+    fmeta[_LIBRARY_META_KEY] = True
+
+
+def add_function_flirt_match(vw, va, name):
+    """
+    mark the function at the given address as a library function with the given name.
+    the name overrides any existing function name.
+
+    args:
+      vw (vivisect.Workspace):
+      va (int): the virtual address of a function.
+      name (str): the name to assign to the function.
+    """
+    make_library_function(vw, va)
     viv_utils.set_function_name(vw, va, name)
 
 
 def get_match_name(match):
+    """
+    fetch the best name for a `flirt.FlirtSignature` instance.
+    these instances returned by `flirt.FlirtMatcher.match()`
+    may have multiple names, such as public and local names for different parts
+    of a function. the best name is that at offset zero (the function name).
+
+    probably every signature has a best name, though I'm not 100% sure.
+
+    args:
+      match (flirt.FlirtSignature): the signature to get a name from.
+
+    returns:
+      str: the best name of the function matched by the given signature.
+    """
     for (name, type_, offset) in match.names:
         if offset == 0:
             return name
@@ -152,25 +215,48 @@ def get_match_name(match):
 
 
 def match_function_flirt_signatures(matcher, vw, va):
-    if va == 0x403970:
-        add_function_flirt_match(vw, va, "__alloca_probe")
-        return
+    """
+    match the given FLIRT signatures against the function at the given address.
+    upon success, update the workspace with match metadata, setting the
+    function as a library function and assigning its name.
 
-    if vw.funcmeta.get(va, {}).get("capa/library", False):
+    if multiple different signatures match the function, don't do anything.
+
+    args:
+      match (flirt.FlirtMatcher): the compiled FLIRT signature matcher.
+      vw (vivisect.workspace): the analyzed program's workspace.
+      va (int): the virtual address of a function to match.
+
+    returns:
+      Optional[str]: the recognized function name, or `None`.
+    """
+    function_meta = vw.funcmeta.get(va)
+    if not function_meta:
+        # not a function, we're not going to consider this.
+        return None
+
+    if is_library_function(vw, va):
         # already matched here.
         # this might be the case if recursive matching visited this address.
         return viv_utils.get_function_name(vw, va)
 
+    # 0x200 comes from:
+    #  0x20 bytes for default byte signature size in flirt
+    #  0x100 bytes for max checksum data size
+    #  some wiggle room for tail bytes
+    size = function_meta.get("Size", 0x200)
     # TODO: fix reads at the end of a section.
-    # TODO: pick the right size to read here.
-    buf = vw.readMemory(va, 0x200)
-    matches = matcher.match(buf)
+    buf = vw.readMemory(va, size)
 
     matches = []
     for match in matcher.match(buf):
+        # collect all the name tuples (name, type, offset) with type==reference.
+        # ignores other name types like "public" and "local".
         references = list(filter(lambda n: n[1] == "reference", match.names))
 
         if not references:
+            # there are no references that we need to check, so this is a complete match.
+            # common case.
             matches.append(match)
 
         else:
@@ -210,6 +296,8 @@ def match_function_flirt_signatures(matcher, vw, va):
                 # if the name is found, then this flag will be set.
                 does_match_the_reference = False
                 for xref in vw.getXrefsFrom(loc_va):
+                    # FLIRT signatures only match code,
+                    # so we're only going to resolve references that point to code.
                     if xref[vivisect.const.XR_RTYPE] != vivisect.const.REF_CODE:
                         continue
 
@@ -239,6 +327,15 @@ def match_function_flirt_signatures(matcher, vw, va):
                 matches.append(match)
 
     if matches:
+        # we may have multiple signatures that match the same function, like `strcpy`.
+        # these could be copies from multiple libraries.
+        # so we don't mind if there are multiple matches, as long as names are the same.
+        #
+        # but if there are multiple candidate names, that's a problem.
+        # our signatures are not precise enough.
+        # we could maybe mark the function as "is a library function", but not assign name.
+        # though, if we have signature FPs among library functions, it could easily FP with user code too.
+        # so safest thing to do is not make any claim about the function.
         names = list(set(map(get_match_name, matches)))
         if len(names) == 1:
             name = names[0]
@@ -251,5 +348,16 @@ def match_function_flirt_signatures(matcher, vw, va):
 
 
 def match_vw_flirt_signatures(matcher, vw):
+    """
+    enumerate all functions in the workspace and match the given FLIRT signatures.
+    upon each success, update the workspace with match metadata, setting the
+    function as a library function and assigning its name.
+
+    if multiple different signatures match a function, don't do anything.
+
+    args:
+      match (flirt.FlirtMatcher): the compiled FLIRT signature matcher.
+      vw (vivisect.workspace): the analyzed program's workspace.
+    """
     for va in sorted(vw.getFunctions()):
         match_function_flirt_signatures(matcher, vw, va)

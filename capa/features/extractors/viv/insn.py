@@ -11,6 +11,7 @@ import envi.memory
 import envi.archs.i386.disasm
 
 import capa.features.extractors.helpers
+import capa.features.extractors.viv
 import capa.features.extractors.viv.helpers
 from capa.features import (
     ARCH_X32,
@@ -111,7 +112,7 @@ def extract_insn_api_features(f, bb, insn):
         if not target:
             return
 
-        if f.vw.funcmeta.get(target, {}).get("capa/library"):
+        if capa.features.extractors.viv.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)
             yield API(name), insn.va
             return
