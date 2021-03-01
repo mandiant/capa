@@ -285,7 +285,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    backend = args.backend if sys.version_info > (3, 0) else None
+    backend = args.backend if sys.version_info > (3, 0) else capa.main.BACKEND_VIV
     extractor = capa.main.get_extractor(args.sample, args.format, backend)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
