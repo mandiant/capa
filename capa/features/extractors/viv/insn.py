@@ -500,6 +500,7 @@ def extract_insn_cross_section_cflow(f, bb, insn):
     """
     for va, flags in insn.getBranches():
         if va is None:
+            # va may be none for dynamic branches that haven't been resolved, such as `jmp eax`.
             continue
 
         if flags & envi.BR_FALL:
