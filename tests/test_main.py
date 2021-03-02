@@ -365,3 +365,17 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     assert "act as TCP client" in std.out
     assert "connect TCP socket" in std.out
     assert "create TCP socket" in std.out
+
+
+# It tests main works with different backends. It doesn't test that the backend
+# is actually called.
+def test_backend_option(capsys):
+    if sys.version_info > (3, 0):
+        path = get_data_path_by_name("pma16-01")
+        assert capa.main.main([path, "-b", capa.main.BACKEND_VIV]) == 0
+        std = capsys.readouterr()
+        assert "check for PEB NtGlobalFlag flag (24 matches)" in std.out
+
+        assert capa.main.main([path, "-b", capa.main.BACKEND_SMDA]) == 0
+        std = capsys.readouterr()
+        assert "check for PEB NtGlobalFlag flag (24 matches)" in std.out
