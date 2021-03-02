@@ -7,6 +7,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
+import json
 import textwrap
 
 import pytest
@@ -367,15 +368,18 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     assert "create TCP socket" in std.out
 
 
-# It tests main works with different backends. It doesn't test that the backend
-# is actually called.
+# It tests main works with different backends
 def test_backend_option(capsys):
     if sys.version_info > (3, 0):
         path = get_data_path_by_name("pma16-01")
-        assert capa.main.main([path, "-b", capa.main.BACKEND_VIV]) == 0
+        assert capa.main.main([path, "-j", "-b", capa.main.BACKEND_VIV]) == 0
         std = capsys.readouterr()
-        assert "check for PEB NtGlobalFlag flag (24 matches)" in std.out
+        std_json = json.loads(std.out)
+        assert std_json["meta"]["analysis"]["extractor"] == "VivisectFeatureExtractor"
+        assert len(std_json["rules"]) > 0
 
-        assert capa.main.main([path, "-b", capa.main.BACKEND_SMDA]) == 0
+        assert capa.main.main([path, "-j", "-b", capa.main.BACKEND_SMDA]) == 0
         std = capsys.readouterr()
-        assert "check for PEB NtGlobalFlag flag (24 matches)" in std.out
+        std_json = json.loads(std.out)
+        assert std_json["meta"]["analysis"]["extractor"] == "SmdaFeatureExtractor"
+        assert len(std_json["rules"]) > 0
