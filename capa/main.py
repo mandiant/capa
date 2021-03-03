@@ -32,7 +32,9 @@ import capa.features.extractors
 from capa.helpers import oint, get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
-SUPPORTED_FILE_MAGIC = set(["MZ"])
+SUPPORTED_FILE_MAGIC = set([b"MZ"])
+BACKEND_VIV = "vivisect"
+BACKEND_SMDA = "smda"
 
 
 logger = logging.getLogger("capa")
@@ -303,29 +305,43 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format, disable_progress=False):
-    from smda.SmdaConfig import SmdaConfig
-    from smda.Disassembler import Disassembler
+def get_extractor_py3(path, format, backend, disable_progress=False):
+    if backend == "smda":
+        from smda.SmdaConfig import SmdaConfig
+        from smda.Disassembler import Disassembler
 
-    import capa.features.extractors.smda
+        import capa.features.extractors.smda
 
-    smda_report = None
-    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        config = SmdaConfig()
-        config.STORE_BUFFER = True
-        smda_disasm = Disassembler(config)
-        smda_report = smda_disasm.disassembleFile(path)
+        smda_report = None
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            config = SmdaConfig()
+            config.STORE_BUFFER = True
+            smda_disasm = Disassembler(config)
+            smda_report = smda_disasm.disassembleFile(path)
 
-    return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+        return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+    else:
+        import capa.features.extractors.viv
+
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            vw = get_workspace(path, format, should_save=False)
+
+            try:
+                vw.saveWorkspace()
+            except IOError:
+                # see #168 for discussion around how to handle non-writable directories
+                logger.info("source directory is not writable, won't save intermediate workspace")
+
+        return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-def get_extractor(path, format, disable_progress=False):
+def get_extractor(path, format, backend, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
     """
     if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format, disable_progress=disable_progress)
+        return get_extractor_py3(path, format, backend, disable_progress=disable_progress)
     else:
         return get_extractor_py2(path, format, disable_progress=disable_progress)
 
@@ -501,6 +517,15 @@ def main(argv=None):
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
     )
+    if sys.version_info >= (3, 0):
+        parser.add_argument(
+            "-b",
+            "--backend",
+            type=str,
+            help="select the backend to use",
+            choices=(BACKEND_VIV, BACKEND_SMDA),
+            default=BACKEND_VIV,
+        )
     parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument(
@@ -605,7 +630,8 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format, disable_progress=args.quiet)
+            backend = args.backend if sys.version_info > (3, 0) else capa.main.BACKEND_VIV
+            extractor = get_extractor(args.sample, args.format, backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

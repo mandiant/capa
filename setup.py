@@ -27,6 +27,8 @@ if sys.version_info >= (3, 0):
     # py3
     requirements.append("halo")
     requirements.append("networkx")
+    requirements.append("vivisect==1.0.0")
+    requirements.append("viv-utils==0.3.19")
     requirements.append("smda==1.5.13")
 else:
     # py2

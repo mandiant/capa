@@ -199,7 +199,7 @@ def main(argv=None):
         else:
             format = args.format
             try:
-                extractor = capa.main.get_extractor(args.sample, args.format)
+                extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV)
             except capa.main.UnsupportedFormatError:
                 logger.error("-" * 80)
                 logger.error(" Input file does not appear to be a PE file.")

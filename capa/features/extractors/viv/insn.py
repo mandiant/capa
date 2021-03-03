@@ -239,7 +239,7 @@ def read_bytes(vw, va):
     """
     segm = vw.getSegment(va)
     if not segm:
-        raise envi.SegmentationViolation()
+        raise envi.SegmentationViolation(va)
 
     segm_end = segm[0] + segm[1]
     try:
