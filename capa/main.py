@@ -10,12 +10,14 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import time
 import hashlib
 import logging
 import os.path
 import argparse
 import datetime
 import textwrap
+import contextlib
 import collections
 
 import halo
@@ -38,6 +40,14 @@ BACKEND_SMDA = "smda"
 
 
 logger = logging.getLogger("capa")
+
+
+@contextlib.contextmanager
+def timing(msg):
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 def set_vivisect_log_level(level):
@@ -236,26 +246,28 @@ def is_supported_file_type(sample):
 SHELLCODE_BASE = 0x690000
 
 
-def get_shellcode_vw(sample, arch="auto", should_save=True):
+def get_shellcode_vw(sample, arch="auto"):
     """
-    Return shellcode workspace using explicit arch or via auto detect
+    Return shellcode workspace using explicit arch or via auto detect.
+    The workspace is *not* analyzed nor saved.
     """
     import viv_utils
 
     with open(sample, "rb") as f:
         sample_bytes = f.read()
+
     if arch == "auto":
         # choose arch with most functions, idea by Jay G.
         vw_cands = []
         for arch in ["i386", "amd64"]:
             vw_cands.append(
-                viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+                viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False)
             )
         if not vw_cands:
             raise ValueError("could not generate vivisect workspace")
         vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
     else:
-        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False)
 
     vw.setMeta("StorageName", "%s.viv" % sample)
 
@@ -273,33 +285,77 @@ def get_meta_str(vw):
     return "%s, number of functions: %d" % (", ".join(meta), len(vw.getFunctions()))
 
 
+def register_flirt_signature_analyzers(vw, sigpaths):
+    """
+    args:
+      vw (vivisect.VivWorkspace):
+      sigpaths (List[str]): file system paths of .sig/.pat files
+    """
+    import flirt
+    import viv_utils.flirt
+
+    for sigpath in sigpaths:
+        if sigpath.endswith(".sig"):
+            with open(sigpath, "rb") as f:
+                with timing("flirt: parsing .sig: " + sigpath):
+                    sigs = flirt.parse_sig(f.read())
+
+        elif sigpath.endswith(".pat"):
+            with open(sigpath, "rb") as f:
+                with timing("flirt: parsing .pat: " + sigpath):
+                    sigs = flirt.parse_pat(f.read().decode("utf-8"))
+
+        else:
+            raise ValueError("unexpect signature file extension: " + sigpath)
+
+        logger.debug("flirt: sig count: %d", len(sigs))
+
+        with timing("flirt: compiling sigs"):
+            matcher = flirt.compile(sigs)
+
+        analyzer = viv_utils.flirt.FlirtFunctionAnalyzer(matcher, sigpath)
+        logger.debug("registering viv function analyzer: %s", repr(analyzer))
+        viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
+
+
 class UnsupportedFormatError(ValueError):
     pass
 
 
-def get_workspace(path, format, should_save=True):
+def get_workspace(path, format, sigpaths):
+    # lazy import enables us to not require viv if user wants SMDA, for example.
     import viv_utils
 
     logger.debug("generating vivisect workspace for: %s", path)
     if format == "auto":
         if not is_supported_file_type(path):
             raise UnsupportedFormatError()
-        vw = viv_utils.getWorkspace(path, should_save=should_save)
+
+        # don't analyze, so that we can add our Flirt function analyzer first.
+        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "pe":
-        vw = viv_utils.getWorkspace(path, should_save=should_save)
+        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "sc32":
-        vw = get_shellcode_vw(path, arch="i386", should_save=should_save)
+        # these are not analyzed nor saved.
+        vw = get_shellcode_vw(path, arch="i386")
     elif format == "sc64":
-        vw = get_shellcode_vw(path, arch="amd64", should_save=should_save)
+        vw = get_shellcode_vw(path, arch="amd64")
+    else:
+        raise ValueError("unexpected format: " + format)
+
+    register_flirt_signature_analyzers(vw, sigpaths)
+
+    vw.analyze()
+
     logger.debug("%s", get_meta_str(vw))
     return vw
 
 
-def get_extractor_py2(path, format, disable_progress=False):
+def get_extractor_py2(path, format, sigpaths, disable_progress=False):
     import capa.features.extractors.viv
 
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        vw = get_workspace(path, format, should_save=False)
+        vw = get_workspace(path, format, sigpaths)
 
         try:
             vw.saveWorkspace()
@@ -314,7 +370,7 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format, backend, disable_progress=False):
+def get_extractor_py3(path, format, backend, sigpaths, disable_progress=False):
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
@@ -333,7 +389,7 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
         import capa.features.extractors.viv
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            vw = get_workspace(path, format, should_save=False)
+            vw = get_workspace(path, format, sigpaths)
 
             try:
                 vw.saveWorkspace()
@@ -344,15 +400,20 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
 
 
-def get_extractor(path, format, backend, disable_progress=False):
+def get_extractor(path, format, backend, sigpaths, disable_progress=False):
     """
+    args:
+      path (str): file system path to file to analyze.
+      format (str): "auto" for autodetection or one of "pe", "sc32" or "sc64" to override.
+      sigpaths (List[str]): file system paths to .sig/.pat files to identify functions.
+ 
     raises:
       UnsupportedFormatError:
     """
     if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format, backend, disable_progress=disable_progress)
+        return get_extractor_py3(path, format, backend, sigpaths, disable_progress=disable_progress)
     else:
-        return get_extractor_py2(path, format, disable_progress=disable_progress)
+        return get_extractor_py2(path, format, sigpaths, disable_progress=disable_progress)
 
 
 def is_nursery_rule_path(path):
@@ -534,6 +595,14 @@ def main(argv=None):
         choices=(BACKEND_VIV, BACKEND_SMDA),
         default=BACKEND_VIV,
     )
+    parser.add_argument(
+        "--signature",
+        action="append",
+        dest="signatures",
+        type=str,
+        default=[],
+        help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+    )
     parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument(
@@ -638,7 +707,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, args.format, args.backend, args.signatures, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
