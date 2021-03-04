@@ -95,7 +95,7 @@ def get_capa_results(args):
     rules, format, path = args
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, disable_progress=True)
+        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, args.signatures, disable_progress=True)
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
@@ -146,6 +146,14 @@ def main(argv=None):
             type=str,
             default="(embedded rules)",
             help="Path to rule file or directory, use embedded rules by default",
+        )
+        parser.add_argument(
+            "--signature",
+            action="append",
+            dest="signatures",
+            type=str,
+            default=[],
+            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
         )
         parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
         parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")

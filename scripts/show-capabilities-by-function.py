@@ -138,6 +138,14 @@ def main(argv=None):
             default="auto",
             help="Select sample format, %s" % format_help,
         )
+        parser.add_argument(
+            "--signature",
+            action="append",
+            dest="signatures",
+            type=str,
+            default=[],
+            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+        )
         args = parser.parse_args(args=argv)
 
         if args.quiet:
@@ -199,7 +207,7 @@ def main(argv=None):
         else:
             format = args.format
             try:
-                extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV)
+                extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, args.signatures)
             except capa.main.UnsupportedFormatError:
                 logger.error("-" * 80)
                 logger.error(" Input file does not appear to be a PE file.")

@@ -273,6 +273,14 @@ def main(argv=None):
             choices=(capa.main.BACKEND_VIV, capa.main.BACKEND_SMDA),
             default=capa.main.BACKEND_VIV,
         )
+    parser.add_argument(
+        "--signature",
+        action="append",
+        dest="signatures",
+        type=str,
+        default=[],
+        help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+    )
     args = parser.parse_args(args=argv)
 
     if args.quiet:
@@ -286,7 +294,7 @@ def main(argv=None):
         logging.getLogger().setLevel(logging.INFO)
 
     backend = args.backend if sys.version_info > (3, 0) else capa.main.BACKEND_VIV
-    extractor = capa.main.get_extractor(args.sample, args.format, backend)
+    extractor = capa.main.get_extractor(args.sample, args.format, backend, sigpaths=args.signatures)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 
