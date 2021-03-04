@@ -87,7 +87,7 @@ class FeatureExtractor(object):
           - recognize when to fetch symbol names for called (non-API) functions
 
         args:
-          va [int]: the virtual address of a function.
+          va (int): the virtual address of a function.
 
         returns:
           bool: True if the given address is the start of a library function.
@@ -101,7 +101,7 @@ class FeatureExtractor(object):
         we accept a VA here, rather than function object, to handle addresses identified in instructions.
 
         args:
-          va [int]: the virtual address of a function.
+          va (int): the virtual address of a function.
 
         returns:
           str: the function name

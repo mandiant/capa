@@ -45,19 +45,6 @@ def add_va_int_cast(o):
     return o
 
 
-import time
-import contextlib
-
-
-@contextlib.contextmanager
-def timing(msg):
-    t0 = time.time()
-    yield
-    t1 = time.time()
-    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
-
-
-
 class VivisectFeatureExtractor(FeatureExtractor):
     def __init__(self, vw, path):
         super(VivisectFeatureExtractor, self).__init__()

@@ -495,7 +495,7 @@ def extract_insn_segment_access_features(f, bb, insn):
 
 def get_section(vw, va):
     for start, length, _, __ in vw.getMemoryMaps():
-        if va and start <= va < start + length:
+        if start <= va < start + length:
             return start
 
     raise KeyError(va)
