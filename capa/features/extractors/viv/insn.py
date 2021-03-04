@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import viv_utils
+import viv_utils.flirt
 import envi.memory
 import envi.archs.i386.disasm
 
@@ -112,7 +113,7 @@ def extract_insn_api_features(f, bb, insn):
         if not target:
             return
 
-        if capa.features.extractors.viv.is_library_function(f.vw, target):
+        if viv_utils.flirt.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)
             yield API(name), insn.va
             return

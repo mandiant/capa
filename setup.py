@@ -30,6 +30,7 @@ if sys.version_info >= (3, 0):
     requirements.append("vivisect")
     requirements.append("viv-utils==0.3.19")
     requirements.append("smda==1.5.13")
+    requirements.append("python-flirt~=0.5.4")
 else:
     # py2
     requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
