@@ -334,6 +334,27 @@ def register_flirt_signature_analyzers(vw, sigpaths):
         viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
 
 
+def get_default_signatures():
+    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+        logger.debug("detected running under PyInstaller")
+        sigs_path = os.path.join(sys._MEIPASS, "sigs")
+        logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
+    else:
+        logger.debug("detected running from source")
+        sigs_path = os.path.join(os.path.dirname(__file__), "..", "sigs")
+        logger.debug("default signatures path (source method): %s", sigs_path)
+
+    ret = []
+    for root, dirs, files in os.walk(sigs_path):
+        for file in files:
+            if not (file.endswith(".pat") or file.endswith(".pat.gz") or file.endswith(".sig")):
+                continue
+
+            ret.append(os.path.join(root, file))
+
+    return ret
+
+
 class UnsupportedFormatError(ValueError):
     pass
 
@@ -641,7 +662,9 @@ def install_common_args(parser, wanted=None):
             action="append",
             dest="signatures",
             type=str,
-            default=[],
+            # with action=append, users can specify futher signatures but not override whats found in $capa/sigs/.
+            # seems reasonable for now. this is an easy way to register the default signature set.
+            default=get_default_signatures(),
             help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
         )
 
