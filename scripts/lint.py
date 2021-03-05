@@ -322,7 +322,7 @@ class FormatIncorrect(Lint):
         expected = capa.rules.Rule.from_yaml(rule.definition, use_ruamel=True).to_yaml()
 
         if actual != expected:
-            diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(1))
+            diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(True))
             self.recommendation = self.recommendation_template.format("".join(diff))
             return True
 
@@ -557,6 +557,7 @@ def main(argv=None):
     samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
 
     parser = argparse.ArgumentParser(description="A program.")
+    capa.main.install_common_args(parser, wanted={"tag"})
     parser.add_argument("rules", type=str, help="Path to rules")
     parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
     parser.add_argument(
@@ -564,22 +565,9 @@ def main(argv=None):
         action="store_true",
         help="Enable thorough linting - takes more time, but does a better job",
     )
-    parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
+    capa.main.handle_common_args(args)
 
-    if args.verbose:
-        level = logging.DEBUG
-    elif args.quiet:
-        level = logging.ERROR
-    else:
-        level = logging.INFO
-
-    logging.basicConfig(level=level)
-    logging.getLogger("capa.lint").setLevel(level)
-
-    capa.main.set_vivisect_log_level(logging.CRITICAL)
     logging.getLogger("capa").setLevel(logging.CRITICAL)
     logging.getLogger("viv_utils").setLevel(logging.CRITICAL)
 

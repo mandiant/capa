@@ -82,37 +82,12 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    formats = [
-        ("auto", "(default) detect file type automatically"),
-        ("pe", "Windows PE file"),
-        ("sc32", "32-bit shellcode"),
-        ("sc64", "64-bit shellcode"),
-        ("freeze", "features previously frozen by capa"),
-    ]
-    format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
-
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    parser.add_argument("sample", type=str, help="Path to sample to analyze")
-    parser.add_argument(
-        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
-    )
+    capa.main.install_common_args(parser, wanted={"format", "sample"})
+
     parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
-
-    if args.quiet:
-        logging.basicConfig(level=logging.ERROR)
-        logging.getLogger().setLevel(logging.ERROR)
-    elif args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
-
-    # disable vivisect-related logging, it's verbose and not relevant for capa users
-    capa.main.set_vivisect_log_level(logging.CRITICAL)
+    capa.main.handle_common_args(args)
 
     try:
         taste = capa.helpers.get_file_taste(args.sample)
