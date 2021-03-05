@@ -288,6 +288,30 @@ def get_meta_str(vw):
     return "%s, number of functions: %d" % (", ".join(meta), len(vw.getFunctions()))
 
 
+def load_flirt_signature(path):
+    import flirt
+
+    if path.endswith(".sig"):
+        with open(path, "rb") as f:
+            with timing("flirt: parsing .sig: " + path):
+                sigs = flirt.parse_sig(f.read())
+
+    elif path.endswith(".pat"):
+        with open(path, "rb") as f:
+            with timing("flirt: parsing .pat: " + path):
+                sigs = flirt.parse_pat(f.read().decode("utf-8"))
+
+    elif path.endswith(".pat.gz"):
+        with gzip.open(path, "rb") as f:
+            with timing("flirt: parsing .pat.gz: " + path):
+                sigs = flirt.parse_pat(f.read().decode("utf-8"))
+
+    else:
+        raise ValueError("unexpect signature file extension: " + path)
+
+    return sigs
+
+
 def register_flirt_signature_analyzers(vw, sigpaths):
     """
     args:
@@ -298,23 +322,7 @@ def register_flirt_signature_analyzers(vw, sigpaths):
     import viv_utils.flirt
 
     for sigpath in sigpaths:
-        if sigpath.endswith(".sig"):
-            with open(sigpath, "rb") as f:
-                with timing("flirt: parsing .sig: " + sigpath):
-                    sigs = flirt.parse_sig(f.read())
-
-        elif sigpath.endswith(".pat"):
-            with open(sigpath, "rb") as f:
-                with timing("flirt: parsing .pat: " + sigpath):
-                    sigs = flirt.parse_pat(f.read().decode("utf-8"))
-
-        elif sigpath.endswith(".pat.gz"):
-            with gzip.open(sigpath, "rb") as f:
-                with timing("flirt: parsing .pat.gz: " + sigpath):
-                    sigs = flirt.parse_pat(f.read().decode("utf-8"))
-
-        else:
-            raise ValueError("unexpect signature file extension: " + sigpath)
+        sigs = load_flirt_signature(sigpath)
 
         logger.debug("flirt: sig count: %d", len(sigs))
 
