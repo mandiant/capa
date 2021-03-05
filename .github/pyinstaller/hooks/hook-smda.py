@@ -1,5 +1,4 @@
 # Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+import PyInstaller.utils.hooks
 
-hiddenimports = [
-    "capstone",
-]
+binaries = PyInstaller.utils.hooks.collect_dynamic_libs("capstone")
