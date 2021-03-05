@@ -2,7 +2,7 @@ name: build
 
 on:
   release:
-    types: [edited, published]
+    types: [edited, published, push]
 
 jobs:
   build:
@@ -26,19 +26,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Set up Python 2.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 2.7
+          python-version: 3.9
       - if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install -y libyaml-dev
-      - if: matrix.os == 'windows-latest'
-        run: |
-          choco install vcredist2008
-          choco install --ignore-dependencies vcpython27
       - name: Install PyInstaller
-        # pyinstaller 4 doesn't support Python 2.7
-        run: pip install 'pyinstaller==3.*'
+        run: pip install 'pyinstaller==4.2'
       - name: Install capa
         run: pip install -e .
       - name: Build standalone executable
