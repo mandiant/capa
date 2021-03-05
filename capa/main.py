@@ -525,7 +525,11 @@ def install_common_args(parser, wanted=None):
         ]
         format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
         parser.add_argument(
-            "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
+            "-f",
+            "--format",
+            choices=[f[0] for f in formats],
+            default="auto",
+            help="select sample format, %s" % format_help,
         )
 
     if "backend" in wanted and sys.version_info >= (3, 0):
@@ -577,6 +581,7 @@ def handle_common_args(args):
     # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
     # see #380 and: https://stackoverflow.com/a/3259271/87207
     import codecs
+
     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
 
     if args.color == "always":

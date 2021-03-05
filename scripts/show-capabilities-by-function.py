@@ -161,9 +161,7 @@ def main(argv=None):
             logger.error(
                 " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
             )
-            logger.error(
-                " If you don't know the input file type, you can try using the `file` utility to guess it."
-            )
+            logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
             logger.error("-" * 80)
             return -1
         except capa.main.UnsupportedRuntimeError:
@@ -173,9 +171,7 @@ def main(argv=None):
             logger.error(" capa supports running under Python 2.7 using Vivisect for binary analysis.")
             logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
             logger.error(" ")
-            logger.error(
-                " If you're seeing this message on the command line, please ensure you're running Python 2.7."
-            )
+            logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
             logger.error("-" * 80)
             return -1
 
