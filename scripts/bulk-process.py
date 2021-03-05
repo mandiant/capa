@@ -96,7 +96,7 @@ def get_capa_results(args):
     rules, format, path = args
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, disable_progress=True)
+        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, disable_progress=True)
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
