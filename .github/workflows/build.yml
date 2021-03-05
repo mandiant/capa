@@ -43,7 +43,7 @@ jobs:
       - name: Build standalone executable
         run: pyinstaller .github/pyinstaller/pyinstaller.spec
       - name: Does it run?
-        run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+        run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.asset_name }}
