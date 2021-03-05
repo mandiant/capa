@@ -637,13 +637,13 @@ def install_common_args(parser, wanted=None):
 
     if "signatures" in wanted:
         parser.add_argument(
-                "--signature",
-                action="append",
-                dest="signatures",
-                type=str,
-                default=[],
-                help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
-            )
+            "--signature",
+            action="append",
+            dest="signatures",
+            type=str,
+            default=[],
+            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+        )
 
     if "tag" in wanted:
         parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
