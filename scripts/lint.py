@@ -201,7 +201,9 @@ class DoesntMatchExample(Lint):
                 continue
 
             try:
-                extractor = capa.main.get_extractor(path, "auto", capa.main.BACKEND_VIV, sigpaths=[], disable_progress=True)
+                extractor = capa.main.get_extractor(
+                    path, "auto", capa.main.BACKEND_VIV, sigpaths=[], disable_progress=True
+                )
                 capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
                 logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)

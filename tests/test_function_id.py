@@ -1,8 +1,7 @@
 import pytest
+from fixtures import get_function, pma16_01_extractor, extract_function_features
 
 import capa.features.insn
-
-from fixtures import pma16_01_extractor, get_function, extract_function_features
 
 
 def test_function_id_simple_match(pma16_01_extractor):
@@ -18,7 +17,7 @@ def test_function_id_gz_pat(pma16_01_extractor):
 
 @pytest.mark.xfail
 def test_function_id_complex_match(pma16_01_extractor):
-    # 0x405714 is __spawnlp which requires recursive match of __spawnvp at 0x407FAB 
+    # 0x405714 is __spawnlp which requires recursive match of __spawnvp at 0x407FAB
     # (and __spawnvpe at 0x409DE8)
     assert pma16_01_extractor.is_library_function(0x405714) == True
     assert pma16_01_extractor.get_function_name(0x405714) == "__spawnlp"

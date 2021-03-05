@@ -10,8 +10,8 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
-import time
 import gzip
+import time
 import hashlib
 import logging
 import os.path
@@ -262,7 +262,9 @@ def get_shellcode_vw(sample, arch="auto"):
         vw_cands = []
         for arch in ["i386", "amd64"]:
             vw_cands.append(
-                viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False)
+                viv_utils.getShellcodeWorkspace(
+                    sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False
+                )
             )
         if not vw_cands:
             raise ValueError("could not generate vivisect workspace")
@@ -412,7 +414,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
       path (str): file system path to file to analyze.
       format (str): "auto" for autodetection or one of "pe", "sc32" or "sc64" to override.
       sigpaths (List[str]): file system paths to .sig/.pat files to identify functions.
- 
+
     raises:
       UnsupportedFormatError:
     """
