@@ -703,7 +703,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            backend = args.backend if sys.version_info > (3, 0) else capa.BACKEND_VIV
+            backend = args.backend if sys.version_info > (3, 0) else BACKEND_VIV
             extractor = get_extractor(args.sample, args.format, backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
