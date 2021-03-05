@@ -22,14 +22,12 @@ excludedimports = [
     "PyQt5",
     "qt5",
     "pyqtwebengine",
-
     # the above are imported by these viv modules.
     # so really, we'd want to exclude these submodules of viv.
     # but i dont think this works.
     "vqt",
     "vdb.qt",
     "envi.qt",
-
     # unused by capa
     "pyasn1",
 ]
