@@ -428,18 +428,145 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
     }
 
 
+def install_common_args(parser, wanted=None):
+    """
+    register a common set of command line arguments for re-use by main & scripts.
+    these are things like logging/coloring/etc.
+    also enable callers to opt-in to common arguments, like specifying the input sample.
+
+    this routine lets many script use the same language for cli arguments.
+    see `handle_common_args` to do common configuration.
+
+    args:
+      parser (argparse.ArgumentParser): a parser to update in place, adding common arguments.
+      wanted (Set[str]): collection of arguments to opt-into, including:
+        - "sample": required positional argument to input file.
+        - "format": flag to override file format.
+        - "rules": flag to override path to capa rules.
+        - "tag": flag to override/specify which rules to match.
+    """
+    if wanted is None:
+        wanted = set()
+
+    #
+    # common arguments that all scripts will have
+    #
+
+    parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
+    )
+    parser.add_argument(
+        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
+    )
+    parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
+    parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
+    parser.add_argument(
+        "--color",
+        type=str,
+        choices=("auto", "always", "never"),
+        default="auto",
+        help="enable ANSI color codes in results, default: only during interactive session",
+    )
+
+    #
+    # arguments that may be opted into:
+    #
+    #   - sample
+    #   - format
+    #   - rules
+    #   - tag
+    #
+
+    if "sample" in wanted:
+        if sys.version_info >= (3, 0):
+            parser.add_argument(
+                # Python 3 str handles non-ASCII arguments correctly
+                "sample",
+                type=str,
+                help="path to sample to analyze",
+            )
+        else:
+            parser.add_argument(
+                # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
+                # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
+                # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
+                "sample",
+                type=lambda s: s.decode(sys.getfilesystemencoding()),
+                help="path to sample to analyze",
+            )
+
+    if "format" in wanted:
+        formats = [
+            ("auto", "(default) detect file type automatically"),
+            ("pe", "Windows PE file"),
+            ("sc32", "32-bit shellcode"),
+            ("sc64", "64-bit shellcode"),
+            ("freeze", "features previously frozen by capa"),
+        ]
+        format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
+        parser.add_argument(
+            "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
+        )
+
+    if "rules" in wanted:
+        parser.add_argument(
+            "-r",
+            "--rules",
+            type=str,
+            default=RULES_PATH_DEFAULT_STRING,
+            help="path to rule file or directory, use embedded rules by default",
+        )
+
+    if "tag" in wanted:
+        parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
+
+
+def handle_common_args(args):
+    """
+    handle the global config specified by `install_common_args`,
+    such as configuring logging/coloring/etc.
+
+    args:
+      args (argparse.Namespace): parsed arguments that included at least `install_common_args` args.
+    """
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
+
+    # disable vivisect-related logging, it's verbose and not relevant for capa users
+    set_vivisect_log_level(logging.CRITICAL)
+
+    # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
+    # tqdm bails when trying to render the progress bar in this setup.
+    # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
+    # see #380 and: https://stackoverflow.com/a/3259271/87207
+    import codecs
+    codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
+
+    if args.color == "always":
+        colorama.init(strip=False)
+    elif args.color == "auto":
+        # colorama will detect:
+        #  - when on Windows console, and fixup coloring, and
+        #  - when not an interactive session, and disable coloring
+        # renderers should use coloring and assume it will be stripped out if necessary.
+        colorama.init()
+    elif args.color == "never":
+        colorama.init(strip=True)
+    else:
+        raise RuntimeError("unexpected --color value: " + args.color)
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
-
-    formats = [
-        ("auto", "(default) detect file type automatically"),
-        ("pe", "Windows PE file"),
-        ("sc32", "32-bit shellcode"),
-        ("sc64", "64-bit shellcode"),
-        ("freeze", "features previously frozen by capa"),
-    ]
-    format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
 
     desc = "The FLARE team's open-source tool to identify capabilities in executable files."
     epilog = textwrap.dedent(
@@ -473,65 +600,10 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-
-    if sys.version_info >= (3, 0):
-        parser.add_argument(
-            # Python 3 str handles non-ASCII arguments correctly
-            "sample",
-            type=str,
-            help="path to sample to analyze",
-        )
-    else:
-        parser.add_argument(
-            # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
-            # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
-            # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
-            "sample",
-            type=lambda s: s.decode(sys.getfilesystemencoding()),
-            help="path to sample to analyze",
-        )
-    parser.add_argument("--version", action="version", version="%(prog)s {:s}".format(capa.version.__version__))
-    parser.add_argument(
-        "-r",
-        "--rules",
-        type=str,
-        default=RULES_PATH_DEFAULT_STRING,
-        help="path to rule file or directory, use embedded rules by default",
-    )
-    parser.add_argument(
-        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="select sample format, %s" % format_help
-    )
-    parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
+    install_common_args(parser, {"sample", "format", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable verbose result document (no effect with --json)"
-    )
-    parser.add_argument(
-        "-vv", "--vverbose", action="store_true", help="enable very verbose result document (no effect with --json)"
-    )
-    parser.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
-    parser.add_argument("-q", "--quiet", action="store_true", help="disable all output but errors")
-    parser.add_argument(
-        "--color",
-        type=str,
-        choices=("auto", "always", "never"),
-        default="auto",
-        help="enable ANSI color codes in results, default: only during interactive session",
-    )
     args = parser.parse_args(args=argv)
-
-    if args.quiet:
-        logging.basicConfig(level=logging.WARNING)
-        logging.getLogger().setLevel(logging.WARNING)
-    elif args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
-
-    # disable vivisect-related logging, it's verbose and not relevant for capa users
-    set_vivisect_log_level(logging.CRITICAL)
+    handle_common_args(args)
 
     try:
         taste = get_file_taste(args.sample)
@@ -540,14 +612,6 @@ def main(argv=None):
         # handle the IOError separately and reach into the args
         logger.error("%s", e.args[0])
         return -1
-
-    # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
-    # tqdm bails when trying to render the progress bar in this setup.
-    # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
-    # see #380 and: https://stackoverflow.com/a/3259271/87207
-    import codecs
-
-    codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
 
     if args.rules == RULES_PATH_DEFAULT_STRING:
         logger.debug("-" * 80)
@@ -637,19 +701,6 @@ def main(argv=None):
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):
             return -1
-
-    if args.color == "always":
-        colorama.init(strip=False)
-    elif args.color == "auto":
-        # colorama will detect:
-        #  - when on Windows console, and fixup coloring, and
-        #  - when not an interactive session, and disable coloring
-        # renderers should use coloring and assume it will be stripped out if necessary.
-        colorama.init()
-    elif args.color == "never":
-        colorama.init(strip=True)
-    else:
-        raise RuntimeError("unexpected --color value: " + args.color)
 
     if args.json:
         print(capa.render.render_json(meta, rules, capabilities))
