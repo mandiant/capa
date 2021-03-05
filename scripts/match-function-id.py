@@ -72,7 +72,12 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="FLIRT match each function")
     parser.add_argument("sample", type=str, help="Path to sample to analyze")
-    parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="match a specific function by VA, rather than add functions")
+    parser.add_argument(
+        "-F",
+        "--function",
+        type=lambda x: int(x, 0x10),
+        help="match a specific function by VA, rather than add functions",
+    )
     parser.add_argument(
         "--signature",
         action="append",
