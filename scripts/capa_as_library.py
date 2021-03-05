@@ -6,6 +6,7 @@ import collections
 import capa.main
 import capa.rules
 import capa.engine
+import capa.render
 import capa.features
 import capa.render.utils as rutils
 from capa.engine import *

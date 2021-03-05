@@ -65,6 +65,7 @@ import multiprocessing.pool
 
 import capa
 import capa.main
+import capa.rules
 import capa.render
 
 logger = logging.getLogger("capa")
@@ -139,42 +140,14 @@ def main(argv=None):
         argv = sys.argv[1:]
 
         parser = argparse.ArgumentParser(description="detect capabilities in programs.")
+        capa.main.install_common_args(parser, wanted={"rules"})
         parser.add_argument("input", type=str, help="Path to directory of files to recursively analyze")
-        parser.add_argument(
-            "-r",
-            "--rules",
-            type=str,
-            default="(embedded rules)",
-            help="Path to rule file or directory, use embedded rules by default",
-        )
-        parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
-        parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
         parser.add_argument(
             "-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor"
         )
         parser.add_argument("--no-mp", action="store_true", help="disable subprocesses")
         args = parser.parse_args(args=argv)
-
-        if args.quiet:
-            logging.basicConfig(level=logging.ERROR)
-            logging.getLogger().setLevel(logging.ERROR)
-        elif args.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.getLogger().setLevel(logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-            logging.getLogger().setLevel(logging.INFO)
-
-        # disable vivisect-related logging, it's verbose and not relevant for capa users
-        capa.main.set_vivisect_log_level(logging.CRITICAL)
-
-        # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
-        # tqdm bails when trying to render the progress bar in this setup.
-        # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
-        # see #380 and: https://stackoverflow.com/a/3259271/87207
-        import codecs
-
-        codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
+        capa.main.handle_common_args(args)
 
         if args.rules == "(embedded rules)":
             logger.info("using default embedded rules")
