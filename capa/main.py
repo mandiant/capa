@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and limitations 
 import os
 import sys
 import time
+import gzip
 import hashlib
 import logging
 import os.path
@@ -303,6 +304,11 @@ def register_flirt_signature_analyzers(vw, sigpaths):
         elif sigpath.endswith(".pat"):
             with open(sigpath, "rb") as f:
                 with timing("flirt: parsing .pat: " + sigpath):
+                    sigs = flirt.parse_pat(f.read().decode("utf-8"))
+
+        elif sigpath.endswith(".pat.gz"):
+            with gzip.open(sigpath, "rb") as f:
+                with timing("flirt: parsing .pat.gz: " + sigpath):
                     sigs = flirt.parse_pat(f.read().decode("utf-8"))
 
         else:

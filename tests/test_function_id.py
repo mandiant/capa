@@ -10,6 +10,12 @@ def test_function_id_simple_match(pma16_01_extractor):
     assert pma16_01_extractor.get_function_name(0x407490) == "__aulldiv"
 
 
+def test_function_id_gz_pat(pma16_01_extractor):
+    # aullrem is stored in `test_aullrem.pat.gz`
+    assert pma16_01_extractor.is_library_function(0x407500) == True
+    assert pma16_01_extractor.get_function_name(0x407500) == "__aullrem"
+
+
 @pytest.mark.xfail
 def test_function_id_complex_match(pma16_01_extractor):
     # 0x405714 is __spawnlp which requires recursive match of __spawnvp at 0x407FAB 
