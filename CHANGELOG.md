@@ -1,5 +1,68 @@
 # Change Log
 
+## v1.6.0 (2021-03-09)
+
+This release adds the capa explorer rule generator plugin for IDA Pro, vivisect support for Python 3 and 12 new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. Thank you also to the vivisect development team (@rakuy0, @atlas0fd00m) for the Python 3 support (`vivisect==1.0.0`) and the fixes for Python 2 (`vivisect==0.2.1`).
+
+### Rule Generator IDA Plugin
+
+The capa explorer IDA plugin now helps you quickly build new capa rules using features extracted directly from your IDA database. Without leaving the plugin interface you can use the features extracted by capa explorer to develop and test new rules and save your work directly to your capa rules directory. To get started select the new `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view, and click `Analyze`. For more information check out the capa explorer [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md).
+
+![](doc/img/rulegen_expanded.png)
+
+### Upcoming changes
+
+**This is the last capa release that supports Python 2.** The next release will be v2.0 and will have breaking changes, including the removal of Python 2 support.
+
+If you have workflows that rely on the Python 2 version and need future maintenance, please reach out. We may be able to supply limited backports of key fixes and features.
+
+### New features
+
+- explorer: Add capa explorer rule generator plugin for IDA Pro. Now capa explorer helps you build new capa rules!  #426, #438, #439 @mike-hunhoff
+- python: Python 3 support in vivisect #421 @Ana06
+- main: Add backend option in Python 3 to select the backend to be used (either SMDA or vivisect) #421 @Ana06
+- python: Python 3 support in IDA #429, #437 @mike-hunhoff
+- ci: test pyinstaller CI #452 @williballenthin
+- scripts: enable multiple backends in `show-features.py` #429 @mike-hunhoff
+- scripts: add `scripts/vivisect-py2-vs-py3.sh`  to compare vivisect Python 2 vs 3 (can easily be modified to test run times and compare different versions) #421 @Ana06
+
+### New Rules (12)
+
+- patch process command line @re-fox @williballenthin (graduated from nursery)
+- compiled with dmd @re-fox
+- compiled with exe4j @johnk3r
+- compiled from Visual Basic @williballenthin
+- capture screenshot in Go @TcM1911
+- compiled with Nim @mike-hunhoff
+- linked against Go process enumeration library @TcM1911
+- linked against Go registry library @TcM1911
+- linked against Go WMI library @TcM1911
+- linked against Go static asset library @TcM1911
+- inspect load icon resource @mike-hunhoff
+- linked against XZip @mr-tz
+
+### Bug Fixes
+
+- ida: check for unmapped addresses when resolving data references #436 @mike-hunhoff
+
+### Changes
+
+- setup: vivisect v1.0.0 is the default backend for Python3 (it was SMDA before) #421 @Ana06
+- setup: bump vivisect to 0.2.1 #454 @mr-tz
+- linter: adding ntoskrnl, ntdll overlap lint #428 @mike-hunhoff
+- ci: use py3.9 and pyinstaller 4.2 to build standalone binaries #452 @williballenthin
+- scripts: remove old migration script #450 @williballenthin
+
+### Development
+
+- main: factor out common cli argument handling #450 @williballenthin
+
+### Raw diffs
+
+  - [capa v1.5.1...v1.6.0](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.1...v1.6.0](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+
+
 ## v1.5.1 (2021-02-09)
 
 This release fixes the version number that we forgot to update for v1.5.0 (therefore, v1.5.0 was not published to pypi). It also includes 1 new rule and some rule improvements.
