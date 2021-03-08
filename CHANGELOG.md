@@ -1,5 +1,19 @@
 # Change Log
 
+## v1.5.1 (2021-02-09)
+
+This release fixes the version number that we forgot to update for v1.5.0 (therefore, v1.5.0 was not published to pypi). It also includes 1 new rule and some rule improvements.
+
+### New Rules (1)
+
+- encrypt data using vest @re-fox
+
+### Raw diffs
+
+  - [capa v1.5.0...v1.5.1](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.0...v1.5.1](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+
+
 ## v1.5.0 (2021-02-05)
 
 This release brings support for running capa under Python 3 via [SMDA](https://github.com/danielplohmann/smda), more thorough CI testing and linting, better extraction of strings and byte features, and 50 (!) new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. A special shout out to the following new project contributors:
