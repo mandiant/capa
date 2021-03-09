@@ -1143,14 +1143,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", settings.user["rule_path"]
+                self.parent, "Please select a capa rules directory", settings.user.get("rule_path", "")
             )
         )
 
     def ask_user_capa_rule_file(self):
         """ """
         return QtWidgets.QFileDialog.getSaveFileName(
-            None, "Please select a capa rule to edit", settings.user["rule_path"], "*.yml"
+            None, "Please select a capa rule to edit", settings.user.get("rule_path", ""), "*.yml"
         )[0]
 
     def slot_change_rule_scope(self):
