@@ -37,6 +37,10 @@ from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearc
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
 
+CAPA_SETTINGS_RULE_PATH = "rule_path"
+CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
+CAPA_SETTINGS_RULEGEN_SCOPE = "rulegen_scope"
+
 
 def write_file(path, data):
     """ """
@@ -166,6 +170,60 @@ class CapaExplorerFeatureExtractor(capa.features.extractors.ida.IdaFeatureExtrac
         return super(CapaExplorerFeatureExtractor, self).extract_function_features(f)
 
 
+class QLineEditClicked(QtWidgets.QLineEdit):
+    def __init__(self, content, parent=None):
+        """ """
+        super(QLineEditClicked, self).__init__(content, parent)
+
+    def mouseReleaseEvent(self, e):
+        """ """
+        old = self.text()
+        new = str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                self.parent(), "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+            )
+        )
+        if new:
+            self.setText(new)
+        else:
+            self.setText(old)
+
+
+class CapaSettingsInputDialog(QtWidgets.QDialog):
+    def __init__(self, title, parent=None):
+        """ """
+        super(CapaSettingsInputDialog, self).__init__(parent)
+
+        self.setWindowTitle(title)
+        self.setMinimumWidth(500)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
+
+        self.edit_rule_path = QLineEditClicked(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
+        self.edit_rule_author = QtWidgets.QLineEdit(settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, ""))
+        self.edit_rule_scope = QtWidgets.QComboBox()
+
+        scopes = ("file", "function", "basic block")
+
+        self.edit_rule_scope.addItems(scopes)
+        self.edit_rule_scope.setCurrentIndex(scopes.index(settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function")))
+
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
+
+        layout = QtWidgets.QFormLayout(self)
+        layout.addRow("capa rules path", self.edit_rule_path)
+        layout.addRow("Default rule author", self.edit_rule_author)
+        layout.addRow("Default rule scope", self.edit_rule_scope)
+
+        layout.addWidget(buttons)
+
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+    def get_values(self):
+        """ """
+        return self.edit_rule_path.text(), self.edit_rule_author.text(), self.edit_rule_scope.currentText()
+
+
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 
@@ -197,11 +255,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen = None
         self.view_tabs = None
         self.view_tab_rulegen = None
-        self.view_menu_bar = None
         self.view_status_label = None
         self.view_buttons = None
         self.view_analyze_button = None
         self.view_reset_button = None
+        self.view_settings_button = None
         self.view_save_button = None
 
         self.view_rulegen_preview = None
@@ -273,10 +331,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_view_status_label()
         self.load_view_buttons()
 
-        # load menu bar and sub menus
-        self.load_view_menu_bar()
-        self.load_configure_menu()
-
         # load parent view
         self.load_view_parent()
 
@@ -284,11 +338,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         """load tabs"""
         tabs = QtWidgets.QTabWidget()
         self.view_tabs = tabs
-
-    def load_view_menu_bar(self):
-        """load menu bar"""
-        bar = QtWidgets.QMenuBar()
-        self.view_menu_bar = bar
 
     def load_view_checkbox_limit_by(self):
         """load limit results by function checkbox"""
@@ -319,19 +368,23 @@ class CapaExplorerForm(idaapi.PluginForm):
         analyze_button = QtWidgets.QPushButton("Analyze")
         reset_button = QtWidgets.QPushButton("Reset")
         save_button = QtWidgets.QPushButton("Save")
+        settings_button = QtWidgets.QPushButton("Settings")
 
         analyze_button.clicked.connect(self.slot_analyze)
         reset_button.clicked.connect(self.slot_reset)
         save_button.clicked.connect(self.slot_save)
+        settings_button.clicked.connect(self.slot_settings)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(analyze_button)
         layout.addWidget(reset_button)
-        layout.addStretch(2)
+        layout.addWidget(settings_button)
+        layout.addStretch(3)
         layout.addWidget(save_button, alignment=QtCore.Qt.AlignRight)
 
         self.view_analyze_button = analyze_button
         self.view_reset_button = reset_button
+        self.view_settings_button = settings_button
         self.view_save_button = save_button
         self.view_buttons = layout
 
@@ -350,7 +403,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout.addWidget(self.view_tabs)
         layout.addLayout(self.view_buttons)
         layout.addWidget(self.view_status_label)
-        layout.setMenuBar(self.view_menu_bar)
 
         self.parent.setLayout(layout)
 
@@ -450,27 +502,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.view_tabs.addTab(tab, "Rule Generator")
 
-    def load_configure_menu(self):
-        """ """
-        actions = (
-            ("Change default rules directory...", "Set default rules directory", self.slot_change_rules_dir),
-            ("Change default rule author...", "Set default rule author", self.slot_change_rule_author),
-            ("Change default rule scope...", "Set default rule scope", self.slot_change_rule_scope),
-        )
-        self.load_menu("Settings", actions)
-
-    def load_menu(self, title, actions):
-        """load menu actions
-
-        @param title: menu name displayed in UI
-        @param actions: tuple of tuples containing action name, tooltip, and slot function
-        """
-        menu = self.view_menu_bar.addMenu(title)
-        for (name, _, slot) in actions:
-            action = QtWidgets.QAction(name, self.parent)
-            action.triggered.connect(slot)
-            menu.addAction(action)
-
     def load_ida_hooks(self):
         """load IDA UI hooks"""
         # map named action (defined in idagui.cfg) to Python function
@@ -567,7 +598,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         try:
             # resolve rules directory - check self and settings first, then ask user
-            if not os.path.exists(settings.user.get("rule_path", "")):
+            if not os.path.exists(settings.user.get(CAPA_SETTINGS_RULE_PATH, "")):
                 idaapi.info("Please select a file directory containing capa rules.")
                 path = self.ask_user_directory()
                 if not path:
@@ -575,7 +606,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                         "You must select a file directory containing capa rules before analysis can be run. The standard collection of capa rules can be downloaded from https://github.com/fireeye/capa-rules."
                     )
                     return False
-                settings.user["rule_path"] = path
+                settings.user[CAPA_SETTINGS_RULE_PATH] = path
         except Exception as e:
             logger.error("Failed to load capa rules (error: %s).", e)
             return False
@@ -584,7 +615,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
 
-        rule_path = settings.user["rule_path"]
+        rule_path = settings.user[CAPA_SETTINGS_RULE_PATH]
         try:
             if not os.path.exists(rule_path):
                 raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
@@ -613,7 +644,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             total_paths = len(rule_paths)
             for (i, rule_path) in enumerate(rule_paths):
                 update_wait_box(
-                    "loading capa rules from %s (%d of %d)" % (settings.user["rule_path"], i + 1, total_paths)
+                    "loading capa rules from %s (%d of %d)"
+                    % (settings.user[CAPA_SETTINGS_RULE_PATH], i + 1, total_paths)
                 )
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
@@ -632,12 +664,14 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
         except Exception as e:
-            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules from %s" % settings.user["rule_path"])
-            logger.error("Failed to load rules from %s (error: %s).", settings.user["rule_path"], e)
+            capa.ida.helpers.inform_user_ida_ui(
+                "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
+            )
+            logger.error("Failed to load rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
                 "Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/fireeye/capa-rules."
             )
-            settings.user["rule_path"] = ""
+            settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return False
 
         self.ruleset_cache = ruleset
@@ -743,7 +777,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             self.model_data.render_capa_doc(self.doc, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rules_cache))
+                "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e)
@@ -881,14 +915,14 @@ class CapaExplorerForm(idaapi.PluginForm):
             # load preview and feature tree
             self.view_rulegen_preview.load_preview_meta(
                 f.start_ea if f else None,
-                settings.user.get("rulegen_author", "<insert_author>"),
-                settings.user.get("rulegen_scope", "function"),
+                settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, "<insert_author>"),
+                settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function"),
             )
             self.view_rulegen_features.load_features(file_features, func_features)
 
             # self.view_rulegen_header_label.setText("Function Features (%s)" % trim_function_name(f))
             self.set_view_status_label(
-                "capa rules directory: %s (%d rules)" % (settings.user["rule_path"], len(self.rules_cache))
+                "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
             logger.error("Failed to render views (error: %s)" % e)
@@ -1066,6 +1100,16 @@ class CapaExplorerForm(idaapi.PluginForm):
         elif self.view_tabs.currentIndex() == 1:
             self.save_function_analysis()
 
+    def slot_settings(self):
+        """ """
+        dialog = CapaSettingsInputDialog("capa explorer settings", parent=self.parent)
+        if dialog.exec_():
+            (
+                settings.user[CAPA_SETTINGS_RULE_PATH],
+                settings.user[CAPA_SETTINGS_RULEGEN_AUTHOR],
+                settings.user[CAPA_SETTINGS_RULEGEN_SCOPE],
+            ) = dialog.get_values()
+
     def save_program_analysis(self):
         """ """
         if not self.doc:
@@ -1143,41 +1187,15 @@ class CapaExplorerForm(idaapi.PluginForm):
         """create Qt dialog to ask user for a directory"""
         return str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                self.parent, "Please select a capa rules directory", settings.user.get("rule_path", "")
+                self.parent, "Please select a capa rules directory", settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
             )
         )
 
     def ask_user_capa_rule_file(self):
         """ """
         return QtWidgets.QFileDialog.getSaveFileName(
-            None, "Please select a capa rule to edit", settings.user.get("rule_path", ""), "*.yml"
+            None, "Please select a capa rule to edit", settings.user.get(CAPA_SETTINGS_RULE_PATH, ""), "*.yml"
         )[0]
-
-    def slot_change_rule_scope(self):
-        """ """
-        scope = idaapi.ask_str(str(settings.user.get("rulegen_scope", "function")), 0, "Enter default rule scope")
-        if scope:
-            settings.user["rulegen_scope"] = scope
-            idaapi.info("Run analysis again for your changes to take effect.")
-
-    def slot_change_rule_author(self):
-        """ """
-        author = idaapi.ask_str(str(settings.user.get("rulegen_author", "")), 0, "Enter default rule author")
-        if author:
-            settings.user["rulegen_author"] = author
-            idaapi.info("Run analysis again for your changes to take effect.")
-
-    def slot_change_rules_dir(self):
-        """allow user to change rules directory
-
-        user selection stored in settings for future runs
-        """
-        path = self.ask_user_directory()
-        if path:
-            settings.user["rule_path"] = path
-            self.rules_cache = None
-            self.ruleset_cache = None
-            idaapi.info("Run analysis again for your changes to take effect.")
 
     def set_view_status_label(self, text):
         """update status label control
