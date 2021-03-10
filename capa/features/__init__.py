@@ -125,6 +125,10 @@ class String(Feature):
     def __init__(self, value, description=None):
         super(String, self).__init__(value, description=description)
 
+    def get_value_str(self):
+        """ """
+        return repr(self.value).strip("'")
+
 
 class Regex(String):
     def __init__(self, value, description=None):
@@ -194,7 +198,7 @@ class StringFactory(object):
     def __new__(self, value, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
-        return String(value, description=description)
+        return String(str(codecs.decode(value, "unicode_escape")), description=description)
 
 
 class Bytes(Feature):
