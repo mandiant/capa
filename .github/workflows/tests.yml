@@ -41,28 +41,40 @@ jobs:
       run: python scripts/lint.py rules/
 
   tests:
-    name: Tests in ${{ matrix.python }}
-    runs-on: ubuntu-20.04
+    name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     needs: [code_style, rule_linter]
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+        # across all operating systems
+        # TODO replace 2.7 with 3.6 once we're Python 3 only
+        python-version: [2.7, 3.9]
         include:
-          - python: 2.7
-          - python: 3.7
-          - python: 3.8
-          - python: 3.9.1
+          # on Ubuntu run these as well
+          - os: ubuntu-20.04
+            # TODO remove 3.6 here once we're Python 3 only
+            python-version: 3.6
+          - os: ubuntu-20.04
+            python-version: 3.7
+          - os: ubuntu-20.04
+            python-version: 3.8
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Set up Python ${{ matrix.python }}
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
+      if: matrix.os == 'ubuntu-20.04'
       run: sudo apt-get install -y libyaml-dev
+    - name: Install Microsoft Visual C++ 9.0
+      if: matrix.os == 'windows-2019' && matrix.python-version == '2.7'
+      run: choco install vcpython27
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
