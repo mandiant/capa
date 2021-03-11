@@ -288,26 +288,15 @@ def get_workspace(path, format, should_save=True):
     return vw
 
 
-def get_extractor_py2(path, format, disable_progress=False):
-    import capa.features.extractors.viv
-
-    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        vw = get_workspace(path, format, should_save=False)
-
-        try:
-            vw.saveWorkspace()
-        except IOError:
-            # see #168 for discussion around how to handle non-writable directories
-            logger.info("source directory is not writable, won't save intermediate workspace")
-
-    return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
-
-
 class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format, backend, disable_progress=False):
+def get_extractor(path, format, backend, disable_progress=False):
+    """
+    raises:
+      UnsupportedFormatError:
+    """
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
@@ -335,17 +324,6 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
                 logger.info("source directory is not writable, won't save intermediate workspace")
 
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
-
-
-def get_extractor(path, format, backend, disable_progress=False):
-    """
-    raises:
-      UnsupportedFormatError:
-    """
-    if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format, backend, disable_progress=disable_progress)
-    else:
-        return get_extractor_py2(path, format, disable_progress=disable_progress)
 
 
 def is_nursery_rule_path(path):
@@ -498,22 +476,11 @@ def install_common_args(parser, wanted=None):
     #
 
     if "sample" in wanted:
-        if sys.version_info >= (3, 0):
-            parser.add_argument(
-                # Python 3 str handles non-ASCII arguments correctly
-                "sample",
-                type=str,
-                help="path to sample to analyze",
-            )
-        else:
-            parser.add_argument(
-                # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
-                # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
-                # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
-                "sample",
-                type=lambda s: s.decode(sys.getfilesystemencoding()),
-                help="path to sample to analyze",
-            )
+        parser.add_argument(
+            "sample",
+            type=str,
+            help="path to sample to analyze",
+        )
 
     if "format" in wanted:
         formats = [
@@ -532,15 +499,15 @@ def install_common_args(parser, wanted=None):
             help="select sample format, %s" % format_help,
         )
 
-    if "backend" in wanted and sys.version_info >= (3, 0):
-        parser.add_argument(
-            "-b",
-            "--backend",
-            type=str,
-            help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_SMDA),
-            default=BACKEND_VIV,
-        )
+        if "backend" in wanted:
+            parser.add_argument(
+                "-b",
+                "--backend",
+                type=str,
+                help="select the backend to use",
+                choices=(BACKEND_VIV, BACKEND_SMDA),
+                default=BACKEND_VIV,
+            )
 
     if "rules" in wanted:
         parser.add_argument(
@@ -703,8 +670,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            backend = args.backend if sys.version_info > (3, 0) else BACKEND_VIV
-            extractor = get_extractor(args.sample, args.format, backend, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
