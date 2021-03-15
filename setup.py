@@ -28,7 +28,7 @@ if sys.version_info >= (3, 0):
     requirements.append("halo")
     requirements.append("networkx")
     requirements.append("vivisect==1.0.0")
-    requirements.append("viv-utils[flirt]==0.4.1")
+    requirements.append("viv-utils[flirt]==0.5.0")
     requirements.append("smda==1.5.13")
 else:
     # py2
@@ -38,7 +38,7 @@ else:
     # TODO: issue here with flirt not being supported.
     # but we're also no longer supporting py2
     # so this whole block goes away.
-    requirements.append("viv-utils==0.4.1")
+    requirements.append("viv-utils==0.5.0")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
     requirements.append("backports.functools-lru-cache")
 
