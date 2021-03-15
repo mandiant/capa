@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
 import textwrap
 
 import pytest
@@ -174,7 +173,6 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("#11"))
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_freeze_sample(tmpdir, z9324d_extractor):
     # tmpdir fixture handles cleanup
     o = tmpdir.mkdir("capa").join("test.frz").strpath
@@ -182,7 +180,6 @@ def test_freeze_sample(tmpdir, z9324d_extractor):
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason="vivsect only works on py2")
 def test_freeze_load_sample(tmpdir, z9324d_extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
 
