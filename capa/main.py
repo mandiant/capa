@@ -380,7 +380,8 @@ def get_workspace(path, format, sigpaths):
     else:
         raise ValueError("unexpected format: " + format)
 
-    register_flirt_signature_analyzers(vw, sigpaths)
+    if sys.version_info >= (3, 0):
+        register_flirt_signature_analyzers(vw, sigpaths)
 
     vw.analyze()
 

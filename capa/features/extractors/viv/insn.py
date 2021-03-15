@@ -5,10 +5,12 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 
 import viv_utils
 import envi.memory
-import viv_utils.flirt
+if sys.version_info >= (3, 0):
+    import viv_utils.flirt
 import envi.archs.i386.disasm
 
 import capa.features.extractors.viv
@@ -113,10 +115,11 @@ def extract_insn_api_features(f, bb, insn):
         if not target:
             return
 
-        if viv_utils.flirt.is_library_function(f.vw, target):
-            name = viv_utils.get_function_name(f.vw, target)
-            yield API(name), insn.va
-            return
+        if sys.version_info >= (3, 0):
+            if viv_utils.flirt.is_library_function(f.vw, target):
+                name = viv_utils.get_function_name(f.vw, target)
+                yield API(name), insn.va
+                return
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
