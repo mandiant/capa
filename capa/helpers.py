@@ -12,9 +12,7 @@ _hex = hex
 
 
 def hex(i):
-    # under py2.7, long integers get formatted with a trailing `L`
-    # and this is not pretty. so strip it out.
-    return _hex(oint(i)).rstrip("L")
+    return _hex(oint(i))
 
 
 def oint(i):
