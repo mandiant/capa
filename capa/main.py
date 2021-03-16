@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
