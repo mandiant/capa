@@ -261,8 +261,7 @@ def parse_description(s, value_type, description=None):
         if value_type == "bytes":
             try:
                 value = codecs.decode(value.replace(" ", ""), "hex")
-            # TODO: Remove TypeError when Python2 is not used anymore
-            except (TypeError, binascii.Error):
+            except binascii.Error:
                 raise InvalidRule('unexpected bytes value: "%s", must be a valid hex sequence' % value)
 
             if len(value) > MAX_BYTES_FEATURE_SIZE:
