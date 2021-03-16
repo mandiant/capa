@@ -543,10 +543,9 @@ def handle_common_args(args):
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
 
-    # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
-    # tqdm bails when trying to render the progress bar in this setup.
-    # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
-    # see #380 and: https://stackoverflow.com/a/3259271/87207
+    # Since Python 3.8 cp65001 is an alias to utf_8, but not for Pyhton < 3.8
+    # TODO: remove this code when only supporting Python 3.8+
+    # https://stackoverflow.com/a/3259271/87207
     import codecs
 
     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
