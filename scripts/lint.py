@@ -568,6 +568,8 @@ def main(argv=None):
 
     logging.getLogger("capa").setLevel(logging.CRITICAL)
     logging.getLogger("viv_utils").setLevel(logging.CRITICAL)
+    if args.debug:
+      logging.getLogger("capa.lint").setLevel(logging.DEBUG)
 
     time0 = time.time()
 
