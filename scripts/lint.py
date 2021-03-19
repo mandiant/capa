@@ -331,7 +331,12 @@ class FormatIncorrect(Lint):
 
         if actual != expected:
             diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(True))
-            self.recommendation = self.recommendation_template.format("".join(diff))
+            recommendation_template = self.recommendation_template
+            if "\r\n" in actual:
+                recommendation_template = (
+                    self.recommendation_template + "\nplease make sure that the file uses LF (\\n) line endings only"
+                )
+            self.recommendation = recommendation_template.format("".join(diff))
             return True
 
         return False
