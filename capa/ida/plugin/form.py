@@ -1019,6 +1019,12 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # create deep copy of current rules, add our new rule
         rules = copy.copy(self.rules_cache)
+
+        # ensure subscope rules are included
+        for sub in rule.extract_subscope_rules():
+            rules.append(sub)
+
+        # include our new rule in the list
         rules.append(rule)
 
         try:

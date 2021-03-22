@@ -415,6 +415,11 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         # create a new parent under root node, by default; new node added last position in tree
         new_parent = self.new_expression_node(self.root, (action.data()[0], ""))
 
+        if "basic block" in action.data()[0]:
+            # add default child expression when nesting under basic block
+            new_parent.setExpanded(True)
+            new_parent = self.new_expression_node(new_parent, ("- or:", ""))
+
         for o in self.get_features(selected=True):
             # take child from its parent by index, add to new parent
             new_parent.addChild(o.parent().takeChild(o.parent().indexOfChild(o)))
@@ -425,6 +430,15 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_edit_expression(self, action):
         """ """
         expression, o = action.data()
+        if "basic block" in expression and "basic block" not in o.text(
+            CapaExplorerRulgenEditor.get_column_feature_index()
+        ):
+            # current expression is "basic block", and not changing to "basic block" expression
+            children = o.takeChildren()
+            new_parent = self.new_expression_node(o, ("- or:", ""))
+            for child in children:
+                new_parent.addChild(child)
+            new_parent.setExpanded(True)
         o.setText(CapaExplorerRulgenEditor.get_column_feature_index(), expression)
 
     def slot_clear_all(self, action):
