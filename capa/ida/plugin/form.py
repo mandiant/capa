@@ -617,6 +617,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         rule_path = settings.user[CAPA_SETTINGS_RULE_PATH]
         try:
+            # TODO refactor: this first part is identical to capa.main.get_rules
             if not os.path.exists(rule_path):
                 raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
@@ -632,8 +633,8 @@ class CapaExplorerForm(idaapi.PluginForm):
                         continue
                     for file in files:
                         if not file.endswith(".yml"):
-                            if not (file.endswith(".md") or file.endswith(".git") or file.endswith(".txt")):
-                                # expect to see readme.md, format.md, and maybe a .git directory
+                            if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                                # expect to see .git* files, readme.md, format.md, and maybe a .git directory
                                 # other things maybe are rules, but are mis-named.
                                 logger.warning("skipping non-.yml file: %s", file)
                             continue
