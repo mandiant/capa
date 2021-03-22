@@ -1,7 +1,10 @@
 ![capa](.github/logo.png)
 
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
+[![Last release](https://img.shields.io/github/v/release/fireeye/capa)](https://github.com/fireeye/capa/releases)
+[![Number of rules](https://img.shields.io/badge/rules-471-blue.svg)](https://github.com/fireeye/capa-rules)
 [![CI status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
-[![Number of rules](https://img.shields.io/badge/rules-469-blue.svg)](https://github.com/fireeye/capa-rules)
+[![Downloads](https://img.shields.io/github/downloads/fireeye/capa/total)](https://github.com/fireeye/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.

@@ -736,6 +736,8 @@ class Rule(object):
         # the below regex makes these adjustments and while ugly, we don't have to explore the ruamel.yaml insides
         doc = re.sub(r"!!int '0x-([0-9a-fA-F]+)'", r"-0x\1", doc)
 
+        # normalize CRLF to LF
+        doc = doc.replace("\r\n", "\n")
         return doc
 
 

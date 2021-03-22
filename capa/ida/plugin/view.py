@@ -178,6 +178,9 @@ def build_context_menu(o, actions):
 
 
 class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
+
+    INDENT = " " * 2
+
     def __init__(self, parent=None):
         """ """
         super(CapaExplorerRulgenPreview, self).__init__(parent)
@@ -210,11 +213,98 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         self.setText("\n".join(metadata_default))
 
     def keyPressEvent(self, e):
-        """ """
-        if e.key() == QtCore.Qt.Key_Tab:
-            self.insertPlainText(" " * 2)
+        """intercept key press events"""
+        if e.key() in (QtCore.Qt.Key_Tab, QtCore.Qt.Key_Backtab):
+            # apparently it's not easy to implement tabs as spaces, or multi-line tab or SHIFT + Tab
+            # so we need to implement it ourselves so we can retain properly formatted capa rules
+            # when a user uses the Tab key
+            if self.textCursor().selection().isEmpty():
+                # single line, only worry about Tab
+                if e.key() == QtCore.Qt.Key_Tab:
+                    self.insertPlainText(self.INDENT)
+            else:
+                # multi-line tab or SHIFT + Tab
+                cur = self.textCursor()
+                select_start_ppos = cur.selectionStart()
+                select_end_ppos = cur.selectionEnd()
+
+                scroll_ppos = self.verticalScrollBar().sliderPosition()
+
+                # determine lineno for first selected line, and column
+                cur.setPosition(select_start_ppos)
+                start_lineno = self.count_previous_lines_from_block(cur.block())
+                start_lineco = cur.columnNumber()
+
+                # determine lineno for last selected line
+                cur.setPosition(select_end_ppos)
+                end_lineno = self.count_previous_lines_from_block(cur.block())
+
+                # now we need to indent or dedent the selected lines. for now, we read the text, modify
+                # the lines between start_lineno and end_lineno accordingly, and then reset the view
+                # this might not be the best solution, but it avoids messing around with cursor positions
+                # to determine the beginning of lines
+
+                plain = self.toPlainText().splitlines()
+
+                if e.key() == QtCore.Qt.Key_Tab:
+                    # user Tab, indent selected lines
+                    lines_modified = end_lineno - start_lineno
+                    first_modified = True
+                    change = [self.INDENT + line for line in plain[start_lineno : end_lineno + 1]]
+                else:
+                    # user SHIFT + Tab, dedent selected lines
+                    lines_modified = 0
+                    first_modified = False
+                    change = []
+                    for (lineno, line) in enumerate(plain[start_lineno : end_lineno + 1]):
+                        if line.startswith(self.INDENT):
+                            if lineno == 0:
+                                # keep track if first line is modified, so we can properly display
+                                # the text selection later
+                                first_modified = True
+                            lines_modified += 1
+                            line = line[len(self.INDENT) :]
+                        change.append(line)
+
+                # apply modifications, and reset view
+                plain[start_lineno : end_lineno + 1] = change
+                self.setPlainText("\n".join(plain) + "\n")
+
+                # now we need to properly adjust the selection positions, so users don't have to
+                # re-select when indenting or dedenting the same lines repeatedly
+                if e.key() == QtCore.Qt.Key_Tab:
+                    # user Tab, increase increment selection positions
+                    select_start_ppos += len(self.INDENT)
+                    select_end_ppos += (lines_modified * len(self.INDENT)) + len(self.INDENT)
+                elif lines_modified:
+                    # user SHIFT + Tab, decrease selection positions
+                    if start_lineco not in (0, 1) and first_modified:
+                        # only decrease start position if not in first column
+                        select_start_ppos -= len(self.INDENT)
+                    select_end_ppos -= lines_modified * len(self.INDENT)
+
+                # apply updated selection and restore previous scroll position
+                self.set_selection(select_start_ppos, select_end_ppos, len(self.toPlainText()))
+                self.verticalScrollBar().setSliderPosition(scroll_ppos)
         else:
             super(CapaExplorerRulgenPreview, self).keyPressEvent(e)
+
+    def count_previous_lines_from_block(self, block):
+        """calculate number of lines preceding block"""
+        count = 0
+        while True:
+            block = block.previous()
+            if not block.isValid():
+                break
+            count += block.lineCount()
+        return count
+
+    def set_selection(self, start, end, max):
+        """set text selection"""
+        cursor = self.textCursor()
+        cursor.setPosition(start)
+        cursor.setPosition(end if end < max else max, QtGui.QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
 
 
 class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
