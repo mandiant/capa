@@ -311,6 +311,21 @@ class FormatLineFeedEOL(Lint):
         return True
 
 
+class FeatureStringDoubleQuotes(Lint):
+    name = "feature string escaped characters"
+
+    def check_features(self, ctx, features):
+        for feature in features:
+            if isinstance(feature, capa.features.String) and not isinstance(feature, capa.features.Regex):
+                if feature.value.startswith("\"") and feature.value.endswith("\""):
+                    continue
+                escaped = repr(feature.value)[1:-1]
+                if feature.value != escaped:
+                    self.recommendation = "change %s to \"%s\"" % (feature.value, escaped)
+                    return True
+        return False
+
+
 class FormatSingleEmptyLineEOF(Lint):
     name = "EOF format"
     recommendation = "end file with a single empty line"
@@ -391,7 +406,7 @@ def lint_meta(ctx, rule):
     return run_lints(META_LINTS, ctx, rule)
 
 
-FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi())
+FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi(), FeatureStringDoubleQuotes())
 
 
 def lint_features(ctx, rule):
@@ -402,7 +417,7 @@ def lint_features(ctx, rule):
 FORMAT_LINTS = (
     FormatLineFeedEOL(),
     FormatSingleEmptyLineEOF(),
-    FormatIncorrect(),
+    #FormatIncorrect(),
 )
 
 

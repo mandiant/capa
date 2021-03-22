@@ -127,7 +127,7 @@ class String(Feature):
 
     def get_value_str(self):
         """ """
-        return repr(self.value).strip("'")
+        return repr(self.value)[1:-1]
 
 
 class Regex(String):
@@ -198,6 +198,7 @@ class StringFactory(object):
     def __new__(self, value, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
+        print(value)
         return String(str(codecs.decode(value, "unicode_escape")), description=description)
 
 
