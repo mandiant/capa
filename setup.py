@@ -21,7 +21,7 @@ requirements = [
     "ruamel.yaml",
     "wcwidth",
     "ida-settings==2.1.0",
-    "viv-utils==0.5.0",
+    "viv-utils==0.6.0",
 ]
 
 if sys.version_info >= (3, 0):
