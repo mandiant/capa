@@ -25,6 +25,8 @@ import argparse
 import itertools
 import posixpath
 
+import ruamel.yaml
+
 import capa.main
 import capa.rules
 import capa.engine
@@ -311,21 +313,6 @@ class FormatLineFeedEOL(Lint):
         return True
 
 
-class FeatureStringDoubleQuotes(Lint):
-    name = "feature string escaped characters"
-
-    def check_features(self, ctx, features):
-        for feature in features:
-            if isinstance(feature, capa.features.String) and not isinstance(feature, capa.features.Regex):
-                if feature.value.startswith("\"") and feature.value.endswith("\""):
-                    continue
-                escaped = repr(feature.value)[1:-1]
-                if feature.value != escaped:
-                    self.recommendation = "change %s to \"%s\"" % (feature.value, escaped)
-                    return True
-        return False
-
-
 class FormatSingleEmptyLineEOF(Lint):
     name = "EOF format"
     recommendation = "end file with a single empty line"
@@ -354,6 +341,32 @@ class FormatIncorrect(Lint):
             self.recommendation = recommendation_template.format("".join(diff))
             return True
 
+        return False
+
+
+class FormatStringQuotesIncorrect(Lint):
+    name = "rule string quotes incorrect"
+
+    def check_rule(self, ctx, rule):
+        events = capa.rules.Rule._get_ruamel_yaml_parser().parse(rule.definition)
+        for key in events:
+            if not (isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "string"):
+                continue
+            value = next(events)  # assume value is next event
+            if not isinstance(value, ruamel.yaml.ScalarEvent):
+                # ignore non-scalar
+                continue
+            if value.value.startswith("/") and value.value.endswith(("/", "/i")):
+                # ignore regex for now
+                continue
+            if value.style is None:
+                # no quotes
+                self.recommendation = 'add double quotes to "%s"' % value.value
+                return True
+            if value.style == "'":
+                # single quote
+                self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                return True
         return False
 
 
@@ -406,7 +419,7 @@ def lint_meta(ctx, rule):
     return run_lints(META_LINTS, ctx, rule)
 
 
-FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi(), FeatureStringDoubleQuotes())
+FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi())
 
 
 def lint_features(ctx, rule):
@@ -417,7 +430,8 @@ def lint_features(ctx, rule):
 FORMAT_LINTS = (
     FormatLineFeedEOL(),
     FormatSingleEmptyLineEOF(),
-    #FormatIncorrect(),
+    FormatStringQuotesIncorrect(),
+    FormatIncorrect(),
 )
 
 

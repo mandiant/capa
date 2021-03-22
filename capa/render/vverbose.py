@@ -56,7 +56,11 @@ def render_statement(ostream, match, statement, indent=0):
         child = statement["child"]
 
         if child[child["type"]]:
-            value = rutils.bold2(child[child["type"]])
+            if child["type"] == "string":
+                value = '"%s"' % capa.features.escape_string(child[child["type"]])
+            else:
+                value = child[child["type"]]
+            value = rutils.bold2(value)
             if child.get("description"):
                 ostream.write("count(%s(%s = %s)): " % (child["type"], value, child["description"]))
             else:
@@ -89,6 +93,9 @@ def render_feature(ostream, match, feature, indent=0):
     if key == "regex":
         key = "string"  # render string for regex to mirror the rule source
         value = feature["match"]  # the match provides more information than the value for regex
+
+    if key == "string":
+        value = '"%s"' % capa.features.escape_string(value)
 
     ostream.write(key)
     ostream.write(": ")

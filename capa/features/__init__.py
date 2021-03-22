@@ -38,6 +38,20 @@ def hex_string(h):
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
 
 
+def escape_string(s):
+    """escape special characters"""
+    s = repr(s)
+    if not s.startswith(('"', "'")):
+        # u'hello\r\nworld' -> hello\\r\\nworld
+        s = s[2:-1]
+    else:
+        # 'hello\r\nworld' -> hello\\r\\nworld
+        s = s[1:-1]
+    s = s.replace("\\'", "'")  # repr() may escape "'" in some edge cases, remove
+    s = s.replace('"', '\\"')  # repr() does not escape '"', add
+    return s
+
+
 class Feature(object):
     def __init__(self, value, arch=None, description=None):
         """
@@ -125,10 +139,6 @@ class String(Feature):
     def __init__(self, value, description=None):
         super(String, self).__init__(value, description=description)
 
-    def get_value_str(self):
-        """ """
-        return repr(self.value)[1:-1]
-
 
 class Regex(String):
     def __init__(self, value, description=None):
@@ -198,8 +208,7 @@ class StringFactory(object):
     def __new__(self, value, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
-        print(value)
-        return String(str(codecs.decode(value, "unicode_escape")), description=description)
+        return String(value, description=description)
 
 
 class Bytes(Feature):
