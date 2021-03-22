@@ -15,10 +15,10 @@ jobs:
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
-          - os: windows-latest
+          - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
-          - os: macos-latest
+          - os: macos-10.15
             artifact_name: capa
             asset_name: macos
     steps:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - if: matrix.os == 'ubuntu-latest'
+      - if: matrix.os == 'ubuntu-16.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Install PyInstaller
         run: pip install 'pyinstaller==4.2'
@@ -47,7 +47,7 @@ jobs:
 
   zip:
     name: zip ${{ matrix.asset_name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: build
     strategy:
       matrix:
