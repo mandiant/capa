@@ -689,14 +689,12 @@ def test_string_values_special_characters():
                 name: test rule
             features:
                 - or:
-                    - string: hello\\r\\nworld
-                    - string: some\\path
+                    - string: "hello\\r\\nworld"
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
     assert (String("hello\r\nworld") in children) == True
-    assert (String("some\\path") in children) == True
 
 
 def test_regex_values_always_string():
