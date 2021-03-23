@@ -24,6 +24,7 @@ SUPPORTED_IDA_VERSIONS = [
     "7.3",
     "7.4",
     "7.5",
+    "7.6",
 ]
 
 # file type names as returned by idaapi.get_file_type_name()
