@@ -690,6 +690,8 @@ def test_string_values_special_characters():
             features:
                 - or:
                     - string: "hello\\r\\nworld"
+                    - string: "bye\\nbye"
+                      description: "test description"
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
