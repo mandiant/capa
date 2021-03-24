@@ -803,9 +803,11 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         if text:
             for o in iterate_tree(self):
                 data = o.data(0, 0x100)
-                if data and text.lower() not in data.get_value_str().lower():
-                    o.setHidden(True)
-                    continue
+                if data:
+                    to_match = data.get_value_str()
+                    if not to_match or text.lower() not in to_match.lower():
+                        o.setHidden(True)
+                        continue
                 o.setHidden(False)
                 o.setExpanded(True)
         else:
