@@ -25,6 +25,8 @@ import argparse
 import itertools
 import posixpath
 
+import ruamel.yaml
+
 import capa.main
 import capa.rules
 import capa.engine
@@ -342,6 +344,32 @@ class FormatIncorrect(Lint):
         return False
 
 
+class FormatStringQuotesIncorrect(Lint):
+    name = "rule string quotes incorrect"
+
+    def check_rule(self, ctx, rule):
+        events = capa.rules.Rule._get_ruamel_yaml_parser().parse(rule.definition)
+        for key in events:
+            if not (isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "string"):
+                continue
+            value = next(events)  # assume value is next event
+            if not isinstance(value, ruamel.yaml.ScalarEvent):
+                # ignore non-scalar
+                continue
+            if value.value.startswith("/") and value.value.endswith(("/", "/i")):
+                # ignore regex for now
+                continue
+            if value.style is None:
+                # no quotes
+                self.recommendation = 'add double quotes to "%s"' % value.value
+                return True
+            if value.style == "'":
+                # single quote
+                self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                return True
+        return False
+
+
 def run_lints(lints, ctx, rule):
     for lint in lints:
         if lint.check_rule(ctx, rule):
@@ -402,6 +430,7 @@ def lint_features(ctx, rule):
 FORMAT_LINTS = (
     FormatLineFeedEOL(),
     FormatSingleEmptyLineEOF(),
+    FormatStringQuotesIncorrect(),
     FormatIncorrect(),
 )
 

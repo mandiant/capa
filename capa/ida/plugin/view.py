@@ -624,11 +624,23 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         # single features
         for (k, v) in filter(lambda t: t[1] == 1, counted):
-            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), k.get_value_str()), ""))
+            if isinstance(k, (capa.features.String,)):
+                value = '"%s"' % capa.features.escape_string(k.get_value_str())
+            else:
+                value = k.get_value_str()
+            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), value), ""))
 
         # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
-            self.new_feature_node(self.root, ("- count(%s): %d" % (str(k), v), ""))
+            if k.value:
+                if isinstance(k, (capa.features.String,)):
+                    value = '"%s"' % capa.features.escape_string(k.get_value_str())
+                else:
+                    value = k.get_value_str()
+                display = "- count(%s(%s)): %d" % (k.name.lower(), value, v)
+            else:
+                display = "- count(%s): %d" % (k.name.lower(), v)
+            self.new_feature_node(self.root, (display, ""))
 
         self.expandAll()
         self.update_preview()
@@ -882,15 +894,19 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         def format_address(e):
             return "%X" % e if e else ""
 
+        def format_feature(feature):
+            """ """
+            name = feature.name.lower()
+            value = feature.get_value_str()
+            if isinstance(feature, (capa.features.String,)):
+                value = '"%s"' % capa.features.escape_string(value)
+            return "%s(%s)" % (name, value)
+
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
                 # filter basic blocks for now, we may want to add these back in some time
                 # in the future
                 continue
-
-            if isinstance(feature, capa.features.String):
-                # strip string for display
-                feature.value = feature.value.strip()
 
             # level 0
             if type(feature) not in self.parent_items:
@@ -900,20 +916,22 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if feature not in self.parent_items:
                 if len(eas) > 1:
                     self.parent_items[feature] = self.new_parent_node(
-                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
                     )
                 else:
                     self.parent_items[feature] = self.new_leaf_node(
-                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
                     )
 
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
-                    self.new_leaf_node(self.parent_items[feature], (str(feature), format_address(ea)), feature=feature)
+                    self.new_leaf_node(
+                        self.parent_items[feature], (format_feature(feature), format_address(ea)), feature=feature
+                    )
             else:
                 ea = eas.pop()
-                for (i, v) in enumerate((str(feature), format_address(ea))):
+                for (i, v) in enumerate((format_feature(feature), format_address(ea))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 

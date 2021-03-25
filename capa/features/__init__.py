@@ -38,6 +38,20 @@ def hex_string(h):
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
 
 
+def escape_string(s):
+    """escape special characters"""
+    s = repr(s)
+    if not s.startswith(('"', "'")):
+        # u'hello\r\nworld' -> hello\\r\\nworld
+        s = s[2:-1]
+    else:
+        # 'hello\r\nworld' -> hello\\r\\nworld
+        s = s[1:-1]
+    s = s.replace("\\'", "'")  # repr() may escape "'" in some edge cases, remove
+    s = s.replace('"', '\\"')  # repr() does not escape '"', add
+    return s
+
+
 class Feature(object):
     def __init__(self, value, arch=None, description=None):
         """

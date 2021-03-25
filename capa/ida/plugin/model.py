@@ -488,13 +488,17 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         @param feature: capa feature read from doc
         """
-        if feature[feature["type"]]:
+        key = feature["type"]
+        value = feature[feature["type"]]
+        if value:
+            if key == "string":
+                value = '"%s"' % capa.features.escape_string(value)
             if feature.get("description", ""):
-                return "%s(%s = %s)" % (feature["type"], feature[feature["type"]], feature["description"])
+                return "%s(%s = %s)" % (key, value, feature["description"])
             else:
-                return "%s(%s)" % (feature["type"], feature[feature["type"]])
+                return "%s(%s)" % (key, value)
         else:
-            return "%s" % feature["type"]
+            return "%s" % key
 
     def render_capa_doc_feature_node(self, parent, feature, locations, doc):
         """process capa doc feature node
@@ -551,7 +555,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             )
 
         if feature["type"] == "regex":
-            return CapaExplorerStringViewItem(parent, display, location, feature["match"])
+            return CapaExplorerStringViewItem(
+                parent, display, location, '"%s"' % capa.features.escape_string(feature["match"])
+            )
 
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)
@@ -576,7 +582,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if feature["type"] in ("string",):
             # display string preview
-            return CapaExplorerStringViewItem(parent, display, location, feature[feature["type"]])
+            return CapaExplorerStringViewItem(
+                parent, display, location, '"%s"' % capa.features.escape_string(feature[feature["type"]])
+            )
 
         if feature["type"] in ("import", "export"):
             # display no preview

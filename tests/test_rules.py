@@ -681,6 +681,25 @@ def test_explicit_string_values_int():
     assert (String("0x123") in children) == True
 
 
+def test_string_values_special_characters():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - string: "hello\\r\\nworld"
+                    - string: "bye\\nbye"
+                      description: "test description"
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (String("hello\r\nworld") in children) == True
+    assert (String("bye\nbye") in children) == True
+
+
 def test_regex_values_always_string():
     rules = [
         capa.rules.Rule.from_yaml(
