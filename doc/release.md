@@ -1,0 +1,25 @@
+# Release checklist
+
+- [ ] Ensure all milestoned issues/PRs are addressed, or reassign to a new milestone.
+- [ ] Add the `dont merge` label to all PRs that are close to be ready to merge (or merge them if they are ready) in [capa](https://github.com/fireeye/capa/pulls) and [capa-rules](https://github.com/fireeye/capa-rules/pulls).
+- [ ] Ensure the [CI workflow succeeds in master](https://github.com/fireeye/capa/actions/workflows/tests.yml?query=branch%3Amaster).
+- [ ] Ensure that `python scripts/lint.py rules/ --thorough` succeeds (only `missing examples`  offenses are allowed in the nursery).
+- [ ] Review changes
+  - capa https://github.com/fireeye/capa/compare/\<last-release\>...master
+  - capa-rules https://github.com/fireeye/capa-rules/compare/\<last-release>\...master
+- [ ] Update [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md)
+  - Do not forget to add a nice introduction thanking contributors
+  - Remember that we need a major release if we introduce breaking changes
+  - Sections
+    - New Features
+    - New Rules
+    - Bug Fixes
+    - Changes
+    - Development
+    - Raw diffs
+- [ ] Update [capa/version.py](https://github.com/fireeye/capa/blob/master/capa/version.py)
+- [ ] Create a PR with the updated [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md) and [capa/version.py](https://github.com/fireeye/capa/blob/master/capa/version.py). Copy this checklist in the PR description.
+- [ ] After PR review, merge the PR and [create the release in GH](https://github.com/fireeye/capa/releases/new) using text from the [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md).
+- [ ] Verify GH actions [upload artifacts](https://github.com/fireeye/capa/releases), [publish to PyPI](https://pypi.org/project/flare-capa) and [create a tag in capa rules](https://github.com/fireeye/capa-rules/tags) upon completion.
+- [ ] [Spread the word](https://twitter.com)
+

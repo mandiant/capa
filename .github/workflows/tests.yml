@@ -8,7 +8,7 @@ on:
 
 jobs:
   code_style:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout capa
       uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       run: black -l 120 --check .
 
   rule_linter:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Checkout capa with rules submodule
       uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
 
   tests:
     name: Tests in ${{ matrix.python }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [code_style, rule_linter]
     strategy:
       fail-fast: false
@@ -67,4 +67,3 @@ jobs:
       run: pip install -e .[dev]
     - name: Run tests
       run: pytest tests/
-
