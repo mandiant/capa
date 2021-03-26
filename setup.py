@@ -18,7 +18,6 @@ requirements = [
     "tabulate",
     "colorama",
     "termcolor",
-    "ruamel.yaml",
     "wcwidth",
     "ida-settings==2.1.0",
     "viv-utils==0.6.0",
@@ -28,6 +27,7 @@ if sys.version_info >= (3, 0):
     # py3
     requirements.append("halo")
     requirements.append("networkx")
+    requirements.append("ruamel.yaml==0.17.0")
     requirements.append("vivisect==1.0.0")
     requirements.append("smda==1.5.13")
 else:
@@ -36,6 +36,7 @@ else:
     requirements.append("halo==0.0.30")  # halo==0.0.30 is the last version to support py2.7
     requirements.append("vivisect==0.2.1")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
+    requirements.append("ruamel.yaml==0.16.13")  # last version tested with Python 2.7
     requirements.append("backports.functools-lru-cache")
 
 # this sets __version__
