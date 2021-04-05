@@ -5,7 +5,7 @@ about: Suggest an idea for capa
 ---
 <!--
 # Is your issue related to capa rules (for example an idea for a new rule)?
-We use sybmodules to separate code, rules and test data. If your issue is related to capa rules, please report it at https://github.com/fireeye/capa-rules/issues.
+We use submodules to separate code, rules and test data. If your issue is related to capa rules, please report it at https://github.com/fireeye/capa-rules/issues.
 
 # Have you checked that your issue isn't already filed?
 Please search if there is a similar issue at https://github.com/fireeye/capa/issues. If there is already a similar issue, please add more details there instead of opening a new one.
