@@ -15,9 +15,10 @@ from fixtures import *
     FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],
 )
+@pytest.mark.xfail(sys.version_info < (3, 0), reason="SMDA only works on py3")
+@pytest.mark.xfail(sys.platform == "win32", reason="SMDA bug: https://github.com/danielplohmann/smda/issues/20")
 def test_smda_features(sample, scope, feature, expected):
-    with xfail(sys.version_info < (3, 0), reason="SMDA only works on py3"):
-        do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
+    do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
 
 
 @parametrize(
