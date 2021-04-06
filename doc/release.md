@@ -1,6 +1,6 @@
 # Release checklist
 
-- [ ] Ensure all milestoned issues/PRs are addressed, or reassign to a new milestone.
+- [ ] Ensure all [milestoned issues/PRs](https://github.com/fireeye/capa/milestones) are addressed, or reassign to a new milestone.
 - [ ] Add the `dont merge` label to all PRs that are close to be ready to merge (or merge them if they are ready) in [capa](https://github.com/fireeye/capa/pulls) and [capa-rules](https://github.com/fireeye/capa-rules/pulls).
 - [ ] Ensure the [CI workflow succeeds in master](https://github.com/fireeye/capa/actions/workflows/tests.yml?query=branch%3Amaster).
 - [ ] Ensure that `python scripts/lint.py rules/ --thorough` succeeds (only `missing examples`  offenses are allowed in the nursery).
