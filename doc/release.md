@@ -17,6 +17,25 @@
     - Changes
     - Development
     - Raw diffs
+  - Update `Raw diffs` links
+  - Create placeholder for `master (unreleased)` section
+    ```
+    ## master (unreleased)
+
+    ### New Features
+
+    ### New Rules
+
+    ### Bug Fixes
+
+    ### Changes
+
+    ### Development
+
+    ### Raw diffs
+    - [capa <release>...master](https://github.com/fireeye/capa/compare/<release>...master)
+    - [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/<release>...master)
+    ```
 - [ ] Update [capa/version.py](https://github.com/fireeye/capa/blob/master/capa/version.py)
 - [ ] Create a PR with the updated [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md) and [capa/version.py](https://github.com/fireeye/capa/blob/master/capa/version.py). Copy this checklist in the PR description.
 - [ ] After PR review, merge the PR and [create the release in GH](https://github.com/fireeye/capa/releases/new) using text from the [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md).

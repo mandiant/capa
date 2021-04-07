@@ -1,5 +1,22 @@
 # Change Log
 
+## master (unreleased)
+
+### New Features
+
+### New Rules
+
+### Bug Fixes
+
+### Changes
+
+### Development
+
+### Raw diffs
+- [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
+- [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
+
+
 ## v1.6.1 (2021-04-07)
 
 This release includes several bug fixes, such as a vivisect issue that prevented capa from working on Windows with Python 3. It also adds 17 new rules and a bunch of improvements in the rules and IDA rule generator. We appreciate everyone who opened issues, provided feedback, and contributed code and rules.
