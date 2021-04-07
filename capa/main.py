@@ -438,7 +438,7 @@ def install_common_args(parser, wanted=None):
       wanted (Set[str]): collection of arguments to opt-into, including:
         - "sample": required positional argument to input file.
         - "format": flag to override file format.
-        - "backend": flag to override analysis backend under py3.
+        - "backend": flag to override analysis backend.
         - "rules": flag to override path to capa rules.
         - "tag": flag to override/specify which rules to match.
     """
