@@ -12,21 +12,21 @@ import sys
 import setuptools
 
 requirements = [
-    "six",
-    "tqdm",
-    "pyyaml",
-    "tabulate",
-    "colorama",
-    "termcolor",
-    "wcwidth",
+    "six==1.15.0",
+    "tqdm==4.60.0",
+    "pyyaml==5.4.1",
+    "tabulate==0.8.9",
+    "colorama==0.4.4",
+    "termcolor==1.1.0",
+    "wcwidth==0.2.5",
     "ida-settings==2.1.0",
     "viv-utils==0.6.0",
 ]
 
 if sys.version_info >= (3, 0):
     # py3
-    requirements.append("halo")
-    requirements.append("networkx")
+    requirements.append("halo==0.0.31")
+    requirements.append("networkx==2.5.1")
     requirements.append("ruamel.yaml==0.17.0")
     requirements.append("vivisect==1.0.1")
     requirements.append("smda==1.5.13")
@@ -37,7 +37,7 @@ else:
     requirements.append("vivisect==0.2.1")
     requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
     requirements.append("ruamel.yaml==0.16.13")  # last version tested with Python 2.7
-    requirements.append("backports.functools-lru-cache")
+    requirements.append("backports.functools-lru-cache==1.6.1")
 
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
@@ -77,13 +77,13 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest",
-            "pytest-sugar",
-            "pytest-instafail",
-            "pytest-cov",
-            "pycodestyle",
-            "black ; python_version>'3.0'",
-            "isort",
+            "pytest==4.6.11",  # TODO: Change to 6.2.3 when removing py2
+            "pytest-sugar==0.9.4",
+            "pytest-instafail==0.4.2",
+            "pytest-cov==2.11.1",
+            "pycodestyle==2.7.0",
+            "black==20.8b1 ; python_version>'3.0'",
+            "isort==4.3.21",  # TODO: Change to 5.8.0 when removing py2
         ]
     },
     zip_safe=False,
