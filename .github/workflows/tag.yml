@@ -15,7 +15,12 @@ jobs:
         repository: fireeye/capa-rules
         token: ${{ secrets.CAPA_TOKEN }}
     - name: Tag capa-rules
-      run: git tag ${{ github.event.release.tag_name }}
+      run: |
+        # user information is needed to create annotated tags (with a message)
+        git config user.email 'capa-dev@fireeye.com'
+        git config user.name 'Capa Bot'
+        name=${{ github.event.release.tag_name }}
+        git tag $name -m "https://github.com/fireeye/capa/releases/$name"
     - name: Push tag to capa-rules
       uses: ad-m/github-push-action@master
       with:
