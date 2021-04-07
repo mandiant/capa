@@ -27,7 +27,7 @@ if sys.version_info >= (3, 0):
     # py3
     requirements.append("halo==0.0.31")
     requirements.append("networkx==2.5.1")
-    requirements.append("ruamel.yaml==0.17.0")
+    requirements.append("ruamel.yaml==0.17.2")
     requirements.append("vivisect==1.0.1")
     requirements.append("smda==1.5.13")
 else:
