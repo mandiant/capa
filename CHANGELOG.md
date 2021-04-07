@@ -1,5 +1,74 @@
 # Change Log
 
+## v1.6.1 (2021-04-07)
+
+This release includes several bug fixes, such as a vivisect issue that prevented capa from working on Windows with Python 3. It also adds 17 new rules and a bunch of improvements in the rules and IDA rule generator. We appreciate everyone who opened issues, provided feedback, and contributed code and rules.
+
+### Upcoming changes
+
+**This is the very last capa release that supports Python 2.** The next release will be v2.0 and will have breaking changes, including the removal of Python 2 support.
+
+### New features
+
+- explorer: add support for multi-line tab and SHIFT + Tab #474 @mike-hunhoff
+
+![multi-line tab in rule generator](doc/img/changelog/tab.gif)
+
+### New Rules (17)
+
+- encrypt data using RC4 with custom key via WinAPI @MalwareMechanic
+- encrypt data using Curve25519 @dandonov
+- packaged as an IExpress self-extracting archive @recvfrom
+- create registry key via offline registry library @johnk3r
+- open registry key via offline registry library @johnk3r
+- query registry key via offline registry library @johnk3r
+- set registry key via offline registry library @johnk3r
+- delete registry key via offline registry library @johnk3r
+- enumerate PE sections @Ana06
+- inject DLL reflectively @Ana06
+- inspect section memory permissions @Ana06
+- parse PE exports @Ana06
+- rebuild import table @Ana06
+- compare security identifiers @mike-hunhoff
+- get user security identifier @mike-hunhoff
+- listen for remote procedure calls @mike-hunhoff
+- query remote server for available data @mike-hunhoff
+
+### Bug Fixes
+
+- vivisect: update to v1.0.1 which includes bug fix for #459 (capa failed in Windows with Python 3 and vivisect) #512 @williballenthin
+- explorer: fix initialize rules directory #464 @mike-hunhoff
+- explorer: support subscope rules #493 @mike-hunhoff
+- explorer: add checks to validate matched data when searching #500 @mike-hunhoff
+- features, explorer: add support for string features with special characters e.g. '\n' #468 @mike-hunhoff
+
+### Changes
+
+- vivisect: raises `IncompatibleVivVersion` instead of `UnicodeDecodeError` when using incompatible Python 2 `.viv` files with Python3 #479 @Ana06
+- explorer: improve settings modification #465 @mike-hunhoff
+- rules: improvements @mr-tz, @re-fox, @mike-hunhoff
+- rules, lint: enforce string with double quotes formatting in rules #468 @mike-hunhoff
+- lint: ensure LF end of line #485 #486 @mr-tz
+- setup: pin dependencies #513 #504 @Ana06 @mr-tz
+
+### Development
+
+- ci: test on Windows, Ubuntu, macOS across Python versions #470 @mr-tz @Ana06
+- ci: pin OS versions #491 @williballenthin
+- ci: tag capa-rules on release #476 @Ana06
+- doc: document release process #476 @Ana06
+- doc: Improve README badges #477 #478 @ana06 @mr-tz
+- doc: update capa explorer documentation #503 @mike-hunhoff
+- doc: add PR template #495 @mr-tz
+- changelog: document incompatibility of viv files #475 @Ana06
+- rule loading: ignore files starting with .git #492 @mr-tz
+
+### Raw diffs
+
+  - [capa v1.6.0...v1.6.1](https://github.com/fireeye/capa/compare/v1.6.0...v1.6.1)
+  - [capa-rules v1.6.0...v1.6.1](https://github.com/fireeye/capa-rules/compare/v1.6.0...v1.6.1)
+
+
 ## v1.6.0 (2021-03-09)
 
 This release adds the capa explorer rule generator plugin for IDA Pro, vivisect support for Python 3 and 12 new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. Thank you also to the vivisect development team (@rakuy0, @atlas0fd00m) for the Python 3 support (`vivisect==1.0.0`) and the fixes for Python 2 (`vivisect==0.2.1`).
