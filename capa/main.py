@@ -35,6 +35,8 @@ RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
+EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
+EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 
 
 logger = logging.getLogger("capa")
@@ -670,9 +672,14 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
-        format = args.format
+        if args.format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_32):
+            format = "sc32"
+        elif args.format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_64):
+            format = "sc64"
+        else:
+            format = args.format
         try:
-            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, format, args.backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
