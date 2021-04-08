@@ -2,6 +2,8 @@
 
 ## master (unreleased)
 
+The first Python 3 ONLY capa version.
+
 ### New Features
 
 ### New Rules
@@ -9,6 +11,8 @@
 ### Bug Fixes
 
 ### Changes
+
+- py3: drop Python 2 support #480 @Ana06
 
 ### Development
 

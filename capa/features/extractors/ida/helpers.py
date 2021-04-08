@@ -23,11 +23,7 @@ def find_byte_sequence(start, end, seq):
         end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
-    if sys.version_info[0] >= 3:
-        seq = " ".join(["%02x" % b for b in seq])
-    else:
-        seq = " ".join(["%02x" % ord(b) for b in seq])
-
+    seq = " ".join(["%02x" % b for b in seq])
     while True:
         ea = idaapi.find_binary(start, end, seq, 0, idaapi.SEARCH_DOWN)
         if ea == idaapi.BADADDR:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -288,26 +288,15 @@ def get_workspace(path, format, should_save=True):
     return vw
 
 
-def get_extractor_py2(path, format, disable_progress=False):
-    import capa.features.extractors.viv
-
-    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-        vw = get_workspace(path, format, should_save=False)
-
-        try:
-            vw.saveWorkspace()
-        except IOError:
-            # see #168 for discussion around how to handle non-writable directories
-            logger.info("source directory is not writable, won't save intermediate workspace")
-
-    return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
-
-
 class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor_py3(path, format, backend, disable_progress=False):
+def get_extractor(path, format, backend, disable_progress=False):
+    """
+    raises:
+      UnsupportedFormatError:
+    """
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
@@ -335,17 +324,6 @@ def get_extractor_py3(path, format, backend, disable_progress=False):
                 logger.info("source directory is not writable, won't save intermediate workspace")
 
         return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
-
-
-def get_extractor(path, format, backend, disable_progress=False):
-    """
-    raises:
-      UnsupportedFormatError:
-    """
-    if sys.version_info >= (3, 0):
-        return get_extractor_py3(path, format, backend, disable_progress=disable_progress)
-    else:
-        return get_extractor_py2(path, format, disable_progress=disable_progress)
 
 
 def is_nursery_rule_path(path):
@@ -460,7 +438,7 @@ def install_common_args(parser, wanted=None):
       wanted (Set[str]): collection of arguments to opt-into, including:
         - "sample": required positional argument to input file.
         - "format": flag to override file format.
-        - "backend": flag to override analysis backend under py3.
+        - "backend": flag to override analysis backend.
         - "rules": flag to override path to capa rules.
         - "tag": flag to override/specify which rules to match.
     """
@@ -498,22 +476,11 @@ def install_common_args(parser, wanted=None):
     #
 
     if "sample" in wanted:
-        if sys.version_info >= (3, 0):
-            parser.add_argument(
-                # Python 3 str handles non-ASCII arguments correctly
-                "sample",
-                type=str,
-                help="path to sample to analyze",
-            )
-        else:
-            parser.add_argument(
-                # in #328 we noticed that the sample path is not handled correctly if it contains non-ASCII characters
-                # https://stackoverflow.com/a/22947334/ offers a solution and decoding using getfilesystemencoding works
-                # in our testing, however other sources suggest `sys.stdin.encoding` (https://stackoverflow.com/q/4012571/)
-                "sample",
-                type=lambda s: s.decode(sys.getfilesystemencoding()),
-                help="path to sample to analyze",
-            )
+        parser.add_argument(
+            "sample",
+            type=str,
+            help="path to sample to analyze",
+        )
 
     if "format" in wanted:
         formats = [
@@ -532,15 +499,15 @@ def install_common_args(parser, wanted=None):
             help="select sample format, %s" % format_help,
         )
 
-    if "backend" in wanted and sys.version_info >= (3, 0):
-        parser.add_argument(
-            "-b",
-            "--backend",
-            type=str,
-            help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_SMDA),
-            default=BACKEND_VIV,
-        )
+        if "backend" in wanted:
+            parser.add_argument(
+                "-b",
+                "--backend",
+                type=str,
+                help="select the backend to use",
+                choices=(BACKEND_VIV, BACKEND_SMDA),
+                default=BACKEND_VIV,
+            )
 
     if "rules" in wanted:
         parser.add_argument(
@@ -576,10 +543,9 @@ def handle_common_args(args):
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
 
-    # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
-    # tqdm bails when trying to render the progress bar in this setup.
-    # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
-    # see #380 and: https://stackoverflow.com/a/3259271/87207
+    # Since Python 3.8 cp65001 is an alias to utf_8, but not for Pyhton < 3.8
+    # TODO: remove this code when only supporting Python 3.8+
+    # https://stackoverflow.com/a/3259271/87207
     import codecs
 
     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
@@ -599,6 +565,9 @@ def handle_common_args(args):
 
 
 def main(argv=None):
+    if sys.version_info < (3, 6):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.6+")
+
     if argv is None:
         argv = sys.argv[1:]
 
@@ -703,8 +672,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            backend = args.backend if sys.version_info > (3, 0) else BACKEND_VIV
-            extractor = get_extractor(args.sample, args.format, backend, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, args.format, args.backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
@@ -713,16 +681,6 @@ def main(argv=None):
                 " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
             )
             logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-            logger.error("-" * 80)
-            return -1
-        except UnsupportedRuntimeError:
-            logger.error("-" * 80)
-            logger.error(" Unsupported runtime or Python interpreter.")
-            logger.error(" ")
-            logger.error(" capa supports running under Python 2.7 using Vivisect for binary analysis.")
-            logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
-            logger.error(" ")
-            logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
             logger.error("-" * 80)
             return -1
 

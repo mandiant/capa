@@ -8,7 +8,6 @@
 
 import collections
 
-import six
 import tabulate
 
 import capa.render.utils as rutils

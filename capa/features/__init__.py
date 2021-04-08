@@ -27,10 +27,7 @@ VALID_ARCH = (ARCH_X32, ARCH_X64)
 
 
 def bytes_to_str(b):
-    if sys.version_info[0] >= 3:
-        return str(codecs.encode(b, "hex").decode("utf-8"))
-    else:
-        return codecs.encode(b, "hex")
+    return str(codecs.encode(b, "hex").decode("utf-8"))
 
 
 def hex_string(h):

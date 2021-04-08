@@ -53,8 +53,6 @@ jobs:
         include:
           # on Ubuntu run these as well
           - os: ubuntu-20.04
-            python-version: 2.7
-          - os: ubuntu-20.04
             python-version: 3.7
           - os: ubuntu-20.04
             python-version: 3.8
