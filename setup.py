@@ -22,7 +22,7 @@ requirements = [
     "viv-utils==0.6.0",
     "halo==0.0.31",
     "networkx==2.5.1",
-    "ruamel.yaml==0.17.0",
+    "ruamel.yaml==0.17.4",
     "vivisect==1.0.1",
     "smda==1.5.13",
 ]
