@@ -16,6 +16,8 @@ The first Python 3 ONLY capa version.
 
 ### Development
 
+- ci: add capa release link to capa-rules tag #517 @Ana06
+
 ### Raw diffs
 - [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
 - [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
