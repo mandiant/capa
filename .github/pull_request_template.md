@@ -1,5 +1,5 @@
 <!--
-Thank you for contributing to capa! :heart:
+Thank you for contributing to capa! <3
 
 IMPORTANT NOTE
 It's most important that you submit your improvements. So even if you don't use this complete template we look forward to collaborating!
@@ -12,17 +12,16 @@ PR template based on https://embeddedartistry.com/blog/2017/08/04/a-github-pull-
 
 ### Description
 
-<!-- Please describe the changes in this PR. Including your motivation and context helps us to review. -->
+<!-- Please describe the changes in this PR. Include your motivation and context to help us review. -->
 
 closes # (issue)
 
-### Type of change
+### Documentation
 
-Please update the [CHANGELOG.md](/CHANGELOG.md)
-
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] I have updated the [CHANGELOG.md](/CHANGELOG.md), this is required for:
+  - Bug fixes (non-breaking change which fixes an issue)
+  - New features (non-breaking change which adds functionality)
+  - Breaking changes (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
   - [ ] I have made the corresponding changes to the documentation
 
