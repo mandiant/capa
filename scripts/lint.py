@@ -33,7 +33,7 @@ import capa.engine
 import capa.features
 import capa.features.insn
 
-logger = logging.getLogger("capa.lint")
+logger = logging.getLogger("lint")
 
 
 class Lint(object):
