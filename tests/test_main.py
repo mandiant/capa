@@ -80,6 +80,8 @@ def test_main_shellcode(z499c2_extractor):
     assert capa.main.main([path, "-v", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-j", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-f", "sc32"]) == 0
+    # auto detect shellcode based on file extension
+    assert capa.main.main([path]) == 0
 
 
 def test_ruleset():

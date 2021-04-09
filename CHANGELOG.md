@@ -6,6 +6,8 @@ The first Python 3 ONLY capa version.
 
 ### New Features
 
+- main: auto detect shellcode based on file extension #516 @mr-tz
+
 ### New Rules
 
 ### Bug Fixes
