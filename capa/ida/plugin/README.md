@@ -34,9 +34,10 @@ For more information on the FLARE team's open-source framework, capa, check out 
 
 ### Requirements
 
-capa explorer supports the following IDA setups:
+capa explorer supports Python >= 3.6 and the following IDA Pro versions:
 
-* IDA Pro 7.4+ with Python >= 3.6.
+* IDA 7.4
+* IDA 7.5
 
 If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
 
