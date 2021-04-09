@@ -317,6 +317,10 @@ def get_extractor(path, format, backend, disable_progress=False):
         import capa.features.extractors.viv
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
+                format = "sc32"
+            elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
+                format = "sc64"
             vw = get_workspace(path, format, should_save=False)
 
             try:
@@ -672,12 +676,7 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
-        if args.format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_32):
-            format = "sc32"
-        elif args.format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_64):
-            format = "sc64"
-        else:
-            format = args.format
+        format = args.format
         try:
             extractor = get_extractor(args.sample, format, args.backend, disable_progress=args.quiet)
         except UnsupportedFormatError:
