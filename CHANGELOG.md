@@ -12,6 +12,8 @@ The first Python 3 ONLY capa version.
 
 ### Bug Fixes
 
+- build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 #505 @mr-tz
+
 ### Changes
 
 - py3: drop Python 2 support #480 @Ana06
