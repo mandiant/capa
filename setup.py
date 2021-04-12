@@ -24,7 +24,7 @@ requirements = [
     "networkx==2.5.1",
     "ruamel.yaml==0.17.4",
     "vivisect==1.0.1",
-    "smda==1.5.13",
+    "smda==1.5.14",
 ]
 
 # this sets __version__
