@@ -25,9 +25,24 @@ The first Python 3 ONLY capa version.
 - ci: add capa release link to capa-rules tag #517 @Ana06
 
 ### Raw diffs
+
+<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 -->
 - [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
 - [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
 
+
+## v1.6.2 (2021-04-13)
+
+This release backports a fix to capa 1.6: The Windows binary was built with Python 3.9 which doesn't support Windows 7.
+
+### Bug Fixes
+
+- build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 @mr-tz @Ana06
+
+### Raw diffs
+
+  - [capa v1.6.1...v1.6.2](https://github.com/fireeye/capa/compare/v1.6.1...v1.6.2)
+  - [capa-rules v1.6.1...v1.6.2](https://github.com/fireeye/capa-rules/compare/v1.6.1...v1.6.2)
 
 ## v1.6.1 (2021-04-07)
 
