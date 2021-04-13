@@ -18,6 +18,7 @@ The first Python 3 ONLY capa version.
 
 - py3: drop Python 2 support #480 @Ana06
 - deps: bump ruamel yaml parser to 0.17.4 #519 @williballenthin
+- explorer: explain how to install IDA 7.6 patch to enable the plugin #528 @williballenthin
 
 ### Development
 
