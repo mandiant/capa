@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, master-py2 ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, master-py2 ]
 
 jobs:
   code_style:
