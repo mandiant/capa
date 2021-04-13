@@ -1,6 +1,8 @@
 name: build
 
 on:
+  push:
+    branches: [master]
   release:
     types: [edited, published]
 
@@ -47,6 +49,8 @@ jobs:
           path: dist/${{ matrix.artifact_name }}
 
   test_run:
+    # test that binaries run on push to master
+    if: github.event_name == 'push'
     name: Test run on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [build]
@@ -74,10 +78,12 @@ jobs:
       - name: Run capa
         run: ./${{ matrix.artifact_name }} -h
 
-  zip:
-    name: zip ${{ matrix.asset_name }}
+  zip_and_upload:
+    # upload zipped binaries to Release page
+    if: github.event_name == 'release'
+    name: zip and upload ${{ matrix.asset_name }}
     runs-on: ubuntu-20.04
-    needs: [build, test_run]
+    needs: [build]
     strategy:
       matrix:
         include:
