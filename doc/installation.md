@@ -42,6 +42,7 @@ If you'd like to review and modify the capa source code, you'll need to check it
 Next, clone the capa git repository.
 We use submodules to separate [code](https://github.com/fireeye/capa), [rules](https://github.com/fireeye/capa-rules), and [test data](https://github.com/fireeye/capa-testfiles).
 To clone everything use the `--recurse-submodules` option:
+- CAUTION: The capa testfiles repository contains many malware samples. If you pull down everything using this method, you may want to install to a directory that won't trigger your anti-virus software.
 - `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
 - `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 
@@ -107,9 +108,7 @@ You can skip the checks by using the `--no-verify` git option.
 We compile capa standalone binaries using PyInstaller. To reproduce the build process check out the source code as described above and follow these steps.
 
 #### Install PyInstaller:
-For Python 2.7: `$ pip install 'pyinstaller==3.*'` (PyInstaller 4 doesn't support Python 2.7)
-
-For Python 3: `$ pip install 'pyinstaller`
+`$ pip install pyinstaller` (Python 3)
 
 #### Run Pyinstaller
 `$ pyinstaller .github/pyinstaller/pyinstaller.spec`
