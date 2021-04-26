@@ -202,7 +202,7 @@ class CapaExplorerRuleMatchItem(CapaExplorerDataItem):
 
     @property
     def source(self):
-        """ return rule contents for display """
+        """return rule contents for display"""
         return self._source
 
 

@@ -79,7 +79,7 @@ def get_segment_buffer(seg):
 
 
 def get_file_imports():
-    """ get file imports """
+    """get file imports"""
     imports = {}
 
     for idx in range(idaapi.get_import_module_qty()):
@@ -116,7 +116,7 @@ def get_instructions_in_range(start, end):
 
 
 def is_operand_equal(op1, op2):
-    """ compare two IDA op_t """
+    """compare two IDA op_t"""
     if op1.flags != op2.flags:
         return False
 
@@ -142,7 +142,7 @@ def is_operand_equal(op1, op2):
 
 
 def is_basic_block_equal(bb1, bb2):
-    """ compare two IDA BasicBlock """
+    """compare two IDA BasicBlock"""
     if bb1.start_ea != bb2.start_ea:
         return False
 
@@ -156,7 +156,7 @@ def is_basic_block_equal(bb1, bb2):
 
 
 def basic_block_size(bb):
-    """ calculate size of basic block """
+    """calculate size of basic block"""
     return bb.end_ea - bb.start_ea
 
 
@@ -174,7 +174,7 @@ def read_bytes_at(ea, count):
 
 
 def find_string_at(ea, min=4):
-    """ check if ASCII string exists at a given virtual address """
+    """check if ASCII string exists at a given virtual address"""
     found = idaapi.get_strlit_contents(ea, -1, idaapi.STRTYPE_C)
     if found and len(found) > min:
         try:
@@ -228,23 +228,23 @@ def get_op_phrase_info(op):
 
 
 def is_op_write(insn, op):
-    """ Check if an operand is written to (destination operand) """
+    """Check if an operand is written to (destination operand)"""
     return idaapi.has_cf_chg(insn.get_canon_feature(), op.n)
 
 
 def is_op_read(insn, op):
-    """ Check if an operand is read from (source operand) """
+    """Check if an operand is read from (source operand)"""
     return idaapi.has_cf_use(insn.get_canon_feature(), op.n)
 
 
 def is_op_offset(insn, op):
-    """ Check is an operand has been marked as an offset (by auto-analysis or manually) """
+    """Check is an operand has been marked as an offset (by auto-analysis or manually)"""
     flags = idaapi.get_flags(insn.ea)
     return ida_bytes.is_off(flags, op.n)
 
 
 def is_sp_modified(insn):
-    """ determine if instruction modifies SP, ESP, RSP """
+    """determine if instruction modifies SP, ESP, RSP"""
     for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
         if op.reg == idautils.procregs.sp.reg and is_op_write(insn, op):
             # register is stack and written
@@ -253,7 +253,7 @@ def is_sp_modified(insn):
 
 
 def is_bp_modified(insn):
-    """ check if instruction modifies BP, EBP, RBP """
+    """check if instruction modifies BP, EBP, RBP"""
     for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
         if op.reg == idautils.procregs.bp.reg and is_op_write(insn, op):
             # register is base and written
@@ -262,12 +262,12 @@ def is_bp_modified(insn):
 
 
 def is_frame_register(reg):
-    """ check if register is sp or bp """
+    """check if register is sp or bp"""
     return reg in (idautils.procregs.sp.reg, idautils.procregs.bp.reg)
 
 
 def get_insn_ops(insn, target_ops=()):
-    """ yield op_t for instruction, filter on type if specified """
+    """yield op_t for instruction, filter on type if specified"""
     for op in insn.ops:
         if op.type == idaapi.o_void:
             # avoid looping all 6 ops if only subset exists
@@ -278,7 +278,7 @@ def get_insn_ops(insn, target_ops=()):
 
 
 def is_op_stack_var(ea, index):
-    """ check if operand is a stack variable """
+    """check if operand is a stack variable"""
     return idaapi.is_stkvar(idaapi.get_flags(ea), index)
 
 
@@ -332,7 +332,7 @@ def is_basic_block_tight_loop(bb):
 
 
 def find_data_reference_from_insn(insn, max_depth=10):
-    """ search for data reference from instruction, return address of instruction if no reference exists """
+    """search for data reference from instruction, return address of instruction if no reference exists"""
     depth = 0
     ea = insn.ea
 
@@ -375,5 +375,5 @@ def get_function_blocks(f):
 
 
 def is_basic_block_return(bb):
-    """ check if basic block is return block """
+    """check if basic block is return block"""
     return bb.type == idaapi.fcb_ret
