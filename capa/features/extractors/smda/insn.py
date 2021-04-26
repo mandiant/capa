@@ -293,7 +293,7 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
 
 
 def extract_insn_segment_access_features(f, bb, insn):
-    """ parse the instruction for access to fs or gs """
+    """parse the instruction for access to fs or gs"""
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
         if "fs:" in operand:

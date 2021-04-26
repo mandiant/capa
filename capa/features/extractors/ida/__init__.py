@@ -34,10 +34,7 @@ def add_ea_int_cast(o):
     this bit of skullduggery lets use cast viv-utils objects as ints.
     the correct way of doing this is to update viv-utils (or subclass the objects here).
     """
-    if sys.version_info[0] >= 3:
-        setattr(o, "__int__", types.MethodType(get_ea, o))
-    else:
-        setattr(o, "__int__", types.MethodType(get_ea, o, type(o)))
+    setattr(o, "__int__", types.MethodType(get_ea, o))
     return o
 
 

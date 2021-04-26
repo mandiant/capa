@@ -264,15 +264,14 @@ def main(argv=None):
     parser.add_argument(
         "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
     )
-    if sys.version_info >= (3, 0):
-        parser.add_argument(
-            "-b",
-            "--backend",
-            type=str,
-            help="select the backend to use",
-            choices=(capa.main.BACKEND_VIV, capa.main.BACKEND_SMDA),
-            default=capa.main.BACKEND_VIV,
-        )
+    parser.add_argument(
+        "-b",
+        "--backend",
+        type=str,
+        help="select the backend to use",
+        choices=(capa.main.BACKEND_VIV, capa.main.BACKEND_SMDA),
+        default=capa.main.BACKEND_VIV,
+    )
     parser.add_argument(
         "--signature",
         action="append",
@@ -293,8 +292,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    backend = args.backend if sys.version_info > (3, 0) else capa.main.BACKEND_VIV
-    extractor = capa.main.get_extractor(args.sample, args.format, backend, sigpaths=args.signatures)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=args.signatures)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 

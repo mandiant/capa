@@ -7,40 +7,24 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
-import sys
 
 import setuptools
 
 requirements = [
-    "six",
-    "tqdm",
-    "pyyaml",
-    "tabulate",
-    "colorama",
-    "termcolor",
-    "ruamel.yaml",
-    "wcwidth",
+    "tqdm==4.60.0",
+    "pyyaml==5.4.1",
+    "tabulate==0.8.9",
+    "colorama==0.4.4",
+    "termcolor==1.1.0",
+    "wcwidth==0.2.5",
     "ida-settings==2.1.0",
+    "viv-utils==0.6.0",
+    "halo==0.0.31",
+    "networkx==2.5.1",
+    "ruamel.yaml==0.17.4",
+    "vivisect==1.0.1",
+    "smda==1.5.14",
 ]
-
-if sys.version_info >= (3, 0):
-    # py3
-    requirements.append("halo")
-    requirements.append("networkx")
-    requirements.append("vivisect==1.0.0")
-    requirements.append("viv-utils[flirt]==0.5.0")
-    requirements.append("smda==1.5.13")
-else:
-    # py2
-    requirements.append("enum34==1.1.6")  # v1.1.6 is needed by halo 0.0.30 / spinners 0.0.24
-    requirements.append("halo==0.0.30")  # halo==0.0.30 is the last version to support py2.7
-    requirements.append("vivisect==0.1.0")
-    # TODO: issue here with flirt not being supported.
-    # but we're also no longer supporting py2
-    # so this whole block goes away.
-    requirements.append("viv-utils==0.5.0")
-    requirements.append("networkx==2.2")  # v2.2 is last version supported by Python 2.7
-    requirements.append("backports.functools-lru-cache")
 
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
@@ -80,13 +64,13 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest",
-            "pytest-sugar",
-            "pytest-instafail",
-            "pytest-cov",
-            "pycodestyle",
-            "black ; python_version>'3.0'",
-            "isort",
+            "pytest==6.2.3",
+            "pytest-sugar==0.9.4",
+            "pytest-instafail==0.4.2",
+            "pytest-cov==2.11.1",
+            "pycodestyle==2.7.0",
+            "black==21.4b0",
+            "isort==5.8.0",
         ]
     },
     zip_safe=False,
@@ -97,8 +81,8 @@ setuptools.setup(
         "Intended Audience :: Information Technology",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Topic :: Security",
     ],
+    python_requires=">=3.6",
 )

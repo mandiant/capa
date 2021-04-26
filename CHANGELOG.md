@@ -1,5 +1,204 @@
 # Change Log
 
+## master (unreleased)
+
+The first Python 3 ONLY capa version.
+
+### New Features
+
+- main: auto detect shellcode based on file extension #516 @mr-tz
+
+### New Rules
+
+### Bug Fixes
+
+- build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 #505 @mr-tz
+
+### Changes
+
+- py3: drop Python 2 support #480 @Ana06
+- deps: bump ruamel yaml parser to 0.17.4 #519 @williballenthin
+- explorer: explain how to install IDA 7.6 patch to enable the plugin #528 @williballenthin
+
+### Development
+
+- ci: add capa release link to capa-rules tag #517 @Ana06
+
+### Raw diffs
+
+<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 -->
+- [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
+- [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
+
+
+## v1.6.2 (2021-04-13)
+
+This release backports a fix to capa 1.6: The Windows binary was built with Python 3.9 which doesn't support Windows 7.
+
+### Bug Fixes
+
+- build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 @mr-tz @Ana06
+
+### Raw diffs
+
+  - [capa v1.6.1...v1.6.2](https://github.com/fireeye/capa/compare/v1.6.1...v1.6.2)
+  - [capa-rules v1.6.1...v1.6.2](https://github.com/fireeye/capa-rules/compare/v1.6.1...v1.6.2)
+
+## v1.6.1 (2021-04-07)
+
+This release includes several bug fixes, such as a vivisect issue that prevented capa from working on Windows with Python 3. It also adds 17 new rules and a bunch of improvements in the rules and IDA rule generator. We appreciate everyone who opened issues, provided feedback, and contributed code and rules.
+
+### Upcoming changes
+
+**This is the very last capa release that supports Python 2.** The next release will be v2.0 and will have breaking changes, including the removal of Python 2 support.
+
+### New features
+
+- explorer: add support for multi-line tab and SHIFT + Tab #474 @mike-hunhoff
+
+![multi-line tab in rule generator](doc/img/changelog/tab.gif)
+
+### New Rules (17)
+
+- encrypt data using RC4 with custom key via WinAPI @MalwareMechanic
+- encrypt data using Curve25519 @dandonov
+- packaged as an IExpress self-extracting archive @recvfrom
+- create registry key via offline registry library @johnk3r
+- open registry key via offline registry library @johnk3r
+- query registry key via offline registry library @johnk3r
+- set registry key via offline registry library @johnk3r
+- delete registry key via offline registry library @johnk3r
+- enumerate PE sections @Ana06
+- inject DLL reflectively @Ana06
+- inspect section memory permissions @Ana06
+- parse PE exports @Ana06
+- rebuild import table @Ana06
+- compare security identifiers @mike-hunhoff
+- get user security identifier @mike-hunhoff
+- listen for remote procedure calls @mike-hunhoff
+- query remote server for available data @mike-hunhoff
+
+### Bug Fixes
+
+- vivisect: update to v1.0.1 which includes bug fix for #459 (capa failed in Windows with Python 3 and vivisect) #512 @williballenthin
+- explorer: fix initialize rules directory #464 @mike-hunhoff
+- explorer: support subscope rules #493 @mike-hunhoff
+- explorer: add checks to validate matched data when searching #500 @mike-hunhoff
+- features, explorer: add support for string features with special characters e.g. '\n' #468 @mike-hunhoff
+
+### Changes
+
+- vivisect: raises `IncompatibleVivVersion` instead of `UnicodeDecodeError` when using incompatible Python 2 `.viv` files with Python3 #479 @Ana06
+- explorer: improve settings modification #465 @mike-hunhoff
+- rules: improvements @mr-tz, @re-fox, @mike-hunhoff
+- rules, lint: enforce string with double quotes formatting in rules #468 @mike-hunhoff
+- lint: ensure LF end of line #485 #486 @mr-tz
+- setup: pin dependencies #513 #504 @Ana06 @mr-tz
+
+### Development
+
+- ci: test on Windows, Ubuntu, macOS across Python versions #470 @mr-tz @Ana06
+- ci: pin OS versions #491 @williballenthin
+- ci: tag capa-rules on release #476 @Ana06
+- doc: document release process #476 @Ana06
+- doc: Improve README badges #477 #478 @ana06 @mr-tz
+- doc: update capa explorer documentation #503 @mike-hunhoff
+- doc: add PR template #495 @mr-tz
+- changelog: document incompatibility of viv files #475 @Ana06
+- rule loading: ignore files starting with .git #492 @mr-tz
+
+### Raw diffs
+
+  - [capa v1.6.0...v1.6.1](https://github.com/fireeye/capa/compare/v1.6.0...v1.6.1)
+  - [capa-rules v1.6.0...v1.6.1](https://github.com/fireeye/capa-rules/compare/v1.6.0...v1.6.1)
+
+
+## v1.6.0 (2021-03-09)
+
+This release adds the capa explorer rule generator plugin for IDA Pro, vivisect support for Python 3 and 12 new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. Thank you also to the vivisect development team (@rakuy0, @atlas0fd00m) for the Python 3 support (`vivisect==1.0.0`) and the fixes for Python 2 (`vivisect==0.2.1`).
+
+### Rule Generator IDA Plugin
+
+The capa explorer IDA plugin now helps you quickly build new capa rules using features extracted directly from your IDA database. Without leaving the plugin interface you can use the features extracted by capa explorer to develop and test new rules and save your work directly to your capa rules directory. To get started select the new `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view, and click `Analyze`. For more information check out the capa explorer [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md).
+
+![](doc/img/rulegen_expanded.png)
+
+### Python 2/3 vivisect workspace compatibility
+
+This version of capa adds Python 3 support in vivisect. Note that `.viv` files (generated by vivisect) are not compatible between Python 2 and Python 3. When updating to Python 3 you need to delete all the `.viv` files for capa to work.
+
+If you get the following error (or a similar one), you most likely need to delete `.viv` files:
+```
+UnicodeDecodeError: 'ascii' codec can't decode byte 0x90 in position 2: ordinal not in range(128)
+```
+
+### Upcoming changes
+
+**This is the last capa release that supports Python 2.** The next release will be v2.0 and will have breaking changes, including the removal of Python 2 support.
+
+If you have workflows that rely on the Python 2 version and need future maintenance, please reach out. We may be able to supply limited backports of key fixes and features.
+
+### New features
+
+- explorer: Add capa explorer rule generator plugin for IDA Pro. Now capa explorer helps you build new capa rules!  #426, #438, #439 @mike-hunhoff
+- python: Python 3 support in vivisect #421 @Ana06
+- main: Add backend option in Python 3 to select the backend to be used (either SMDA or vivisect) #421 @Ana06
+- python: Python 3 support in IDA #429, #437 @mike-hunhoff
+- ci: test pyinstaller CI #452 @williballenthin
+- scripts: enable multiple backends in `show-features.py` #429 @mike-hunhoff
+- scripts: add `scripts/vivisect-py2-vs-py3.sh`  to compare vivisect Python 2 vs 3 (can easily be modified to test run times and compare different versions) #421 @Ana06
+
+### New Rules (12)
+
+- patch process command line @re-fox @williballenthin (graduated from nursery)
+- compiled with dmd @re-fox
+- compiled with exe4j @johnk3r
+- compiled from Visual Basic @williballenthin
+- capture screenshot in Go @TcM1911
+- compiled with Nim @mike-hunhoff
+- linked against Go process enumeration library @TcM1911
+- linked against Go registry library @TcM1911
+- linked against Go WMI library @TcM1911
+- linked against Go static asset library @TcM1911
+- inspect load icon resource @mike-hunhoff
+- linked against XZip @mr-tz
+
+### Bug Fixes
+
+- ida: check for unmapped addresses when resolving data references #436 @mike-hunhoff
+
+### Changes
+
+- setup: vivisect v1.0.0 is the default backend for Python3 (it was SMDA before) #421 @Ana06
+- setup: bump vivisect to 0.2.1 #454 @mr-tz
+- linter: adding ntoskrnl, ntdll overlap lint #428 @mike-hunhoff
+- ci: use py3.9 and pyinstaller 4.2 to build standalone binaries #452 @williballenthin
+- scripts: remove old migration script #450 @williballenthin
+
+### Development
+
+- main: factor out common cli argument handling #450 @williballenthin
+
+### Raw diffs
+
+  - [capa v1.5.1...v1.6.0](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.1...v1.6.0](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+
+
+## v1.5.1 (2021-02-09)
+
+This release fixes the version number that we forgot to update for v1.5.0 (therefore, v1.5.0 was not published to pypi). It also includes 1 new rule and some rule improvements.
+
+### New Rules (1)
+
+- encrypt data using vest @re-fox
+
+### Raw diffs
+
+  - [capa v1.5.0...v1.5.1](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.0...v1.5.1](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+
+
 ## v1.5.0 (2021-02-05)
 
 This release brings support for running capa under Python 3 via [SMDA](https://github.com/danielplohmann/smda), more thorough CI testing and linting, better extraction of strings and byte features, and 50 (!) new rules. We appreciate everyone who opened issues, provided feedback, and contributed code and rules. A special shout out to the following new project contributors:

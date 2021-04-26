@@ -178,6 +178,9 @@ def build_context_menu(o, actions):
 
 
 class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
+
+    INDENT = " " * 2
+
     def __init__(self, parent=None):
         """ """
         super(CapaExplorerRulgenPreview, self).__init__(parent)
@@ -210,11 +213,98 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         self.setText("\n".join(metadata_default))
 
     def keyPressEvent(self, e):
-        """ """
-        if e.key() == QtCore.Qt.Key_Tab:
-            self.insertPlainText(" " * 2)
+        """intercept key press events"""
+        if e.key() in (QtCore.Qt.Key_Tab, QtCore.Qt.Key_Backtab):
+            # apparently it's not easy to implement tabs as spaces, or multi-line tab or SHIFT + Tab
+            # so we need to implement it ourselves so we can retain properly formatted capa rules
+            # when a user uses the Tab key
+            if self.textCursor().selection().isEmpty():
+                # single line, only worry about Tab
+                if e.key() == QtCore.Qt.Key_Tab:
+                    self.insertPlainText(self.INDENT)
+            else:
+                # multi-line tab or SHIFT + Tab
+                cur = self.textCursor()
+                select_start_ppos = cur.selectionStart()
+                select_end_ppos = cur.selectionEnd()
+
+                scroll_ppos = self.verticalScrollBar().sliderPosition()
+
+                # determine lineno for first selected line, and column
+                cur.setPosition(select_start_ppos)
+                start_lineno = self.count_previous_lines_from_block(cur.block())
+                start_lineco = cur.columnNumber()
+
+                # determine lineno for last selected line
+                cur.setPosition(select_end_ppos)
+                end_lineno = self.count_previous_lines_from_block(cur.block())
+
+                # now we need to indent or dedent the selected lines. for now, we read the text, modify
+                # the lines between start_lineno and end_lineno accordingly, and then reset the view
+                # this might not be the best solution, but it avoids messing around with cursor positions
+                # to determine the beginning of lines
+
+                plain = self.toPlainText().splitlines()
+
+                if e.key() == QtCore.Qt.Key_Tab:
+                    # user Tab, indent selected lines
+                    lines_modified = end_lineno - start_lineno
+                    first_modified = True
+                    change = [self.INDENT + line for line in plain[start_lineno : end_lineno + 1]]
+                else:
+                    # user SHIFT + Tab, dedent selected lines
+                    lines_modified = 0
+                    first_modified = False
+                    change = []
+                    for (lineno, line) in enumerate(plain[start_lineno : end_lineno + 1]):
+                        if line.startswith(self.INDENT):
+                            if lineno == 0:
+                                # keep track if first line is modified, so we can properly display
+                                # the text selection later
+                                first_modified = True
+                            lines_modified += 1
+                            line = line[len(self.INDENT) :]
+                        change.append(line)
+
+                # apply modifications, and reset view
+                plain[start_lineno : end_lineno + 1] = change
+                self.setPlainText("\n".join(plain) + "\n")
+
+                # now we need to properly adjust the selection positions, so users don't have to
+                # re-select when indenting or dedenting the same lines repeatedly
+                if e.key() == QtCore.Qt.Key_Tab:
+                    # user Tab, increase increment selection positions
+                    select_start_ppos += len(self.INDENT)
+                    select_end_ppos += (lines_modified * len(self.INDENT)) + len(self.INDENT)
+                elif lines_modified:
+                    # user SHIFT + Tab, decrease selection positions
+                    if start_lineco not in (0, 1) and first_modified:
+                        # only decrease start position if not in first column
+                        select_start_ppos -= len(self.INDENT)
+                    select_end_ppos -= lines_modified * len(self.INDENT)
+
+                # apply updated selection and restore previous scroll position
+                self.set_selection(select_start_ppos, select_end_ppos, len(self.toPlainText()))
+                self.verticalScrollBar().setSliderPosition(scroll_ppos)
         else:
             super(CapaExplorerRulgenPreview, self).keyPressEvent(e)
+
+    def count_previous_lines_from_block(self, block):
+        """calculate number of lines preceding block"""
+        count = 0
+        while True:
+            block = block.previous()
+            if not block.isValid():
+                break
+            count += block.lineCount()
+        return count
+
+    def set_selection(self, start, end, max):
+        """set text selection"""
+        cursor = self.textCursor()
+        cursor.setPosition(start)
+        cursor.setPosition(end if end < max else max, QtGui.QTextCursor.KeepAnchor)
+        self.setTextCursor(cursor)
 
 
 class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
@@ -325,6 +415,11 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         # create a new parent under root node, by default; new node added last position in tree
         new_parent = self.new_expression_node(self.root, (action.data()[0], ""))
 
+        if "basic block" in action.data()[0]:
+            # add default child expression when nesting under basic block
+            new_parent.setExpanded(True)
+            new_parent = self.new_expression_node(new_parent, ("- or:", ""))
+
         for o in self.get_features(selected=True):
             # take child from its parent by index, add to new parent
             new_parent.addChild(o.parent().takeChild(o.parent().indexOfChild(o)))
@@ -335,6 +430,15 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_edit_expression(self, action):
         """ """
         expression, o = action.data()
+        if "basic block" in expression and "basic block" not in o.text(
+            CapaExplorerRulgenEditor.get_column_feature_index()
+        ):
+            # current expression is "basic block", and not changing to "basic block" expression
+            children = o.takeChildren()
+            new_parent = self.new_expression_node(o, ("- or:", ""))
+            for child in children:
+                new_parent.addChild(child)
+            new_parent.setExpanded(True)
         o.setText(CapaExplorerRulgenEditor.get_column_feature_index(), expression)
 
     def slot_clear_all(self, action):
@@ -520,11 +624,23 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         # single features
         for (k, v) in filter(lambda t: t[1] == 1, counted):
-            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), k.get_value_str()), ""))
+            if isinstance(k, (capa.features.String,)):
+                value = '"%s"' % capa.features.escape_string(k.get_value_str())
+            else:
+                value = k.get_value_str()
+            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), value), ""))
 
         # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
-            self.new_feature_node(self.root, ("- count(%s): %d" % (str(k), v), ""))
+            if k.value:
+                if isinstance(k, (capa.features.String,)):
+                    value = '"%s"' % capa.features.escape_string(k.get_value_str())
+                else:
+                    value = k.get_value_str()
+                display = "- count(%s(%s)): %d" % (k.name.lower(), value, v)
+            else:
+                display = "- count(%s): %d" % (k.name.lower(), v)
+            self.new_feature_node(self.root, (display, ""))
 
         self.expandAll()
         self.update_preview()
@@ -699,9 +815,11 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         if text:
             for o in iterate_tree(self):
                 data = o.data(0, 0x100)
-                if data and text.lower() not in data.get_value_str().lower():
-                    o.setHidden(True)
-                    continue
+                if data:
+                    to_match = data.get_value_str()
+                    if not to_match or text.lower() not in to_match.lower():
+                        o.setHidden(True)
+                        continue
                 o.setHidden(False)
                 o.setExpanded(True)
         else:
@@ -776,15 +894,19 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         def format_address(e):
             return "%X" % e if e else ""
 
+        def format_feature(feature):
+            """ """
+            name = feature.name.lower()
+            value = feature.get_value_str()
+            if isinstance(feature, (capa.features.String,)):
+                value = '"%s"' % capa.features.escape_string(value)
+            return "%s(%s)" % (name, value)
+
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
                 # filter basic blocks for now, we may want to add these back in some time
                 # in the future
                 continue
-
-            if isinstance(feature, capa.features.String):
-                # strip string for display
-                feature.value = feature.value.strip()
 
             # level 0
             if type(feature) not in self.parent_items:
@@ -794,20 +916,22 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if feature not in self.parent_items:
                 if len(eas) > 1:
                     self.parent_items[feature] = self.new_parent_node(
-                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
                     )
                 else:
                     self.parent_items[feature] = self.new_leaf_node(
-                        self.parent_items[type(feature)], (str(feature),), feature=feature
+                        self.parent_items[type(feature)], (format_feature(feature),), feature=feature
                     )
 
             # level n > 1
             if len(eas) > 1:
                 for ea in sorted(eas):
-                    self.new_leaf_node(self.parent_items[feature], (str(feature), format_address(ea)), feature=feature)
+                    self.new_leaf_node(
+                        self.parent_items[feature], (format_feature(feature), format_address(ea)), feature=feature
+                    )
             else:
                 ea = eas.pop()
-                for (i, v) in enumerate((str(feature), format_address(ea))):
+                for (i, v) in enumerate((format_feature(feature), format_address(ea))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 

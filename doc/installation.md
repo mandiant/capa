@@ -42,6 +42,7 @@ If you'd like to review and modify the capa source code, you'll need to check it
 Next, clone the capa git repository.
 We use submodules to separate [code](https://github.com/fireeye/capa), [rules](https://github.com/fireeye/capa-rules), and [test data](https://github.com/fireeye/capa-testfiles).
 To clone everything use the `--recurse-submodules` option:
+- CAUTION: The capa testfiles repository contains many malware samples. If you pull down everything using this method, you may want to install to a directory that won't trigger your anti-virus software.
 - `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
 - `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
 
@@ -59,6 +60,25 @@ Use `pip` to install the source code in "editable" mode. This means that Python 
 
 You'll find that the `capa.exe` (Windows) or `capa` (Linux/MacOS) executables in your path now invoke the capa binary from this directory.
 
+#### Development
+
+##### venv [optional]
+
+For development, we recommend to use [venv](https://docs.python.org/3/tutorial/venv.html). It allows you to create a virtual environment: a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages. This approach avoids conflicts between the requirements of different applications on your computer. It also ensures that you don't overlook to add a new requirement to `setup.up` using a library already installed on your system.
+
+To create an environment (in the parent directory, to avoid commiting it by accident or messing with the linters), run:
+`$ python3 -m venv ../capa-env`
+
+To activate `capa-env` in Linux or MacOS, run:
+`$ source ../capa-env/bin/activate`
+
+To activate `capa-env` in Windows, run:
+`$ ..\capa-env\Scripts\activate.bat`
+
+For more details about creating and using virtual environments, check out the [venv documentation](https://docs.python.org/3/tutorial/venv.html).
+
+##### Install development dependencies
+
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter, with `-l 120`
   - [isort 5](https://pypi.org/project/isort/) code formatter, with `--profile black --length-sort --line-width 120`
@@ -69,30 +89,28 @@ To install these development dependencies, run:
 
 `$ pip install -e /local/path/to/src[dev]`
 
-Note that some development dependencies (including the black code formatter) require Python 3.
-
 To check the code style, formatting and run the tests you can run the script `scripts/ci.sh`.
 You can run it with the argument `no_tests` to skip the tests and only run the code style and formatting: `scripts/ci.sh no_tests`
+
+##### Setup hooks [optional]
+
+If you plan to contribute to capa, you may want to setup the hooks.
+Run `scripts/setup-hooks.sh` to set the following hooks up:
+- The `pre-commit` hook runs checks before every `git commit`.
+  It runs `scripts/ci.sh no_tests` aborting the commit if there are code style or rule linter offenses you need to fix.
+- The `pre-push` hook runs checks before every `git push`.
+  It runs `scripts/ci.sh` aborting the push if there are code style or rule linter offenses or if the tests fail.
+  This way you can ensure everything is alright before sending a pull request.
+
+You can skip the checks by using the `--no-verify` git option.
 
 ### 3. Compile binary using PyInstaller
 We compile capa standalone binaries using PyInstaller. To reproduce the build process check out the source code as described above and follow these steps.
 
 #### Install PyInstaller:
-For Python 2.7: `$ pip install 'pyinstaller==3.*'` (PyInstaller 4 doesn't support Python 2.7)
-
-For Python 3: `$ pip install 'pyinstaller`
+`$ pip install pyinstaller` (Python 3)
 
 #### Run Pyinstaller
 `$ pyinstaller .github/pyinstaller/pyinstaller.spec`
 
 You can find the compiled binary in the created directory `dist/`.
-
-### 4. Setup hooks [optional]
-If you plan to contribute to capa, you may want to setup the hooks.
-Run `scripts/setup-hooks.sh` to set the following hooks up:
-- The `pre-commit` hook runs checks before every `git commit`.
-  It runs `scripts/ci.sh no_tests` aborting the commit if there are code style or rule linter offenses you need to fix.
-  You can skip this check by using the `--no-verify` git option.
-- The `pre-push` hook runs checks before every `git push`.
-  It runs `scripts/ci.sh` aborting the push if there are code style or rule linter offenses or if the tests fail.
-  This way you can ensure everything is alright before sending a pull request.

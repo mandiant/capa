@@ -39,18 +39,11 @@ def get_printable_len(op):
         raise ValueError("Unhandled operand data type 0x%x." % op.dtype)
 
     def is_printable_ascii(chars):
-        if sys.version_info[0] >= 3:
-            return all(c < 127 and chr(c) in string.printable for c in chars)
-        else:
-            return all(ord(c) < 127 and c in string.printable for c in chars)
+        return all(c < 127 and chr(c) in string.printable for c in chars)
 
     def is_printable_utf16le(chars):
-        if sys.version_info[0] >= 3:
-            if all(c == 0x00 for c in chars[1::2]):
-                return is_printable_ascii(chars[::2])
-        else:
-            if all(c == "\x00" for c in chars[1::2]):
-                return is_printable_ascii(chars[::2])
+        if all(c == 0x00 for c in chars[1::2]):
+            return is_printable_ascii(chars[::2])
 
     if is_printable_ascii(chars):
         return idaapi.get_dtype_size(op.dtype)

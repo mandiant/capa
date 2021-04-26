@@ -1,7 +1,10 @@
 ![capa](.github/logo.png)
 
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
+[![Last release](https://img.shields.io/github/v/release/fireeye/capa)](https://github.com/fireeye/capa/releases)
+[![Number of rules](https://img.shields.io/badge/rules-488-blue.svg)](https://github.com/fireeye/capa-rules)
 [![CI status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
-[![Number of rules](https://img.shields.io/badge/rules-469-blue.svg)](https://github.com/fireeye/capa-rules)
+[![Downloads](https://img.shields.io/github/downloads/fireeye/capa/total)](https://github.com/fireeye/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
@@ -146,8 +149,8 @@ rule:
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you can use the [capa explorer plugin](capa/ida/plugin/).
-capa explorer lets you quickly identify and navigate to interesting areas of a program and help you build new capa rules out of the features extracted directly from your IDB.
+If you use IDA Pro, then you can use the [capa explorer](capa/ida/plugin/) plugin.
+capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
 ![capa + IDA Pro integration](doc/img/explorer_expanded.png)
 

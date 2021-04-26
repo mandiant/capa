@@ -18,7 +18,8 @@ try:
 except ImportError:
     from backports.functools_lru_cache import lru_cache
 
-import six
+import io
+
 import yaml
 import ruamel.yaml
 
@@ -244,7 +245,7 @@ def parse_description(s, value_type, description=None):
     """
     s can be an int or a string
     """
-    if value_type != "string" and isinstance(s, six.string_types) and DESCRIPTION_SEPARATOR in s:
+    if value_type != "string" and isinstance(s, str) and DESCRIPTION_SEPARATOR in s:
         if description:
             raise InvalidRule(
                 'unexpected value: "%s", only one description allowed (inline description with `%s`)'
@@ -256,12 +257,11 @@ def parse_description(s, value_type, description=None):
     else:
         value = s
 
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         if value_type == "bytes":
             try:
                 value = codecs.decode(value.replace(" ", ""), "hex")
-            # TODO: Remove TypeError when Python2 is not used anymore
-            except (TypeError, binascii.Error):
+            except binascii.Error:
                 raise InvalidRule('unexpected bytes value: "%s", must be a valid hex sequence' % value)
 
             if len(value) > MAX_BYTES_FEATURE_SIZE:
@@ -406,7 +406,7 @@ def build_statements(d, scope):
             return Range(feature, min=min, max=max, description=description)
         else:
             raise InvalidRule("unexpected range: %s" % (count))
-    elif key == "string" and not isinstance(d[key], six.string_types):
+    elif key == "string" and not isinstance(d[key], str):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
     else:
         Feature = parse_feature(key)
@@ -699,7 +699,7 @@ class Rule(object):
         for key in hidden_meta.keys():
             del meta[key]
 
-        ostream = six.BytesIO()
+        ostream = io.BytesIO()
         self._get_ruamel_yaml_parser().dump(definition, ostream)
 
         for key, value in hidden_meta.items():
@@ -736,6 +736,8 @@ class Rule(object):
         # the below regex makes these adjustments and while ugly, we don't have to explore the ruamel.yaml insides
         doc = re.sub(r"!!int '0x-([0-9a-fA-F]+)'", r"-0x\1", doc)
 
+        # normalize CRLF to LF
+        doc = doc.replace("\r\n", "\n")
         return doc
 
 
@@ -936,7 +938,7 @@ class RuleSet(object):
         rules_filtered = set([])
         for rule in rules:
             for k, v in rule.meta.items():
-                if isinstance(v, six.string_types) and tag in v:
+                if isinstance(v, str) and tag in v:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
                     rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
                     break

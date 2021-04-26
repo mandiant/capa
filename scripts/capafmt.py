@@ -65,6 +65,8 @@ def main(argv=None):
             return 0
         else:
             logger.info("rule requires reformatting (%s)", rule.name)
+            if "\r\n" in rule.definition:
+                logger.info("please make sure that the file uses LF (\\n) line endings only")
             return 1
 
     if args.in_place:

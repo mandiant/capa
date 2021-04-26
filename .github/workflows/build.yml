@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: build
 
 on:
@@ -79,3 +80,117 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN}}
           file: ${{ env.zip_name }}
           tag: ${{ github.ref }}
+=======
+name: build
+
+on:
+  push:
+    branches: [master]
+  release:
+    types: [edited, published]
+
+jobs:
+  build:
+    name: PyInstaller for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-16.04
+            # use old linux so that the shared library versioning is more portable
+            artifact_name: capa
+            asset_name: linux
+          - os: windows-2019
+            artifact_name: capa.exe
+            asset_name: windows
+          - os: macos-10.15
+            artifact_name: capa
+            asset_name: macos
+    steps:
+      - name: Checkout capa
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      # using Python 3.8 to support running across multiple operating systems including Windows 7
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - if: matrix.os == 'ubuntu-16.04'
+        run: sudo apt-get install -y libyaml-dev
+      - name: Install PyInstaller
+        run: pip install 'pyinstaller==4.2'
+      - name: Install capa
+        run: pip install -e .
+      - name: Build standalone executable
+        run: pyinstaller .github/pyinstaller/pyinstaller.spec
+      - name: Does it run?
+        run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.artifact_name }}
+
+  test_run:
+    # test that binaries run on push to master
+    if: github.event_name == 'push'
+    name: Test run on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: [build]
+    strategy:
+      matrix:
+        include:
+          # OSs not already tested above
+          - os: ubuntu-18.04
+            artifact_name: capa
+            asset_name: linux
+          - os: ubuntu-20.04
+            artifact_name: capa
+            asset_name: linux
+          - os: windows-2016
+            artifact_name: capa.exe
+            asset_name: windows
+    steps:
+      - name: Download ${{ matrix.asset_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+      - name: Set executable flag
+        if: matrix.os != 'windows-2016'
+        run: chmod +x ${{ matrix.artifact_name }}
+      - name: Run capa
+        run: ./${{ matrix.artifact_name }} -h
+
+  zip_and_upload:
+    # upload zipped binaries to Release page
+    if: github.event_name == 'release'
+    name: zip and upload ${{ matrix.asset_name }}
+    runs-on: ubuntu-20.04
+    needs: [build]
+    strategy:
+      matrix:
+        include:
+          - asset_name: linux
+            artifact_name: capa
+          - asset_name: windows
+            artifact_name: capa.exe
+          - asset_name: macos
+            artifact_name: capa
+    steps:
+      - name: Download ${{ matrix.asset_name }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+      - name: Set executable flag
+        run: chmod +x ${{ matrix.artifact_name }}
+      - name: Set zip name
+        run: echo "zip_name=capa-${GITHUB_REF#refs/tags/}-${{ matrix.asset_name }}.zip" >> $GITHUB_ENV
+      - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
+        run: zip ${{ env.zip_name }} ${{ matrix.artifact_name }}
+      - name: Upload ${{ env.zip_name }} to GH Release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN}}
+          file: ${{ env.zip_name }}
+          tag: ${{ github.ref }}
+>>>>>>> master

@@ -16,10 +16,7 @@ MIN_STACKSTRING_LEN = 8
 
 
 def xor_static(data, i):
-    if sys.version_info >= (3, 0):
-        return bytes(c ^ i for c in data)
-    else:
-        return "".join(chr(ord(c) ^ i) for c in data)
+    return bytes(c ^ i for c in data)
 
 
 def is_aw_function(symbol):

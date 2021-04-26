@@ -1,0 +1,29 @@
+name: tag
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  tag:
+    name: Tag capa rules
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout capa-rules
+      uses: actions/checkout@v2
+      with:
+        repository: fireeye/capa-rules
+        token: ${{ secrets.CAPA_TOKEN }}
+    - name: Tag capa-rules
+      run: |
+        # user information is needed to create annotated tags (with a message)
+        git config user.email 'capa-dev@fireeye.com'
+        git config user.name 'Capa Bot'
+        name=${{ github.event.release.tag_name }}
+        git tag $name -m "https://github.com/fireeye/capa/releases/$name"
+    - name: Push tag to capa-rules
+      uses: ad-m/github-push-action@master
+      with:
+        repository: fireeye/capa-rules
+        github_token: ${{ secrets.CAPA_TOKEN }}
+        tags: true

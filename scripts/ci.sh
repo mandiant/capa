@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 # Use a console with emojis support for a better experience
+# Use venv to ensure that `python` calls the correct python version
 
 # Stash uncommited changes
 MSG="pre-push-$(date +%s)";
@@ -25,17 +26,8 @@ restore_stashed() {
   fi
 }
 
-python_3() {
-  case "$(uname -s)" in
-   CYGWIN*|MINGW32*|MSYS*|MINGW*)
-     py -3 -m $1 > $2 2>&1;;
-   *)
-     python3 -m $1 > $2 2>&1;;
-  esac
-}
-
 # Run isort and print state
-python_3 'isort --profile black --length-sort --line-width 120 -c .' 'isort-output.log';
+python -m isort --profile black --length-sort --line-width 120 -c . > isort-output.log 2>&1;
 if [ $? == 0 ]; then
   echo 'isort succeeded!! 💖';
 else
@@ -46,7 +38,7 @@ else
 fi
 
 # Run black and print state
-python_3 'black -l 120 --check .' 'black-output.log';
+python -m black -l 120 --check . > black-output.log 2>&1;
 if [ $? == 0 ]; then
   echo 'black succeeded!! 💝';
 else
@@ -70,7 +62,7 @@ fi
 # Run tests except if first argument is no_tests
 if [ "$1" != 'no_tests' ]; then
   echo 'Running tests, please wait ⌛';
-  pytest tests/ --maxfail=1;
+  python -m pytest tests/ --maxfail=1;
   if [ $? == 0 ]; then
     echo 'Tests succeed!! 🎉';
   else

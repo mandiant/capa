@@ -27,15 +27,26 @@ VALID_ARCH = (ARCH_X32, ARCH_X64)
 
 
 def bytes_to_str(b):
-    if sys.version_info[0] >= 3:
-        return str(codecs.encode(b, "hex").decode("utf-8"))
-    else:
-        return codecs.encode(b, "hex")
+    return str(codecs.encode(b, "hex").decode("utf-8"))
 
 
 def hex_string(h):
-    """ render hex string e.g. "0a40b1" as "0A 40 B1" """
+    """render hex string e.g. "0a40b1" as "0A 40 B1" """
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
+
+
+def escape_string(s):
+    """escape special characters"""
+    s = repr(s)
+    if not s.startswith(('"', "'")):
+        # u'hello\r\nworld' -> hello\\r\\nworld
+        s = s[2:-1]
+    else:
+        # 'hello\r\nworld' -> hello\\r\\nworld
+        s = s[1:-1]
+    s = s.replace("\\'", "'")  # repr() may escape "'" in some edge cases, remove
+    s = s.replace('"', '\\"')  # repr() does not escape '"', add
+    return s
 
 
 class Feature(object):

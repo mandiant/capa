@@ -10,7 +10,6 @@ import logging
 import datetime
 
 import idc
-import six
 import idaapi
 import idautils
 
@@ -24,6 +23,7 @@ SUPPORTED_IDA_VERSIONS = [
     "7.3",
     "7.4",
     "7.5",
+    "7.6",
 ]
 
 # file type names as returned by idaapi.get_file_type_name()
@@ -71,7 +71,7 @@ def get_disasm_line(va):
 
 
 def is_func_start(ea):
-    """ check if function stat exists at virtual address """
+    """check if function stat exists at virtual address"""
     f = idaapi.get_func(ea)
     return f and f.start_ea == ea
 
@@ -85,7 +85,7 @@ def get_func_start_ea(ea):
 def get_file_md5():
     """ """
     md5 = idautils.GetInputFileMD5()
-    if not isinstance(md5, six.string_types):
+    if not isinstance(md5, str):
         md5 = capa.features.bytes_to_str(md5)
     return md5
 
@@ -93,7 +93,7 @@ def get_file_md5():
 def get_file_sha256():
     """ """
     sha256 = idaapi.retrieve_input_file_sha256()
-    if not isinstance(sha256, six.string_types):
+    if not isinstance(sha256, str):
         sha256 = capa.features.bytes_to_str(sha256)
     return sha256
 
