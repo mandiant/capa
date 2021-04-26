@@ -362,6 +362,20 @@ class UnsupportedFormatError(ValueError):
 
 
 def get_workspace(path, format, sigpaths):
+    """
+    load the program at the given path into a vivisect workspace using the given format.
+    also apply the given FLIRT signatures.
+
+    supported formats:
+      - pe
+      - sc32
+      - sc64
+      - auto
+
+    this creates and analyzes the workspace; however, it does *not* save the workspace.
+    this is the responsibility of the caller.
+    """
+
     # lazy import enables us to not require viv if user wants SMDA, for example.
     import viv_utils
 
@@ -422,7 +436,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
                 format = "sc32"
             elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
                 format = "sc64"
-            vw = get_workspace(path, format, sigpaths, should_save=False)
+            vw = get_workspace(path, format, sigpaths)
 
             try:
                 vw.saveWorkspace()
