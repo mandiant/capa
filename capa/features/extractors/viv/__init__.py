@@ -10,6 +10,7 @@ import types
 import logging
 
 import viv_utils
+
 if sys.version_info >= (3, 0):
     import viv_utils.flirt
 
@@ -87,6 +88,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def is_library_function(self, va):
         if sys.version_info >= (3, 0):
             import viv_utils.flirt
+
             return viv_utils.flirt.is_library_function(self.vw, va)
         else:
             return False

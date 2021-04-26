@@ -9,8 +9,10 @@ import sys
 
 import viv_utils
 import envi.memory
+
 if sys.version_info >= (3, 0):
     import viv_utils.flirt
+
 import envi.archs.i386.disasm
 
 import capa.features.extractors.viv
