@@ -71,7 +71,7 @@ def get_disasm_line(va):
 
 
 def is_func_start(ea):
-    """ check if function stat exists at virtual address """
+    """check if function stat exists at virtual address"""
     f = idaapi.get_func(ea)
     return f and f.start_ea == ea
 

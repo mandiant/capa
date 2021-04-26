@@ -53,7 +53,7 @@ def get_imports(ctx):
 
 
 def check_for_api_call(ctx, insn):
-    """ check instruction for API call """
+    """check instruction for API call"""
     if not insn.get_canon_mnem() in ("call", "jmp"):
         return
 
@@ -256,7 +256,7 @@ def bb_stack_cookie_registers(bb):
 
 
 def is_nzxor_stack_cookie_delta(f, bb, insn):
-    """ check if nzxor exists within stack cookie delta """
+    """check if nzxor exists within stack cookie delta"""
     # security cookie check should use SP or BP
     if not capa.features.extractors.ida.helpers.is_frame_register(insn.Op2.reg):
         return False
@@ -279,7 +279,7 @@ def is_nzxor_stack_cookie_delta(f, bb, insn):
 
 
 def is_nzxor_stack_cookie(f, bb, insn):
-    """ check if nzxor is related to stack cookie """
+    """check if nzxor is related to stack cookie"""
     if contains_stack_cookie_keywords(idaapi.get_cmt(insn.ea, False)):
         # Example:
         #   xor     ecx, ebp        ; StackCookie

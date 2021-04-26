@@ -78,7 +78,7 @@ def extract_file_embedded_pe():
 
 
 def extract_file_export_names():
-    """ extract function exports """
+    """extract function exports"""
     for (_, _, ea, name) in idautils.Entries():
         yield Export(name), ea
 
@@ -144,7 +144,7 @@ def extract_file_strings():
 
 
 def extract_features():
-    """ extract file features """
+    """extract file features"""
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler():
             yield feature, va

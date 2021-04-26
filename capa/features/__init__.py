@@ -31,7 +31,7 @@ def bytes_to_str(b):
 
 
 def hex_string(h):
-    """ render hex string e.g. "0a40b1" as "0A 40 B1" """
+    """render hex string e.g. "0a40b1" as "0A 40 B1" """
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
 
 
