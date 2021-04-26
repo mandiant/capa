@@ -8,10 +8,8 @@
 import sys
 
 import viv_utils
+import viv_utils.flirt
 import envi.memory
-
-if sys.version_info >= (3, 0):
-    import viv_utils.flirt
 
 import envi.archs.i386.disasm
 
@@ -117,11 +115,10 @@ def extract_insn_api_features(f, bb, insn):
         if not target:
             return
 
-        if sys.version_info >= (3, 0):
-            if viv_utils.flirt.is_library_function(f.vw, target):
-                name = viv_utils.get_function_name(f.vw, target)
-                yield API(name), insn.va
-                return
+        if viv_utils.flirt.is_library_function(f.vw, target):
+            name = viv_utils.get_function_name(f.vw, target)
+            yield API(name), insn.va
+            return
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:

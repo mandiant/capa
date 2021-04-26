@@ -5,14 +5,11 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
 import types
 import logging
 
 import viv_utils
-
-if sys.version_info >= (3, 0):
-    import viv_utils.flirt
+import viv_utils.flirt
 
 import capa.features.extractors
 import capa.features.extractors.viv.file
@@ -86,12 +83,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
             yield feature, va
 
     def is_library_function(self, va):
-        if sys.version_info >= (3, 0):
-            import viv_utils.flirt
-
-            return viv_utils.flirt.is_library_function(self.vw, va)
-        else:
-            return False
+        return viv_utils.flirt.is_library_function(self.vw, va)
 
     def get_function_name(self, va):
         return viv_utils.get_function_name(self.vw, va)
