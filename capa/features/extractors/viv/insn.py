@@ -8,9 +8,8 @@
 import sys
 
 import viv_utils
-import viv_utils.flirt
 import envi.memory
-
+import viv_utils.flirt
 import envi.archs.i386.disasm
 
 import capa.features.extractors.viv
