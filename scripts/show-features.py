@@ -83,7 +83,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    capa.main.install_common_args(parser, wanted={"format", "sample"})
+    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures"})
 
     parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
     args = parser.parse_args(args=argv)
@@ -100,7 +100,7 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=[])
+            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=args.signatures)
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
