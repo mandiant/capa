@@ -122,7 +122,7 @@ def dumps(extractor):
                 )
 
             for insnva, insn in sorted(
-                [(insn.__int__(), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
+                [(int(insn), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
             ):
                 ret["functions"][hex(f)][hex(bb)].append(hex(insnva))
 

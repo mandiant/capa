@@ -12,18 +12,7 @@ _hex = hex
 
 
 def hex(i):
-    return _hex(oint(i))
-
-
-def oint(i):
-    # there seems to be some trouble with using `int(viv_utils.Function)`
-    # with the black magic we do with binding the `__int__()` routine.
-    # i haven't had a chance to debug this yet (and i have no hotel wifi).
-    # so in the meantime, detect this, and call the method directly.
-    try:
-        return int(i)
-    except TypeError:
-        return i.__int__()
+    return _hex(int(i))
 
 
 def get_file_taste(sample_path):

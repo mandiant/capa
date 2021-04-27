@@ -32,7 +32,7 @@ import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
-from capa.helpers import oint, get_file_taste
+from capa.helpers import get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
@@ -87,14 +87,14 @@ def find_function_capabilities(ruleset, extractor, f):
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 
-        _, matches = capa.engine.match(ruleset.basic_block_rules, bb_features, oint(bb))
+        _, matches = capa.engine.match(ruleset.basic_block_rules, bb_features, int(bb))
 
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
             for va, _ in res:
                 function_features[capa.features.MatchedRule(rule_name)].add(va)
 
-    _, function_matches = capa.engine.match(ruleset.function_rules, function_features, oint(f))
+    _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
 
 
@@ -139,7 +139,8 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     functions = list(extractor.get_functions())
 
     for f in pbar(functions, desc="matching", unit=" functions"):
-        function_address = f.__int__()
+        #from IPython import embed; embed()
+        function_address = int(f)
 
         if extractor.is_library_function(function_address):
             function_name = extractor.get_function_name(function_address)

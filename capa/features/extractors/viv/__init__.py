@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import types
 import logging
 
 import viv_utils
@@ -22,26 +21,16 @@ __all__ = ["file", "function", "basicblock", "insn"]
 logger = logging.getLogger(__name__)
 
 
-def get_va(self):
-    try:
-        # vivisect type
+class InstructionHandle:
+    """this acts like a vivisect.Opcode but with an __int__() method"""
+    def __init__(self, inner):
+        self._inner = inner
+
+    def __int__(self):
         return self.va
-    except AttributeError:
-        pass
 
-    raise TypeError()
-
-
-def add_va_int_cast(o):
-    """
-    dynamically add a cast-to-int (`__int__`) method to the given object
-    that returns the value of the `.va` property.
-
-    this bit of skullduggery lets use cast viv-utils objects as ints.
-    the correct way of doing this is to update viv-utils (or subclass the objects here).
-    """
-    setattr(o, "__int__", types.MethodType(get_va, o))
-    return o
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
@@ -60,15 +49,14 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def get_functions(self):
         for va in sorted(self.vw.getFunctions()):
-            yield add_va_int_cast(viv_utils.Function(self.vw, va))
+            yield viv_utils.Function(self.vw, va)
 
     def extract_function_features(self, f):
         for feature, va in capa.features.extractors.viv.function.extract_features(f):
             yield feature, va
 
     def get_basic_blocks(self, f):
-        for bb in f.basic_blocks:
-            yield add_va_int_cast(bb)
+        return f.basic_blocks
 
     def extract_basic_block_features(self, f, bb):
         for feature, va in capa.features.extractors.viv.basicblock.extract_features(f, bb):
@@ -76,7 +64,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def get_instructions(self, f, bb):
         for insn in bb.instructions:
-            yield add_va_int_cast(insn)
+            yield InstructionHandle(insn)
 
     def extract_insn_features(self, f, bb, insn):
         for feature, va in capa.features.extractors.viv.insn.extract_features(f, bb, insn):

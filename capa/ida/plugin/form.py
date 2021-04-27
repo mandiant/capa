@@ -78,7 +78,7 @@ def find_func_features(f, extractor):
                 _bb_features[feature].add(ea)
                 func_features[feature].add(ea)
 
-        bb_features[capa.helpers.oint(bb)] = _bb_features
+        bb_features[int(bb)] = _bb_features
 
     return func_features, bb_features
 
@@ -100,7 +100,7 @@ def find_func_matches(f, ruleset, func_features, bb_features):
                 func_features[capa.features.MatchedRule(name)].add(ea)
 
     # find rule matches for function, function features include rule matches for basic blocks
-    _, matches = capa.engine.match(ruleset.function_rules, func_features, capa.helpers.oint(f))
+    _, matches = capa.engine.match(ruleset.function_rules, func_features, int(f))
     for (name, res) in matches.items():
         func_matches[name].extend(res)
 

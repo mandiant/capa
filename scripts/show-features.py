@@ -135,9 +135,9 @@ def main(argv=None):
         if args.format == "freeze":
             functions = tuple(filter(lambda f: f == args.function, functions))
         else:
-            functions = tuple(filter(lambda f: capa.helpers.oint(f) == args.function, functions))
+            functions = tuple(filter(lambda f: int(f) == args.function, functions))
 
-            if args.function not in [capa.helpers.oint(f) for f in functions]:
+            if args.function not in [int(f) for f in functions]:
                 print("0x%X not a function" % args.function)
                 return -1
 
