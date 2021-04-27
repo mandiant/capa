@@ -181,6 +181,9 @@ class ExampleFileDNE(Lint):
         return not found
 
 
+DEFAULT_SIGNATURES = capa.main.get_default_signatures()
+
+
 class DoesntMatchExample(Lint):
     name = "doesn't match on referenced example"
     recommendation = "Fix the rule logic or provide a different example"
@@ -204,7 +207,7 @@ class DoesntMatchExample(Lint):
 
             try:
                 extractor = capa.main.get_extractor(
-                    path, "auto", capa.main.BACKEND_VIV, sigpaths=[], disable_progress=True
+                    path, "auto", capa.main.BACKEND_VIV, sigpaths=DEFAULT_SIGNATURES, disable_progress=True
                 )
                 capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
