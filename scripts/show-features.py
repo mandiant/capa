@@ -100,7 +100,9 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=args.signatures)
+            extractor = capa.main.get_extractor(
+                args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=args.signatures
+            )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
