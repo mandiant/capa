@@ -140,7 +140,6 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     functions = list(extractor.get_functions())
 
     for f in pbar(functions, desc="matching", unit=" functions"):
-        #from IPython import embed; embed()
         function_address = int(f)
 
         if extractor.is_library_function(function_address):
