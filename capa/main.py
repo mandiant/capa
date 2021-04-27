@@ -301,12 +301,12 @@ def load_flirt_signature(path):
     elif path.endswith(".pat"):
         with open(path, "rb") as f:
             with timing("flirt: parsing .pat: " + path):
-                sigs = flirt.parse_pat(f.read().decode("utf-8"))
+                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
 
     elif path.endswith(".pat.gz"):
         with gzip.open(path, "rb") as f:
             with timing("flirt: parsing .pat.gz: " + path):
-                sigs = flirt.parse_pat(f.read().decode("utf-8"))
+                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
 
     else:
         raise ValueError("unexpect signature file extension: " + path)
