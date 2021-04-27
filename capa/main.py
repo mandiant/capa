@@ -253,7 +253,8 @@ SHELLCODE_BASE = 0x690000
 def get_shellcode_vw(sample, arch="auto"):
     """
     Return shellcode workspace using explicit arch or via auto detect.
-    The workspace is *not* analyzed nor saved.
+    The workspace is *not* analyzed nor saved. Its up to the caller to do this.
+    Then, they can register FLIRT analyzers or decide not to write to disk.
     """
     import viv_utils
 
