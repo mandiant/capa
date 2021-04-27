@@ -121,9 +121,7 @@ def compare_extractors_viv_null(viv_ext, null_ext):
         assert list(viv_ext.extract_function_features(f)) == list(null_ext.extract_function_features(int(f)))
 
         for bb in viv_ext.get_basic_blocks(f):
-            assert list(map(int, viv_ext.get_instructions(f, bb))) == list(
-                null_ext.get_instructions(int(f), int(bb))
-            )
+            assert list(map(int, viv_ext.get_instructions(f, bb))) == list(null_ext.get_instructions(int(f), int(bb)))
             assert list(viv_ext.extract_basic_block_features(f, bb)) == list(
                 null_ext.extract_basic_block_features(int(f), int(bb))
             )

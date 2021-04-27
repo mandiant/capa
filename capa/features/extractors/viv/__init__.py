@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class InstructionHandle:
     """this acts like a vivisect.Opcode but with an __int__() method"""
+
     def __init__(self, inner):
         self._inner = inner
 

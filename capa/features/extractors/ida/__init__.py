@@ -17,6 +17,7 @@ from capa.features.extractors import FeatureExtractor
 
 class FunctionHandle:
     """this acts like an idaapi.func_t but with __int__()"""
+
     def __init__(self, inner):
         self._inner = inner
 
@@ -29,6 +30,7 @@ class FunctionHandle:
 
 class BasicBlockHandle:
     """this acts like an idaapi.BasicBlock but with __int__()"""
+
     def __init__(self, inner):
         self._inner = inner
 
@@ -41,6 +43,7 @@ class BasicBlockHandle:
 
 class InstructionHandle:
     """this acts like an idaapi.insn_t but with __int__()"""
+
     def __init__(self, inner):
         self._inner = inner
 
