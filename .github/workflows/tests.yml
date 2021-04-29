@@ -17,7 +17,7 @@ jobs:
       with:
         python-version: 3.8
     - name: Install dependencies
-      run: pip install 'isort==5.*' black
+      run: pip install -e .[dev]
     - name: Lint with isort
       run: isort --profile black --length-sort --line-width 120 -c .
     - name: Lint with black
@@ -34,7 +34,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    # We don't need vivisect, so we can install capa using Python3
     - name: Install capa
       run: pip install -e .
     - name: Run rule linter
