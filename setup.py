@@ -83,7 +83,7 @@ setuptools.setup(
             "pytest-cov==2.11.1",
             "pycodestyle==2.7.0",
             "black==20.8b1 ; python_version>'3.0'",
-            "isort==4.3.21",  # TODO: Change to 5.8.0 when removing py2
+            "isort==5.8.0 ; python_version>'3.0'",
         ]
     },
     zip_safe=False,
