@@ -42,13 +42,13 @@ capa explorer supports Python >= 3.6 and the following IDA Pro versions:
 
 If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
 
-#### IDA 7.6 caveat: IDA needs a patch
+#### IDA 7.6 caveat: IDA 7.6sp1 or patch required
 
 As described [here](https://www.hex-rays.com/blog/ida-7-6-empty-qtreeview-qtreewidget/):
 
 > A rather nasty issue evaded our testing and found its way into IDA 7.6: using the PyQt5 modules that are shipped with IDA, QTreeView (or QTreeWidget) instances will always fail to display contents.
 
-Therefore, in order to use capa under IDA 7.6, you need to download and install the fix corresponding to your IDA installation, replacing the original QtWidgets DLL with the one contained in the .zip file (links to Hex-Rays):
+Therefore, in order to use capa under IDA 7.6 you need the [Service Pack 1 for IDA 7.6](https://www.hex-rays.com/products/ida/news/7_6sp1). Alternatively, you can download and install the fix corresponding to your IDA installation, replacing the original QtWidgets DLL with the one contained in the .zip file (links to Hex-Rays):
 
 
   - Windows: [pyqt5_qtwidgets_win](https://www.hex-rays.com/wp-content/uploads/2021/04/pyqt5_qtwidgets_win.zip)
