@@ -76,6 +76,41 @@ class FeatureExtractor(object):
         """
         raise NotImplemented
 
+    def is_library_function(self, va):
+        """
+        is the given address a library function?
+        the backend may implement its own function matching algorithm, or none at all.
+        we accept a VA here, rather than function object, to handle addresses identified in instructions.
+
+        this information is used to:
+          - filter out matches in library functions (by default), and
+          - recognize when to fetch symbol names for called (non-API) functions
+
+        args:
+          va (int): the virtual address of a function.
+
+        returns:
+          bool: True if the given address is the start of a library function.
+        """
+        return False
+
+    def get_function_name(self, va):
+        """
+        fetch any recognized name for the given address.
+        this is only guaranteed to return a value when the given function is a recognized library function.
+        we accept a VA here, rather than function object, to handle addresses identified in instructions.
+
+        args:
+          va (int): the virtual address of a function.
+
+        returns:
+          str: the function name
+
+        raises:
+          KeyError: when the given function does not have a name.
+        """
+        raise KeyError(va)
+
     @abc.abstractmethod
     def extract_function_features(self, f):
         """

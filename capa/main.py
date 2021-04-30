@@ -10,16 +10,20 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import gzip
+import time
 import hashlib
 import logging
 import os.path
 import argparse
 import datetime
 import textwrap
+import contextlib
 import collections
 
 import halo
 import tqdm
+import flirt
 import colorama
 
 import capa.rules
@@ -29,7 +33,7 @@ import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
-from capa.helpers import oint, get_file_taste
+from capa.helpers import get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
@@ -40,6 +44,14 @@ EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 
 
 logger = logging.getLogger("capa")
+
+
+@contextlib.contextmanager
+def timing(msg):
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 def set_vivisect_log_level(level):
@@ -76,14 +88,14 @@ def find_function_capabilities(ruleset, extractor, f):
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 
-        _, matches = capa.engine.match(ruleset.basic_block_rules, bb_features, oint(bb))
+        _, matches = capa.engine.match(ruleset.basic_block_rules, bb_features, int(bb))
 
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
             for va, _ in res:
                 function_features[capa.features.MatchedRule(rule_name)].add(va)
 
-    _, function_matches = capa.engine.match(ruleset.function_rules, function_features, oint(f))
+    _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
 
 
@@ -125,10 +137,19 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for f in pbar(list(extractor.get_functions()), desc="matching", unit=" functions"):
+    functions = list(extractor.get_functions())
+
+    for f in pbar(functions, desc="matching", unit=" functions"):
+        function_address = int(f)
+
+        if extractor.is_library_function(function_address):
+            function_name = extractor.get_function_name(function_address)
+            logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
+            continue
+
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
-        meta["feature_counts"]["functions"][f.__int__()] = feature_count
-        logger.debug("analyzed function 0x%x and extracted %d features", f.__int__(), feature_count)
+        meta["feature_counts"]["functions"][function_address] = feature_count
+        logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
 
         for rule_name, res in function_matches.items():
             all_function_matches[rule_name].extend(res)
@@ -136,7 +157,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
             all_bb_matches[rule_name].extend(res)
 
     # mapping from matched rule feature to set of addresses at which it matched.
-    # schema: Dic[MatchedRule: Set[int]
+    # schema: Dict[MatchedRule: Set[int]
     function_features = {
         capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in all_function_matches.items()
@@ -229,26 +250,31 @@ def is_supported_file_type(sample):
 SHELLCODE_BASE = 0x690000
 
 
-def get_shellcode_vw(sample, arch="auto", should_save=True):
+def get_shellcode_vw(sample, arch="auto"):
     """
-    Return shellcode workspace using explicit arch or via auto detect
+    Return shellcode workspace using explicit arch or via auto detect.
+    The workspace is *not* analyzed nor saved. Its up to the caller to do this.
+    Then, they can register FLIRT analyzers or decide not to write to disk.
     """
     import viv_utils
 
     with open(sample, "rb") as f:
         sample_bytes = f.read()
+
     if arch == "auto":
         # choose arch with most functions, idea by Jay G.
         vw_cands = []
         for arch in ["i386", "amd64"]:
             vw_cands.append(
-                viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+                viv_utils.getShellcodeWorkspace(
+                    sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False
+                )
             )
         if not vw_cands:
             raise ValueError("could not generate vivisect workspace")
         vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
     else:
-        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, should_save=should_save)
+        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False)
 
     vw.setMeta("StorageName", "%s.viv" % sample)
 
@@ -266,26 +292,114 @@ def get_meta_str(vw):
     return "%s, number of functions: %d" % (", ".join(meta), len(vw.getFunctions()))
 
 
+def load_flirt_signature(path):
+
+    if path.endswith(".sig"):
+        with open(path, "rb") as f:
+            with timing("flirt: parsing .sig: " + path):
+                sigs = flirt.parse_sig(f.read())
+
+    elif path.endswith(".pat"):
+        with open(path, "rb") as f:
+            with timing("flirt: parsing .pat: " + path):
+                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
+
+    elif path.endswith(".pat.gz"):
+        with gzip.open(path, "rb") as f:
+            with timing("flirt: parsing .pat.gz: " + path):
+                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
+
+    else:
+        raise ValueError("unexpect signature file extension: " + path)
+
+    return sigs
+
+
+def register_flirt_signature_analyzers(vw, sigpaths):
+    """
+    args:
+      vw (vivisect.VivWorkspace):
+      sigpaths (List[str]): file system paths of .sig/.pat files
+    """
+    import viv_utils.flirt
+
+    for sigpath in sigpaths:
+        sigs = load_flirt_signature(sigpath)
+
+        logger.debug("flirt: sig count: %d", len(sigs))
+
+        with timing("flirt: compiling sigs"):
+            matcher = flirt.compile(sigs)
+
+        analyzer = viv_utils.flirt.FlirtFunctionAnalyzer(matcher, sigpath)
+        logger.debug("registering viv function analyzer: %s", repr(analyzer))
+        viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
+
+
+def get_default_signatures():
+    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+        logger.debug("detected running under PyInstaller")
+        sigs_path = os.path.join(sys._MEIPASS, "sigs")
+        logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
+    else:
+        logger.debug("detected running from source")
+        sigs_path = os.path.join(os.path.dirname(__file__), "..", "sigs")
+        logger.debug("default signatures path (source method): %s", sigs_path)
+
+    ret = []
+    for root, dirs, files in os.walk(sigs_path):
+        for file in files:
+            if not (file.endswith(".pat") or file.endswith(".pat.gz") or file.endswith(".sig")):
+                continue
+
+            ret.append(os.path.join(root, file))
+
+    return ret
+
+
 class UnsupportedFormatError(ValueError):
     pass
 
 
-def get_workspace(path, format, should_save=True):
+def get_workspace(path, format, sigpaths):
+    """
+    load the program at the given path into a vivisect workspace using the given format.
+    also apply the given FLIRT signatures.
+
+    supported formats:
+      - pe
+      - sc32
+      - sc64
+      - auto
+
+    this creates and analyzes the workspace; however, it does *not* save the workspace.
+    this is the responsibility of the caller.
+    """
+
+    # lazy import enables us to not require viv if user wants SMDA, for example.
     import viv_utils
 
     logger.debug("generating vivisect workspace for: %s", path)
     if format == "auto":
         if not is_supported_file_type(path):
             raise UnsupportedFormatError()
-        vw = viv_utils.getWorkspace(path, should_save=should_save)
+
+        # don't analyze, so that we can add our Flirt function analyzer first.
+        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "pe":
-        vw = viv_utils.getWorkspace(path, should_save=should_save)
+        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "sc32":
-        vw = get_shellcode_vw(path, arch="i386", should_save=should_save)
+        # these are not analyzed nor saved.
+        vw = get_shellcode_vw(path, arch="i386")
     elif format == "sc64":
-        vw = get_shellcode_vw(path, arch="amd64", should_save=should_save)
+        vw = get_shellcode_vw(path, arch="amd64")
     else:
         raise ValueError("unexpected format: " + format)
+
+    register_flirt_signature_analyzers(vw, sigpaths)
+
+    vw.analyze()
+
     logger.debug("%s", get_meta_str(vw))
     return vw
 
@@ -294,7 +408,7 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor(path, format, backend, disable_progress=False):
+def get_extractor(path, format, backend, sigpaths, disable_progress=False):
     """
     raises:
       UnsupportedFormatError:
@@ -321,7 +435,7 @@ def get_extractor(path, format, backend, disable_progress=False):
                 format = "sc32"
             elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
                 format = "sc64"
-            vw = get_workspace(path, format, should_save=False)
+            vw = get_workspace(path, format, sigpaths)
 
             try:
                 vw.saveWorkspace()
@@ -524,6 +638,18 @@ def install_common_args(parser, wanted=None):
             help="path to rule file or directory, use embedded rules by default",
         )
 
+    if "signatures" in wanted:
+        parser.add_argument(
+            "--signature",
+            action="append",
+            dest="signatures",
+            type=str,
+            # with action=append, users can specify futher signatures but not override whats found in $capa/sigs/.
+            # seems reasonable for now. this is an easy way to register the default signature set.
+            default=get_default_signatures(),
+            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+        )
+
     if "tag" in wanted:
         parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
 
@@ -609,7 +735,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"sample", "format", "backend", "rules", "tag"})
+    install_common_args(parser, {"sample", "format", "backend", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
     handle_common_args(args)
@@ -678,7 +804,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, format, args.backend, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, format, args.backend, args.signatures, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

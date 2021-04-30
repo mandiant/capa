@@ -122,7 +122,7 @@ def dumps(extractor):
                 )
 
             for insnva, insn in sorted(
-                [(insn.__int__(), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
+                [(int(insn), insn) for insn in extractor.get_instructions(f, bb)], key=lambda p: p[0]
             ):
                 ret["functions"][hex(f)][hex(bb)].append(hex(insnva))
 
@@ -248,43 +248,13 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    formats = [
-        ("auto", "(default) detect file type automatically"),
-        ("pe", "Windows PE file"),
-        ("sc32", "32-bit shellcode"),
-        ("sc64", "64-bit shellcode"),
-    ]
-    format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
-
     parser = argparse.ArgumentParser(description="save capa features to a file")
-    parser.add_argument("sample", type=str, help="Path to sample to analyze")
+    capa.main.install_common_args(parser, {"sample", "format", "backend", "signatures"})
     parser.add_argument("output", type=str, help="Path to output file")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
-    parser.add_argument(
-        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
-    )
-    parser.add_argument(
-        "-b",
-        "--backend",
-        type=str,
-        help="select the backend to use",
-        choices=(capa.main.BACKEND_VIV, capa.main.BACKEND_SMDA),
-        default=capa.main.BACKEND_VIV,
-    )
     args = parser.parse_args(args=argv)
+    capa.main.handle_common_args(args)
 
-    if args.quiet:
-        logging.basicConfig(level=logging.ERROR)
-        logging.getLogger().setLevel(logging.ERROR)
-    elif args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
-
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=args.signatures)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 

@@ -83,7 +83,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    capa.main.install_common_args(parser, wanted={"format", "sample"})
+    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures"})
 
     parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
     args = parser.parse_args(args=argv)
@@ -100,7 +100,9 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV)
+            extractor = capa.main.get_extractor(
+                args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=args.signatures
+            )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
@@ -135,9 +137,9 @@ def main(argv=None):
         if args.format == "freeze":
             functions = tuple(filter(lambda f: f == args.function, functions))
         else:
-            functions = tuple(filter(lambda f: capa.helpers.oint(f) == args.function, functions))
+            functions = tuple(filter(lambda f: int(f) == args.function, functions))
 
-            if args.function not in [capa.helpers.oint(f) for f in functions]:
+            if args.function not in [int(f) for f in functions]:
                 print("0x%X not a function" % args.function)
                 return -1
 

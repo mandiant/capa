@@ -111,7 +111,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(parser, wanted={"format", "sample", "rules", "tag"})
+    capa.main.install_common_args(parser, wanted={"format", "backend", "sample", "signatures", "rules", "tag"})
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
@@ -152,8 +152,9 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         format = args.format
+
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format)
+            extractor = capa.main.get_extractor(args.sample, args.format, args.backend, args.signatures)
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

@@ -72,12 +72,15 @@ def xfail(condition, reason=None):
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
+    aulldiv_pat = os.path.join(CD, "..", "sigs", "test_aulldiv.pat")
+    aullrem_pat = os.path.join(CD, "..", "sigs", "test_aullrem.pat.gz")
+
     if "raw32" in path:
-        vw = capa.main.get_workspace(path, "sc32", should_save=False)
+        vw = capa.main.get_workspace(path, "sc32", sigpaths=[aulldiv_pat, aullrem_pat])
     elif "raw64" in path:
-        vw = capa.main.get_workspace(path, "sc64", should_save=False)
+        vw = capa.main.get_workspace(path, "sc64", sigpaths=[aulldiv_pat, aullrem_pat])
     else:
-        vw = capa.main.get_workspace(path, "auto", should_save=True)
+        vw = capa.main.get_workspace(path, "auto", sigpaths=[aulldiv_pat, aullrem_pat])
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
     return extractor
@@ -241,14 +244,14 @@ def sample(request):
 
 def get_function(extractor, fva):
     for f in extractor.get_functions():
-        if f.__int__() == fva:
+        if int(f) == fva:
             return f
     raise ValueError("function not found")
 
 
 def get_basic_block(extractor, f, va):
     for bb in extractor.get_basic_blocks(f):
-        if bb.__int__() == va:
+        if int(bb) == va:
             return bb
     raise ValueError("basic block not found")
 

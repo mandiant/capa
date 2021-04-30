@@ -6,9 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
-import types
-
 import idaapi
 
 import capa.features.extractors.ida.file
@@ -18,24 +15,43 @@ import capa.features.extractors.ida.basicblock
 from capa.features.extractors import FeatureExtractor
 
 
-def get_ea(self):
-    """ """
-    if isinstance(self, (idaapi.BasicBlock, idaapi.func_t)):
+class FunctionHandle:
+    """this acts like an idaapi.func_t but with __int__()"""
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    def __int__(self):
         return self.start_ea
-    if isinstance(self, idaapi.insn_t):
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class BasicBlockHandle:
+    """this acts like an idaapi.BasicBlock but with __int__()"""
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    def __int__(self):
+        return self.start_ea
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class InstructionHandle:
+    """this acts like an idaapi.insn_t but with __int__()"""
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    def __int__(self):
         return self.ea
-    raise TypeError
 
-
-def add_ea_int_cast(o):
-    """
-    dynamically add a cast-to-int (`__int__`) method to the given object
-    that returns the value of the `.ea` property.
-    this bit of skullduggery lets use cast viv-utils objects as ints.
-    the correct way of doing this is to update viv-utils (or subclass the objects here).
-    """
-    setattr(o, "__int__", types.MethodType(get_ea, o))
-    return o
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
 
 
 class IdaFeatureExtractor(FeatureExtractor):
@@ -59,21 +75,23 @@ class IdaFeatureExtractor(FeatureExtractor):
         # ignore library functions and thunk functions as identified by IDA
         for f in ida_helpers.get_functions(skip_thunks=True, skip_libs=True):
             setattr(f, "ctx", ctx)
-            yield add_ea_int_cast(f)
+            yield FunctionHandle(f)
 
     @staticmethod
     def get_function(ea):
         f = idaapi.get_func(ea)
         setattr(f, "ctx", {})
-        return add_ea_int_cast(f)
+        return FunctionHandle(f)
 
     def extract_function_features(self, f):
         for (feature, ea) in capa.features.extractors.ida.function.extract_features(f):
             yield feature, ea
 
     def get_basic_blocks(self, f):
-        for bb in capa.features.extractors.ida.helpers.get_function_blocks(f):
-            yield add_ea_int_cast(bb)
+        import capa.features.extractors.ida.helpers as ida_helpers
+
+        for bb in ida_helpers.get_function_blocks(f):
+            yield BasicBlockHandle(bb)
 
     def extract_basic_block_features(self, f, bb):
         for (feature, ea) in capa.features.extractors.ida.basicblock.extract_features(f, bb):
@@ -83,7 +101,7 @@ class IdaFeatureExtractor(FeatureExtractor):
         import capa.features.extractors.ida.helpers as ida_helpers
 
         for insn in ida_helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
-            yield add_ea_int_cast(insn)
+            yield InstructionHandle(insn)
 
     def extract_insn_features(self, f, bb, insn):
         for (feature, ea) in capa.features.extractors.ida.insn.extract_features(f, bb, insn):

@@ -115,28 +115,21 @@ def compare_extractors_viv_null(viv_ext, null_ext):
       null_ext (capa.features.extractors.NullFeatureExtractor)
     """
     assert list(viv_ext.extract_file_features()) == list(null_ext.extract_file_features())
-    assert list(map(to_int, viv_ext.get_functions())) == list(null_ext.get_functions())
+    assert list(map(int, viv_ext.get_functions())) == list(null_ext.get_functions())
     for f in viv_ext.get_functions():
-        assert list(map(to_int, viv_ext.get_basic_blocks(f))) == list(null_ext.get_basic_blocks(to_int(f)))
-        assert list(viv_ext.extract_function_features(f)) == list(null_ext.extract_function_features(to_int(f)))
+        assert list(map(int, viv_ext.get_basic_blocks(f))) == list(null_ext.get_basic_blocks(int(f)))
+        assert list(viv_ext.extract_function_features(f)) == list(null_ext.extract_function_features(int(f)))
 
         for bb in viv_ext.get_basic_blocks(f):
-            assert list(map(to_int, viv_ext.get_instructions(f, bb))) == list(
-                null_ext.get_instructions(to_int(f), to_int(bb))
-            )
+            assert list(map(int, viv_ext.get_instructions(f, bb))) == list(null_ext.get_instructions(int(f), int(bb)))
             assert list(viv_ext.extract_basic_block_features(f, bb)) == list(
-                null_ext.extract_basic_block_features(to_int(f), to_int(bb))
+                null_ext.extract_basic_block_features(int(f), int(bb))
             )
 
             for insn in viv_ext.get_instructions(f, bb):
                 assert list(viv_ext.extract_insn_features(f, bb, insn)) == list(
-                    null_ext.extract_insn_features(to_int(f), to_int(bb), to_int(insn))
+                    null_ext.extract_insn_features(int(f), int(bb), int(insn))
                 )
-
-
-def to_int(o):
-    """helper to get int value of extractor items"""
-    return capa.helpers.oint(o)
 
 
 def test_freeze_s_roundtrip():

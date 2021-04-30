@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
-import sys
 
 import setuptools
 
@@ -19,7 +18,7 @@ requirements = [
     "termcolor==1.1.0",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
-    "viv-utils==0.6.0",
+    "viv-utils[flirt]==0.6.2",
     "halo==0.0.31",
     "networkx==2.5.1",
     "ruamel.yaml==0.17.4",

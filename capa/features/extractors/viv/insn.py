@@ -5,10 +5,14 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 
+import viv_utils
 import envi.memory
+import viv_utils.flirt
 import envi.archs.i386.disasm
 
+import capa.features.extractors.viv
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
 from capa.features import (
@@ -74,7 +78,6 @@ def extract_insn_api_features(f, bb, insn):
     # example:
     #
     #    call dword [0x00473038]
-
     if insn.mnem not in ("call", "jmp"):
         return
 
@@ -96,7 +99,7 @@ def extract_insn_api_features(f, bb, insn):
     # call via thunk on x86,
     # see 9324d1a8ae37a36ae560c37448c9705a at 0x407985
     #
-    # this is also how calls to internal functions may be decoded on x64.
+    # this is also how calls to internal functions may be decoded on x32 and x64.
     # see Lab21-01.exe_:0x140001178
     #
     # follow chained thunks, e.g. in 82bf6347acf15e5d883715dc289d8a2b at 0x14005E0FF in
@@ -109,6 +112,11 @@ def extract_insn_api_features(f, bb, insn):
         imports = get_imports(f.vw)
         target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, insn.va)
         if not target:
+            return
+
+        if viv_utils.flirt.is_library_function(f.vw, target):
+            name = viv_utils.get_function_name(f.vw, target)
+            yield API(name), insn.va
             return
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):

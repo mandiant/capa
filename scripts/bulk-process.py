@@ -96,7 +96,7 @@ def get_capa_results(args):
     rules, format, path = args
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, disable_progress=True)
+        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, args.signatures, disable_progress=True)
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
@@ -140,7 +140,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
         parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-        capa.main.install_common_args(parser, wanted={"rules"})
+        capa.main.install_common_args(parser, wanted={"rules", "signatures"})
         parser.add_argument("input", type=str, help="Path to directory of files to recursively analyze")
         parser.add_argument(
             "-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor"
