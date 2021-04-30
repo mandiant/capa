@@ -1,5 +1,4 @@
-import pytest
-from fixtures import get_function, pma16_01_extractor, extract_function_features
+from fixtures import get_function, extract_function_features
 
 import capa.features.insn
 
@@ -15,7 +14,6 @@ def test_function_id_gz_pat(pma16_01_extractor):
     assert pma16_01_extractor.get_function_name(0x407500) == "__aullrem"
 
 
-@pytest.mark.xfail
 def test_function_id_complex_match(pma16_01_extractor):
     # 0x405714 is __spawnlp which requires recursive match of __spawnvp at 0x407FAB
     # (and __spawnvpe at 0x409DE8)
