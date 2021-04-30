@@ -7,6 +7,7 @@ The first Python 3 ONLY capa version.
 ### New Features
 
 - main: auto detect shellcode based on file extension #516 @mr-tz
+- main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 
 ### New Rules
 
