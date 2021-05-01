@@ -72,15 +72,20 @@ def xfail(condition, reason=None):
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
-    aulldiv_pat = os.path.join(CD, "..", "sigs", "test_aulldiv.pat")
-    aullrem_pat = os.path.join(CD, "..", "sigs", "test_aullrem.pat.gz")
+    sigpaths = [
+        os.path.join(CD, "..", "sigs", "test_aulldiv.pat"),
+        os.path.join(CD, "..", "sigs", "test_aullrem.pat.gz"),
+        os.path.join(CD, "..", "sigs", "flare_common_libs.sig"),
+        os.path.join(CD, "..", "sigs", "flare_msvc_atlmfc_32_64.sig"),
+        os.path.join(CD, "..", "sigs", "flare_msvc_rtf_32_64.sig"),
+    ]
 
     if "raw32" in path:
-        vw = capa.main.get_workspace(path, "sc32", sigpaths=[aulldiv_pat, aullrem_pat])
+        vw = capa.main.get_workspace(path, "sc32", sigpaths=sigpaths)
     elif "raw64" in path:
-        vw = capa.main.get_workspace(path, "sc64", sigpaths=[aulldiv_pat, aullrem_pat])
+        vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        vw = capa.main.get_workspace(path, "auto", sigpaths=[aulldiv_pat, aullrem_pat])
+        vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
     return extractor
