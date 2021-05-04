@@ -73,4 +73,4 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest tests/
+      run: pytest -v tests/
