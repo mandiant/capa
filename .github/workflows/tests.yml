@@ -46,15 +46,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-10.15]
+        os: [windows-2019]
         # across all operating systems
         python-version: [3.6, 3.9]
-        include:
-          # on Ubuntu run these as well
-          - os: ubuntu-20.04
-            python-version: 3.7
-          - os: ubuntu-20.04
-            python-version: 3.8
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
