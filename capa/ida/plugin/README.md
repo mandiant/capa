@@ -79,6 +79,7 @@ You can install capa explorer using the following steps:
 
 1. Open IDA and analyze a supported file type (select the `Manual Load` and `Load Resources` options in IDA for best results)
 2. Open capa explorer in IDA by navigating to `Edit > Plugins > FLARE capa explorer` or using the keyboard shortcut `Alt+F5`
+   You can also use `ida_loader.load_and_run_plugin("capa_explorer", arg)`. `arg` is a bitflag for which setting the LSB enables automatic analysis. See `capa.ida.plugin.form.Options` for more details.
 3. Select the `Program Analysis` tab
 4. Click the `Analyze` button
 

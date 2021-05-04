@@ -230,7 +230,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 
-    def __init__(self, name):
+    def __init__(self, name, option=0):
         """initialize form elements"""
         super(CapaExplorerForm, self).__init__()
 
@@ -277,6 +277,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_status_label = None
 
         self.Show()
+
+        if option == 1:
+            self.analyze_program()
 
     def OnCreate(self, form):
         """called when plugin form is created

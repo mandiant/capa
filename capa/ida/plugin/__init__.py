@@ -54,8 +54,14 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         pass
 
     def run(self, arg):
-        """called when IDA is running the plugin as a script"""
-        self.form = CapaExplorerForm(self.PLUGIN_NAME)
+        """
+        called when IDA is running the plugin as a script
+
+        args:
+          arg (int): bitflag. Setting LSB enables automatic analysis upon
+          loading. The other bits are currently undefined. See `form.Options`.
+        """
+        self.form = CapaExplorerForm(self.PLUGIN_NAME, arg)
         return True
 
 
