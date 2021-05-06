@@ -32,6 +32,19 @@ The first Python 3 ONLY capa version.
 - [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
 
 
+## v1.6.3 (2021-04-29)
+
+This release adds IDA 7.6 support to capa.
+
+### Changes
+
+- IDA 7.6 support @williballenthin @Ana06
+
+### Raw diffs
+
+  - [capa v1.6.2...v1.6.3](https://github.com/fireeye/capa/compare/v1.6.2...v1.6.3)
+
+
 ## v1.6.2 (2021-04-13)
 
 This release backports a fix to capa 1.6: The Windows binary was built with Python 3.9 which doesn't support Windows 7.
@@ -43,7 +56,7 @@ This release backports a fix to capa 1.6: The Windows binary was built with Pyth
 ### Raw diffs
 
   - [capa v1.6.1...v1.6.2](https://github.com/fireeye/capa/compare/v1.6.1...v1.6.2)
-  - [capa-rules v1.6.1...v1.6.2](https://github.com/fireeye/capa-rules/compare/v1.6.1...v1.6.2)
+
 
 ## v1.6.1 (2021-04-07)
 
