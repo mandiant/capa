@@ -43,4 +43,5 @@
 - [ ] After PR review, merge the PR and [create the release in GH](https://github.com/fireeye/capa/releases/new) using text from the [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md).
 - [ ] Verify GH actions [upload artifacts](https://github.com/fireeye/capa/releases), [publish to PyPI](https://pypi.org/project/flare-capa) and [create a tag in capa rules](https://github.com/fireeye/capa-rules/tags) upon completion.
 - [ ] [Spread the word](https://twitter.com)
+- [ ] Update internal service
 
