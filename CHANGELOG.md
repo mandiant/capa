@@ -11,7 +11,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - explorer: IDA 7.6 support #497 @williballenthin
 
-### New Rules (63)
+### New Rules (64)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -76,6 +76,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/list-containers @williballenthin
 - nursery/run-in-container @williballenthin
 - persistence/registry/appinitdlls/disable-appinit_dlls-code-signature-enforcement @williballenthin
+- collection/password-manager/steal-keepass-passwords-using-keefarce @Ana06
 -
 
 ### Bug Fixes
