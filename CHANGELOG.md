@@ -76,6 +76,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/list-containers @williballenthin
 - nursery/run-in-container @williballenthin
 - persistence/registry/appinitdlls/disable-appinit_dlls-code-signature-enforcement @williballenthin
+-
 
 ### Bug Fixes
 
