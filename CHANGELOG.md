@@ -93,6 +93,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 ### Development
 
 - ci: add capa release link to capa-rules tag #517 @Ana06
+- ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/fireeye/capa-rules/pull/374 #549 @Ana06
 
 ### Raw diffs
 
