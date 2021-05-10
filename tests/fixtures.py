@@ -60,7 +60,7 @@ def xfail(condition, reason=None):
 
 
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=6)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
