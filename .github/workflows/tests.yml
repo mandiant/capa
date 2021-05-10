@@ -61,10 +61,7 @@ jobs:
     - name: Install pyyaml
       if: matrix.os == 'ubuntu-20.04'
       run: sudo apt-get install -y libyaml-dev
-    - name: Install Microsoft Visual C++ 9.0
-      if: matrix.os == 'windows-2019' && matrix.python-version == '2.7'
-      run: choco install vcpython27
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest -v tests/ -k test_viv_features
+      run: pytest --full-trace -ra -v tests/ -k test_viv_features
