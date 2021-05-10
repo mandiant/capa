@@ -12,6 +12,7 @@ import os.path
 import binascii
 import contextlib
 import collections
+from functools import lru_cache
 
 import pytest
 
@@ -20,12 +21,6 @@ import capa.features.file
 import capa.features.insn
 import capa.features.basicblock
 from capa.features import ARCH_X32, ARCH_X64
-
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
-
 
 CD = os.path.dirname(__file__)
 
@@ -42,10 +37,6 @@ def xfail(condition, reason=None):
         # this test:
         #  - passes on py3 if foo() works
         #  - fails  on py3 if foo() fails
-        #  - xfails on py2 if foo() fails
-        #  - fails  on py2 if foo() works
-        with xfail(sys.version_info < (3, 0), reason="py2 doesn't foo"):
-            foo()
     """
     try:
         # do the block
@@ -68,7 +59,7 @@ def xfail(condition, reason=None):
             raise RuntimeError("expected to fail, but didn't")
 
 
-@lru_cache()
+@lru_cache(maxsize=10)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
@@ -81,13 +72,14 @@ def get_viv_extractor(path):
     ]
 
     if "raw32" in path:
-        vw = capa.main.get_workspace(path, "sc32", sigpaths=[])
+        vw = capa.main.get_workspace(path, "sc32", sigpaths=sigpaths)
     elif "raw64" in path:
-        vw = capa.main.get_workspace(path, "sc64", sigpaths=[])
+        vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        vw = capa.main.get_workspace(path, "auto", sigpaths=[])
+        vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
+    print(get_viv_extractor.cache_info)
     return extractor
 
 

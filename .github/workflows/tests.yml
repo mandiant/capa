@@ -64,4 +64,4 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest --full-trace -ra -v tests/ -k test_viv_features
+      run: pytest --full-trace -ra -s -vv tests/ -k test_viv_features
