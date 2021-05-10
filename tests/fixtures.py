@@ -470,7 +470,7 @@ FEATURE_PRESENCE_TESTS = [
     ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
     # insn/characteristic(recursive call)
-    ("kernel32-64", "function=0x18000f6c0", capa.features.Characteristic("recursive call"), True),
+    ("mimikatz", "function=0x40640e", capa.features.Characteristic("recursive call"), True),
     # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
     ("mimikatz", "function=0x4175FF", capa.features.Characteristic("recursive call"), False),
     # insn/characteristic(indirect call)
