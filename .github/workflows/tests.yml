@@ -46,9 +46,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019]
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
         # across all operating systems
         python-version: [3.6, 3.9]
+        include:
+          # on Ubuntu run these as well
+          - os: ubuntu-20.04
+            python-version: 3.7
+          - os: ubuntu-20.04
+            python-version: 3.8
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
@@ -64,4 +70,4 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest --full-trace -ra -s -vv tests/ -k test_viv_features
+      run: pytest tests/

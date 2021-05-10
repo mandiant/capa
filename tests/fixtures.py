@@ -59,6 +59,7 @@ def xfail(condition, reason=None):
             raise RuntimeError("expected to fail, but didn't")
 
 
+# need to limit cache size so GitHub Actions doesn't run out of memory, see #545
 @lru_cache(maxsize=8)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
@@ -77,9 +78,6 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
-
-    # caller needs to save workspace
-    vw.saveWorkspace()
 
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
@@ -143,6 +141,7 @@ def extract_basic_block_features(extractor, f, bb):
     return features
 
 
+# note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
         return os.path.join(CD, "data", "mimikatz.exe_")
@@ -472,7 +471,7 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
     # insn/characteristic(recursive call)
     ("kernel32-64", "function=0x18000f6c0", capa.features.Characteristic("recursive call"), True),
-    # before this we used 0x4556E5, False, which is ambiguous because there's a data reference / indirect recursive call
+    # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
     ("mimikatz", "function=0x4175FF", capa.features.Characteristic("recursive call"), False),
     # insn/characteristic(indirect call)
     ("mimikatz", "function=0x4175FF", capa.features.Characteristic("indirect call"), True),
@@ -482,7 +481,7 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), False),
     # function/characteristic(calls to)
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
-    # before this we used 0x4556E5, False, which is ambiguous because there's a data reference / indirect recursive call
+    # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
     ("mimikatz", "function=0x456BB9", capa.features.Characteristic("calls to"), False),
 ]
 
@@ -502,7 +501,6 @@ FEATURE_COUNT_TESTS = [
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
-    print(get_viv_extractor.cache_info())
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
@@ -513,7 +511,6 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
 
 
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
-    print(get_viv_extractor.cache_info())
     extractor = get_extractor(sample)
     features = scope(extractor)
     msg = "%s should be found %d times in %s, found: %d" % (
