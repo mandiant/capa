@@ -77,9 +77,12 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
+
+    # caller needs to save workspace
+    vw.saveWorkspace()
+
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
-    print(get_viv_extractor.cache_info)
     return extractor
 
 
@@ -497,6 +500,7 @@ FEATURE_COUNT_TESTS = [
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
+    print(get_viv_extractor.cache_info())
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
@@ -507,6 +511,7 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
 
 
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
+    print(get_viv_extractor.cache_info())
     extractor = get_extractor(sample)
     features = scope(extractor)
     msg = "%s should be found %d times in %s, found: %d" % (
