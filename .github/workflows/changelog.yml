@@ -1,0 +1,39 @@
+name: changelog
+
+on:
+  # We need pull_request_target instead of pull_request because a write
+  # repository token is needed to add a review to a PR. DO NOT BUILD
+  # OR RUN UNTRUSTED CODE FROM PRs IN THIS ACTION
+  pull_request_target:
+    types: [opened, edited, synchronize]
+
+jobs:
+  check_changelog:
+    runs-on: ubuntu-20.04
+    env:
+      NO_CHANGELOG: '[x] No CHANGELOG update needed'
+    steps:
+    - name: Get changed files
+      id: files
+      uses: jitterbit/get-changed-files@v1
+    - name: check changelog updated
+      id: changelog_updated
+      env:
+        PR_BODY: ${{ github.event.pull_request.body }}
+        FILES: ${{ steps.files.outputs.modified }}
+      run: |
+        echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
+    - name: Reject pull request if no CHANGELOG update
+      if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
+      uses: andrewmusgrave/automatic-pull-request-review@0.0.5
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        event: REQUEST_CHANGES
+        body: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
+    - name: Dismiss previous review if CHANGELOG update
+      uses: andrewmusgrave/automatic-pull-request-review@0.0.5
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        event: DISMISS
+        body: "CHANGELOG updated or no update needed, thanks! :smile:"
+
