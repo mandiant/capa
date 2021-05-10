@@ -318,163 +318,163 @@ def parametrize(params, values, **kwargs):
 
 
 FEATURE_PRESENCE_TESTS = [
-    # file/characteristic("embedded pe")
-    ("pma12-04", "file", capa.features.Characteristic("embedded pe"), True),
-    # file/string
-    ("mimikatz", "file", capa.features.String("SCardControl"), True),
-    ("mimikatz", "file", capa.features.String("SCardTransmit"), True),
-    ("mimikatz", "file", capa.features.String("ACR  > "), True),
-    ("mimikatz", "file", capa.features.String("nope"), False),
-    # file/sections
-    ("mimikatz", "file", capa.features.file.Section(".text"), True),
-    ("mimikatz", "file", capa.features.file.Section(".nope"), False),
-    # IDA doesn't extract unmapped sections by default
-    # ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
-    # file/exports
-    ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
-    ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
-    ("kernel32", "file", capa.features.file.Export("nope"), False),
-    # file/imports
-    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
-    ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
-    ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
-    ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
-    ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
-    ("mimikatz", "file", capa.features.file.Import("#11"), False),
-    ("mimikatz", "file", capa.features.file.Import("#nope"), False),
-    ("mimikatz", "file", capa.features.file.Import("nope"), False),
-    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
-    ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
-    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
-    ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
-    # function/characteristic(loop)
-    ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
-    ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
-    # bb/characteristic(tight loop)
-    ("mimikatz", "function=0x402EC4", capa.features.Characteristic("tight loop"), True),
-    ("mimikatz", "function=0x401000", capa.features.Characteristic("tight loop"), False),
-    # bb/characteristic(stack string)
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("stack string"), True),
-    ("mimikatz", "function=0x401000", capa.features.Characteristic("stack string"), False),
-    # bb/characteristic(tight loop)
-    ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.Characteristic("tight loop"), True),
-    ("mimikatz", "function=0x401000,bb=0x401000", capa.features.Characteristic("tight loop"), False),
-    # insn/mnemonic
-    ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("push"), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("movzx"), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
-    # insn/number
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
-    # insn/number: stack adjustments
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
-    # insn/number: arch flavors
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
-    # insn/offset
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
-    # insn/offset, issue #276
-    ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
-    # insn/offset: stack references
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
-    # insn/offset: negative
-    ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
-    ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-    # insn/offset: arch flavors
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X32), True),
-    ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X64), False),
-    # insn/api
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptImportKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptDestroyKey"), True),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
-    ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
-    # insn/api: thunk
-    ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
-    # insn/api: x64
-    (
-        "kernel32-64",
-        "function=0x180001010",
-        capa.features.insn.API("RtlVirtualUnwind"),
-        True,
-    ),
-    ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
-    # insn/api: x64 thunk
-    (
-        "kernel32-64",
-        "function=0x1800202B0",
-        capa.features.insn.API("RtlCaptureContext"),
-        True,
-    ),
-    ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
-    # insn/api: x64 nested thunk
-    ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
-    # insn/api: call via jmp
-    ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
-    ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
-    # TODO ignore thunk functions that call via jmp?
-    # insn/api: resolve indirect calls
-    ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
-    ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),
-    ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), True),
-    ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), True),
-    # insn/string
-    ("mimikatz", "function=0x40105D", capa.features.String("SCardControl"), True),
-    ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
-    ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
-    ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
-    ("773290...", "function=0x140001140", capa.features.String(r"%s:\\OfficePackagesForWDAG"), True),
-    # insn/regex, issue #262
-    ("pma16-01", "function=0x4021B0", capa.features.Regex("HTTP/1.0"), True),
-    ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
-    # insn/string, pointer to string
-    ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
-    # insn/string, direct memory reference
-    ("mimikatz", "function=0x46D6CE", capa.features.String("(null)"), True),
-    # insn/bytes
-    ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardControl".encode("utf-16le")), True),
-    ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardTransmit".encode("utf-16le")), True),
-    ("mimikatz", "function=0x40105D", capa.features.Bytes("ACR  > ".encode("utf-16le")), True),
-    ("mimikatz", "function=0x40105D", capa.features.Bytes("nope".encode("ascii")), False),
-    # IDA features included byte sequences read from invalid memory, fixed in #409
-    ("mimikatz", "function=0x44570F", capa.features.Bytes(binascii.unhexlify("FF" * 256)), False),
-    # insn/bytes, pointer to bytes
-    ("mimikatz", "function=0x44EDEF", capa.features.Bytes("INPUTEVENT".encode("utf-16le")), True),
-    # insn/characteristic(nzxor)
-    ("mimikatz", "function=0x410DFC", capa.features.Characteristic("nzxor"), True),
-    ("mimikatz", "function=0x40105D", capa.features.Characteristic("nzxor"), False),
-    # insn/characteristic(nzxor): no security cookies
-    ("mimikatz", "function=0x46D534", capa.features.Characteristic("nzxor"), False),
-    # insn/characteristic(nzxor): xorps
-    # viv needs fixup to recognize function, see above
-    ("3b13b...", "function=0x10006860", capa.features.Characteristic("nzxor"), True),
-    # insn/characteristic(peb access)
-    ("kernel32-64", "function=0x1800017D0", capa.features.Characteristic("peb access"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("peb access"), False),
-    # insn/characteristic(gs access)
-    ("kernel32-64", "function=0x180001068", capa.features.Characteristic("gs access"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("gs access"), False),
-    # insn/characteristic(cross section flow)
-    ("a1982...", "function=0x4014D0", capa.features.Characteristic("cross section flow"), True),
-    # insn/characteristic(cross section flow): imports don't count
-    ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
+    # # file/characteristic("embedded pe")
+    # ("pma12-04", "file", capa.features.Characteristic("embedded pe"), True),
+    # # file/string
+    # ("mimikatz", "file", capa.features.String("SCardControl"), True),
+    # ("mimikatz", "file", capa.features.String("SCardTransmit"), True),
+    # ("mimikatz", "file", capa.features.String("ACR  > "), True),
+    # ("mimikatz", "file", capa.features.String("nope"), False),
+    # # file/sections
+    # ("mimikatz", "file", capa.features.file.Section(".text"), True),
+    # ("mimikatz", "file", capa.features.file.Section(".nope"), False),
+    # # IDA doesn't extract unmapped sections by default
+    # # ("mimikatz", "file", capa.features.file.Section(".rsrc"), True),
+    # # file/exports
+    # ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
+    # ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
+    # ("kernel32", "file", capa.features.file.Export("nope"), False),
+    # # file/imports
+    # ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
+    # ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
+    # ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
+    # ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
+    # ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
+    # ("mimikatz", "file", capa.features.file.Import("#11"), False),
+    # ("mimikatz", "file", capa.features.file.Import("#nope"), False),
+    # ("mimikatz", "file", capa.features.file.Import("nope"), False),
+    # ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
+    # ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
+    # ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
+    # ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
+    # # function/characteristic(loop)
+    # ("mimikatz", "function=0x401517", capa.features.Characteristic("loop"), True),
+    # ("mimikatz", "function=0x401000", capa.features.Characteristic("loop"), False),
+    # # bb/characteristic(tight loop)
+    # ("mimikatz", "function=0x402EC4", capa.features.Characteristic("tight loop"), True),
+    # ("mimikatz", "function=0x401000", capa.features.Characteristic("tight loop"), False),
+    # # bb/characteristic(stack string)
+    # ("mimikatz", "function=0x4556E5", capa.features.Characteristic("stack string"), True),
+    # ("mimikatz", "function=0x401000", capa.features.Characteristic("stack string"), False),
+    # # bb/characteristic(tight loop)
+    # ("mimikatz", "function=0x402EC4,bb=0x402F8E", capa.features.Characteristic("tight loop"), True),
+    # ("mimikatz", "function=0x401000,bb=0x401000", capa.features.Characteristic("tight loop"), False),
+    # # insn/mnemonic
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("push"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("movzx"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
+    # # insn/number
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
+    # # insn/number: stack adjustments
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
+    # # insn/number: arch flavors
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
+    # # insn/offset
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0xC), True),
+    # # insn/offset, issue #276
+    # ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
+    # # insn/offset: stack references
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
+    # # insn/offset: negative
+    # ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
+    # ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
+    # # insn/offset: arch flavors
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X32), True),
+    # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X64), False),
+    # # insn/api
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptImportKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptDestroyKey"), True),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
+    # ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
+    # # insn/api: thunk
+    # ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
+    # ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
+    # # insn/api: x64
+    # (
+    #     "kernel32-64",
+    #     "function=0x180001010",
+    #     capa.features.insn.API("RtlVirtualUnwind"),
+    #     True,
+    # ),
+    # ("kernel32-64", "function=0x180001010", capa.features.insn.API("RtlVirtualUnwind"), True),
+    # # insn/api: x64 thunk
+    # (
+    #     "kernel32-64",
+    #     "function=0x1800202B0",
+    #     capa.features.insn.API("RtlCaptureContext"),
+    #     True,
+    # ),
+    # ("kernel32-64", "function=0x1800202B0", capa.features.insn.API("RtlCaptureContext"), True),
+    # # insn/api: x64 nested thunk
+    # ("al-khaser x64", "function=0x14004B4F0", capa.features.insn.API("__vcrt_GetModuleHandle"), True),
+    # # insn/api: call via jmp
+    # ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
+    # ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
+    # # TODO ignore thunk functions that call via jmp?
+    # # insn/api: resolve indirect calls
+    # ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
+    # ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),
+    # ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), True),
+    # ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), True),
+    # # insn/string
+    # ("mimikatz", "function=0x40105D", capa.features.String("SCardControl"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.String("SCardTransmit"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.String("ACR  > "), True),
+    # ("mimikatz", "function=0x40105D", capa.features.String("nope"), False),
+    # ("773290...", "function=0x140001140", capa.features.String(r"%s:\\OfficePackagesForWDAG"), True),
+    # # insn/regex, issue #262
+    # ("pma16-01", "function=0x4021B0", capa.features.Regex("HTTP/1.0"), True),
+    # ("pma16-01", "function=0x4021B0", capa.features.Regex("www.practicalmalwareanalysis.com"), False),
+    # # insn/string, pointer to string
+    # ("mimikatz", "function=0x44EDEF", capa.features.String("INPUTEVENT"), True),
+    # # insn/string, direct memory reference
+    # ("mimikatz", "function=0x46D6CE", capa.features.String("(null)"), True),
+    # # insn/bytes
+    # ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardControl".encode("utf-16le")), True),
+    # ("mimikatz", "function=0x40105D", capa.features.Bytes("SCardTransmit".encode("utf-16le")), True),
+    # ("mimikatz", "function=0x40105D", capa.features.Bytes("ACR  > ".encode("utf-16le")), True),
+    # ("mimikatz", "function=0x40105D", capa.features.Bytes("nope".encode("ascii")), False),
+    # # IDA features included byte sequences read from invalid memory, fixed in #409
+    # ("mimikatz", "function=0x44570F", capa.features.Bytes(binascii.unhexlify("FF" * 256)), False),
+    # # insn/bytes, pointer to bytes
+    # ("mimikatz", "function=0x44EDEF", capa.features.Bytes("INPUTEVENT".encode("utf-16le")), True),
+    # # insn/characteristic(nzxor)
+    # ("mimikatz", "function=0x410DFC", capa.features.Characteristic("nzxor"), True),
+    # ("mimikatz", "function=0x40105D", capa.features.Characteristic("nzxor"), False),
+    # # insn/characteristic(nzxor): no security cookies
+    # ("mimikatz", "function=0x46D534", capa.features.Characteristic("nzxor"), False),
+    # # insn/characteristic(nzxor): xorps
+    # # viv needs fixup to recognize function, see above
+    # ("3b13b...", "function=0x10006860", capa.features.Characteristic("nzxor"), True),
+    # # insn/characteristic(peb access)
+    # ("kernel32-64", "function=0x1800017D0", capa.features.Characteristic("peb access"), True),
+    # ("mimikatz", "function=0x4556E5", capa.features.Characteristic("peb access"), False),
+    # # insn/characteristic(gs access)
+    # ("kernel32-64", "function=0x180001068", capa.features.Characteristic("gs access"), True),
+    # ("mimikatz", "function=0x4556E5", capa.features.Characteristic("gs access"), False),
+    # # insn/characteristic(cross section flow)
+    # ("a1982...", "function=0x4014D0", capa.features.Characteristic("cross section flow"), True),
+    # # insn/characteristic(cross section flow): imports don't count
+    # ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
+    # ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
     # insn/characteristic(recursive call)
     ("39c05...", "function=0x10003100", capa.features.Characteristic("recursive call"), True),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("recursive call"), False),
