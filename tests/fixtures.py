@@ -59,7 +59,7 @@ def xfail(condition, reason=None):
             raise RuntimeError("expected to fail, but didn't")
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=8)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
@@ -471,8 +471,9 @@ FEATURE_PRESENCE_TESTS = [
     ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
     # insn/characteristic(recursive call)
-    ("39c05...", "function=0x10003100", capa.features.Characteristic("recursive call"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("recursive call"), False),
+    ("kernel32-64", "function=0x18000f6c0", capa.features.Characteristic("recursive call"), True),
+    # before this we used 0x4556E5, False, which is ambiguous because there's a data reference / indirect recursive call
+    ("mimikatz", "function=0x4175FF", capa.features.Characteristic("recursive call"), False),
     # insn/characteristic(indirect call)
     ("mimikatz", "function=0x4175FF", capa.features.Characteristic("indirect call"), True),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("indirect call"), False),
@@ -481,7 +482,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), False),
     # function/characteristic(calls to)
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("calls to"), False),
+    # before this we used 0x4556E5, False, which is ambiguous because there's a data reference / indirect recursive call
+    ("mimikatz", "function=0x456BB9", capa.features.Characteristic("calls to"), False),
 ]
 
 FEATURE_PRESENCE_TESTS_IDA = [
