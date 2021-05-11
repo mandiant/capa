@@ -12,6 +12,7 @@ import os.path
 import binascii
 import contextlib
 import collections
+from functools import lru_cache
 
 import pytest
 
@@ -20,12 +21,6 @@ import capa.features.file
 import capa.features.insn
 import capa.features.basicblock
 from capa.features import ARCH_X32, ARCH_X64
-
-try:
-    from functools import lru_cache
-except ImportError:
-    from backports.functools_lru_cache import lru_cache
-
 
 CD = os.path.dirname(__file__)
 
@@ -40,11 +35,11 @@ def xfail(condition, reason=None):
     example::
 
         # this test:
-        #  - passes on py3 if foo() works
-        #  - fails  on py3 if foo() fails
-        #  - xfails on py2 if foo() fails
-        #  - fails  on py2 if foo() works
-        with xfail(sys.version_info < (3, 0), reason="py2 doesn't foo"):
+        #  - passes on Linux if foo() works
+        #  - fails  on Linux if foo() fails
+        #  - xfails on Windows if foo() fails
+        #  - fails  on Windows if foo() works
+        with xfail(sys.platform == "win32", reason="doesn't work on Windows"):
             foo()
     """
     try:
@@ -68,7 +63,8 @@ def xfail(condition, reason=None):
             raise RuntimeError("expected to fail, but didn't")
 
 
-@lru_cache()
+# need to limit cache size so GitHub Actions doesn't run out of memory, see #545
+@lru_cache(maxsize=6)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
@@ -148,6 +144,7 @@ def extract_basic_block_features(extractor, f, bb):
     return features
 
 
+# note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
         return os.path.join(CD, "data", "mimikatz.exe_")
@@ -476,8 +473,9 @@ FEATURE_PRESENCE_TESTS = [
     ("kernel32-64", "function=0x180001068", capa.features.Characteristic("cross section flow"), False),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("cross section flow"), False),
     # insn/characteristic(recursive call)
-    ("39c05...", "function=0x10003100", capa.features.Characteristic("recursive call"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("recursive call"), False),
+    ("mimikatz", "function=0x40640e", capa.features.Characteristic("recursive call"), True),
+    # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
+    ("mimikatz", "function=0x4175FF", capa.features.Characteristic("recursive call"), False),
     # insn/characteristic(indirect call)
     ("mimikatz", "function=0x4175FF", capa.features.Characteristic("indirect call"), True),
     ("mimikatz", "function=0x4556E5", capa.features.Characteristic("indirect call"), False),
@@ -486,7 +484,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x4702FD", capa.features.Characteristic("calls from"), False),
     # function/characteristic(calls to)
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
-    ("mimikatz", "function=0x4556E5", capa.features.Characteristic("calls to"), False),
+    # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
+    ("mimikatz", "function=0x456BB9", capa.features.Characteristic("calls to"), False),
 ]
 
 FEATURE_PRESENCE_TESTS_IDA = [
