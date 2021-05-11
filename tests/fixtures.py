@@ -35,8 +35,12 @@ def xfail(condition, reason=None):
     example::
 
         # this test:
-        #  - passes on py3 if foo() works
-        #  - fails  on py3 if foo() fails
+        #  - passes on Linux if foo() works
+        #  - fails  on Linux if foo() fails
+        #  - xfails on Windows if foo() fails
+        #  - fails  on Windows if foo() works
+        with xfail(sys.platform == "win32", reason="doesn't work on Windows"):
+            foo()
     """
     try:
         # do the block
@@ -78,7 +82,6 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
-
     extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
     return extractor
