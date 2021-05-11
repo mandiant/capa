@@ -91,6 +91,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - explorer: explain how to install IDA 7.6 patch to enable the plugin #528 @williballenthin
 - explorer: document IDA 7.6sp1 as alternative to the patch #536 @Ana06
 - rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
+- tests: update test cases and caching #545 @mr-tz
 
 ### Development
 
