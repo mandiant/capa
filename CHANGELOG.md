@@ -77,7 +77,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/run-in-container @williballenthin
 - persistence/registry/appinitdlls/disable-appinit_dlls-code-signature-enforcement @williballenthin
 - collection/password-manager/steal-keepass-passwords-using-keefarce @Ana06
-- host-interaction/network/connectivity/check-internet-connectivity-via-wininet     author:
+- host-interaction/network/connectivity/check-internet-connectivity-via-wininet matthew.williams@fireeye.com michael.hunhoff@fireeye.com
 -
 
 ### Bug Fixes
@@ -96,6 +96,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 
 - ci: add capa release link to capa-rules tag #517 @Ana06
 - ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/fireeye/capa-rules/pull/374 #549 @Ana06
+- ci, changelog: support multiple author in sync GH https://github.com/fireeye/capa-rules/pull/378 @Ana06
 
 ### Raw diffs
 
