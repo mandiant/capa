@@ -11,7 +11,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - explorer: IDA 7.6 support #497 @williballenthin
 
-### New Rules (66)
+### New Rules (67)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -78,6 +78,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - persistence/registry/appinitdlls/disable-appinit_dlls-code-signature-enforcement @williballenthin
 - collection/password-manager/steal-keepass-passwords-using-keefarce @Ana06
 - host-interaction/network/connectivity/check-internet-connectivity-via-wininet matthew.williams@fireeye.com michael.hunhoff@fireeye.com
+- nursery/create-bits-job @mr-tz
 -
 
 ### Bug Fixes
