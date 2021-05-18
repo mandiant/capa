@@ -69,6 +69,7 @@ SUPPORTED_FEATURES = {
         capa.features.MatchedRule,
         capa.features.file.Export,
         capa.features.file.Import,
+        capa.features.insn.API,
         capa.features.file.Section,
         capa.features.Characteristic("embedded pe"),
         capa.features.String,

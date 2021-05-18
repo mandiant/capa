@@ -7,7 +7,10 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import PE.carve as pe_carve  # vivisect PE
+import viv_utils
+import viv_utils.flirt
 
+import capa.features.insn
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features import String, Characteristic
@@ -80,6 +83,16 @@ def extract_file_strings(vw, file_path):
         yield String(s.s), s.offset
 
 
+def extract_file_library_functions(vw, file_path):
+    """
+    extract the names of statically-linked library functions.
+    """
+    for va in sorted(vw.getFunctions()):
+        if viv_utils.flirt.is_library_function(vw, va):
+            name = viv_utils.get_function_name(vw, va)
+            yield capa.features.insn.API(name), va
+
+
 def extract_features(vw, file_path):
     """
     extract file features from given workspace
@@ -103,4 +116,5 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
+    extract_file_library_functions,
 )

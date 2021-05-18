@@ -112,6 +112,16 @@ def extract_file_strings(smda_report, file_path):
         yield String(s.s), s.offset
 
 
+def extract_file_library_functions(smda_report, file_path):
+    """
+    extract the names of statically-linked library functions.
+    """
+    if False:
+        # using a `yield` here to force this to be a generator, not function.
+        yield NotImplementedError("SMDA doesn't have library matching")
+    return
+
+
 def extract_features(smda_report, file_path):
     """
     extract file features from given workspace
@@ -135,4 +145,5 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
+    extract_file_library_functions,
 )
