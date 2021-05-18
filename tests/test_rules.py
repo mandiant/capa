@@ -83,6 +83,7 @@ def test_rule_descriptions():
                 description: string description
               - string: '/myregex/'
                 description: regex description
+              - mnemonic: inc = mnemonic description
               # TODO - count(number(2 = number description)): 2
               - or:
                 - description: or description
@@ -104,6 +105,8 @@ def test_rule_descriptions():
             for child in statement.get_children():
                 rec(child)
         else:
+            if isinstance(statement.value, str):
+                assert "description" not in statement.value
             assert statement.description == statement.name + " description"
 
     rec(r.statement)
