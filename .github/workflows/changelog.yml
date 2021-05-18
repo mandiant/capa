@@ -25,13 +25,14 @@ jobs:
         echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
     - name: Reject pull request if no CHANGELOG update
       if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
-      uses: andrewmusgrave/automatic-pull-request-review@0.0.5
+      uses: Ana06/automatic-pull-request-review@v0.1.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         event: REQUEST_CHANGES
         body: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
+        allow_duplicate: false
     - name: Dismiss previous review if CHANGELOG update
-      uses: andrewmusgrave/automatic-pull-request-review@0.0.5
+      uses: Ana06/automatic-pull-request-review@v0.1.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         event: DISMISS
