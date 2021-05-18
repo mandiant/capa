@@ -182,6 +182,13 @@ def ida_main():
 
 def print_features(functions, extractor):
     for f in functions:
+        function_address = int(f)
+
+        if extractor.is_library_function(function_address):
+            function_name = extractor.get_function_name(function_address)
+            logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
+            continue
+
         for feature, va in extractor.extract_function_features(f):
             print("func: 0x%08x: %s" % (va, feature))
 
