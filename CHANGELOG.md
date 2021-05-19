@@ -101,6 +101,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - ci: add capa release link to capa-rules tag #517 @Ana06
 - ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/fireeye/capa-rules/pull/374 #549 @Ana06
 - ci, changelog: support multiple author in sync GH https://github.com/fireeye/capa-rules/pull/378 @Ana06
+- ci, lint: check statements for single child statements #563 @mr-tz
 
 ### Raw diffs
 
