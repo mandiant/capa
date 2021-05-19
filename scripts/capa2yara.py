@@ -708,7 +708,7 @@ def main(argv=None):
         return -1
 
     output_yar(
-        "// Rules from Fireeyes https://github.com/fireeye/capa-rules converted to YARA using https://github.com/fireeye/capa/blob/master/scripts/capa2yara.py by Arnim Rupp"
+        "// Rules from FireEye's https://github.com/fireeye/capa-rules converted to YARA using https://github.com/fireeye/capa/blob/master/scripts/capa2yara.py by Arnim Rupp"
     )
     output_yar(
         "// Beware: These are less rules than capa (because not all fit into YARA, stats at EOF) and is less precise because e.g. capas function scopes are applied to the whole file"
