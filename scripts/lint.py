@@ -557,9 +557,23 @@ def lint_rule(ctx, rule):
     if is_nursery_rule(rule):
         has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
         lints_failed = len(
-            tuple(filter(lambda v: v.level == Lint.FAIL and not (v.name == "missing examples" or v.name == "referenced example doesn't exist"), violations))
+            tuple(
+                filter(
+                    lambda v: v.level == Lint.FAIL
+                    and not (v.name == "missing examples" or v.name == "referenced example doesn't exist"),
+                    violations,
+                )
+            )
         )
-        lints_warned = len(tuple(filter(lambda v: v.level == Lint.WARN or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist"), violations)))
+        lints_warned = len(
+            tuple(
+                filter(
+                    lambda v: v.level == Lint.WARN
+                    or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist"),
+                    violations,
+                )
+            )
+        )
 
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
