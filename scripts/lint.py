@@ -528,16 +528,23 @@ def lint_rule(ctx, rule):
 
         print("")
 
-    lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL and not is_nursery_rule(rule), violations)))
-    lints_warned = len(tuple(filter(lambda v: v.level == Lint.WARN or (v.level == Lint.FAIL and is_nursery_rule(rule)), violations)))
+    if is_nursery_rule(rule):
+        has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
+        lints_failed = len(
+            tuple(filter(lambda v: v.level == Lint.FAIL and not v.name == "missing examples", violations))
+        )
+        lints_warned = len(tuple(filter(lambda v: v.level == Lint.WARN, violations)))
 
-    if not lints_failed and is_nursery_rule(rule):
-        print("")
-        print("%s%s" % ("    (nursery) ", rule.name))
-        print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
-        print("")
+        if (not lints_failed) and has_examples:
+            print("")
+            print("%s%s" % ("    (nursery) ", rule.name))
+            print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
+            print("")
+    else:
+        lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL, violations)))
+        lints_warned = len(tuple(filter(lambda v: v.level == Lint.WARN, violations)))
 
-    return (lints_failed, lints_warned, is_nursery_rule(rule))
+    return (lints_failed, lints_warned)
 
 
 def lint(ctx, rules):
@@ -548,10 +555,9 @@ def lint(ctx, rules):
         see `collect_samples(path)`.
       rules (List[Rule]): the rules to lint.
 
-    Returns: Dict[string, Tuple(int, int, bool)]
+    Returns: Dict[string, Tuple(int, int)]
       - # lints failed
       - # lints warned
-      - is nursery rule
     """
     ret = {}
 
@@ -661,11 +667,11 @@ def main(argv=None):
     results_by_name = lint(ctx, rules)
     failed_rules = []
     warned_rules = []
-    for name, (fail_count, warn_count, is_nursery_rule) in results_by_name.items():
+    for name, (fail_count, warn_count) in results_by_name.items():
         if fail_count > 0:
             failed_rules.append(name)
 
-        if warn_count > 0 and not is_nursery_rule:
+        if warn_count > 0:
             warned_rules.append(name)
 
     min, sec = divmod(time.time() - time0, 60)
