@@ -15,7 +15,7 @@ jobs:
     steps:
     - name: Get changed files
       id: files
-      uses: jitterbit/get-changed-files@v1
+      uses: Ana06/get-changed-files@v1.1
     - name: check changelog updated
       id: changelog_updated
       env:
