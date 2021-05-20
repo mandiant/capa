@@ -218,6 +218,29 @@ class DoesntMatchExample(Lint):
                 return True
 
 
+class StatementWithSingleChildStatement(Lint):
+    name = "rule contains one or more statements with a single child statement"
+    recommendation = "remove the superfluous parent statement"
+    recommendation_template = "remove the superfluous parent statement: {:s}"
+    violation = False
+
+    def check_rule(self, ctx, rule):
+        self.violation = False
+
+        def rec(statement, is_root=False):
+            if isinstance(statement, (capa.engine.And, capa.engine.Or)):
+                children = list(statement.get_children())
+                if not is_root and len(children) == 1 and isinstance(children[0], capa.engine.Statement):
+                    self.recommendation = self.recommendation_template.format(str(statement))
+                    self.violation = True
+                for child in children:
+                    rec(child)
+
+        rec(rule.statement, is_root=True)
+
+        return self.violation
+
+
 class UnusualMetaField(Lint):
     name = "unusual meta field"
     recommendation = "Remove the meta field"
@@ -472,7 +495,10 @@ def get_rule_features(rule):
     return features
 
 
-LOGIC_LINTS = (DoesntMatchExample(),)
+LOGIC_LINTS = (
+    DoesntMatchExample(),
+    StatementWithSingleChildStatement(),
+)
 
 
 def lint_logic(ctx, rule):

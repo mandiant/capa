@@ -10,6 +10,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - explorer: IDA 7.6 support #497 @williballenthin
+- scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
 
 ### New Rules (69)
 
@@ -95,13 +96,14 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - explorer: document IDA 7.6sp1 as alternative to the patch #536 @Ana06
 - rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
 - tests: update test cases and caching #545 @mr-tz
-- linter: summarize results at the end #571 @williballenthin
+- show-features: don't show features from library functions #569 @williballenthin
 
 ### Development
 
 - ci: add capa release link to capa-rules tag #517 @Ana06
 - ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/fireeye/capa-rules/pull/374 #549 @Ana06
 - ci, changelog: support multiple author in sync GH https://github.com/fireeye/capa-rules/pull/378 @Ana06
+- ci, lint: check statements for single child statements #563 @mr-tz
 
 ### Raw diffs
 
