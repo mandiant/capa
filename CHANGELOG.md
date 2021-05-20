@@ -10,6 +10,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - explorer: IDA 7.6 support #497 @williballenthin
+- scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
 
 ### New Rules (69)
 
