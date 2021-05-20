@@ -786,7 +786,7 @@ def main(argv=None):
         logger.debug("using rules path: %s", rules_path)
 
     try:
-        rules = get_rules(rules_path, disable_progress=args.quiet or args.tag)
+        rules = get_rules(rules_path, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
         logger.debug(
             "successfully loaded %s rules",
@@ -796,13 +796,7 @@ def main(argv=None):
             len([i for i in filter(lambda r: "capa/subscope-rule" not in r.meta, rules.rules.values())]),
         )
         if args.tag:
-            n_rules_all = len(rules)
             rules = rules.filter_rules_by_meta(args.tag)
-            n_rules = len(rules)
-            diff = n_rules_all - n_rules
-            if not args.quiet:
-                for _ in tqdm.trange(n_rules, desc="loading ", unit=" rules", postfix="skipped %d rules" % diff):
-                    pass
             for i, r in enumerate(rules.rules, 1):
                 logger.debug("selected %d rules", len(rules))
                 # TODO don't display subscope rules?

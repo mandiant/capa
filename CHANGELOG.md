@@ -11,7 +11,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - explorer: IDA 7.6 support #497 @williballenthin
 - scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
 - main: auto detect shellcode based on file extension #516 @mr-tz
-- main: more detailed progress bar output when loading rules and matching functions #562 @mr-tz
+- main: more detailed progress bar output when matching functions #562 @mr-tz
 
 ### New Rules (69)
 
