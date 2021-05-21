@@ -199,6 +199,7 @@ def convert_rule(rule, rulename, cround, depth):
                 var_name = "api_" + var_names.pop(0)
 
                 # limit regex with word boundary \b but also search for appended A and W
+                # TODO: better use something like /(\\x00|\\x01|\\x02|\\x03|\\x04)' + api + '(A|W)?\\x00/  ???
                 yara_strings += "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
                 yara_condition += "\t$" + var_name + " "
 
@@ -291,8 +292,10 @@ def convert_rule(rule, rulename, cround, depth):
             # /reg(|.exe)/ => /reg(.exe)?/
             regex = re.sub(r"\(\|([^\)]+)\)", r"(\1)?", regex)
 
-            # change begining of line to word boundary, e.g. /^open => /\bopen
-            regex = re.sub(r"^\^", r"\\b", regex)
+            # change begining of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the begining of a word in a text but usually a function name if there's ^ in a capa rule)
+            regex = re.sub(r"^\^", r"\\x00", regex)
+
+            #regex = re.sub(r"^\^", r"\\b", regex)
 
             regex = "/" + regex + "/"
             if count:
@@ -587,30 +590,38 @@ def convert_rules(rules, namespaces, cround):
                         meta_name = "attack"
                         for attack in list(metas[meta]):
                             logger.info("attack:" + attack)
+                            # cut out tag in square brackets, e.g. Defense Evasion::Obfuscated Files or Information [T1027] => T1027
                             r = re.search(r"\[(T[^\]]*)", attack)
                             if r:
                                 tag = r.group(1)
                                 logger.info("attack tag:" + tag)
                                 tag = re.sub(r"\W", "_", tag)
                                 rule_tags += tag + " "
+                                # also add a line "attack = ..." to yaras 'meta:' to keep the long description:
+                                yara_meta += '\tattack = "' + attack + '"\n'
                     elif meta_name == "mbc":
                         for mbc in list(metas[meta]):
                             logger.info("mbc:" + mbc)
+                            # cut out tag in square brackets, e.g. Cryptography::Encrypt Data::RC6 [C0027.010] => C0027.010
                             r = re.search(r"\[(.[^\]]*)", mbc)
                             if r:
                                 tag = r.group(1)
                                 logger.info("mbc tag:" + tag)
                                 tag = re.sub(r"\W", "_", tag)
                                 rule_tags += tag + " "
+
+                                # also add a line "mbc = ..." to yaras 'meta:' to keep the long description:
+                                yara_meta += '\tmbc = "' + mbc + '"\n'
+
                     for value in metas[meta]:
                         if meta_name == "hash":
                             value = re.sub(r"^([0-9a-f]{20,64}):0x[0-9a-f]{1,10}$", r"\1", value, flags=re.IGNORECASE)
 
-                        # examples in capa can contain the same hash several times with different offset, so check if it's already there:
-                        # (keeping the offset might be interessting for some but breaks yara-ci for checking of the final rules
-                        if not value in seen_hashes:
-                            yara_meta += "\t" + meta_name + ' = "' + value + '"\n'
-                            seen_hashes.append(value)
+                            # examples in capa can contain the same hash several times with different offset, so check if it's already there:
+                            # (keeping the offset might be interessting for some but breaks yara-ci for checking of the final rules
+                            if not value in seen_hashes:
+                                yara_meta += "\t" + meta_name + ' = "' + value + '"\n'
+                                seen_hashes.append(value)
 
                 else:
                     # no list:
