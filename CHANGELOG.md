@@ -7,12 +7,13 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 
 ### New Features
 
-- main: auto detect shellcode based on file extension #516 @mr-tz
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - explorer: IDA 7.6 support #497 @williballenthin
 - scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
+- main: auto detect shellcode based on file extension #516 @mr-tz
+- main: more detailed progress bar output when matching functions #562 @mr-tz
 
-### New Rules (69)
+### New Rules (70)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -82,6 +83,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/create-bits-job @mr-tz
 - nursery/execute-syscall-instruction @kulinacs @mr-tz
 - nursery/connect-to-wmi-namespace-via-wbemlocator michael.hunhoff@fireeye.com
+- anti-analysis/obfuscation/obfuscated-with-callobfuscator johnk3r
 -
 
 ### Bug Fixes
@@ -98,6 +100,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - tests: update test cases and caching #545 @mr-tz
 - show-features: don't show features from library functions #569 @williballenthin
 - linter: summarize results at the end #571 @williballenthin
+- meta: added `library_functions` field, `feature_counts.functions` does not include library functions any more #562 @mr-tz
 
 ### Development
 

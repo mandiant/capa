@@ -25,6 +25,7 @@ def test_main(z9324d_extractor):
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
     assert capa.main.main([path]) == 0
 
 
@@ -79,6 +80,7 @@ def test_main_shellcode(z499c2_extractor):
     assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-v", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-j", "-f", "sc32"]) == 0
+    assert capa.main.main([path, "-q", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-f", "sc32"]) == 0
     # auto detect shellcode based on file extension
     assert capa.main.main([path]) == 0
