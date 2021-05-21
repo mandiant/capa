@@ -128,7 +128,8 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         "feature_counts": {
             "file": 0,
             "functions": {},
-        }
+        },
+        "library_functions": {},
     }
 
     pbar = tqdm.tqdm
@@ -138,13 +139,20 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         pbar = lambda s, *args, **kwargs: s
 
     functions = list(extractor.get_functions())
+    n_funcs = len(functions)
 
-    for f in pbar(functions, desc="matching", unit=" functions"):
+    pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
+    for f in pb:
         function_address = int(f)
 
         if extractor.is_library_function(function_address):
             function_name = extractor.get_function_name(function_address)
             logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
+            meta["library_functions"][function_address] = function_name
+            n_libs = len(meta["library_functions"])
+            percentage = 100 * (n_libs / n_funcs)
+            if isinstance(pb, tqdm.tqdm):
+                pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
             continue
 
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
@@ -494,7 +502,7 @@ def get_rules(rule_path, disable_progress=False):
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for rule_path in pbar(list(rule_paths), desc="loading ", unit="     rules"):
+    for rule_path in pbar(list(rule_paths), desc="loading ", unit=" rules"):
         try:
             rule = capa.rules.Rule.from_yaml_file(rule_path)
         except capa.rules.InvalidRule:
@@ -789,8 +797,8 @@ def main(argv=None):
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
-            logger.debug("selected %s rules", len(rules))
             for i, r in enumerate(rules.rules, 1):
+                logger.debug("selected %d rules", len(rules))
                 # TODO don't display subscope rules?
                 logger.debug(" %d. %s", i, r)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
