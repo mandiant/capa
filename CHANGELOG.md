@@ -97,6 +97,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
 - tests: update test cases and caching #545 @mr-tz
 - show-features: don't show features from library functions #569 @williballenthin
+- linter: summarize results at the end #571 @williballenthin
 
 ### Development
 
