@@ -295,7 +295,7 @@ def convert_rule(rule, rulename, cround, depth):
             # change begining of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the begining of a word in a text but usually a function name if there's ^ in a capa rule)
             regex = re.sub(r"^\^", r"\\x00", regex)
 
-            #regex = re.sub(r"^\^", r"\\b", regex)
+            # regex = re.sub(r"^\^", r"\\b", regex)
 
             regex = "/" + regex + "/"
             if count:
