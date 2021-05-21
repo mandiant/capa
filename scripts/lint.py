@@ -554,15 +554,37 @@ def lint_rule(ctx, rule):
 
         print("")
 
-    lints_failed = any(map(lambda v: v.level == Lint.FAIL, violations))
+    if is_nursery_rule(rule):
+        has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
+        lints_failed = len(
+            tuple(
+                filter(
+                    lambda v: v.level == Lint.FAIL
+                    and not (v.name == "missing examples" or v.name == "referenced example doesn't exist"),
+                    violations,
+                )
+            )
+        )
+        lints_warned = len(
+            tuple(
+                filter(
+                    lambda v: v.level == Lint.WARN
+                    or (v.level == Lint.FAIL and v.name == "referenced example doesn't exist"),
+                    violations,
+                )
+            )
+        )
 
-    if not lints_failed and is_nursery_rule(rule):
-        print("")
-        print("%s%s" % ("    (nursery) ", rule.name))
-        print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
-        print("")
+        if (not lints_failed) and (not lints_warned) and has_examples:
+            print("")
+            print("%s%s" % ("    (nursery) ", rule.name))
+            print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
+            print("")
+    else:
+        lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL, violations)))
+        lints_warned = len(tuple(filter(lambda v: v.level == Lint.WARN, violations)))
 
-    return lints_failed and not is_nursery_rule(rule)
+    return (lints_failed, lints_warned)
 
 
 def lint(ctx, rules):
@@ -572,15 +594,20 @@ def lint(ctx, rules):
         for each sample, record sample id of sha256, md5, and filename.
         see `collect_samples(path)`.
       rules (List[Rule]): the rules to lint.
+
+    Returns: Dict[string, Tuple(int, int)]
+      - # lints failed
+      - # lints warned
     """
-    did_suggest_fix = False
-    for rule in rules.rules.values():
+    ret = {}
+
+    for name, rule in rules.rules.items():
         if rule.meta.get("capa/subscope-rule", False):
             continue
 
-        did_suggest_fix = lint_rule(ctx, rule) or did_suggest_fix
+        ret[name] = lint_rule(ctx, rule)
 
-    return did_suggest_fix
+    return ret
 
 
 def collect_samples(path):
@@ -677,16 +704,33 @@ def main(argv=None):
         "is_thorough": args.thorough,
     }
 
-    did_violate = lint(ctx, rules)
+    results_by_name = lint(ctx, rules)
+    failed_rules = []
+    warned_rules = []
+    for name, (fail_count, warn_count) in results_by_name.items():
+        if fail_count > 0:
+            failed_rules.append(name)
+
+        if warn_count > 0:
+            warned_rules.append(name)
 
     min, sec = divmod(time.time() - time0, 60)
     logger.debug("lints ran for ~ %02d:%02dm", min, sec)
 
-    if not did_violate:
+    if warned_rules:
+        print("rules with WARN:")
+        for warned_rule in sorted(warned_rules):
+            print("  - " + warned_rule)
+        print()
+
+    if failed_rules:
+        print("rules with FAIL:")
+        for failed_rule in sorted(failed_rules):
+            print("  - " + failed_rule)
+        return 1
+    else:
         logger.info("no lints failed, nice!")
         return 0
-    else:
-        return 1
 
 
 if __name__ == "__main__":
