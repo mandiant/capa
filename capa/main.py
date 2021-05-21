@@ -23,7 +23,6 @@ import collections
 
 import halo
 import tqdm
-import flirt
 import colorama
 
 import capa.rules
@@ -301,6 +300,8 @@ def get_meta_str(vw):
 
 
 def load_flirt_signature(path):
+    # lazy import enables us to only require flirt here and not in IDA, for example
+    import flirt
 
     if path.endswith(".sig"):
         with open(path, "rb") as f:
@@ -329,6 +330,8 @@ def register_flirt_signature_analyzers(vw, sigpaths):
       vw (vivisect.VivWorkspace):
       sigpaths (List[str]): file system paths of .sig/.pat files
     """
+    # lazy import enables us to only require flirt here and not in IDA, for example
+    import flirt
     import viv_utils.flirt
 
     for sigpath in sigpaths:
