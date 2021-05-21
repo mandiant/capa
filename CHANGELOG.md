@@ -12,7 +12,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - explorer: IDA 7.6 support #497 @williballenthin
 - scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
 
-### New Rules (69)
+### New Rules (70)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -82,6 +82,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/create-bits-job @mr-tz
 - nursery/execute-syscall-instruction @kulinacs @mr-tz
 - nursery/connect-to-wmi-namespace-via-wbemlocator michael.hunhoff@fireeye.com
+- anti-analysis/obfuscation/obfuscated-with-callobfuscator johnk3r
 -
 
 ### Bug Fixes
