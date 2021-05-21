@@ -281,42 +281,6 @@ def parse_description(s, value_type, description=None):
     return value, description
 
 
-def parse_meta(meta):
-    """
-    further process meta items such as MBC
-    """
-    mbcs = meta.get("mbc", [])
-    if not isinstance(mbcs, list):
-        raise InvalidRule("MBC mapping must be a list")
-
-    if mbcs:
-        meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
-
-    # TODO att&ck
-
-    return meta
-
-
-def parse_canonical_mbc(mbc):
-    """
-    parse capa's canonical MBC representation: `OBJECTIVE::Behavior::Method [Identifier]`
-    """
-    objective, _, rest = mbc.partition("::")
-    if "::" in rest:
-        behavior, _, rest = rest.partition("::")
-        method, _, id = rest.rpartition(" ")
-    else:
-        behavior, _, id = rest.rpartition(" ")
-        method = ""
-    return {
-        "id": id.lstrip("[").rstrip("]"),
-        "objective": objective,
-        "behavior": behavior,
-        "method": method,
-        # TODO "micro-behavior": "",
-    }
-
-
 def pop_statement_description_entry(d):
     """
     extracts the description for statements and removes the description entry from the document
@@ -596,10 +560,11 @@ class Rule(object):
 
     @classmethod
     def from_dict(cls, d, definition):
-        name = d["rule"]["meta"]["name"]
+        meta = d["rule"]["meta"]
+        name = meta["name"]
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
-        scope = d["rule"]["meta"].get("scope", FUNCTION_SCOPE)
+        scope = meta.get("scope", FUNCTION_SCOPE)
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -613,7 +578,9 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
-        meta = parse_meta(d["rule"]["meta"])
+        mbcs = meta.get("mbc", [])
+        if not isinstance(mbcs, list):
+            raise InvalidRule("MBC mapping must be a list")
 
         return cls(name, scope, build_statements(statements[0], scope), meta, definition)
 

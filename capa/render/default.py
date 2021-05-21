@@ -180,15 +180,10 @@ def render_mbc(doc, ostream):
             continue
 
         for mbc in rule["meta"]["mbc"]:
-            id = mbc.get("id")
-            objective = mbc.get("objective")
-            behavior = mbc.get("behavior")
-            method = mbc.get("method")
-
-            if method:
-                objectives[objective].add((behavior, method, id))
+            if mbc.get("method"):
+                objectives[mbc["objective"]].add((mbc["behavior"], mbc["method"], mbc["id"]))
             else:
-                objectives[objective].add((behavior, id))
+                objectives[mbc["objective"]].add((mbc["behavior"], mbc["id"]))
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
