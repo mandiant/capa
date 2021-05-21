@@ -179,18 +179,15 @@ def render_mbc(doc, ostream):
         if not rule["meta"].get("mbc"):
             continue
 
-        mbcs = rule["meta"]["mbc"]
-        if not isinstance(mbcs, list):
-            raise ValueError("invalid rule: MBC mapping is not a list")
+        for mbc in rule["meta"]["mbc"]:
+            id = mbc.get("id")
+            objective = mbc.get("objective")
+            behavior = mbc.get("behavior")
+            method = mbc.get("method")
 
-        for mbc in mbcs:
-            objective, _, rest = mbc.partition("::")
-            if "::" in rest:
-                behavior, _, rest = rest.partition("::")
-                method, _, id = rest.rpartition(" ")
+            if method:
                 objectives[objective].add((behavior, method, id))
             else:
-                behavior, _, id = rest.rpartition(" ")
                 objectives[objective].add((behavior, id))
 
     rows = []
@@ -199,10 +196,10 @@ def render_mbc(doc, ostream):
         for spec in sorted(behaviors):
             if len(spec) == 2:
                 behavior, id = spec
-                inner_rows.append("%s %s" % (rutils.bold(behavior), id))
+                inner_rows.append("%s [%s]" % (rutils.bold(behavior), id))
             elif len(spec) == 3:
                 behavior, method, id = spec
-                inner_rows.append("%s::%s %s" % (rutils.bold(behavior), method, id))
+                inner_rows.append("%s::%s [%s]" % (rutils.bold(behavior), method, id))
             else:
                 raise RuntimeError("unexpected MBC spec format")
         rows.append(
