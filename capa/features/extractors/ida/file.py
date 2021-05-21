@@ -147,7 +147,10 @@ def extract_file_library_functions():
     """
     extract the names of statically-linked library functions.
     """
-    if False:
+    for ea in idautils.Functions():
+        if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
+            name = idaapi.get_name(ea)
+            yield capa.features.insn.API(name), ea
         # using a `yield` here to force this to be a generator, not function.
         yield NotImplementedError("SMDA doesn't have library matching")
     return
