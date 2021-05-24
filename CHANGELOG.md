@@ -13,7 +13,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: more detailed progress bar output when matching functions #562 @mr-tz
 
-### New Rules (70)
+### New Rules (71)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -84,6 +84,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/execute-syscall-instruction @kulinacs @mr-tz
 - nursery/connect-to-wmi-namespace-via-wbemlocator michael.hunhoff@fireeye.com
 - anti-analysis/obfuscation/obfuscated-with-callobfuscator johnk3r
+- executable/installer/inno-setup/packaged-as-an-inno-setup-installer awillia2@cisco.com
 -
 
 ### Bug Fixes
