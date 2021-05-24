@@ -18,7 +18,7 @@ requirements = [
     "termcolor==1.1.0",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.6.2",
+    "viv-utils[flirt]==0.6.4",
     "halo==0.0.31",
     "networkx==2.5.1",
     "ruamel.yaml==0.17.4",
