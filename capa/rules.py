@@ -72,6 +72,7 @@ SUPPORTED_FEATURES = {
         capa.features.file.Import,
         capa.features.insn.API,
         capa.features.file.Section,
+        capa.features.file.FunctionName,
         capa.features.Characteristic("embedded pe"),
         capa.features.String,
     },
@@ -232,6 +233,8 @@ def parse_feature(key):
         return capa.features.file.Section
     elif key == "match":
         return capa.features.MatchedRule
+    elif key == "function-name":
+        return capa.features.file.FunctionName
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 

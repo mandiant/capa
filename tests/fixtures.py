@@ -486,6 +486,8 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x40105D", capa.features.Characteristic("calls to"), True),
     # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
     ("mimikatz", "function=0x456BB9", capa.features.Characteristic("calls to"), False),
+    # file/function-name
+    ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
 ]
 
 FEATURE_PRESENCE_TESTS_IDA = [

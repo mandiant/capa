@@ -16,7 +16,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features import String, Characteristic
-from capa.features.file import Export, Import, Section
+from capa.features.file import Export, Import, Section, FunctionName
 
 
 def check_segment_for_pe(seg):
@@ -143,17 +143,14 @@ def extract_file_strings():
             yield String(s.s), (seg.start_ea + s.offset)
 
 
-def extract_file_library_functions():
+def extract_file_function_names():
     """
     extract the names of statically-linked library functions.
     """
     for ea in idautils.Functions():
         if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
             name = idaapi.get_name(ea)
-            yield capa.features.insn.API(name), ea
-        # using a `yield` here to force this to be a generator, not function.
-        yield NotImplementedError("SMDA doesn't have library matching")
-    return
+            yield FunctionName(name), ea
 
 
 def extract_features():
@@ -169,7 +166,7 @@ FILE_HANDLERS = (
     extract_file_strings,
     extract_file_section_names,
     extract_file_embedded_pe,
-    extract_file_library_functions,
+    extract_file_function_names,
 )
 
 

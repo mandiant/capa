@@ -25,3 +25,10 @@ class Section(Feature):
     def __init__(self, value, description=None):
         # value is section name
         super(Section, self).__init__(value, description=description)
+
+
+class FunctionName(Feature):
+    """ recognized name for statically linked function  """
+    def __init__(self, name, description=None):
+        # value is function name
+        super(FunctionName, self).__init__(name, description=description)

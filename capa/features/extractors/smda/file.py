@@ -112,7 +112,7 @@ def extract_file_strings(smda_report, file_path):
         yield String(s.s), s.offset
 
 
-def extract_file_library_functions(smda_report, file_path):
+def extract_file_function_names(smda_report, file_path):
     """
     extract the names of statically-linked library functions.
     """
@@ -145,5 +145,5 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
-    extract_file_library_functions,
+    extract_file_function_names,
 )

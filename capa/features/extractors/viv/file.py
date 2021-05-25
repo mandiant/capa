@@ -14,7 +14,7 @@ import capa.features.insn
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features import String, Characteristic
-from capa.features.file import Export, Import, Section
+from capa.features.file import Export, Import, Section, FunctionName
 
 
 def extract_file_embedded_pe(vw, file_path):
@@ -83,14 +83,14 @@ def extract_file_strings(vw, file_path):
         yield String(s.s), s.offset
 
 
-def extract_file_library_functions(vw, file_path):
+def extract_file_function_names(vw, file_path):
     """
     extract the names of statically-linked library functions.
     """
     for va in sorted(vw.getFunctions()):
         if viv_utils.flirt.is_library_function(vw, va):
             name = viv_utils.get_function_name(vw, va)
-            yield capa.features.insn.API(name), va
+            yield FunctionName(name), va
 
 
 def extract_features(vw, file_path):
@@ -116,5 +116,5 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
-    extract_file_library_functions,
+    extract_file_function_names,
 )
