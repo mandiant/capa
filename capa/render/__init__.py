@@ -164,29 +164,35 @@ def convert_match_to_result_document(rules, capabilities, result):
 
 def convert_meta_to_result_document(meta):
     mbcs = meta.get("mbc", [])
-    if mbcs:
-        meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
-
+    meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
     return dict(meta)
 
 
 def parse_canonical_mbc(mbc):
     """
-    parse capa's canonical MBC representation: `OBJECTIVE::Behavior::Method [Identifier]`
+    parse capa's canonical MBC representation: `Objective::Behavior::Method [Identifier]`
     """
-    objective, _, rest = mbc.partition("::")
-    if "::" in rest:
-        behavior, _, rest = rest.partition("::")
-        method, _, id = rest.rpartition(" ")
-    else:
-        behavior, _, id = rest.rpartition(" ")
-        method = ""
+    id = objective = behavior = method = None
+    parts = mbc.split("::")
+    if len(parts) > 0:
+        last = parts.pop()
+        last, _, id = last.rpartition(" ")
+        id = id.lstrip("[").rstrip("]")
+        parts.append(last)
+
+    if len(parts) > 0:
+        objective = parts[0]
+    if len(parts) > 1:
+        behavior = parts[1]
+    if len(parts) > 2:
+        method = parts[2]
+
     return {
-        "id": id.lstrip("[").rstrip("]"),
-        "objective": objective,
-        "behavior": behavior,
-        "method": method,
-        # TODO "micro-behavior": "",
+        "parts": parts,
+        "id": id or "",
+        "objective": objective or "",
+        "behavior": behavior or "",
+        "method": method or "",
     }
 
 

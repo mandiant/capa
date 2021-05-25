@@ -578,6 +578,7 @@ class Rule(object):
         if scope not in SUPPORTED_FEATURES.keys():
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
+        meta = d["rule"]["meta"]
         mbcs = meta.get("mbc", [])
         if not isinstance(mbcs, list):
             raise InvalidRule("MBC mapping must be a list")
