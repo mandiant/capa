@@ -25,6 +25,7 @@ import argparse
 import itertools
 import posixpath
 
+import termcolor
 import ruamel.yaml
 
 import capa.main
@@ -36,9 +37,21 @@ import capa.features.insn
 logger = logging.getLogger("lint")
 
 
+def red(s):
+    return termcolor.colored(s, "red")
+
+
+def orange(s):
+    return termcolor.colored(s, "yellow")
+
+
+def green(s):
+    return termcolor.colored(s, "green")
+
+
 class Lint(object):
-    WARN = "WARN"
-    FAIL = "FAIL"
+    WARN = orange("WARN")
+    FAIL = red("FAIL")
 
     name = "lint"
     level = FAIL
@@ -237,6 +250,30 @@ class StatementWithSingleChildStatement(Lint):
                     rec(child)
 
         rec(rule.statement, is_root=True)
+
+        return self.violation
+
+
+class OrStatementWithAlwaysTrueChild(Lint):
+    name = "rule contains an `or` statement that's always True because of an `optional` or other child statement that's always True"
+    recommendation = "clarify the rule logic, e.g. by moving the always True child statement"
+    recommendation_template = "clarify the rule logic, e.g. by moving the always True child statement: {:s}"
+    violation = False
+
+    def check_rule(self, ctx, rule):
+        self.violation = False
+
+        def rec(statement):
+            if isinstance(statement, capa.engine.Or):
+                children = list(statement.get_children())
+                for child in children:
+                    # `Some` implements `optional` which is an alias for `0 or more`
+                    if isinstance(child, capa.engine.Some) and child.count == 0:
+                        self.recommendation = self.recommendation_template.format(str(child))
+                        self.violation = True
+                    rec(child)
+
+        rec(rule.statement)
 
         return self.violation
 
@@ -498,6 +535,7 @@ def get_rule_features(rule):
 LOGIC_LINTS = (
     DoesntMatchExample(),
     StatementWithSingleChildStatement(),
+    OrStatementWithAlwaysTrueChild(),
 )
 
 
@@ -578,7 +616,7 @@ def lint_rule(ctx, rule):
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
             print("%s%s" % ("    (nursery) ", rule.name))
-            print("%s  %s: %s: %s" % ("    ", Lint.WARN, "no lint failures", "Graduate the rule"))
+            print("%s  %s: %s: %s" % ("    ", Lint.WARN, green("no lint failures"), "Graduate the rule"))
             print("")
     else:
         lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL, violations)))
@@ -718,18 +756,18 @@ def main(argv=None):
     logger.debug("lints ran for ~ %02d:%02dm", min, sec)
 
     if warned_rules:
-        print("rules with WARN:")
+        print(orange("rules with WARN:"))
         for warned_rule in sorted(warned_rules):
             print("  - " + warned_rule)
         print()
 
     if failed_rules:
-        print("rules with FAIL:")
+        print(red("rules with FAIL:"))
         for failed_rule in sorted(failed_rules):
             print("  - " + failed_rule)
         return 1
     else:
-        logger.info("no lints failed, nice!")
+        logger.info(green("no lints failed, nice!"))
         return 0
 
 
