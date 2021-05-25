@@ -14,8 +14,8 @@ import capa.rules
 import capa.engine
 import capa.features
 from capa.features import ARCH_X32, ARCH_X64, String
-from capa.features.insn import Number, Offset
 from capa.features.file import FunctionName
+from capa.features.insn import Number, Offset
 
 
 def test_rule_ctor():
