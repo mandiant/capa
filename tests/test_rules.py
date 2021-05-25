@@ -916,4 +916,3 @@ def test_function_name_features():
     assert (FunctionName("strcpy") in children) == True
     assert (FunctionName("strcmp", description="copy from here to there") in children) == True
     assert (FunctionName("strdup", description="duplicate a string") in children) == True
-

@@ -28,7 +28,8 @@ class Section(Feature):
 
 
 class FunctionName(Feature):
-    """ recognized name for statically linked function  """
+    """recognized name for statically linked function"""
+
     def __init__(self, name, description=None):
         # value is function name
         super(FunctionName, self).__init__(name, description=description)
