@@ -23,6 +23,7 @@ import io
 import yaml
 import ruamel.yaml
 
+import capa.rules
 import capa.engine
 import capa.features
 import capa.features.file

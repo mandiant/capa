@@ -7,11 +7,11 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
-import sys
 import codecs
 import logging
 
 import capa.engine
+import capa.features
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
@@ -202,7 +202,7 @@ class _MatchedRegex(Regex):
 
 
 class StringFactory(object):
-    def __new__(self, value, description=None):
+    def __new__(cls, value, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
         return String(value, description=description)
