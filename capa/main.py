@@ -32,6 +32,7 @@ import capa.version
 import capa.features
 import capa.features.freeze
 import capa.features.extractors
+import capa.features.extractors.pefile
 from capa.helpers import get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -807,6 +808,23 @@ def main(argv=None):
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         return -1
+
+    if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
+        # this pefile file feature extractor is pretty light weight: it doesn't do any code analysis.
+        # so we can fairly quickly determine if the given PE file has "pure" file-scope rules
+        # that indicate a limitation (like "file is packed based on section names")
+        # and avoid doing a full code analysis on difficult/impossible binaries.
+        file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(args.sample)
+        pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+
+        # file limitations that rely on non-file scope won't be detected here.
+        # nor on FunctionName features, because pefile doesn't support this.
+        if has_file_limitation(rules, pure_file_capabilities):
+            # bail if capa encountered file limitation e.g. a packed binary
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                logger.debug("file limitation short circuit, won't analyze fully.")
+                return -1
 
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"
