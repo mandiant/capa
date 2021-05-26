@@ -64,7 +64,7 @@ def xfail(condition, reason=None):
 
 
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
-@lru_cache(maxsize=6)
+@lru_cache(maxsize=1)
 def get_viv_extractor(path):
     import capa.features.extractors.viv
 
@@ -314,7 +314,7 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-FEATURE_PRESENCE_TESTS = [
+FEATURE_PRESENCE_TESTS = sorted([
     # file/characteristic("embedded pe")
     ("pma12-04", "file", capa.features.Characteristic("embedded pe"), True),
     # file/string
@@ -488,7 +488,10 @@ FEATURE_PRESENCE_TESTS = [
     ("mimikatz", "function=0x456BB9", capa.features.Characteristic("calls to"), False),
     # file/function-name
     ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
-]
+],
+# order tests by (file, item)
+# so that our LRU cache is most effective.
+key=lambda t: (t[0], t[1]))
 
 FEATURE_PRESENCE_TESTS_IDA = [
     # file/imports
