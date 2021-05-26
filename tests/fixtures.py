@@ -114,6 +114,7 @@ def get_smda_extractor(path):
 @lru_cache(maxsize=1)
 def get_pefile_extractor(path):
     import capa.features.extractors.pefile
+
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 

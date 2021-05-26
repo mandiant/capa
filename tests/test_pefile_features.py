@@ -14,23 +14,6 @@ from fixtures import parametrize
 import capa.features.file
 
 
-def pefile_parametrize(params, valuess, **kwargs):
-    """
-    fixup pytest parametrization to mark a subset of tests as xfail.
-
-    xfail pefile tests that aren't at file scope.
-    """
-    ret = []
-    for values in valuess:
-        (sample, scope, feature, expected) = values
-        if scope != "file":
-            #ret.append(pytest.param(*values, marks=pytest.mark.xfail(, strict=True)))
-            pass
-        else:
-            ret.append(values)
-    return parametrize(params, ret, **kwargs)
-
-
 @parametrize(
     "sample,scope,feature,expected",
     FEATURE_PRESENCE_TESTS,

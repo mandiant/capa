@@ -12,9 +12,9 @@ import pefile
 import capa.features.extractors
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
-from capa.features.extractors import FeatureExtractor
 from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section
+from capa.features.extractors import FeatureExtractor
 
 __all__ = ["file"]
 logger = logging.getLogger(__name__)
@@ -107,7 +107,6 @@ def extract_file_function_names(pe, file_path):
         # using a `yield` here to force this to be a generator, not function.
         yield NotImplementedError("pefile doesn't have library matching")
     return
-
 
 
 def extract_file_features(pe, file_path):
