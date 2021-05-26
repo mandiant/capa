@@ -6,11 +6,8 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
+import struct
 import builtins
-
-from capa.features.file import Import
-from capa.features.insn import API
 
 MIN_STACKSTRING_LEN = 8
 
@@ -87,3 +84,49 @@ def twos_complement(val, bits):
     else:
         # return positive value as is
         return val
+
+
+def carve_pe(pbytes, offset=0):
+    """
+    Return a list of (offset, size, xor) tuples of embedded PEs
+
+    Based on the version from vivisect:
+      https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
+    And its IDA adaptation:
+      capa/features/extractors/ida/file.py
+    """
+    mz_xor = [
+        (
+            xor_static(b"MZ", i),
+            xor_static(b"PE", i),
+            i,
+        )
+        for i in range(256)
+    ]
+
+    pblen = len(pbytes)
+    todo = [(pbytes.find(mzx, offset), mzx, pex, i) for mzx, pex, i in mz_xor]
+    todo = [(off, mzx, pex, i) for (off, mzx, pex, i) in todo if off != -1]
+
+    while len(todo):
+
+        off, mzx, pex, i = todo.pop()
+
+        # The MZ header has one field we will check
+        # e_lfanew is at 0x3c
+        e_lfanew = off + 0x3C
+        if pblen < (e_lfanew + 4):
+            continue
+
+        newoff = struct.unpack("<I", xor_static(pbytes[e_lfanew : e_lfanew + 4], i))[0]
+
+        nextres = pbytes.find(mzx, off + 1)
+        if nextres != -1:
+            todo.append((nextres, mzx, pex, i))
+
+        peoff = off + newoff
+        if pblen < (peoff + 2):
+            continue
+
+        if pbytes[peoff : peoff + 2] == pex:
+            yield (off, i)
