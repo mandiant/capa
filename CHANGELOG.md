@@ -13,7 +13,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: more detailed progress bar output when matching functions #562 @mr-tz
 
-### New Rules (73)
+### New Rules (77)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -87,6 +87,10 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - executable/installer/inno-setup/packaged-as-an-inno-setup-installer awillia2@cisco.com
 - data-manipulation/hashing/djb2/hash-data-using-djb2 awillia2@cisco.com
 - data-manipulation/encoding/base64/decode-data-using-base64-via-dword-translation-table gilbert.elliot@fireeye.com
+- nursery/list-tcp-connections-and-listeners michael.hunhoff@fireeye.com
+- nursery/list-udp-connections-and-listeners michael.hunhoff@fireeye.com
+- nursery/log-keystrokes-via-raw-input-data michael.hunhoff@fireeye.com
+- nursery/register-http-server-url michael.hunhoff@fireeye.com
 -
 
 ### Bug Fixes
