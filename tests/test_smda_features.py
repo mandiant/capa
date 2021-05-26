@@ -5,6 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
+
 import pytest
 from fixtures import *
 from fixtures import parametrize
@@ -20,12 +22,16 @@ def smda_parametrize(params, valuess, **kwargs):
     """
     ret = []
     for values in valuess:
-        (_, scope, feature, expected) = values
+        (sample, scope, feature, expected) = values
         if scope == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
             # pytest.param behaves like a list, but carries along associated marks, like xfail.
             #
             # https://stackoverflow.com/a/30575822/87207
-            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA has no function ID")))
+            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA has no function ID", strict=True)))
+        elif sample == "a1982..." and sys.platform == "win32":
+            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA bug tracked #585", strict=True)))
+        elif sample == "al-khaser x64" and sys.platform == "win32":
+            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA bug tracked #585", strict=True)))
         else:
             ret.append(values)
     return parametrize(params, ret, **kwargs)
