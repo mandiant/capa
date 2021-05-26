@@ -111,6 +111,12 @@ def get_smda_extractor(path):
     return capa.features.extractors.smda.SmdaFeatureExtractor(report, path)
 
 
+@lru_cache(maxsize=1)
+def get_pefile_extractor(path):
+    import capa.features.extractors.pefile
+    return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+
 @lru_cache()
 def extract_file_features(extractor):
     features = collections.defaultdict(set)
