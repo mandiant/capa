@@ -14,39 +14,25 @@ from fixtures import parametrize
 import capa.features.file
 
 
-def smda_parametrize(params, valuess, **kwargs):
-    """
-    fixup pytest parametrization to mark a subset of tests as xfail.
-
-    xfail SMDA tests that rely on function id.
-    """
-    ret = []
-    for values in valuess:
-        (sample, scope, feature, expected) = values
-        if scope == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
-            # pytest.param behaves like a list, but carries along associated marks, like xfail.
-            #
-            # https://stackoverflow.com/a/30575822/87207
-            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA has no function ID", strict=True)))
-        elif sample == "a1982..." and sys.platform == "win32":
-            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA bug tracked #585", strict=True)))
-        elif sample == "al-khaser x64" and sys.platform == "win32":
-            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA bug tracked #585", strict=True)))
-        else:
-            ret.append(values)
-    return parametrize(params, ret, **kwargs)
-
-
-@smda_parametrize(
+@parametrize(
     "sample,scope,feature,expected",
     FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],
 )
 def test_smda_features(sample, scope, feature, expected):
+    if scope.__name__ == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
+        pytest.xfail("SMDA has no function ID")
+
+    if sample == "a1982..." and sys.platform == "win32":
+        pytest.xfail("SMDA bug tracked #585")
+
+    if sample == "al-khaser x64" and sys.platform == "win32":
+        pytest.xfail("SMDA bug tracked #585")
+
     do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
 
 
-@smda_parametrize(
+@parametrize(
     "sample,scope,feature,expected",
     FEATURE_COUNT_TESTS,
     indirect=["sample", "scope"],
