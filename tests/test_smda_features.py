@@ -5,22 +5,43 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
+import pytest
+
+import capa.features.file
 
 from fixtures import *
+from fixtures import parametrize
 
 
-@parametrize(
+def smda_parametrize(params, valuess, **kwargs):
+    """
+    fixup pytest parametrization to mark a subset of tests as xfail.
+
+    xfail SMDA tests that rely on function id.
+    """
+    ret = []
+    for values in valuess:
+        (_, scope, feature, expected) = values
+        if scope == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
+            # pytest.param behaves like a list, but carries along associated marks, like xfail.
+            #
+            # https://stackoverflow.com/a/30575822/87207
+            ret.append(pytest.param(*values, marks=pytest.mark.xfail(reason="SMDA has no function ID")))
+        else:
+            ret.append(values)
+    return parametrize(params, ret, **kwargs)
+
+
+@smda_parametrize(
     "sample,scope,feature,expected",
     FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],
 )
-@pytest.mark.xfail(sys.platform == "win32", reason="SMDA bug: https://github.com/danielplohmann/smda/issues/20")
 def test_smda_features(sample, scope, feature, expected):
     do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
 
 
-@parametrize(
+@smda_parametrize(
     "sample,scope,feature,expected",
     FEATURE_COUNT_TESTS,
     indirect=["sample", "scope"],
