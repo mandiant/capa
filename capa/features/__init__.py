@@ -9,6 +9,7 @@
 import re
 import codecs
 import logging
+import collections
 
 import capa.engine
 import capa.features
@@ -155,6 +156,10 @@ class Regex(String):
             )
 
     def evaluate(self, ctx):
+        # mapping from string value to list of locations.
+        # will unique the locations later on.
+        matches = collections.defaultdict(list)
+
         for feature, locations in ctx.items():
             if not isinstance(feature, (capa.features.String,)):
                 continue
@@ -164,13 +169,26 @@ class Regex(String):
             # using this mode cleans is more convenient for rule authors,
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
-                # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
-                # this is because `self` may match on many strings, so we can't stuff the matched value into it.
-                # instead, return a new instance that has a reference to both the regex and the matched value.
-                # see #262.
-                return capa.engine.Result(True, _MatchedRegex(self, feature.value), [], locations=locations)
+                matches[feature.value].extend(locations)
 
-        return capa.engine.Result(False, _MatchedRegex(self, None), [])
+        if matches:
+            # finalize: defaultdict -> dict
+            # which makes json serialization easier
+            matches = dict(matches)
+
+            # collect all locations
+            locations = set()
+            for s in matches.keys():
+                matches[s] = list(set(matches[s]))
+                locations.update(matches[s])
+
+            # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
+            # this is because `self` may match on many strings, so we can't stuff the matched value into it.
+            # instead, return a new instance that has a reference to both the regex and the matched values.
+            # see #262.
+            return capa.engine.Result(True, _MatchedRegex(self, matches), [], locations=locations)
+        else:
+            return capa.engine.Result(False, _MatchedRegex(self, None), [])
 
     def __str__(self):
         return "regex(string =~ %s)" % self.value
@@ -178,27 +196,27 @@ class Regex(String):
 
 class _MatchedRegex(Regex):
     """
-    this represents a specific instance of a regular expression feature match.
-    treat it the same as a `Regex` except it has the `match` field that contains the complete string that matched.
+    this represents specific match instances of a regular expression feature.
+    treat it the same as a `Regex` except it has the `matches` field that contains the complete strings that matched.
 
     note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, regex, match):
+    def __init__(self, regex, matches):
         """
         args:
-          regex (Regex): the regex feature that matches
-          match (string|None): the matching string or None if it doesn't match
+          regex (Regex): the regex feature that matches.
+          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
         """
         super(_MatchedRegex, self).__init__(regex.value, description=regex.description)
         # we want this to collide with the name of `Regex` above,
         # so that it works nicely with the renderers.
         self.name = "regex"
         # this may be None if the regex doesn't match
-        self.match = match
+        self.matches = matches
 
     def __str__(self):
-        return 'regex(string =~ %s, matched = "%s")' % (self.value, self.match)
+        return 'regex(string =~ %s, matches = %s)' % (self.value, ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())))
 
 
 class StringFactory(object):

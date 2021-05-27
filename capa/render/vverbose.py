@@ -6,10 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import collections
-
 import tabulate
 
+import capa.features
 import capa.rules
 import capa.render.utils as rutils
 import capa.render.verbose
@@ -85,31 +84,50 @@ def render_statement(ostream, match, statement, indent=0):
         raise RuntimeError("unexpected match statement type: " + str(statement))
 
 
+def render_string_value(s):
+    return '"%s"' % capa.features.escape_string(s)
+
+
 def render_feature(ostream, match, feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature["type"]
     value = feature[feature["type"]]
-    if key == "regex":
-        key = "string"  # render string for regex to mirror the rule source
-        value = feature["match"]  # the match provides more information than the value for regex
 
-    if key == "string":
-        value = '"%s"' % capa.features.escape_string(value)
+    if key != "regex":
+        # like:
+        #   number: 10 = SOME_CONSTANT @ 0x401000
+        if key == "string":
+            value = render_string_value(value)
 
-    ostream.write(key)
-    ostream.write(": ")
+        ostream.write(key)
+        ostream.write(": ")
 
-    if value:
-        ostream.write(rutils.bold2(value))
+        if value:
+            ostream.write(rutils.bold2(value))
 
-        if "description" in feature:
-            ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
-            ostream.write(feature["description"])
+            if "description" in feature:
+                ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
+                ostream.write(feature["description"])
 
-    render_locations(ostream, match)
-    ostream.write("\n")
+        render_locations(ostream, match)
+        ostream.write("\n")
+    else:
+        # like:
+        #  regex: /blah/ = SOME_CONSTANT
+        #    - "foo blah baz" @ 0x401000
+        #    - "aaa blah bbb" @ 0x402000, 0x403400
+        ostream.write(key)
+        ostream.write(": ")
+        ostream.write(value)
+        ostream.write("\n")
 
+        for match, locations in sorted(feature["matches"].items(), key=lambda p: p[0]):
+            ostream.write("  " * (indent + 1))
+            ostream.write("- ")
+            ostream.write(rutils.bold2(render_string_value(match)))
+            render_locations(ostream, {"locations": locations})
+            ostream.write("\n")
 
 def render_node(ostream, match, node, indent=0):
     if node["type"] == "statement":

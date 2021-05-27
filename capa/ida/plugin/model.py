@@ -12,6 +12,8 @@ import idc
 import idaapi
 from PyQt5 import QtGui, QtCore
 
+import capa.rules
+import capa.features
 import capa.ida.helpers
 import capa.render.utils as rutils
 from capa.ida.plugin.item import (
@@ -556,7 +558,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if feature["type"] == "regex":
             return CapaExplorerStringViewItem(
-                parent, display, location, '"%s"' % capa.features.escape_string(feature["match"])
+                parent, display, location, "\n".join(map(lambda s: '"' + capa.features.escape_string(s) + '"', feature["matches"].keys()))
             )
 
         if feature["type"] == "basicblock":
