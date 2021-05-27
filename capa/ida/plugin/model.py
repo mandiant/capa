@@ -557,9 +557,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             )
 
         if feature["type"] == "regex":
-            return CapaExplorerStringViewItem(
-                parent, display, location, "\n".join(map(lambda s: '"' + capa.features.escape_string(s) + '"', feature["matches"].keys()))
-            )
+            for s, locations in feature["matches"].items():
+                if location in locations:
+                    return CapaExplorerStringViewItem(
+                        parent, display, location, '"' + capa.features.escape_string(s) + '"'
+                    )
+
+            # programming error: the given location should always be found in the regex matches
+            raise ValueError("regex match at location not found")
 
         if feature["type"] == "basicblock":
             return CapaExplorerBlockItem(parent, location)
