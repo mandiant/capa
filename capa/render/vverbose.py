@@ -8,8 +8,8 @@
 
 import tabulate
 
-import capa.features
 import capa.rules
+import capa.features
 import capa.render.utils as rutils
 import capa.render.verbose
 
@@ -128,6 +128,7 @@ def render_feature(ostream, match, feature, indent=0):
             ostream.write(rutils.bold2(render_string_value(match)))
             render_locations(ostream, {"locations": locations})
             ostream.write("\n")
+
 
 def render_node(ostream, match, node, indent=0):
     if node["type"] == "statement":

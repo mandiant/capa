@@ -216,7 +216,10 @@ class _MatchedRegex(Regex):
         self.matches = matches
 
     def __str__(self):
-        return 'regex(string =~ %s, matches = %s)' % (self.value, ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())))
+        return "regex(string =~ %s, matches = %s)" % (
+            self.value,
+            ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
+        )
 
 
 class StringFactory(object):
