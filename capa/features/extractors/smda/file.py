@@ -79,8 +79,8 @@ def extract_file_import_names(smda_report, file_path):
         library_name = imported_library.name.lower()
         library_name = library_name[:-4] if library_name.endswith(".dll") else library_name
         for func in imported_library.entries:
+            va = func.iat_address + smda_report.base_addr
             if func.name:
-                va = func.iat_address + smda_report.base_addr
                 for name in capa.features.extractors.helpers.generate_symbols(library_name, func.name):
                     yield Import(name), va
             elif func.is_ordinal:
@@ -112,6 +112,16 @@ def extract_file_strings(smda_report, file_path):
         yield String(s.s), s.offset
 
 
+def extract_file_function_names(smda_report, file_path):
+    """
+    extract the names of statically-linked library functions.
+    """
+    if False:
+        # using a `yield` here to force this to be a generator, not function.
+        yield NotImplementedError("SMDA doesn't have library matching")
+    return
+
+
 def extract_features(smda_report, file_path):
     """
     extract file features from given workspace
@@ -125,7 +135,6 @@ def extract_features(smda_report, file_path):
     """
 
     for file_handler in FILE_HANDLERS:
-        result = file_handler(smda_report, file_path)
         for feature, va in file_handler(smda_report, file_path):
             yield feature, va
 
@@ -136,4 +145,5 @@ FILE_HANDLERS = (
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
+    extract_file_function_names,
 )

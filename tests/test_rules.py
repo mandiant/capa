@@ -11,7 +11,10 @@ import textwrap
 import pytest
 
 import capa.rules
+import capa.engine
+import capa.features
 from capa.features import ARCH_X32, ARCH_X64, String
+from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
 
 
@@ -891,3 +894,25 @@ def test_rules_namespace_dependencies():
     assert "rule 1" in r4
     assert "rule 2" in r4
     assert "rule 3" not in r4
+
+
+def test_function_name_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - function-name: strcpy
+                    - function-name: strcmp = copy from here to there
+                    - function-name: strdup
+                      description: duplicate a string
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (FunctionName("strcpy") in children) == True
+    assert (FunctionName("strcmp", description="copy from here to there") in children) == True
+    assert (FunctionName("strdup", description="duplicate a string") in children) == True
