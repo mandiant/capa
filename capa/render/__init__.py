@@ -165,14 +165,17 @@ def convert_match_to_result_document(rules, capabilities, result):
 def convert_meta_to_result_document(meta):
     mbcs = meta.get("mbc", [])
     meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
-    return dict(meta)
+    return meta
 
 
 def parse_canonical_mbc(mbc):
     """
     parse capa's canonical MBC representation: `Objective::Behavior::Method [Identifier]`
     """
-    id = objective = behavior = method = None
+    id = ""
+    objective = ""
+    behavior = ""
+    method = ""
     parts = mbc.split("::")
     if len(parts) > 0:
         last = parts.pop()
@@ -189,10 +192,10 @@ def parse_canonical_mbc(mbc):
 
     return {
         "parts": parts,
-        "id": id or "",
-        "objective": objective or "",
-        "behavior": behavior or "",
-        "method": method or "",
+        "id": id,
+        "objective": objective,
+        "behavior": behavior,
+        "method": method,
     }
 
 
