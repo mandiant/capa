@@ -13,6 +13,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - rule: add file-scope feature (`function-name`) for recognized library functions #567 @williballenthin
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: more detailed progress bar output when matching functions #562 @mr-tz
+- main: detect file limitations without doing code analysis for better performance #583 @williballenthin
 
 ### New Rules (77)
 

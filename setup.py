@@ -24,6 +24,7 @@ requirements = [
     "ruamel.yaml==0.17.4",
     "vivisect==1.0.3",
     "smda==1.5.17",
+    "pefile==2021.5.24",
 ]
 
 # this sets __version__
