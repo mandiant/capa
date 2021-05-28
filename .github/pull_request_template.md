@@ -1,31 +1,22 @@
+
 <!--
 Thank you for contributing to capa! <3
-
-IMPORTANT NOTE
-It's most important that you submit your improvements. So even if you don't use this complete template we look forward to collaborating!
 
 Please read capa's CONTRIBUTING guide if you haven't done so already.
 It contains helpful information about how to contribute to capa. Check https://github.com/fireeye/capa/blob/master/.github/CONTRIBUTING.md
 
-PR template based on https://embeddedartistry.com/blog/2017/08/04/a-github-pull-request-template-for-your-projects/
+Please describe the changes in this pull request (PR). Include your motivation and context to help us review.
+
+Please mention the issue your PR addresses (if any):
+closes #issue_number
 -->
 
-### Description
 
-<!-- Please describe the changes in this PR. Include your motivation and context to help us review. -->
+### Checklist
 
-closes # (issue)
-
-### Documentation
-
-- [ ] I have updated the [CHANGELOG.md](/CHANGELOG.md), this is required for:
-  - Bug fixes (non-breaking change which fixes an issue)
-  - New features (non-breaking change which adds functionality)
-  - Breaking changes (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
-  - [ ] I have made the corresponding changes to the documentation
-
-### Tests
-
-- [ ] I have added tests that prove my fix is effective or that my feature works
+<!-- CHANGELOG.md has a `master (unreleased)` section. Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning in the release notes to this file. -->
+- [ ] No CHANGELOG update needed
+<!-- Tests prove that your fix/work as expected and ensure it doesn't break on the feature. -->
 - [ ] No new tests needed
+<!-- Please help us keeping capa documentation up-to-date -->
+- [ ] No documentation update needed
