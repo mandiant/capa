@@ -206,7 +206,8 @@ def has_file_limitation(rules, capabilities, is_standalone=True):
 
         logger.warning("-" * 80)
         for line in file_limitation_rule.meta.get("description", "").split("\n"):
-            logger.warning(line)
+            logger.warning(" " + line)
+        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
         if is_standalone:
             logger.warning(" ")
             logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
