@@ -891,6 +891,9 @@ class RuleSet(object):
     def __getitem__(self, rulename):
         return self.rules[rulename]
 
+    def __contains__(self, rulename):
+        return rulename in self.rules
+
     @staticmethod
     def _get_rules_for_scope(rules, scope):
         """
