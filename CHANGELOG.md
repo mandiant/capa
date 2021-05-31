@@ -111,6 +111,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - linter: summarize results at the end #571 @williballenthin
 - meta: added `library_functions` field, `feature_counts.functions` does not include library functions any more #562 @mr-tz
 - linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
+- json: breaking change in results document; now contains parsed MBC fields instead of canonical representation #526 @mr-tz
 - main: implement file limitations via rules not code #390 @williballenthin
 
 ### Development

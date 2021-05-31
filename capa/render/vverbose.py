@@ -197,6 +197,12 @@ def render_rules(ostream, doc):
                 continue
 
             v = rule["meta"][key]
+            if not v:
+                continue
+
+            if key == "mbc":
+                v = [rutils.format_mbc(mbc) for mbc in v]
+
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]
             elif isinstance(v, list) and len(v) > 1:

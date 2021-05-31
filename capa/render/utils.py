@@ -29,6 +29,10 @@ def hex(n):
         return "0x%X" % n
 
 
+def format_mbc(mbc):
+    return "%s [%s]" % ("::".join(mbc["parts"]), mbc["id"])
+
+
 def capability_rules(doc):
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
     for (_, _, rule) in sorted(
