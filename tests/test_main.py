@@ -9,7 +9,6 @@
 import json
 import textwrap
 
-import pytest
 from fixtures import *
 
 import capa.main
@@ -361,8 +360,8 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     assert "create TCP socket" in std.out
 
 
-# It tests main works with different backends
 def test_backend_option(capsys):
+    # tests that main works with different backends
     path = get_data_path_by_name("pma16-01")
     assert capa.main.main([path, "-j", "-b", capa.main.BACKEND_VIV]) == 0
     std = capsys.readouterr()

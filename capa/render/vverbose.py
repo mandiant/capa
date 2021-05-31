@@ -219,8 +219,8 @@ def render_rules(ostream, doc):
             if not v:
                 continue
 
-            if key == "mbc":
-                v = [rutils.format_mbc(mbc) for mbc in v]
+            if key in ("att&ck", "mbc"):
+                v = [rutils.format_parts_id(vv) for vv in v]
 
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]

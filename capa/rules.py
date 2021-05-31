@@ -579,8 +579,9 @@ class Rule(object):
             raise InvalidRule("{:s} is not a supported scope".format(scope))
 
         meta = d["rule"]["meta"]
-        mbcs = meta.get("mbc", [])
-        if not isinstance(mbcs, list):
+        if not isinstance(meta.get("att&ck", []), list):
+            raise InvalidRule("ATT&CK mapping must be a list")
+        if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
         return cls(name, scope, build_statements(statements[0], scope), meta, definition)

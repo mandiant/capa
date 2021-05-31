@@ -29,8 +29,11 @@ def hex(n):
         return "0x%X" % n
 
 
-def format_mbc(mbc):
-    return "%s [%s]" % ("::".join(mbc["parts"]), mbc["id"])
+def format_parts_id(data):
+    """
+    format canonical representation of ATT&CK/MBC parts and ID
+    """
+    return "%s [%s]" % ("::".join(data["parts"]), data["id"])
 
 
 def capability_rules(doc):

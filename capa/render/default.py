@@ -123,14 +123,10 @@ def render_attack(doc, ostream):
             continue
 
         for attack in rule["meta"]["att&ck"]:
-            tactic, _, rest = attack.partition("::")
-            if "::" in rest:
-                technique, _, rest = rest.partition("::")
-                subtechnique, _, id = rest.rpartition(" ")
-                tactics[tactic].add((technique, subtechnique, id))
+            if attack.get("subtechnique"):
+                tactics[attack["tactic"]].add((attack["technique"], attack["subtechnique"], attack["id"]))
             else:
-                technique, _, id = rest.rpartition(" ")
-                tactics[tactic].add((technique, id))
+                tactics[attack["tactic"]].add((attack["technique"], attack["id"]))
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
