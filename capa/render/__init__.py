@@ -162,6 +162,43 @@ def convert_match_to_result_document(rules, capabilities, result):
     return doc
 
 
+def convert_meta_to_result_document(meta):
+    mbcs = meta.get("mbc", [])
+    meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
+    return meta
+
+
+def parse_canonical_mbc(mbc):
+    """
+    parse capa's canonical MBC representation: `Objective::Behavior::Method [Identifier]`
+    """
+    id = ""
+    objective = ""
+    behavior = ""
+    method = ""
+    parts = mbc.split("::")
+    if len(parts) > 0:
+        last = parts.pop()
+        last, _, id = last.rpartition(" ")
+        id = id.lstrip("[").rstrip("]")
+        parts.append(last)
+
+    if len(parts) > 0:
+        objective = parts[0]
+    if len(parts) > 1:
+        behavior = parts[1]
+    if len(parts) > 2:
+        method = parts[2]
+
+    return {
+        "parts": parts,
+        "id": id,
+        "objective": objective,
+        "behavior": behavior,
+        "method": method,
+    }
+
+
 def convert_capabilities_to_result_document(meta, rules, capabilities):
     """
     convert the given rule set and capabilities result to a common, Python-native data structure.
@@ -204,8 +241,10 @@ def convert_capabilities_to_result_document(meta, rules, capabilities):
         if rule.meta.get("capa/subscope-rule"):
             continue
 
+        rule_meta = convert_meta_to_result_document(rule.meta)
+
         doc["rules"][rule_name] = {
-            "meta": dict(rule.meta),
+            "meta": rule_meta,
             "source": rule.definition,
             "matches": {
                 addr: convert_match_to_result_document(rules, capabilities, match) for (addr, match) in matches
