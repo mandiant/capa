@@ -16,6 +16,10 @@ jobs:
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@v1.1
+      # this Action may throw the below error, e.g. when not properly rebased
+      # however, it still gets the modified files and we can continue
+      # Error: The head commit for this pull_request_target event is not ahead of the base commit.
+      continue-on-error: true
     - name: check changelog updated
       id: changelog_updated
       env:
