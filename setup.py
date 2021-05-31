@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.60.0",
+    "tqdm==4.61.0",
     "pyyaml==5.4.1",
     "tabulate==0.8.9",
     "colorama==0.4.4",
