@@ -186,7 +186,7 @@ def convert_match_to_result_document(rules, capabilities, result):
                     #       or:
                     #         import: mscoree._CorExeMain @ 0x402000
                     #
-                    # however, we lose the fact that it was rule 
+                    # however, we lose the fact that it was rule
                     #   "compiled to the .NET platform"
                     # that contained this logic and did the match.
                     #
@@ -195,7 +195,9 @@ def convert_match_to_result_document(rules, capabilities, result):
                     # in the meantime, the above might be sufficient.
                     rule_matches = {address: result for (address, result) in capabilities[rule.name]}
                     for location in doc["locations"]:
-                        doc["children"].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
+                        doc["children"].append(
+                            convert_match_to_result_document(rules, capabilities, rule_matches[location])
+                        )
 
     return doc
 
