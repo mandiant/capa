@@ -884,12 +884,16 @@ class RuleSet(object):
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
         self.rules = {rule.name: rule for rule in rules}
+        self.rules_by_namespace = index_rules_by_namespace(rules)
 
     def __len__(self):
         return len(self.rules)
 
     def __getitem__(self, rulename):
         return self.rules[rulename]
+
+    def __contains__(self, rulename):
+        return rulename in self.rules
 
     @staticmethod
     def _get_rules_for_scope(rules, scope):

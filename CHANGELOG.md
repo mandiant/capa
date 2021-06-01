@@ -93,7 +93,6 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/list-udp-connections-and-listeners michael.hunhoff@fireeye.com
 - nursery/log-keystrokes-via-raw-input-data michael.hunhoff@fireeye.com
 - nursery/register-http-server-url michael.hunhoff@fireeye.com
--
 
 ### Bug Fixes
 
@@ -113,6 +112,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
 - json: breaking change in results document; now contains parsed MBC fields instead of canonical representation #526 @mr-tz
 - json: breaking change: record all matching strings for regex #159 @williballenthin
+- main: implement file limitations via rules not code #390 @williballenthin
 
 ### Development
 

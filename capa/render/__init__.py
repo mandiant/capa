@@ -123,7 +123,7 @@ def convert_match_to_result_document(rules, capabilities, result):
         if bool(result.success):
             doc["locations"] = result.locations
 
-    # if we have a `match` statement, then we're referencing another rule.
+    # if we have a `match` statement, then we're referencing another rule or namespace.
     # this could an external rule (written by a human), or
     #  rule generated to support a subscope (basic block, etc.)
     # we still want to include the matching logic in this tree.
@@ -139,25 +139,65 @@ def convert_match_to_result_document(rules, capabilities, result):
         and doc["success"]
     ):
 
-        rule_name = doc["node"]["feature"]["match"]
-        rule = rules[rule_name]
-        rule_matches = {address: result for (address, result) in capabilities[rule_name]}
+        name = doc["node"]["feature"]["match"]
 
-        if rule.meta.get("capa/subscope-rule"):
-            # for a subscope rule, fixup the node to be a scope node, rather than a match feature node.
+        if name in rules:
+            # this is a rule that we're matching
             #
-            # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
-            scope = rule.meta["scope"]
-            doc["node"] = {
-                "type": "statement",
-                "statement": {
-                    "type": "subscope",
-                    "subscope": scope,
-                },
-            }
+            # pull matches from the referenced rule into our tree here.
+            rule_name = doc["node"]["feature"]["match"]
+            rule = rules[rule_name]
+            rule_matches = {address: result for (address, result) in capabilities[rule_name]}
 
-        for location in doc["locations"]:
-            doc["children"].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
+            if rule.meta.get("capa/subscope-rule"):
+                # for a subscope rule, fixup the node to be a scope node, rather than a match feature node.
+                #
+                # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
+                scope = rule.meta["scope"]
+                doc["node"] = {
+                    "type": "statement",
+                    "statement": {
+                        "type": "subscope",
+                        "subscope": scope,
+                    },
+                }
+
+            for location in doc["locations"]:
+                doc["children"].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
+        else:
+            # this is a namespace that we're matching
+            #
+            # check for all rules in the namespace,
+            # seeing if they matched.
+            # if so, pull their matches into our match tree here.
+            ns_name = doc["node"]["feature"]["match"]
+            ns_rules = rules.rules_by_namespace[ns_name]
+
+            for rule in ns_rules:
+                if rule.name in capabilities:
+                    # the rule matched, so splice results into our tree here.
+                    #
+                    # note, there's a shortcoming in our result document schema here:
+                    # we lose the name of the rule that matched in a namespace.
+                    # for example, if we have a statement: `match: runtime/dotnet`
+                    # and we get matches, we can say the following:
+                    #
+                    #     match: runtime/dotnet @ 0x0
+                    #       or:
+                    #         import: mscoree._CorExeMain @ 0x402000
+                    #
+                    # however, we lose the fact that it was rule
+                    #   "compiled to the .NET platform"
+                    # that contained this logic and did the match.
+                    #
+                    # we could introduce an intermediate node here.
+                    # this would be a breaking change and require updates to the renderers.
+                    # in the meantime, the above might be sufficient.
+                    rule_matches = {address: result for (address, result) in capabilities[rule.name]}
+                    for location in doc["locations"]:
+                        doc["children"].append(
+                            convert_match_to_result_document(rules, capabilities, rule_matches[location])
+                        )
 
     return doc
 

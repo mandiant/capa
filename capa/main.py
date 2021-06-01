@@ -189,57 +189,33 @@ def has_rule_with_namespace(rules, capabilities, rule_cat):
     return False
 
 
-def has_file_limitation(rules, capabilities, is_standalone=True):
-    file_limitations = {
-        # capa will likely detect installer specific functionality.
-        # this is probably not what the user wants.
-        "executable/installer": [
-            " This sample appears to be an installer.",
-            " ",
-            " capa cannot handle installers well. This means the results may be misleading or incomplete."
-            " You should try to understand the install mechanism and analyze created files with capa.",
-        ],
-        # capa won't detect much in .NET samples.
-        # it might match some file-level things.
-        # for consistency, bail on things that we don't support.
-        "runtime/dotnet": [
-            " This sample appears to be a .NET module.",
-            " ",
-            " .NET is a cross-platform framework for running managed applications.",
-            " capa cannot handle non-native files. This means that the results may be misleading or incomplete.",
-            " You may have to analyze the file manually, using a tool like the .NET decompiler dnSpy.",
-        ],
-        # capa will detect dozens of capabilities for AutoIt samples,
-        # but these are due to the AutoIt runtime, not the payload script.
-        # so, don't confuse the user with FP matches - bail instead
-        "compiler/autoit": [
-            " This sample appears to be compiled with AutoIt.",
-            " ",
-            " AutoIt is a freeware BASIC-like scripting language designed for automating the Windows GUI.",
-            " capa cannot handle AutoIt scripts. This means that the results will be misleading or incomplete.",
-            " You may have to analyze the file manually, using a tool like the AutoIt decompiler MyAut2Exe.",
-        ],
-        # capa won't detect much in packed samples
-        "anti-analysis/packer/": [
-            " This sample appears to be packed.",
-            " ",
-            " Packed samples have often been obfuscated to hide their logic.",
-            " capa cannot handle obfuscation well. This means the results may be misleading or incomplete.",
-            " If possible, you should try to unpack this input file before analyzing it with capa.",
-        ],
-    }
+def is_internal_rule(rule):
+    return rule.meta.get("namespace", "").startswith("internal/")
 
-    for category, dialogue in file_limitations.items():
-        if not has_rule_with_namespace(rules, capabilities, category):
+
+def is_file_limitation_rule(rule):
+    return rule.meta.get("namespace", "") == "internal/limitation/file"
+
+
+def has_file_limitation(rules, capabilities, is_standalone=True):
+    file_limitation_rules = list(filter(is_file_limitation_rule, rules.rules.values()))
+
+    for file_limitation_rule in file_limitation_rules:
+        if file_limitation_rule.name not in capabilities:
             continue
+
         logger.warning("-" * 80)
-        for line in dialogue:
-            logger.warning(line)
+        for line in file_limitation_rule.meta.get("description", "").split("\n"):
+            logger.warning(" " + line)
+        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
         if is_standalone:
             logger.warning(" ")
             logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
         logger.warning("-" * 80)
+
+        # bail on first file limitation
         return True
+
     return False
 
 
