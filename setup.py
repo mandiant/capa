@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.60.0",
+    "tqdm==4.61.0",
     "pyyaml==5.4.1",
     "tabulate==0.8.9",
     "colorama==0.4.4",
@@ -21,7 +21,7 @@ requirements = [
     "viv-utils[flirt]==0.6.4",
     "halo==0.0.31",
     "networkx==2.5.1",
-    "ruamel.yaml==0.17.4",
+    "ruamel.yaml==0.17.5",
     "vivisect==1.0.3",
     "smda==1.5.17",
     "pefile==2021.5.24",
