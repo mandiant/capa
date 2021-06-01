@@ -884,7 +884,7 @@ class RuleSet(object):
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
         self.rules = {rule.name: rule for rule in rules}
-        self.rules_by_namespace = self._index_rules_by_namespace(rules)
+        self.rules_by_namespace = index_rules_by_namespace(rules)
 
     def __len__(self):
         return len(self.rules)
@@ -938,23 +938,6 @@ class RuleSet(object):
             done.append(rule)
 
         return done
-
-    @staticmethod
-    def _index_rules_by_namespace(rules):
-        """
-        index the given rules into a dictionary, mapping from namespace name to
-        list of rules in that namespace.
-        """
-        index = collections.defaultdict(list)
-
-        for rule in rules:
-            namespace = rule.meta.get("namespace")
-            if namespace:
-                while namespace:
-                    index[namespace].append(rule)
-                    namespace, _, _ = namespace.rpartition("/")
-
-        return dict(index)
 
     def filter_rules_by_meta(self, tag):
         """
