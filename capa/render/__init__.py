@@ -72,7 +72,7 @@ def convert_feature_to_result_document(feature):
     if feature.description:
         result["description"] = feature.description
     if feature.name == "regex":
-        result["match"] = feature.match
+        result["matches"] = feature.matches
     return result
 
 
