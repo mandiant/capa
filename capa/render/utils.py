@@ -29,6 +29,17 @@ def hex(n):
         return "0x%X" % n
 
 
+def parse_parts_id(s):
+    id = ""
+    parts = s.split("::")
+    if len(parts) > 0:
+        last = parts.pop()
+        last, _, id = last.rpartition(" ")
+        id = id.lstrip("[").rstrip("]")
+        parts.append(last)
+    return parts, id
+
+
 def format_parts_id(data):
     """
     format canonical representation of ATT&CK/MBC parts and ID
