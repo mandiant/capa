@@ -10,6 +10,7 @@ import json
 
 import capa.rules
 import capa.engine
+import capa.render.utils
 
 
 def convert_statement_to_result_document(statement):
@@ -203,26 +204,45 @@ def convert_match_to_result_document(rules, capabilities, result):
 
 
 def convert_meta_to_result_document(meta):
+    attacks = meta.get("att&ck", [])
+    meta["att&ck"] = [parse_canonical_attack(attack) for attack in attacks]
     mbcs = meta.get("mbc", [])
     meta["mbc"] = [parse_canonical_mbc(mbc) for mbc in mbcs]
     return meta
+
+
+def parse_canonical_attack(attack):
+    """
+    parse capa's canonical ATT&CK representation: `Tactic::Technique::Subtechnique [Identifier]`
+    """
+    tactic = ""
+    technique = ""
+    subtechnique = ""
+    parts, id = capa.render.utils.parse_parts_id(attack)
+    if len(parts) > 0:
+        tactic = parts[0]
+    if len(parts) > 1:
+        technique = parts[1]
+    if len(parts) > 2:
+        subtechnique = parts[2]
+
+    return {
+        "parts": parts,
+        "id": id,
+        "tactic": tactic,
+        "technique": technique,
+        "subtechnique": subtechnique,
+    }
 
 
 def parse_canonical_mbc(mbc):
     """
     parse capa's canonical MBC representation: `Objective::Behavior::Method [Identifier]`
     """
-    id = ""
     objective = ""
     behavior = ""
     method = ""
-    parts = mbc.split("::")
-    if len(parts) > 0:
-        last = parts.pop()
-        last, _, id = last.rpartition(" ")
-        id = id.lstrip("[").rstrip("]")
-        parts.append(last)
-
+    parts, id = capa.render.utils.parse_parts_id(mbc)
     if len(parts) > 0:
         objective = parts[0]
     if len(parts) > 1:

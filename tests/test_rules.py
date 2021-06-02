@@ -399,6 +399,34 @@ def test_invalid_rules():
             )
         )
 
+    # att&ck and mbc must be lists
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        att&ck: Tactic::Technique::Subtechnique [Identifier]
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        mbc: Objective::Behavior::Method [Identifier]
+                    features:
+                        - number: 1
+                """
+            )
+        )
+
 
 def test_number_symbol():
     rule = textwrap.dedent(
