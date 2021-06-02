@@ -93,6 +93,12 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/list-udp-connections-and-listeners michael.hunhoff@fireeye.com
 - nursery/log-keystrokes-via-raw-input-data michael.hunhoff@fireeye.com
 - nursery/register-http-server-url michael.hunhoff@fireeye.com
+- internal/limitation/file/internal-autoit-file-limitation.yml william.ballenthin@fireeye.com
+- internal/limitation/file/internal-dotnet-file-limitation.yml william.ballenthin@fireeye.com
+- internal/limitation/file/internal-installer-file-limitation.yml william.ballenthin@fireeye.com
+- internal/limitation/file/internal-packer-file-limitation.yml william.ballenthin@fireeye.com
+-
+
 
 ### Bug Fixes
 
