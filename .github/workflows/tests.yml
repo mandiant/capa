@@ -7,6 +7,16 @@ on:
     branches: [ master ]
 
 jobs:
+  changelog_format:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout capa
+      uses: actions/checkout@v2
+    # The sync GH action in capa-rules relies on a single '- *$' in the CHANGELOG file
+    - name: Ensure CHANGELOG has '- *$'
+      run: |
+        number=$(grep '\- *$' CHANGELOG.md | wc -l)
+        if [ $number != 1 ]; then exit 1; fi
   code_style:
     runs-on: ubuntu-20.04
     steps:
