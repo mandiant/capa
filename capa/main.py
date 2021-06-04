@@ -777,8 +777,8 @@ def main(argv=None):
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
+            logger.debug("selected %d rules", len(rules))
             for i, r in enumerate(rules.rules, 1):
-                logger.debug("selected %d rules", len(rules))
                 # TODO don't display subscope rules?
                 logger.debug(" %d. %s", i, r)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
