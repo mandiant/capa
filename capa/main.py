@@ -18,6 +18,7 @@ import os.path
 import argparse
 import datetime
 import textwrap
+import itertools
 import contextlib
 import collections
 
@@ -164,14 +165,15 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
         for rule_name, res in bb_matches.items():
             all_bb_matches[rule_name].extend(res)
 
-    # mapping from matched rule feature to set of addresses at which it matched.
+    # collection of features that captures the rule matches within function and BB scopes.
+    # mapping from feature (matched rule) to set of addresses at which it matched.
     # schema: Dict[MatchedRule: Set[int]
-    function_features = {
+    function_and_lower_features = {
         capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
-        for rule_name, results in all_function_matches.items()
+        for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
     }
 
-    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_features)
+    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count
 
     matches = {}
