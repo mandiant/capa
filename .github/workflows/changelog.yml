@@ -24,7 +24,7 @@ jobs:
       run: |
         echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
     - name: Reject pull request if no CHANGELOG update
-      if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
+      if: ${{ always() && steps.changelog_updated.outcome == 'failure' && github.actor != 'dependabot' }}
       uses: Ana06/automatic-pull-request-review@v0.1.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
