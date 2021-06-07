@@ -23,7 +23,7 @@ requirements = [
     "networkx==2.5.1",
     "ruamel.yaml==0.17.7",
     "vivisect==1.0.3",
-    "smda==1.5.17",
+    "smda==1.5.18",
     "pefile==2021.5.24",
 ]
 
