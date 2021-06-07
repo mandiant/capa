@@ -9,6 +9,8 @@ on:
 
 jobs:
   check_changelog:
+    # no need to check for dependency updates via dependabot
+    if: github.actor != 'dependabot'
     runs-on: ubuntu-20.04
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
@@ -24,7 +26,7 @@ jobs:
       run: |
         echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
     - name: Reject pull request if no CHANGELOG update
-      if: ${{ always() && steps.changelog_updated.outcome == 'failure' && github.actor != 'dependabot' }}
+      if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
       uses: Ana06/automatic-pull-request-review@v0.1.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -37,4 +39,3 @@ jobs:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         event: DISMISS
         body: "CHANGELOG updated or no update needed, thanks! :smile:"
-
