@@ -23,12 +23,6 @@ def test_smda_features(sample, scope, feature, expected):
     if scope.__name__ == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
         pytest.xfail("SMDA has no function ID")
 
-    if "a198216798ca38f280dc413f8c57f2c2" in sample and sys.platform == "win32":
-        pytest.xfail("SMDA bug tracked #585")
-
-    if "al-khaser_x64" in sample and sys.platform == "win32":
-        pytest.xfail("SMDA bug tracked #585")
-
     do_test_feature_presence(get_smda_extractor, sample, scope, feature, expected)
 
 
