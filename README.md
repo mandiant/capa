@@ -1,4 +1,4 @@
-![capa](.github/logo.png)
+![capa](https://github.com/fireeye/capa/blob/master/.github/logo.png)
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/fireeye/capa)](https://github.com/fireeye/capa/releases)
@@ -65,16 +65,9 @@ $ capa.exe suspicious.exe
 
 Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
 
-<!--
-Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
-- Windows 64bit: TODO
-- Linux: TODO
-- OSX: TODO
--->
+To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/fireeye/capa/blob/master/doc/installation.md) for further setup instructions.
 
-To use capa as a library or integrate with another tool, see [doc/installation.md](doc/installation.md) for further setup instructions.
-
-For more information about how to use capa, see [doc/usage.md](doc/usage.md).
+For more information about how to use capa, see [doc/usage.md](https://github.com/fireeye/capa/blob/master/doc/usage.md).
 
 # example
 
@@ -91,7 +84,7 @@ This is useful for at least two reasons:
   - it shows where within the binary an experienced analyst might study with IDA Pro
 
 ```
-λ capa.exe suspicious.exe -vv
+$ capa.exe suspicious.exe -vv
 ...
 execute shell command and capture output
 namespace   c2/shell
@@ -149,18 +142,21 @@ rule:
 The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you can use the [capa explorer](capa/ida/plugin/) plugin.
+If you use IDA Pro, then you can use the [capa explorer](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) plugin.
 capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
-![capa + IDA Pro integration](doc/img/explorer_expanded.png)
+![capa + IDA Pro integration](https://github.com/fireeye/capa/blob/master/doc/img/explorer_expanded.png)
 
 # further information
 ## capa
-- [doc/installation](doc/installation.md)
-- [doc/usage](doc/usage.md)
-- [doc/limitations](doc/limitations.md)
-- [Contributing Guide](.github/CONTRIBUTING.md)
+- [Installation](https://github.com/fireeye/capa/blob/master/doc/installation.md)
+- [Usage](https://github.com/fireeye/capa/blob/master/doc/usage.md)
+- [Limitations](https://github.com/fireeye/capa/blob/master/doc/limitations.md)
+- [Contributing Guide](https://github.com/fireeye/capa/blob/master/.github/CONTRIBUTING.md)
 
 ## capa rules
 - [capa-rules repository](https://github.com/fireeye/capa-rules)
 - [capa-rules rule format](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
+
+## capa testfiles
+The [capa-testfiles repository](https://github.com/fireeye/capa-testfiles) contains the data we use to test capa's code and rules
