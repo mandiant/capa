@@ -33,3 +33,4 @@ class FunctionName(Feature):
     def __init__(self, name, description=None):
         # value is function name
         super(FunctionName, self).__init__(name, description=description)
+        self.name = "function-name"
