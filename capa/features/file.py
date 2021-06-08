@@ -33,4 +33,6 @@ class FunctionName(Feature):
     def __init__(self, name, description=None):
         # value is function name
         super(FunctionName, self).__init__(name, description=description)
+        # override the name property set by `capa.features.Feature`
+        # that would be `functionname` (note missing dash)
         self.name = "function-name"
