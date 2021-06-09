@@ -16,7 +16,6 @@ from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section
 from capa.features.extractors import FeatureExtractor
 
-__all__ = ["file"]
 logger = logging.getLogger(__name__)
 
 
