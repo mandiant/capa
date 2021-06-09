@@ -593,9 +593,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent, display, location, '"%s"' % capa.features.escape_string(feature[feature["type"]])
             )
 
-        if feature["type"] in ("import", "export"):
+        if feature["type"] in ("import", "export", "function-name"):
             # display no preview
-            return CapaExplorerFeatureItem(parent, display=display)
+            return CapaExplorerFeatureItem(parent, location=location, display=display)
 
         raise RuntimeError("unexpected feature type: " + str(feature["type"]))
 
