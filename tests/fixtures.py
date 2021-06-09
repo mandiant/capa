@@ -66,7 +66,7 @@ def xfail(condition, reason=None):
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
 @lru_cache(maxsize=1)
 def get_viv_extractor(path):
-    import capa.features.extractors.viv
+    import capa.features.extractors.viv.extractor
 
     sigpaths = [
         os.path.join(CD, "..", "sigs", "test_aulldiv.pat"),
@@ -82,7 +82,7 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
-    extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
     return extractor
 

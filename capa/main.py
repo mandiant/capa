@@ -418,7 +418,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
 
         return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
     else:
-        import capa.features.extractors.viv
+        import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
@@ -433,7 +433,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
                 # see #168 for discussion around how to handle non-writable directories
                 logger.info("source directory is not writable, won't save intermediate workspace")
 
-        return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
 
 
 def is_nursery_rule_path(path):

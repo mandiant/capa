@@ -111,7 +111,7 @@ def compare_extractors_viv_null(viv_ext, null_ext):
     and NullFeatureExtractor returns ints
 
     args:
-      viv_ext (capa.features.extractors.viv.VivisectFeatureExtractor)
+      viv_ext (capa.features.extractors.viv.extractor.VivisectFeatureExtractor)
       null_ext (capa.features.extractors.NullFeatureExtractor)
     """
     assert list(viv_ext.extract_file_features()) == list(null_ext.extract_file_features())
