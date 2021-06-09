@@ -851,7 +851,7 @@ def main(argv=None):
 
 def ida_main():
     import capa.ida.helpers
-    import capa.features.extractors.ida
+    import capa.features.extractors.ida.extractor
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
@@ -883,7 +883,7 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata()
 
-    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
+    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
     meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities, is_standalone=False):

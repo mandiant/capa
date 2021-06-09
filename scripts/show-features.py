@@ -153,10 +153,13 @@ def main(argv=None):
 
 
 def ida_main():
+    import idc
+    import capa.features.extractors.ida.extractor
+
     function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
     print("getting features for current function 0x%X" % function)
 
-    extractor = capa.features.extractors.ida.IdaFeatureExtractor()
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     if not function:
         for feature, va in extractor.extract_file_features():

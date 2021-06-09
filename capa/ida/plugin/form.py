@@ -21,8 +21,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 import capa.main
 import capa.rules
 import capa.ida.helpers
-import capa.render.utils as rutils
-import capa.features.extractors.ida
+import capa.features.extractors.ida.extractor
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -155,7 +154,7 @@ class CapaExplorerProgressIndicator(QtCore.QObject):
         self.progress.emit("extracting features from %s" % text)
 
 
-class CapaExplorerFeatureExtractor(capa.features.extractors.ida.IdaFeatureExtractor):
+class CapaExplorerFeatureExtractor(capa.features.extractors.ida.extractor.IdaFeatureExtractor):
     """subclass the IdaFeatureExtractor
 
     track progress during feature extraction, also allow user to cancel feature extraction

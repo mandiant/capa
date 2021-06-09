@@ -37,9 +37,9 @@ def get_ida_extractor(_path):
     check_input_file("5f66b82558ca92e54e77f216ef4c066c")
 
     # have to import import this inline so pytest doesn't bail outside of IDA
-    import capa.features.extractors.ida
+    import capa.features.extractors.ida.extractor
 
-    return capa.features.extractors.ida.IdaFeatureExtractor()
+    return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
