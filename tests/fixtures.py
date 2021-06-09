@@ -101,14 +101,14 @@ def get_smda_extractor(path):
     from smda.SmdaConfig import SmdaConfig
     from smda.Disassembler import Disassembler
 
-    import capa.features.extractors.smda
+    import capa.features.extractors.smda.extractor
 
     config = SmdaConfig()
     config.STORE_BUFFER = True
     disasm = Disassembler(config)
     report = disasm.disassembleFile(path)
 
-    return capa.features.extractors.smda.SmdaFeatureExtractor(report, path)
+    return capa.features.extractors.smda.extractor.SmdaFeatureExtractor(report, path)
 
 
 @lru_cache(maxsize=1)

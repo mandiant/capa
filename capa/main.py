@@ -407,7 +407,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
 
-        import capa.features.extractors.smda
+        import capa.features.extractors.smda.extractor
 
         smda_report = None
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -416,7 +416,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
             smda_disasm = Disassembler(config)
             smda_report = smda_disasm.disassembleFile(path)
 
-        return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+        return capa.features.extractors.smda.extractor.SmdaFeatureExtractor(smda_report, path)
     else:
         import capa.features.extractors.viv.extractor
 
