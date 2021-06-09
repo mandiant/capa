@@ -72,6 +72,9 @@ setuptools.setup(
             "pycodestyle==2.7.0",
             "black==21.5b2",
             "isort==5.8.0",
+        ],
+        "mypy": [
+            "types-colorama",
         ]
     },
     zip_safe=False,
