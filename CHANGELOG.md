@@ -15,7 +15,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: more detailed progress bar output when matching functions #562 @mr-tz
 - main: detect file limitations without doing code analysis for better performance #583 @williballenthin
 
-### New Rules (84)
+### New Rules (85)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -100,6 +100,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - host-interaction/network/domain/enumerate-domain-computers-via-ldap awillia2@cisco.com
 - host-interaction/network/domain/get-domain-controller-name awillia2@cisco.com
 - internal/limitation/file/internal-visual-basic-file-limitation @mr-tz
+- data-manipulation/hashing/md5/hash-data-with-md5 moritz.raabe@fireeye.com
 -
 
 
