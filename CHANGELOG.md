@@ -124,6 +124,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - json: breaking change in results document; now contains parsed ATT&CK and MBC fields instead of canonical representation #526 @mr-tz
 - json: breaking change: record all matching strings for regex #159 @williballenthin
 - main: implement file limitations via rules not code #390 @williballenthin
+- json: breaking change: correctly render negative offsets #619 @williballenthin
 
 ### Development
 

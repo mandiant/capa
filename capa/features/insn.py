@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import capa.render.utils
 from capa.features import Feature
 
 
@@ -24,7 +25,7 @@ class Number(Feature):
         super(Number, self).__init__(value, arch=arch, description=description)
 
     def get_value_str(self):
-        return "0x%X" % self.value
+        return capa.render.utils.hex(self.value)
 
 
 class Offset(Feature):
@@ -32,7 +33,7 @@ class Offset(Feature):
         super(Offset, self).__init__(value, arch=arch, description=description)
 
     def get_value_str(self):
-        return "0x%X" % self.value
+        return capa.render.utils.hex(self.value)
 
 
 class Mnemonic(Feature):
