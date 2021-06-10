@@ -75,7 +75,11 @@ setuptools.setup(
             "isort==5.8.0",
         ],
         "mypy": [
+            "types-PyYAML",
             "types-colorama",
+            "types-tabulate",
+            "types-termcolor",
+            "types-backports",
         ],
     },
     zip_safe=False,

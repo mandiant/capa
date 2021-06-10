@@ -15,7 +15,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - main: more detailed progress bar output when matching functions #562 @mr-tz
 - main: detect file limitations without doing code analysis for better performance #583 @williballenthin
 
-### New Rules (87)
+### New Rules (88)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -103,6 +103,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - data-manipulation/hashing/md5/hash-data-with-md5 moritz.raabe@fireeye.com
 - compiler/autohotkey/compiled-with-autohotkey awillia2@cisco.com
 - internal/limitation/file/internal-autohotkey-file-limitation @mr-tz
+- host-interaction/process/dump/create-process-memory-minidump michael.hunhoff@fireeye.com
 -
 
 
