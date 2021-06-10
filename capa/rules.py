@@ -887,7 +887,6 @@ def topologically_order_rules(rules):
     return ret
 
 
-
 class RuleSet(object):
     """
     a ruleset is initialized with a collection of rules, which it verifies and sorts into scopes.
