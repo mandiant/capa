@@ -12,7 +12,7 @@ import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
-from capa.features.extractors import FeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 
 class FunctionHandle:

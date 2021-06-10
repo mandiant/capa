@@ -15,7 +15,7 @@ import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
-from capa.features.extractors import FeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 

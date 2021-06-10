@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
 
-import pytest
 from fixtures import *
 
 import capa.main
@@ -15,9 +14,9 @@ import capa.helpers
 import capa.features
 import capa.features.insn
 import capa.features.freeze
-import capa.features.extractors
+import capa.features.extractors.base_extractor
 
-EXTRACTOR = capa.features.extractors.NullFeatureExtractor(
+EXTRACTOR = capa.features.extractors.base_extractor.NullFeatureExtractor(
     {
         "base address": 0x401000,
         "file features": [

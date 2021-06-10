@@ -80,7 +80,7 @@ def dumps(extractor):
     serialize the given extractor to a string
 
     args:
-      extractor: capa.features.extractor.FeatureExtractor:
+      extractor: capa.features.extractors.base_extractor.FeatureExtractor:
 
     returns:
       str: the serialized features.
