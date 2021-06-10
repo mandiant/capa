@@ -10,7 +10,7 @@ import re
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Dict, Set, Union
+from typing import TYPE_CHECKING, Set, Dict, Union
 
 import capa.engine
 import capa.features.common
