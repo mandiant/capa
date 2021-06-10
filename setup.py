@@ -75,7 +75,7 @@ setuptools.setup(
         ],
         "mypy": [
             "types-colorama",
-        ]
+        ],
     },
     zip_safe=False,
     keywords="capa malware analysis capability detection FLARE",
