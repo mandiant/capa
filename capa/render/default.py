@@ -11,6 +11,7 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
+import capa.render.result_document
 
 tabulate.PRESERVE_WHITESPACE = True
 
@@ -219,3 +220,8 @@ def render_default(doc):
     render_capabilities(doc, ostream)
 
     return ostream.getvalue()
+
+
+def render(meta, rules, capabilities):
+    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    return render_default(doc)

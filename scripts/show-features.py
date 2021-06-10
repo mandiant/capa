@@ -154,6 +154,7 @@ def main(argv=None):
 
 def ida_main():
     import idc
+
     import capa.features.extractors.ida.extractor
 
     function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)

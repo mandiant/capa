@@ -28,10 +28,13 @@ import colorama
 
 import capa.rules
 import capa.engine
-import capa.render
 import capa.version
 import capa.features
+import capa.render.json
+import capa.render.default
+import capa.render.verbose
 import capa.features.freeze
+import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.pefile
 from capa.helpers import get_file_taste
@@ -835,13 +838,13 @@ def main(argv=None):
             return -1
 
     if args.json:
-        print(capa.render.render_json(meta, rules, capabilities))
+        print(capa.render.json.render(meta, rules, capabilities))
     elif args.vverbose:
-        print(capa.render.render_vverbose(meta, rules, capabilities))
+        print(capa.render.vverbose.render(meta, rules, capabilities))
     elif args.verbose:
-        print(capa.render.render_verbose(meta, rules, capabilities))
+        print(capa.render.verbose.render(meta, rules, capabilities))
     else:
-        print(capa.render.render_default(meta, rules, capabilities))
+        print(capa.render.default.render(meta, rules, capabilities))
     colorama.deinit()
 
     logger.debug("done.")
@@ -890,7 +893,7 @@ def ida_main():
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
     colorama.init(strip=True)
-    print(capa.render.render_default(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities))
 
 
 def is_runtime_ida():

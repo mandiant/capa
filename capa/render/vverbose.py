@@ -12,6 +12,7 @@ import capa.rules
 import capa.features
 import capa.render.utils as rutils
 import capa.render.verbose
+import capa.render.result_document
 
 
 def render_locations(ostream, match):
@@ -261,3 +262,8 @@ def render_vverbose(doc):
     ostream.write("\n")
 
     return ostream.getvalue()
+
+
+def render(meta, rules, capabilities):
+    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    return render_vverbose(doc)
