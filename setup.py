@@ -25,6 +25,7 @@ requirements = [
     "vivisect==1.0.3",
     "smda==1.5.18",
     "pefile==2021.5.24",
+    "typing==3.7.4.3",
 ]
 
 # this sets __version__

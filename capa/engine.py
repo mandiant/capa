@@ -9,7 +9,13 @@
 import copy
 import collections
 
+from typing import Union, List, Dict, Set
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from capa.rules import Rule
+
 import capa.features.common
+from capa.features.common import Feature
 
 
 class Statement(object):
@@ -78,7 +84,7 @@ class Result(object):
     we need this so that we can render the tree of expressions and their results.
     """
 
-    def __init__(self, success, statement, children, locations=None):
+    def __init__(self, success: bool, statement: Union[Statement, Feature], children: List["Result"], locations=None):
         """
         args:
           success (bool)
@@ -199,7 +205,7 @@ class Subscope(Statement):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
-def match(rules, features, va):
+def match(rules: List["Rule"], features: Dict[Feature, Set[int]], va: int):
     """
     Args:
       rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.

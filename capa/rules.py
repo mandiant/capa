@@ -33,7 +33,6 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.rules import Rule
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 
 logger = logging.getLogger(__name__)
