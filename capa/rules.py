@@ -25,8 +25,6 @@ from typing import Any, Set, Dict, List, Union, Iterator
 import yaml
 import ruamel.yaml
 
-import capa.rules
-import capa.engine
 import capa.engine as ceng
 import capa.features
 import capa.features.file
@@ -491,9 +489,7 @@ class Rule(object):
     def _extract_subscope_rules_rec(self, statement):
         if isinstance(statement, ceng.Statement):
             # for each child that is a subscope,
-            for subscope in filter(
-                lambda statement: isinstance(statement, capa.engine.Subscope), statement.get_children()
-            ):
+            for subscope in filter(lambda statement: isinstance(statement, ceng.Subscope), statement.get_children()):
 
                 # create a new rule from it.
                 # the name is a randomly generated, hopefully unique value.
@@ -572,7 +568,7 @@ class Rule(object):
         if len(statements) != 1:
             raise InvalidRule("rule must begin with a single top level statement")
 
-        if isinstance(statements[0], capa.engine.Subscope):
+        if isinstance(statements[0], ceng.Subscope):
             raise InvalidRule("top level statement may not be a subscope")
 
         if scope not in SUPPORTED_FEATURES.keys():
