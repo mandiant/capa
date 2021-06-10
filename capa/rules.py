@@ -20,9 +20,10 @@ try:
 except ImportError:
     from backports.functools_lru_cache import lru_cache
 
+from typing import Any, Set, Dict, List, Union, Iterator
+
 import yaml
 import ruamel.yaml
-from typing import List, Any, Union, Dict, Iterator, Set
 
 import capa.rules
 import capa.engine
@@ -32,8 +33,8 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.rules import Rule
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 
 logger = logging.getLogger(__name__)
 

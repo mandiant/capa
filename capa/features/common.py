@@ -10,6 +10,7 @@ import re
 import codecs
 import logging
 import collections
+from typing import Dict, List, Union
 
 import capa.engine
 import capa.features.common
@@ -27,16 +28,16 @@ ARCH_X64 = "x64"
 VALID_ARCH = (ARCH_X32, ARCH_X64)
 
 
-def bytes_to_str(b):
+def bytes_to_str(b: bytes) -> str:
     return str(codecs.encode(b, "hex").decode("utf-8"))
 
 
-def hex_string(h):
+def hex_string(h: str) -> str:
     """render hex string e.g. "0a40b1" as "0A 40 B1" """
     return " ".join(h[i : i + 2] for i in range(0, len(h), 2)).upper()
 
 
-def escape_string(s):
+def escape_string(s: str) -> str:
     """escape special characters"""
     s = repr(s)
     if not s.startswith(('"', "'")):
@@ -51,7 +52,7 @@ def escape_string(s):
 
 
 class Feature(object):
-    def __init__(self, value, arch=None, description=None):
+    def __init__(self, value: Union[str, int, bytes], arch=None, description=None):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
@@ -79,14 +80,14 @@ class Feature(object):
     def __eq__(self, other):
         return self.name == other.name and self.value == other.value and self.arch == other.arch
 
-    def get_value_str(self):
+    def get_value_str(self) -> str:
         """
         render the value of this feature, for use by `__str__` and friends.
         subclasses should override to customize the rendering.
 
         Returns: any
         """
-        return self.value
+        return str(self.value)
 
     def __str__(self):
         if self.value is not None:
@@ -100,7 +101,7 @@ class Feature(object):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx: Dict["Feature", List[int]]) -> capa.engine.Result:
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
@@ -123,24 +124,26 @@ class Feature(object):
 
 
 class MatchedRule(Feature):
-    def __init__(self, value, description=None):
+    def __init__(self, value: str, description=None):
         super(MatchedRule, self).__init__(value, description=description)
         self.name = "match"
 
 
 class Characteristic(Feature):
-    def __init__(self, value, description=None):
+    def __init__(self, value: str, description=None):
         super(Characteristic, self).__init__(value, description=description)
 
 
 class String(Feature):
-    def __init__(self, value, description=None):
+    def __init__(self, value: str, description=None):
         super(String, self).__init__(value, description=description)
 
 
 class Regex(String):
-    def __init__(self, value, description=None):
+    def __init__(self, value: str, description=None):
         super(Regex, self).__init__(value, description=description)
+        self.value = value
+
         pat = self.value[len("/") : -len("/")]
         flags = re.DOTALL
         if value.endswith("/i"):
@@ -202,7 +205,7 @@ class _MatchedRegex(Regex):
     note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, regex, matches):
+    def __init__(self, regex: Regex, matches):
         """
         args:
           regex (Regex): the regex feature that matches.
@@ -223,15 +226,16 @@ class _MatchedRegex(Regex):
 
 
 class StringFactory(object):
-    def __new__(cls, value, description=None):
+    def __new__(cls, value: str, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)
         return String(value, description=description)
 
 
 class Bytes(Feature):
-    def __init__(self, value, description=None):
+    def __init__(self, value: bytes, description=None):
         super(Bytes, self).__init__(value, description=description)
+        self.value = value
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
