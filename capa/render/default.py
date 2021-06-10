@@ -7,19 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import Dict, List, Tuple
 
 import tabulate
-from typing import (
-    Dict,
-    List,
-    Tuple,
-)
 
-from capa.engine import Result
-from capa.render.utils import StringIO
-from capa.rules import RuleSet
 import capa.render.utils as rutils
 import capa.render.result_document
+from capa.rules import RuleSet
+from capa.engine import Result
+from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
 

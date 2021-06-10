@@ -7,11 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import List, Tuple, Optional
 
 import envi
 import vivisect.const
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
+from vivisect import VivWorkspace
+
+from capa.features.extractors.viv.extractor import InstructionHandle
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper
@@ -26,7 +30,7 @@ FAR_BRANCH_MASK = envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH
 DESTRUCTIVE_MNEMONICS = ("mov", "lea", "pop", "xor")
 
 
-def get_previous_instructions(vw, va):
+def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
     """
     collect the instructions that flow to the given address, local to the current function.
 
@@ -67,7 +71,7 @@ class NotFoundError(Exception):
     pass
 
 
-def find_definition(vw, va, reg):
+def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, int]:
     """
     scan backwards from the given address looking for assignments to the given register.
     if a constant, return that value.
@@ -128,14 +132,14 @@ def find_definition(vw, va, reg):
     raise NotFoundError()
 
 
-def is_indirect_call(vw, va, insn=None):
+def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional[InstructionHandle] = None) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
     return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
-def resolve_indirect_call(vw, va, insn=None):
+def resolve_indirect_call(vw: VivWorkspace, va: int, insn: Optional[InstructionHandle] = None) -> Tuple[int, int]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 
