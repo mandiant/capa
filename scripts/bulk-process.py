@@ -55,6 +55,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import os
 import sys
 import json
 import logging
@@ -66,7 +67,7 @@ import multiprocessing.pool
 import capa
 import capa.main
 import capa.rules
-import capa.render
+import capa.render.json
 
 logger = logging.getLogger("capa")
 
@@ -205,7 +206,7 @@ def main(argv=None):
                 capabilities = result["ok"]["capabilities"]
                 # our renderer expects to emit a json document for a single sample
                 # so we deserialize the json document, store it in a larger dict, and we'll subsequently re-encode.
-                results[result["path"]] = json.loads(capa.render.render_json(meta, rules, capabilities))
+                results[result["path"]] = json.loads(capa.render.json.render(meta, rules, capabilities))
             else:
                 raise ValueError("unexpected status: %s" % (result["status"]))
 

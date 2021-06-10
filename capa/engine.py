@@ -9,7 +9,7 @@
 import copy
 import collections
 
-import capa.features
+import capa.features.common
 
 
 class Statement(object):
@@ -199,37 +199,6 @@ class Subscope(Statement):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
-def topologically_order_rules(rules):
-    """
-    order the given rules such that dependencies show up before dependents.
-    this means that as we match rules, we can add features for the matches, and these
-     will be matched by subsequent rules if they follow this order.
-
-    assumes that the rule dependency graph is a DAG.
-    """
-    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
-    rules = list(rules)
-    namespaces = capa.rules.index_rules_by_namespace(rules)
-    rules = {rule.name: rule for rule in rules}
-    seen = set([])
-    ret = []
-
-    def rec(rule):
-        if rule.name in seen:
-            return
-
-        for dep in rule.get_dependencies(namespaces):
-            rec(rules[dep])
-
-        ret.append(rule)
-        seen.add(rule.name)
-
-    for rule in rules.values():
-        rec(rule)
-
-    return ret
-
-
 def match(rules, features, va):
     """
     Args:
@@ -254,12 +223,12 @@ def match(rules, features, va):
         res = rule.evaluate(features)
         if res:
             results[rule.name].append((va, res))
-            features[capa.features.MatchedRule(rule.name)].add(va)
+            features[capa.features.common.MatchedRule(rule.name)].add(va)
 
             namespace = rule.meta.get("namespace")
             if namespace:
                 while namespace:
-                    features[capa.features.MatchedRule(namespace)].add(va)
+                    features[capa.features.common.MatchedRule(namespace)].add(va)
                     namespace, _, _ = namespace.rpartition("/")
 
     return (features, results)

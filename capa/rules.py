@@ -12,6 +12,7 @@ import codecs
 import logging
 import binascii
 import functools
+import collections
 
 try:
     from functools import lru_cache
@@ -25,12 +26,13 @@ import ruamel.yaml
 
 import capa.rules
 import capa.engine
+import capa.engine as ceng
 import capa.features
 import capa.features.file
 import capa.features.insn
+import capa.features.common
 import capa.features.basicblock
-from capa.engine import *
-from capa.features import MAX_BYTES_FEATURE_SIZE
+from capa.features.common import MAX_BYTES_FEATURE_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -67,38 +69,38 @@ BASIC_BLOCK_SCOPE = "basic block"
 
 SUPPORTED_FEATURES = {
     FILE_SCOPE: {
-        capa.features.MatchedRule,
+        capa.features.common.MatchedRule,
         capa.features.file.Export,
         capa.features.file.Import,
         capa.features.file.Section,
         capa.features.file.FunctionName,
-        capa.features.Characteristic("embedded pe"),
-        capa.features.String,
+        capa.features.common.Characteristic("embedded pe"),
+        capa.features.common.String,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
         capa.features.basicblock.BasicBlock,
-        capa.features.Characteristic("calls from"),
-        capa.features.Characteristic("calls to"),
-        capa.features.Characteristic("loop"),
-        capa.features.Characteristic("recursive call"),
+        capa.features.common.Characteristic("calls from"),
+        capa.features.common.Characteristic("calls to"),
+        capa.features.common.Characteristic("loop"),
+        capa.features.common.Characteristic("recursive call"),
     },
     BASIC_BLOCK_SCOPE: {
-        capa.features.MatchedRule,
+        capa.features.common.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
-        capa.features.String,
-        capa.features.Bytes,
+        capa.features.common.String,
+        capa.features.common.Bytes,
         capa.features.insn.Offset,
         capa.features.insn.Mnemonic,
-        capa.features.Characteristic("nzxor"),
-        capa.features.Characteristic("peb access"),
-        capa.features.Characteristic("fs access"),
-        capa.features.Characteristic("gs access"),
-        capa.features.Characteristic("cross section flow"),
-        capa.features.Characteristic("tight loop"),
-        capa.features.Characteristic("stack string"),
-        capa.features.Characteristic("indirect call"),
+        capa.features.common.Characteristic("nzxor"),
+        capa.features.common.Characteristic("peb access"),
+        capa.features.common.Characteristic("fs access"),
+        capa.features.common.Characteristic("gs access"),
+        capa.features.common.Characteristic("cross section flow"),
+        capa.features.common.Characteristic("tight loop"),
+        capa.features.common.Characteristic("stack string"),
+        capa.features.common.Characteristic("indirect call"),
     },
 }
 
@@ -142,8 +144,8 @@ class InvalidRuleSet(ValueError):
 
 
 def ensure_feature_valid_for_scope(scope, feature):
-    if isinstance(feature, capa.features.Characteristic):
-        if capa.features.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]:
+    if isinstance(feature, capa.features.common.Characteristic):
+        if capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]:
             raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
     elif not isinstance(feature, tuple(filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope]))):
         raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
@@ -199,9 +201,9 @@ def parse_feature(key):
     if key == "api":
         return capa.features.insn.API
     elif key == "string":
-        return capa.features.StringFactory
+        return capa.features.common.StringFactory
     elif key == "bytes":
-        return capa.features.Bytes
+        return capa.features.common.Bytes
     elif key == "number":
         return capa.features.insn.Number
     elif key.startswith("number/"):
@@ -223,7 +225,7 @@ def parse_feature(key):
     elif key == "basic blocks":
         return capa.features.basicblock.BasicBlock
     elif key == "characteristic":
-        return capa.features.Characteristic
+        return capa.features.common.Characteristic
     elif key == "export":
         return capa.features.file.Export
     elif key == "import":
@@ -231,7 +233,7 @@ def parse_feature(key):
     elif key == "section":
         return capa.features.file.Section
     elif key == "match":
-        return capa.features.MatchedRule
+        return capa.features.common.MatchedRule
     elif key == "function-name":
         return capa.features.file.FunctionName
     else:
@@ -264,7 +266,7 @@ def parse_description(s, value_type, description=None):
     if isinstance(value, str):
         if value_type == "bytes":
             try:
-                value = codecs.decode(value.replace(" ", ""), "hex")
+                value = codecs.decode(value.replace(" ", "").encode("ascii"), "hex")
             except binascii.Error:
                 raise InvalidRule('unexpected bytes value: "%s", must be a valid hex sequence' % value)
 
@@ -323,21 +325,21 @@ def build_statements(d, scope):
     key = list(d.keys())[0]
     description = pop_statement_description_entry(d[key])
     if key == "and":
-        return And([build_statements(dd, scope) for dd in d[key]], description=description)
+        return ceng.And([build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "or":
-        return Or([build_statements(dd, scope) for dd in d[key]], description=description)
+        return ceng.Or([build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "not":
         if len(d[key]) != 1:
             raise InvalidRule("not statement must have exactly one child statement")
-        return Not(build_statements(d[key][0], scope), description=description)
+        return ceng.Not(build_statements(d[key][0], scope), description=description)
     elif key.endswith(" or more"):
         count = int(key[: -len("or more")])
-        return Some(count, [build_statements(dd, scope) for dd in d[key]], description=description)
+        return ceng.Some(count, [build_statements(dd, scope) for dd in d[key]], description=description)
     elif key == "optional":
         # `optional` is an alias for `0 or more`
         # which is useful for documenting behaviors,
         # like with `write file`, we might say that `WriteFile` is optionally found alongside `CreateFileA`.
-        return Some(0, [build_statements(dd, scope) for dd in d[key]], description=description)
+        return ceng.Some(0, [build_statements(dd, scope) for dd in d[key]], description=description)
 
     elif key == "function":
         if scope != FILE_SCOPE:
@@ -346,7 +348,7 @@ def build_statements(d, scope):
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
-        return Subscope(FUNCTION_SCOPE, build_statements(d[key][0], FUNCTION_SCOPE))
+        return ceng.Subscope(FUNCTION_SCOPE, build_statements(d[key][0], FUNCTION_SCOPE))
 
     elif key == "basic block":
         if scope != FUNCTION_SCOPE:
@@ -355,7 +357,7 @@ def build_statements(d, scope):
         if len(d[key]) != 1:
             raise InvalidRule("subscope must have exactly one child statement")
 
-        return Subscope(BASIC_BLOCK_SCOPE, build_statements(d[key][0], BASIC_BLOCK_SCOPE))
+        return ceng.Subscope(BASIC_BLOCK_SCOPE, build_statements(d[key][0], BASIC_BLOCK_SCOPE))
 
     elif key.startswith("count(") and key.endswith(")"):
         # e.g.:
@@ -396,18 +398,18 @@ def build_statements(d, scope):
 
         count = d[key]
         if isinstance(count, int):
-            return Range(feature, min=count, max=count, description=description)
+            return ceng.Range(feature, min=count, max=count, description=description)
         elif count.endswith(" or more"):
             min = parse_int(count[: -len(" or more")])
             max = None
-            return Range(feature, min=min, max=max, description=description)
+            return ceng.Range(feature, min=min, max=max, description=description)
         elif count.endswith(" or fewer"):
             min = None
             max = parse_int(count[: -len(" or fewer")])
-            return Range(feature, min=min, max=max, description=description)
+            return ceng.Range(feature, min=min, max=max, description=description)
         elif count.startswith("("):
             min, max = parse_range(count)
-            return Range(feature, min=min, max=max, description=description)
+            return ceng.Range(feature, min=min, max=max, description=description)
         else:
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], str):
@@ -462,7 +464,7 @@ class Rule(object):
         deps = set([])
 
         def rec(statement):
-            if isinstance(statement, capa.features.MatchedRule):
+            if isinstance(statement, capa.features.common.MatchedRule):
                 # we're not sure at this point if the `statement.value` is
                 #  really a rule name or a namespace name (we use `MatchedRule` for both cases).
                 # we'll give precedence to namespaces, and then assume if that does work,
@@ -478,7 +480,7 @@ class Rule(object):
                     # not a namespace, assume its a rule name.
                     deps.add(statement.value)
 
-            elif isinstance(statement, Statement):
+            elif isinstance(statement, ceng.Statement):
                 for child in statement.get_children():
                     rec(child)
 
@@ -489,7 +491,7 @@ class Rule(object):
         return deps
 
     def _extract_subscope_rules_rec(self, statement):
-        if isinstance(statement, Statement):
+        if isinstance(statement, ceng.Statement):
             # for each child that is a subscope,
             for subscope in filter(
                 lambda statement: isinstance(statement, capa.engine.Subscope), statement.get_children()
@@ -518,7 +520,7 @@ class Rule(object):
                 )
 
                 # update the existing statement to `match` the new rule
-                new_node = capa.features.MatchedRule(name)
+                new_node = capa.features.common.MatchedRule(name)
                 statement.replace_child(subscope, new_node)
 
                 # and yield the new rule to our caller
@@ -854,6 +856,37 @@ def index_rules_by_namespace(rules):
     return dict(namespaces)
 
 
+def topologically_order_rules(rules):
+    """
+    order the given rules such that dependencies show up before dependents.
+    this means that as we match rules, we can add features for the matches, and these
+     will be matched by subsequent rules if they follow this order.
+
+    assumes that the rule dependency graph is a DAG.
+    """
+    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    rules = list(rules)
+    namespaces = index_rules_by_namespace(rules)
+    rules = {rule.name: rule for rule in rules}
+    seen = set([])
+    ret = []
+
+    def rec(rule):
+        if rule.name in seen:
+            return
+
+        for dep in rule.get_dependencies(namespaces):
+            rec(rules[dep])
+
+        ret.append(rule)
+        seen.add(rule.name)
+
+    for rule in rules.values():
+        rec(rule)
+
+    return ret
+
+
 class RuleSet(object):
     """
     a ruleset is initialized with a collection of rules, which it verifies and sorts into scopes.
@@ -916,7 +949,7 @@ class RuleSet(object):
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
-        return get_rules_with_scope(capa.engine.topologically_order_rules(scope_rules), scope)
+        return get_rules_with_scope(topologically_order_rules(scope_rules), scope)
 
     @staticmethod
     def _extract_subscope_rules(rules):

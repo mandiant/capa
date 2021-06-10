@@ -10,9 +10,9 @@ import string
 import struct
 
 import envi
-import vivisect.const
+import envi.archs.i386.disasm
 
-from capa.features import Characteristic
+from capa.features.common import Characteristic
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 
@@ -37,7 +37,7 @@ def _bb_has_tight_loop(f, bb):
     """
     if len(bb.instructions) > 0:
         for bva, bflags in bb.instructions[-1].getBranches():
-            if bflags & vivisect.envi.BR_COND:
+            if bflags & envi.BR_COND:
                 if bva == bb.va:
                     return True
 
@@ -117,11 +117,15 @@ def get_printable_len(oper):
         chars = struct.pack("<I", oper.imm)
     elif oper.tsize == 8:
         chars = struct.pack("<Q", oper.imm)
+    else:
+        raise ValueError("unexpected oper.tsize: %d" % (oper.tsize))
+
     if is_printable_ascii(chars):
         return oper.tsize
-    if is_printable_utf16le(chars):
+    elif is_printable_utf16le(chars):
         return oper.tsize / 2
-    return 0
+    else:
+        return 0
 
 
 def is_printable_ascii(chars):

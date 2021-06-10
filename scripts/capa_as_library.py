@@ -6,11 +6,12 @@ import collections
 import capa.main
 import capa.rules
 import capa.engine
-import capa.render
 import capa.features
+import capa.render.json
 import capa.render.utils as rutils
+import capa.render.default
+import capa.render.result_document
 from capa.engine import *
-from capa.render import convert_capabilities_to_result_document
 
 # edit this to set the path for file to analyze and rule directory
 RULES_PATH = "/tmp/capa/rules/"
@@ -202,14 +203,14 @@ def capa_details(file_path, output_format="dictionary"):
     capa_output = False
     if output_format == "dictionary":
         # ...as python dictionary, simplified as textable but in dictionary
-        doc = convert_capabilities_to_result_document(meta, rules, capabilities)
+        doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
         capa_output = render_dictionary(doc)
     elif output_format == "json":
         # render results
         # ...as json
-        capa_output = json.loads(capa.render.render_json(meta, rules, capabilities))
+        capa_output = json.loads(capa.render.json.render(meta, rules, capabilities))
     elif output_format == "texttable":
         # ...as human readable text table
-        capa_output = capa.render.render_default(meta, rules, capabilities)
+        capa_output = capa.render.default.render(meta, rules, capabilities)
 
     return capa_output

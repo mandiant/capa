@@ -128,6 +128,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - json: breaking change: record all matching strings for regex #159 @williballenthin
 - main: implement file limitations via rules not code #390 @williballenthin
 - json: breaking change: correctly render negative offsets #619 @williballenthin
+- library: breaking change: remove logic from `__init__.py` throughout #622 @williballenthin
 
 ### Development
 

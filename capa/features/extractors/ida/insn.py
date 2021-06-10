@@ -12,7 +12,8 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features import (
+from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.common import (
     ARCH_X32,
     ARCH_X64,
     MAX_BYTES_FEATURE_SIZE,
@@ -21,7 +22,6 @@ from capa.features import (
     String,
     Characteristic,
 )
-from capa.features.insn import API, Number, Offset, Mnemonic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features

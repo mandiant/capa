@@ -28,10 +28,13 @@ import colorama
 
 import capa.rules
 import capa.engine
-import capa.render
 import capa.version
-import capa.features
+import capa.render.json
+import capa.render.default
+import capa.render.verbose
+import capa.features.common
 import capa.features.freeze
+import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.pefile
 from capa.helpers import get_file_taste
@@ -94,7 +97,7 @@ def find_function_capabilities(ruleset, extractor, f):
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
             for va, _ in res:
-                function_features[capa.features.MatchedRule(rule_name)].add(va)
+                function_features[capa.features.common.MatchedRule(rule_name)].add(va)
 
     _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
@@ -169,7 +172,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     # mapping from feature (matched rule) to set of addresses at which it matched.
     # schema: Dict[MatchedRule: Set[int]
     function_and_lower_features = {
-        capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
+        capa.features.common.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
     }
 
@@ -407,7 +410,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
 
-        import capa.features.extractors.smda
+        import capa.features.extractors.smda.extractor
 
         smda_report = None
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -416,9 +419,9 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
             smda_disasm = Disassembler(config)
             smda_report = smda_disasm.disassembleFile(path)
 
-        return capa.features.extractors.smda.SmdaFeatureExtractor(smda_report, path)
+        return capa.features.extractors.smda.extractor.SmdaFeatureExtractor(smda_report, path)
     else:
-        import capa.features.extractors.viv
+        import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
@@ -433,7 +436,7 @@ def get_extractor(path, format, backend, sigpaths, disable_progress=False):
                 # see #168 for discussion around how to handle non-writable directories
                 logger.info("source directory is not writable, won't save intermediate workspace")
 
-        return capa.features.extractors.viv.VivisectFeatureExtractor(vw, path)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
 
 
 def is_nursery_rule_path(path):
@@ -835,13 +838,13 @@ def main(argv=None):
             return -1
 
     if args.json:
-        print(capa.render.render_json(meta, rules, capabilities))
+        print(capa.render.json.render(meta, rules, capabilities))
     elif args.vverbose:
-        print(capa.render.render_vverbose(meta, rules, capabilities))
+        print(capa.render.vverbose.render(meta, rules, capabilities))
     elif args.verbose:
-        print(capa.render.render_verbose(meta, rules, capabilities))
+        print(capa.render.verbose.render(meta, rules, capabilities))
     else:
-        print(capa.render.render_default(meta, rules, capabilities))
+        print(capa.render.default.render(meta, rules, capabilities))
     colorama.deinit()
 
     logger.debug("done.")
@@ -850,8 +853,10 @@ def main(argv=None):
 
 
 def ida_main():
+    import capa.rules
     import capa.ida.helpers
-    import capa.features.extractors.ida
+    import capa.render.default
+    import capa.features.extractors.ida.extractor
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
@@ -883,14 +888,14 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata()
 
-    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.IdaFeatureExtractor())
+    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
     meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
     colorama.init(strip=True)
-    print(capa.render.render_default(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities))
 
 
 def is_runtime_ida():

@@ -10,6 +10,8 @@ import textwrap
 
 import capa.rules
 import capa.engine
+import capa.features.insn
+import capa.features.common
 from capa.engine import *
 from capa.features import *
 from capa.features.insn import *
@@ -233,7 +235,7 @@ def test_match_adds_matched_rule_feature():
     )
     r = capa.rules.Rule.from_yaml(rule)
     features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert capa.features.MatchedRule("test rule") in features
+    assert capa.features.common.MatchedRule("test rule") in features
 
 
 def test_match_matched_rules():
@@ -264,22 +266,22 @@ def test_match_matched_rules():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule1") in features
-    assert capa.features.MatchedRule("test rule2") in features
+    assert capa.features.common.MatchedRule("test rule1") in features
+    assert capa.features.common.MatchedRule("test rule2") in features
 
     # the ordering of the rules must not matter,
     # the engine should match rules in an appropriate order.
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(reversed(rules)),
+        capa.rules.topologically_order_rules(reversed(rules)),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule1") in features
-    assert capa.features.MatchedRule("test rule2") in features
+    assert capa.features.common.MatchedRule("test rule1") in features
+    assert capa.features.common.MatchedRule("test rule2") in features
 
 
 def test_regex():
@@ -322,34 +324,34 @@ def test_regex():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") not in features
+    assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aaaa"): {1}},
+        capa.rules.topologically_order_rules(rules),
+        {capa.features.common.String("aaaa"): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") not in features
+    assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
+        capa.rules.topologically_order_rules(rules),
+        {capa.features.common.String("aBBBBa"): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") not in features
+    assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("abbbba"): {1}},
+        capa.rules.topologically_order_rules(rules),
+        {capa.features.common.String("abbbba"): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") in features
-    assert capa.features.MatchedRule("rule with implied wildcards") in features
-    assert capa.features.MatchedRule("rule with anchor") not in features
+    assert capa.features.common.MatchedRule("test rule") in features
+    assert capa.features.common.MatchedRule("rule with implied wildcards") in features
+    assert capa.features.common.MatchedRule("rule with anchor") not in features
 
 
 def test_regex_ignorecase():
@@ -368,11 +370,11 @@ def test_regex_ignorecase():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
+        capa.rules.topologically_order_rules(rules),
+        {capa.features.common.String("aBBBBa"): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") in features
+    assert capa.features.common.MatchedRule("test rule") in features
 
 
 def test_regex_complex():
@@ -391,11 +393,11 @@ def test_regex_complex():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String(r"Hardware\Key\key with spaces\some value"): {1}},
+        capa.rules.topologically_order_rules(rules),
+        {capa.features.common.String(r"Hardware\Key\key with spaces\some value"): {1}},
         0x0,
     )
-    assert capa.features.MatchedRule("test rule") in features
+    assert capa.features.common.MatchedRule("test rule") in features
 
 
 def test_match_namespace():
@@ -449,19 +451,19 @@ def test_match_namespace():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.API("CreateFile"): {1}},
         0x0,
     )
     assert "CreateFile API" in matches
     assert "file-create" in matches
     assert "filesystem-any" in matches
-    assert capa.features.MatchedRule("file") in features
-    assert capa.features.MatchedRule("file/create") in features
-    assert capa.features.MatchedRule("file/create/CreateFile") in features
+    assert capa.features.common.MatchedRule("file") in features
+    assert capa.features.common.MatchedRule("file/create") in features
+    assert capa.features.common.MatchedRule("file/create/CreateFile") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.API("WriteFile"): {1}},
         0x0,
     )
@@ -472,11 +474,11 @@ def test_match_namespace():
 
 def test_render_number():
     assert str(capa.features.insn.Number(1)) == "number(0x1)"
-    assert str(capa.features.insn.Number(1, arch=ARCH_X32)) == "number/x32(0x1)"
-    assert str(capa.features.insn.Number(1, arch=ARCH_X64)) == "number/x64(0x1)"
+    assert str(capa.features.insn.Number(1, arch=capa.features.common.ARCH_X32)) == "number/x32(0x1)"
+    assert str(capa.features.insn.Number(1, arch=capa.features.common.ARCH_X64)) == "number/x64(0x1)"
 
 
 def test_render_offset():
     assert str(capa.features.insn.Offset(1)) == "offset(0x1)"
-    assert str(capa.features.insn.Offset(1, arch=ARCH_X32)) == "offset/x32(0x1)"
-    assert str(capa.features.insn.Offset(1, arch=ARCH_X64)) == "offset/x64(0x1)"
+    assert str(capa.features.insn.Offset(1, arch=capa.features.common.ARCH_X32)) == "offset/x32(0x1)"
+    assert str(capa.features.insn.Offset(1, arch=capa.features.common.ARCH_X64)) == "offset/x64(0x1)"

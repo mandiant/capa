@@ -6,14 +6,13 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
 import string
 import struct
 
 import idaapi
 
 import capa.features.extractors.ida.helpers
-from capa.features import Characteristic
+from capa.features.common import Characteristic
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.ida import helpers
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN

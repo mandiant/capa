@@ -31,7 +31,6 @@ See the License for the specific language governing permissions and limitations 
 """
 
 import re
-import pdb
 import sys
 import string
 import logging
@@ -44,8 +43,7 @@ import capa.rules
 import capa.engine
 import capa.features
 import capa.features.insn
-from capa.features import ARCH_X32, ARCH_X64, String
-from capa.features.insn import Number, Offset
+from capa.features.common import ARCH_X32, ARCH_X64, String
 
 logger = logging.getLogger("capa2yara")
 
@@ -348,9 +346,9 @@ def convert_rule(rule, rulename, cround, depth):
             kid = rule.child
             kids = [kid]
             num_kids = 1
-            logger.info("kid: " + kids)
+            logger.info("kid: %s", kids)
         except:
-            logger.info("no kid in rule: " + rule.name)
+            logger.info("no kid in rule: %s", rule.name)
 
     # just a single statement without 'and' or 'or' before it in this rule
     if "kids" not in locals().keys():
@@ -366,7 +364,7 @@ def convert_rule(rule, rulename, cround, depth):
 
     else:
         x = 0
-        logger.info("doing kids: " + repr(kids) + " - len: " + str(num_kids))
+        logger.info("doing kids: %r - len: %s", kids, num_kids)
         for kid in kids:
             s_type = kid.name
             logger.info("doing type: " + s_type + " kidnum: " + str(x))

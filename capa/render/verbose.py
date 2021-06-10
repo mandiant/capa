@@ -26,6 +26,7 @@ import tabulate
 
 import capa.rules
 import capa.render.utils as rutils
+import capa.render.result_document
 
 
 def render_meta(ostream, doc):
@@ -120,3 +121,8 @@ def render_verbose(doc):
     ostream.write("\n")
 
     return ostream.getvalue()
+
+
+def render(meta, rules, capabilities):
+    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    return render_verbose(doc)

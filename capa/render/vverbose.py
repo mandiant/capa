@@ -9,9 +9,10 @@
 import tabulate
 
 import capa.rules
-import capa.features
 import capa.render.utils as rutils
 import capa.render.verbose
+import capa.features.common
+import capa.render.result_document
 
 
 def render_locations(ostream, match):
@@ -56,7 +57,7 @@ def render_statement(ostream, match, statement, indent=0):
 
         if child[child["type"]]:
             if child["type"] == "string":
-                value = '"%s"' % capa.features.escape_string(child[child["type"]])
+                value = '"%s"' % capa.features.common.escape_string(child[child["type"]])
             else:
                 value = child[child["type"]]
             value = rutils.bold2(value)
@@ -85,7 +86,7 @@ def render_statement(ostream, match, statement, indent=0):
 
 
 def render_string_value(s):
-    return '"%s"' % capa.features.escape_string(s)
+    return '"%s"' % capa.features.common.escape_string(s)
 
 
 def render_feature(ostream, match, feature, indent=0):
@@ -261,3 +262,8 @@ def render_vverbose(doc):
     ostream.write("\n")
 
     return ostream.getvalue()
+
+
+def render(meta, rules, capabilities):
+    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    return render_vverbose(doc)

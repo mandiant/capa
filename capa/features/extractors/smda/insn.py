@@ -5,7 +5,8 @@ import struct
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.helpers
-from capa.features import (
+from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.common import (
     ARCH_X32,
     ARCH_X64,
     MAX_BYTES_FEATURE_SIZE,
@@ -14,7 +15,6 @@ from capa.features import (
     String,
     Characteristic,
 )
-from capa.features.insn import API, Number, Offset, Mnemonic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -97,7 +97,7 @@ def read_bytes(smda_report, va, num_bytes=None):
 
     rva = va - smda_report.base_addr
     if smda_report.buffer is None:
-        return
+        raise ValueError("buffer is empty")
     buffer_end = len(smda_report.buffer)
     max_bytes = num_bytes if num_bytes is not None else MAX_BYTES_FEATURE_SIZE
     if rva + max_bytes > buffer_end:
