@@ -15,7 +15,6 @@ import envi.archs.amd64.regs
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
 
-import capa.features.extractors.viv
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic
