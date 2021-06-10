@@ -73,7 +73,7 @@ def extract_stackstring(f, bb):
         yield Characteristic("stack string"), bb.va
 
 
-def is_mov_imm_to_stack(instr):
+def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     """
     Return if instruction moves immediate onto stack
     """
@@ -105,7 +105,7 @@ def is_mov_imm_to_stack(instr):
     return True
 
 
-def get_printable_len(oper):
+def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     """
     Return string length if all operand bytes are ascii or utf16-le printable
     """
@@ -128,7 +128,7 @@ def get_printable_len(oper):
         return 0
 
 
-def is_printable_ascii(chars):
+def is_printable_ascii(chars: bytes) -> bool:
     try:
         chars_str = chars.decode("ascii")
     except UnicodeDecodeError:
@@ -137,9 +137,10 @@ def is_printable_ascii(chars):
         return all(c in string.printable for c in chars_str)
 
 
-def is_printable_utf16le(chars):
+def is_printable_utf16le(chars: bytes) -> bool:
     if all(c == b"\x00" for c in chars[1::2]):
         return is_printable_ascii(chars[::2])
+    return False
 
 
 def extract_features(f, bb):
