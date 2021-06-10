@@ -26,12 +26,12 @@ import ruamel.yaml
 
 import capa.rules
 import capa.engine
+import capa.engine as ceng
 import capa.features
 import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-import capa.engine as ceng
 from capa.features.common import MAX_BYTES_FEATURE_SIZE
 
 logger = logging.getLogger(__name__)

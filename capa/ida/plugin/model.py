@@ -14,8 +14,8 @@ from PyQt5 import QtGui, QtCore
 
 import capa.rules
 import capa.ida.helpers
-import capa.features.common
 import capa.render.utils as rutils
+import capa.features.common
 from capa.ida.plugin.item import (
     CapaExplorerDataItem,
     CapaExplorerRuleItem,

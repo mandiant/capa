@@ -3,8 +3,8 @@ import lief
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
-from capa.features.common import String, Characteristic
 from capa.features.file import Export, Import, Section
+from capa.features.common import String, Characteristic
 
 
 def extract_file_embedded_pe(smda_report, file_path):

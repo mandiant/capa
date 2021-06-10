@@ -61,8 +61,8 @@ import capa.rules
 import capa.engine
 import capa.features
 import capa.render.utils as rutils
-import capa.render.result_document
 import capa.features.freeze
+import capa.render.result_document
 from capa.helpers import get_file_taste
 
 logger = logging.getLogger("capa.show-capabilities-by-function")

@@ -11,13 +11,14 @@ import viv_utils
 import envi.memory
 import viv_utils.flirt
 import envi.archs.i386.regs
-import envi.archs.i386.disasm
 import envi.archs.amd64.regs
+import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
 
 import capa.features.extractors.viv
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
+from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.common import (
     ARCH_X32,
     ARCH_X64,
@@ -27,7 +28,6 @@ from capa.features.common import (
     String,
     Characteristic,
 )
-from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain

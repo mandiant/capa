@@ -5,6 +5,7 @@ import struct
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.helpers
+from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.common import (
     ARCH_X32,
     ARCH_X64,
@@ -14,7 +15,6 @@ from capa.features.common import (
     String,
     Characteristic,
 )
-from capa.features.insn import API, Number, Offset, Mnemonic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features

@@ -22,10 +22,10 @@ import capa.main
 import capa.rules
 import capa.engine
 import capa.ida.helpers
-import capa.features.common
-import capa.features.extractors.ida.extractor
 import capa.render.json
+import capa.features.common
 import capa.render.result_document
+import capa.features.extractors.ida.extractor
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -773,7 +773,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             update_wait_box("rendering results")
 
             try:
-                self.doc = capa.render.result_document.convert_capabilities_to_result_document(meta, self.ruleset_cache, capabilities)
+                self.doc = capa.render.result_document.convert_capabilities_to_result_document(
+                    meta, self.ruleset_cache, capabilities
+                )
             except Exception as e:
                 logger.error("Failed to render results (error: %s)", e)
                 return False

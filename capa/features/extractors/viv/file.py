@@ -13,8 +13,8 @@ import viv_utils.flirt
 import capa.features.insn
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
-from capa.features.common import String, Characteristic
 from capa.features.file import Export, Import, Section, FunctionName
+from capa.features.common import String, Characteristic
 
 
 def extract_file_embedded_pe(vw, file_path):

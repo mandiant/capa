@@ -12,10 +12,10 @@ from fixtures import *
 import capa.main
 import capa.rules
 import capa.helpers
-import capa.features.insn
 import capa.features.file
-import capa.features.freeze
+import capa.features.insn
 import capa.features.common
+import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
 

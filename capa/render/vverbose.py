@@ -11,8 +11,8 @@ import tabulate
 import capa.rules
 import capa.render.utils as rutils
 import capa.render.verbose
-import capa.render.result_document
 import capa.features.common
+import capa.render.result_document
 
 
 def render_locations(ostream, match):
