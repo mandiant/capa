@@ -15,8 +15,8 @@ import idautils
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
-from capa.features import String, Characteristic
 from capa.features.file import Export, Import, Section, FunctionName
+from capa.features.common import String, Characteristic
 
 
 def check_segment_for_pe(seg):
