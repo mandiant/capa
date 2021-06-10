@@ -8,9 +8,8 @@
 
 import copy
 import collections
+from typing import TYPE_CHECKING, Set, Dict, List, Union
 
-from typing import Union, List, Dict, Set
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from capa.rules import Rule
 
