@@ -20,8 +20,12 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.main
 import capa.rules
+import capa.engine
 import capa.ida.helpers
+import capa.features.common
 import capa.features.extractors.ida.extractor
+import capa.render.json
+import capa.render.result_document
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -96,7 +100,7 @@ def find_func_matches(f, ruleset, func_features, bb_features):
         for (name, res) in matches.items():
             bb_matches[name].extend(res)
             for (ea, _) in res:
-                func_features[capa.features.MatchedRule(name)].add(ea)
+                func_features[capa.features.common.MatchedRule(name)].add(ea)
 
     # find rule matches for function, function features include rule matches for basic blocks
     _, matches = capa.engine.match(ruleset.function_rules, func_features, int(f))
@@ -769,7 +773,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             update_wait_box("rendering results")
 
             try:
-                self.doc = capa.render.convert_capabilities_to_result_document(meta, self.ruleset_cache, capabilities)
+                self.doc = capa.render.result_document.convert_capabilities_to_result_document(meta, self.ruleset_cache, capabilities)
             except Exception as e:
                 logger.error("Failed to render results (error: %s)", e)
                 return False
@@ -864,7 +868,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                         if rule.meta.get("capa/subscope-rule"):
                             continue
                         for (ea, _) in res:
-                            func_features[capa.features.MatchedRule(name)].add(ea)
+                            func_features[capa.features.common.MatchedRule(name)].add(ea)
                 except Exception as e:
                     logger.error("Failed to match function/basic block rule scope (error: %s)" % e)
                     return False
@@ -898,7 +902,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     if rule.meta.get("capa/subscope-rule"):
                         continue
                     for (ea, _) in res:
-                        file_features[capa.features.MatchedRule(name)].add(ea)
+                        file_features[capa.features.common.MatchedRule(name)].add(ea)
             except Exception as e:
                 logger.error("Failed to match file scope rules (error: %s)" % e)
                 return False
@@ -1122,7 +1126,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No program analysis to save.")
             return
 
-        s = json.dumps(self.doc, sort_keys=True, cls=capa.render.CapaJsonObjectEncoder).encode("utf-8")
+        s = json.dumps(self.doc, sort_keys=True, cls=capa.render.json.CapaJsonObjectEncoder).encode("utf-8")
 
         path = idaapi.ask_file(True, "*.json", "Choose file to save capa program analysis JSON")
         if not path:

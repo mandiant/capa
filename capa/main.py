@@ -29,10 +29,10 @@ import colorama
 import capa.rules
 import capa.engine
 import capa.version
-import capa.features
 import capa.render.json
 import capa.render.default
 import capa.render.verbose
+import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
 import capa.features.extractors
@@ -97,7 +97,7 @@ def find_function_capabilities(ruleset, extractor, f):
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
             for va, _ in res:
-                function_features[capa.features.MatchedRule(rule_name)].add(va)
+                function_features[capa.features.common.MatchedRule(rule_name)].add(va)
 
     _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
@@ -172,7 +172,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
     # mapping from feature (matched rule) to set of addresses at which it matched.
     # schema: Dict[MatchedRule: Set[int]
     function_and_lower_features = {
-        capa.features.MatchedRule(rule_name): set(map(lambda p: p[0], results))
+        capa.features.common.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
     }
 
@@ -853,7 +853,9 @@ def main(argv=None):
 
 
 def ida_main():
+    import capa.rules
     import capa.ida.helpers
+    import capa.render.default
     import capa.features.extractors.ida.extractor
 
     logging.basicConfig(level=logging.INFO)

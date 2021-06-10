@@ -5,24 +5,23 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
-
+import fixtures
 from fixtures import *
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
-    FEATURE_PRESENCE_TESTS,
+    fixtures.FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],
 )
 def test_viv_features(sample, scope, feature, expected):
-    do_test_feature_presence(get_viv_extractor, sample, scope, feature, expected)
+    fixtures.do_test_feature_presence(fixtures.get_viv_extractor, sample, scope, feature, expected)
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
-    FEATURE_COUNT_TESTS,
+    fixtures.FEATURE_COUNT_TESTS,
     indirect=["sample", "scope"],
 )
 def test_viv_feature_counts(sample, scope, feature, expected):
-    do_test_feature_count(get_viv_extractor, sample, scope, feature, expected)
+    fixtures.do_test_feature_count(fixtures.get_viv_extractor, sample, scope, feature, expected)

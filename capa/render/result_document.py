@@ -8,6 +8,7 @@
 import capa.rules
 import capa.engine
 import capa.render.utils
+import capa.features.common
 
 
 def convert_statement_to_result_document(statement):
@@ -92,7 +93,7 @@ def convert_node_to_result_document(node):
             "type": "statement",
             "statement": convert_statement_to_result_document(node),
         }
-    elif isinstance(node, capa.features.Feature):
+    elif isinstance(node, capa.features.common.Feature):
         return {
             "type": "feature",
             "feature": convert_feature_to_result_document(node),
@@ -114,10 +115,10 @@ def convert_match_to_result_document(rules, capabilities, result):
 
     # logic expression, like `and`, don't have locations - their children do.
     # so only add `locations` to feature nodes.
-    if isinstance(result.statement, capa.features.Feature):
+    if isinstance(result.statement, capa.features.common.Feature):
         if bool(result.success):
             doc["locations"] = result.locations
-    elif isinstance(result.statement, capa.rules.Range):
+    elif isinstance(result.statement, capa.engine.Range):
         if bool(result.success):
             doc["locations"] = result.locations
 

@@ -9,7 +9,8 @@
 import copy
 import collections
 
-import capa.features
+import capa.rules
+import capa.features.common
 
 
 class Statement(object):
@@ -254,12 +255,12 @@ def match(rules, features, va):
         res = rule.evaluate(features)
         if res:
             results[rule.name].append((va, res))
-            features[capa.features.MatchedRule(rule.name)].add(va)
+            features[capa.features.common.MatchedRule(rule.name)].add(va)
 
             namespace = rule.meta.get("namespace")
             if namespace:
                 while namespace:
-                    features[capa.features.MatchedRule(namespace)].add(va)
+                    features[capa.features.common.MatchedRule(namespace)].add(va)
                     namespace, _, _ = namespace.rpartition("/")
 
     return (features, results)

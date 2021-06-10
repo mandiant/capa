@@ -1,8 +1,8 @@
 import textwrap
 
 import capa.rules
-from capa.render import convert_meta_to_result_document
-from capa.render.utils import format_parts_id
+import capa.render.utils
+import capa.render.result_document
 
 
 def test_render_meta_attack():
@@ -27,7 +27,7 @@ def test_render_meta_attack():
         )
     )
     r = capa.rules.Rule.from_yaml(rule)
-    rule_meta = convert_meta_to_result_document(r.meta)
+    rule_meta = capa.render.result_document.convert_meta_to_result_document(r.meta)
     attack = rule_meta["att&ck"][0]
 
     assert attack["id"] == id
@@ -35,7 +35,7 @@ def test_render_meta_attack():
     assert attack["technique"] == technique
     assert attack["subtechnique"] == subtechnique
 
-    assert format_parts_id(attack) == canonical
+    assert capa.render.utils.format_parts_id(attack) == canonical
 
 
 def test_render_meta_mbc():
@@ -60,7 +60,7 @@ def test_render_meta_mbc():
         )
     )
     r = capa.rules.Rule.from_yaml(rule)
-    rule_meta = convert_meta_to_result_document(r.meta)
+    rule_meta = capa.render.result_document.convert_meta_to_result_document(r.meta)
     attack = rule_meta["mbc"][0]
 
     assert attack["id"] == id
@@ -68,4 +68,4 @@ def test_render_meta_mbc():
     assert attack["behavior"] == behavior
     assert attack["method"] == method
 
-    assert format_parts_id(attack) == canonical
+    assert capa.render.utils.format_parts_id(attack) == canonical

@@ -6,9 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import envi
 import vivisect.const
 
-from capa.features import Characteristic
+from capa.features.common import Characteristic
 from capa.features.extractors import loops
 
 
@@ -41,9 +42,9 @@ def extract_function_loop(f):
             for bva, bflags in bb.instructions[-1].getBranches():
                 # vivisect does not set branch flags for non-conditional jmp so add explicit check
                 if (
-                    bflags & vivisect.envi.BR_COND
-                    or bflags & vivisect.envi.BR_FALL
-                    or bflags & vivisect.envi.BR_TABLE
+                    bflags & envi.BR_COND
+                    or bflags & envi.BR_FALL
+                    or bflags & envi.BR_TABLE
                     or bb.instructions[-1].mnem == "jmp"
                 ):
                     edges.append((bb.va, bva))

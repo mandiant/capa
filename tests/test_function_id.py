@@ -1,4 +1,4 @@
-from fixtures import get_function, pma16_01_extractor, extract_function_features
+from fixtures import get_function, extract_function_features
 
 import capa.features.insn
 

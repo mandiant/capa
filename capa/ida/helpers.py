@@ -14,6 +14,8 @@ import idaapi
 import idautils
 
 import capa
+import capa.version
+import capa.features.common
 
 logger = logging.getLogger("capa")
 
@@ -86,7 +88,7 @@ def get_file_md5():
     """ """
     md5 = idautils.GetInputFileMD5()
     if not isinstance(md5, str):
-        md5 = capa.features.bytes_to_str(md5)
+        md5 = capa.features.common.bytes_to_str(md5)
     return md5
 
 
@@ -94,7 +96,7 @@ def get_file_sha256():
     """ """
     sha256 = idaapi.retrieve_input_file_sha256()
     if not isinstance(sha256, str):
-        sha256 = capa.features.bytes_to_str(sha256)
+        sha256 = capa.features.common.bytes_to_str(sha256)
     return sha256
 
 

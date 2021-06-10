@@ -12,7 +12,7 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features import (
+from capa.features.common import (
     ARCH_X32,
     ARCH_X64,
     MAX_BYTES_FEATURE_SIZE,

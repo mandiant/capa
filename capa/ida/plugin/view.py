@@ -14,6 +14,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 import capa.rules
 import capa.engine
 import capa.ida.helpers
+import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
 from capa.ida.plugin.model import CapaExplorerDataModel
@@ -624,8 +625,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         # single features
         for (k, v) in filter(lambda t: t[1] == 1, counted):
-            if isinstance(k, (capa.features.String,)):
-                value = '"%s"' % capa.features.escape_string(k.get_value_str())
+            if isinstance(k, (capa.features.common.String,)):
+                value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
             else:
                 value = k.get_value_str()
             self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), value), ""))
@@ -633,8 +634,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
             if k.value:
-                if isinstance(k, (capa.features.String,)):
-                    value = '"%s"' % capa.features.escape_string(k.get_value_str())
+                if isinstance(k, (capa.features.common.String,)):
+                    value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
                 else:
                     value = k.get_value_str()
                 display = "- count(%s(%s)): %d" % (k.name.lower(), value, v)
@@ -898,8 +899,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             """ """
             name = feature.name.lower()
             value = feature.get_value_str()
-            if isinstance(feature, (capa.features.String,)):
-                value = '"%s"' % capa.features.escape_string(value)
+            if isinstance(feature, (capa.features.common.String,)):
+                value = '"%s"' % capa.features.common.escape_string(value)
             return "%s(%s)" % (name, value)
 
         for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):

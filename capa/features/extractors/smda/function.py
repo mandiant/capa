@@ -1,4 +1,4 @@
-from capa.features import Characteristic
+from capa.features.common import Characteristic
 from capa.features.extractors import loops
 
 

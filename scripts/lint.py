@@ -31,8 +31,8 @@ import ruamel.yaml
 import capa.main
 import capa.rules
 import capa.engine
-import capa.features
 import capa.features.insn
+import capa.features.common
 
 logger = logging.getLogger("lint")
 
@@ -326,7 +326,7 @@ class FeatureStringTooShort(Lint):
 
     def check_features(self, ctx, features):
         for feature in features:
-            if isinstance(feature, capa.features.String):
+            if isinstance(feature, capa.features.common.String):
                 if len(feature.value) < 4:
                     self.recommendation = self.recommendation.format(feature.value)
                     return True

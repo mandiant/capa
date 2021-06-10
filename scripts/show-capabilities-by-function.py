@@ -59,9 +59,9 @@ import colorama
 import capa.main
 import capa.rules
 import capa.engine
-import capa.render
 import capa.features
 import capa.render.utils as rutils
+import capa.render.result_document
 import capa.features.freeze
 from capa.helpers import get_file_taste
 
@@ -191,7 +191,7 @@ def main(argv=None):
     #  - when not an interactive session, and disable coloring
     # renderers should use coloring and assume it will be stripped out if necessary.
     colorama.init()
-    doc = capa.render.convert_capabilities_to_result_document(meta, rules, capabilities)
+    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
     print(render_matches_by_function(doc))
     colorama.deinit()
 

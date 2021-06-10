@@ -9,6 +9,7 @@ import pytest
 
 try:
     sys.path.append(os.path.dirname(__file__))
+    import fixtures
     from fixtures import *
 finally:
     sys.path.pop()
@@ -44,20 +45,20 @@ def get_ida_extractor(_path):
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_features():
-    for (sample, scope, feature, expected) in FEATURE_PRESENCE_TESTS + FEATURE_PRESENCE_TESTS_IDA:
-        id = make_test_id((sample, scope, feature, expected))
+    for (sample, scope, feature, expected) in fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA:
+        id = fixtures.make_test_id((sample, scope, feature, expected))
 
         try:
-            check_input_file(get_sample_md5_by_name(sample))
+            check_input_file(fixtures.get_sample_md5_by_name(sample))
         except RuntimeError:
             print("SKIP %s" % (id))
             continue
 
-        scope = resolve_scope(scope)
-        sample = resolve_sample(sample)
+        scope = fixtures.resolve_scope(scope)
+        sample = fixtures.resolve_sample(sample)
 
         try:
-            do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
+            fixtures.do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
         except Exception as e:
             print("FAIL %s" % (id))
             traceback.print_exc()
@@ -67,20 +68,20 @@ def test_ida_features():
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_feature_counts():
-    for (sample, scope, feature, expected) in FEATURE_COUNT_TESTS:
-        id = make_test_id((sample, scope, feature, expected))
+    for (sample, scope, feature, expected) in fixtures.FEATURE_COUNT_TESTS:
+        id = fixtures.make_test_id((sample, scope, feature, expected))
 
         try:
-            check_input_file(get_sample_md5_by_name(sample))
+            check_input_file(fixtures.get_sample_md5_by_name(sample))
         except RuntimeError:
             print("SKIP %s" % (id))
             continue
 
-        scope = resolve_scope(scope)
-        sample = resolve_sample(sample)
+        scope = fixtures.resolve_scope(scope)
+        sample = fixtures.resolve_sample(sample)
 
         try:
-            do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
+            fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
         except Exception as e:
             print("FAIL %s" % (id))
             traceback.print_exc()

@@ -13,7 +13,7 @@ import viv_utils.flirt
 import capa.features.insn
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
-from capa.features import String, Characteristic
+from capa.features.common import String, Characteristic
 from capa.features.file import Export, Import, Section, FunctionName
 
 
