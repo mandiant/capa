@@ -9,14 +9,22 @@
 import collections
 
 import tabulate
+from typing import (
+    Dict,
+    List,
+    Tuple,
+)
 
+from capa.engine import Result
+from capa.render.utils import StringIO
+from capa.rules import RuleSet
 import capa.render.utils as rutils
 import capa.render.result_document
 
 tabulate.PRESERVE_WHITESPACE = True
 
 
-def width(s, character_count):
+def width(s: str, character_count: int) -> str:
     """pad the given string to at least `character_count`"""
     if len(s) < character_count:
         return s + " " * (character_count - len(s))
@@ -24,7 +32,7 @@ def width(s, character_count):
         return s
 
 
-def render_meta(doc, ostream):
+def render_meta(doc, ostream: StringIO):
     rows = [
         (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
         ("sha1", doc["meta"]["sample"]["sha1"]),
@@ -64,7 +72,7 @@ def find_subrule_matches(doc):
     return matches
 
 
-def render_capabilities(doc, ostream):
+def render_capabilities(doc, ostream: StringIO):
     """
     example::
 
@@ -102,7 +110,7 @@ def render_capabilities(doc, ostream):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_attack(doc, ostream):
+def render_attack(doc, ostream: StringIO):
     """
     example::
 
@@ -157,7 +165,7 @@ def render_attack(doc, ostream):
         ostream.write("\n")
 
 
-def render_mbc(doc, ostream):
+def render_mbc(doc, ostream: StringIO):
     """
     example::
 
@@ -222,6 +230,6 @@ def render_default(doc):
     return ostream.getvalue()
 
 
-def render(meta, rules, capabilities):
+def render(meta, rules: RuleSet, capabilities: Dict[str, List[Tuple[int, Result]]]) -> str:
     doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
     return render_default(doc)
