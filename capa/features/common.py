@@ -10,7 +10,7 @@ import re
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, Set, Union
 
 import capa.engine
 import capa.features.common
@@ -104,7 +104,7 @@ class Feature(object):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", List[int]]) -> "Result":
+    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "Result":
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
