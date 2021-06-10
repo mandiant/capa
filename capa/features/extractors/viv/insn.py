@@ -225,7 +225,7 @@ def derefs(vw, p):
         p = next
 
 
-def read_memory(vw, va, size):
+def read_memory(vw, va: int, size: int) -> bytes:
     # as documented in #176, vivisect will not readMemory() when the section is not marked readable.
     #
     # but here, we don't care about permissions.
@@ -241,7 +241,7 @@ def read_memory(vw, va, size):
     raise envi.exc.SegmentationViolation(va)
 
 
-def read_bytes(vw, va):
+def read_bytes(vw, va: int) -> bytes:
     """
     read up to MAX_BYTES_FEATURE_SIZE from the given address.
 
@@ -300,7 +300,7 @@ def extract_insn_bytes_features(f, bb, insn):
             yield Bytes(buf), insn.va
 
 
-def read_string(vw, offset):
+def read_string(vw, offset: int) -> str:
     try:
         alen = vw.detectString(offset)
     except envi.exc.SegmentationViolation:
@@ -400,7 +400,7 @@ def extract_insn_offset_features(f, bb, insn):
             yield Offset(v, arch=get_arch(f.vw)), insn.va
 
 
-def is_security_cookie(f, bb, insn):
+def is_security_cookie(f, bb, insn) -> bool:
     """
     check if an instruction is related to security cookie checks
     """
@@ -497,7 +497,7 @@ def extract_insn_segment_access_features(f, bb, insn):
         yield Characteristic("gs access"), insn.va
 
 
-def get_section(vw, va):
+def get_section(vw, va: int):
     for start, length, _, __ in vw.getMemoryMaps():
         if start <= va < start + length:
             return start
