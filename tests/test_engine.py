@@ -266,7 +266,7 @@ def test_match_matched_rules():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
@@ -276,7 +276,7 @@ def test_match_matched_rules():
     # the ordering of the rules must not matter,
     # the engine should match rules in an appropriate order.
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(reversed(rules)),
+        capa.rules.topologically_order_rules(reversed(rules)),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
@@ -324,28 +324,28 @@ def test_regex():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )
     assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("aaaa"): {1}},
         0x0,
     )
     assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("aBBBBa"): {1}},
         0x0,
     )
     assert capa.features.common.MatchedRule("test rule") not in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("abbbba"): {1}},
         0x0,
     )
@@ -370,7 +370,7 @@ def test_regex_ignorecase():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("aBBBBa"): {1}},
         0x0,
     )
@@ -393,7 +393,7 @@ def test_regex_complex():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String(r"Hardware\Key\key with spaces\some value"): {1}},
         0x0,
     )
@@ -451,7 +451,7 @@ def test_match_namespace():
     ]
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.API("CreateFile"): {1}},
         0x0,
     )
@@ -463,7 +463,7 @@ def test_match_namespace():
     assert capa.features.common.MatchedRule("file/create/CreateFile") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.insn.API("WriteFile"): {1}},
         0x0,
     )

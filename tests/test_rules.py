@@ -751,14 +751,14 @@ def test_regex_values_always_string():
         ),
     ]
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("123"): {1}},
         0x0,
     )
-    assert capa.features.comm.MatchedRule("test rule") in features
+    assert capa.features.common.MatchedRule("test rule") in features
 
     features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
+        capa.rules.topologically_order_rules(rules),
         {capa.features.common.String("0x123"): {1}},
         0x0,
     )

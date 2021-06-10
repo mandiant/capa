@@ -856,6 +856,38 @@ def index_rules_by_namespace(rules):
     return dict(namespaces)
 
 
+def topologically_order_rules(rules):
+    """
+    order the given rules such that dependencies show up before dependents.
+    this means that as we match rules, we can add features for the matches, and these
+     will be matched by subsequent rules if they follow this order.
+
+    assumes that the rule dependency graph is a DAG.
+    """
+    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    rules = list(rules)
+    namespaces = index_rules_by_namespace(rules)
+    rules = {rule.name: rule for rule in rules}
+    seen = set([])
+    ret = []
+
+    def rec(rule):
+        if rule.name in seen:
+            return
+
+        for dep in rule.get_dependencies(namespaces):
+            rec(rules[dep])
+
+        ret.append(rule)
+        seen.add(rule.name)
+
+    for rule in rules.values():
+        rec(rule)
+
+    return ret
+
+
+
 class RuleSet(object):
     """
     a ruleset is initialized with a collection of rules, which it verifies and sorts into scopes.
@@ -918,7 +950,7 @@ class RuleSet(object):
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
-        return get_rules_with_scope(capa.engine.topologically_order_rules(scope_rules), scope)
+        return get_rules_with_scope(topologically_order_rules(scope_rules), scope)
 
     @staticmethod
     def _extract_subscope_rules(rules):
