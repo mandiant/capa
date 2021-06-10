@@ -53,11 +53,11 @@ import json
 import zlib
 import logging
 
-import capa.features
 import capa.features.file
 import capa.features.insn
+import capa.features.common
 import capa.features.basicblock
-import capa.features.extractors
+import capa.features.extractors.base_extractor
 from capa.helpers import hex
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def serialize_feature(feature):
     return feature.freeze_serialize()
 
 
-KNOWN_FEATURES = {F.__name__: F for F in capa.features.Feature.__subclasses__()}
+KNOWN_FEATURES = {F.__name__: F for F in capa.features.common.Feature.__subclasses__()}
 
 
 def deserialize_feature(doc):
@@ -80,7 +80,7 @@ def dumps(extractor):
     serialize the given extractor to a string
 
     args:
-      extractor: capa.features.extractor.FeatureExtractor:
+      extractor: capa.features.extractors.base_extractor.FeatureExtractor:
 
     returns:
       str: the serialized features.
@@ -217,7 +217,7 @@ def loads(s):
         feature = deserialize_feature(feature[:2])
         features["functions"][loc[0]]["basic blocks"][loc[1]]["instructions"][loc[2]]["features"].append((va, feature))
 
-    return capa.features.extractors.NullFeatureExtractor(features)
+    return capa.features.extractors.base_extractor.NullFeatureExtractor(features)
 
 
 MAGIC = "capa0000".encode("ascii")

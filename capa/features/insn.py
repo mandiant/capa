@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import capa.render.utils
-from capa.features import Feature
+from capa.features.common import Feature
 
 
 class API(Feature):
