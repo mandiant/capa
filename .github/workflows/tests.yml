@@ -79,5 +79,7 @@ jobs:
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       run: pip install -e .[dev]
+    - name: Run installed capa
+      run: capa -h
     - name: Run tests
       run: pytest tests/
