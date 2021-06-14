@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping
+from typing import Set, Dict, List, Tuple, Union, Mapping
 
 import capa.rules
 import capa.features.common
@@ -62,7 +62,7 @@ class Statement:
             yield self.child
 
         if hasattr(self, "children"):
-            for child in self.children:
+            for child in getattr(self, "children"):
                 yield child
 
     def replace_child(self, existing, new):
@@ -71,9 +71,10 @@ class Statement:
                 self.child = new
 
         if hasattr(self, "children"):
-            for i, child in enumerate(self.children):
+            children = getattr(self, "children")
+            for i, child in enumerate(children):
                 if child is existing:
-                    self.children[i] = new
+                    children[i] = new
 
 
 class Result:
@@ -235,9 +236,9 @@ def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tupl
       va (int): location of the features
 
     Returns:
-      Tuple[FeatureSet, Dict[str, Tuple[int, Result]]]: two-tuple with entries:
+      Tuple[FeatureSet, MatchResults]: two-tuple with entries:
         - set of features used for matching (which may be greater than argument, due to rule match features), and
-        - mapping from rule name to (location of match, result object)
+        - mapping from rule name to [(location of match, result object)]
     """
     results = collections.defaultdict(list)  # type: MatchResults
 

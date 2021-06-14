@@ -164,7 +164,7 @@ class Regex(String):
         matches = collections.defaultdict(list)
 
         for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.common.String,)):
+            if not isinstance(feature, (String,)):
                 continue
 
             if not isinstance(feature.value, str):
@@ -243,7 +243,7 @@ class Bytes(Feature):
 
     def evaluate(self, ctx):
         for feature, locations in ctx.items():
-            if not isinstance(feature, (capa.features.common.Bytes,)):
+            if not isinstance(feature, (Bytes,)):
                 continue
 
             if feature.value.startswith(self.value):
