@@ -7,6 +7,23 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import abc
+from typing import Tuple, Iterator, SupportsInt
+
+from capa.features.basicblock import Feature
+
+# feature extractors may reference functions, BBs, insns by opaque handle values.
+# the only requirement of these handles are that they support `__int__`,
+# so that they can be rendered as addresses.
+#
+# these handles are only consumed by routines on
+# the feature extractor from which they were created.
+#
+# int(FunctionHandle) -> function start address
+# int(BBHandle) -> BasicBlock start address
+# int(InsnHandle) -> instruction address
+FunctionHandle = SupportsInt
+BBHandle = SupportsInt
+InsnHandle = SupportsInt
 
 
 class FeatureExtractor(object):
@@ -36,16 +53,14 @@ class FeatureExtractor(object):
         super(FeatureExtractor, self).__init__()
 
     @abc.abstractmethod
-    def get_base_address(self):
+    def get_base_address(self) -> int:
         """
         fetch the preferred load address at which the sample was analyzed.
-
-        returns: int
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def extract_file_features(self):
+    def extract_file_features(self) -> Iterator[Tuple[Feature, int]]:
         """
         extract file-scope features.
 
@@ -56,27 +71,19 @@ class FeatureExtractor(object):
                 print('0x%x: %s', va, feature)
 
         yields:
-          Tuple[capa.features.Feature, int]: feature and its location
+          Tuple[Feature, int]: feature and its location
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def get_functions(self):
+    def get_functions(self) -> Iterator[FunctionHandle]:
         """
         enumerate the functions and provide opaque values that will
          subsequently be provided to `.extract_function_features()`, etc.
-
-        by "opaque value", we mean that this can be any object, as long as it
-         provides enough context to `.extract_function_features()`.
-
-        the opaque value should support casting to int (`__int__`) for the function start address.
-
-        yields:
-          any: the opaque function value.
         """
         raise NotImplemented
 
-    def is_library_function(self, va):
+    def is_library_function(self, va: int) -> bool:
         """
         is the given address a library function?
         the backend may implement its own function matching algorithm, or none at all.
@@ -94,7 +101,7 @@ class FeatureExtractor(object):
         """
         return False
 
-    def get_function_name(self, va):
+    def get_function_name(self, va: int) -> str:
         """
         fetch any recognized name for the given address.
         this is only guaranteed to return a value when the given function is a recognized library function.
@@ -112,7 +119,7 @@ class FeatureExtractor(object):
         raise KeyError(va)
 
     @abc.abstractmethod
-    def extract_function_features(self, f):
+    def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, int]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -125,31 +132,23 @@ class FeatureExtractor(object):
                     print('0x%x: %s', va, feature)
 
         args:
-          f [any]: an opaque value previously fetched from `.get_functions()`.
+          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
 
         yields:
-          Tuple[capa.features.Feature, int]: feature and its location
+          Tuple[Feature, int]: feature and its location
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
         """
         enumerate the basic blocks in the given function and provide opaque values that will
          subsequently be provided to `.extract_basic_block_features()`, etc.
-
-        by "opaque value", we mean that this can be any object, as long as it
-         provides enough context to `.extract_basic_block_features()`.
-
-        the opaque value should support casting to int (`__int__`) for the basic block start address.
-
-        yields:
-          any: the opaque basic block value.
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, int]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -163,32 +162,24 @@ class FeatureExtractor(object):
                         print('0x%x: %s', va, feature)
 
         args:
-          f [any]: an opaque value previously fetched from `.get_functions()`.
-          bb [any]: an opaque value previously fetched from `.get_basic_blocks()`.
+          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
 
         yields:
-          Tuple[capa.features.Feature, int]: feature and its location
+          Tuple[Feature, int]: feature and its location
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def get_instructions(self, f, bb):
+    def get_instructions(self: FunctionHandle, f, bb: BBHandle) -> Iterator[InsnHandle]:
         """
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.
-
-        by "opaque value", we mean that this can be any object, as long as it
-         provides enough context to `.extract_insn_features()`.
-
-        the opaque value should support casting to int (`__int__`) for the instruction address.
-
-        yields:
-          any: the opaque function value.
         """
         raise NotImplemented
 
     @abc.abstractmethod
-    def extract_insn_features(self, f, bb, insn):
+    def extract_insn_features(self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, int]]:
         """
         extract instruction-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -203,12 +194,12 @@ class FeatureExtractor(object):
                             print('0x%x: %s', va, feature)
 
         args:
-          f [any]: an opaque value previously fetched from `.get_functions()`.
-          bb [any]: an opaque value previously fetched from `.get_basic_blocks()`.
-          insn [any]: an opaque value previously fetched from `.get_instructions()`.
+          f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
+          bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
+          insn [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
 
         yields:
-          Tuple[capa.features.Feature, int]: feature and its location
+          Tuple[Feature, int]: feature and its location
         """
         raise NotImplemented
 
