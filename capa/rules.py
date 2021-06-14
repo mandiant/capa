@@ -319,7 +319,6 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
 
         else:
             # the value might be a number, like: `number: 10`
-            # or there might not be any description, like: `api: CreateFileA`
             value = s
 
     return value, description

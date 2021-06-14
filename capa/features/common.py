@@ -170,6 +170,10 @@ class Regex(String):
             if not isinstance(feature, (capa.features.common.String,)):
                 continue
 
+            if not isinstance(feature.value, str):
+                # this is a programming error: String should only contain str
+                raise ValueError("unexpected feature value type")
+
             # `re.search` finds a match anywhere in the given string
             # which implies leading and/or trailing whitespace.
             # using this mode cleans is more convenient for rule authors,
@@ -214,7 +218,7 @@ class _MatchedRegex(Regex):
           regex (Regex): the regex feature that matches.
           match (Dict[string, List[int]]|None): mapping from matching string to its locations.
         """
-        super(_MatchedRegex, self).__init__(regex.value, description=regex.description)
+        super(_MatchedRegex, self).__init__(str(regex.value), description=regex.description)
         # we want this to collide with the name of `Regex` above,
         # so that it works nicely with the renderers.
         self.name = "regex"
