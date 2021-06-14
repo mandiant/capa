@@ -254,35 +254,72 @@ def parse_feature(key: str):
 DESCRIPTION_SEPARATOR = " = "
 
 
-def parse_description(s: Union[str, int], value_type: str, description=None):
-    if value_type != "string" and isinstance(s, str) and DESCRIPTION_SEPARATOR in s:
-        if description:
-            raise InvalidRule(
-                'unexpected value: "%s", only one description allowed (inline description with `%s`)'
-                % (s, DESCRIPTION_SEPARATOR)
-            )
-        value, _, description = s.partition(DESCRIPTION_SEPARATOR)
-        if description == "":
-            raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
-    else:
+def parse_bytes(s: str) -> bytes:
+    try:
+        b = codecs.decode(s.replace(" ", "").encode("ascii"), "hex")
+    except binascii.Error:
+        raise InvalidRule('unexpected bytes value: must be a valid hex sequence: "%s"' % s)
+
+    if len(b) > MAX_BYTES_FEATURE_SIZE:
+        raise InvalidRule(
+            "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
+        )
+
+    return b
+
+
+def parse_description(s: Union[str, int, bytes], value_type: str, description=None):
+    if value_type == "string":
+        # string features cannot have inline descriptions,
+        # so we assume the entire value is the string,
+        # like: `string: foo = bar` -> "foo = bar"
         value = s
+    else:
+        # other features can have inline descriptions, like `number: 10 = CONST_FOO`.
+        # in this case, the RHS will be like `10 = CONST_FOO` or some other string
+        if isinstance(s, str):
+            if DESCRIPTION_SEPARATOR in s:
+                if description:
+                    # there is already a description passed in as a sub node, like:
+                    #
+                    #     - number: 10 = CONST_FOO
+                    #       description: CONST_FOO
+                    raise InvalidRule(
+                        'unexpected value: "%s", only one description allowed (inline description with `%s`)'
+                        % (s, DESCRIPTION_SEPARATOR)
+                    )
 
-    if isinstance(value, str):
-        if value_type == "bytes":
-            try:
-                value = codecs.decode(value.replace(" ", "").encode("ascii"), "hex")
-            except binascii.Error:
-                raise InvalidRule('unexpected bytes value: "%s", must be a valid hex sequence' % value)
+                value, _, description = s.partition(DESCRIPTION_SEPARATOR)
+                if description == "":
+                    # sanity check:
+                    # there is an empty description, like `number: 10 =`
+                    raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
+            else:
+                # this is a string, but there is no description,
+                # like: `api: CreateFileA`
+                value = s
 
-            if len(value) > MAX_BYTES_FEATURE_SIZE:
-                raise InvalidRule(
-                    "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
-                )
-        elif value_type in ("number", "offset") or value_type.startswith(("number/", "offset/")):
-            try:
-                value = parse_int(value)
-            except ValueError:
-                raise InvalidRule('unexpected value: "%s", must begin with numerical value' % value)
+            # cast from the received string value to the appropriate type.
+            #
+            # without a description, this type would already be correct,
+            # but since we parsed the description from a string,
+            # we need to convert the value to the expected type.
+            #
+            # for example, from `number: 10 = CONST_FOO` we have
+            # the string "10" that needs to become the number 10.
+            if value_type == "bytes":
+                value = parse_bytes(value)
+            elif (value_type in ("number", "offset") 
+                  or value_type.startswith(("number/", "offset/"))):
+                try:
+                    value = parse_int(value)
+                except ValueError:
+                    raise InvalidRule('unexpected value: "%s", must begin with numerical value' % value)
+
+        else:
+            # the value might be a number, like: `number: 10`
+            # or there might not be any description, like: `api: CreateFileA`
+            value = s
 
     return value, description
 
