@@ -8,13 +8,17 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping
 
 if TYPE_CHECKING:
     from capa.rules import Rule
 
 import capa.features.common
 from capa.features.common import Feature
+
+# a collection of features and the locations at which they are found.
+# used throughout matching as the context in which features are searched.
+FeatureSet = Dict[Feature, Set[int]]
 
 
 class Statement:
@@ -38,7 +42,7 @@ class Statement:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx):
+    def evaluate(self, features: FeatureSet) -> "Result":
         """
         classes that inherit `Statement` must implement `evaluate`
 
@@ -204,7 +208,11 @@ class Subscope(Statement):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
-def match(rules: List["Rule"], features: Dict[Feature, Set[int]], va: int):
+# mapping from rule name to list of: (location of match, result object)
+MatchResults = Mapping[str, List[Tuple[int, Result]]]
+
+
+def match(rules: List["Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
     """
     Args:
       rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
@@ -212,11 +220,11 @@ def match(rules: List["Rule"], features: Dict[Feature, Set[int]], va: int):
       va (int): location of the features
 
     Returns:
-      Tuple[List[capa.features.Feature], Dict[str, Tuple[int, capa.engine.Result]]]: two-tuple with entries:
-        - list of features used for matching (which may be greater than argument, due to rule match features), and
+      Tuple[FeatureSet, Dict[str, Tuple[int, Result]]]: two-tuple with entries:
+        - set of features used for matching (which may be greater than argument, due to rule match features), and
         - mapping from rule name to (location of match, result object)
     """
-    results = collections.defaultdict(list)
+    results = collections.defaultdict(list)  # type: MatchResults
 
     # copy features so that we can modify it
     # without affecting the caller (keep this function pure)

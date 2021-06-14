@@ -31,6 +31,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
+from capa.engine import Statement, FeatureSet
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 
 logger = logging.getLogger(__name__)
@@ -430,7 +431,7 @@ def second(s: List[Any]) -> Any:
 
 
 class Rule:
-    def __init__(self, name, scope, statement, meta, definition=""):
+    def __init__(self, name: str, scope: str, statement: Statement, meta, definition=""):
         super(Rule, self).__init__()
         self.name = name
         self.scope = scope
@@ -551,7 +552,7 @@ class Rule:
         for new_rule in self._extract_subscope_rules_rec(self.statement):
             yield new_rule
 
-    def evaluate(self, features):
+    def evaluate(self, features: FeatureSet):
         return self.statement.evaluate(features)
 
     @classmethod
