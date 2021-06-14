@@ -148,10 +148,12 @@ class InvalidRuleSet(ValueError):
 def ensure_feature_valid_for_scope(scope: str, feature: Feature):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
-    if (isinstance(feature, capa.features.common.Characteristic)
+    if (
+        isinstance(feature, capa.features.common.Characteristic)
         and isinstance(feature.value, str)
-        and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]):
-            raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+        and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
+    ):
+        raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
 
     # features of this scope that are not Characteristics will be Type instances.
     # check that the given feature is one of these types.
@@ -309,8 +311,7 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
             # the string "10" that needs to become the number 10.
             if value_type == "bytes":
                 value = parse_bytes(value)
-            elif (value_type in ("number", "offset") 
-                  or value_type.startswith(("number/", "offset/"))):
+            elif value_type in ("number", "offset") or value_type.startswith(("number/", "offset/")):
                 try:
                     value = parse_int(value)
                 except ValueError:
