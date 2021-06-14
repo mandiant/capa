@@ -54,7 +54,7 @@ def escape_string(s: str) -> str:
     return s
 
 
-class Feature(object):
+class Feature:
     def __init__(self, value: Union[str, int, bytes], arch=None, description=None):
         """
         Args:
@@ -228,7 +228,7 @@ class _MatchedRegex(Regex):
         )
 
 
-class StringFactory(object):
+class StringFactory:
     def __new__(cls, value: str, description=None):
         if value.startswith("/") and (value.endswith("/") or value.endswith("/i")):
             return Regex(value, description=description)

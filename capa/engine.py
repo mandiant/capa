@@ -17,7 +17,7 @@ import capa.features.common
 from capa.features.common import Feature
 
 
-class Statement(object):
+class Statement:
     """
     superclass for structural nodes, such as and/or/not.
     this exists to provide a default impl for `__str__` and `__repr__`,
@@ -69,7 +69,7 @@ class Statement(object):
                     self.children[i] = new
 
 
-class Result(object):
+class Result:
     """
     represents the results of an evaluation of statements against features.
 

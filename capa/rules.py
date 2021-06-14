@@ -429,7 +429,7 @@ def second(s: List[Any]) -> Any:
     return s[1]
 
 
-class Rule(object):
+class Rule:
     def __init__(self, name, scope, statement, meta, definition=""):
         super(Rule, self).__init__()
         self.name = name
@@ -863,7 +863,7 @@ def topologically_order_rules(rules: List[Rule]) -> List[Rule]:
     return ret
 
 
-class RuleSet(object):
+class RuleSet:
     """
     a ruleset is initialized with a collection of rules, which it verifies and sorts into scopes.
     each set of scoped rules is sorted topologically, which enables rules to match on past rule matches.

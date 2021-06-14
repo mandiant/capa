@@ -26,7 +26,7 @@ BBHandle = SupportsInt
 InsnHandle = SupportsInt
 
 
-class FeatureExtractor(object):
+class FeatureExtractor:
     """
     FeatureExtractor defines the interface for fetching features from a sample.
 
