@@ -131,17 +131,15 @@ def render_attack(doc, ostream: StringIO):
             if attack.get("subtechnique"):
                 tactics[attack["tactic"]].add((attack["technique"], attack["subtechnique"], attack["id"]))
             else:
-                tactics[attack["tactic"]].add((attack["technique"], attack["id"], None))
+                tactics[attack["tactic"]].add((attack["technique"], None, attack["id"]))
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
         inner_rows = []
-        for spec in sorted(techniques):
-            if spec[-1] is None:
-                technique, id, _ = spec
+        for (technique, subtechnique, id) in sorted(techniques):
+            if subtechnique is None:
                 inner_rows.append("%s %s" % (rutils.bold(technique), id))
             else:
-                technique, subtechnique, id = spec
                 inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
         rows.append(
             (
@@ -182,17 +180,15 @@ def render_mbc(doc, ostream: StringIO):
             if mbc.get("method"):
                 objectives[mbc["objective"]].add((mbc["behavior"], mbc["method"], mbc["id"]))
             else:
-                objectives[mbc["objective"]].add((mbc["behavior"], mbc["id"], None))
+                objectives[mbc["objective"]].add((mbc["behavior"], None, mbc["id"]))
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
         inner_rows = []
-        for spec in sorted(behaviors):
-            if spec[-1] is None:
-                behavior, id, _ = spec
+        for (behavior, method, id) in sorted(behaviors):
+            if method is None:
                 inner_rows.append("%s [%s]" % (rutils.bold(behavior), id))
             else:
-                behavior, method, id = spec
                 inner_rows.append("%s::%s [%s]" % (rutils.bold(behavior), method, id))
         rows.append(
             (
