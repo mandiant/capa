@@ -26,6 +26,7 @@ import os
 import json
 
 from binaryninja import *
+from binaryninja import PluginCommand
 
 
 def append_func_cmt(bv, va, cmt):
