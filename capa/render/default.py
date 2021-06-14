@@ -128,10 +128,7 @@ def render_attack(doc, ostream: StringIO):
             continue
 
         for attack in rule["meta"]["att&ck"]:
-            if attack.get("subtechnique"):
-                tactics[attack["tactic"]].add((attack["technique"], attack["subtechnique"], attack["id"]))
-            else:
-                tactics[attack["tactic"]].add((attack["technique"], None, attack["id"]))
+            tactics[attack["tactic"]].add((attack["technique"], attack.get("subtechnique"), attack["id"]))
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
@@ -177,10 +174,7 @@ def render_mbc(doc, ostream: StringIO):
             continue
 
         for mbc in rule["meta"]["mbc"]:
-            if mbc.get("method"):
-                objectives[mbc["objective"]].add((mbc["behavior"], mbc["method"], mbc["id"]))
-            else:
-                objectives[mbc["objective"]].add((mbc["behavior"], None, mbc["id"]))
+            objectives[mbc["objective"]].add((mbc["behavior"], mbc.get("method"), mbc["id"]))
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
