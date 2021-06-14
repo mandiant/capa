@@ -155,11 +155,12 @@ def ensure_feature_valid_for_scope(scope: str, feature: Feature):
     ):
         raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
 
-    # features of this scope that are not Characteristics will be Type instances.
-    # check that the given feature is one of these types.
-    types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
-    if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-        raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+    if not isinstance(feature, capa.features.common.Characteristic):
+        # features of this scope that are not Characteristics will be Type instances.
+        # check that the given feature is one of these types.
+        types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
+        if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
+            raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
 
 
 def parse_int(s: str) -> int:
