@@ -18,7 +18,9 @@ import collections
 try:
     from functools import lru_cache
 except ImportError:
-    from backports.functools_lru_cache import lru_cache
+    # need to type ignore this due to mypy bug here (duplicate name):
+    # https://github.com/python/mypy/issues/1153
+    from backports.functools_lru_cache import lru_cache  # type: ignore
 
 from typing import Any, Set, Dict, List, Union, Iterator
 

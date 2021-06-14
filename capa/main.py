@@ -21,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import halo
 import tqdm
@@ -138,7 +138,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             "functions": {},
         },
         "library_functions": {},
-    }
+    }  # type: Dict[str, Any]
 
     pbar = tqdm.tqdm
     if disable_progress:
@@ -182,10 +182,17 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count
 
-    matches = {}  # type: MatchResults
-    matches.update(all_bb_matches)
-    matches.update(all_function_matches)
-    matches.update(all_file_matches)
+    matches = {
+        rule_name: results
+        for rule_name, results in itertools.chain(
+            # each rule exists in exactly one scope,
+            # so there won't be any overlap among these following MatchResults,
+            # and we can merge the dictionaries naively.
+            all_bb_matches.items(),
+            all_function_matches.items(),
+            all_file_matches.items(),
+        )
+    }
 
     return matches, meta
 
@@ -332,18 +339,35 @@ def register_flirt_signature_analyzers(vw, sigpaths):
         viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
 
 
+def is_running_standalone() -> bool:
+    """
+    are we running from a PyInstaller'd executable?
+    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
+    """
+    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
+
+
+def get_default_root() -> str:
+    """
+    get the file system path to the default resources directory.
+    under PyInstaller, this comes from _MEIPASS.
+    under source, this is the root directory of the project.
+    """
+    if is_running_standalone():
+        # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
+        # its injected by pyinstaller.
+        # so we'll fetch this attribute dynamically.
+        return getattr(sys, "_MEIPASS")
+    else:
+        return os.path.join(os.path.dirname(__file__), "..")
+
+
 def get_default_signatures() -> List[str]:
     """
     compute a list of file system paths to the default FLIRT signatures.
     """
-    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-        logger.debug("detected running under PyInstaller")
-        sigs_path = os.path.join(sys._MEIPASS, "sigs")
-        logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
-    else:
-        logger.debug("detected running from source")
-        sigs_path = os.path.join(os.path.dirname(__file__), "..", "sigs")
-        logger.debug("default signatures path (source method): %s", sigs_path)
+    sigs_path = os.path.join(get_default_root(), "sigs")
+    logger.debug("signatures path: %s", sigs_path)
 
     ret = []
     for root, dirs, files in os.walk(sigs_path):
@@ -757,14 +781,8 @@ def main(argv=None):
         logger.debug("     https://github.com/fireeye/capa-rules")
         logger.debug("-" * 80)
 
-        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-            logger.debug("detected running under PyInstaller")
-            rules_path = os.path.join(sys._MEIPASS, "rules")
-            logger.debug("default rule path (PyInstaller method): %s", rules_path)
-        else:
-            logger.debug("detected running from source")
-            rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", rules_path)
+        rules_path = os.path.join(get_default_root(), "rules")
+        logger.debug("rule path: %s", rules_path)
 
         if not os.path.exists(rules_path):
             # when a users installs capa via pip,
@@ -882,15 +900,8 @@ def ida_main():
     logger.debug("     https://github.com/fireeye/capa-rules")
     logger.debug("-" * 80)
 
-    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-        logger.debug("detected running under PyInstaller")
-        rules_path = os.path.join(sys._MEIPASS, "rules")
-        logger.debug("default rule path (PyInstaller method): %s", rules_path)
-    else:
-        logger.debug("detected running from source")
-        rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
-        logger.debug("default rule path (source method): %s", rules_path)
-
+    rules_path = os.path.join(get_default_root(), "rules")
+    logger.debug("rule path: %s", rules_path)
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 

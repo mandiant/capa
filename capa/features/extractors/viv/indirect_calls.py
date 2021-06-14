@@ -142,7 +142,9 @@ def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional["InstructionHandl
     return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
-def resolve_indirect_call(vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None) -> Tuple[int, int]:
+def resolve_indirect_call(
+    vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None
+) -> Tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 
