@@ -10,13 +10,10 @@ import re
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, Union
+from typing import Set, Dict, Union
 
 import capa.engine
-import capa.features.common
-
-if TYPE_CHECKING:
-    from capa.engine import Result
+import capa.features
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
@@ -104,7 +101,7 @@ class Feature:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "Result":
+    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "capa.engine.Result":
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):

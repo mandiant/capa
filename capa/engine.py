@@ -10,14 +10,17 @@ import copy
 import collections
 from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping
 
-if TYPE_CHECKING:
-    from capa.rules import Rule
-
+import capa.rules
 import capa.features.common
 from capa.features.common import Feature
 
 # a collection of features and the locations at which they are found.
-# used throughout matching as the context in which features are searched.
+#
+# used throughout matching as the context in which features are searched:
+# to check if a feature exists, do: `Number(0x10) in features`.
+# to collect the locations of a feature, do: `features[Number(0x10)]`
+#
+# aliased here so that the type can be documented and xref'd.
 FeatureSet = Dict[Feature, Set[int]]
 
 
@@ -209,10 +212,22 @@ class Subscope(Statement):
 
 
 # mapping from rule name to list of: (location of match, result object)
+#
+# used throughout matching and rendering to collection the results
+#  of statement evaluation and their locations.
+#
+# to check if a rule matched, do: `"TCP client" in matches`.
+# to find where a rule matched, do: `map(first, matches["TCP client"])`
+# to see how a rule matched, do:
+#
+#     for address, match_details in matches["TCP client"]:
+#         inspect(match_details)
+#
+# aliased here so that the type can be documented and xref'd.
 MatchResults = Mapping[str, List[Tuple[int, Result]]]
 
 
-def match(rules: List["Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
+def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
     """
     Args:
       rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
