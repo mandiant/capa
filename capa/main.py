@@ -174,11 +174,10 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
     # collection of features that captures the rule matches within function and BB scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
-    # schema: Dict[MatchedRule: Set[int]
     function_and_lower_features = {
         capa.features.common.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
-    }
+    }  # type: FeatureSet
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count

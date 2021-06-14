@@ -12,7 +12,7 @@ import capa.engine
 import capa.render.utils
 import capa.features.common
 from capa.rules import RuleSet
-from capa.engine import Result
+from capa.engine import MatchResults
 
 
 def convert_statement_to_result_document(statement):
@@ -261,7 +261,7 @@ def parse_canonical_mbc(mbc: str):
     }
 
 
-def convert_capabilities_to_result_document(meta, rules: RuleSet, capabilities: Dict[str, List[Tuple[int, Result]]]):
+def convert_capabilities_to_result_document(meta, rules: RuleSet, capabilities: MatchResults):
     """
     convert the given rule set and capabilities result to a common, Python-native data structure.
     this format can be directly emitted to JSON, or passed to the other `capa.render.*.render()` routines

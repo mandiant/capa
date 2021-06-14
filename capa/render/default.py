@@ -7,14 +7,14 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import tabulate
 
 import capa.render.utils as rutils
 import capa.render.result_document
 from capa.rules import RuleSet
-from capa.engine import Result
+from capa.engine import MatchResults
 from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
@@ -226,6 +226,6 @@ def render_default(doc):
     return ostream.getvalue()
 
 
-def render(meta, rules: RuleSet, capabilities: Dict[str, List[Tuple[int, Result]]]) -> str:
+def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
     doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
     return render_default(doc)
