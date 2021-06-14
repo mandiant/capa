@@ -69,8 +69,8 @@ def get_viv_extractor(path):
     import capa.features.extractors.viv
 
     sigpaths = [
-        os.path.join(CD, "..", "sigs", "test_aulldiv.pat"),
-        os.path.join(CD, "..", "sigs", "test_aullrem.pat.gz"),
+        os.path.join(CD, "data", "sigs", "test_aulldiv.pat"),
+        os.path.join(CD, "data", "sigs", "test_aullrem.pat.gz"),
         os.path.join(CD, "..", "sigs", "flare_common_libs.sig"),
         os.path.join(CD, "..", "sigs", "flare_msvc_atlmfc_32_64.sig"),
         os.path.join(CD, "..", "sigs", "flare_msvc_rtf_32_64.sig"),
