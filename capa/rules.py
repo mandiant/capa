@@ -145,7 +145,7 @@ class InvalidRuleSet(ValueError):
         return str(self)
 
 
-def ensure_feature_valid_for_scope(scope: str, feature: Feature):
+def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
     if (
