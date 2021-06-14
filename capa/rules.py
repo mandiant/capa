@@ -180,23 +180,21 @@ def parse_range(s: str):
         raise InvalidRule("invalid range: %s" % (s))
 
     s = s[len("(") : -len(")")]
-    min, _, max = s.partition(",")
-    min = min.strip()
-    max = max.strip()
+    min_spec, _, max_spec = s.partition(",")
+    min_spec = min_spec.strip()
+    max_spec = max_spec.strip()
 
-    if min:
-        min = parse_int(min.strip())
+    min = None
+    if min_spec:
+        min = parse_int(min_spec)
         if min < 0:
             raise InvalidRule("range min less than zero")
-    else:
-        min = None
 
-    if max:
-        max = parse_int(max.strip())
+    max = None
+    if max_spec:
+        max = parse_int(max_spec)
         if max < 0:
             raise InvalidRule("range max less than zero")
-    else:
-        max = None
 
     if min is not None and max is not None:
         if max < min:
