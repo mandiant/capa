@@ -146,10 +146,17 @@ class InvalidRuleSet(ValueError):
 
 
 def ensure_feature_valid_for_scope(scope: str, feature: Feature):
-    if isinstance(feature, capa.features.common.Characteristic):
-        if capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]:
+    # if the given feature is a characteristic,
+    # check that is a valid characteristic for the given scope.
+    if (isinstance(feature, capa.features.common.Characteristic)
+        and isinstance(feature.value, str)
+        and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]):
             raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
-    elif not isinstance(feature, tuple(filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope]))):
+
+    # features of this scope that are not Characteristics will be Type instances.
+    # check that the given feature is one of these types.
+    types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
+    if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
         raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
 
 
