@@ -171,7 +171,7 @@ class FeatureExtractor:
         raise NotImplemented
 
     @abc.abstractmethod
-    def get_instructions(self: FunctionHandle, f, bb: BBHandle) -> Iterator[InsnHandle]:
+    def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
         """
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.

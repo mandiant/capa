@@ -152,7 +152,7 @@ def extract_features(f, bb):
       bb (viv_utils.BasicBlock): the basic block to process.
 
     yields:
-      Feature, set[VA]: the features and their location found in this basic block.
+      Tuple[Feature, int]: the features and their location found in this basic block.
     """
     yield BasicBlock(), bb.va
     for bb_handler in BASIC_BLOCK_HANDLERS:

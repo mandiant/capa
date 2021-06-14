@@ -607,7 +607,7 @@ def extract_features(f, bb, insn):
       insn (vivisect...Instruction): the instruction to process.
 
     yields:
-      Feature, set[VA]: the features and their location found in this insn.
+      Tuple[Feature, int]: the features and their location found in this insn.
     """
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, va in insn_handler(f, bb, insn):
