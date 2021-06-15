@@ -432,7 +432,7 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor(
-    path: str, format: str, backend: str, sigpaths: List[str], disable_progress=False
+    path: str, format: str, backend: str, sigpaths: List[str], should_save_workspace, disable_progress=False
 ) -> FeatureExtractor:
     """
     raises:
@@ -462,11 +462,15 @@ def get_extractor(
                 format = "sc64"
             vw = get_workspace(path, format, sigpaths)
 
-            try:
-                vw.saveWorkspace()
-            except IOError:
-                # see #168 for discussion around how to handle non-writable directories
-                logger.info("source directory is not writable, won't save intermediate workspace")
+            if should_save_workspace:
+                logger.debug("saving workspace")
+                try:
+                    vw.saveWorkspace()
+                except IOError:
+                    # see #168 for discussion around how to handle non-writable directories
+                    logger.info("source directory is not writable, won't save intermediate workspace")
+            else:
+                logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
 
@@ -839,8 +843,12 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         format = args.format
+        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+
         try:
-            extractor = get_extractor(args.sample, format, args.backend, args.signatures, disable_progress=args.quiet)
+            extractor = get_extractor(
+                args.sample, format, args.backend, args.signatures, should_save_workspace, disable_progress=args.quiet
+            )
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

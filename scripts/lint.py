@@ -220,7 +220,7 @@ class DoesntMatchExample(Lint):
 
             try:
                 extractor = capa.main.get_extractor(
-                    path, "auto", capa.main.BACKEND_VIV, sigpaths=DEFAULT_SIGNATURES, disable_progress=True
+                    path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
                 )
                 capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
             except Exception as e:
