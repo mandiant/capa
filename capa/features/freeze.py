@@ -254,7 +254,7 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=args.signatures)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, args.signatures, False)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 
