@@ -84,6 +84,7 @@ def get_viv_extractor(path):
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
+    vw.saveWorkspace()
     extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
     fixup_viv(path, extractor)
     return extractor
