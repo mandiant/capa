@@ -11,6 +11,8 @@ import capa.rules
 import capa.engine
 import capa.render.utils
 import capa.features.common
+from capa.rules import RuleSet
+from capa.engine import MatchResults
 
 
 def convert_statement_to_result_document(statement):
@@ -214,7 +216,7 @@ def convert_meta_to_result_document(meta):
     return meta
 
 
-def parse_canonical_attack(attack):
+def parse_canonical_attack(attack: str):
     """
     parse capa's canonical ATT&CK representation: `Tactic::Technique::Subtechnique [Identifier]`
     """
@@ -238,7 +240,7 @@ def parse_canonical_attack(attack):
     }
 
 
-def parse_canonical_mbc(mbc):
+def parse_canonical_mbc(mbc: str):
     """
     parse capa's canonical MBC representation: `Objective::Behavior::Method [Identifier]`
     """
@@ -262,7 +264,7 @@ def parse_canonical_mbc(mbc):
     }
 
 
-def convert_capabilities_to_result_document(meta, rules, capabilities):
+def convert_capabilities_to_result_document(meta, rules: RuleSet, capabilities: MatchResults):
     """
     convert the given rule set and capabilities result to a common, Python-native data structure.
     this format can be directly emitted to JSON, or passed to the other `capa.render.*.render()` routines

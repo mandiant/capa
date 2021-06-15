@@ -25,7 +25,8 @@ Derived from: https://github.com/fireeye/capa/blob/master/scripts/import-to-ida.
 import os
 import json
 
-from binaryninja import *
+import binaryninja
+import binaryninja.interaction
 
 
 def append_func_cmt(bv, va, cmt):
@@ -46,31 +47,31 @@ def append_func_cmt(bv, va, cmt):
 def load_analysis(bv):
     shortname = os.path.splitext(os.path.basename(bv.file.filename))[0]
     dirname = os.path.dirname(bv.file.filename)
-    log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
+    binaryninja.log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
     if os.access(os.path.join(dirname, shortname + ".js"), os.R_OK):
         path = os.path.join(dirname, shortname + ".js")
     elif os.access(os.path.join(dirname, shortname + ".json"), os.R_OK):
         path = os.path.join(dirname, shortname + ".json")
     else:
-        path = interaction.get_open_filename_input("capa report:", "JSON (*.js *.json);;All Files (*)")
+        path = binaryninja.interaction.get_open_filename_input("capa report:", "JSON (*.js *.json);;All Files (*)")
     if not path or not os.access(path, os.R_OK):
-        log_error("Invalid filename.")
+        binaryninja.log_error("Invalid filename.")
         return 0
-    log_info("Using capa file %s" % path)
+    binaryninja.log_info("Using capa file %s" % path)
 
     with open(path, "rb") as f:
         doc = json.loads(f.read().decode("utf-8"))
 
     if "meta" not in doc or "rules" not in doc:
-        log_error("doesn't appear to be a capa report")
+        binaryninja.log_error("doesn't appear to be a capa report")
         return -1
 
     a = doc["meta"]["sample"]["md5"].lower()
-    md5 = Transform["MD5"]
-    rawhex = Transform["RawHex"]
+    md5 = binaryninja.Transform["MD5"]
+    rawhex = binaryninja.Transform["RawHex"]
     b = rawhex.encode(md5.encode(bv.parent_view.read(bv.parent_view.start, bv.parent_view.end))).decode("utf-8")
     if not a == b:
-        log_error("sample mismatch")
+        binaryninja.log_error("sample mismatch")
         return -2
 
     rows = []
@@ -96,7 +97,7 @@ def load_analysis(bv):
         else:
             cmt = "%s" % (name,)
 
-        log_info("0x%x: %s" % (va, cmt))
+        binaryninja.log_info("0x%x: %s" % (va, cmt))
         try:
             # message will look something like:
             #
@@ -105,7 +106,7 @@ def load_analysis(bv):
         except ValueError:
             continue
 
-    log_info("ok")
+    binaryninja.log_info("ok")
 
 
-PluginCommand.register("Load capa file", "Loads an analysis file from capa", load_analysis)
+binaryninja.PluginCommand.register("Load capa file", "Loads an analysis file from capa", load_analysis)

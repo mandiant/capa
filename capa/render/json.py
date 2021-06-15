@@ -8,6 +8,8 @@
 import json
 
 import capa.render.result_document
+from capa.rules import RuleSet
+from capa.engine import MatchResults
 
 
 class CapaJsonObjectEncoder(json.JSONEncoder):
@@ -23,7 +25,7 @@ class CapaJsonObjectEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-def render(meta, rules, capabilities):
+def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
     return json.dumps(
         capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities),
         cls=CapaJsonObjectEncoder,

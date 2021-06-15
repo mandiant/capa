@@ -8,11 +8,23 @@
 
 import copy
 import collections
+from typing import Set, Dict, List, Tuple, Union, Mapping
 
+import capa.rules
 import capa.features.common
+from capa.features.common import Feature
+
+# a collection of features and the locations at which they are found.
+#
+# used throughout matching as the context in which features are searched:
+# to check if a feature exists, do: `Number(0x10) in features`.
+# to collect the locations of a feature, do: `features[Number(0x10)]`
+#
+# aliased here so that the type can be documented and xref'd.
+FeatureSet = Dict[Feature, Set[int]]
 
 
-class Statement(object):
+class Statement:
     """
     superclass for structural nodes, such as and/or/not.
     this exists to provide a default impl for `__str__` and `__repr__`,
@@ -33,7 +45,7 @@ class Statement(object):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx):
+    def evaluate(self, features: FeatureSet) -> "Result":
         """
         classes that inherit `Statement` must implement `evaluate`
 
@@ -50,7 +62,7 @@ class Statement(object):
             yield self.child
 
         if hasattr(self, "children"):
-            for child in self.children:
+            for child in getattr(self, "children"):
                 yield child
 
     def replace_child(self, existing, new):
@@ -59,12 +71,13 @@ class Statement(object):
                 self.child = new
 
         if hasattr(self, "children"):
-            for i, child in enumerate(self.children):
+            children = getattr(self, "children")
+            for i, child in enumerate(children):
                 if child is existing:
-                    self.children[i] = new
+                    children[i] = new
 
 
-class Result(object):
+class Result:
     """
     represents the results of an evaluation of statements against features.
 
@@ -78,7 +91,7 @@ class Result(object):
     we need this so that we can render the tree of expressions and their results.
     """
 
-    def __init__(self, success, statement, children, locations=None):
+    def __init__(self, success: bool, statement: Union[Statement, Feature], children: List["Result"], locations=None):
         """
         args:
           success (bool)
@@ -199,7 +212,23 @@ class Subscope(Statement):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
-def match(rules, features, va):
+# mapping from rule name to list of: (location of match, result object)
+#
+# used throughout matching and rendering to collection the results
+#  of statement evaluation and their locations.
+#
+# to check if a rule matched, do: `"TCP client" in matches`.
+# to find where a rule matched, do: `map(first, matches["TCP client"])`
+# to see how a rule matched, do:
+#
+#     for address, match_details in matches["TCP client"]:
+#         inspect(match_details)
+#
+# aliased here so that the type can be documented and xref'd.
+MatchResults = Mapping[str, List[Tuple[int, Result]]]
+
+
+def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
     """
     Args:
       rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
@@ -207,11 +236,11 @@ def match(rules, features, va):
       va (int): location of the features
 
     Returns:
-      Tuple[List[capa.features.Feature], Dict[str, Tuple[int, capa.engine.Result]]]: two-tuple with entries:
-        - list of features used for matching (which may be greater than argument, due to rule match features), and
-        - mapping from rule name to (location of match, result object)
+      Tuple[FeatureSet, MatchResults]: two-tuple with entries:
+        - set of features used for matching (which may be greater than argument, due to rule match features), and
+        - mapping from rule name to [(location of match, result object)]
     """
-    results = collections.defaultdict(list)
+    results = collections.defaultdict(list)  # type: MatchResults
 
     # copy features so that we can modify it
     # without affecting the caller (keep this function pure)

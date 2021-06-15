@@ -50,7 +50,7 @@ def extract_file_import_names(vw, file_path):
             yield Import(name), va
 
 
-def is_viv_ord_impname(impname):
+def is_viv_ord_impname(impname: str) -> bool:
     """
     return if import name matches vivisect's ordinal naming scheme `'ord%d' % ord`
     """

@@ -8,15 +8,16 @@
 
 import struct
 import builtins
+from typing import Tuple, Iterator
 
 MIN_STACKSTRING_LEN = 8
 
 
-def xor_static(data, i):
+def xor_static(data: bytes, i: int) -> bytes:
     return bytes(c ^ i for c in data)
 
 
-def is_aw_function(symbol):
+def is_aw_function(symbol: str) -> bool:
     """
     is the given function name an A/W function?
     these are variants of functions that, on Windows, accept either a narrow or wide string.
@@ -32,7 +33,7 @@ def is_aw_function(symbol):
     return "a" <= symbol[-2] <= "z" or "0" <= symbol[-2] <= "9"
 
 
-def is_ordinal(symbol):
+def is_ordinal(symbol: str) -> bool:
     """
     is the given symbol an ordinal that is prefixed by "#"?
     """
@@ -41,7 +42,7 @@ def is_ordinal(symbol):
     return False
 
 
-def generate_symbols(dll, symbol):
+def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
     """
     for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
@@ -67,11 +68,11 @@ def generate_symbols(dll, symbol):
             yield symbol[:-1]
 
 
-def all_zeros(bytez):
+def all_zeros(bytez: bytes) -> bool:
     return all(b == 0 for b in builtins.bytes(bytez))
 
 
-def twos_complement(val, bits):
+def twos_complement(val: int, bits: int) -> int:
     """
     compute the 2's complement of int value val
 
@@ -86,9 +87,9 @@ def twos_complement(val, bits):
         return val
 
 
-def carve_pe(pbytes, offset=0):
+def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[Tuple[int, int]]:
     """
-    Return a list of (offset, size, xor) tuples of embedded PEs
+    Generate (offset, key) tuples of embedded PEs
 
     Based on the version from vivisect:
       https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
@@ -97,20 +98,20 @@ def carve_pe(pbytes, offset=0):
     """
     mz_xor = [
         (
-            xor_static(b"MZ", i),
-            xor_static(b"PE", i),
-            i,
+            xor_static(b"MZ", key),
+            xor_static(b"PE", key),
+            key,
         )
-        for i in range(256)
+        for key in range(256)
     ]
 
     pblen = len(pbytes)
-    todo = [(pbytes.find(mzx, offset), mzx, pex, i) for mzx, pex, i in mz_xor]
-    todo = [(off, mzx, pex, i) for (off, mzx, pex, i) in todo if off != -1]
+    todo = [(pbytes.find(mzx, offset), mzx, pex, key) for mzx, pex, key in mz_xor]
+    todo = [(off, mzx, pex, key) for (off, mzx, pex, key) in todo if off != -1]
 
     while len(todo):
 
-        off, mzx, pex, i = todo.pop()
+        off, mzx, pex, key = todo.pop()
 
         # The MZ header has one field we will check
         # e_lfanew is at 0x3c
@@ -118,15 +119,15 @@ def carve_pe(pbytes, offset=0):
         if pblen < (e_lfanew + 4):
             continue
 
-        newoff = struct.unpack("<I", xor_static(pbytes[e_lfanew : e_lfanew + 4], i))[0]
+        newoff = struct.unpack("<I", xor_static(pbytes[e_lfanew : e_lfanew + 4], key))[0]
 
         nextres = pbytes.find(mzx, off + 1)
         if nextres != -1:
-            todo.append((nextres, mzx, pex, i))
+            todo.append((nextres, mzx, pex, key))
 
         peoff = off + newoff
         if pblen < (peoff + 2):
             continue
 
         if pbytes[peoff : peoff + 2] == pex:
-            yield (off, i)
+            yield (off, key)

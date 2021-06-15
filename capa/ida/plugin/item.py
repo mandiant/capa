@@ -31,7 +31,7 @@ def location_to_hex(location):
     return "%08X" % location
 
 
-class CapaExplorerDataItem(object):
+class CapaExplorerDataItem:
     """store data for CapaExplorerDataModel"""
 
     def __init__(self, parent, data, can_check=True):

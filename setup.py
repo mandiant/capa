@@ -25,6 +25,7 @@ requirements = [
     "vivisect==1.0.3",
     "smda==1.5.18",
     "pefile==2021.5.24",
+    "typing==3.7.4.3",
 ]
 
 # this sets __version__
@@ -72,7 +73,14 @@ setuptools.setup(
             "pycodestyle==2.7.0",
             "black==21.6b0",
             "isort==5.8.0",
-        ]
+            "mypy==0.901",
+            # type stubs for mypy
+            "types-backports==0.1.2",
+            "types-colorama==0.4.0",
+            "types-PyYAML==0.1.6",
+            "types-tabulate==0.1.0",
+            "types-termcolor==0.1.0",
+        ],
     },
     zip_safe=False,
     keywords="capa malware analysis capability detection FLARE",
