@@ -255,25 +255,9 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
-    if args.signatures == capa.main.SIGNATURES_PATH_DEFAULT_STRING:
-        logger.debug("-" * 80)
-        logger.debug(" Using default embedded signatures.")
-        logger.debug(
-            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
-        )
-        logger.debug("-" * 80)
-        sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
-    else:
-        sigs_path = args.signatures
-        logger.debug("using signatures path: %s", sigs_path)
+    sigpaths = capa.main.get_signatures(args.signatures)
 
-    try:
-        sig_paths = capa.main.get_signatures(sigs_path)
-    except (IOError) as e:
-        logger.error("%s", str(e))
-        return -1
-
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=sig_paths)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=sigpaths)
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 

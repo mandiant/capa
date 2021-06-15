@@ -151,14 +151,6 @@ def main(argv=None):
         args = parser.parse_args(args=argv)
         capa.main.handle_common_args(args)
 
-        if args.rules == "(embedded rules)":
-            logger.info("using default embedded rules")
-            logger.debug("detected running from source")
-            args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", args.rules)
-        else:
-            logger.info("using rules path: %s", args.rules)
-
         try:
             rules = capa.main.get_rules(args.rules)
             rules = capa.rules.RuleSet(rules)
@@ -167,15 +159,8 @@ def main(argv=None):
             logger.error("%s", str(e))
             return -1
 
-        if args.signatures == capa.main.SIGNATURES_PATH_DEFAULT_STRING:
-            logger.debug("using default embedded signatures.")
-            sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
-        else:
-            sigs_path = args.signatures
-            logger.debug("using signatures path: %s", sigs_path)
-
         try:
-            sig_paths = capa.main.get_signatures(sigs_path)
+            sig_paths = capa.main.get_signatures(args.signatures)
         except (IOError) as e:
             logger.error("%s", str(e))
             return -1

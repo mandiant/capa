@@ -668,6 +668,9 @@ def handle_common_args(args):
     """
     handle the global config specified by `install_common_args`,
     such as configuring logging/coloring/etc.
+    the following fields will be overwritten when present:
+      - rules: file system path to rule files.
+      - signatures: file system path to signature files.
 
     args:
       args (argparse.Namespace): parsed arguments that included at least `install_common_args` args.
@@ -704,6 +707,61 @@ def handle_common_args(args):
         colorama.init(strip=True)
     else:
         raise RuntimeError("unexpected --color value: " + args.color)
+
+    if hasattr(args, "rules"):
+        if args.rules == RULES_PATH_DEFAULT_STRING:
+            logger.debug("-" * 80)
+            logger.debug(" Using default embedded rules.")
+            logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug(" You can see the current default rule set here:")
+            logger.debug("     https://github.com/fireeye/capa-rules")
+            logger.debug("-" * 80)
+
+            if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+                logger.debug("detected running under PyInstaller")
+                rules_path = os.path.join(sys._MEIPASS, "rules")
+                logger.debug("default rule path (PyInstaller method): %s", rules_path)
+            else:
+                logger.debug("detected running from source")
+                rules_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "rules"))
+                logger.debug("default rule path (source method): %s", rules_path)
+
+            if not os.path.exists(rules_path):
+                # when a users installs capa via pip,
+                # this pulls down just the source code - not the default rules.
+                # i'm not sure the default rules should even be written to the library directory,
+                # so in this case, we require the user to use -r to specify the rule directory.
+                logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
+                logger.error("provide your own rule set via the `-r` option.")
+                return -1
+        else:
+            rules_path = args.rules
+            logger.debug("using rules path: %s", rules_path)
+
+        args.rules = rules_path
+
+    if hasattr(args, "signatures"):
+        if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
+            logger.debug("-" * 80)
+            logger.debug(" Using default embedded signatures.")
+            logger.debug(
+                " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+            )
+            logger.debug("-" * 80)
+
+            if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+                logger.debug("detected running under PyInstaller")
+                sigs_path = os.path.join(sys._MEIPASS, "sigs")
+                logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
+            else:
+                logger.debug("detected running from source")
+                sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
+                logger.debug("default signatures path (source method): %s", sigs_path)
+        else:
+            sigs_path = args.signatures
+            logger.debug("using signatures path: %s", sigs_path)
+
+        args.signatures = sigs_path
 
 
 def main(argv=None):
@@ -758,37 +816,8 @@ def main(argv=None):
         logger.error("%s", e.args[0])
         return -1
 
-    if args.rules == RULES_PATH_DEFAULT_STRING:
-        logger.debug("-" * 80)
-        logger.debug(" Using default embedded rules.")
-        logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
-        logger.debug(" You can see the current default rule set here:")
-        logger.debug("     https://github.com/fireeye/capa-rules")
-        logger.debug("-" * 80)
-
-        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-            logger.debug("detected running under PyInstaller")
-            rules_path = os.path.join(sys._MEIPASS, "rules")
-            logger.debug("default rule path (PyInstaller method): %s", rules_path)
-        else:
-            logger.debug("detected running from source")
-            rules_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "rules"))
-            logger.debug("default rule path (source method): %s", rules_path)
-
-        if not os.path.exists(rules_path):
-            # when a users installs capa via pip,
-            # this pulls down just the source code - not the default rules.
-            # i'm not sure the default rules should even be written to the library directory,
-            # so in this case, we require the user to use -r to specify the rule directory.
-            logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
-            logger.error("provide your own rule set via the `-r` option.")
-            return -1
-    else:
-        rules_path = args.rules
-        logger.debug("using rules path: %s", rules_path)
-
     try:
-        rules = get_rules(rules_path, disable_progress=args.quiet)
+        rules = get_rules(args.rules, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
         logger.debug(
             "successfully loaded %s rules",
@@ -824,28 +853,8 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return -1
 
-    if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
-        logger.debug("-" * 80)
-        logger.debug(" Using default embedded signatures.")
-        logger.debug(
-            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
-        )
-        logger.debug("-" * 80)
-
-        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-            logger.debug("detected running under PyInstaller")
-            sigs_path = os.path.join(sys._MEIPASS, "sigs")
-            logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
-        else:
-            logger.debug("detected running from source")
-            sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
-            logger.debug("default signatures path (source method): %s", sigs_path)
-    else:
-        sigs_path = args.signatures
-        logger.debug("using signatures path: %s", sigs_path)
-
     try:
-        sig_paths = get_signatures(sigs_path)
+        sig_paths = get_signatures(args.signatures)
     except (IOError) as e:
         logger.error("%s", str(e))
         return -1
