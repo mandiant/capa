@@ -116,7 +116,7 @@ def extract_features(f, bb):
       bb (smda.common.SmdaBasicBlock): the basic block to process.
 
     yields:
-      Feature, set[VA]: the features and their location found in this basic block.
+      Tuple[Feature, int]: the features and their location found in this basic block.
     """
     yield BasicBlock(), bb.offset
     for bb_handler in BASIC_BLOCK_HANDLERS:

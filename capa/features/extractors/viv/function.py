@@ -61,7 +61,7 @@ def extract_features(f):
       f (viv_utils.Function): the function from which to extract features
 
     yields:
-      Feature, set[VA]: the features and their location found in this function.
+      Tuple[Feature, int]: the features and their location found in this function.
     """
     for func_handler in FUNCTION_HANDLERS:
         for feature, va in func_handler(f):

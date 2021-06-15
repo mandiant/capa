@@ -10,7 +10,6 @@ import logging
 import viv_utils
 import viv_utils.flirt
 
-import capa.features.extractors
 import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.function

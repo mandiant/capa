@@ -131,6 +131,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - json: breaking change: correctly render negative offsets #619 @williballenthin
 - library: breaking change: remove logic from `__init__.py` throughout #622 @williballenthin
 - main: don't create .viv files unless CAPA_SAVE_WORKSPACE is set #507 @williballenthin
+- library: add type annotations for use with mypy #447 @williballenthin
 
 ### Development
 

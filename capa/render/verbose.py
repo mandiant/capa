@@ -27,6 +27,8 @@ import tabulate
 import capa.rules
 import capa.render.utils as rutils
 import capa.render.result_document
+from capa.rules import RuleSet
+from capa.engine import MatchResults
 
 
 def render_meta(ostream, doc):
@@ -123,6 +125,6 @@ def render_verbose(doc):
     return ostream.getvalue()
 
 
-def render(meta, rules, capabilities):
+def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
     doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
     return render_verbose(doc)

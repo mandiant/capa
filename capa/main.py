@@ -21,6 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
+from typing import Any, Dict, List, Tuple
 
 import halo
 import tqdm
@@ -37,7 +38,10 @@ import capa.features.freeze
 import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.pefile
+from capa.rules import Rule, RuleSet
+from capa.engine import FeatureSet, MatchResults
 from capa.helpers import get_file_taste
+from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
@@ -51,7 +55,7 @@ logger = logging.getLogger("capa")
 
 
 @contextlib.contextmanager
-def timing(msg):
+def timing(msg: str):
     t0 = time.time()
     yield
     t1 = time.time()
@@ -67,12 +71,12 @@ def set_vivisect_log_level(level):
     logging.getLogger("envi.codeflow").setLevel(level)
 
 
-def find_function_capabilities(ruleset, extractor, f):
+def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle):
     # contains features from:
     #  - insns
     #  - function
-    function_features = collections.defaultdict(set)
-    bb_matches = collections.defaultdict(list)
+    function_features = collections.defaultdict(set)  # type: FeatureSet
+    bb_matches = collections.defaultdict(list)  # type: MatchResults
 
     for feature, va in extractor.extract_function_features(f):
         function_features[feature].add(va)
@@ -103,8 +107,8 @@ def find_function_capabilities(ruleset, extractor, f):
     return function_matches, bb_matches, len(function_features)
 
 
-def find_file_capabilities(ruleset, extractor, function_features):
-    file_features = collections.defaultdict(set)
+def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
+    file_features = collections.defaultdict(set)  # type: FeatureSet
 
     for feature, va in extractor.extract_file_features():
         # not all file features may have virtual addresses.
@@ -124,9 +128,9 @@ def find_file_capabilities(ruleset, extractor, function_features):
     return matches, len(file_features)
 
 
-def find_capabilities(ruleset, extractor, disable_progress=None):
-    all_function_matches = collections.defaultdict(list)
-    all_bb_matches = collections.defaultdict(list)
+def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None) -> Tuple[MatchResults, Any]:
+    all_function_matches = collections.defaultdict(list)  # type: MatchResults
+    all_bb_matches = collections.defaultdict(list)  # type: MatchResults
 
     meta = {
         "feature_counts": {
@@ -134,7 +138,7 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
             "functions": {},
         },
         "library_functions": {},
-    }
+    }  # type: Dict[str, Any]
 
     pbar = tqdm.tqdm
     if disable_progress:
@@ -170,19 +174,25 @@ def find_capabilities(ruleset, extractor, disable_progress=None):
 
     # collection of features that captures the rule matches within function and BB scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
-    # schema: Dict[MatchedRule: Set[int]
     function_and_lower_features = {
         capa.features.common.MatchedRule(rule_name): set(map(lambda p: p[0], results))
         for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
-    }
+    }  # type: FeatureSet
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count
 
-    matches = {}
-    matches.update(all_bb_matches)
-    matches.update(all_function_matches)
-    matches.update(all_file_matches)
+    matches = {
+        rule_name: results
+        for rule_name, results in itertools.chain(
+            # each rule exists in exactly one scope,
+            # so there won't be any overlap among these following MatchResults,
+            # and we can merge the dictionaries naively.
+            all_bb_matches.items(),
+            all_function_matches.items(),
+            all_file_matches.items(),
+        )
+    }
 
     return matches, meta
 
@@ -194,15 +204,15 @@ def has_rule_with_namespace(rules, capabilities, rule_cat):
     return False
 
 
-def is_internal_rule(rule):
+def is_internal_rule(rule: Rule) -> bool:
     return rule.meta.get("namespace", "").startswith("internal/")
 
 
-def is_file_limitation_rule(rule):
+def is_file_limitation_rule(rule: Rule) -> bool:
     return rule.meta.get("namespace", "") == "internal/limitation/file"
 
 
-def has_file_limitation(rules, capabilities, is_standalone=True):
+def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
     file_limitation_rules = list(filter(is_file_limitation_rule, rules.rules.values()))
 
     for file_limitation_rule in file_limitation_rules:
@@ -224,7 +234,7 @@ def has_file_limitation(rules, capabilities, is_standalone=True):
     return False
 
 
-def is_supported_file_type(sample):
+def is_supported_file_type(sample: str) -> bool:
     """
     Return if this is a supported file based on magic header values
     """
@@ -329,15 +339,35 @@ def register_flirt_signature_analyzers(vw, sigpaths):
         viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
 
 
-def get_default_signatures():
-    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-        logger.debug("detected running under PyInstaller")
-        sigs_path = os.path.join(sys._MEIPASS, "sigs")
-        logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
+def is_running_standalone() -> bool:
+    """
+    are we running from a PyInstaller'd executable?
+    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
+    """
+    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
+
+
+def get_default_root() -> str:
+    """
+    get the file system path to the default resources directory.
+    under PyInstaller, this comes from _MEIPASS.
+    under source, this is the root directory of the project.
+    """
+    if is_running_standalone():
+        # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
+        # its injected by pyinstaller.
+        # so we'll fetch this attribute dynamically.
+        return getattr(sys, "_MEIPASS")
     else:
-        logger.debug("detected running from source")
-        sigs_path = os.path.join(os.path.dirname(__file__), "..", "sigs")
-        logger.debug("default signatures path (source method): %s", sigs_path)
+        return os.path.join(os.path.dirname(__file__), "..")
+
+
+def get_default_signatures() -> List[str]:
+    """
+    compute a list of file system paths to the default FLIRT signatures.
+    """
+    sigs_path = os.path.join(get_default_root(), "sigs")
+    logger.debug("signatures path: %s", sigs_path)
 
     ret = []
     for root, dirs, files in os.walk(sigs_path):
@@ -401,7 +431,9 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
-def get_extractor(path, format, backend, sigpaths, should_save_workspace, disable_progress=False):
+def get_extractor(
+    path: str, format: str, backend: str, sigpaths: List[str], should_save_workspace, disable_progress=False
+) -> FeatureExtractor:
     """
     raises:
       UnsupportedFormatError:
@@ -443,7 +475,7 @@ def get_extractor(path, format, backend, sigpaths, should_save_workspace, disabl
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
 
 
-def is_nursery_rule_path(path):
+def is_nursery_rule_path(path: str) -> bool:
     """
     The nursery is a spot for rules that have not yet been fully polished.
     For example, they may not have references to public example of a technique.
@@ -456,7 +488,7 @@ def is_nursery_rule_path(path):
     return "nursery" in path
 
 
-def get_rules(rule_path, disable_progress=False):
+def get_rules(rule_path: str, disable_progress=False) -> List[Rule]:
     if not os.path.exists(rule_path):
         raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
@@ -483,7 +515,7 @@ def get_rules(rule_path, disable_progress=False):
                 rule_path = os.path.join(root, file)
                 rule_paths.append(rule_path)
 
-    rules = []
+    rules = []  # type: List[Rule]
 
     pbar = tqdm.tqdm
     if disable_progress:
@@ -753,14 +785,8 @@ def main(argv=None):
         logger.debug("     https://github.com/fireeye/capa-rules")
         logger.debug("-" * 80)
 
-        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-            logger.debug("detected running under PyInstaller")
-            rules_path = os.path.join(sys._MEIPASS, "rules")
-            logger.debug("default rule path (PyInstaller method): %s", rules_path)
-        else:
-            logger.debug("detected running from source")
-            rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", rules_path)
+        rules_path = os.path.join(get_default_root(), "rules")
+        logger.debug("rule path: %s", rules_path)
 
         if not os.path.exists(rules_path):
             # when a users installs capa via pip,
@@ -880,15 +906,8 @@ def ida_main():
     logger.debug("     https://github.com/fireeye/capa-rules")
     logger.debug("-" * 80)
 
-    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
-        logger.debug("detected running under PyInstaller")
-        rules_path = os.path.join(sys._MEIPASS, "rules")
-        logger.debug("default rule path (PyInstaller method): %s", rules_path)
-    else:
-        logger.debug("detected running from source")
-        rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
-        logger.debug("default rule path (source method): %s", rules_path)
-
+    rules_path = os.path.join(get_default_root(), "rules")
+    logger.debug("rule path: %s", rules_path)
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 
