@@ -98,7 +98,9 @@ def get_capa_results(args):
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, args.signatures, should_save_workspace, disable_progress=True)
+        extractor = capa.main.get_extractor(
+            path, format, capa.main.BACKEND_VIV, args.signatures, should_save_workspace, disable_progress=True
+        )
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.

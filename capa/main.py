@@ -846,7 +846,9 @@ def main(argv=None):
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
-            extractor = get_extractor(args.sample, format, args.backend, args.signatures, should_save_workspace, disable_progress=args.quiet)
+            extractor = get_extractor(
+                args.sample, format, args.backend, args.signatures, should_save_workspace, disable_progress=args.quiet
+            )
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
