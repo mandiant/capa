@@ -78,6 +78,7 @@ def get_capa_results(args):
 
     args is a tuple, containing:
       rules (capa.rules.RuleSet): the rules to match
+      signatures (List[str]): list of file system paths to signature files
       format (str): the name of the sample file format
       path (str): the file system path to the sample to process
 
@@ -94,10 +95,10 @@ def get_capa_results(args):
       meta (dict): the meta analysis results
       capabilities (dict): the matched capabilities and their result objects
     """
-    rules, format, path = args
+    rules, sigpaths, format, path = args
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, args.signatures, disable_progress=True)
+        extractor = capa.main.get_extractor(path, format, capa.main.BACKEND_VIV, sigpaths, disable_progress=True)
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
@@ -166,6 +167,19 @@ def main(argv=None):
             logger.error("%s", str(e))
             return -1
 
+        if args.signatures == capa.main.SIGNATURES_PATH_DEFAULT_STRING:
+            logger.debug("using default embedded signatures.")
+            sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
+        else:
+            sigs_path = args.signatures
+            logger.debug("using signatures path: %s", sigs_path)
+
+        try:
+            sig_paths = capa.main.get_signatures(sigs_path)
+        except (IOError) as e:
+            logger.error("%s", str(e))
+            return -1
+
         samples = []
         for (base, directories, files) in os.walk(args.input):
             for file in files:
@@ -197,7 +211,7 @@ def main(argv=None):
 
         results = {}
         for result in mapper(
-            get_capa_results, [(rules, "pe", sample) for sample in samples], parallelism=args.parallelism
+            get_capa_results, [(rules, sig_paths, "pe", sample) for sample in samples], parallelism=args.parallelism
         ):
             if result["status"] == "error":
                 logger.warning(result["error"])

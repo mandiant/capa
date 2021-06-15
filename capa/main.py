@@ -40,6 +40,7 @@ import capa.features.extractors.pefile
 from capa.helpers import get_file_taste
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
+SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
@@ -503,6 +504,25 @@ def get_rules(rule_path, disable_progress=False):
     return rules
 
 
+def get_signatures(sigs_path):
+    if not os.path.exists(sigs_path):
+        raise IOError("signatures path %s does not exist or cannot be accessed" % sigs_path)
+
+    paths = []
+    if os.path.isfile(sigs_path):
+        paths.append(sigs_path)
+    elif os.path.isdir(sigs_path):
+        logger.debug("reading signatures from directory %s", sigs_path)
+        for root, dirs, files in os.walk(sigs_path):
+            for file in files:
+                if file.endswith((".pat", ".pat.gz", ".sig")):
+                    sig_path = os.path.join(root, file)
+                    logger.debug("found signature: %s", sig_path)
+                    paths.append(sig_path)
+
+    return paths
+
+
 def collect_metadata(argv, sample_path, rules_path, format, extractor):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
@@ -634,12 +654,9 @@ def install_common_args(parser, wanted=None):
     if "signatures" in wanted:
         parser.add_argument(
             "--signature",
-            action="append",
             dest="signatures",
             type=str,
-            # with action=append, users can specify futher signatures but not override whats found in $capa/sigs/.
-            # seems reasonable for now. this is an easy way to register the default signature set.
-            default=get_default_signatures(),
+            default=SIGNATURES_PATH_DEFAULT_STRING,
             help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
         )
 
@@ -755,7 +772,7 @@ def main(argv=None):
             logger.debug("default rule path (PyInstaller method): %s", rules_path)
         else:
             logger.debug("detected running from source")
-            rules_path = os.path.join(os.path.dirname(__file__), "..", "rules")
+            rules_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "rules"))
             logger.debug("default rule path (source method): %s", rules_path)
 
         if not os.path.exists(rules_path):
@@ -807,6 +824,32 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return -1
 
+    if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
+        logger.debug("-" * 80)
+        logger.debug(" Using default embedded signatures.")
+        logger.debug(
+            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+        )
+        logger.debug("-" * 80)
+
+        if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+            logger.debug("detected running under PyInstaller")
+            sigs_path = os.path.join(sys._MEIPASS, "sigs")
+            logger.debug("default signatures path (PyInstaller method): %s", sigs_path)
+        else:
+            logger.debug("detected running from source")
+            sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
+            logger.debug("default signatures path (source method): %s", sigs_path)
+    else:
+        sigs_path = args.signatures
+        logger.debug("using signatures path: %s", sigs_path)
+
+    try:
+        sig_paths = get_signatures(sigs_path)
+    except (IOError) as e:
+        logger.error("%s", str(e))
+        return -1
+
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"
         with open(args.sample, "rb") as f:
@@ -814,7 +857,7 @@ def main(argv=None):
     else:
         format = args.format
         try:
-            extractor = get_extractor(args.sample, format, args.backend, args.signatures, disable_progress=args.quiet)
+            extractor = get_extractor(args.sample, format, args.backend, sig_paths, disable_progress=args.quiet)
         except UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

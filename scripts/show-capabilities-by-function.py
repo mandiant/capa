@@ -121,7 +121,7 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if args.rules == "(embedded rules)":
+    if args.rules == capa.main.RULES_PATH_DEFAULT_STRING:
         logger.info("-" * 80)
         logger.info(" Using default embedded rules.")
         logger.info(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
@@ -130,7 +130,7 @@ def main(argv=None):
         logger.info("-" * 80)
 
         logger.debug("detected running from source")
-        args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
+        args.rules = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "rules"))
         logger.debug("default rule path (source method): %s", args.rules)
     else:
         logger.info("using rules path: %s", args.rules)
@@ -146,6 +146,24 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
+    if args.signatures == capa.main.SIGNATURES_PATH_DEFAULT_STRING:
+        logger.debug("-" * 80)
+        logger.debug(" Using default embedded signatures.")
+        logger.debug(
+            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+        )
+        logger.debug("-" * 80)
+        sigs_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "sigs"))
+    else:
+        sigs_path = args.signatures
+        logger.debug("using signatures path: %s", sigs_path)
+
+    try:
+        sig_paths = capa.main.get_signatures(sigs_path)
+    except (IOError) as e:
+        logger.error("%s", str(e))
+        return -1
+
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"
         with open(args.sample, "rb") as f:
@@ -154,7 +172,7 @@ def main(argv=None):
         format = args.format
 
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, args.backend, args.signatures)
+            extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sig_paths)
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
