@@ -7,11 +7,16 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import TYPE_CHECKING, Set, List, Deque, Tuple, Union, Optional
 
 import envi
 import vivisect.const
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
+from vivisect import VivWorkspace
+
+if TYPE_CHECKING:
+    from capa.features.extractors.viv.extractor import InstructionHandle
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper
@@ -26,7 +31,7 @@ FAR_BRANCH_MASK = envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH
 DESTRUCTIVE_MNEMONICS = ("mov", "lea", "pop", "xor")
 
 
-def get_previous_instructions(vw, va):
+def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
     """
     collect the instructions that flow to the given address, local to the current function.
 
@@ -43,12 +48,14 @@ def get_previous_instructions(vw, va):
     # ensure that it fallsthrough to this one.
     loc = vw.getPrevLocation(va, adjacent=True)
     if loc is not None:
-        # from vivisect.const:
-        # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
-        (pva, _, ptype, pinfo) = vw.getPrevLocation(va, adjacent=True)
+        ploc = vw.getPrevLocation(va, adjacent=True)
+        if ploc is not None:
+            # from vivisect.const:
+            # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
+            (pva, _, ptype, pinfo) = ploc
 
-        if ptype == LOC_OP and not (pinfo & IF_NOFALL):
-            ret.append(pva)
+            if ptype == LOC_OP and not (pinfo & IF_NOFALL):
+                ret.append(pva)
 
     # find any code refs, e.g. jmp, to this location.
     # ignore any calls.
@@ -67,7 +74,7 @@ class NotFoundError(Exception):
     pass
 
 
-def find_definition(vw, va, reg):
+def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Union[int, None]]:
     """
     scan backwards from the given address looking for assignments to the given register.
     if a constant, return that value.
@@ -83,8 +90,8 @@ def find_definition(vw, va, reg):
     raises:
       NotFoundError: when the definition cannot be found.
     """
-    q = collections.deque()
-    seen = set([])
+    q = collections.deque()  # type: Deque[int]
+    seen = set([])  # type: Set[int]
 
     q.extend(get_previous_instructions(vw, va))
     while q:
@@ -128,14 +135,16 @@ def find_definition(vw, va, reg):
     raise NotFoundError()
 
 
-def is_indirect_call(vw, va, insn=None):
+def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
     return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
-def resolve_indirect_call(vw, va, insn=None):
+def resolve_indirect_call(
+    vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None
+) -> Tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 

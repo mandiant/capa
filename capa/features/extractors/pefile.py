@@ -136,7 +136,7 @@ FILE_HANDLERS = (
 
 
 class PefileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path):
+    def __init__(self, path: str):
         super(PefileFeatureExtractor, self).__init__()
         self.path = path
         self.pe = pefile.PE(path)

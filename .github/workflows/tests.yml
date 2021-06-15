@@ -17,6 +17,7 @@ jobs:
       run: |
         number=$(grep '\- *$' CHANGELOG.md | wc -l)
         if [ $number != 1 ]; then exit 1; fi
+
   code_style:
     runs-on: ubuntu-20.04
     steps:
@@ -32,6 +33,8 @@ jobs:
       run: isort --profile black --length-sort --line-width 120 -c .
     - name: Lint with black
       run: black -l 120 --check .
+    - name: Check types with mypy
+      run: mypy --config-file .github/mypy/mypy.ini capa/ scripts/ tests/
 
   rule_linter:
     runs-on: ubuntu-20.04

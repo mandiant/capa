@@ -49,7 +49,7 @@ def green(s):
     return termcolor.colored(s, "green")
 
 
-class Lint(object):
+class Lint:
     WARN = orange("WARN")
     FAIL = red("FAIL")
 

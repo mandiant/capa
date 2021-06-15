@@ -11,17 +11,17 @@ import io
 import termcolor
 
 
-def bold(s):
+def bold(s: str) -> str:
     """draw attention to the given string"""
     return termcolor.colored(s, "blue")
 
 
-def bold2(s):
+def bold2(s: str) -> str:
     """draw attention to the given string, within a `bold` section"""
     return termcolor.colored(s, "green")
 
 
-def hex(n):
+def hex(n: int) -> str:
     """render the given number using upper case hex, like: 0x123ABC"""
     if n < 0:
         return "-0x%X" % (-n)
@@ -29,7 +29,7 @@ def hex(n):
         return "0x%X" % n
 
 
-def parse_parts_id(s):
+def parse_parts_id(s: str):
     id = ""
     parts = s.split("::")
     if len(parts) > 0:

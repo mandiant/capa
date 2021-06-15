@@ -228,7 +228,7 @@ def dump(extractor):
     return MAGIC + zlib.compress(dumps(extractor).encode("utf-8"))
 
 
-def is_freeze(buf):
+def is_freeze(buf: bytes) -> bool:
     return buf[: len(MAGIC)] == MAGIC
 
 
