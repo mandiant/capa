@@ -127,6 +127,10 @@ def extract_insn_api_features(f, bb, insn):
                 for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                     yield API(name), insn.va
 
+            # if jump leads to an ENDBRANCH instruction, skip it
+            if f.vw.getByteDef(target)[1].startswith(b"\xf3\x0f\x1e"):
+                target += 4
+
             target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, target)
             if not target:
                 return

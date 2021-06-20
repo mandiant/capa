@@ -41,7 +41,7 @@ def extract_file_import_names(vw, file_path):
     """
     for va, _, _, tinfo in vw.getImports():
         # vivisect source: tinfo = "%s.%s" % (libname, impname)
-        modname, impname = tinfo.split(".")
+        modname, impname = tinfo.split(".", 1)
         if is_viv_ord_impname(impname):
             # replace ord prefix with #
             impname = "#%s" % impname[len("ord") :]
