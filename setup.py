@@ -79,7 +79,7 @@ setuptools.setup(
             "types-colorama==0.4.0",
             "types-PyYAML==0.1.6",
             "types-tabulate==0.1.0",
-            "types-termcolor==0.1.0",
+            "types-termcolor==0.1.1",
         ],
     },
     zip_safe=False,
