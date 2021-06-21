@@ -76,7 +76,7 @@ setuptools.setup(
             "mypy==0.901",
             # type stubs for mypy
             "types-backports==0.1.2",
-            "types-colorama==0.4.0",
+            "types-colorama==0.4.2",
             "types-PyYAML==0.1.6",
             "types-tabulate==0.1.0",
             "types-termcolor==0.1.0",
