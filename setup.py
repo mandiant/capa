@@ -75,7 +75,7 @@ setuptools.setup(
             "isort==5.9.1",
             "mypy==0.901",
             # type stubs for mypy
-            "types-backports==0.1.2",
+            "types-backports==0.1.3",
             "types-colorama==0.4.2",
             "types-PyYAML==5.4.3",
             "types-tabulate==0.1.1",
