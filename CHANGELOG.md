@@ -113,6 +113,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 #505 @mr-tz
 - main: correctly match BB-scope matches at file scope #605 @williballenthin
 - explorer: add support for function-name feature #618 @mike-hunhoff
+- explorer: circular import workaround #654 @mike-hunhoff
 
 ### Changes
 

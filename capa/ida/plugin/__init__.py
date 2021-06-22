@@ -11,7 +11,6 @@ import logging
 import idaapi
 import ida_kernwin
 
-from capa.ida.helpers import is_supported_file_type, is_supported_ida_version
 from capa.ida.plugin.form import CapaExplorerForm
 from capa.ida.plugin.icon import ICON
 
@@ -41,10 +40,12 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """called when IDA is loading the plugin"""
         logging.basicConfig(level=logging.INFO)
 
+        import capa.ida.helpers
+
         # do not load plugin if IDA version/file type not supported
-        if not is_supported_ida_version():
+        if not capa.ida.helpers.is_supported_ida_version():
             return idaapi.PLUGIN_SKIP
-        if not is_supported_file_type():
+        if not capa.ida.helpers.is_supported_file_type():
             return idaapi.PLUGIN_SKIP
         return idaapi.PLUGIN_OK
 
