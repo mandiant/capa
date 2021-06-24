@@ -18,6 +18,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - show-features: don't show features from library functions #569 @williballenthin
 - linter: summarize results at the end #571 @williballenthin
 - linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
+- explorer: add argument to control whether to automatically analyze when running capa explorer #548 @Ana06
 
 ### Breaking Changes
 
