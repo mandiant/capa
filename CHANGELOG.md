@@ -29,7 +29,7 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - json: correctly render negative offsets #619 @williballenthin
 - library: remove logic from `__init__.py` throughout #622 @williballenthin
 
-### New Rules (89)
+### New Rules (93)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -119,6 +119,10 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - internal/limitation/file/internal-autohotkey-file-limitation @mr-tz
 - host-interaction/process/dump/create-process-memory-minidump michael.hunhoff@fireeye.com
 - nursery/get-storage-device-properties michael.hunhoff@fireeye.com
+- nursery/execute-shell-command-via-windows-remote-management michael.hunhoff@fireeye.com
+- nursery/get-token-privileges michael.hunhoff@fireeye.com
+- nursery/prompt-user-for-credentials michael.hunhoff@fireeye.com
+- nursery/spoof-parent-pid michael.hunhoff@fireeye.com
 -
 
 ### Bug Fixes
