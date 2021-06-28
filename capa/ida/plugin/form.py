@@ -44,6 +44,13 @@ CAPA_SETTINGS_RULE_PATH = "rule_path"
 CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
 CAPA_SETTINGS_RULEGEN_SCOPE = "rulegen_scope"
 
+from enum import IntFlag
+
+
+class Options(IntFlag):
+    DEFAULT = 0
+    ANALYZE = 1  # Runs the analysis when starting the explorer
+
 
 def write_file(path, data):
     """ """
@@ -230,7 +237,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 
-    def __init__(self, name):
+    def __init__(self, name, option=Options.DEFAULT):
         """initialize form elements"""
         super(CapaExplorerForm, self).__init__()
 
@@ -277,6 +284,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_status_label = None
 
         self.Show()
+
+        if (option & Options.ANALYZE) == Options.ANALYZE:
+            self.analyze_program()
 
     def OnCreate(self, form):
         """called when plugin form is created

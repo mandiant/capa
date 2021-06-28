@@ -144,9 +144,12 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         format = args.format
+        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sig_paths)
+            extractor = capa.main.get_extractor(
+                args.sample, args.format, args.backend, sig_paths, should_save_workspace
+            )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

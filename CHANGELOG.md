@@ -7,15 +7,30 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 
 ### New Features
 
+- rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
-- explorer: IDA 7.6 support #497 @williballenthin
+- tests: update test cases and caching #545 @mr-tz
 - scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
 - rule: add file-scope feature (`function-name`) for recognized library functions #567 @williballenthin
 - main: auto detect shellcode based on file extension #516 @mr-tz
 - main: more detailed progress bar output when matching functions #562 @mr-tz
 - main: detect file limitations without doing code analysis for better performance #583 @williballenthin
+- show-features: don't show features from library functions #569 @williballenthin
+- linter: summarize results at the end #571 @williballenthin
+- linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
+- explorer: add argument to control whether to automatically analyze when running capa explorer #548 @Ana06
 
-### New Rules (88)
+### Breaking Changes
+
+- py3: drop Python 2 support #480 @Ana06
+- meta: added `library_functions` field, `feature_counts.functions` does not include library functions any more #562 @mr-tz
+- json: results document now contains parsed ATT&CK and MBC fields instead of canonical representation #526 @mr-tz
+- json: record all matching strings for regex #159 @williballenthin
+- main: implement file limitations via rules not code #390 @williballenthin
+- json: correctly render negative offsets #619 @williballenthin
+- library: remove logic from `__init__.py` throughout #622 @williballenthin
+
+### New Rules (93)
 
 - anti-analysis/packer/amber/packed-with-amber @gormaniac
 - collection/file-managers/gather-3d-ftp-information @re-fox
@@ -104,33 +119,24 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - compiler/autohotkey/compiled-with-autohotkey awillia2@cisco.com
 - internal/limitation/file/internal-autohotkey-file-limitation @mr-tz
 - host-interaction/process/dump/create-process-memory-minidump michael.hunhoff@fireeye.com
+- nursery/get-storage-device-properties michael.hunhoff@fireeye.com
+- nursery/execute-shell-command-via-windows-remote-management michael.hunhoff@fireeye.com
+- nursery/get-token-privileges michael.hunhoff@fireeye.com
+- nursery/prompt-user-for-credentials michael.hunhoff@fireeye.com
+- nursery/spoof-parent-pid michael.hunhoff@fireeye.com
 -
-
 
 ### Bug Fixes
 
 - build: use Python 3.8 for PyInstaller to support consistently running across multiple operating systems including Windows 7 #505 @mr-tz
 - main: correctly match BB-scope matches at file scope #605 @williballenthin
-- explorer: add support for function-name feature #618 @mike-hunhoff
 
-### Changes
-
-- py3: drop Python 2 support #480 @Ana06
-- deps: bump ruamel yaml parser to 0.17.4 #519 @williballenthin
+### capa explorer IDA Pro plugin
+- explorer: IDA 7.6 support #497 @williballenthin
 - explorer: explain how to install IDA 7.6 patch to enable the plugin #528 @williballenthin
 - explorer: document IDA 7.6sp1 as alternative to the patch #536 @Ana06
-- rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
-- tests: update test cases and caching #545 @mr-tz
-- show-features: don't show features from library functions #569 @williballenthin
-- linter: summarize results at the end #571 @williballenthin
-- meta: added `library_functions` field, `feature_counts.functions` does not include library functions any more #562 @mr-tz
-- linter: check for `or` with always true child statement, e.g. `optional`, colors #348 @mr-tz
-- json: breaking change in results document; now contains parsed ATT&CK and MBC fields instead of canonical representation #526 @mr-tz
-- json: breaking change: record all matching strings for regex #159 @williballenthin
-- main: implement file limitations via rules not code #390 @williballenthin
-- json: breaking change: correctly render negative offsets #619 @williballenthin
-- library: breaking change: remove logic from `__init__.py` throughout #622 @williballenthin
-- library: add type annotations for use with mypy #447 @williballenthin
+- explorer: add support for function-name feature #618 @mike-hunhoff
+- explorer: circular import workaround #654 @mike-hunhoff
 
 ### Development
 

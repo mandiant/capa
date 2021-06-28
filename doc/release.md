@@ -10,13 +10,7 @@
 - [ ] Update [CHANGELOG.md](https://github.com/fireeye/capa/blob/master/CHANGELOG.md)
   - Do not forget to add a nice introduction thanking contributors
   - Remember that we need a major release if we introduce breaking changes
-  - Sections
-    - New Features
-    - New Rules
-    - Bug Fixes
-    - Changes
-    - Development
-    - Raw diffs
+  - Sections: see template below
   - Update `Raw diffs` links
   - Create placeholder for `master (unreleased)` section
     ```
@@ -24,13 +18,15 @@
 
     ### New Features
 
+    ### Breaking Changes
+
     ### New Rules (0)
 
     -
 
     ### Bug Fixes
 
-    ### Changes
+    ### capa explorer IDA Pro plugin
 
     ### Development
 

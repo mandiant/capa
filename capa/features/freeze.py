@@ -257,7 +257,8 @@ def main(argv=None):
 
     sigpaths = capa.main.get_signatures(args.signatures)
 
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths=sigpaths)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths, False)
+
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 
