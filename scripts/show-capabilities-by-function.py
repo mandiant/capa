@@ -121,20 +121,6 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if args.rules == "(embedded rules)":
-        logger.info("-" * 80)
-        logger.info(" Using default embedded rules.")
-        logger.info(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
-        logger.info(" You can see the current default rule set here:")
-        logger.info("     https://github.com/fireeye/capa-rules")
-        logger.info("-" * 80)
-
-        logger.debug("detected running from source")
-        args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
-        logger.debug("default rule path (source method): %s", args.rules)
-    else:
-        logger.info("using rules path: %s", args.rules)
-
     try:
         rules = capa.main.get_rules(args.rules)
         rules = capa.rules.RuleSet(rules)
@@ -143,6 +129,12 @@ def main(argv=None):
             rules = rules.filter_rules_by_meta(args.tag)
             logger.info("selected %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+        logger.error("%s", str(e))
+        return -1
+
+    try:
+        sig_paths = capa.main.get_signatures(args.signatures)
+    except (IOError) as e:
         logger.error("%s", str(e))
         return -1
 
@@ -156,7 +148,7 @@ def main(argv=None):
 
         try:
             extractor = capa.main.get_extractor(
-                args.sample, args.format, args.backend, args.signatures, should_save_workspace
+                args.sample, args.format, args.backend, sig_paths, should_save_workspace
             )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)

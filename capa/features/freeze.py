@@ -52,6 +52,7 @@ See the License for the specific language governing permissions and limitations 
 import json
 import zlib
 import logging
+import os.path
 
 import capa.features.file
 import capa.features.insn
@@ -254,7 +255,10 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, args.signatures, False)
+    sigpaths = capa.main.get_signatures(args.signatures)
+
+    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths, False)
+
     with open(args.output, "wb") as f:
         f.write(dump(extractor))
 

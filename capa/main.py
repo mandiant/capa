@@ -44,6 +44,7 @@ from capa.helpers import get_file_taste
 from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
+SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 SUPPORTED_FILE_MAGIC = set([b"MZ"])
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
@@ -539,6 +540,25 @@ def get_rules(rule_path: str, disable_progress=False) -> List[Rule]:
     return rules
 
 
+def get_signatures(sigs_path):
+    if not os.path.exists(sigs_path):
+        raise IOError("signatures path %s does not exist or cannot be accessed" % sigs_path)
+
+    paths = []
+    if os.path.isfile(sigs_path):
+        paths.append(sigs_path)
+    elif os.path.isdir(sigs_path):
+        logger.debug("reading signatures from directory %s", sigs_path)
+        for root, dirs, files in os.walk(sigs_path):
+            for file in files:
+                if file.endswith((".pat", ".pat.gz", ".sig")):
+                    sig_path = os.path.join(root, file)
+                    logger.debug("found signature: %s", sig_path)
+                    paths.append(sig_path)
+
+    return paths
+
+
 def collect_metadata(argv, sample_path, rules_path, format, extractor):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
@@ -670,12 +690,9 @@ def install_common_args(parser, wanted=None):
     if "signatures" in wanted:
         parser.add_argument(
             "--signature",
-            action="append",
             dest="signatures",
             type=str,
-            # with action=append, users can specify futher signatures but not override whats found in $capa/sigs/.
-            # seems reasonable for now. this is an easy way to register the default signature set.
-            default=get_default_signatures(),
+            default=SIGNATURES_PATH_DEFAULT_STRING,
             help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
         )
 
@@ -687,6 +704,9 @@ def handle_common_args(args):
     """
     handle the global config specified by `install_common_args`,
     such as configuring logging/coloring/etc.
+    the following fields will be overwritten when present:
+      - rules: file system path to rule files.
+      - signatures: file system path to signature files.
 
     args:
       args (argparse.Namespace): parsed arguments that included at least `install_common_args` args.
@@ -723,6 +743,47 @@ def handle_common_args(args):
         colorama.init(strip=True)
     else:
         raise RuntimeError("unexpected --color value: " + args.color)
+
+    if hasattr(args, "rules"):
+        if args.rules == RULES_PATH_DEFAULT_STRING:
+            logger.debug("-" * 80)
+            logger.debug(" Using default embedded rules.")
+            logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug(" You can see the current default rule set here:")
+            logger.debug("     https://github.com/fireeye/capa-rules")
+            logger.debug("-" * 80)
+
+            rules_path = os.path.join(get_default_root(), "rules")
+
+            if not os.path.exists(rules_path):
+                # when a users installs capa via pip,
+                # this pulls down just the source code - not the default rules.
+                # i'm not sure the default rules should even be written to the library directory,
+                # so in this case, we require the user to use -r to specify the rule directory.
+                logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
+                logger.error("provide your own rule set via the `-r` option.")
+                return -1
+        else:
+            rules_path = args.rules
+            logger.debug("using rules path: %s", rules_path)
+
+        args.rules = rules_path
+
+    if hasattr(args, "signatures"):
+        if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
+            logger.debug("-" * 80)
+            logger.debug(" Using default embedded signatures.")
+            logger.debug(
+                " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+            )
+            logger.debug("-" * 80)
+
+            sigs_path = os.path.join(get_default_root(), "sigs")
+        else:
+            sigs_path = args.signatures
+            logger.debug("using signatures path: %s", sigs_path)
+
+        args.signatures = sigs_path
 
 
 def main(argv=None):
@@ -777,31 +838,8 @@ def main(argv=None):
         logger.error("%s", e.args[0])
         return -1
 
-    if args.rules == RULES_PATH_DEFAULT_STRING:
-        logger.debug("-" * 80)
-        logger.debug(" Using default embedded rules.")
-        logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
-        logger.debug(" You can see the current default rule set here:")
-        logger.debug("     https://github.com/fireeye/capa-rules")
-        logger.debug("-" * 80)
-
-        rules_path = os.path.join(get_default_root(), "rules")
-        logger.debug("rule path: %s", rules_path)
-
-        if not os.path.exists(rules_path):
-            # when a users installs capa via pip,
-            # this pulls down just the source code - not the default rules.
-            # i'm not sure the default rules should even be written to the library directory,
-            # so in this case, we require the user to use -r to specify the rule directory.
-            logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
-            logger.error("provide your own rule set via the `-r` option.")
-            return -1
-    else:
-        rules_path = args.rules
-        logger.debug("using rules path: %s", rules_path)
-
     try:
-        rules = get_rules(rules_path, disable_progress=args.quiet)
+        rules = get_rules(args.rules, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
         logger.debug(
             "successfully loaded %s rules",
@@ -837,6 +875,12 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return -1
 
+    try:
+        sig_paths = get_signatures(args.signatures)
+    except (IOError) as e:
+        logger.error("%s", str(e))
+        return -1
+
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"
         with open(args.sample, "rb") as f:
@@ -847,7 +891,7 @@ def main(argv=None):
 
         try:
             extractor = get_extractor(
-                args.sample, format, args.backend, args.signatures, should_save_workspace, disable_progress=args.quiet
+                args.sample, format, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
             )
         except UnsupportedFormatError:
             logger.error("-" * 80)

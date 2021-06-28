@@ -78,6 +78,7 @@ def get_capa_results(args):
 
     args is a tuple, containing:
       rules (capa.rules.RuleSet): the rules to match
+      signatures (List[str]): list of file system paths to signature files
       format (str): the name of the sample file format
       path (str): the file system path to the sample to process
 
@@ -94,12 +95,12 @@ def get_capa_results(args):
       meta (dict): the meta analysis results
       capabilities (dict): the matched capabilities and their result objects
     """
-    rules, format, path = args
+    rules, sigpaths, format, path = args
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
     logger.info("computing capa results for: %s", path)
     try:
         extractor = capa.main.get_extractor(
-            path, format, capa.main.BACKEND_VIV, args.signatures, should_save_workspace, disable_progress=True
+            path, format, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
         )
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
@@ -153,19 +154,17 @@ def main(argv=None):
         args = parser.parse_args(args=argv)
         capa.main.handle_common_args(args)
 
-        if args.rules == "(embedded rules)":
-            logger.info("using default embedded rules")
-            logger.debug("detected running from source")
-            args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", args.rules)
-        else:
-            logger.info("using rules path: %s", args.rules)
-
         try:
             rules = capa.main.get_rules(args.rules)
             rules = capa.rules.RuleSet(rules)
             logger.info("successfully loaded %s rules", len(rules))
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+            logger.error("%s", str(e))
+            return -1
+
+        try:
+            sig_paths = capa.main.get_signatures(args.signatures)
+        except (IOError) as e:
             logger.error("%s", str(e))
             return -1
 
@@ -200,7 +199,7 @@ def main(argv=None):
 
         results = {}
         for result in mapper(
-            get_capa_results, [(rules, "pe", sample) for sample in samples], parallelism=args.parallelism
+            get_capa_results, [(rules, sig_paths, "pe", sample) for sample in samples], parallelism=args.parallelism
         ):
             if result["status"] == "error":
                 logger.warning(result["error"])

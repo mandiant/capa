@@ -66,6 +66,7 @@ Example::
 """
 import sys
 import logging
+import os.path
 import argparse
 
 import capa.main
@@ -95,14 +96,18 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
+    try:
+        sig_paths = capa.main.get_signatures(args.signatures)
+    except (IOError) as e:
+        logger.error("%s", str(e))
+        return -1
+
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
         try:
-            extractor = capa.main.get_extractor(
-                args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=args.signatures
-            )
+            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=sig_paths)
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
