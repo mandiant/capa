@@ -863,7 +863,13 @@ def main(argv=None):
         # so we can fairly quickly determine if the given PE file has "pure" file-scope rules
         # that indicate a limitation (like "file is packed based on section names")
         # and avoid doing a full code analysis on difficult/impossible binaries.
-        file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(args.sample)
+        try:
+            from pefile import PEFormatError
+
+            file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(args.sample)
+        except PEFormatError as e:
+            logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
+            return -1
         pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
 
         # file limitations that rely on non-file scope won't be detected here.
