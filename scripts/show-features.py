@@ -64,6 +64,7 @@ Example::
     insn: 0x10001027: mnemonic(shl)
     ...
 """
+import os
 import sys
 import logging
 import os.path
@@ -106,8 +107,11 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
+        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
-            extractor = capa.main.get_extractor(args.sample, args.format, capa.main.BACKEND_VIV, sigpaths=sig_paths)
+            extractor = capa.main.get_extractor(
+                args.sample, args.format, capa.main.BACKEND_VIV, sig_paths, should_save_workspace
+            )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")

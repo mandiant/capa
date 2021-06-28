@@ -39,7 +39,7 @@ jobs:
   rule_linter:
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout capa with rules submodule
+    - name: Checkout capa with submodules
       uses: actions/checkout@v2
       with:
         submodules: true
@@ -83,4 +83,4 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest tests/
+      run: pytest -v tests/
