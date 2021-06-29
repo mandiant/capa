@@ -11,7 +11,8 @@ import sys
 import subprocess
 
 import pytest
-from fixtures import CD, get_extractor, get_data_path_by_name
+
+CD = os.path.dirname(__file__)
 
 
 def get_script_path(s):
@@ -19,7 +20,7 @@ def get_script_path(s):
 
 
 def get_file_path():
-    return get_extractor(get_data_path_by_name("9324d...")).path
+    return os.path.join(CD, "data", "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 def get_rules_path():
@@ -33,11 +34,6 @@ def get_rule_path():
 @pytest.mark.parametrize(
     "script,args",
     [
-        pytest.param(
-            "show-features.py",
-            [get_file_path()],
-        ),
-        pytest.param("bulk-process.py", [get_file_path()]),
         pytest.param("capa2yara.py", [get_rules_path()]),
         pytest.param("capafmt.py", [get_rule_path()]),
         # not testing lint.py as it runs regularly anyway
@@ -53,5 +49,17 @@ def test_scripts(script, args):
     assert p.returncode == 0
 
 
+def test_bulk_process(tmpdir):
+    # create test directory to recursively analyze
+    t = tmpdir.mkdir("test")
+    with open(os.path.join(CD, "data", "ping_täst.exe_"), "rb") as f:
+        t.join("test.exe_").write_binary(f.read())
+
+    p = run_program(get_script_path("bulk-process.py"), [t.dirname])
+    assert p.returncode == 0
+
+
 def run_program(script_path, args):
-    return subprocess.run([sys.executable] + [script_path] + args)
+    args = [sys.executable] + [script_path] + args
+    print("running: '%s'" % args)
+    return subprocess.run(args)

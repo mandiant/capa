@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+# save workspaces to speed up testing
+env:
+  CAPA_SAVE_WORKSPACE: "True"
+
 jobs:
   changelog_format:
     runs-on: ubuntu-20.04
