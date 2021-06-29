@@ -54,9 +54,6 @@ def get_imports(ctx):
 
 def check_for_api_call(ctx, insn):
     """check instruction for API call"""
-    if not insn.get_canon_mnem() in ("call", "jmp"):
-        return
-
     info = ()
     ref = insn.ea
 
@@ -95,10 +92,28 @@ def extract_insn_api_features(f, bb, insn):
     example:
         call dword [0x00473038]
     """
+    if not insn.get_canon_mnem() in ("call", "jmp"):
+        return
+
     for api in check_for_api_call(f.ctx, insn):
         dll, _, symbol = api.rpartition(".")
         for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
             yield API(name), insn.ea
+
+    # extract IDA/FLIRT recognized API functions
+    targets = tuple(idautils.CodeRefsFrom(insn.ea, False))
+    if not targets:
+        return
+
+    target = targets[0]
+    target_func = idaapi.get_func(target)
+    if not target_func or target_func.start_ea != target:
+        # not a function (start)
+        return
+
+    if target_func.flags & idaapi.FUNC_LIB:
+        name = idaapi.get_name(target_func.start_ea)
+        yield API(name), insn.ea
 
 
 def extract_insn_number_features(f, bb, insn):
