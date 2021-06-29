@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+# save workspaces to speed up testing
+env:
+  CAPA_SAVE_WORKSPACE: "True"
+
 jobs:
   changelog_format:
     runs-on: ubuntu-20.04
@@ -39,7 +43,7 @@ jobs:
   rule_linter:
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout capa with rules submodule
+    - name: Checkout capa with submodules
       uses: actions/checkout@v2
       with:
         submodules: true
@@ -83,4 +87,4 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: Run tests
-      run: pytest tests/
+      run: pytest -v tests/

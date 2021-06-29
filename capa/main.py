@@ -433,7 +433,7 @@ class UnsupportedRuntimeError(RuntimeError):
 
 
 def get_extractor(
-    path: str, format: str, backend: str, sigpaths: List[str], should_save_workspace, disable_progress=False
+    path: str, format: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
 ) -> FeatureExtractor:
     """
     raises:
