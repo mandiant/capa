@@ -101,7 +101,7 @@ def extract_insn_api_features(f, bb, insn):
             yield API(name), insn.ea
 
     # extract IDA/FLIRT recognized API functions
-    targets = list(idautils.CodeRefsFrom(insn.ea, False))
+    targets = tuple(idautils.CodeRefsFrom(insn.ea, False))
     if not targets:
         return
 
@@ -111,8 +111,8 @@ def extract_insn_api_features(f, bb, insn):
         # not a function (start)
         return
 
-    if idaapi.get_func(target).flags & idaapi.FUNC_LIB:
-        name = idaapi.get_name(target)
+    if target_func.flags & idaapi.FUNC_LIB:
+        name = idaapi.get_name(target_func.start_ea)
         yield API(name), insn.ea
 
 
