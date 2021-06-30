@@ -548,13 +548,22 @@ def get_signatures(sigs_path):
     if os.path.isfile(sigs_path):
         paths.append(sigs_path)
     elif os.path.isdir(sigs_path):
-        logger.debug("reading signatures from directory %s", sigs_path)
+        logger.debug("reading signatures from directory %s", os.path.abspath(os.path.normpath(sigs_path)))
         for root, dirs, files in os.walk(sigs_path):
             for file in files:
                 if file.endswith((".pat", ".pat.gz", ".sig")):
                     sig_path = os.path.join(root, file)
-                    logger.debug("found signature: %s", sig_path)
                     paths.append(sig_path)
+
+    # nicely normalize and format path so that debugging messages are clearer
+    paths = [os.path.abspath(os.path.normpath(path)) for path in paths]
+
+    # load signatures in deterministic order: the alphabetic sorting of filename.
+    # this means that `0_sigs.pat` loads before `1_sigs.pat`.
+    paths = sorted(paths, key=os.path.basename)
+
+    for path in paths:
+        logger.debug("found signature file: %s", path)
 
     return paths
 
