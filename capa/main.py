@@ -328,7 +328,11 @@ def register_flirt_signature_analyzers(vw, sigpaths):
     import viv_utils.flirt
 
     for sigpath in sigpaths:
-        sigs = load_flirt_signature(sigpath)
+        try:
+            sigs = load_flirt_signature(sigpath)
+        except ValueError as e:
+            logger.warning("could not load %s: %s", sigpath, str(e))
+            continue
 
         logger.debug("flirt: sig count: %d", len(sigs))
 
@@ -698,11 +702,11 @@ def install_common_args(parser, wanted=None):
 
     if "signatures" in wanted:
         parser.add_argument(
-            "--signature",
-            dest="signatures",
+            "-s",
+            "--signatures",
             type=str,
             default=SIGNATURES_PATH_DEFAULT_STRING,
-            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+            help="path to .sig/.pat file or directory used to identify library functions, use embedded signatures by default",
         )
 
     if "tag" in wanted:
