@@ -21,7 +21,7 @@
 - [capa-rules v2.0.0...master](https://github.com/fireeye/capa-rules/compare/v2.0.0...master)
 
 
-## v2.0.0 (2021-07-02)
+## v2.0.0 (2021-07-19)
 
 We are excited to announce version 2.0! :tada:
 capa 2.0:
@@ -30,7 +30,7 @@ capa 2.0:
 - provides more concise and relevant result via identification of library functions using FLIRT
   ![capa v2.0 results ignoring library code functions](doc/img/changelog/flirt-ignore.png)
 - includes many features and enhancements for the capa explorer IDA plugin
-- adds 89 new rules, including all new techniques introduced in MITRE ATT&CK v9
+- adds 93 new rules, including all new techniques introduced in MITRE ATT&CK v9
 
 A huge thanks to everyone who submitted issues, provided feedback, and contributed code and rules. Many colleagues across dozens of organizations have volunteered their experience to improve this tool! :heart:
 
