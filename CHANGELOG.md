@@ -2,8 +2,38 @@
 
 ## master (unreleased)
 
-The first Python 3 ONLY capa version.
-It includes many new rules, including all new techniques introduced in MITRE ATT&CK v9.
+### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+- 
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v2.0.0...master](https://github.com/fireeye/capa/compare/v2.0.0...master)
+- [capa-rules v2.0.0...master](https://github.com/fireeye/capa-rules/compare/v2.0.0...master)
+
+
+## v2.0.0 (2021-07-19)
+
+We are excited to announce version 2.0! :tada:
+capa 2.0:
+- enables anyone to contribute rules more easily
+- is the first Python 3 ONLY version
+- provides more concise and relevant result via identification of library functions using FLIRT
+  ![capa v2.0 results ignoring library code functions](doc/img/changelog/flirt-ignore.png)
+- includes many features and enhancements for the capa explorer IDA plugin
+- adds 93 new rules, including all new techniques introduced in MITRE ATT&CK v9
+
+A huge thanks to everyone who submitted issues, provided feedback, and contributed code and rules. Many colleagues across dozens of organizations have volunteered their experience to improve this tool! :heart:
+
 
 ### New Features
 
@@ -123,7 +153,6 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/get-token-privileges michael.hunhoff@fireeye.com
 - nursery/prompt-user-for-credentials michael.hunhoff@fireeye.com
 - nursery/spoof-parent-pid michael.hunhoff@fireeye.com
--
 
 ### Bug Fixes
 
@@ -151,9 +180,9 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 
 ### Raw diffs
 
-<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 -->
-- [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
-- [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
+<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 and v1.6.3 -->
+- [capa v1.6.1...v2.0.0](https://github.com/fireeye/capa/compare/v1.6.1...v2.0.0)
+- [capa-rules v1.6.1...v2.0.0](https://github.com/fireeye/capa-rules/compare/v1.6.1...v2.0.0)
 
 
 ## v1.6.3 (2021-04-29)
