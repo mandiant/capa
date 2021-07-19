@@ -11,7 +11,9 @@ capa detects capabilities in executable files.
 You run it against a PE file or shellcode and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
-Check out the overview in our first [capa blog post](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
+Check out:
+- the overview in our first [capa blog post](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html)
+- the major version 2.0 updates described in our [second blog post](https://www.fireeye.com/blog/threat-research/2021/07/capa-2-better-stronger-faster.html)
 
 ```
 $ capa.exe suspicious.exe
