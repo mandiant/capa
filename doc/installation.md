@@ -27,6 +27,10 @@ To install capa as a Python library use `pip` to fetch the `flare-capa` module.
 #### *Note*:
 This method is appropriate for integrating capa in an existing project.
 This technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r` or set the rules path in the IDA Pro plugin.
+This technique also doesn't set up the default library identification [signatures](https://github.com/fireeye/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
+For example, to run capa with both a rule path and a signature path:
+
+    capa   -r /path/to/capa-rules   -s /path/to/capa-sigs  suspicious.exe
 Alternatively, see Method 3 below.
 
 ### 1. Install capa module
