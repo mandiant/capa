@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
-- 
+- collection/webcam/capture-webcam-image johnk3r
+-
 
 ### Bug Fixes
 
