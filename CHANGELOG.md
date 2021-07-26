@@ -15,6 +15,8 @@
 
 ### capa explorer IDA Pro plugin
 
+- explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
+
 ### Development
 
 ### Raw diffs
