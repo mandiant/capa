@@ -19,6 +19,7 @@
 ### capa explorer IDA Pro plugin
 
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
+- explorer: remove duplicate check when saving file #687 @mike-hunhoff
 
 ### Development
 

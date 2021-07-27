@@ -54,8 +54,6 @@ class Options(IntFlag):
 
 def write_file(path, data):
     """ """
-    if os.path.exists(path) and 1 != idaapi.ask_yn(1, "The file already exists. Overwrite?"):
-        return
     with open(path, "wb") as save_file:
         save_file.write(data)
 
@@ -1140,7 +1138,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         s = json.dumps(self.doc, sort_keys=True, cls=capa.render.json.CapaJsonObjectEncoder).encode("utf-8")
 
-        path = idaapi.ask_file(True, "*.json", "Choose file to save capa program analysis JSON")
+        path = self.ask_user_capa_json_file()
         if not path:
             return
 
@@ -1216,7 +1214,16 @@ class CapaExplorerForm(idaapi.PluginForm):
     def ask_user_capa_rule_file(self):
         """ """
         return QtWidgets.QFileDialog.getSaveFileName(
-            None, "Please select a capa rule to edit", settings.user.get(CAPA_SETTINGS_RULE_PATH, ""), "*.yml"
+            None,
+            "Please select a location to save capa rule file",
+            settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
+            "*.yml",
+        )[0]
+
+    def ask_user_capa_json_file(self):
+        """ """
+        return QtWidgets.QFileDialog.getSaveFileName(
+            None, "Please select a location to save capa JSON file", "", "*.json"
         )[0]
 
     def set_view_status_label(self, text):
