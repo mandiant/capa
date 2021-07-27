@@ -4,6 +4,8 @@
 
 ### New Features
 
+- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+
 ### Breaking Changes
 
 ### New Rules (4)
