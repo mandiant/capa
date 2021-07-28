@@ -4,6 +4,8 @@
 
 ### New Features
 
+- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+
 ### Breaking Changes
 
 ### New Rules (4)
@@ -20,6 +22,7 @@
 
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
 - explorer: remove duplicate check when saving file #687 @mike-hunhoff
+- explorer: update IDA extractor to use non-canon mnemonics #688 @mike-hunhoff
 
 ### Development
 

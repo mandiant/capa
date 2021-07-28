@@ -9,6 +9,7 @@ import re
 from collections import Counter
 
 import idc
+import idaapi
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.rules
@@ -805,6 +806,14 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         if selected:
             self.editor.update_features(selected)
 
+    def slot_add_n_bytes_feature(self, action):
+        """ """
+        count = idaapi.ask_long(16, f"Enter number of bytes (1-{capa.features.common.MAX_BYTES_FEATURE_SIZE}):")
+        if count and 1 <= count <= capa.features.common.MAX_BYTES_FEATURE_SIZE:
+            item = self.selectedItems()[0].data(0, 0x100)
+            item.value = item.value[:count]
+            self.editor.update_features([item])
+
     def slot_custom_context_menu_requested(self, pos):
         """ """
         actions = []
@@ -816,6 +825,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         if selected_items_count == 1:
             action_add_features_fmt = "Add feature"
+            if isinstance(self.selectedItems()[0].data(0, 0x100), capa.features.common.Bytes):
+                actions.append(("Add n bytes...", (), self.slot_add_n_bytes_feature))
         else:
             action_add_features_fmt = "Add %d features" % selected_items_count
 
