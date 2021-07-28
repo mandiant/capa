@@ -567,7 +567,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def update_rulegen_tree_limit_features_to_selection(self, ea):
         """ """
-        self.view_rulegen_features.filter_items_by_ea(ea, None)
+        self.view_rulegen_features.filter_items_by_ea(ea)
 
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
         """function hook for IDA "screen ea changed" action
@@ -1188,7 +1188,7 @@ class CapaExplorerForm(idaapi.PluginForm):
     def slot_checkbox_limit_features_by_ea(self, state):
         """ """
         if state == QtCore.Qt.Checked:
-            self.view_rulegen_features.filter_items_by_ea(idaapi.get_screen_ea(), None)
+            self.view_rulegen_features.filter_items_by_ea(idaapi.get_screen_ea())
         else:
             self.view_rulegen_features.show_all_items()
 
