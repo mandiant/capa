@@ -5,6 +5,7 @@
 ### New Features
 
 - explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
 
 ### Breaking Changes
 
