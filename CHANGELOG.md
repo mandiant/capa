@@ -10,12 +10,13 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (5)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
 - nursery/monitor-clipboard-content michael.hunhoff@fireeye.com
 - nursery/monitor-local-ipv4-address-changes michael.hunhoff@fireeye.com
+- nursery/load-windows-common-language-runtime michael.hunhoff@fireeye.com
 -
 
 ### Bug Fixes
