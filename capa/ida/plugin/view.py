@@ -863,6 +863,44 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         else:
             self.show_all_items()
 
+    def filter_items_by_ea(self, min_ea, max_ea=None):
+        """ """
+        visited = []
+
+        def show_item_and_parents(_o):
+            """iteratively show and expand an item and its' parents"""
+            while _o:
+                visited.append(_o)
+                _o.setHidden(False)
+                _o.setExpanded(True)
+                _o = _o.parent()
+
+        for o in iterate_tree(self):
+            if o in visited:
+                # save some cycles, only visit item once
+                continue
+
+            # read ea from "Address" column
+            o_ea = o.text(CapaExplorerRulegenFeatures.get_column_address_index())
+
+            if o_ea == "":
+                # ea may be empty, hide by default
+                o.setHidden(True)
+                continue
+
+            o_ea = int(o_ea, 16)
+
+            if max_ea is not None and min_ea <= o_ea <= max_ea:
+                show_item_and_parents(o)
+            elif o_ea == min_ea:
+                show_item_and_parents(o)
+            else:
+                # made it here, hide by default
+                o.setHidden(True)
+
+        # resize the view for UX
+        resize_columns_to_content(self.header())
+
     def style_parent_node(self, o):
         """ """
         font = QtGui.QFont()
