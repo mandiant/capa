@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (20)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -18,6 +18,20 @@
 - nursery/monitor-local-ipv4-address-changes michael.hunhoff@fireeye.com
 - nursery/load-windows-common-language-runtime michael.hunhoff@fireeye.com
 - nursery/resize-volume-shadow-copy-storage michael.hunhoff@fireeye.com
+- nursery/add-user-account-group michael.hunhoff@fireeye.com
+- nursery/add-user-account-to-group michael.hunhoff@fireeye.com
+- nursery/add-user-account michael.hunhoff@fireeye.com
+- nursery/change-user-account-password michael.hunhoff@fireeye.com
+- nursery/delete-user-account-from-group michael.hunhoff@fireeye.com
+- nursery/delete-user-account-group michael.hunhoff@fireeye.com
+- nursery/delete-user-account michael.hunhoff@fireeye.com
+- nursery/list-domain-servers michael.hunhoff@fireeye.com
+- nursery/list-groups-for-user-account michael.hunhoff@fireeye.com
+- nursery/list-user-account-groups michael.hunhoff@fireeye.com
+- nursery/list-user-accounts-for-group michael.hunhoff@fireeye.com
+- nursery/list-user-accounts michael.hunhoff@fireeye.com
+- nursery/parse-url michael.hunhoff@fireeye.com
+- nursery/register-raw-input-devices michael.hunhoff@fireeye.com
 -
 
 ### Bug Fixes
