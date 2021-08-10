@@ -54,8 +54,6 @@ class Options(IntFlag):
 
 def write_file(path, data):
     """ """
-    if os.path.exists(path) and 1 != idaapi.ask_yn(1, "The file already exists. Overwrite?"):
-        return
     with open(path, "wb") as save_file:
         save_file.write(data)
 
@@ -277,6 +275,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_editor = None
         self.view_rulegen_header_label = None
         self.view_rulegen_search = None
+        self.view_rulegen_limit_features_by_ea = None
         self.rulegen_current_function = None
         self.rulegen_bb_features_cache = {}
         self.rulegen_func_features_cache = {}
@@ -467,6 +466,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         label2.setText("Editor")
         label2.setFont(font)
 
+        self.view_rulegen_limit_features_by_ea = QtWidgets.QCheckBox("Limit features to current dissasembly address")
+        self.view_rulegen_limit_features_by_ea.setChecked(False)
+        self.view_rulegen_limit_features_by_ea.stateChanged.connect(self.slot_checkbox_limit_features_by_ea)
+
         self.view_rulegen_status_label = QtWidgets.QLabel()
         self.view_rulegen_status_label.setAlignment(QtCore.Qt.AlignLeft)
         self.view_rulegen_status_label.setText("")
@@ -497,6 +500,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         layout3.addWidget(self.view_rulegen_editor, 65)
 
         layout2.addWidget(self.view_rulegen_header_label)
+        layout2.addWidget(self.view_rulegen_limit_features_by_ea)
         layout2.addWidget(self.view_rulegen_search)
         layout2.addWidget(self.view_rulegen_features)
 
@@ -561,6 +565,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.limit_results_to_function(idaapi.get_func(ea))
         self.view_tree.reset_ui()
 
+    def update_rulegen_tree_limit_features_to_selection(self, ea):
+        """ """
+        self.view_rulegen_features.filter_items_by_ea(ea)
+
     def ida_hook_screen_ea_changed(self, widget, new_ea, old_ea):
         """function hook for IDA "screen ea changed" action
 
@@ -580,6 +588,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if not idaapi.get_func(new_ea):
             return
+
+        if self.view_tabs.currentIndex() == 1 and self.view_rulegen_limit_features_by_ea.isChecked():
+            return self.update_rulegen_tree_limit_features_to_selection(new_ea)
 
         if idaapi.get_func(new_ea) == idaapi.get_func(old_ea):
             # user navigated same function - ignore
@@ -982,6 +993,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_editor.reset_view()
         self.view_rulegen_preview.reset_view()
         self.view_rulegen_search.clear()
+        self.view_rulegen_limit_features_by_ea.setChecked(False)
         self.set_rulegen_preview_border_neutral()
         self.rulegen_current_function = None
         self.rulegen_func_features_cache = {}
@@ -1140,7 +1152,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         s = json.dumps(self.doc, sort_keys=True, cls=capa.render.json.CapaJsonObjectEncoder).encode("utf-8")
 
-        path = idaapi.ask_file(True, "*.json", "Choose file to save capa program analysis JSON")
+        path = self.ask_user_capa_json_file()
         if not path:
             return
 
@@ -1172,6 +1184,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.range_model_proxy.reset_address_range_filter()
 
         self.view_tree.reset_ui()
+
+    def slot_checkbox_limit_features_by_ea(self, state):
+        """ """
+        if state == QtCore.Qt.Checked:
+            self.view_rulegen_features.filter_items_by_ea(idaapi.get_screen_ea())
+        else:
+            self.view_rulegen_features.show_all_items()
 
     def slot_checkbox_show_results_by_function_changed(self, state):
         """slot activated if checkbox clicked
@@ -1216,7 +1235,16 @@ class CapaExplorerForm(idaapi.PluginForm):
     def ask_user_capa_rule_file(self):
         """ """
         return QtWidgets.QFileDialog.getSaveFileName(
-            None, "Please select a capa rule to edit", settings.user.get(CAPA_SETTINGS_RULE_PATH, ""), "*.yml"
+            None,
+            "Please select a location to save capa rule file",
+            settings.user.get(CAPA_SETTINGS_RULE_PATH, ""),
+            "*.yml",
+        )[0]
+
+    def ask_user_capa_json_file(self):
+        """ """
+        return QtWidgets.QFileDialog.getSaveFileName(
+            None, "Please select a location to save capa JSON file", "", "*.json"
         )[0]
 
     def set_view_status_label(self, text):

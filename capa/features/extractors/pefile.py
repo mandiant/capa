@@ -32,6 +32,8 @@ def extract_file_export_names(pe, file_path):
 
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
         for export in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+            if not export.name:
+                continue
             try:
                 name = export.name.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:

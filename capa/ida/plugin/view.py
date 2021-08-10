@@ -9,6 +9,7 @@ import re
 from collections import Counter
 
 import idc
+import idaapi
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 import capa.rules
@@ -178,6 +179,13 @@ def build_context_menu(o, actions):
     return menu
 
 
+def resize_columns_to_content(header):
+    """ """
+    header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
+    if header.sectionSize(0) > MAX_SECTION_SIZE:
+        header.resizeSection(0, MAX_SECTION_SIZE)
+
+
 class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
 
     INDENT = " " * 2
@@ -319,13 +327,16 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         self.preview = preview
 
         self.setHeaderLabels(["Feature", "Description", "Comment"])
-        self.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.header().setStretchLastSection(False)
         self.setExpandsOnDoubleClick(False)
         self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
+
+        # configure view columns to auto-resize
+        for idx in range(3):
+            self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
 
         # enable drag and drop
         self.setDragEnabled(True)
@@ -336,6 +347,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         self.itemChanged.connect(self.slot_item_changed)
         self.customContextMenuRequested.connect(self.slot_custom_context_menu_requested)
         self.itemDoubleClicked.connect(self.slot_item_double_clicked)
+        self.expanded.connect(self.slot_resize_columns_to_content)
+        self.collapsed.connect(self.slot_resize_columns_to_content)
 
         self.root = None
         self.reset_view()
@@ -395,6 +408,10 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         """ """
         self.root = None
         self.clear()
+
+    def slot_resize_columns_to_content(self):
+        """ """
+        resize_columns_to_content(self.header())
 
     def slot_item_changed(self, item, column):
         """ """
@@ -645,6 +662,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         self.expandAll()
         self.update_preview()
+        resize_columns_to_content(self.header())
 
     def load_features_from_yaml(self, rule_text, update_preview=False):
         """ """
@@ -736,8 +754,11 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.editor = editor
 
         self.setHeaderLabels(["Feature", "Virtual Address"])
-        self.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
+
+        # configure view columns to auto-resize
+        for idx in range(2):
+            self.header().setSectionResizeMode(idx, QtWidgets.QHeaderView.Interactive)
 
         self.setExpandsOnDoubleClick(False)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -746,6 +767,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         # connect slots
         self.itemDoubleClicked.connect(self.slot_item_double_clicked)
         self.customContextMenuRequested.connect(self.slot_custom_context_menu_requested)
+        self.expanded.connect(self.slot_resize_columns_to_content)
+        self.collapsed.connect(self.slot_resize_columns_to_content)
 
         self.reset_view()
 
@@ -773,11 +796,23 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         """ """
         self.clear()
 
+    def slot_resize_columns_to_content(self):
+        """ """
+        resize_columns_to_content(self.header())
+
     def slot_add_selected_features(self, action):
         """ """
         selected = [item.data(0, 0x100) for item in self.selectedItems()]
         if selected:
             self.editor.update_features(selected)
+
+    def slot_add_n_bytes_feature(self, action):
+        """ """
+        count = idaapi.ask_long(16, f"Enter number of bytes (1-{capa.features.common.MAX_BYTES_FEATURE_SIZE}):")
+        if count and 1 <= count <= capa.features.common.MAX_BYTES_FEATURE_SIZE:
+            item = self.selectedItems()[0].data(0, 0x100)
+            item.value = item.value[:count]
+            self.editor.update_features([item])
 
     def slot_custom_context_menu_requested(self, pos):
         """ """
@@ -790,6 +825,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         if selected_items_count == 1:
             action_add_features_fmt = "Add feature"
+            if isinstance(self.selectedItems()[0].data(0, 0x100), capa.features.common.Bytes):
+                actions.append(("Add n bytes...", (), self.slot_add_n_bytes_feature))
         else:
             action_add_features_fmt = "Add %d features" % selected_items_count
 
@@ -825,6 +862,44 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 o.setExpanded(True)
         else:
             self.show_all_items()
+
+    def filter_items_by_ea(self, min_ea, max_ea=None):
+        """ """
+        visited = []
+
+        def show_item_and_parents(_o):
+            """iteratively show and expand an item and its' parents"""
+            while _o:
+                visited.append(_o)
+                _o.setHidden(False)
+                _o.setExpanded(True)
+                _o = _o.parent()
+
+        for o in iterate_tree(self):
+            if o in visited:
+                # save some cycles, only visit item once
+                continue
+
+            # read ea from "Address" column
+            o_ea = o.text(CapaExplorerRulegenFeatures.get_column_address_index())
+
+            if o_ea == "":
+                # ea may be empty, hide by default
+                o.setHidden(True)
+                continue
+
+            o_ea = int(o_ea, 16)
+
+            if max_ea is not None and min_ea <= o_ea <= max_ea:
+                show_item_and_parents(o)
+            elif o_ea == min_ea:
+                show_item_and_parents(o)
+            else:
+                # made it here, hide by default
+                o.setHidden(True)
+
+        # resize the view for UX
+        resize_columns_to_content(self.header())
 
     def style_parent_node(self, o):
         """ """
@@ -887,6 +962,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
         if func_features:
             self.parse_features_for_tree(self.new_parent_node(self, ("Function/Basic Block Scope",)), func_features)
+        resize_columns_to_content(self.header())
 
     def parse_features_for_tree(self, parent, features):
         """ """
@@ -1000,11 +1076,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
     def slot_resize_columns_to_content(self):
         """reset view columns to contents"""
         if self.should_resize_columns:
-            self.header().resizeSections(QtWidgets.QHeaderView.ResizeToContents)
-
-            # limit size of first section
-            if self.header().sectionSize(0) > MAX_SECTION_SIZE:
-                self.header().resizeSection(0, MAX_SECTION_SIZE)
+            resize_columns_to_content(self.header())
 
     def map_index_to_source_item(self, model_index):
         """map proxy model index to source model item

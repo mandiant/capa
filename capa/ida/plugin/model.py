@@ -435,12 +435,18 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             for ea in rule["matches"].keys():
                 ea = capa.ida.helpers.get_func_start_ea(ea)
                 if ea is None:
-                    # file scope, skip for rendering in this mode
+                    # file scope, skip rendering in this mode
                     continue
-                if None is matches_by_function.get(ea, None):
-                    matches_by_function[ea] = CapaExplorerFunctionItem(self.root_node, ea, can_check=False)
+                if not matches_by_function.get(ea, ()):
+                    # new function root
+                    matches_by_function[ea] = (CapaExplorerFunctionItem(self.root_node, ea, can_check=False), [])
+                function_root, match_cache = matches_by_function[ea]
+                if rule["meta"]["name"] in match_cache:
+                    # rule match already rendered for this function root, skip it
+                    continue
+                match_cache.append(rule["meta"]["name"])
                 CapaExplorerRuleItem(
-                    matches_by_function[ea],
+                    function_root,
                     rule["meta"]["name"],
                     rule["meta"].get("namespace"),
                     len(rule["matches"]),

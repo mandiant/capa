@@ -2,8 +2,66 @@
 
 ## master (unreleased)
 
-The first Python 3 ONLY capa version.
-It includes many new rules, including all new techniques introduced in MITRE ATT&CK v9.
+### New Features
+
+- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
+- explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
+
+### Breaking Changes
+
+### New Rules (20)
+
+- collection/webcam/capture-webcam-image johnk3r
+- nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
+- nursery/monitor-clipboard-content michael.hunhoff@fireeye.com
+- nursery/monitor-local-ipv4-address-changes michael.hunhoff@fireeye.com
+- nursery/load-windows-common-language-runtime michael.hunhoff@fireeye.com
+- nursery/resize-volume-shadow-copy-storage michael.hunhoff@fireeye.com
+- nursery/add-user-account-group michael.hunhoff@fireeye.com
+- nursery/add-user-account-to-group michael.hunhoff@fireeye.com
+- nursery/add-user-account michael.hunhoff@fireeye.com
+- nursery/change-user-account-password michael.hunhoff@fireeye.com
+- nursery/delete-user-account-from-group michael.hunhoff@fireeye.com
+- nursery/delete-user-account-group michael.hunhoff@fireeye.com
+- nursery/delete-user-account michael.hunhoff@fireeye.com
+- nursery/list-domain-servers michael.hunhoff@fireeye.com
+- nursery/list-groups-for-user-account michael.hunhoff@fireeye.com
+- nursery/list-user-account-groups michael.hunhoff@fireeye.com
+- nursery/list-user-accounts-for-group michael.hunhoff@fireeye.com
+- nursery/list-user-accounts michael.hunhoff@fireeye.com
+- nursery/parse-url michael.hunhoff@fireeye.com
+- nursery/register-raw-input-devices michael.hunhoff@fireeye.com
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+- explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
+- explorer: remove duplicate check when saving file #687 @mike-hunhoff
+- explorer: update IDA extractor to use non-canon mnemonics #688 @mike-hunhoff
+
+### Development
+
+### Raw diffs
+- [capa v2.0.0...master](https://github.com/fireeye/capa/compare/v2.0.0...master)
+- [capa-rules v2.0.0...master](https://github.com/fireeye/capa-rules/compare/v2.0.0...master)
+
+
+## v2.0.0 (2021-07-19)
+
+We are excited to announce version 2.0! :tada:
+capa 2.0:
+- enables anyone to contribute rules more easily
+- is the first Python 3 ONLY version
+- provides more concise and relevant result via identification of library functions using FLIRT
+  ![capa v2.0 results ignoring library code functions](doc/img/changelog/flirt-ignore.png)
+- includes many features and enhancements for the capa explorer IDA plugin
+- adds 93 new rules, including all new techniques introduced in MITRE ATT&CK v9
+
+A huge thanks to everyone who submitted issues, provided feedback, and contributed code and rules. Many colleagues across dozens of organizations have volunteered their experience to improve this tool! :heart:
+
 
 ### New Features
 
@@ -123,7 +181,6 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 - nursery/get-token-privileges michael.hunhoff@fireeye.com
 - nursery/prompt-user-for-credentials michael.hunhoff@fireeye.com
 - nursery/spoof-parent-pid michael.hunhoff@fireeye.com
--
 
 ### Bug Fixes
 
@@ -151,9 +208,9 @@ It includes many new rules, including all new techniques introduced in MITRE ATT
 
 ### Raw diffs
 
-<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 -->
-- [capa v1.6.1...master](https://github.com/fireeye/capa/compare/v1.6.1...master)
-- [capa-rules v1.6.1...master](https://github.com/fireeye/capa-rules/compare/v1.6.1...master)
+<!-- The diff uses v1.6.1 because master doesn't include v1.6.2 and v1.6.3 -->
+- [capa v1.6.1...v2.0.0](https://github.com/fireeye/capa/compare/v1.6.1...v2.0.0)
+- [capa-rules v1.6.1...v2.0.0](https://github.com/fireeye/capa-rules/compare/v1.6.1...v2.0.0)
 
 
 ## v1.6.3 (2021-04-29)

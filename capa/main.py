@@ -330,7 +330,11 @@ def register_flirt_signature_analyzers(vw, sigpaths):
     import viv_utils.flirt
 
     for sigpath in sigpaths:
-        sigs = load_flirt_signature(sigpath)
+        try:
+            sigs = load_flirt_signature(sigpath)
+        except ValueError as e:
+            logger.warning("could not load %s: %s", sigpath, str(e))
+            continue
 
         logger.debug("flirt: sig count: %d", len(sigs))
 
@@ -550,13 +554,22 @@ def get_signatures(sigs_path):
     if os.path.isfile(sigs_path):
         paths.append(sigs_path)
     elif os.path.isdir(sigs_path):
-        logger.debug("reading signatures from directory %s", sigs_path)
+        logger.debug("reading signatures from directory %s", os.path.abspath(os.path.normpath(sigs_path)))
         for root, dirs, files in os.walk(sigs_path):
             for file in files:
                 if file.endswith((".pat", ".pat.gz", ".sig")):
                     sig_path = os.path.join(root, file)
-                    logger.debug("found signature: %s", sig_path)
                     paths.append(sig_path)
+
+    # nicely normalize and format path so that debugging messages are clearer
+    paths = [os.path.abspath(os.path.normpath(path)) for path in paths]
+
+    # load signatures in deterministic order: the alphabetic sorting of filename.
+    # this means that `0_sigs.pat` loads before `1_sigs.pat`.
+    paths = sorted(paths, key=os.path.basename)
+
+    for path in paths:
+        logger.debug("found signature file: %s", path)
 
     return paths
 
@@ -691,11 +704,11 @@ def install_common_args(parser, wanted=None):
 
     if "signatures" in wanted:
         parser.add_argument(
-            "--signature",
-            dest="signatures",
+            "-s",
+            "--signatures",
             type=str,
             default=SIGNATURES_PATH_DEFAULT_STRING,
-            help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
+            help="path to .sig/.pat file or directory used to identify library functions, use embedded signatures by default",
         )
 
     if "tag" in wanted:

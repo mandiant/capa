@@ -337,7 +337,7 @@ def extract_insn_mnemonic_features(f, bb, insn):
         bb (IDA BasicBlock)
         insn (IDA insn_t)
     """
-    yield Mnemonic(insn.get_canon_mnem()), insn.ea
+    yield Mnemonic(idc.print_insn_mnem(insn.ea)), insn.ea
 
 
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
