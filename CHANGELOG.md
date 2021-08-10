@@ -36,6 +36,9 @@
 
 ### Bug Fixes
 
+- main: fix `KeyError: 0` when reporting results @williballehtin #703
+- main: fix potential false negatives due to namespaces across scopes @williballenthin #721
+
 ### capa explorer IDA Pro plugin
 
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
