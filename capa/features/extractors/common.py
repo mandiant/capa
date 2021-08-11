@@ -6,7 +6,6 @@ import contextlib
 import capa.features.extractors.elf
 from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, CHARACTERISTIC_WINDOWS, Characteristic
 
-
 logger = logging.getLogger(__name__)
 
 

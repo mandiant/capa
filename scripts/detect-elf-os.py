@@ -27,6 +27,7 @@ logger = logging.getLogger("capa.detect-elf-os")
 def main(argv=None):
     if capa.helpers.is_runtime_ida():
         from capa.ida.helpers import IDAIO
+
         f: BinaryIO = IDAIO()
 
     else:

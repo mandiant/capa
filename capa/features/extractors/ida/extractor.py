@@ -9,16 +9,16 @@ import logging
 import functools
 import contextlib
 
-import ida_loader
 import idaapi
+import ida_loader
 
 import capa.ida.helpers
 import capa.features.extractors.elf
-from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, Characteristic
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
+from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, Characteristic
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 

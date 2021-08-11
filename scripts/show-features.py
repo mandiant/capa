@@ -75,8 +75,8 @@ import capa.rules
 import capa.engine
 import capa.helpers
 import capa.features
-import capa.features.freeze
 import capa.features.common
+import capa.features.freeze
 
 logger = logging.getLogger("capa.show-features")
 
