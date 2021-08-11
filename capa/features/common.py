@@ -27,6 +27,11 @@ ARCH_X32 = "x32"
 ARCH_X64 = "x64"
 VALID_ARCH = (ARCH_X32, ARCH_X64)
 
+OS_WINDOWS = "os/windows"
+OS_LINUX = "os/linux"
+OS_MACOS = "os/macos"
+VALID_OS = (OS_WINDOWS, OS_LINUX, OS_MACOS)
+
 
 def bytes_to_str(b: bytes) -> str:
     return str(codecs.encode(b, "hex").decode("utf-8"))
@@ -131,6 +136,7 @@ class MatchedRule(Feature):
 
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
+
         super(Characteristic, self).__init__(value, description=description)
 
 

@@ -15,7 +15,7 @@ import capa.engine
 import capa.features.common
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
-from capa.features.common import ARCH_X32, ARCH_X64, String
+from capa.features.common import ARCH_X32, ARCH_X64, OS_WINDOWS, String, Characteristic
 
 
 def test_rule_ctor():
@@ -944,3 +944,20 @@ def test_function_name_features():
     assert (FunctionName("strcpy") in children) == True
     assert (FunctionName("strcmp", description="copy from here to there") in children) == True
     assert (FunctionName("strdup", description="duplicate a string") in children) == True
+
+
+def test_os_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - characteristic: os/windows
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Characteristic(OS_WINDOWS) in children) == True
