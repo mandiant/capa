@@ -34,10 +34,15 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
-from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_LINUX, CHARACTERISTIC_MACOS
-from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF
-
+from capa.features.common import (
+    CHARACTERISTIC_PE,
+    CHARACTERISTIC_ELF,
+    CHARACTERISTIC_LINUX,
+    CHARACTERISTIC_MACOS,
+    CHARACTERISTIC_WINDOWS,
+    MAX_BYTES_FEATURE_SIZE,
+    Feature,
+)
 
 logger = logging.getLogger(__name__)
 

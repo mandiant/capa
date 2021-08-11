@@ -14,9 +14,8 @@ import capa.features.extractors
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
-from capa.features.common import String, Characteristic
+from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_WINDOWS, String, Characteristic
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_PE
 
 logger = logging.getLogger(__name__)
 

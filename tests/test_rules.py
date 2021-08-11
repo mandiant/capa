@@ -15,7 +15,16 @@ import capa.engine
 import capa.features.common
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
-from capa.features.common import ARCH_X32, ARCH_X64, CHARACTERISTIC_PE, CHARACTERISTIC_WINDOWS, OS_WINDOWS, FORMAT_PE, String, Characteristic
+from capa.features.common import (
+    ARCH_X32,
+    ARCH_X64,
+    FORMAT_PE,
+    OS_WINDOWS,
+    CHARACTERISTIC_PE,
+    CHARACTERISTIC_WINDOWS,
+    String,
+    Characteristic,
+)
 
 
 def test_rule_ctor():
