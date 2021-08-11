@@ -45,7 +45,7 @@ from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtra
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
-SUPPORTED_FILE_MAGIC = set([b"MZ"])
+SUPPORTED_FILE_MAGIC = (b"MZ", b"\x7fELF")
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
@@ -240,8 +240,8 @@ def is_supported_file_type(sample: str) -> bool:
     Return if this is a supported file based on magic header values
     """
     with open(sample, "rb") as f:
-        magic = f.read(2)
-    if magic in SUPPORTED_FILE_MAGIC:
+        magic = f.read(4)
+    if magic.startswith(SUPPORTED_FILE_MAGIC):
         return True
     else:
         return False
@@ -414,7 +414,7 @@ def get_workspace(path, format, sigpaths):
 
         # don't analyze, so that we can add our Flirt function analyzer first.
         vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
-    elif format == "pe":
+    elif format in {"pe", "elf"}:
         vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "sc32":
         # these are not analyzed nor saved.
@@ -668,6 +668,7 @@ def install_common_args(parser, wanted=None):
         formats = [
             ("auto", "(default) detect file type automatically"),
             ("pe", "Windows PE file"),
+            ("elf", "Executable and Linkable Format"),
             ("sc32", "32-bit shellcode"),
             ("sc64", "64-bit shellcode"),
             ("freeze", "features previously frozen by capa"),

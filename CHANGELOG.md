@@ -1,6 +1,7 @@
 # Change Log
 
 ## master (unreleased)
+- main: add initial elf files support
 
 ### New Features
 
