@@ -22,7 +22,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Union, Iterator
+from typing import Any, Dict, List, Union, Iterator
 
 import yaml
 import ruamel.yaml
@@ -153,14 +153,14 @@ def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement
         and isinstance(feature.value, str)
         and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+        raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+            raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
 
 
 def parse_int(s: str) -> int:
