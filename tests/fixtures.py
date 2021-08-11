@@ -22,6 +22,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.features.common import ARCH_X32, ARCH_X64
+from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_PE
 
 CD = os.path.dirname(__file__)
 
@@ -499,6 +500,13 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
         # file/function-name
         ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
+        # os & format
+        ("pma16-01", "file", CHARACTERISTIC_WINDOWS, True),
+        ("pma16-01", "function=0x404356", CHARACTERISTIC_WINDOWS, True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_WINDOWS, True),
+        ("pma16-01", "file", CHARACTERISTIC_PE, True),
+        ("pma16-01", "function=0x404356", CHARACTERISTIC_PE, True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_PE, True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
