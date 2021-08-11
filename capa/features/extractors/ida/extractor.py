@@ -5,14 +5,41 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import logging
+import functools
+import contextlib
 
+import ida_loader
 import idaapi
 
+import capa.ida.helpers
+import capa.features.extractors.elf
+from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, Characteristic
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
 from capa.features.extractors.base_extractor import FeatureExtractor
+
+
+def extract_format():
+    format_name = ida_loader.get_file_type_name()
+
+    if "PE" in format_name:
+        yield CHARACTERISTIC_PE, 0x0
+    elif "ELF64" in format_name:
+        yield CHARACTERISTIC_ELF, 0x0
+    elif "ELF32" in format_name:
+        yield CHARACTERISTIC_ELF, 0x0
+    else:
+        raise NotImplementedError("file format: %s", format_name)
+
+
+def extract_os():
+    with contextlib.closing(capa.ida.helpers.IDAIO()) as f:
+        os = capa.features.extractors.elf.detect_elf_os(f)
+
+    yield Characteristic("os/%s" % (os.lower())), 0x0
 
 
 class FunctionHandle:
@@ -57,6 +84,9 @@ class InstructionHandle:
 class IdaFeatureExtractor(FeatureExtractor):
     def __init__(self):
         super(IdaFeatureExtractor, self).__init__()
+        self.global_features = []
+        self.global_features.extend(extract_os())
+        self.global_features.extend(extract_format())
 
     def get_base_address(self):
         return idaapi.get_imagebase()
@@ -64,6 +94,7 @@ class IdaFeatureExtractor(FeatureExtractor):
     def extract_file_features(self):
         for (feature, ea) in capa.features.extractors.ida.file.extract_features():
             yield feature, ea
+        yield from self.global_features
 
     def get_functions(self):
         import capa.features.extractors.ida.helpers as ida_helpers
@@ -86,6 +117,7 @@ class IdaFeatureExtractor(FeatureExtractor):
     def extract_function_features(self, f):
         for (feature, ea) in capa.features.extractors.ida.function.extract_features(f):
             yield feature, ea
+        yield from self.global_features
 
     def get_basic_blocks(self, f):
         import capa.features.extractors.ida.helpers as ida_helpers
@@ -96,6 +128,7 @@ class IdaFeatureExtractor(FeatureExtractor):
     def extract_basic_block_features(self, f, bb):
         for (feature, ea) in capa.features.extractors.ida.basicblock.extract_features(f, bb):
             yield feature, ea
+        yield from self.global_features
 
     def get_instructions(self, f, bb):
         import capa.features.extractors.ida.helpers as ida_helpers
@@ -106,3 +139,4 @@ class IdaFeatureExtractor(FeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         for (feature, ea) in capa.features.extractors.ida.insn.extract_features(f, bb, insn):
             yield feature, ea
+        yield from self.global_features
