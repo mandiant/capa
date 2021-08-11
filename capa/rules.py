@@ -36,6 +36,8 @@ import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_LINUX, CHARACTERISTIC_MACOS
+from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,8 @@ SUPPORTED_FEATURES = {
         CHARACTERISTIC_WINDOWS,
         CHARACTERISTIC_LINUX,
         CHARACTERISTIC_MACOS,
+        CHARACTERISTIC_PE,
+        CHARACTERISTIC_ELF,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
@@ -93,6 +97,8 @@ SUPPORTED_FEATURES = {
         CHARACTERISTIC_WINDOWS,
         CHARACTERISTIC_LINUX,
         CHARACTERISTIC_MACOS,
+        CHARACTERISTIC_PE,
+        CHARACTERISTIC_ELF,
     },
     BASIC_BLOCK_SCOPE: {
         capa.features.common.MatchedRule,
@@ -113,6 +119,8 @@ SUPPORTED_FEATURES = {
         CHARACTERISTIC_WINDOWS,
         CHARACTERISTIC_LINUX,
         CHARACTERISTIC_MACOS,
+        CHARACTERISTIC_PE,
+        CHARACTERISTIC_ELF,
     },
 }
 

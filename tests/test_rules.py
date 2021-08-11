@@ -15,7 +15,7 @@ import capa.engine
 import capa.features.common
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
-from capa.features.common import ARCH_X32, ARCH_X64, OS_WINDOWS, String, Characteristic
+from capa.features.common import ARCH_X32, ARCH_X64, OS_WINDOWS, FORMAT_PE, String, Characteristic
 
 
 def test_rule_ctor():
@@ -961,3 +961,20 @@ def test_os_features():
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
     assert (Characteristic(OS_WINDOWS) in children) == True
+
+
+def test_format_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - characteristic: format/pe
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Characteristic(FORMAT_PE) in children) == True

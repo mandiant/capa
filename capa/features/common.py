@@ -32,6 +32,10 @@ OS_LINUX = "os/linux"
 OS_MACOS = "os/macos"
 VALID_OS = (OS_WINDOWS, OS_LINUX, OS_MACOS)
 
+FORMAT_PE = "format/pe"
+FORMAT_ELF = "format/elf"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
+
 
 def bytes_to_str(b: bytes) -> str:
     return str(codecs.encode(b, "hex").decode("utf-8"))
@@ -143,6 +147,9 @@ class Characteristic(Feature):
 CHARACTERISTIC_WINDOWS = Characteristic(OS_WINDOWS)
 CHARACTERISTIC_LINUX = Characteristic(OS_LINUX)
 CHARACTERISTIC_MACOS = Characteristic(OS_MACOS)
+
+CHARACTERISTIC_PE = Characteristic(FORMAT_PE)
+CHARACTERISTIC_ELF = Characteristic(FORMAT_ELF)
 
 
 class String(Feature):
