@@ -140,6 +140,11 @@ class Characteristic(Feature):
         super(Characteristic, self).__init__(value, description=description)
 
 
+CHARACTERISTIC_WINDOWS = Characteristic(OS_WINDOWS)
+CHARACTERISTIC_LINUX = Characteristic(OS_LINUX)
+CHARACTERISTIC_MACOS = Characteristic(OS_MACOS)
+
+
 class String(Feature):
     def __init__(self, value: str, description=None):
         super(String, self).__init__(value, description=description)

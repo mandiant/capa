@@ -34,7 +34,8 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
-from capa.features.common import OS_LINUX, OS_MACOS, OS_WINDOWS, MAX_BYTES_FEATURE_SIZE, Feature
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
+from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_LINUX, CHARACTERISTIC_MACOS
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +79,9 @@ SUPPORTED_FEATURES = {
         capa.features.file.FunctionName,
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
-        capa.features.common.Characteristic(OS_WINDOWS),
-        capa.features.common.Characteristic(OS_LINUX),
-        capa.features.common.Characteristic(OS_MACOS),
+        CHARACTERISTIC_WINDOWS,
+        CHARACTERISTIC_LINUX,
+        CHARACTERISTIC_MACOS,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
@@ -89,9 +90,9 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("calls to"),
         capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
-        capa.features.common.Characteristic(OS_WINDOWS),
-        capa.features.common.Characteristic(OS_LINUX),
-        capa.features.common.Characteristic(OS_MACOS),
+        CHARACTERISTIC_WINDOWS,
+        CHARACTERISTIC_LINUX,
+        CHARACTERISTIC_MACOS,
     },
     BASIC_BLOCK_SCOPE: {
         capa.features.common.MatchedRule,
@@ -109,9 +110,9 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("tight loop"),
         capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
-        capa.features.common.Characteristic(OS_WINDOWS),
-        capa.features.common.Characteristic(OS_LINUX),
-        capa.features.common.Characteristic(OS_MACOS),
+        CHARACTERISTIC_WINDOWS,
+        CHARACTERISTIC_LINUX,
+        CHARACTERISTIC_MACOS,
     },
 }
 
