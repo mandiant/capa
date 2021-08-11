@@ -1,5 +1,6 @@
 from smda.common.SmdaReport import SmdaReport
 
+import capa.features.extractors.common
 import capa.features.extractors.smda.file
 import capa.features.extractors.smda.insn
 import capa.features.extractors.smda.function
@@ -12,6 +13,12 @@ class SmdaFeatureExtractor(FeatureExtractor):
         super(SmdaFeatureExtractor, self).__init__()
         self.smda_report = smda_report
         self.path = path
+        with open(self.path, "rb") as f:
+            self.buf = f.read()
+
+        self.global_features = []
+        self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
+        self.global_features.extend(capa.features.extractors.common.extract_format(self.buf))
 
     def get_base_address(self):
         return self.smda_report.base_addr
@@ -19,6 +26,7 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def extract_file_features(self):
         for feature, va in capa.features.extractors.smda.file.extract_features(self.smda_report, self.path):
             yield feature, va
+        yield from self.global_features
 
     def get_functions(self):
         for function in self.smda_report.getFunctions():
@@ -27,6 +35,7 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def extract_function_features(self, f):
         for feature, va in capa.features.extractors.smda.function.extract_features(f):
             yield feature, va
+        yield from self.global_features
 
     def get_basic_blocks(self, f):
         for bb in f.getBlocks():
@@ -35,6 +44,7 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def extract_basic_block_features(self, f, bb):
         for feature, va in capa.features.extractors.smda.basicblock.extract_features(f, bb):
             yield feature, va
+        yield from self.global_features
 
     def get_instructions(self, f, bb):
         for smda_ins in bb.getInstructions():
@@ -43,3 +53,4 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         for feature, va in capa.features.extractors.smda.insn.extract_features(f, bb, insn):
             yield feature, va
+        yield from self.global_features

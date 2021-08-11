@@ -10,9 +10,9 @@ import logging
 import viv_utils
 import viv_utils.flirt
 
+import capa.features.extractors.common
 import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
-import capa.features.extractors.viv.common
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -42,8 +42,8 @@ class VivisectFeatureExtractor(FeatureExtractor):
             self.buf = f.read()
 
         self.global_features = []
-        self.global_features.extend(capa.features.extractors.viv.common.extract_os(self.buf))
-        self.global_features.extend(capa.features.extractors.viv.common.extract_format(self.buf))
+        self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
+        self.global_features.extend(capa.features.extractors.common.extract_format(self.buf))
 
     def get_base_address(self):
         # assume there is only one file loaded into the vw
