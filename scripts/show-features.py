@@ -194,15 +194,6 @@ def ida_main():
     return 0
 
 
-def is_global_feature(feature):
-    if (isinstance(feature, capa.features.common.Characteristic) 
-        and isinstance(feature.value, str)
-        and (feature.value.startswith("os/")
-             or feature.value.startswith("format/"))):
-        return True
-    return False
-
-
 def print_features(functions, extractor):
     for f in functions:
         function_address = int(f)
@@ -213,21 +204,21 @@ def print_features(functions, extractor):
             continue
 
         for feature, va in extractor.extract_function_features(f):
-            if is_global_feature(feature):
+            if capa.features.common.is_global_feature(feature):
                 continue
 
             print("func: 0x%08x: %s" % (va, feature))
 
         for bb in extractor.get_basic_blocks(f):
             for feature, va in extractor.extract_basic_block_features(f, bb):
-                if is_global_feature(feature):
+                if capa.features.common.is_global_feature(feature):
                     continue
 
                 print("bb  : 0x%08x: %s" % (va, feature))
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, va in extractor.extract_insn_features(f, bb, insn):
-                    if is_global_feature(feature):
+                    if capa.features.common.is_global_feature(feature):
                         continue
 
                     try:

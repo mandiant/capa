@@ -278,3 +278,16 @@ class Bytes(Feature):
     @classmethod
     def freeze_deserialize(cls, args):
         return cls(*[codecs.decode(x, "hex") for x in args])
+
+
+def is_global_feature(feature):
+    """
+    is this a feature that is extracted at every scope?
+    today, this are OS and file format features.
+    """
+    if (isinstance(feature, Characteristic) 
+        and isinstance(feature.value, str)
+        and (feature.value.startswith("os/")
+             or feature.value.startswith("format/"))):
+        return True
+    return False
