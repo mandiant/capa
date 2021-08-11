@@ -30,7 +30,6 @@ def main(argv=None):
         f: BinaryIO = IDAIO()
 
     else:
-        print("not ida")
         if argv is None:
             argv = sys.argv[1:]
 
