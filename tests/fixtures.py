@@ -22,7 +22,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.features.common import ARCH_X32, ARCH_X64
-from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_PE
+from capa.features.common import CHARACTERISTIC_WINDOWS, CHARACTERISTIC_LINUX, CHARACTERISTIC_PE, CHARACTERISTIC_ELF
 
 CD = os.path.dirname(__file__)
 
@@ -502,9 +502,11 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
         # os & format
         ("pma16-01", "file", CHARACTERISTIC_WINDOWS, True),
+        ("pma16-01", "file", CHARACTERISTIC_LINUX, False),
         ("pma16-01", "function=0x404356", CHARACTERISTIC_WINDOWS, True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_WINDOWS, True),
         ("pma16-01", "file", CHARACTERISTIC_PE, True),
+        ("pma16-01", "file", CHARACTERISTIC_ELF, False),
         ("pma16-01", "function=0x404356", CHARACTERISTIC_PE, True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_PE, True),
     ],
