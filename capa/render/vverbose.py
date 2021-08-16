@@ -113,7 +113,8 @@ def render_feature(ostream, match, feature, indent=0):
                 ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
                 ostream.write(feature["description"])
 
-        render_locations(ostream, match)
+        if key not in ("os", "arch"):
+            render_locations(ostream, match)
         ostream.write("\n")
     else:
         # like:
