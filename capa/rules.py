@@ -34,15 +34,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
-from capa.features.common import (
-    CHARACTERISTIC_PE,
-    CHARACTERISTIC_ELF,
-    CHARACTERISTIC_LINUX,
-    CHARACTERISTIC_MACOS,
-    CHARACTERISTIC_WINDOWS,
-    MAX_BYTES_FEATURE_SIZE,
-    Feature,
-)
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +78,8 @@ SUPPORTED_FEATURES = {
         capa.features.file.FunctionName,
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
-        CHARACTERISTIC_WINDOWS,
-        CHARACTERISTIC_LINUX,
-        CHARACTERISTIC_MACOS,
-        CHARACTERISTIC_PE,
-        CHARACTERISTIC_ELF,
+        capa.features.common.Format,
+        capa.features.common.OS,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
@@ -99,11 +88,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("calls to"),
         capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
-        CHARACTERISTIC_WINDOWS,
-        CHARACTERISTIC_LINUX,
-        CHARACTERISTIC_MACOS,
-        CHARACTERISTIC_PE,
-        CHARACTERISTIC_ELF,
+        capa.features.common.OS,
     },
     BASIC_BLOCK_SCOPE: {
         capa.features.common.MatchedRule,
@@ -121,11 +106,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("tight loop"),
         capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
-        CHARACTERISTIC_WINDOWS,
-        CHARACTERISTIC_LINUX,
-        CHARACTERISTIC_MACOS,
-        CHARACTERISTIC_PE,
-        CHARACTERISTIC_ELF,
+        capa.features.common.OS,
     },
 }
 
@@ -243,16 +224,16 @@ def parse_feature(key: str):
         bitness = key.partition("/")[2]
         # the other handlers here return constructors for features,
         # and we want to as well,
-        # however, we need to preconfigure one of the arguments (`arch`).
+        # however, we need to preconfigure one of the arguments (`bitness`).
         # so, instead we return a partially-applied function that
-        #  provides `arch` to the feature constructor.
+        #  provides `bitness` to the feature constructor.
         # it forwards any other arguments provided to the closure along to the constructor.
-        return functools.partial(capa.features.insn.Number, arch=bitness)
+        return functools.partial(capa.features.insn.Number, bitness=bitness)
     elif key == "offset":
         return capa.features.insn.Offset
     elif key.startswith("offset/"):
         bitness = key.partition("/")[2]
-        return functools.partial(capa.features.insn.Offset, arch=bitness)
+        return functools.partial(capa.features.insn.Offset, bitness=bitness)
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
@@ -269,6 +250,10 @@ def parse_feature(key: str):
         return capa.features.common.MatchedRule
     elif key == "function-name":
         return capa.features.file.FunctionName
+    elif key == "os":
+        return capa.features.common.OS
+    elif key == "format":
+        return capa.features.common.Format
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 

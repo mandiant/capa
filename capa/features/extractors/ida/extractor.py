@@ -5,8 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import logging
-import functools
 import contextlib
 
 import idaapi
@@ -18,7 +16,7 @@ import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
-from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, Characteristic
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 
@@ -26,20 +24,29 @@ def extract_format():
     format_name = ida_loader.get_file_type_name()
 
     if "PE" in format_name:
-        yield CHARACTERISTIC_PE, 0x0
+        yield Format(FORMAT_PE), 0x0
     elif "ELF64" in format_name:
-        yield CHARACTERISTIC_ELF, 0x0
+        yield Format(FORMAT_ELF), 0x0
     elif "ELF32" in format_name:
-        yield CHARACTERISTIC_ELF, 0x0
+        yield Format(FORMAT_ELF), 0x0
     else:
         raise NotImplementedError("file format: %s", format_name)
 
 
 def extract_os():
-    with contextlib.closing(capa.ida.helpers.IDAIO()) as f:
-        os = capa.features.extractors.elf.detect_elf_os(f)
+    format_name = ida_loader.get_file_type_name()
 
-    yield Characteristic("os/%s" % (os.lower())), 0x0
+    if "PE" in format_name:
+        yield OS(OS_WINDOWS), 0x0
+
+    elif "ELF" in format_name:
+        with contextlib.closing(capa.ida.helpers.IDAIO()) as f:
+            os = capa.features.extractors.elf.detect_elf_os(f)
+
+        yield OS(os), 0x0
+
+    else:
+        raise NotImplementedError("file format: %s", format_name)
 
 
 class FunctionHandle:

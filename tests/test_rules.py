@@ -16,14 +16,15 @@ import capa.features.common
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
 from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    OS_LINUX,
     BITNESS_X32,
     BITNESS_X64,
-    FORMAT_PE,
-    OS_WINDOWS,
-    CHARACTERISTIC_PE,
-    CHARACTERISTIC_WINDOWS,
     String,
-    Characteristic,
+    OS,
+    Format
 )
 
 
@@ -964,13 +965,13 @@ def test_os_features():
                 scope: file
             features:
                 - and:
-                    - characteristic: os/windows
+                    - os: windows
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
-    assert (CHARACTERISTIC_WINDOWS in children) == True
-    assert (CHARACTERISTIC_LINUX not in children) == True
+    assert (OS(OS_WINDOWS) in children) == True
+    assert (OS(OS_LINUX) not in children) == True
 
 
 def test_format_features():
@@ -982,10 +983,10 @@ def test_format_features():
                 scope: file
             features:
                 - and:
-                    - characteristic: format/pe
+                    - format: pe
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
-    assert (CHARACTERISTIC_PE in children) == True
-    assert (CHARACTERISTIC_ELF not in children) == True
+    assert (Format(FORMAT_PE) in children) == True
+    assert (Format(FORMAT_ELF) not in children) == True

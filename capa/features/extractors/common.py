@@ -4,27 +4,27 @@ import binascii
 import contextlib
 
 import capa.features.extractors.elf
-from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_ELF, CHARACTERISTIC_WINDOWS, Characteristic
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format
 
 logger = logging.getLogger(__name__)
 
 
 def extract_format(buf):
     if buf.startswith(b"MZ"):
-        yield CHARACTERISTIC_PE, 0x0
+        yield Format(FORMAT_PE), 0x0
     elif buf.startswith(b"\x7fELF"):
-        yield CHARACTERISTIC_ELF, 0x0
+        yield Format(FORMAT_ELF), 0x0
     else:
         raise NotImplementedError("file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
 
 
 def extract_os(buf):
     if buf.startswith(b"MZ"):
-        yield CHARACTERISTIC_WINDOWS, 0x0
+        yield OS(OS_WINDOWS), 0x0
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
 
-        yield Characteristic("os/%s" % (os.lower())), 0x0
+        yield OS(os), 0x0
     else:
         raise NotImplementedError("file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))

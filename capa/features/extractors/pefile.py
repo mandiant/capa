@@ -14,7 +14,7 @@ import capa.features.extractors
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
-from capa.features.common import CHARACTERISTIC_PE, CHARACTERISTIC_WINDOWS, String, Characteristic
+from capa.features.common import OS, Format, String, Characteristic, OS_WINDOWS, FORMAT_PE
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -114,11 +114,11 @@ def extract_file_function_names(pe, file_path):
 def extract_os(pe, file_path):
     # assuming PE -> Windows
     # though i suppose they're also used by UEFI
-    yield CHARACTERISTIC_WINDOWS, 0x0
+    yield OS(OS_WINDOWS), 0x0
 
 
 def extract_format(pe, file_path):
-    yield CHARACTERISTIC_PE, 0x0
+    yield Format(FORMAT_PE), 0x0
 
 
 def extract_file_features(pe, file_path):

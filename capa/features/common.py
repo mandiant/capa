@@ -14,22 +14,13 @@ from typing import Set, Dict, Union
 
 import capa.engine
 import capa.features
+import capa.features.extractors.elf
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
 
 # thunks may be chained so we specify a delta to control the depth to which these chains are explored
 THUNK_CHAIN_DEPTH_DELTA = 5
-
-
-OS_WINDOWS = "os/windows"
-OS_LINUX = "os/linux"
-OS_MACOS = "os/macos"
-VALID_OS = (OS_WINDOWS, OS_LINUX, OS_MACOS)
-
-FORMAT_PE = "format/pe"
-FORMAT_ELF = "format/elf"
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
 
 
 def bytes_to_str(b: bytes) -> str:
@@ -137,14 +128,6 @@ class Characteristic(Feature):
     def __init__(self, value: str, description=None):
 
         super(Characteristic, self).__init__(value, description=description)
-
-
-CHARACTERISTIC_WINDOWS = Characteristic(OS_WINDOWS)
-CHARACTERISTIC_LINUX = Characteristic(OS_LINUX)
-CHARACTERISTIC_MACOS = Characteristic(OS_MACOS)
-
-CHARACTERISTIC_PE = Characteristic(FORMAT_PE)
-CHARACTERISTIC_ELF = Characteristic(FORMAT_ELF)
 
 
 class String(Feature):
@@ -280,15 +263,51 @@ class Bytes(Feature):
 BITNESS_X32 = "x32"
 BITNESS_X64 = "x64"
 VALID_BITNESS = (BITNESS_X32, BITNESS_X64)
+
+
+ARCH_I386 = "i386"
+ARCH_AMD64 = "amd64"
+VALID_ARCH = (ARCH_I386, ARCH_AMD64)
+
+
+class Arch(Feature):
+    def __init__(self, value: str, description=None):
+        assert value in VALID_ARCH
+        super(Arch, self).__init__(value, description=description)
+        self.name = "arch"
+
+
+OS_WINDOWS = "windows"
+OS_LINUX = "linux"
+OS_MACOS = "macos"
+VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
+VALID_OS.add(OS_WINDOWS)
+VALID_OS.add(OS_LINUX)
+VALID_OS.add(OS_MACOS)
+
+
+class OS(Feature):
+    def __init__(self, value: str, description=None):
+        assert value in (VALID_OS)
+        super(OS, self).__init__(value, description=description)
+        self.name = "os"
+
+
+FORMAT_PE = "pe"
+FORMAT_ELF = "elf"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
+
+
+class Format(Feature):
+    def __init__(self, value: str, description=None):
+        assert value in (VALID_FORMAT)
+        super(Format, self).__init__(value, description=description)
+        self.name = "format"
+
+
 def is_global_feature(feature):
     """
     is this a feature that is extracted at every scope?
-    today, this are OS and file format features.
+    today, this are OS and arch features.
     """
-    if (
-        isinstance(feature, Characteristic)
-        and isinstance(feature.value, str)
-        and (feature.value.startswith("os/") or feature.value.startswith("format/"))
-    ):
-        return True
-    return False
+    return isinstance(feature, (OS, Arch))

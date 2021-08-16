@@ -24,10 +24,12 @@ import capa.features.basicblock
 from capa.features.common import (
     BITNESS_X32,
     BITNESS_X64,
-    CHARACTERISTIC_PE,
-    CHARACTERISTIC_ELF,
-    CHARACTERISTIC_LINUX,
-    CHARACTERISTIC_WINDOWS,
+    FORMAT_ELF,
+    FORMAT_PE,
+    Format,
+    OS,
+    OS_LINUX,
+    OS_WINDOWS,
 )
 
 CD = os.path.dirname(__file__)
@@ -511,17 +513,17 @@ FEATURE_PRESENCE_TESTS = sorted(
         # file/function-name
         ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
         # os & format
-        ("pma16-01", "file", CHARACTERISTIC_WINDOWS, True),
-        ("pma16-01", "file", CHARACTERISTIC_LINUX, False),
-        ("pma16-01", "function=0x404356", CHARACTERISTIC_WINDOWS, True),
-        ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_WINDOWS, True),
-        ("pma16-01", "file", CHARACTERISTIC_PE, True),
-        ("pma16-01", "file", CHARACTERISTIC_ELF, False),
-        ("pma16-01", "function=0x404356", CHARACTERISTIC_PE, True),
-        ("pma16-01", "function=0x404356,bb=0x4043B9", CHARACTERISTIC_PE, True),
+        ("pma16-01", "file", OS(OS_WINDOWS), True),
+        ("pma16-01", "file", OS(OS_LINUX), False),
+        ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("pma16-01", "file", Format(FORMAT_PE), True),
+        ("pma16-01", "file", Format(FORMAT_ELF), False),
+        ("pma16-01", "function=0x404356", Format(FORMAT_PE), True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", Format(FORMAT_PE), True),
         # elf support
-        ("7351f.elf", "file", CHARACTERISTIC_LINUX, True),
-        ("7351f.elf", "file", CHARACTERISTIC_ELF, True),
+        ("7351f.elf", "file", OS(OS_LINUX), True),
+        ("7351f.elf", "file", OS(OS_WINDOWS), False),
         ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
         ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
     ],
