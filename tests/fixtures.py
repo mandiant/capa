@@ -519,11 +519,11 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
         ("pma16-01", "file", Format(FORMAT_PE), True),
         ("pma16-01", "file", Format(FORMAT_ELF), False),
-        ("pma16-01", "function=0x404356", Format(FORMAT_PE), True),
-        ("pma16-01", "function=0x404356,bb=0x4043B9", Format(FORMAT_PE), True),
         # elf support
         ("7351f.elf", "file", OS(OS_LINUX), True),
         ("7351f.elf", "file", OS(OS_WINDOWS), False),
+        ("7351f.elf", "file", Format(FORMAT_ELF), True),
+        ("7351f.elf", "file", Format(FORMAT_PE), False),
         ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
         ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
     ],
