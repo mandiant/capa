@@ -3,6 +3,7 @@ from smda.common.SmdaReport import SmdaReport
 import capa.features.extractors.common
 import capa.features.extractors.smda.file
 import capa.features.extractors.smda.insn
+import capa.features.extractors.smda.global_
 import capa.features.extractors.smda.function
 import capa.features.extractors.smda.basicblock
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -16,8 +17,10 @@ class SmdaFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             self.buf = f.read()
 
+        # pre-compute these because we'll yield them at *every* scope.
         self.global_features = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
+        self.global_features.extend(capa.features.extractors.smda.global_.extract_arch(self.smda_report))
 
     def get_base_address(self):
         return self.smda_report.base_addr

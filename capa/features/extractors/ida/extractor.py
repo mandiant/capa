@@ -14,6 +14,7 @@ import capa.ida.helpers
 import capa.features.extractors.elf
 import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
+import capa.features.extractors.ida.global_
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
 from capa.features.common import OS, OS_WINDOWS
@@ -80,7 +81,7 @@ class IdaFeatureExtractor(FeatureExtractor):
         super(IdaFeatureExtractor, self).__init__()
         self.global_features = []
         self.global_features.extend(extract_os())
-        self.global_features.extend(extract_format())
+        self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
 
     def get_base_address(self):
         return idaapi.get_imagebase()

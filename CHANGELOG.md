@@ -9,6 +9,7 @@
 - explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
 - all: add support for ELF files #700 @Adir-Shemesh @TcM1911
 - rule format: add feature `format: ` for file format, like `format: pe` @williballenthin
+- rule format: add feature `arch: ` for architecture, like `arch: amd64` @williballenthin
 - rule format: add feature `os: ` for operating system, like `os: windows` #701 @williballenthin
 
 ### Breaking Changes

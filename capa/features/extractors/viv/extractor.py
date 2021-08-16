@@ -13,6 +13,7 @@ import viv_utils.flirt
 import capa.features.extractors.common
 import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
+import capa.features.extractors.viv.global_
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -41,8 +42,10 @@ class VivisectFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             self.buf = f.read()
 
+        # pre-compute these because we'll yield them at *every* scope.
         self.global_features = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
+        self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
     def get_base_address(self):
         # assume there is only one file loaded into the vw

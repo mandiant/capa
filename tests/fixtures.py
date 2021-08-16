@@ -22,14 +22,17 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.features.common import (
-    BITNESS_X32,
-    BITNESS_X64,
-    FORMAT_ELF,
-    FORMAT_PE,
-    Format,
     OS,
     OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
     OS_WINDOWS,
+    BITNESS_X32,
+    BITNESS_X64,
+    Arch,
+    Format,
 )
 
 CD = os.path.dirname(__file__)
@@ -512,11 +515,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
         # file/function-name
         ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
-        # os & format
+        # os & format & arch
         ("pma16-01", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "file", OS(OS_LINUX), False),
         ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("pma16-01", "file", Arch(ARCH_I386), True),
+        ("pma16-01", "file", Arch(ARCH_AMD64), False),
+        ("pma16-01", "function=0x404356", Arch(ARCH_I386), True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
         ("pma16-01", "file", Format(FORMAT_PE), True),
         ("pma16-01", "file", Format(FORMAT_ELF), False),
         # elf support
@@ -524,6 +531,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("7351f.elf", "file", OS(OS_WINDOWS), False),
         ("7351f.elf", "file", Format(FORMAT_ELF), True),
         ("7351f.elf", "file", Format(FORMAT_PE), False),
+        ("7351f.elf", "file", Arch(ARCH_I386), False),
+        ("7351f.elf", "file", Arch(ARCH_AMD64), True),
         ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
         ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
     ],

@@ -17,8 +17,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import String, Characteristic
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format, String, Characteristic
 
 
 def check_segment_for_pe(seg):

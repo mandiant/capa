@@ -80,6 +80,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.String,
         capa.features.common.Format,
         capa.features.common.OS,
+        capa.features.common.Arch,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
@@ -89,6 +90,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
         capa.features.common.OS,
+        capa.features.common.Arch,
     },
     BASIC_BLOCK_SCOPE: {
         capa.features.common.MatchedRule,
@@ -107,6 +109,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
         capa.features.common.OS,
+        capa.features.common.Arch,
     },
 }
 
@@ -254,6 +257,8 @@ def parse_feature(key: str):
         return capa.features.common.OS
     elif key == "format":
         return capa.features.common.Format
+    elif key == "arch":
+        return capa.features.common.Arch
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 

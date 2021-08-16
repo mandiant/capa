@@ -16,15 +16,18 @@ import capa.features.common
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset
 from capa.features.common import (
+    OS,
+    OS_LINUX,
+    ARCH_I386,
     FORMAT_PE,
+    ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
-    OS_LINUX,
     BITNESS_X32,
     BITNESS_X64,
+    Arch,
+    Format,
     String,
-    OS,
-    Format
 )
 
 
@@ -990,3 +993,21 @@ def test_format_features():
     children = list(r.statement.get_children())
     assert (Format(FORMAT_PE) in children) == True
     assert (Format(FORMAT_ELF) not in children) == True
+
+
+def test_arch_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - arch: amd64
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Arch(ARCH_AMD64) in children) == True
+    assert (Arch(ARCH_I386) not in children) == True
