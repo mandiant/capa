@@ -21,11 +21,6 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 # thunks may be chained so we specify a delta to control the depth to which these chains are explored
 THUNK_CHAIN_DEPTH_DELTA = 5
 
-# identifiers for supported architectures names that tweak a feature
-# for example, offset/x32
-ARCH_X32 = "x32"
-ARCH_X64 = "x64"
-VALID_ARCH = (ARCH_X32, ARCH_X64)
 
 OS_WINDOWS = "os/windows"
 OS_LINUX = "os/linux"
@@ -61,33 +56,33 @@ def escape_string(s: str) -> str:
 
 
 class Feature:
-    def __init__(self, value: Union[str, int, bytes], arch=None, description=None):
+    def __init__(self, value: Union[str, int, bytes], bitness=None, description=None):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
-          arch (str): one of the VALID_ARCH values, or None.
-            When None, then the feature applies to any architecture.
-            Modifies the feature name from `feature` to `feature/arch`, like `offset/x32`.
+          bitness (str): one of the VALID_BITNESS values, or None.
+            When None, then the feature applies to any bitness.
+            Modifies the feature name from `feature` to `feature/bitness`, like `offset/x32`.
           description (str): a human-readable description that explains the feature value.
         """
         super(Feature, self).__init__()
 
-        if arch is not None:
-            if arch not in VALID_ARCH:
-                raise ValueError("arch '%s' must be one of %s" % (arch, VALID_ARCH))
-            self.name = self.__class__.__name__.lower() + "/" + arch
+        if bitness is not None:
+            if bitness not in VALID_BITNESS:
+                raise ValueError("bitness '%s' must be one of %s" % (bitness, VALID_BITNESS))
+            self.name = self.__class__.__name__.lower() + "/" + bitness
         else:
             self.name = self.__class__.__name__.lower()
 
         self.value = value
-        self.arch = arch
+        self.bitness = bitness
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, self.value, self.arch))
+        return hash((self.name, self.value, self.bitness))
 
     def __eq__(self, other):
-        return self.name == other.name and self.value == other.value and self.arch == other.arch
+        return self.name == other.name and self.value == other.value and self.bitness == other.bitness
 
     def get_value_str(self) -> str:
         """
@@ -114,8 +109,8 @@ class Feature:
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
-        if self.arch is not None:
-            return (self.__class__.__name__, [self.value, {"arch": self.arch}])
+        if self.bitness is not None:
+            return (self.__class__.__name__, [self.value, {"bitness": self.bitness}])
         else:
             return (self.__class__.__name__, [self.value])
 
@@ -280,6 +275,11 @@ class Bytes(Feature):
         return cls(*[codecs.decode(x, "hex") for x in args])
 
 
+# identifiers for supported bitness names that tweak a feature
+# for example, offset/x32
+BITNESS_X32 = "x32"
+BITNESS_X64 = "x64"
+VALID_BITNESS = (BITNESS_X32, BITNESS_X64)
 def is_global_feature(feature):
     """
     is this a feature that is extracted at every scope?

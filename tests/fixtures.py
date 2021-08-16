@@ -22,8 +22,8 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.features.common import (
-    ARCH_X32,
-    ARCH_X64,
+    BITNESS_X32,
+    BITNESS_X64,
     CHARACTERISTIC_PE,
     CHARACTERISTIC_ELF,
     CHARACTERISTIC_LINUX,
@@ -390,10 +390,10 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/number: stack adjustments
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
-        # insn/number: arch flavors
+        # insn/number: bitness flavors
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X64), False),
         # insn/offset
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
@@ -406,10 +406,10 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/offset: negative
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-        # insn/offset: arch flavors
+        # insn/offset: bitness flavors
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X64), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X64), False),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),

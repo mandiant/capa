@@ -19,8 +19,8 @@ import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.common import (
-    ARCH_X32,
-    ARCH_X64,
+    BITNESS_X32,
+    BITNESS_X64,
     MAX_BYTES_FEATURE_SIZE,
     THUNK_CHAIN_DEPTH_DELTA,
     Bytes,
@@ -34,12 +34,12 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def get_arch(vw):
-    arch = vw.getMeta("Architecture")
-    if arch == "i386":
-        return ARCH_X32
-    elif arch == "amd64":
-        return ARCH_X64
+def get_bitness(vw):
+    bitness = vw.getMeta("Architecture")
+    if bitness == "i386":
+        return BITNESS_X32
+    elif bitness == "amd64":
+        return BITNESS_X64
 
 
 def interface_extract_instruction_XXX(f, bb, insn):
@@ -193,7 +193,7 @@ def extract_insn_number_features(f, bb, insn):
             return
 
         yield Number(v), insn.va
-        yield Number(v, arch=get_arch(f.vw)), insn.va
+        yield Number(v, bitness=get_bitness(f.vw)), insn.va
 
 
 def derefs(vw, p):
@@ -389,7 +389,7 @@ def extract_insn_offset_features(f, bb, insn):
             v = oper.disp
 
             yield Offset(v), insn.va
-            yield Offset(v, arch=get_arch(f.vw)), insn.va
+            yield Offset(v, bitness=get_bitness(f.vw)), insn.va
 
         # like: [esi + ecx + 16384]
         #        reg   ^     ^
@@ -400,7 +400,7 @@ def extract_insn_offset_features(f, bb, insn):
             v = oper.disp
 
             yield Offset(v), insn.va
-            yield Offset(v, arch=get_arch(f.vw)), insn.va
+            yield Offset(v, bitness=get_bitness(f.vw)), insn.va
 
 
 def is_security_cookie(f, bb, insn) -> bool:

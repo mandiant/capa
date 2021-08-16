@@ -14,8 +14,8 @@ import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.common import (
-    ARCH_X32,
-    ARCH_X64,
+    BITNESS_X32,
+    BITNESS_X64,
     MAX_BYTES_FEATURE_SIZE,
     THUNK_CHAIN_DEPTH_DELTA,
     Bytes,
@@ -28,22 +28,22 @@ from capa.features.common import (
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def get_arch(ctx):
+def get_bitness(ctx):
     """
-    fetch the ARCH_* constant for the currently open workspace.
+    fetch the BITNESS_* constant for the currently open workspace.
 
     via Tamir Bahar/@tmr232
     https://reverseengineering.stackexchange.com/a/11398/17194
     """
-    if "arch" not in ctx:
+    if "bitness" not in ctx:
         info = idaapi.get_inf_structure()
         if info.is_64bit():
-            ctx["arch"] = ARCH_X64
+            ctx["bitness"] = BITNESS_X64
         elif info.is_32bit():
-            ctx["arch"] = ARCH_X32
+            ctx["bitness"] = BITNESS_X32
         else:
-            raise ValueError("unexpected architecture")
-    return ctx["arch"]
+            raise ValueError("unexpected bitness")
+    return ctx["bitness"]
 
 
 def get_imports(ctx):
@@ -149,7 +149,7 @@ def extract_insn_number_features(f, bb, insn):
             const = op.addr
 
         yield Number(const), insn.ea
-        yield Number(const, arch=get_arch(f.ctx)), insn.ea
+        yield Number(const, bitness=get_bitness(f.ctx)), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -218,7 +218,7 @@ def extract_insn_offset_features(f, bb, insn):
         op_off = capa.features.extractors.helpers.twos_complement(op_off, 32)
 
         yield Offset(op_off), insn.ea
-        yield Offset(op_off, arch=get_arch(f.ctx)), insn.ea
+        yield Offset(op_off, bitness=get_bitness(f.ctx)), insn.ea
 
 
 def contains_stack_cookie_keywords(s):

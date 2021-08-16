@@ -13,6 +13,8 @@
 
 ### Breaking Changes
 
+- legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
+
 ### New Rules (20)
 
 - collection/webcam/capture-webcam-image johnk3r
