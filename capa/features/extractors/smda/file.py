@@ -1,6 +1,7 @@
 # if we have SMDA we definitely have lief
 import lief
 
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
@@ -74,6 +75,11 @@ def extract_file_function_names(smda_report, file_path):
     return
 
 
+def extract_file_format(smda_report, file_path):
+    with open(file_path, "rb") as f:
+        yield from capa.features.extractors.common.extract_format(f.read())
+
+
 def extract_features(smda_report, file_path):
     """
     extract file features from given workspace
@@ -98,4 +104,5 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
+    extract_file_format,
 )

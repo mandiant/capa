@@ -11,6 +11,7 @@ import viv_utils
 import viv_utils.flirt
 
 import capa.features.insn
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
@@ -87,6 +88,10 @@ def extract_file_function_names(vw, buf):
             yield FunctionName(name), va
 
 
+def extract_file_format(vw, buf):
+    yield from capa.features.extractors.common.extract_format(buf)
+
+
 def extract_features(vw, buf: bytes):
     """
     extract file features from given workspace
@@ -111,4 +116,5 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
+    extract_file_format,
 )

@@ -16,21 +16,8 @@ import capa.features.extractors.ida.file
 import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format
+from capa.features.common import OS, OS_WINDOWS
 from capa.features.extractors.base_extractor import FeatureExtractor
-
-
-def extract_format():
-    format_name = ida_loader.get_file_type_name()
-
-    if "PE" in format_name:
-        yield Format(FORMAT_PE), 0x0
-    elif "ELF64" in format_name:
-        yield Format(FORMAT_ELF), 0x0
-    elif "ELF32" in format_name:
-        yield Format(FORMAT_ELF), 0x0
-    else:
-        raise NotImplementedError("file format: %s", format_name)
 
 
 def extract_os():

@@ -43,7 +43,6 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
         self.global_features = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
-        self.global_features.extend(capa.features.extractors.common.extract_format(self.buf))
 
     def get_base_address(self):
         # assume there is only one file loaded into the vw

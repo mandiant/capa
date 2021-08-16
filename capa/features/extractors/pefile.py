@@ -117,7 +117,7 @@ def extract_os(pe, file_path):
     yield OS(OS_WINDOWS), 0x0
 
 
-def extract_format(pe, file_path):
+def extract_file_format(pe, file_path):
     yield Format(FORMAT_PE), 0x0
 
 
@@ -146,7 +146,7 @@ FILE_HANDLERS = (
     extract_file_strings,
     extract_file_function_names,
     extract_os,
-    extract_format,
+    extract_file_format,
 )
 
 

@@ -18,7 +18,6 @@ class SmdaFeatureExtractor(FeatureExtractor):
 
         self.global_features = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
-        self.global_features.extend(capa.features.extractors.common.extract_format(self.buf))
 
     def get_base_address(self):
         return self.smda_report.base_addr
