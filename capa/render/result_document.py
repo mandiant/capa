@@ -198,9 +198,19 @@ def convert_match_to_result_document(rules, capabilities, result):
                     # in the meantime, the above might be sufficient.
                     rule_matches = {address: result for (address, result) in capabilities[rule.name]}
                     for location in doc["locations"]:
-                        doc["children"].append(
-                            convert_match_to_result_document(rules, capabilities, rule_matches[location])
-                        )
+                        # doc[locations] contains all matches for the given namespace.
+                        # for example, the feature might be `match: anti-analysis/packer`
+                        # which matches against "generic unpacker" and "UPX".
+                        # in this case, doc[locations] contains locations for *both* of thse.
+                        #
+                        # rule_matches contains the matches for the specific rule.
+                        # this is a subset of doc[locations].
+                        #
+                        # so, grab only the locations for current rule.
+                        if location in rule_matches:
+                            doc["children"].append(
+                                convert_match_to_result_document(rules, capabilities, rule_matches[location])
+                            )
 
     return doc
 
