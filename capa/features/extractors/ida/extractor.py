@@ -5,10 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import contextlib
-
 import idaapi
-import ida_loader
 
 import capa.ida.helpers
 import capa.features.extractors.elf
@@ -17,24 +14,7 @@ import capa.features.extractors.ida.insn
 import capa.features.extractors.ida.global_
 import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
-from capa.features.common import OS, OS_WINDOWS
 from capa.features.extractors.base_extractor import FeatureExtractor
-
-
-def extract_os():
-    format_name = ida_loader.get_file_type_name()
-
-    if "PE" in format_name:
-        yield OS(OS_WINDOWS), 0x0
-
-    elif "ELF" in format_name:
-        with contextlib.closing(capa.ida.helpers.IDAIO()) as f:
-            os = capa.features.extractors.elf.detect_elf_os(f)
-
-        yield OS(os), 0x0
-
-    else:
-        raise NotImplementedError("file format: %s", format_name)
 
 
 class FunctionHandle:
@@ -80,7 +60,7 @@ class IdaFeatureExtractor(FeatureExtractor):
     def __init__(self):
         super(IdaFeatureExtractor, self).__init__()
         self.global_features = []
-        self.global_features.extend(extract_os())
+        self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
 
     def get_base_address(self):
