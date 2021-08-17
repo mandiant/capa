@@ -15,7 +15,12 @@ def extract_format(buf):
     elif buf.startswith(b"\x7fELF"):
         yield Format(FORMAT_ELF), 0x0
     else:
-        raise NotImplementedError("file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
+        # we likely end up here:
+        #  1. handling a file format (e.g. macho)
+        #
+        # for (1), this logic will need to be updated as the format is implemented.
+        logger.debug("unsupported file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
+        return
 
 
 def extract_os(buf):
@@ -27,4 +32,15 @@ def extract_os(buf):
 
         yield OS(os), 0x0
     else:
-        raise NotImplementedError("file format: %s", binascii.hexlify(buf[:4]).decode("ascii"))
+        # we likely end up here:
+        #  1. handling shellcode, or
+        #  2. handling a new file format (e.g. macho)
+        #
+        # for (1) we can't do much - its shellcode and all bets are off.
+        # we could maybe accept a futher CLI argument to specify the OS,
+        # but i think this would be rarely used.
+        # rules that rely on OS conditions will fail to match on shellcode.
+        #
+        # for (2), this logic will need to be updated as the format is implemented.
+        logger.debug("unsupported file format: %s, will not guess OS", binascii.hexlify(buf[:4]).decode("ascii"))
+        return

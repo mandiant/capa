@@ -1,7 +1,11 @@
+import logging
+
 import envi.archs.i386
 import envi.archs.amd64
 
 from capa.features.common import ARCH_I386, ARCH_AMD64, Arch
+
+logger = logging.getLogger(__name__)
 
 
 def extract_arch(vw):
@@ -12,4 +16,9 @@ def extract_arch(vw):
         yield Arch(ARCH_I386), 0x0
 
     else:
-        raise NotImplementedError("unsupported architecture: %s" % (vw.arch.__class__.__name__))
+        # we likely end up here:
+        #  1. handling a new architecture (e.g. aarch64)
+        #
+        # for (1), this logic will need to be updated as the format is implemented.
+        logger.debug("unsupported architecture: %s", vw.arch.__class__.__name__)
+        return
