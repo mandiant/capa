@@ -6,8 +6,7 @@ import ida_loader
 
 import capa.ida.helpers
 import capa.features.extractors.elf
-from capa.features.common import OS, OS_WINDOWS
-from capa.features.common import ARCH_I386, ARCH_AMD64, Arch
+from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch
 
 logger = logging.getLogger(__name__)
 
