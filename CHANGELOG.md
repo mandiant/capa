@@ -16,7 +16,8 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (20)
+### New Rules (21)
+
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -38,6 +39,7 @@
 - nursery/list-user-accounts michael.hunhoff@fireeye.com
 - nursery/parse-url michael.hunhoff@fireeye.com
 - nursery/register-raw-input-devices michael.hunhoff@fireeye.com
+- anti-analysis/packer/gopacker/packed-with-gopacker jared.wilson@fireeye.com
 -
 
 ### Bug Fixes
