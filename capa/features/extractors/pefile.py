@@ -14,7 +14,7 @@ import capa.features.extractors
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
-from capa.features.common import OS, FORMAT_PE, OS_WINDOWS, Format, String, Characteristic
+from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, String, Characteristic
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ def extract_file_function_names(pe, file_path):
     return
 
 
-def extract_os(pe, file_path):
+def extract_file_os(pe, file_path):
     # assuming PE -> Windows
     # though i suppose they're also used by UEFI
     yield OS(OS_WINDOWS), 0x0
@@ -119,6 +119,15 @@ def extract_os(pe, file_path):
 
 def extract_file_format(pe, file_path):
     yield Format(FORMAT_PE), 0x0
+
+
+def extract_file_arch(pe, file_path):
+    if pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_I386"]:
+        yield Arch(ARCH_I386), 0x0
+    elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
+        yield Arch(ARCH_AMD64), 0x0
+    else:
+        logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
 
 def extract_file_features(pe, file_path):
@@ -145,8 +154,9 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
-    extract_os,
+    extract_file_os,
     extract_file_format,
+    extract_file_arch,
 )
 
 

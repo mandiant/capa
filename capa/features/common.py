@@ -265,6 +265,7 @@ BITNESS_X64 = "x64"
 VALID_BITNESS = (BITNESS_X32, BITNESS_X64)
 
 
+# other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
 VALID_ARCH = (ARCH_I386, ARCH_AMD64)
