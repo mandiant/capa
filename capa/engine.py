@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import Set, Dict, List, Tuple, Union, Mapping
+from typing import Set, Dict, List, Tuple, Union, Mapping, Iterable
 
 import capa.rules
 import capa.features.common
@@ -228,6 +228,23 @@ class Subscope(Statement):
 MatchResults = Mapping[str, List[Tuple[int, Result]]]
 
 
+def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[int]):
+    """
+    record into the given featureset that the given rule matched at the given locations.
+
+    naively, this is just adding a MatchedRule feature;
+    however, we also want to record matches for the rule's namespaces.
+
+    updates `features` in-place. doesn't modify the remaining arguments.
+    """
+    features[capa.features.common.MatchedRule(rule.name)].update(locations)
+    namespace = rule.meta.get("namespace")
+    if namespace:
+        while namespace:
+            features[capa.features.common.MatchedRule(namespace)].update(locations)
+            namespace, _, _ = namespace.rpartition("/")
+
+
 def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
     """
     Args:
@@ -237,7 +254,7 @@ def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tupl
 
     Returns:
       Tuple[FeatureSet, MatchResults]: two-tuple with entries:
-        - set of features used for matching (which may be greater than argument, due to rule match features), and
+        - set of features used for matching (which may be a superset of the given `features` argument, due to rule match features), and
         - mapping from rule name to [(location of match, result object)]
     """
     results = collections.defaultdict(list)  # type: MatchResults
@@ -252,12 +269,9 @@ def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tupl
         res = rule.evaluate(features)
         if res:
             results[rule.name].append((va, res))
-            features[capa.features.common.MatchedRule(rule.name)].add(va)
-
-            namespace = rule.meta.get("namespace")
-            if namespace:
-                while namespace:
-                    features[capa.features.common.MatchedRule(namespace)].add(va)
-                    namespace, _, _ = namespace.rpartition("/")
+            # we need to update the current `features`
+            # because subsequent iterations of this loop may use newly added features,
+            # such as rule or namespace matches.
+            index_rule_matches(features, rule, [va])
 
     return (features, results)

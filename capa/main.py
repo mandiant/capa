@@ -21,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Iterable
 
 import halo
 import tqdm
@@ -101,8 +101,9 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
 
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
+            rule = ruleset[rule_name]
             for va, _ in res:
-                function_features[capa.features.common.MatchedRule(rule_name)].add(va)
+                capa.engine.index_rule_matches(function_features, rule, [va])
 
     _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
@@ -175,10 +176,11 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
     # collection of features that captures the rule matches within function and BB scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
-    function_and_lower_features = {
-        capa.features.common.MatchedRule(rule_name): set(map(lambda p: p[0], results))
-        for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items())
-    }  # type: FeatureSet
+    function_and_lower_features: FeatureSet = collections.defaultdict(set)
+    for rule_name, results in itertools.chain(all_function_matches.items(), all_bb_matches.items()):
+        locations = set(map(lambda p: p[0], results))
+        rule = ruleset[rule_name]
+        capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count
