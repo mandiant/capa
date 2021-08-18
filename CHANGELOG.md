@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (23)
+### New Rules (24)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -36,6 +36,7 @@
 - anti-analysis/packer/gopacker/packed-with-gopacker jared.wilson@fireeye.com
 - host-interaction/driver/create-device-object @mr-tz
 - host-interaction/process/create/execute-command @mr-tz
+- data-manipulation/encryption/create-new-key-via-cryptacquirecontext chuong.dong@fireeye.com
 -
 
 ### Bug Fixes
