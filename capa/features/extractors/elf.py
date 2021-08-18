@@ -120,6 +120,8 @@ def detect_elf_os(f: BinaryIO) -> str:
         logger.warning("failed to read program headers")
         e_phnum = 0
 
+    # search for PT_NOTE sections that specify an OS
+    # for example, on Linux there is a GNU section with minimum kernel version
     for i in range(e_phnum):
         offset = i * e_phentsize
         phent = program_headers[offset : offset + e_phentsize]
@@ -192,6 +194,8 @@ def detect_elf_os(f: BinaryIO) -> str:
             logger.debug("note owner: %s", "FREEBSD")
             ret = OS.FREEBSD if not ret else ret
 
+    # search for recognizable dynamic linkers (interpreters)
+    # for example, on linux, we see file paths like: /lib64/ld-linux-x86-64.so.2
     for i in range(e_phnum):
         offset = i * e_phentsize
         phent = program_headers[offset : offset + e_phentsize]
