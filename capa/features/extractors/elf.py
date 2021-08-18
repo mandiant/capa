@@ -188,6 +188,9 @@ def detect_elf_os(f: BinaryIO) -> str:
         elif name == "NetBSD":
             logger.debug("note owner: %s", "NETBSD")
             ret = OS.NETBSD if not ret else ret
+        elif name == "FreeBSD":
+            logger.debug("note owner: %s", "FREEBSD")
+            ret = OS.FREEBSD if not ret else ret
 
     for i in range(e_phnum):
         offset = i * e_phentsize
