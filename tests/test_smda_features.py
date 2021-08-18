@@ -11,6 +11,7 @@ from fixtures import *
 from fixtures import parametrize
 
 import capa.features.file
+import capa.features.insn
 
 
 @parametrize(
@@ -21,6 +22,9 @@ import capa.features.file
 def test_smda_features(sample, scope, feature, expected):
     if scope.__name__ == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
         pytest.xfail("SMDA has no function ID")
+
+    if "elf" in sample and isinstance(feature, capa.features.insn.API):
+        pytest.xfail("SMDA has no ELF API extraction, see #725")
 
     fixtures.do_test_feature_presence(fixtures.get_smda_extractor, sample, scope, feature, expected)
 
