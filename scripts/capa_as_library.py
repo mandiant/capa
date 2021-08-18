@@ -85,6 +85,7 @@ def render_capabilities(doc, ostream):
         ostream["CAPABILITY"].setdefault(rule["meta"]["namespace"], list())
         ostream["CAPABILITY"][rule["meta"]["namespace"]].append(capability)
 
+
 def render_attack(doc, ostream):
     """
     example::
@@ -148,7 +149,6 @@ def render_mbc(doc, ostream):
             else:
                 inner_rows.append("%s::%s [%s]" % (behavior, method, id))
         ostream["MBC"].setdefault(objective.upper(), inner_rows)
-
 
 
 def render_dictionary(doc):
