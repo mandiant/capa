@@ -30,11 +30,12 @@ SUPPORTED_IDA_VERSIONS = [
     "7.6",
 ]
 
-# file type names as returned by idaapi.get_file_type_name()
+# file type names as returned by idainfo.file_type
 SUPPORTED_FILE_TYPES = [
-    "Portable executable for 80386 (PE)",
-    "Portable executable for AMD64 (PE)",
-    "Binary file",  # x86/AMD64 shellcode support
+    idaapi.f_PE,
+    idaapi.f_ELF,
+    # idaapi.f_MACHO,
+    idaapi.f_BIN,
 ]
 
 
@@ -55,10 +56,10 @@ def is_supported_ida_version():
 
 
 def is_supported_file_type():
-    file_type = idaapi.get_file_type_name()
-    if file_type not in SUPPORTED_FILE_TYPES:
+    file_info = idaapi.get_inf_structure()
+    if file_info.filetype not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
-        logger.error(" Input file does not appear to be a PE file.")
+        logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
         logger.error(
             " capa currently only supports analyzing PE files (or binary files containing x86/AMD64 shellcode) with IDA."
