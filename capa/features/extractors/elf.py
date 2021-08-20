@@ -241,7 +241,7 @@ def detect_elf_arch(f: BinaryIO) -> str:
     if not file_header.startswith(b"\x7fELF"):
         raise CorruptElfFile("missing magic header")
 
-    ei_data = struct.unpack_from("BB", file_header, 5)
+    (ei_data,) = struct.unpack_from("B", file_header, 5)
     logger.debug("ei_data: 0x%02x", ei_data)
 
     if ei_data == 1:
