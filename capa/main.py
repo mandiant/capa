@@ -21,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Iterable
+from typing import Any, Dict, List, Tuple
 
 import halo
 import tqdm
@@ -37,6 +37,7 @@ import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
 import capa.features.extractors
+import capa.features.extractors.common
 import capa.features.extractors.pefile
 from capa.rules import Rule, RuleSet
 from capa.engine import FeatureSet, MatchResults
@@ -45,7 +46,6 @@ from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtra
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
-SUPPORTED_FILE_MAGIC = (b"MZ", b"\x7fELF")
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
@@ -242,11 +242,23 @@ def is_supported_file_type(sample: str) -> bool:
     Return if this is a supported file based on magic header values
     """
     with open(sample, "rb") as f:
-        magic = f.read(4)
-    if magic.startswith(SUPPORTED_FILE_MAGIC):
-        return True
-    else:
-        return False
+        taste = f.read(0x100)
+
+    return len(list(capa.features.extractors.common.extract_format(taste))) == 1
+
+
+def is_supported_arch(sample: str) -> bool:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
+
+
+def is_supported_os(sample: str) -> bool:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    return len(list(capa.features.extractors.common.extract_os(buf))) == 1
 
 
 SHELLCODE_BASE = 0x690000
@@ -391,6 +403,14 @@ class UnsupportedFormatError(ValueError):
     pass
 
 
+class UnsupportedArchError(ValueError):
+    pass
+
+
+class UnsupportedOSError(ValueError):
+    pass
+
+
 def get_workspace(path, format, sigpaths):
     """
     load the program at the given path into a vivisect workspace using the given format.
@@ -445,6 +465,21 @@ def get_extractor(
     raises:
       UnsupportedFormatError:
     """
+    if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
+        format = "sc32"
+    elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
+        format = "sc64"
+
+    if format not in ("sc32", "sc64"):
+        if not is_supported_file_type(path):
+            raise UnsupportedFormatError()
+
+        if not is_supported_arch(path):
+            raise UnsupportedArchError()
+
+        if not is_supported_os(path):
+            raise UnsupportedOSError()
+
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
         from smda.Disassembler import Disassembler
@@ -463,10 +498,6 @@ def get_extractor(
         import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
-                format = "sc32"
-            elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
-                format = "sc64"
             vw = get_workspace(path, format, sigpaths)
 
             if should_save_workspace:
@@ -917,12 +948,28 @@ def main(argv=None):
             )
         except UnsupportedFormatError:
             logger.error("-" * 80)
-            logger.error(" Input file does not appear to be a PE file.")
+            logger.error(" Input file does not appear to be a PE or ELF file.")
             logger.error(" ")
             logger.error(
-                " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
+                " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
             )
             logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+            logger.error("-" * 80)
+            return -1
+        except UnsupportedArchError:
+            logger.error("-" * 80)
+            logger.error(" Input file does not appear to be target the x86 architecture.")
+            logger.error(" ")
+            logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
+            logger.error("-" * 80)
+            return -1
+        except UnsupportedOSError:
+            logger.error("-" * 80)
+            logger.error(" Input file does not appear to target a supported OS.")
+            logger.error(" ")
+            logger.error(
+                " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
+            )
             logger.error("-" * 80)
             return -1
 

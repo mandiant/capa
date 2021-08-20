@@ -227,3 +227,40 @@ def detect_elf_os(f: BinaryIO) -> str:
             ret = OS.LINUX if ret is None else ret
 
     return ret.value if ret is not None else "unknown"
+
+
+class Arch(str, Enum):
+    I386 = "i386"
+    AMD64 = "amd64"
+
+
+def detect_elf_arch(f: BinaryIO) -> str:
+    f.seek(0x0)
+    file_header = f.read(0x40)
+
+    if not file_header.startswith(b"\x7fELF"):
+        raise CorruptElfFile("missing magic header")
+
+    ei_data = struct.unpack_from("BB", file_header, 5)
+    logger.debug("ei_data: 0x%02x", ei_data)
+
+    if ei_data == 1:
+        endian = "<"
+    elif ei_data == 2:
+        endian = ">"
+    else:
+        raise CorruptElfFile("not an ELF file: invalid ei_data: 0x%02x" % ei_data)
+
+    (ei_machine,) = struct.unpack_from(endian + "H", file_header, 0x12)
+    logger.debug("ei_machine: 0x%02x", ei_machine)
+
+    EM_386 = 0x3
+    EM_X86_64 = 0x3E
+    if ei_machine == EM_386:
+        return Arch.I386
+    elif ei_machine == EM_X86_64:
+        return Arch.AMD64
+    else:
+        # not really unknown, but unsupport at the moment:
+        # https://github.com/eliben/pyelftools/blob/ab444d982d1849191e910299a985989857466620/elftools/elf/enums.py#L73
+        return "unknown"
