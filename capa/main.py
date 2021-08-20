@@ -237,7 +237,7 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
     return False
 
 
-def is_supported_file_type(sample: str) -> bool:
+def is_supported_format(sample: str) -> bool:
     """
     Return if this is a supported file based on magic header values
     """
@@ -247,6 +247,17 @@ def is_supported_file_type(sample: str) -> bool:
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
 
 
+def get_format(sample: str) -> str:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    for feature, _ in capa.features.extractors.common.extract_format(buf):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return "unknown"
+
+
 def is_supported_arch(sample: str) -> bool:
     with open(sample, "rb") as f:
         buf = f.read()
@@ -254,11 +265,33 @@ def is_supported_arch(sample: str) -> bool:
     return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
 
 
+def get_arch(sample: str) -> str:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    for feature, _ in capa.features.extractors.common.extract_arch(buf):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return "unknown"
+
+
 def is_supported_os(sample: str) -> bool:
     with open(sample, "rb") as f:
         buf = f.read()
 
     return len(list(capa.features.extractors.common.extract_os(buf))) == 1
+
+
+def get_os(sample: str) -> str:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    for feature, _ in capa.features.extractors.common.extract_os(buf):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return "unknown"
 
 
 SHELLCODE_BASE = 0x690000
@@ -431,7 +464,7 @@ def get_workspace(path, format, sigpaths):
 
     logger.debug("generating vivisect workspace for: %s", path)
     if format == "auto":
-        if not is_supported_file_type(path):
+        if not is_supported_format(path):
             raise UnsupportedFormatError()
 
         # don't analyze, so that we can add our Flirt function analyzer first.
@@ -463,15 +496,12 @@ def get_extractor(
 ) -> FeatureExtractor:
     """
     raises:
-      UnsupportedFormatError:
+      UnsupportedFormatError
+      UnsupportedArchError
+      UnsupportedOSError
     """
-    if format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_32):
-        format = "sc32"
-    elif format == "auto" and path.endswith(EXTENSIONS_SHELLCODE_64):
-        format = "sc64"
-
     if format not in ("sc32", "sc64"):
-        if not is_supported_file_type(path):
+        if not is_supported_format(path):
             raise UnsupportedFormatError()
 
         if not is_supported_arch(path):
@@ -605,7 +635,7 @@ def get_signatures(sigs_path):
     return paths
 
 
-def collect_metadata(argv, sample_path, rules_path, format, extractor):
+def collect_metadata(argv, sample_path, rules_path, extractor):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
@@ -620,6 +650,10 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
     if rules_path != RULES_PATH_DEFAULT_STRING:
         rules_path = os.path.abspath(os.path.normpath(rules_path))
 
+    format = get_format(sample_path)
+    arch = get_arch(sample_path)
+    os_ = get_os(sample_path)
+
     return {
         "timestamp": datetime.datetime.now().isoformat(),
         "version": capa.version.__version__,
@@ -632,6 +666,8 @@ def collect_metadata(argv, sample_path, rules_path, format, extractor):
         },
         "analysis": {
             "format": format,
+            "arch": arch,
+            "os": os_,
             "extractor": extractor.__class__.__name__,
             "rules": rules_path,
             "base_address": extractor.get_base_address(),
@@ -940,6 +976,11 @@ def main(argv=None):
             extractor = capa.features.freeze.load(f.read())
     else:
         format = args.format
+        if format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_32):
+            format = "sc32"
+        elif format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_64):
+            format = "sc64"
+
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
@@ -973,7 +1014,7 @@ def main(argv=None):
             logger.error("-" * 80)
             return -1
 
-    meta = collect_metadata(argv, args.sample, args.rules, format, extractor)
+    meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)

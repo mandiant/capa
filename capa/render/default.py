@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
-from typing import Dict, List
 
 import tabulate
 
@@ -33,6 +32,9 @@ def render_meta(doc, ostream: StringIO):
         (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
         ("sha1", doc["meta"]["sample"]["sha1"]),
         ("sha256", doc["meta"]["sample"]["sha256"]),
+        ("os", doc["meta"]["analysis"]["os"]),
+        ("format", doc["meta"]["analysis"]["format"]),
+        ("arch", doc["meta"]["analysis"]["arch"]),
         ("path", doc["meta"]["sample"]["path"]),
     ]
 

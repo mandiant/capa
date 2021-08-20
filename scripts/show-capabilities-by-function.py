@@ -171,7 +171,7 @@ def main(argv=None):
             logger.error("-" * 80)
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, args.rules, format, extractor)
+    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
 
