@@ -999,7 +999,7 @@ def main(argv=None):
             return -1
         except UnsupportedArchError:
             logger.error("-" * 80)
-            logger.error(" Input file does not appear to be target the x86 architecture.")
+            logger.error(" Input file does not appear to target a supported architecture.")
             logger.error(" ")
             logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
             logger.error("-" * 80)
