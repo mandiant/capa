@@ -282,9 +282,7 @@ OS_WINDOWS = "windows"
 OS_LINUX = "linux"
 OS_MACOS = "macos"
 VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
-VALID_OS.add(OS_WINDOWS)
-VALID_OS.add(OS_LINUX)
-VALID_OS.add(OS_MACOS)
+VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS})
 
 
 class OS(Feature):
