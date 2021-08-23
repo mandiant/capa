@@ -15,6 +15,9 @@ from fixtures import *
     indirect=["sample", "scope"],
 )
 def test_viv_features(sample, scope, feature, expected):
+    if "elf" in sample:
+        pytest.xfail("viv ELF parsing is broken (for our test file), see #735")
+
     fixtures.do_test_feature_presence(fixtures.get_viv_extractor, sample, scope, feature, expected)
 
 
@@ -24,4 +27,7 @@ def test_viv_features(sample, scope, feature, expected):
     indirect=["sample", "scope"],
 )
 def test_viv_feature_counts(sample, scope, feature, expected):
+    if "elf" in sample:
+        pytest.xfail("viv ELF parsing is broken (for our test file), see #735")
+
     fixtures.do_test_feature_count(fixtures.get_viv_extractor, sample, scope, feature, expected)
