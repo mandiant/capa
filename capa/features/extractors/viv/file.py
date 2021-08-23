@@ -105,7 +105,7 @@ def extract_features(vw, buf: bytes):
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(vw=vw, buf=buf):
+        for feature, va in file_handler(vw=vw, buf=buf):  # type: ignore
             yield feature, va
 
 
