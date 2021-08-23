@@ -113,9 +113,8 @@ def detect_elf_os(f: BinaryIO) -> str:
     # os_osabi == 0 is commonly set even when the OS is not SYSV.
     # other values are unused or unknown.
     if ei_osabi in OSABI and ei_osabi != 0x0:
-        # update only if not set
-        # so we can get the debugging output of subsequent strategies
-        ret = OSABI[ei_osabi] if not ret else ret
+        # subsequent strategies may overwrite this value
+        ret = OSABI[ei_osabi]
 
     f.seek(e_phoff)
     program_header_size = e_phnum * e_phentsize
