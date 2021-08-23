@@ -11,7 +11,6 @@ from fixtures import *
 from fixtures import parametrize
 
 import capa.features.file
-import capa.features.insn
 
 
 @parametrize(
