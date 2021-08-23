@@ -83,7 +83,9 @@ def detect_elf_os(f: BinaryIO) -> str:
     (ei_osabi,) = struct.unpack_from(endian + "B", file_header, 7)
     OSABI = {
         # via pyelftools: https://github.com/eliben/pyelftools/blob/0664de05ed2db3d39041e2d51d19622a8ef4fb0f/elftools/elf/enums.py#L35-L58
-        # 0: "SYSV",
+        # some candidates are commented out because the are not useful values,
+        # at least when guessing OSes
+        # 0: "SYSV",  # too often used when OS is not SYSV
         1: OS.HPUX,
         2: OS.NETBSD,
         3: OS.LINUX,
@@ -101,10 +103,10 @@ def detect_elf_os(f: BinaryIO) -> str:
         15: OS.AROS,
         16: OS.FENIXOS,
         17: OS.CLOUD,
-        # 53: "SORTFIX",
-        # 64: "ARM_AEABI",
-        # 97: "ARM",
-        # 255: "STANDALONE",
+        # 53: "SORTFIX",      # i can't find any reference to this OS, i dont think it exists
+        # 64: "ARM_AEABI",    # not an OS
+        # 97: "ARM",          # not an OS
+        # 255: "STANDALONE",  # not an OS
     }
     logger.debug("ei_osabi: 0x%02x (%s)", ei_osabi, OSABI.get(ei_osabi, "unknown"))
 
