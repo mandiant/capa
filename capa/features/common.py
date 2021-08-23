@@ -309,6 +309,6 @@ class Format(Feature):
 def is_global_feature(feature):
     """
     is this a feature that is extracted at every scope?
-    today, this are OS and arch features.
+    today, these are OS and arch features.
     """
     return isinstance(feature, (OS, Arch))
