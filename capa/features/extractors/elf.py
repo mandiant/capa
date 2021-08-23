@@ -110,6 +110,8 @@ def detect_elf_os(f: BinaryIO) -> str:
     }
     logger.debug("ei_osabi: 0x%02x (%s)", ei_osabi, OSABI.get(ei_osabi, "unknown"))
 
+    # os_osabi == 0 is commonly set even when the OS is not SYSV.
+    # other values are unused or unknown.
     if ei_osabi in OSABI and ei_osabi != 0x0:
         # update only if not set
         # so we can get the debugging output of subsequent strategies
