@@ -20,15 +20,12 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_embedded_pe(pe, file_path):
-    with open(file_path, "rb") as f:
-        fbytes = f.read()
-
-    for offset, i in capa.features.extractors.helpers.carve_pe(fbytes, 1):
+def extract_file_embedded_pe(buf, **kwargs):
+    for offset, _ in capa.features.extractors.helpers.carve_pe(buf, 1):
         yield Characteristic("embedded pe"), offset
 
 
-def extract_file_export_names(pe, file_path):
+def extract_file_export_names(pe, **kwargs):
     base_address = pe.OPTIONAL_HEADER.ImageBase
 
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
@@ -43,7 +40,7 @@ def extract_file_export_names(pe, file_path):
             yield Export(name), va
 
 
-def extract_file_import_names(pe, file_path):
+def extract_file_import_names(pe, **kwargs):
     """
     extract imported function names
     1. imports by ordinal:
@@ -75,7 +72,7 @@ def extract_file_import_names(pe, file_path):
                     yield Import(name), imp.address
 
 
-def extract_file_section_names(pe, file_path):
+def extract_file_section_names(pe, **kwargs):
     base_address = pe.OPTIONAL_HEADER.ImageBase
 
     for section in pe.sections:
@@ -87,21 +84,18 @@ def extract_file_section_names(pe, file_path):
         yield Section(name), base_address + section.VirtualAddress
 
 
-def extract_file_strings(pe, file_path):
+def extract_file_strings(buf, **kwargs):
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    with open(file_path, "rb") as f:
-        b = f.read()
-
-    for s in capa.features.extractors.strings.extract_ascii_strings(b):
+    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
         yield String(s.s), s.offset
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(b):
+    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
         yield String(s.s), s.offset
 
 
-def extract_file_function_names(pe, file_path):
+def extract_file_function_names(**kwargs):
     """
     extract the names of statically-linked library functions.
     """
@@ -111,17 +105,17 @@ def extract_file_function_names(pe, file_path):
     return
 
 
-def extract_file_os(pe, file_path):
+def extract_file_os(**kwargs):
     # assuming PE -> Windows
     # though i suppose they're also used by UEFI
     yield OS(OS_WINDOWS), 0x0
 
 
-def extract_file_format(pe, file_path):
+def extract_file_format(**kwargs):
     yield Format(FORMAT_PE), 0x0
 
 
-def extract_file_arch(pe, file_path):
+def extract_file_arch(pe, **kwargs):
     if pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_I386"]:
         yield Arch(ARCH_I386), 0x0
     elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
@@ -130,20 +124,20 @@ def extract_file_arch(pe, file_path):
         logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
 
-def extract_file_features(pe, file_path):
+def extract_file_features(pe, buf):
     """
     extract file features from given workspace
 
     args:
       pe (pefile.PE): the parsed PE
-      file_path: path to the input file
+      buf: the raw sample bytes
 
     yields:
       Tuple[Feature, VA]: a feature and its location.
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe, file_path):
+        for feature, va in file_handler(pe=pe, buf=buf):
             yield feature, va
 
 
@@ -170,7 +164,10 @@ class PefileFeatureExtractor(FeatureExtractor):
         return self.pe.OPTIONAL_HEADER.ImageBase
 
     def extract_file_features(self):
-        for feature, va in extract_file_features(self.pe, self.path):
+        with open(self.path, "rb") as f:
+            buf = f.read()
+
+        for feature, va in extract_file_features(self.pe, buf):
             yield feature, va
 
     def get_functions(self):

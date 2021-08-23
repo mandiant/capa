@@ -18,17 +18,17 @@ from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import String, Characteristic
 
 
-def extract_file_embedded_pe(vw, buf):
-    for offset, i in pe_carve.carve(buf, 1):
+def extract_file_embedded_pe(buf, **kwargs):
+    for offset, _ in pe_carve.carve(buf, 1):
         yield Characteristic("embedded pe"), offset
 
 
-def extract_file_export_names(vw, buf):
-    for va, etype, name, _ in vw.getExports():
+def extract_file_export_names(vw, **kwargs):
+    for va, _, name, _ in vw.getExports():
         yield Export(name), va
 
 
-def extract_file_import_names(vw, buf):
+def extract_file_import_names(vw, **kwargs):
     """
     extract imported function names
     1. imports by ordinal:
@@ -62,12 +62,12 @@ def is_viv_ord_impname(impname: str) -> bool:
         return True
 
 
-def extract_file_section_names(vw, buf):
+def extract_file_section_names(vw, **kwargs):
     for va, _, segname, _ in vw.getSegments():
         yield Section(segname), va
 
 
-def extract_file_strings(vw, buf):
+def extract_file_strings(buf, **kwargs):
     """
     extract ASCII and UTF-16 LE strings from file
     """
@@ -78,7 +78,7 @@ def extract_file_strings(vw, buf):
         yield String(s.s), s.offset
 
 
-def extract_file_function_names(vw, buf):
+def extract_file_function_names(vw, **kwargs):
     """
     extract the names of statically-linked library functions.
     """
@@ -88,7 +88,7 @@ def extract_file_function_names(vw, buf):
             yield FunctionName(name), va
 
 
-def extract_file_format(vw, buf):
+def extract_file_format(buf, **kwargs):
     yield from capa.features.extractors.common.extract_format(buf)
 
 
@@ -105,7 +105,7 @@ def extract_features(vw, buf: bytes):
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(vw, buf):
+        for feature, va in file_handler(vw=vw, buf=buf):
             yield feature, va
 
 

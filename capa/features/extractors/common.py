@@ -28,7 +28,7 @@ def extract_format(buf):
 
 def extract_arch(buf):
     if buf.startswith(b"MZ"):
-        yield from capa.features.extractors.pefile.extract_file_arch(pefile.PE(data=buf), "hack: path not provided")
+        yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
 
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:

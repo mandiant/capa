@@ -26,7 +26,7 @@ class SmdaFeatureExtractor(FeatureExtractor):
         return self.smda_report.base_addr
 
     def extract_file_features(self):
-        for feature, va in capa.features.extractors.smda.file.extract_features(self.smda_report, self.path):
+        for feature, va in capa.features.extractors.smda.file.extract_features(self.smda_report, self.buf):
             yield feature, va
         yield from self.global_features
 
