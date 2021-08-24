@@ -60,7 +60,8 @@ def main():
 
         process = psutil.Process(os.getpid())
         print("  duration: %0.02fs" % (t1 - t0))
-        print("  rss: %.1f KiB" % (process.memory_info().rss / 1024))
+        print("  rss: %.1f MiB" % (process.memory_info().rss / 1024 / 1024))
+        print("  vms: %.1f MiB" % (process.memory_info().vms / 1024 / 1024))
 
     print("done.")
     gc.collect()
