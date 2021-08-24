@@ -16,7 +16,7 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (24)
+### New Rules (26)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -42,6 +42,8 @@
 - host-interaction/driver/create-device-object @mr-tz
 - host-interaction/process/create/execute-command @mr-tz
 - data-manipulation/encryption/create-new-key-via-cryptacquirecontext chuong.dong@fireeye.com
+- host-interaction/log/clfs/append-data-to-clfs-log-container blaine.stancill@mandiant.com
+- host-interaction/log/clfs/read-data-from-clfs-log-container blaine.stancill@mandiant.com
 -
 
 ### Bug Fixes
