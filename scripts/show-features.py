@@ -203,6 +203,8 @@ def print_features(functions, extractor):
             logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
             continue
 
+        print("func: 0x%08x" % (function_address))
+
         for feature, va in extractor.extract_function_features(f):
             if capa.features.common.is_global_feature(feature):
                 continue

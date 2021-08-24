@@ -562,7 +562,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
             )
 
-        if feature["type"] == "regex":
+        if feature["type"] in ("regex", "substring"):
             for s, locations in feature["matches"].items():
                 if location in locations:
                     return CapaExplorerStringViewItem(

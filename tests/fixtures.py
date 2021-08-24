@@ -464,9 +464,10 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.common.String("ACR  > "), True),
         ("mimikatz", "function=0x40105D", capa.features.common.String("nope"), False),
         ("773290...", "function=0x140001140", capa.features.common.String(r"%s:\\OfficePackagesForWDAG"), True),
-        # insn/regex, issue #262
+        # insn/regex
         ("pma16-01", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
-        ("pma16-01", "function=0x4021B0", capa.features.common.Regex("www.practicalmalwareanalysis.com"), False),
+        ("pma16-01", "function=0x402F40", capa.features.common.Regex("www.practicalmalwareanalysis.com"), True),
+        ("pma16-01", "function=0x402F40", capa.features.common.Substring("practicalmalwareanalysis.com"), True),
         # insn/string, pointer to string
         ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
         # insn/string, direct memory reference
