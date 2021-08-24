@@ -37,7 +37,10 @@ def main():
     # while also invoking tracemalloc.start() immediately upon start.
     import io
     import os
+    import time
     import contextlib
+
+    import psutil
 
     import capa.main
 
@@ -49,10 +52,17 @@ def main():
         print("iteration %d/%d..." % (i + 1, count))
         with contextlib.redirect_stdout(io.StringIO()):
             with contextlib.redirect_stderr(io.StringIO()):
+                t0 = time.time()
                 capa.main.main()
+                t1 = time.time()
+
+                gc.collect()
+
+        process = psutil.Process(os.getpid())
+        print("  duration: %0.02fs" % (t1 - t0))
+        print("  rss: %.1f KiB" % (process.memory_info().rss / 1024))
 
     print("done.")
-
     gc.collect()
 
     snapshot0 = tracemalloc.take_snapshot()
