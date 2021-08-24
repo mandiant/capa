@@ -326,7 +326,7 @@ class FeatureStringTooShort(Lint):
 
     def check_features(self, ctx, features):
         for feature in features:
-            if isinstance(feature, capa.features.common.String):
+            if isinstance(feature, (capa.features.common.String, capa.features.common.Substring)):
                 if len(feature.value) < 4:
                     self.recommendation = self.recommendation.format(feature.value)
                     return True
@@ -415,23 +415,40 @@ class FormatStringQuotesIncorrect(Lint):
     def check_rule(self, ctx, rule):
         events = capa.rules.Rule._get_ruamel_yaml_parser().parse(rule.definition)
         for key in events:
-            if not (isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "string"):
+            if isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "string":
+                value = next(events)  # assume value is next event
+                if not isinstance(value, ruamel.yaml.ScalarEvent):
+                    # ignore non-scalar
+                    continue
+                if value.value.startswith("/") and value.value.endswith(("/", "/i")):
+                    # ignore regex for now
+                    continue
+                if value.style is None:
+                    # no quotes
+                    self.recommendation = 'add double quotes to "%s"' % value.value
+                    return True
+                if value.style == "'":
+                    # single quote
+                    self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                    return True
+
+            elif isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "substring":
+                value = next(events)  # assume value is next event
+                if not isinstance(value, ruamel.yaml.ScalarEvent):
+                    # ignore non-scalar
+                    continue
+                if value.style is None:
+                    # no quotes
+                    self.recommendation = 'add double quotes to "%s"' % value.value
+                    return True
+                if value.style == "'":
+                    # single quote
+                    self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                    return True
+
+            else:
                 continue
-            value = next(events)  # assume value is next event
-            if not isinstance(value, ruamel.yaml.ScalarEvent):
-                # ignore non-scalar
-                continue
-            if value.value.startswith("/") and value.value.endswith(("/", "/i")):
-                # ignore regex for now
-                continue
-            if value.style is None:
-                # no quotes
-                self.recommendation = 'add double quotes to "%s"' % value.value
-                return True
-            if value.style == "'":
-                # single quote
-                self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
-                return True
+
         return False
 
 
