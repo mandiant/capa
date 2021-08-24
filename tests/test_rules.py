@@ -766,6 +766,23 @@ def test_substring_feature():
     assert (Substring("abc") in children) == True
     assert (Substring("def") in children) == True
     assert (Substring("gh\ni") in children) == True
+ 
+
+def test_substring_description():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - substring: abc
+                      description: the start of the alphabet
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Substring("abc") in children) == True
 
 
 def test_regex_values_always_string():
