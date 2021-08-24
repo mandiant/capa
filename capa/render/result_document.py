@@ -74,7 +74,7 @@ def convert_feature_to_result_document(feature):
     result = {"type": feature.name, feature.name: feature.get_value_str()}
     if feature.description:
         result["description"] = feature.description
-    if feature.name == "regex":
+    if feature.name in ("regex", "substring"):
         result["matches"] = feature.matches
     return result
 

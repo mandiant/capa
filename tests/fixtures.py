@@ -467,6 +467,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/regex, issue #262
         ("pma16-01", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
         ("pma16-01", "function=0x4021B0", capa.features.common.Regex("www.practicalmalwareanalysis.com"), False),
+        ("pma16-01", "function=0x4021B0", capa.features.common.Substring("practicalmalwareanalysis.com"), False),
         # insn/string, pointer to string
         ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
         # insn/string, direct memory reference

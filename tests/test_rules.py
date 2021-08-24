@@ -28,6 +28,7 @@ from capa.features.common import (
     Arch,
     Format,
     String,
+    Substring,
 )
 
 
@@ -745,6 +746,26 @@ def test_string_values_special_characters():
     children = list(r.statement.get_children())
     assert (String("hello\r\nworld") in children) == True
     assert (String("bye\nbye") in children) == True
+
+
+def test_substring_feature():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - substring: abc
+                    - substring: "def"
+                    - substring: "gh\\ni"
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Substring("abc") in children) == True
+    assert (Substring("def") in children) == True
+    assert (Substring("gh\ni") in children) == True
 
 
 def test_regex_values_always_string():

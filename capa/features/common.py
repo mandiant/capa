@@ -135,6 +135,77 @@ class String(Feature):
         super(String, self).__init__(value, description=description)
 
 
+class Substring(String):
+    def __init__(self, value: str, description=None):
+        super(Substring, self).__init__(value, description=description)
+        self.value = value
+
+    def evaluate(self, ctx):
+        # mapping from string value to list of locations.
+        # will unique the locations later on.
+        matches = collections.defaultdict(list)
+
+        for feature, locations in ctx.items():
+            if not isinstance(feature, (String,)):
+                continue
+
+            if not isinstance(feature.value, str):
+                # this is a programming error: String should only contain str
+                raise ValueError("unexpected feature value type")
+
+            if self.value in feature.value:
+                matches[feature.value].extend(locations)
+
+        if matches:
+            # finalize: defaultdict -> dict
+            # which makes json serialization easier
+            matches = dict(matches)
+
+            # collect all locations
+            locations = set()
+            for s in matches.keys():
+                matches[s] = list(set(matches[s]))
+                locations.update(matches[s])
+
+            # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
+            # this is because `self` may match on many strings, so we can't stuff the matched value into it.
+            # instead, return a new instance that has a reference to both the substring and the matched values.
+            return capa.engine.Result(True, _MatchedSubstring(self, matches), [], locations=locations)
+        else:
+            return capa.engine.Result(False, _MatchedSubstring(self, None), [])
+
+    def __str__(self):
+        return "substring(%s)" % self.value
+
+
+class _MatchedSubstring(Substring):
+    """
+    this represents specific match instances of a substring feature.
+    treat it the same as a `Substring` except it has the `matches` field that contains the complete strings that matched.
+
+    note: this type should only ever be constructed by `Substring.evaluate()`. it is not part of the public API.
+    """
+
+    def __init__(self, substring: Substring, matches):
+        """
+        args:
+          substring (Substring): the substring feature that matches.
+          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
+        """
+        super(_MatchedSubstring, self).__init__(str(substring.value), description=substring.description)
+        # we want this to collide with the name of `Substring` above,
+        # so that it works nicely with the renderers.
+        self.name = "substring"
+        # this may be None if the substring doesn't match
+        self.matches = matches
+
+    def __str__(self):
+        return 'substring("%s", matches = %s)' % (
+            self.value,
+            ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
+        )
+
+
 class Regex(String):
     def __init__(self, value: str, description=None):
         super(Regex, self).__init__(value, description=description)

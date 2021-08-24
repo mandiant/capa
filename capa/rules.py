@@ -219,6 +219,8 @@ def parse_feature(key: str):
         return capa.features.insn.API
     elif key == "string":
         return capa.features.common.StringFactory
+    elif key == "substring":
+        return capa.features.common.Substring
     elif key == "bytes":
         return capa.features.common.Bytes
     elif key == "number":
