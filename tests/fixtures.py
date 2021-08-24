@@ -21,7 +21,19 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.common import ARCH_X32, ARCH_X64
+from capa.features.common import (
+    OS,
+    OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    BITNESS_X32,
+    BITNESS_X64,
+    Arch,
+    Format,
+)
 
 CD = os.path.dirname(__file__)
 
@@ -196,6 +208,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "773290480d5445f11d3dc1b800728966.exe_")
     elif name.startswith("3b13b"):
         return os.path.join(CD, "data", "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_")
+    elif name == "7351f.elf":
+        return os.path.join(CD, "data", "7351f8a40c5450557b24622417fc478d.elf_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -241,6 +255,8 @@ def get_sample_md5_by_name(name):
     elif name.startswith("3b13b"):
         # file name is SHA256 hash
         return "56a6ffe6a02941028cc8235204eef31d"
+    elif name == "7351f.elf":
+        return "7351f8a40c5450557b24622417fc478d"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -379,10 +395,10 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/number: stack adjustments
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
-        # insn/number: arch flavors
+        # insn/number: bitness flavors
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, arch=ARCH_X64), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X64), False),
         # insn/offset
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x4), True),
@@ -395,10 +411,10 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/offset: negative
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-        # insn/offset: arch flavors
+        # insn/offset: bitness flavors
         ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, arch=ARCH_X64), False),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X32), True),
+        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X64), False),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
@@ -499,6 +515,26 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
         # file/function-name
         ("pma16-01", "file", capa.features.file.FunctionName("__aulldiv"), True),
+        # os & format & arch
+        ("pma16-01", "file", OS(OS_WINDOWS), True),
+        ("pma16-01", "file", OS(OS_LINUX), False),
+        ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("pma16-01", "file", Arch(ARCH_I386), True),
+        ("pma16-01", "file", Arch(ARCH_AMD64), False),
+        ("pma16-01", "function=0x404356", Arch(ARCH_I386), True),
+        ("pma16-01", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
+        ("pma16-01", "file", Format(FORMAT_PE), True),
+        ("pma16-01", "file", Format(FORMAT_ELF), False),
+        # elf support
+        ("7351f.elf", "file", OS(OS_LINUX), True),
+        ("7351f.elf", "file", OS(OS_WINDOWS), False),
+        ("7351f.elf", "file", Format(FORMAT_ELF), True),
+        ("7351f.elf", "file", Format(FORMAT_PE), False),
+        ("7351f.elf", "file", Arch(ARCH_I386), False),
+        ("7351f.elf", "file", Arch(ARCH_AMD64), True),
+        ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
+        ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.

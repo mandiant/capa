@@ -10,8 +10,10 @@ import logging
 import viv_utils
 import viv_utils.flirt
 
+import capa.features.extractors.common
 import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
+import capa.features.extractors.viv.global_
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -37,14 +39,22 @@ class VivisectFeatureExtractor(FeatureExtractor):
         super(VivisectFeatureExtractor, self).__init__()
         self.vw = vw
         self.path = path
+        with open(self.path, "rb") as f:
+            self.buf = f.read()
+
+        # pre-compute these because we'll yield them at *every* scope.
+        self.global_features = []
+        self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
+        self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
     def get_base_address(self):
         # assume there is only one file loaded into the vw
         return list(self.vw.filemeta.values())[0]["imagebase"]
 
     def extract_file_features(self):
-        for feature, va in capa.features.extractors.viv.file.extract_features(self.vw, self.path):
+        for feature, va in capa.features.extractors.viv.file.extract_features(self.vw, self.buf):
             yield feature, va
+        yield from self.global_features
 
     def get_functions(self):
         for va in sorted(self.vw.getFunctions()):
@@ -53,6 +63,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def extract_function_features(self, f):
         for feature, va in capa.features.extractors.viv.function.extract_features(f):
             yield feature, va
+        yield from self.global_features
 
     def get_basic_blocks(self, f):
         return f.basic_blocks
@@ -60,6 +71,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def extract_basic_block_features(self, f, bb):
         for feature, va in capa.features.extractors.viv.basicblock.extract_features(f, bb):
             yield feature, va
+        yield from self.global_features
 
     def get_instructions(self, f, bb):
         for insn in bb.instructions:
@@ -68,6 +80,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         for feature, va in capa.features.extractors.viv.insn.extract_features(f, bb, insn):
             yield feature, va
+        yield from self.global_features
 
     def is_library_function(self, va):
         return viv_utils.flirt.is_library_function(self.vw, va)

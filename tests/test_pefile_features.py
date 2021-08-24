@@ -20,9 +20,12 @@ import capa.features.file
 )
 def test_pefile_features(sample, scope, feature, expected):
     if scope.__name__ != "file":
-        pytest.xfail("pefile only extract file scope features")
+        pytest.xfail("pefile only extracts file scope features")
 
     if isinstance(feature, capa.features.file.FunctionName):
-        pytest.xfail("pefile only doesn't extract function names")
+        pytest.xfail("pefile doesn't extract function names")
+
+    if ".elf" in sample:
+        pytest.xfail("pefile doesn't handle ELF files")
 
     fixtures.do_test_feature_presence(fixtures.get_pefile_extractor, sample, scope, feature, expected)

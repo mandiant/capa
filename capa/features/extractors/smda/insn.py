@@ -7,8 +7,8 @@ from smda.common.SmdaReport import SmdaReport
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic
 from capa.features.common import (
-    ARCH_X32,
-    ARCH_X64,
+    BITNESS_X32,
+    BITNESS_X64,
     MAX_BYTES_FEATURE_SIZE,
     THUNK_CHAIN_DEPTH_DELTA,
     Bytes,
@@ -23,12 +23,12 @@ PATTERN_HEXNUM = re.compile(r"[+\-] (?P<num>0x[a-fA-F0-9]+)")
 PATTERN_SINGLENUM = re.compile(r"[+\-] (?P<num>[0-9])")
 
 
-def get_arch(smda_report):
+def get_bitness(smda_report):
     if smda_report.architecture == "intel":
         if smda_report.bitness == 32:
-            return ARCH_X32
+            return BITNESS_X32
         elif smda_report.bitness == 64:
-            return ARCH_X64
+            return BITNESS_X64
     else:
         raise NotImplementedError
 
@@ -85,7 +85,7 @@ def extract_insn_number_features(f, bb, insn):
     for operand in operands:
         try:
             yield Number(int(operand, 16)), insn.offset
-            yield Number(int(operand, 16), arch=get_arch(f.smda_report)), insn.offset
+            yield Number(int(operand, 16), bitness=get_bitness(f.smda_report)), insn.offset
         except:
             continue
 
@@ -228,7 +228,7 @@ def extract_insn_offset_features(f, bb, insn):
             number = int(number_int.group("num"))
             number = -1 * number if number_int.group().startswith("-") else number
         yield Offset(number), insn.offset
-        yield Offset(number, arch=get_arch(f.smda_report)), insn.offset
+        yield Offset(number, bitness=get_bitness(f.smda_report)), insn.offset
 
 
 def is_security_cookie(f, bb, insn):

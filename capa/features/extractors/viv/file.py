@@ -11,26 +11,24 @@ import viv_utils
 import viv_utils.flirt
 
 import capa.features.insn
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import String, Characteristic
 
 
-def extract_file_embedded_pe(vw, file_path):
-    with open(file_path, "rb") as f:
-        fbytes = f.read()
-
-    for offset, i in pe_carve.carve(fbytes, 1):
+def extract_file_embedded_pe(buf, **kwargs):
+    for offset, _ in pe_carve.carve(buf, 1):
         yield Characteristic("embedded pe"), offset
 
 
-def extract_file_export_names(vw, file_path):
-    for va, etype, name, _ in vw.getExports():
+def extract_file_export_names(vw, **kwargs):
+    for va, _, name, _ in vw.getExports():
         yield Export(name), va
 
 
-def extract_file_import_names(vw, file_path):
+def extract_file_import_names(vw, **kwargs):
     """
     extract imported function names
     1. imports by ordinal:
@@ -64,26 +62,23 @@ def is_viv_ord_impname(impname: str) -> bool:
         return True
 
 
-def extract_file_section_names(vw, file_path):
+def extract_file_section_names(vw, **kwargs):
     for va, _, segname, _ in vw.getSegments():
         yield Section(segname), va
 
 
-def extract_file_strings(vw, file_path):
+def extract_file_strings(buf, **kwargs):
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    with open(file_path, "rb") as f:
-        b = f.read()
-
-    for s in capa.features.extractors.strings.extract_ascii_strings(b):
+    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
         yield String(s.s), s.offset
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(b):
+    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
         yield String(s.s), s.offset
 
 
-def extract_file_function_names(vw, file_path):
+def extract_file_function_names(vw, **kwargs):
     """
     extract the names of statically-linked library functions.
     """
@@ -93,20 +88,24 @@ def extract_file_function_names(vw, file_path):
             yield FunctionName(name), va
 
 
-def extract_features(vw, file_path):
+def extract_file_format(buf, **kwargs):
+    yield from capa.features.extractors.common.extract_format(buf)
+
+
+def extract_features(vw, buf: bytes):
     """
     extract file features from given workspace
 
     args:
       vw (vivisect.VivWorkspace): the vivisect workspace
-      file_path: path to the input file
+      buf: the raw input file bytes
 
     yields:
       Tuple[Feature, VA]: a feature and its location.
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(vw, file_path):
+        for feature, va in file_handler(vw=vw, buf=buf):  # type: ignore
             yield feature, va
 
 
@@ -117,4 +116,5 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
+    extract_file_format,
 )

@@ -43,7 +43,7 @@ import capa.rules
 import capa.engine
 import capa.features
 import capa.features.insn
-from capa.features.common import ARCH_X32, ARCH_X64, String
+from capa.features.common import BITNESS_X32, BITNESS_X64, String
 
 logger = logging.getLogger("capa2yara")
 

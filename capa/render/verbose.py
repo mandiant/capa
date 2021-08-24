@@ -41,7 +41,9 @@ def render_meta(ostream, doc):
         path                 /tmp/suspicious.dll_
         timestamp            2020-07-03T10:17:05.796933
         capa version         0.0.0
-        format               auto
+        os                   windows
+        format               pe
+        arch                 amd64
         extractor            VivisectFeatureExtractor
         base address         0x10000000
         rules                (embedded rules)
@@ -55,7 +57,9 @@ def render_meta(ostream, doc):
         ("path", doc["meta"]["sample"]["path"]),
         ("timestamp", doc["meta"]["timestamp"]),
         ("capa version", doc["meta"]["version"]),
+        ("os", doc["meta"]["analysis"]["os"]),
         ("format", doc["meta"]["analysis"]["format"]),
+        ("arch", doc["meta"]["analysis"]["arch"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
         ("rules", doc["meta"]["analysis"]["rules"]),

@@ -126,7 +126,7 @@ def get_capa_results(args):
             "error": "unexpected error: %s" % (e),
         }
 
-    meta = capa.main.collect_metadata("", path, "", format, extractor)
+    meta = capa.main.collect_metadata("", path, "", extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
     meta["analysis"].update(counts)
 

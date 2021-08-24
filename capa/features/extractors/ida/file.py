@@ -11,12 +11,13 @@ import struct
 import idc
 import idaapi
 import idautils
+import ida_loader
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import String, Characteristic
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format, String, Characteristic
 
 
 def check_segment_for_pe(seg):
@@ -153,6 +154,19 @@ def extract_file_function_names():
             yield FunctionName(name), ea
 
 
+def extract_file_format():
+    format_name = ida_loader.get_file_type_name()
+
+    if "PE" in format_name:
+        yield Format(FORMAT_PE), 0x0
+    elif "ELF64" in format_name:
+        yield Format(FORMAT_ELF), 0x0
+    elif "ELF32" in format_name:
+        yield Format(FORMAT_ELF), 0x0
+    else:
+        raise NotImplementedError("file format: %s", format_name)
+
+
 def extract_features():
     """extract file features"""
     for file_handler in FILE_HANDLERS:
@@ -167,6 +181,7 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_embedded_pe,
     extract_file_function_names,
+    extract_file_format,
 )
 
 

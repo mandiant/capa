@@ -22,7 +22,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Union, Iterator
+from typing import Any, Dict, List, Union, Iterator
 
 import yaml
 import ruamel.yaml
@@ -78,6 +78,9 @@ SUPPORTED_FEATURES = {
         capa.features.file.FunctionName,
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
+        capa.features.common.Format,
+        capa.features.common.OS,
+        capa.features.common.Arch,
     },
     FUNCTION_SCOPE: {
         # plus basic block scope features, see below
@@ -86,6 +89,8 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("calls to"),
         capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
+        capa.features.common.OS,
+        capa.features.common.Arch,
     },
     BASIC_BLOCK_SCOPE: {
         capa.features.common.MatchedRule,
@@ -103,6 +108,8 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("tight loop"),
         capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
+        capa.features.common.OS,
+        capa.features.common.Arch,
     },
 }
 
@@ -153,14 +160,14 @@ def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement
         and isinstance(feature.value, str)
         and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+        raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            raise InvalidRule("feature %s not support for scope %s" % (feature, scope))
+            raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
 
 
 def parse_int(s: str) -> int:
@@ -217,19 +224,19 @@ def parse_feature(key: str):
     elif key == "number":
         return capa.features.insn.Number
     elif key.startswith("number/"):
-        arch = key.partition("/")[2]
+        bitness = key.partition("/")[2]
         # the other handlers here return constructors for features,
         # and we want to as well,
-        # however, we need to preconfigure one of the arguments (`arch`).
+        # however, we need to preconfigure one of the arguments (`bitness`).
         # so, instead we return a partially-applied function that
-        #  provides `arch` to the feature constructor.
+        #  provides `bitness` to the feature constructor.
         # it forwards any other arguments provided to the closure along to the constructor.
-        return functools.partial(capa.features.insn.Number, arch=arch)
+        return functools.partial(capa.features.insn.Number, bitness=bitness)
     elif key == "offset":
         return capa.features.insn.Offset
     elif key.startswith("offset/"):
-        arch = key.partition("/")[2]
-        return functools.partial(capa.features.insn.Offset, arch=arch)
+        bitness = key.partition("/")[2]
+        return functools.partial(capa.features.insn.Offset, bitness=bitness)
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
@@ -246,6 +253,12 @@ def parse_feature(key: str):
         return capa.features.common.MatchedRule
     elif key == "function-name":
         return capa.features.file.FunctionName
+    elif key == "os":
+        return capa.features.common.OS
+    elif key == "format":
+        return capa.features.common.Format
+    elif key == "arch":
+        return capa.features.common.Arch
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 

@@ -21,3 +21,12 @@ def get_file_taste(sample_path: str) -> bytes:
     with open(sample_path, "rb") as f:
         taste = f.read(8)
     return taste
+
+
+def is_runtime_ida():
+    try:
+        import idc
+    except ImportError:
+        return False
+    else:
+        return True

@@ -8,8 +8,13 @@
 - explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
 - explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
 - all: add support for ELF files #700 @Adir-Shemesh @TcM1911
+- rule format: add feature `format: ` for file format, like `format: pe` #723 @williballenthin
+- rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
+- rule format: add feature `os: ` for operating system, like `os: windows` #723 @williballenthin
 
 ### Breaking Changes
+
+- legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
 ### New Rules (24)
 

@@ -21,16 +21,16 @@ class API(Feature):
 
 
 class Number(Feature):
-    def __init__(self, value: int, arch=None, description=None):
-        super(Number, self).__init__(value, arch=arch, description=description)
+    def __init__(self, value: int, bitness=None, description=None):
+        super(Number, self).__init__(value, bitness=bitness, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)
 
 
 class Offset(Feature):
-    def __init__(self, value: int, arch=None, description=None):
-        super(Offset, self).__init__(value, arch=arch, description=description)
+    def __init__(self, value: int, bitness=None, description=None):
+        super(Offset, self).__init__(value, bitness=bitness, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)

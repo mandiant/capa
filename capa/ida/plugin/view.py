@@ -1007,7 +1007,11 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                         self.parent_items[feature], (format_feature(feature), format_address(ea)), feature=feature
                     )
             else:
-                ea = eas.pop()
+                if eas:
+                    ea = eas.pop()
+                else:
+                    # some features may not have an address e.g. "format"
+                    ea = ""
                 for (i, v) in enumerate((format_feature(feature), format_address(ea))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
