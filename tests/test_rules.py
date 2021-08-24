@@ -766,7 +766,7 @@ def test_substring_feature():
     assert (Substring("abc") in children) == True
     assert (Substring("def") in children) == True
     assert (Substring("gh\ni") in children) == True
- 
+
 
 def test_substring_description():
     rule = textwrap.dedent(
