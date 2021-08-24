@@ -12,6 +12,7 @@
 - rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
 - rule format: add feature `os: ` for operating system, like `os: windows` #723 @williballenthin
 - rule format: add feature `substring: ` for verbatim strings with leading/trailing wildcards #737 @williballenthin
+- scripts: add `profile-memory.py` for profiling memory usage #736 @williballenthin
 
 ### Breaking Changes
 
