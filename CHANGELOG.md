@@ -11,6 +11,7 @@
 - rule format: add feature `format: ` for file format, like `format: pe` #723 @williballenthin
 - rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
 - rule format: add feature `os: ` for operating system, like `os: windows` #723 @williballenthin
+- rule format: add feature `substring: ` for verbatim strings with leading/trailing wildcards #737 @williballenthin
 
 ### Breaking Changes
 
