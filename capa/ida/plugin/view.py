@@ -856,10 +856,13 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 if data:
                     to_match = data.get_value_str()
                     if not to_match or text.lower() not in to_match.lower():
-                        o.setHidden(True)
+                        if not o.isHidden():
+                            o.setHidden(True)
                         continue
-                o.setHidden(False)
-                o.setExpanded(True)
+                if o.isHidden():
+                    o.setHidden(False)
+                if o.childCount() and not o.isExpanded():
+                    o.setExpanded(True)
         else:
             self.show_all_items()
 
@@ -871,8 +874,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             """iteratively show and expand an item and its' parents"""
             while _o:
                 visited.append(_o)
-                _o.setHidden(False)
-                _o.setExpanded(True)
+                if _o.isHidden():
+                    _o.setHidden(False)
+                if _o.childCount() and not _o.isExpanded():
+                    _o.setExpanded(True)
                 _o = _o.parent()
 
         for o in iterate_tree(self):
@@ -885,7 +890,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
             if o_ea == "":
                 # ea may be empty, hide by default
-                o.setHidden(True)
+                if not o.isHidden():
+                    o.setHidden(True)
                 continue
 
             o_ea = int(o_ea, 16)
@@ -896,7 +902,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 show_item_and_parents(o)
             else:
                 # made it here, hide by default
-                o.setHidden(True)
+                if not o.isHidden():
+                    o.setHidden(True)
 
         # resize the view for UX
         resize_columns_to_content(self.header())

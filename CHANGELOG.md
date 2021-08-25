@@ -59,6 +59,7 @@
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
 - explorer: remove duplicate check when saving file #687 @mike-hunhoff
 - explorer: update IDA extractor to use non-canon mnemonics #688 @mike-hunhoff
+- explorer: small performance boost to rule generator search functionality #742 @mike-hunhoff
 
 ### Development
 
