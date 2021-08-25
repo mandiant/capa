@@ -353,7 +353,7 @@ class FeatureNegativeNumber(Lint):
 class FeatureNtdllNtoskrnlApi(Lint):
     name = "feature api may overlap with ntdll and ntoskrnl"
     level = Lint.WARN
-    recommendation = (
+    recommendation_template = (
         "check if {:s} is exported by both ntdll and ntoskrnl; if true, consider removing {:s} "
         "module requirement to improve detection"
     )
@@ -363,7 +363,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
             if isinstance(feature, capa.features.insn.API):
                 modname, _, impname = feature.value.rpartition(".")
                 if modname in ("ntdll", "ntoskrnl"):
-                    self.recommendation = self.recommendation.format(impname, modname)
+                    self.recommendation = self.recommendation_template.format(impname, modname)
                     return True
         return False
 
