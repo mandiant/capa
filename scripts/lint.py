@@ -362,6 +362,49 @@ class FeatureNtdllNtoskrnlApi(Lint):
         for feature in features:
             if isinstance(feature, capa.features.insn.API):
                 modname, _, impname = feature.value.rpartition(".")
+
+                if modname == "ntdll":
+                    if impname in (
+                        "LdrGetProcedureAddress",
+                        "LdrLoadDll",
+                        "NtCreateThread",
+                        "NtCreatUserProcess",
+                        "NtLoadDriver",
+                        "NtQueryDirectoryObject",
+                        "NtResumeThread",
+                        "NtSuspendThread",
+                        "NtTerminateProcess",
+                        "NtWriteVirtualMemory",
+                        "RtlGetNativeSystemInformation",
+                        "NtCreateThreadEx",
+                        "NtCreateUserProcess",
+                        "NtOpenDirectoryObject",
+                        "NtQueueApcThread",
+                        "ZwResumeThread",
+                        "ZwSuspendThread",
+                        "ZwWriteVirtualMemory",
+                        "NtCreateProcess",
+                        "ZwCreateThread",
+                        "NtCreateProcessEx",
+                        "ZwCreateThreadEx",
+                        "ZwCreateProcess",
+                        "ZwCreateUserProcess",
+                        "RtlCreateUserProcess",
+                    ):
+                        # ntoskrnl.exe does not export these routines
+                        continue
+
+                if modname == "ntoskrnl":
+                    if impname in (
+                        "PsGetVersion",
+                        "PsLookupProcessByProcessId",
+                        "KeStackAttachProcess",
+                        "ObfDereferenceObject",
+                        "KeUnstackDetachProcess",
+                    ):
+                        # ntdll.dll does not export these routines
+                        continue
+
                 if modname in ("ntdll", "ntoskrnl"):
                     self.recommendation = self.recommendation_template.format(impname, modname)
                     return True
