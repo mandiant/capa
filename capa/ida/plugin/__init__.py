@@ -47,6 +47,8 @@ class CapaExplorerPlugin(idaapi.plugin_t):
             return idaapi.PLUGIN_SKIP
         if not capa.ida.helpers.is_supported_file_type():
             return idaapi.PLUGIN_SKIP
+        if not capa.ida.helpers.is_supported_arch_type():
+            return idaapi.PLUGIN_SKIP
         return idaapi.PLUGIN_OK
 
     def term(self):

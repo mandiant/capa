@@ -21,22 +21,23 @@ import capa.features.common
 
 logger = logging.getLogger("capa")
 
-SUPPORTED_IDA_VERSIONS = [
-    "7.1",
-    "7.2",
-    "7.3",
+# IDA version as returned by idaapi.get_kernel_version()
+SUPPORTED_IDA_VERSIONS = (
     "7.4",
     "7.5",
     "7.6",
-]
+)
 
-# file type names as returned by idainfo.file_type
-SUPPORTED_FILE_TYPES = [
+# file type as returned by idainfo.file_type
+SUPPORTED_FILE_TYPES = (
     idaapi.f_PE,
     idaapi.f_ELF,
-    # idaapi.f_MACHO,
     idaapi.f_BIN,
-]
+    # idaapi.f_MACHO,
+)
+
+# arch type as returned by idainfo.procname
+SUPPORTED_ARCH_TYPES = ("metapc",)
 
 
 def inform_user_ida_ui(message):
@@ -62,9 +63,21 @@ def is_supported_file_type():
         logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
         logger.error(
-            " capa currently only supports analyzing PE files (or binary files containing x86/AMD64 shellcode) with IDA."
+            " capa currently only supports analyzing PE, ELF files, or binary files containing x86 (32- and 64-bit) shellcode."
         )
         logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+        logger.error("-" * 80)
+        return False
+    return True
+
+
+def is_supported_arch_type():
+    file_info = idaapi.get_inf_structure()
+    if file_info.procname not in SUPPORTED_ARCH_TYPES or not any((file_info.is_32bit(), file_info.is_64bit())):
+        logger.error("-" * 80)
+        logger.error(" Input file does not appear to target a supported architecture.")
+        logger.error(" ")
+        logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
         logger.error("-" * 80)
         return False
     return True

@@ -4,9 +4,6 @@
 
 ### New Features
 
-- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
-- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
-- explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
 - all: add support for ELF files #700 @Adir-Shemesh @TcM1911
 - rule format: add feature `format: ` for file format, like `format: pe` #723 @williballenthin
 - rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
@@ -59,6 +56,10 @@
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
 - explorer: remove duplicate check when saving file #687 @mike-hunhoff
 - explorer: update IDA extractor to use non-canon mnemonics #688 @mike-hunhoff
+- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
+- explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
+- explorer: update support documentation and runtime checks #741 @mike-hunhoff
 
 ### Development
 
