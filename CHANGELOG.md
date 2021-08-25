@@ -70,6 +70,7 @@
 
 - main: fix `KeyError: 0` when reporting results @williballehtin #703
 - main: fix potential false negatives due to namespaces across scopes @williballenthin #721
+- linter: suppress some warnings about imports from ntdll/ntoskrnl @williballenthin #743
 
 ### capa explorer IDA Pro plugin
 
