@@ -15,7 +15,7 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (60)
+### New Rules (76)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -61,6 +61,20 @@
 - persistence/persist-via-desktop-autostart joakim@intezer.com
 - persistence/persist-via-shell-profile-or-rc-file joakim@intezer.com
 - persistence/service/persist-via-rc-script joakim@intezer.com
+- collection/get-current-user-on-linux joakim@intezer.com
+- collection/network/get-mac-address-on-windows moritz.raabe@fireeye.com
+- host-interaction/file-system/read/read-file-on-linux moritz.raabe@fireeye.com joakim@intezer.com
+- host-interaction/file-system/read/read-file-on-windows moritz.raabe@fireeye.com
+- host-interaction/file-system/write/write-file-on-windows william.ballenthin@fireeye.com
+- host-interaction/os/info/get-system-information-on-windows moritz.raabe@fireeye.com joakim@intezer.com
+- host-interaction/process/create/create-process-on-windows moritz.raabe@fireeye.com
+- linking/runtime-linking/link-function-at-runtime-on-windows moritz.raabe@fireeye.com
+- nursery/create-process-on-linux joakim@intezer.com
+- nursery/enumerate-files-on-linux william.ballenthin@fireeye.com
+- nursery/get-mac-address-on-linux joakim@intezer.com
+- nursery/get-system-information-on-linux joakim@intezer.com
+- nursery/link-function-at-runtime-on-linux joakim@intezer.com
+- nursery/write-file-on-linux joakim@intezer.com
 -
 
 ### Bug Fixes
