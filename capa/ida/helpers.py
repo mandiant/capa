@@ -63,7 +63,7 @@ def is_supported_file_type():
         logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
         logger.error(
-            " capa currently only supports analyzing PE, ELF files, or binary files containing x86 (32- and 64-bit) shellcode."
+            " capa currently only supports analyzing PE, ELF, or binary files containing x86 (32- and 64-bit) shellcode."
         )
         logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
         logger.error("-" * 80)
