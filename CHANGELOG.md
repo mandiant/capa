@@ -15,7 +15,7 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (27)
+### New Rules (44)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -44,6 +44,23 @@
 - host-interaction/log/clfs/append-data-to-clfs-log-container blaine.stancill@mandiant.com
 - host-interaction/log/clfs/read-data-from-clfs-log-container blaine.stancill@mandiant.com
 - data-manipulation/encryption/hc-128/encrypt-data-using-hc-128-via-wolfssl blaine.stancill@mandiant.com
+- c2/shell/create-unix-reverse-shell joakim@intezer.com
+- c2/shell/execute-shell-command-received-from-socket joakim@intezer.com
+- collection/get-current-user joakim@intezer.com
+- host-interaction/file-system/change-file-permission joakim@intezer.com
+- host-interaction/hardware/memory/get-memory-information joakim@intezer.com
+- host-interaction/mutex/lock-file joakim@intezer.com
+- host-interaction/os/version/get-kernel-version joakim@intezer.com
+- host-interaction/os/version/get-linux-distribution joakim@intezer.com
+- host-interaction/process/terminate/terminate-process-via-kill joakim@intezer.com
+- lib/duplicate-stdin-and-stdout joakim@intezer.com
+- nursery/capture-network-configuration-via-ifconfig joakim@intezeer.com
+- nursery/collect-ssh-keys joakim@intezer.com
+- nursery/enumerate-processes-via-procfs joakim@intezer.com
+- nursery/interact-with-iptables joakim@intezer.com
+- persistence/persist-via-desktop-autostart joakim@intezer.com
+- persistence/persist-via-shell-profile-or-rc-file joakim@intezer.com
+- persistence/service/persist-via-rc-script joakim@intezer.com
 -
 
 ### Bug Fixes
