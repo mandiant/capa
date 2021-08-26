@@ -34,11 +34,25 @@ For more information on the FLARE team's open-source framework, capa, check out 
 
 ### Requirements
 
-capa explorer supports Python >= 3.6 and the following IDA Pro versions:
+capa explorer supports Python versions >= 3.6.x and the following IDA Pro versions:
 
 * IDA 7.4
 * IDA 7.5
 * IDA 7.6 (caveat below)
+
+capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.6.x). Based on our testing the following matrix shows the Python versions supported
+by each supported IDA version:
+
+| | IDA 7.4 | IDA 7.5 | IDA 7.6 |
+| --- | --- | --- | --- |
+| Python 3.6.x | Yes | Yes | Yes |
+| Python 3.7.x | Yes | Yes | Yes |
+| Python 3.8.x | Partial (see below) | Yes | Yes |
+| Python 3.9.x | No | Partial (see below) | Yes |
+
+To use capa explorer with IDA 7.4 and Python 3.8.x you must follow the instructions provided by hex-rays [here](https://hex-rays.com/blog/ida-7-4-and-python-3-8/).
+
+To use capa explorer with IDA 7.5 and Python 3.9.x you must follow the instructions provided by hex-rays [here](https://hex-rays.com/blog/python-3-9-support-for-ida-7-5/).
 
 If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
 
@@ -61,8 +75,8 @@ Therefore, in order to use capa under IDA 7.6 you need the [Service Pack 1 for I
 
 capa explorer is limited to the file types supported by capa, which include:
 
-* Windows 32-bit and 64-bit PE files
-* Windows 32-bit and 64-bit shellcode
+* Windows x86 (32- and 64-bit) PE and ELF files
+* Windows x86 (32- and 64-bit) shellcode
 
 ### Installation
 

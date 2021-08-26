@@ -4,9 +4,6 @@
 
 ### New Features
 
-- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
-- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
-- explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
 - all: add support for ELF files #700 @Adir-Shemesh @TcM1911
 - rule format: add feature `format: ` for file format, like `format: pe` #723 @williballenthin
 - rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
@@ -18,7 +15,7 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (27)
+### New Rules (44)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -47,6 +44,23 @@
 - host-interaction/log/clfs/append-data-to-clfs-log-container blaine.stancill@mandiant.com
 - host-interaction/log/clfs/read-data-from-clfs-log-container blaine.stancill@mandiant.com
 - data-manipulation/encryption/hc-128/encrypt-data-using-hc-128-via-wolfssl blaine.stancill@mandiant.com
+- c2/shell/create-unix-reverse-shell joakim@intezer.com
+- c2/shell/execute-shell-command-received-from-socket joakim@intezer.com
+- collection/get-current-user joakim@intezer.com
+- host-interaction/file-system/change-file-permission joakim@intezer.com
+- host-interaction/hardware/memory/get-memory-information joakim@intezer.com
+- host-interaction/mutex/lock-file joakim@intezer.com
+- host-interaction/os/version/get-kernel-version joakim@intezer.com
+- host-interaction/os/version/get-linux-distribution joakim@intezer.com
+- host-interaction/process/terminate/terminate-process-via-kill joakim@intezer.com
+- lib/duplicate-stdin-and-stdout joakim@intezer.com
+- nursery/capture-network-configuration-via-ifconfig joakim@intezeer.com
+- nursery/collect-ssh-keys joakim@intezer.com
+- nursery/enumerate-processes-via-procfs joakim@intezer.com
+- nursery/interact-with-iptables joakim@intezer.com
+- persistence/persist-via-desktop-autostart joakim@intezer.com
+- persistence/persist-via-shell-profile-or-rc-file joakim@intezer.com
+- persistence/service/persist-via-rc-script joakim@intezer.com
 -
 
 ### Bug Fixes
@@ -59,6 +73,10 @@
 - explorer: add additional filter logic when displaying matches by function #686 @mike-hunhoff
 - explorer: remove duplicate check when saving file #687 @mike-hunhoff
 - explorer: update IDA extractor to use non-canon mnemonics #688 @mike-hunhoff
+- explorer: allow user to add specified number of bytes when adding a Bytes feature in the Rule Generator #689 @mike-hunhoff
+- explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
+- explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
+- explorer: update support documentation and runtime checks #741 @mike-hunhoff
 - explorer: small performance boost to rule generator search functionality #742 @mike-hunhoff
 
 ### Development
