@@ -92,6 +92,7 @@
 - explorer: enforce max column width Features and Editor panes #691 @mike-hunhoff
 - explorer: add option to limit features to currently selected disassembly address #692 @mike-hunhoff
 - explorer: update support documentation and runtime checks #741 @mike-hunhoff
+- explorer: small performance boost to rule generator search functionality #742 @mike-hunhoff
 
 ### Development
 
