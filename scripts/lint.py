@@ -21,11 +21,13 @@ import difflib
 import hashlib
 import inspect
 import logging
+import pathlib
 import os.path
 import argparse
 import itertools
 import posixpath
 import contextlib
+from pathlib import Path
 from typing import Set, Dict, List
 from dataclasses import field, dataclass
 
@@ -66,9 +68,7 @@ class Context:
       is_thorough: should inspect long-running lints
       capabilities_by_sample: cache of results, indexed by file path.
     """
-
-    # TODO: map this to Path
-    samples: Dict[str, str]
+    samples: Dict[str, Path]
     rules: RuleSet
     is_thorough: bool
     capabilities_by_sample: Dict[str, Set[str]] = field(default_factory=dict)
@@ -222,11 +222,11 @@ class ExampleFileDNE(Lint):
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
-def get_sample_capabilities(ctx, path):
+def get_sample_capabilities(ctx: Context, path: Path):
     extractor = capa.main.get_extractor(
-        path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
+        str(path), "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
-    capabilities, _ = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
+    capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
     return capabilities
 
 
@@ -777,7 +777,7 @@ def lint(ctx: Context):
     return ret
 
 
-def collect_samples(path):
+def collect_samples(path) -> Dict[str, Path]:
     """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
@@ -795,10 +795,10 @@ def collect_samples(path):
             if name.endswith(".fnames"):
                 continue
 
-            path = os.path.join(root, name)
+            path = pathlib.Path(os.path.join(root, name))
 
             try:
-                with open(path, "rb") as f:
+                with path.open("rb") as f:
                     buf = f.read()
             except IOError:
                 continue
