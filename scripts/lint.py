@@ -13,6 +13,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import gc
 import os
 import sys
 import time
@@ -237,6 +238,13 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     capabilities = set(capabilities.keys())
     logger.debug("computed results: %s: %d capabilities", nice_path, len(capabilities))
     ctx.capabilities_by_sample[path] = capabilities
+
+    # when i (wb) run the linter in thorough mode locally,
+    # the OS occasionally kills the process due to memory usage.
+    # so, be extra aggressive in keeping memory usage down.
+    #
+    # tbh, im not sure this actually does anything, but maybe it helps?
+    gc.collect()
 
     return capabilities
 
