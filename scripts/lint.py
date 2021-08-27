@@ -631,30 +631,34 @@ def lint_rule(ctx, rule):
     )
 
     if len(violations) > 0:
-        category = rule.meta.get("rule-category")
+        # don't show nursery rules with a single violation: needs examples.
+        # this is by far the most common reason to be in the nursery,
+        # and ends up just producing a lot of noise.
+        if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
+            category = rule.meta.get("rule-category")
 
-        print("")
-        print(
-            "%s%s %s"
-            % (
-                "    (nursery) " if is_nursery_rule(rule) else "",
-                rule.name,
-                ("(%s)" % category) if category else "",
-            )
-        )
-
-        for violation in violations:
+            print("")
             print(
-                "%s  %s: %s: %s"
+                "%s%s %s"
                 % (
-                    "    " if is_nursery_rule(rule) else "",
-                    Lint.WARN if is_nursery_rule(rule) else violation.level,
-                    violation.name,
-                    violation.recommendation,
+                    "    (nursery) " if is_nursery_rule(rule) else "",
+                    rule.name,
+                    ("(%s)" % category) if category else "",
                 )
             )
 
-        print("")
+            for violation in violations:
+                print(
+                    "%s  %s: %s: %s"
+                    % (
+                        "    " if is_nursery_rule(rule) else "",
+                        Lint.WARN if is_nursery_rule(rule) else violation.level,
+                        violation.name,
+                        violation.recommendation,
+                    )
+                )
+
+            print("")
 
     if is_nursery_rule(rule):
         has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
