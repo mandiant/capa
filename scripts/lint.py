@@ -21,14 +21,14 @@ import difflib
 import hashlib
 import inspect
 import logging
-import pathlib
 import os.path
+import pathlib
 import argparse
 import itertools
 import posixpath
 import contextlib
-from pathlib import Path
 from typing import Set, Dict, List
+from pathlib import Path
 from dataclasses import field, dataclass
 
 import tqdm
@@ -68,10 +68,11 @@ class Context:
       is_thorough: should inspect long-running lints
       capabilities_by_sample: cache of results, indexed by file path.
     """
+
     samples: Dict[str, Path]
     rules: RuleSet
     is_thorough: bool
-    capabilities_by_sample: Dict[str, Set[str]] = field(default_factory=dict)
+    capabilities_by_sample: Dict[Path, Set[str]] = field(default_factory=dict)
 
 
 class Lint:
@@ -222,11 +223,21 @@ class ExampleFileDNE(Lint):
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
-def get_sample_capabilities(ctx: Context, path: Path):
+def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
+    nice_path = os.path.abspath(str(path))
+    if path in ctx.capabilities_by_sample:
+        logger.info("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
+        return ctx.capabilities_by_sample[path]
+
+    logger.info("analyzing sample: %s", nice_path)
     extractor = capa.main.get_extractor(
-        str(path), "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
+        nice_path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
     capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
+    capabilities = set(capabilities.keys())
+    logger.info("computed results: %s: %d capabilities", nice_path, len(capabilities))
+    ctx.capabilities_by_sample[path] = capabilities
+
     return capabilities
 
 
@@ -254,7 +265,7 @@ class DoesntMatchExample(Lint):
             try:
                 capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
+                logger.error("failed to extract capabilities: %s %s %s", rule.name, str(path), e, exc_info=True)
                 return True
 
             if rule.name not in capabilities:
