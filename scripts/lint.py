@@ -234,8 +234,13 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     extractor = capa.main.get_extractor(
         nice_path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
+
     capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
-    capabilities = set(capabilities.keys())
+    # mypy doesn't seem to be happy with the MatchResults type alias & set(...keys())?
+    # so we ignore a few types here.
+    capabilities = set(capabilities.keys())  # type: ignore
+    assert isinstance(capabilities, set)
+
     logger.debug("computed results: %s: %d capabilities", nice_path, len(capabilities))
     ctx.capabilities_by_sample[path] = capabilities
 
