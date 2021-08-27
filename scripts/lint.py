@@ -27,6 +27,7 @@ import posixpath
 
 import termcolor
 import ruamel.yaml
+import tqdm.contrib.logging
 
 import capa.main
 import capa.rules
@@ -699,11 +700,13 @@ def lint(ctx, rules):
     """
     ret = {}
 
-    for name, rule in rules.rules.items():
-        if rule.meta.get("capa/subscope-rule", False):
-            continue
+    with tqdm.contrib.logging.tqdm_logging_redirect(rules.rules.items(), unit="rule") as pbar:
+        for name, rule in pbar:
+            if rule.meta.get("capa/subscope-rule", False):
+                continue
 
-        ret[name] = lint_rule(ctx, rule)
+            pbar.set_description("linting rule: %s" % (name))
+            ret[name] = lint_rule(ctx, rule)
 
     return ret
 
