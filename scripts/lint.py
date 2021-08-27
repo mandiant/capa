@@ -226,16 +226,16 @@ DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     nice_path = os.path.abspath(str(path))
     if path in ctx.capabilities_by_sample:
-        logger.info("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
+        logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
         return ctx.capabilities_by_sample[path]
 
-    logger.info("analyzing sample: %s", nice_path)
+    logger.debug("analyzing sample: %s", nice_path)
     extractor = capa.main.get_extractor(
         nice_path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
     capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
     capabilities = set(capabilities.keys())
-    logger.info("computed results: %s: %d capabilities", nice_path, len(capabilities))
+    logger.debug("computed results: %s: %d capabilities", nice_path, len(capabilities))
     ctx.capabilities_by_sample[path] = capabilities
 
     return capabilities
