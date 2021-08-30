@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from networkx import nx
+import networkx
 from networkx.algorithms.components import strongly_connected_components
 
 
@@ -20,6 +20,6 @@ def has_loop(edges, threshold=2):
     returns:
         bool
     """
-    g = nx.DiGraph()
+    g = networkx.DiGraph()
     g.add_edges_from(edges)
     return any(len(comp) >= threshold for comp in strongly_connected_components(g))
