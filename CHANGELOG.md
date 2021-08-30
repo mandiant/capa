@@ -15,7 +15,7 @@
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 
-### New Rules (77)
+### New Rules (78)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -75,6 +75,7 @@
 - nursery/get-system-information-on-linux joakim@intezer.com
 - nursery/link-function-at-runtime-on-linux joakim@intezer.com
 - nursery/write-file-on-linux joakim@intezer.com
+- communication/socket/tcp/send/obtain-transmitpackets-callback-function-via-wsaioctl jonathan.lepore@mandiant.com
 -
 
 ### Bug Fixes
