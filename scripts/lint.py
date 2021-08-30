@@ -13,26 +13,37 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import gc
 import os
 import sys
 import time
 import string
 import difflib
 import hashlib
+import inspect
 import logging
 import os.path
+import pathlib
 import argparse
 import itertools
 import posixpath
+import contextlib
+from typing import Set, Dict, List
+from pathlib import Path
+from dataclasses import field, dataclass
 
+import tqdm
 import termcolor
 import ruamel.yaml
+import tqdm.contrib.logging
 
 import capa.main
 import capa.rules
 import capa.engine
 import capa.features.insn
 import capa.features.common
+from capa.rules import Rule, RuleSet
+from capa.features.common import Feature
 
 logger = logging.getLogger("lint")
 
@@ -49,6 +60,22 @@ def green(s):
     return termcolor.colored(s, "green")
 
 
+@dataclass
+class Context:
+    """
+    attributes:
+      samples: mapping from content hash (MD5, SHA, etc.) to file path.
+      rules: rules to inspect
+      is_thorough: should inspect long-running lints
+      capabilities_by_sample: cache of results, indexed by file path.
+    """
+
+    samples: Dict[str, Path]
+    rules: RuleSet
+    is_thorough: bool
+    capabilities_by_sample: Dict[Path, Set[str]] = field(default_factory=dict)
+
+
 class Lint:
     WARN = orange("WARN")
     FAIL = red("FAIL")
@@ -57,7 +84,7 @@ class Lint:
     level = FAIL
     recommendation = ""
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return False
 
 
@@ -65,7 +92,7 @@ class NameCasing(Lint):
     name = "rule name casing"
     recommendation = "Rename rule using to start with lower case letters"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return rule.name[0] in string.ascii_uppercase and rule.name[1] not in string.ascii_uppercase
 
 
@@ -74,7 +101,7 @@ class FilenameDoesntMatchRuleName(Lint):
     recommendation = "Rename rule file to match the rule name"
     recommendation_template = 'Rename rule file to match the rule name, expected: "{:s}", found: "{:s}"'
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         expected = rule.name
         expected = expected.lower()
         expected = expected.replace(" ", "-")
@@ -96,7 +123,7 @@ class MissingNamespace(Lint):
     name = "missing rule namespace"
     recommendation = "Add meta.namespace so that the rule is emitted correctly"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return (
             "namespace" not in rule.meta
             and not is_nursery_rule(rule)
@@ -109,7 +136,7 @@ class NamespaceDoesntMatchRulePath(Lint):
     name = "file path doesn't match rule namespace"
     recommendation = "Move rule to appropriate directory or update the namespace"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         # let the other lints catch namespace issues
         if "namespace" not in rule.meta:
             return False
@@ -127,7 +154,7 @@ class MissingScope(Lint):
     name = "missing scope"
     recommendation = "Add meta.scope so that the scope is explicit (defaults to `function`)"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return "scope" not in rule.meta
 
 
@@ -135,7 +162,7 @@ class InvalidScope(Lint):
     name = "invalid scope"
     recommendation = "Use only file, function, or basic block rule scopes"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return rule.meta.get("scope") not in ("file", "function", "basic block")
 
 
@@ -143,7 +170,7 @@ class MissingAuthor(Lint):
     name = "missing author"
     recommendation = "Add meta.author so that users know who to contact with questions"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return "author" not in rule.meta
 
 
@@ -151,7 +178,7 @@ class MissingExamples(Lint):
     name = "missing examples"
     recommendation = "Add meta.examples so that the rule can be tested and verified"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         return (
             "examples" not in rule.meta
             or not isinstance(rule.meta["examples"], list)
@@ -164,7 +191,7 @@ class MissingExampleOffset(Lint):
     name = "missing example offset"
     recommendation = "Add offset of example function"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if rule.meta.get("scope") in ("function", "basic block"):
             examples = rule.meta.get("examples")
             if isinstance(examples, list):
@@ -178,7 +205,7 @@ class ExampleFileDNE(Lint):
     name = "referenced example doesn't exist"
     recommendation = "Add the referenced example to samples directory ($capa-root/tests/data or supplied via --samples)"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if not rule.meta.get("examples"):
             # let the MissingExamples lint catch this case, don't double report.
             return False
@@ -187,7 +214,7 @@ class ExampleFileDNE(Lint):
         for example in rule.meta.get("examples", []):
             if example:
                 example_id = example.partition(":")[0]
-                if example_id in ctx["samples"]:
+                if example_id in ctx.samples:
                     found = True
                     break
 
@@ -197,12 +224,42 @@ class ExampleFileDNE(Lint):
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
+def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
+    nice_path = os.path.abspath(str(path))
+    if path in ctx.capabilities_by_sample:
+        logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
+        return ctx.capabilities_by_sample[path]
+
+    logger.debug("analyzing sample: %s", nice_path)
+    extractor = capa.main.get_extractor(
+        nice_path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
+    )
+
+    capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
+    # mypy doesn't seem to be happy with the MatchResults type alias & set(...keys())?
+    # so we ignore a few types here.
+    capabilities = set(capabilities.keys())  # type: ignore
+    assert isinstance(capabilities, set)
+
+    logger.debug("computed results: %s: %d capabilities", nice_path, len(capabilities))
+    ctx.capabilities_by_sample[path] = capabilities
+
+    # when i (wb) run the linter in thorough mode locally,
+    # the OS occasionally kills the process due to memory usage.
+    # so, be extra aggressive in keeping memory usage down.
+    #
+    # tbh, im not sure this actually does anything, but maybe it helps?
+    gc.collect()
+
+    return capabilities
+
+
 class DoesntMatchExample(Lint):
     name = "doesn't match on referenced example"
     recommendation = "Fix the rule logic or provide a different example"
 
-    def check_rule(self, ctx, rule):
-        if not ctx["is_thorough"]:
+    def check_rule(self, ctx: Context, rule: Rule):
+        if not ctx.is_thorough:
             return False
 
         examples = rule.meta.get("examples", [])
@@ -212,19 +269,16 @@ class DoesntMatchExample(Lint):
         for example in examples:
             example_id = example.partition(":")[0]
             try:
-                path = ctx["samples"][example_id]
+                path = ctx.samples[example_id]
             except KeyError:
                 # lint ExampleFileDNE will catch this.
                 # don't double report.
                 continue
 
             try:
-                extractor = capa.main.get_extractor(
-                    path, "auto", capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
-                )
-                capabilities, meta = capa.main.find_capabilities(ctx["rules"], extractor, disable_progress=True)
+                capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e)
+                logger.error("failed to extract capabilities: %s %s %s", rule.name, str(path), e, exc_info=True)
                 return True
 
             if rule.name not in capabilities:
@@ -237,7 +291,7 @@ class StatementWithSingleChildStatement(Lint):
     recommendation_template = "remove the superfluous parent statement: {:s}"
     violation = False
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         self.violation = False
 
         def rec(statement, is_root=False):
@@ -260,7 +314,7 @@ class OrStatementWithAlwaysTrueChild(Lint):
     recommendation_template = "clarify the rule logic, e.g. by moving the always True child statement: {:s}"
     violation = False
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         self.violation = False
 
         def rec(statement):
@@ -283,7 +337,7 @@ class UnusualMetaField(Lint):
     recommendation = "Remove the meta field"
     recommendation_template = 'Remove the meta field: "{:s}"'
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         for key in rule.meta.keys():
             if key in capa.rules.META_KEYS:
                 continue
@@ -299,7 +353,7 @@ class LibRuleNotInLibDirectory(Lint):
     name = "lib rule not found in lib directory"
     recommendation = "Move the rule to the `lib` subdirectory of the rules path"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if is_nursery_rule(rule):
             return False
 
@@ -313,7 +367,7 @@ class LibRuleHasNamespace(Lint):
     name = "lib rule has a namespace"
     recommendation = "Remove the namespace from the rule"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if "lib" not in rule.meta:
             return False
 
@@ -324,9 +378,10 @@ class FeatureStringTooShort(Lint):
     name = "feature string too short"
     recommendation = 'capa only extracts strings with length >= 4; will not match on "{:s}"'
 
-    def check_features(self, ctx, features):
+    def check_features(self, ctx: Context, features: List[Feature]):
         for feature in features:
             if isinstance(feature, (capa.features.common.String, capa.features.common.Substring)):
+                assert isinstance(feature.value, str)
                 if len(feature.value) < 4:
                     self.recommendation = self.recommendation.format(feature.value)
                     return True
@@ -341,9 +396,10 @@ class FeatureNegativeNumber(Lint):
         'representation; will not match on "{:d}"'
     )
 
-    def check_features(self, ctx, features):
+    def check_features(self, ctx: Context, features: List[Feature]):
         for feature in features:
             if isinstance(feature, (capa.features.insn.Number,)):
+                assert isinstance(feature.value, int)
                 if feature.value < 0:
                     self.recommendation = self.recommendation_template.format(feature.value)
                     return True
@@ -358,9 +414,10 @@ class FeatureNtdllNtoskrnlApi(Lint):
         "module requirement to improve detection"
     )
 
-    def check_features(self, ctx, features):
+    def check_features(self, ctx: Context, features: List[Feature]):
         for feature in features:
             if isinstance(feature, capa.features.insn.API):
+                assert isinstance(feature.value, str)
                 modname, _, impname = feature.value.rpartition(".")
 
                 if modname == "ntdll":
@@ -415,7 +472,7 @@ class FormatLineFeedEOL(Lint):
     name = "line(s) end with CRLF (\\r\\n)"
     recommendation = "convert line endings to LF (\\n) for example using dos2unix"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if len(rule.definition.split("\r\n")) > 0:
             return False
         return True
@@ -425,7 +482,7 @@ class FormatSingleEmptyLineEOF(Lint):
     name = "EOF format"
     recommendation = "end file with a single empty line"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         if rule.definition.endswith("\n") and not rule.definition.endswith("\n\n"):
             return False
         return True
@@ -435,7 +492,7 @@ class FormatIncorrect(Lint):
     name = "rule format incorrect"
     recommendation_template = "use scripts/capafmt.py or adjust as follows\n{:s}"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         actual = rule.definition
         expected = capa.rules.Rule.from_yaml(rule.definition, use_ruamel=True).to_yaml()
 
@@ -455,7 +512,7 @@ class FormatIncorrect(Lint):
 class FormatStringQuotesIncorrect(Lint):
     name = "rule string quotes incorrect"
 
-    def check_rule(self, ctx, rule):
+    def check_rule(self, ctx: Context, rule: Rule):
         events = capa.rules.Rule._get_ruamel_yaml_parser().parse(rule.definition)
         for key in events:
             if isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "string":
@@ -495,13 +552,13 @@ class FormatStringQuotesIncorrect(Lint):
         return False
 
 
-def run_lints(lints, ctx, rule):
+def run_lints(lints, ctx: Context, rule: Rule):
     for lint in lints:
         if lint.check_rule(ctx, rule):
             yield lint
 
 
-def run_feature_lints(lints, ctx, features):
+def run_feature_lints(lints, ctx: Context, features: List[Feature]):
     for lint in lints:
         if lint.check_features(ctx, features):
             yield lint
@@ -513,7 +570,7 @@ NAME_LINTS = (
 )
 
 
-def lint_name(ctx, rule):
+def lint_name(ctx: Context, rule: Rule):
     return run_lints(NAME_LINTS, ctx, rule)
 
 
@@ -523,7 +580,7 @@ SCOPE_LINTS = (
 )
 
 
-def lint_scope(ctx, rule):
+def lint_scope(ctx: Context, rule: Rule):
     return run_lints(SCOPE_LINTS, ctx, rule)
 
 
@@ -540,14 +597,14 @@ META_LINTS = (
 )
 
 
-def lint_meta(ctx, rule):
+def lint_meta(ctx: Context, rule: Rule):
     return run_lints(META_LINTS, ctx, rule)
 
 
 FEATURE_LINTS = (FeatureStringTooShort(), FeatureNegativeNumber(), FeatureNtdllNtoskrnlApi())
 
 
-def lint_features(ctx, rule):
+def lint_features(ctx: Context, rule: Rule):
     features = get_features(ctx, rule)
     return run_feature_lints(FEATURE_LINTS, ctx, features)
 
@@ -560,7 +617,7 @@ FORMAT_LINTS = (
 )
 
 
-def lint_format(ctx, rule):
+def lint_format(ctx: Context, rule: Rule):
     return run_lints(FORMAT_LINTS, ctx, rule)
 
 
@@ -568,11 +625,11 @@ def get_normpath(path):
     return posixpath.normpath(path).replace(os.sep, "/")
 
 
-def get_features(ctx, rule):
+def get_features(ctx: Context, rule: Rule):
     # get features from rule and all dependencies including subscopes and matched rules
     features = []
-    namespaces = ctx["rules"].rules_by_namespace
-    deps = [ctx["rules"].rules[dep] for dep in rule.get_dependencies(namespaces)]
+    namespaces = ctx.rules.rules_by_namespace
+    deps = [ctx.rules.rules[dep] for dep in rule.get_dependencies(namespaces)]
     for r in [rule] + deps:
         features.extend(get_rule_features(r))
     return features
@@ -599,7 +656,7 @@ LOGIC_LINTS = (
 )
 
 
-def lint_logic(ctx, rule):
+def lint_logic(ctx: Context, rule: Rule):
     return run_lints(LOGIC_LINTS, ctx, rule)
 
 
@@ -612,7 +669,7 @@ def is_nursery_rule(rule):
     return rule.meta.get("capa/nursery")
 
 
-def lint_rule(ctx, rule):
+def lint_rule(ctx: Context, rule: Rule):
     logger.debug(rule.name)
 
     violations = list(
@@ -627,30 +684,34 @@ def lint_rule(ctx, rule):
     )
 
     if len(violations) > 0:
-        category = rule.meta.get("rule-category")
+        # don't show nursery rules with a single violation: needs examples.
+        # this is by far the most common reason to be in the nursery,
+        # and ends up just producing a lot of noise.
+        if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
+            category = rule.meta.get("rule-category")
 
-        print("")
-        print(
-            "%s%s %s"
-            % (
-                "    (nursery) " if is_nursery_rule(rule) else "",
-                rule.name,
-                ("(%s)" % category) if category else "",
-            )
-        )
-
-        for violation in violations:
+            print("")
             print(
-                "%s  %s: %s: %s"
+                "%s%s %s"
                 % (
-                    "    " if is_nursery_rule(rule) else "",
-                    Lint.WARN if is_nursery_rule(rule) else violation.level,
-                    violation.name,
-                    violation.recommendation,
+                    "    (nursery) " if is_nursery_rule(rule) else "",
+                    rule.name,
+                    ("(%s)" % category) if category else "",
                 )
             )
 
-        print("")
+            for violation in violations:
+                print(
+                    "%s  %s: %s: %s"
+                    % (
+                        "    " if is_nursery_rule(rule) else "",
+                        Lint.WARN if is_nursery_rule(rule) else violation.level,
+                        violation.name,
+                        violation.recommendation,
+                    )
+                )
+
+            print("")
 
     if is_nursery_rule(rule):
         has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
@@ -685,30 +746,62 @@ def lint_rule(ctx, rule):
     return (lints_failed, lints_warned)
 
 
-def lint(ctx, rules):
-    """
-    Args:
-      samples (Dict[string, string]): map from sample id to path.
-        for each sample, record sample id of sha256, md5, and filename.
-        see `collect_samples(path)`.
-      rules (List[Rule]): the rules to lint.
+def width(s, count):
+    if len(s) > count:
+        return s[: count - 3] + "..."
+    else:
+        return s.ljust(count)
 
+
+@contextlib.contextmanager
+def redirecting_print_to_tqdm():
+    """
+    tqdm (progress bar) expects to have fairly tight control over console output.
+    so calls to `print()` will break the progress bar and make things look bad.
+    so, this context manager temporarily replaces the `print` implementation
+    with one that is compatible with tqdm.
+
+    via: https://stackoverflow.com/a/42424890/87207
+    """
+    old_print = print
+
+    def new_print(*args, **kwargs):
+
+        # If tqdm.tqdm.write raises error, use builtin print
+        try:
+            tqdm.tqdm.write(*args, **kwargs)
+        except:
+            old_print(*args, **kwargs)
+
+    try:
+        # Globaly replace print with new_print
+        inspect.builtins.print = new_print
+        yield
+    finally:
+        inspect.builtins.print = old_print
+
+
+def lint(ctx: Context):
+    """
     Returns: Dict[string, Tuple(int, int)]
       - # lints failed
       - # lints warned
     """
     ret = {}
 
-    for name, rule in rules.rules.items():
-        if rule.meta.get("capa/subscope-rule", False):
-            continue
+    with tqdm.contrib.logging.tqdm_logging_redirect(ctx.rules.rules.items(), unit="rule") as pbar:
+        with redirecting_print_to_tqdm():
+            for name, rule in pbar:
+                if rule.meta.get("capa/subscope-rule", False):
+                    continue
 
-        ret[name] = lint_rule(ctx, rule)
+                pbar.set_description(width("linting rule: %s" % (name), 48))
+                ret[name] = lint_rule(ctx, rule)
 
     return ret
 
 
-def collect_samples(path):
+def collect_samples(path) -> Dict[str, Path]:
     """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
@@ -726,10 +819,10 @@ def collect_samples(path):
             if name.endswith(".fnames"):
                 continue
 
-            path = os.path.join(root, name)
+            path = pathlib.Path(os.path.join(root, name))
 
             try:
-                with open(path, "rb") as f:
+                with path.open("rb") as f:
                     buf = f.read()
             except IOError:
                 continue
@@ -796,13 +889,9 @@ def main(argv=None):
 
     samples = collect_samples(args.samples)
 
-    ctx = {
-        "samples": samples,
-        "rules": rules,
-        "is_thorough": args.thorough,
-    }
+    ctx = Context(samples=samples, rules=rules, is_thorough=args.thorough)
 
-    results_by_name = lint(ctx, rules)
+    results_by_name = lint(ctx)
     failed_rules = []
     warned_rules = []
     for name, (fail_count, warn_count) in results_by_name.items():
