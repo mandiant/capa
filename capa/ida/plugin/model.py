@@ -603,6 +603,9 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # display no preview
             return CapaExplorerFeatureItem(parent, location=location, display=display)
 
+        if feature["type"] in ("arch", "os", "format"):
+            return CapaExplorerFeatureItem(parent, display=display)
+
         raise RuntimeError("unexpected feature type: " + str(feature["type"]))
 
     def update_function_name(self, old_name, new_name):
