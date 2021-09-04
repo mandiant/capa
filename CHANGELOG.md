@@ -14,6 +14,8 @@
 ### Breaking Changes
 
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
+- freeze format gains new section for "global" features #759 @williballenthin
+
 
 ### New Rules (78)
 
