@@ -296,7 +296,7 @@ def resolve_scope(scope):
     if scope == "file":
 
         def inner_file(extractor):
-            return itertools.chain(extract_file_features(extractor), extract_global_scope(extractor))
+            return itertools.chain(extract_file_features(extractor), extract_global_features(extractor))
 
         inner_file.__name__ = scope
         return inner_file
@@ -309,7 +309,7 @@ def resolve_scope(scope):
         def inner_bb(extractor):
             f = get_function(extractor, fva)
             bb = get_basic_block(extractor, f, bbva)
-            return itertools.chain(extract_basic_block_features(extractor, f, bb), extract_global_scope(extractor))
+            return itertools.chain(extract_basic_block_features(extractor, f, bb), extract_global_features(extractor))
 
         inner_bb.__name__ = scope
         return inner_bb
@@ -319,7 +319,7 @@ def resolve_scope(scope):
 
         def inner_function(extractor):
             f = get_function(extractor, va)
-            return itertools.chain(extract_function_features(extractor, f), extract_global_scope(extractor))
+            return itertools.chain(extract_function_features(extractor, f), extract_global_features(extractor))
 
         inner_function.__name__ = scope
         return inner_function
