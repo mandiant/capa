@@ -10,6 +10,7 @@
 import os
 import os.path
 import binascii
+import itertools
 import contextlib
 import collections
 from functools import lru_cache
@@ -132,6 +133,13 @@ def get_pefile_extractor(path):
 
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
+
+def extract_global_features(extractor):
+    features = collections.defaultdict(set)
+    for feature, va in extractor.extract_global_features():
+        features[feature].add(va)
+    return features
+ 
 
 @lru_cache()
 def extract_file_features(extractor):
@@ -288,7 +296,7 @@ def resolve_scope(scope):
     if scope == "file":
 
         def inner_file(extractor):
-            return extract_file_features(extractor)
+            return itertools.chain(extract_file_features(extractor), extract_global_scope(extractor))
 
         inner_file.__name__ = scope
         return inner_file
@@ -301,7 +309,7 @@ def resolve_scope(scope):
         def inner_bb(extractor):
             f = get_function(extractor, fva)
             bb = get_basic_block(extractor, f, bbva)
-            return extract_basic_block_features(extractor, f, bb)
+            return itertools.chain(extract_basic_block_features(extractor, f, bb), extract_global_scope(extractor))
 
         inner_bb.__name__ = scope
         return inner_bb
@@ -311,7 +319,7 @@ def resolve_scope(scope):
 
         def inner_function(extractor):
             f = get_function(extractor, va)
-            return extract_function_features(extractor, f)
+            return itertools.chain(extract_function_features(extractor, f), extract_global_scope(extractor))
 
         inner_function.__name__ = scope
         return inner_function
