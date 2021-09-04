@@ -148,8 +148,28 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     extract_file_function_names,
-    extract_file_os,
     extract_file_format,
+)
+ 
+
+def extract_global_features(pe, buf):
+    """
+    extract global features from given workspace
+
+    args:
+      pe (pefile.PE): the parsed PE
+      buf: the raw sample bytes
+
+    yields:
+      Tuple[Feature, VA]: a feature and its location.
+    """
+    for handler in GLOBAL_HANDLERS:
+        for feature, va in handler(pe=pe, buf=buf):
+            yield feature, va
+
+
+GLOBAL_HANDLERS = (
+    extract_file_os,
     extract_file_arch,
 )
 
@@ -163,12 +183,17 @@ class PefileFeatureExtractor(FeatureExtractor):
     def get_base_address(self):
         return self.pe.OPTIONAL_HEADER.ImageBase
 
+    def extract_global_features(self):
+        with open(self.path, "rb") as f:
+            buf = f.read()
+
+        yield from extract_global_features(self.pe, buf)
+
     def extract_file_features(self):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, va in extract_file_features(self.pe, buf):
-            yield feature, va
+        yield from extract_file_features(self.pe, buf)
 
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
