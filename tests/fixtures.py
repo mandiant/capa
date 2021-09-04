@@ -139,7 +139,7 @@ def extract_global_features(extractor):
     for feature, va in extractor.extract_global_features():
         features[feature].add(va)
     return features
- 
+
 
 @lru_cache()
 def extract_file_features(extractor):

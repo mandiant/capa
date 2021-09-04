@@ -58,7 +58,7 @@ class FeatureExtractor:
         fetch the preferred load address at which the sample was analyzed.
         """
         raise NotImplemented
- 
+
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, int]]:
         """
@@ -74,7 +74,7 @@ class FeatureExtractor:
           Tuple[Feature, int]: feature and its location
         """
         raise NotImplemented
- 
+
     @abc.abstractmethod
     def extract_file_features(self) -> Iterator[Tuple[Feature, int]]:
         """
@@ -272,12 +272,12 @@ class NullFeatureExtractor(FeatureExtractor):
 
     def get_base_address(self):
         return self.features["base address"]
-                                             
+
     def extract_global_features(self):
         for p in self.features.get("global features", []):
             va, feature = p
             yield feature, va
-                                             
+
     def extract_file_features(self):
         for p in self.features.get("file features", []):
             va, feature = p

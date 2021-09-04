@@ -88,12 +88,16 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
         #  - basic blocks
         bb_features = collections.defaultdict(set)
 
-        for feature, va in itertools.chain(extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()):
+        for feature, va in itertools.chain(
+            extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
+        ):
             bb_features[feature].add(va)
             function_features[feature].add(va)
 
         for insn in extractor.get_instructions(f, bb):
-            for feature, va in itertools.chain(extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()):
+            for feature, va in itertools.chain(
+                extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
+            ):
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 

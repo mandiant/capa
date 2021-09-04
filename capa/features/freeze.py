@@ -192,7 +192,7 @@ def loads(s):
         va = int(va, 0x10)
         feature = deserialize_feature(feature[:2])
         features["global features"].append((va, feature))
- 
+
     for feature in doc.get("scopes", {}).get("file", []):
         va, loc = feature[2:]
         va = int(va, 0x10)

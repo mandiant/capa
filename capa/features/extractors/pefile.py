@@ -150,7 +150,7 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_format,
 )
- 
+
 
 def extract_global_features(pe, buf):
     """
