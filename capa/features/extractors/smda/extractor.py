@@ -29,25 +29,25 @@ class SmdaFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        capa.features.extractors.smda.file.extract_features(self.smda_report, self.buf)
+        yield from capa.features.extractors.smda.file.extract_features(self.smda_report, self.buf)
 
     def get_functions(self):
         for function in self.smda_report.getFunctions():
             yield function
 
     def extract_function_features(self, f):
-        capa.features.extractors.smda.function.extract_features(f)
+        yield from capa.features.extractors.smda.function.extract_features(f)
 
     def get_basic_blocks(self, f):
         for bb in f.getBlocks():
             yield bb
 
     def extract_basic_block_features(self, f, bb):
-        capa.features.extractors.smda.basicblock.extract_features(f, bb)
+        yield from capa.features.extractors.smda.basicblock.extract_features(f, bb)
 
     def get_instructions(self, f, bb):
         for smda_ins in bb.getInstructions():
             yield smda_ins
 
     def extract_insn_features(self, f, bb, insn):
-        capa.features.extractors.smda.insn.extract_features(f, bb, insn)
+        yield from capa.features.extractors.smda.insn.extract_features(f, bb, insn)
