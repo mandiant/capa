@@ -81,7 +81,7 @@ setuptools.setup(
             "types-PyYAML==5.4.8",
             "types-tabulate==0.8.2",
             "types-termcolor==1.1.1",
-            "types-psutil==5.8.0",
+            "types-psutil==5.8.2",
         ],
     },
     zip_safe=False,
