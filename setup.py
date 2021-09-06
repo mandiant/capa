@@ -24,7 +24,7 @@ requirements = [
     "ruamel.yaml==0.17.16",
     "vivisect==1.0.3",
     "smda==1.6.2",
-    "pefile==2021.5.24",
+    "pefile==2021.9.3",
     "typing==3.7.4.3",
 ]
 
