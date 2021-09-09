@@ -1032,7 +1032,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def update_rule_status(self, rule_text):
         """ """
-        if self.view_rulegen_editor.root is None:
+        if not self.view_rulegen_editor.invisibleRootItem().childCount():
             self.set_rulegen_preview_border_neutral()
             self.view_rulegen_status_label.clear()
             return

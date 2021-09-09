@@ -27,7 +27,7 @@ COLOR_GREEN_RGB = (79, 121, 66)
 COLOR_BLUE_RGB = (37, 147, 215)
 
 
-def calc_level_by_indent(line, prev_level=0):
+def calc_indent_from_line(line, prev_level=0):
     """ """
     if not len(line.strip()):
         # blank line, which may occur for comments so we simply use the last level
@@ -37,10 +37,13 @@ def calc_level_by_indent(line, prev_level=0):
         # need to adjust two spaces when encountering string description
         line = line[2:]
     # calc line level based on preceding whitespace
-    return len(line) - len(stripped)
+    indent = len(line) - len(stripped)
+
+    # round up to nearest even number; helps keep parsing more sane
+    return indent + (indent % 2)
 
 
-def parse_feature_for_node(feature):
+def parse_yaml_line(feature):
     """ """
     description = ""
     comment = ""
@@ -113,36 +116,19 @@ def parse_node_for_feature(feature, description, comment, depth):
     return display if display.endswith("\n") else display + "\n"
 
 
-def yaml_to_nodes(s):
-    level = 0
-    for line in s.splitlines():
-        feature, description, comment = parse_feature_for_node(line.strip())
-
-        o = QtWidgets.QTreeWidgetItem(None)
-
-        # set node attributes
-        setattr(o, "capa_level", calc_level_by_indent(line, level))
-
-        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- optional:")):
-            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
-        elif feature.startswith("#"):
-            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
-        else:
-            setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
-
-        # set node text
-        for (i, v) in enumerate((feature, description, comment)):
-            o.setText(i, v)
-
-        yield o
-
-
 def iterate_tree(o):
     """ """
     itr = QtWidgets.QTreeWidgetItemIterator(o)
     while itr.value():
         yield itr.value()
         itr += 1
+
+
+def expand_tree(root):
+    """ """
+    for node in iterate_tree(root):
+        if node.childCount() and not node.isExpanded():
+            node.setExpanded(True)
 
 
 def calc_item_depth(o):
@@ -350,7 +336,6 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         self.expanded.connect(self.slot_resize_columns_to_content)
         self.collapsed.connect(self.slot_resize_columns_to_content)
 
-        self.root = None
         self.reset_view()
 
         self.is_editing = False
@@ -400,13 +385,11 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         super(CapaExplorerRulgenEditor, self).dropEvent(e)
 
-        # self.prune_expressions()
         self.update_preview()
-        self.expandAll()
+        expand_tree(self.invisibleRootItem())
 
     def reset_view(self):
         """ """
-        self.root = None
         self.clear()
 
     def slot_resize_columns_to_content(self):
@@ -422,16 +405,21 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_remove_selected(self, action):
         """ """
         for o in self.selectedItems():
-            if o == self.root:
+            if o.parent() is None:
+                # special handling for top-level items
                 self.takeTopLevelItem(self.indexOfTopLevelItem(o))
-                self.root = None
                 continue
             o.parent().removeChild(o)
 
     def slot_nest_features(self, action):
         """ """
-        # create a new parent under root node, by default; new node added last position in tree
-        new_parent = self.new_expression_node(self.root, (action.data()[0], ""))
+        # we don't want to add new features under the invisible root because capa rules should
+        # contain a single top-level node; this may not always be the case so we default to the last
+        # child node that was added to the invisible root
+        top_node = self.invisibleRootItem().child(self.invisibleRootItem().childCount() - 1)
+
+        # create a new parent under top-level node
+        new_parent = self.new_expression_node(top_node, (action.data()[0], ""))
 
         if "basic block" in action.data()[0]:
             # add default child expression when nesting under basic block
@@ -633,9 +621,14 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def update_features(self, features):
         """ """
-        if not self.root:
-            # root node does not exist, create default node, set expanded
-            self.root = self.new_expression_node(self, ("- or:", ""))
+        if not self.invisibleRootItem().childCount():
+            # empty tree; add a default node
+            self.new_expression_node(self.invisibleRootItem(), ("- or:", ""))
+
+        # we don't want to add new features under the invisible root because capa rules should
+        # contain a single top-level node; this may not always be the case so we default to the last
+        # child node that was added to the invisible root
+        top_node = self.invisibleRootItem().child(self.invisibleRootItem().childCount() - 1)
 
         # build feature counts
         counted = list(zip(Counter(features).keys(), Counter(features).values()))
@@ -646,7 +639,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
                 value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
             else:
                 value = k.get_value_str()
-            self.new_feature_node(self.root, ("- %s: %s" % (k.name.lower(), value), ""))
+            self.new_feature_node(top_node, ("- %s: %s" % (k.name.lower(), value), ""))
 
         # n > 1 features
         for (k, v) in filter(lambda t: t[1] > 1, counted):
@@ -658,67 +651,108 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
                 display = "- count(%s(%s)): %d" % (k.name.lower(), value, v)
             else:
                 display = "- count(%s): %d" % (k.name.lower(), v)
-            self.new_feature_node(self.root, (display, ""))
+            self.new_feature_node(top_node, (display, ""))
 
-        self.expandAll()
         self.update_preview()
+        expand_tree(self.invisibleRootItem())
         resize_columns_to_content(self.header())
+
+    def make_child_node_from_feature(self, parent, feature):
+        """ """
+        feature, comment, description = feature
+
+        # we need special handling for the "description" tag; meaning we don't add a new node but simply
+        # set the "description" column for the appropriate parent node
+        if feature.startswith("description:"):
+            if not parent:
+                # we shouldn't have description without a parent; do nothing
+                return None
+
+            # we don't add a new node for description; either set description column of parent's last child
+            # or the parent itself
+            if parent.childCount():
+                parent.child(parent.childCount() - 1).setText(1, feature.lstrip("description:").lstrip())
+            else:
+                parent.setText(1, feature.lstrip("description:").lstrip())
+            return None
+        elif feature.startswith("- description:"):
+            if not parent:
+                # we shouldn't have a description without a parent; do nothing
+                return None
+
+            # we don't add a new node for description; set the description column of the parent instead
+            parent.setText(1, feature.lstrip("- description:").lstrip())
+            return None
+
+        node = QtWidgets.QTreeWidgetItem(parent)
+
+        # set node text to data parsed from feature
+        for (idx, text) in enumerate((feature, comment, description)):
+            node.setText(idx, text)
+
+        # we need to set our own type so we can control the GUI accordingly
+        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- optional:")):
+            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
+        elif feature.startswith("#"):
+            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
+        else:
+            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
+
+        # format the node based on its type
+        (self.set_expression_node, self.set_feature_node, self.set_comment_node)[node.capa_type](node)
+
+        parent.addChild(node)
+
+        return node
 
     def load_features_from_yaml(self, rule_text, update_preview=False):
         """ """
-
-        def add_node(parent, node):
-            if node.text(0).startswith("description:"):
-                if parent.childCount():
-                    parent.child(parent.childCount() - 1).setText(1, node.text(0).lstrip("description:").lstrip())
-                else:
-                    parent.setText(1, node.text(0).lstrip("description:").lstrip())
-            elif node.text(0).startswith("- description:"):
-                parent.setText(1, node.text(0).lstrip("- description:").lstrip())
-            else:
-                parent.addChild(node)
-
-        def build(parent, nodes):
-            if nodes:
-                child_lvl = nodes[0].capa_level
-                while nodes:
-                    node = nodes.pop(0)
-                    if node.capa_level == child_lvl:
-                        add_node(parent, node)
-                    elif node.capa_level > child_lvl:
-                        nodes.insert(0, node)
-                        build(parent.child(parent.childCount() - 1), nodes)
-                    else:
-                        parent = parent.parent() if parent.parent() else parent
-                        add_node(parent, node)
-
         self.reset_view()
 
         # check for lack of features block
         if -1 == rule_text.find("features:"):
             return
 
-        rule_features = rule_text[rule_text.find("features:") + len("features:") :].strip()
-        rule_nodes = list(yaml_to_nodes(rule_features))
+        rule_features = rule_text[rule_text.find("features:") + len("features:") :].strip("\n")
 
-        # check for lack of nodes
-        if not rule_nodes:
+        if not rule_features:
+            # no features; nothing to do
             return
 
-        for o in rule_nodes:
-            (self.set_expression_node, self.set_feature_node, self.set_comment_node)[o.capa_type](o)
+        # build tree from yaml text using stack-based algorithm to build parent -> child edges
+        stack = [self.invisibleRootItem()]
+        for line in rule_features.splitlines():
+            if not len(line.strip()):
+                continue
 
-        self.root = rule_nodes.pop(0)
-        self.addTopLevelItem(self.root)
+            indent = calc_indent_from_line(line)
+
+            # we need to grow our stack to ensure proper parent -> child edges
+            if indent > len(stack):
+                stack.extend([None] * (indent - len(stack)))
+
+            # shave the stack; divide by 2 because even indent, add 1 to avoid shaving root node
+            stack[indent // 2 + 1 :] = []
+
+            # find our parent; should be last node in stack not None
+            parent = None
+            for o in stack[::-1]:
+                if o:
+                    parent = o
+                    break
+
+            node = self.make_child_node_from_feature(parent, parse_yaml_line(line.strip()))
+
+            # append our new node in case its a parent for another node
+            if node:
+                stack.append(node)
 
         if update_preview:
             self.preview.blockSignals(True)
             self.preview.setPlainText(rule_text)
             self.preview.blockSignals(False)
 
-        build(self.root, rule_nodes)
-
-        self.expandAll()
+        expand_tree(self.invisibleRootItem())
 
     def get_features(self, selected=False, ignore=()):
         """ """

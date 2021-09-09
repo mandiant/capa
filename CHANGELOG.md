@@ -96,6 +96,7 @@
 - explorer: update support documentation and runtime checks #741 @mike-hunhoff
 - explorer: small performance boost to rule generator search functionality #742 @mike-hunhoff
 - explorer: add support for arch, os, and format features #758 @mike-hunhoff
+- explorer: improve parsing algorithm for rule generator feature editor #768 @mike-hunhoff
 
 ### Development
 
