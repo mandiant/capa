@@ -942,6 +942,7 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
+    file_extractor = None
     if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
         # these pefile and elffile file feature extractors are pretty light weight: they don't do any code analysis.
         # so we can fairly quickly determine if the given file has "pure" file-scope rules
