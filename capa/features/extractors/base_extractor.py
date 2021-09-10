@@ -60,6 +60,22 @@ class FeatureExtractor:
         raise NotImplemented
 
     @abc.abstractmethod
+    def extract_global_features(self) -> Iterator[Tuple[Feature, int]]:
+        """
+        extract features found at every scope ("global").
+
+        example::
+
+            extractor = VivisectFeatureExtractor(vw, path)
+            for feature, va in extractor.get_global_features():
+                print('0x%x: %s', va, feature)
+
+        yields:
+          Tuple[Feature, int]: feature and its location
+        """
+        raise NotImplemented
+
+    @abc.abstractmethod
     def extract_file_features(self) -> Iterator[Tuple[Feature, int]]:
         """
         extract file-scope features.
@@ -216,6 +232,10 @@ class NullFeatureExtractor(FeatureExtractor):
 
         extractor = NullFeatureExtractor({
             'base address: 0x401000,
+            'global features': [
+                (0x0, capa.features.Arch('i386')),
+                (0x0, capa.features.OS('linux')),
+            ],
             'file features': [
                 (0x402345, capa.features.Characteristic('embedded pe')),
             ],
@@ -252,6 +272,11 @@ class NullFeatureExtractor(FeatureExtractor):
 
     def get_base_address(self):
         return self.features["base address"]
+
+    def extract_global_features(self):
+        for p in self.features.get("global features", []):
+            va, feature = p
+            yield feature, va
 
     def extract_file_features(self):
         for p in self.features.get("file features", []):

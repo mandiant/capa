@@ -25,34 +25,29 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def get_base_address(self):
         return self.smda_report.base_addr
 
-    def extract_file_features(self):
-        for feature, va in capa.features.extractors.smda.file.extract_features(self.smda_report, self.buf):
-            yield feature, va
+    def extract_global_features(self):
         yield from self.global_features
+
+    def extract_file_features(self):
+        yield from capa.features.extractors.smda.file.extract_features(self.smda_report, self.buf)
 
     def get_functions(self):
         for function in self.smda_report.getFunctions():
             yield function
 
     def extract_function_features(self, f):
-        for feature, va in capa.features.extractors.smda.function.extract_features(f):
-            yield feature, va
-        yield from self.global_features
+        yield from capa.features.extractors.smda.function.extract_features(f)
 
     def get_basic_blocks(self, f):
         for bb in f.getBlocks():
             yield bb
 
     def extract_basic_block_features(self, f, bb):
-        for feature, va in capa.features.extractors.smda.basicblock.extract_features(f, bb):
-            yield feature, va
-        yield from self.global_features
+        yield from capa.features.extractors.smda.basicblock.extract_features(f, bb)
 
     def get_instructions(self, f, bb):
         for smda_ins in bb.getInstructions():
             yield smda_ins
 
     def extract_insn_features(self, f, bb, insn):
-        for feature, va in capa.features.extractors.smda.insn.extract_features(f, bb, insn):
-            yield feature, va
-        yield from self.global_features
+        yield from capa.features.extractors.smda.insn.extract_features(f, bb, insn)

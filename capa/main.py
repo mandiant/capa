@@ -79,7 +79,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
     function_features = collections.defaultdict(set)  # type: FeatureSet
     bb_matches = collections.defaultdict(list)  # type: MatchResults
 
-    for feature, va in extractor.extract_function_features(f):
+    for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
         function_features[feature].add(va)
 
     for bb in extractor.get_basic_blocks(f):
@@ -88,12 +88,16 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
         #  - basic blocks
         bb_features = collections.defaultdict(set)
 
-        for feature, va in extractor.extract_basic_block_features(f, bb):
+        for feature, va in itertools.chain(
+            extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
+        ):
             bb_features[feature].add(va)
             function_features[feature].add(va)
 
         for insn in extractor.get_instructions(f, bb):
-            for feature, va in extractor.extract_insn_features(f, bb, insn):
+            for feature, va in itertools.chain(
+                extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
+            ):
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 
@@ -112,7 +116,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
 def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
     file_features = collections.defaultdict(set)  # type: FeatureSet
 
-    for feature, va in extractor.extract_file_features():
+    for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
