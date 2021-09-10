@@ -10,6 +10,7 @@
 - rule format: add feature `os: ` for operating system, like `os: windows` #723 @williballenthin
 - rule format: add feature `substring: ` for verbatim strings with leading/trailing wildcards #737 @williballenthin
 - scripts: add `profile-memory.py` for profiling memory usage #736 @williballenthin
+- main: add light weight ELF file feature extractor to detect file limitations #770 @mr-tz
 
 ### Breaking Changes
 
