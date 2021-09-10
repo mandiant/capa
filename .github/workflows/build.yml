@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-16.04
+          - os: ubuntu-18.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      - if: matrix.os == 'ubuntu-16.04'
+      - if: matrix.os == 'ubuntu-18.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Install PyInstaller
         run: pip install 'pyinstaller==4.2'
