@@ -91,8 +91,18 @@ FILE_HANDLERS = (
     extract_file_section_names,
     extract_file_strings,
     # no library matching
-    extract_file_os,
     extract_file_format,
+)
+
+ 
+def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
+    for global_handler in GLOBAL_HANDLERS:
+        for feature, va in global_handler(elf=elf, buf=buf):  # type: ignore
+            yield feature, va
+
+
+GLOBAL_HANDLERS = (
+    extract_file_os,
     extract_file_arch,
 )
 
@@ -109,6 +119,13 @@ class ElfFeatureExtractor(FeatureExtractor):
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
                 return segment.header.p_vaddr
+
+    def extract_global_features(self):
+        with open(self.path, "rb") as f:
+            buf = f.read()
+
+        for feature, va in extract_global_features(self.elf, buf):
+            yield feature, va
 
     def extract_file_features(self):
         with open(self.path, "rb") as f:
