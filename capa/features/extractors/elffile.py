@@ -102,8 +102,7 @@ class ElfFeatureExtractor(FeatureExtractor):
         super(ElfFeatureExtractor, self).__init__()
         self.path = path
         with open(self.path, "rb") as f:
-            with contextlib.closing(io.BytesIO(f.read())):
-                self.elf = ELFFile()
+            self.elf = ELFFile(io.BytesIO(f.read()))
 
     def get_base_address(self):
         # virtual address of the first segment with type LOAD
