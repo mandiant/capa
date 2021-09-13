@@ -260,6 +260,7 @@ def parse_feature(key: str):
     elif key == "format":
         return capa.features.common.Format
     elif key == "arch":
+
         return capa.features.common.Arch
     else:
         raise InvalidRule("unexpected statement: %s" % key)
@@ -471,6 +472,12 @@ def build_statements(d, scope: str):
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], str):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
+    elif (
+        (key == "os" and d[key] not in capa.features.common.VALID_OS)
+        or (key == "format" and d[key] not in capa.features.common.VALID_FORMAT)
+        or (key == "arch" and d[key] not in capa.features.common.VALID_ARCH)
+    ):
+        raise InvalidRule("unexpected %s value %s" % (key, d[key]))
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))

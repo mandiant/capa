@@ -5,14 +5,16 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
+import io
 import logging
+import contextlib
+from typing import Tuple
 
 from elftools.elf.elffile import ELFFile, SymbolTableSection
 
 import capa.features.extractors.common
 from capa.features.file import Import, Section
-from capa.features.common import OS, FORMAT_ELF, Arch, Format
+from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.extractors.elf import Arch as ElfArch
 from capa.features.extractors.base_extractor import FeatureExtractor
 
@@ -77,31 +79,18 @@ def extract_file_arch(elf, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf, buf):
-    """
-    extract file features from given sample
-
-    args:
-      elf (elftools.elf.elffile.ELFFile): the parsed ELFFile
-      buf: the raw sample bytes
-
-    yields:
-      Tuple[Feature, VA]: a feature and its location.
-    """
-
+def extract_file_features(elf: ELFFile, buf: bytes) -> Tuple[Feature, int]:
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler(elf=elf, buf=buf):
             yield feature, va
 
 
 FILE_HANDLERS = (
-    # TODO extract file export names
-    # extract_file_export_names,
+    # TODO extract_file_export_names,
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
-    # elffile doesn't have library matching
-    # extract_file_function_names,
+    # no library matching
     extract_file_os,
     extract_file_format,
     extract_file_arch,
@@ -112,8 +101,9 @@ class ElfFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
         super(ElfFeatureExtractor, self).__init__()
         self.path = path
-        # TODO close where/when?
-        self.elf = ELFFile(open(self.path, "rb"))
+        with open(self.path, "rb") as f:
+            with contextlib.closing(io.BytesIO(f.read())):
+                self.elf = ELFFile()
 
     def get_base_address(self):
         # virtual address of the first segment with type LOAD
