@@ -39,6 +39,7 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
+import capa.features.extractors.elffile
 from capa.rules import Rule, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import get_file_taste
@@ -945,9 +946,10 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
+    file_extractor = None
     if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
-        # this pefile file feature extractor is pretty light weight: it doesn't do any code analysis.
-        # so we can fairly quickly determine if the given PE file has "pure" file-scope rules
+        # these pefile and elffile file feature extractors are pretty light weight: they don't do any code analysis.
+        # so we can fairly quickly determine if the given file has "pure" file-scope rules
         # that indicate a limitation (like "file is packed based on section names")
         # and avoid doing a full code analysis on difficult/impossible binaries.
         try:
@@ -957,6 +959,17 @@ def main(argv=None):
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
             return -1
+
+    elif args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
+        try:
+            from elftools.common.exceptions import ELFError
+
+            file_extractor = capa.features.extractors.elffile.ElfFeatureExtractor(args.sample)
+        except ELFError as e:
+            logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
+            return -1
+
+    if file_extractor:
         pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
 
         # file limitations that rely on non-file scope won't be detected here.

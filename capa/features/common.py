@@ -344,7 +344,6 @@ VALID_ARCH = (ARCH_I386, ARCH_AMD64)
 
 class Arch(Feature):
     def __init__(self, value: str, description=None):
-        assert value in VALID_ARCH
         super(Arch, self).__init__(value, description=description)
         self.name = "arch"
 
@@ -358,7 +357,6 @@ VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS})
 
 class OS(Feature):
     def __init__(self, value: str, description=None):
-        assert value in (VALID_OS)
         super(OS, self).__init__(value, description=description)
         self.name = "os"
 
@@ -370,7 +368,6 @@ VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
 
 class Format(Feature):
     def __init__(self, value: str, description=None):
-        assert value in (VALID_FORMAT)
         super(Format, self).__init__(value, description=description)
         self.name = "format"
 

@@ -26,6 +26,7 @@ requirements = [
     "smda==1.6.2",
     "pefile==2021.9.3",
     "typing==3.7.4.3",
+    "pyelftools==0.27",
 ]
 
 # this sets __version__

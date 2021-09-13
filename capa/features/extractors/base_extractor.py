@@ -9,7 +9,7 @@
 import abc
 from typing import Tuple, Iterator, SupportsInt
 
-from capa.features.basicblock import Feature
+from capa.features.common import Feature
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # the only requirement of these handles are that they support `__int__`,

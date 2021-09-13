@@ -5,16 +5,18 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+
 import logging
 
 import pefile
 
 import capa.features.common
 import capa.features.extractors
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
-from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, String, Characteristic
+from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -85,14 +87,7 @@ def extract_file_section_names(pe, **kwargs):
 
 
 def extract_file_strings(buf, **kwargs):
-    """
-    extract ASCII and UTF-16 LE strings from file
-    """
-    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
-        yield String(s.s), s.offset
-
-    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
-        yield String(s.s), s.offset
+    yield from capa.features.extractors.common.extract_file_strings(buf)
 
 
 def extract_file_function_names(**kwargs):
