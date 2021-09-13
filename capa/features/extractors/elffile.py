@@ -8,7 +8,7 @@
 import io
 import logging
 import contextlib
-from typing import Tuple
+from typing import Tuple, Iterator
 
 from elftools.elf.elffile import ELFFile, SymbolTableSection
 
@@ -79,9 +79,9 @@ def extract_file_arch(elf, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Tuple[Feature, int]:
+def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(elf=elf, buf=buf):
+        for feature, va in file_handler(elf=elf, buf=buf):  # type: ignore
             yield feature, va
 
 
