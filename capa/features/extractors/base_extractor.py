@@ -57,7 +57,7 @@ class FeatureExtractor:
         """
         fetch the preferred load address at which the sample was analyzed.
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, int]]:
@@ -73,7 +73,7 @@ class FeatureExtractor:
         yields:
           Tuple[Feature, int]: feature and its location
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_file_features(self) -> Iterator[Tuple[Feature, int]]:
@@ -89,7 +89,7 @@ class FeatureExtractor:
         yields:
           Tuple[Feature, int]: feature and its location
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_functions(self) -> Iterator[FunctionHandle]:
@@ -97,7 +97,7 @@ class FeatureExtractor:
         enumerate the functions and provide opaque values that will
          subsequently be provided to `.extract_function_features()`, etc.
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     def is_library_function(self, va: int) -> bool:
         """
@@ -153,7 +153,7 @@ class FeatureExtractor:
         yields:
           Tuple[Feature, int]: feature and its location
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
@@ -161,7 +161,7 @@ class FeatureExtractor:
         enumerate the basic blocks in the given function and provide opaque values that will
          subsequently be provided to `.extract_basic_block_features()`, etc.
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, int]]:
@@ -184,7 +184,7 @@ class FeatureExtractor:
         yields:
           Tuple[Feature, int]: feature and its location
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
@@ -192,7 +192,7 @@ class FeatureExtractor:
         enumerate the instructions in the given basic block and provide opaque values that will
          subsequently be provided to `.extract_insn_features()`, etc.
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_insn_features(self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, int]]:
@@ -217,7 +217,7 @@ class FeatureExtractor:
         yields:
           Tuple[Feature, int]: feature and its location
         """
-        raise NotImplemented
+        raise NotImplementedError()
 
 
 class NullFeatureExtractor(FeatureExtractor):

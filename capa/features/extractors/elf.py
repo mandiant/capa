@@ -83,7 +83,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         (e_phoff,) = struct.unpack_from(endian + "Q", file_header, 0x20)
         e_phentsize, e_phnum = struct.unpack_from(endian + "HH", file_header, 0x36)
     else:
-        raise NotImplemented
+        raise NotImplementedError()
 
     logger.debug("e_phoff: 0x%02x e_phentsize: 0x%02x e_phnum: %d", e_phoff, e_phentsize, e_phnum)
 
@@ -148,7 +148,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         elif bitness == 64:
             p_offset, _, _, p_filesz = struct.unpack_from(endian + "QQQQ", phent, 0x8)
         else:
-            raise NotImplemented
+            raise NotImplementedError()
 
         logger.debug("p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
 
@@ -221,7 +221,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         elif bitness == 64:
             p_offset, _, _, p_filesz = struct.unpack_from(endian + "QQQQ", phent, 0x8)
         else:
-            raise NotImplemented
+            raise NotImplementedError()
 
         f.seek(p_offset)
         interp = f.read(p_filesz)
