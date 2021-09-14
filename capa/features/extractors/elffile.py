@@ -94,7 +94,7 @@ FILE_HANDLERS = (
     extract_file_format,
 )
 
- 
+
 def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
     for global_handler in GLOBAL_HANDLERS:
         for feature, va in global_handler(elf=elf, buf=buf):  # type: ignore
