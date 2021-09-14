@@ -982,7 +982,11 @@ def main(argv=None):
                 return -1
 
     try:
-        sig_paths = get_signatures(args.signatures)
+        if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
+            sig_paths = get_signatures(args.signatures)
+        else:
+            sig_paths = []
+            logger.debug("skipping library code matching: only have PE signatures")
     except (IOError) as e:
         logger.error("%s", str(e))
         return -1
