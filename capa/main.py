@@ -982,7 +982,11 @@ def main(argv=None):
                 return -1
 
     try:
-        sig_paths = get_signatures(args.signatures)
+        if args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
+            sig_paths = []
+            logger.debug("skipping library code matching: there are no ELF signatures yet")
+        else:
+            sig_paths = get_signatures(args.signatures)
     except (IOError) as e:
         logger.error("%s", str(e))
         return -1
