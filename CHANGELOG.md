@@ -18,7 +18,7 @@
 - freeze format gains new section for "global" features #759 @williballenthin
 
 
-### New Rules (78)
+### New Rules (80)
 
 - collection/webcam/capture-webcam-image johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
@@ -79,6 +79,8 @@
 - nursery/link-function-at-runtime-on-linux joakim@intezer.com
 - nursery/write-file-on-linux joakim@intezer.com
 - communication/socket/tcp/send/obtain-transmitpackets-callback-function-via-wsaioctl jonathan.lepore@mandiant.com
+- nursery/linked-against-cpp-http-library @mr-tz
+- nursery/linked-against-cpp-json-library @mr-tz
 -
 
 ### Bug Fixes
