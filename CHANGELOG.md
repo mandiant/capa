@@ -4,6 +4,41 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa <release>...master](https://github.com/fireeye/capa/compare/v3.0.0...master)
+- [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/v3.0.0...master)
+
+## v3.0.0 (2021-09-15)
+
+We are excited to announce version 3.0! :tada:
+
+capa 3.0:
+- adds support for ELF files targeting Linux thanks to [Intezer](https://www.intezer.com/)
+- adds new features to specify OS, CPU architecture, and file format
+- fixes a few bugs that may have led to false negatives (missed capabilities) in older versions
+- adds 80 new rules, including 36 describing techniques for Linux
+
+A huge thanks to everyone who submitted issues, provided feedback, and contributed code and rules.
+Special acknowledgement to @Adir-Shemesh and @TcM1911 of [Intezer](https://www.intezer.com/) for contributing the code to enable ELF support.
+Also, welcome first time contributors:
+  - @jaredscottwilson
+  - @cdong1012
+  - @jlepore-fe 
+
+### New Features
+
 - all: add support for ELF files #700 @Adir-Shemesh @TcM1911
 - rule format: add feature `format: ` for file format, like `format: pe` #723 @williballenthin
 - rule format: add feature `arch: ` for architecture, like `arch: amd64` #723 @williballenthin
@@ -14,13 +49,13 @@
 
 ### Breaking Changes
 
+- rules using `format`, `arch`, `os`, or `substring` features cannot be used by capa versions prior to v3
 - legacy term `arch` (i.e., "x32") is now called `bitness` @williballenthin
 - freeze format gains new section for "global" features #759 @williballenthin
 
-
 ### New Rules (80)
 
-- collection/webcam/capture-webcam-image johnk3r
+- collection/webcam/capture-webcam-image @johnk3r
 - nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
 - nursery/monitor-clipboard-content michael.hunhoff@fireeye.com
 - nursery/monitor-local-ipv4-address-changes michael.hunhoff@fireeye.com
@@ -81,7 +116,6 @@
 - communication/socket/tcp/send/obtain-transmitpackets-callback-function-via-wsaioctl jonathan.lepore@mandiant.com
 - nursery/linked-against-cpp-http-library @mr-tz
 - nursery/linked-against-cpp-json-library @mr-tz
--
 
 ### Bug Fixes
 
@@ -106,8 +140,8 @@
 ### Development
 
 ### Raw diffs
-- [capa v2.0.0...master](https://github.com/fireeye/capa/compare/v2.0.0...master)
-- [capa-rules v2.0.0...master](https://github.com/fireeye/capa-rules/compare/v2.0.0...master)
+- [capa v2.0.0...v3.0.0](https://github.com/fireeye/capa/compare/v2.0.0...v3.0.0)
+- [capa-rules v2.0.0...v3.0.0](https://github.com/fireeye/capa-rules/compare/v2.0.0...v3.0.0)
 
 
 ## v2.0.0 (2021-07-19)

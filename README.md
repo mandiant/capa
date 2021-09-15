@@ -14,6 +14,7 @@ For example, it might suggest that the file is a backdoor, is capable of install
 Check out:
 - the overview in our first [capa blog post](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html)
 - the major version 2.0 updates described in our [second blog post](https://www.fireeye.com/blog/threat-research/2021/07/capa-2-better-stronger-faster.html)
+- the major version 3.0 (ELF support) described in the [third blog post](https://www.fireeye.com/blog/threat-research/2021/09/elfant-in-the-room-capa-v3.html)
 
 ```
 $ capa.exe suspicious.exe
