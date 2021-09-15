@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Tuple
 import halo
 import tqdm
 import colorama
+from pefile import PEFormatError
+from elftools.common.exceptions import ELFError
 
 import capa.rules
 import capa.engine
@@ -953,8 +955,6 @@ def main(argv=None):
         # that indicate a limitation (like "file is packed based on section names")
         # and avoid doing a full code analysis on difficult/impossible binaries.
         try:
-            from pefile import PEFormatError
-
             file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(args.sample)
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
@@ -962,15 +962,20 @@ def main(argv=None):
 
     elif args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
         try:
-            from elftools.common.exceptions import ELFError
-
             file_extractor = capa.features.extractors.elffile.ElfFeatureExtractor(args.sample)
-        except ELFError as e:
+        except (ELFError, OverflowError) as e:
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
             return -1
 
     if file_extractor:
-        pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+        try:
+            pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
+        except PEFormatError as e:
+            logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
+            return -1
+        except (ELFError, OverflowError) as e:
+            logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
+            return -1
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
