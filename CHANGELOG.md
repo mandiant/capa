@@ -31,8 +31,8 @@ capa 3.0:
 - adds 80 new rules, including 36 describing techniques for Linux
 
 A huge thanks to everyone who submitted issues, provided feedback, and contributed code and rules.
-Special acknowledgement to @Adir-Shemesh and @TcM1911 of [Intezer](https://www.intezer.com/) for contributing ELF support.
-Also, welcome first time contributors!
+Special acknowledgement to @Adir-Shemesh and @TcM1911 of [Intezer](https://www.intezer.com/) for contributing the code to enable ELF support.
+Also, welcome first time contributors:
   - @jaredscottwilson
   - @cdong1012
   - @jlepore-fe 
