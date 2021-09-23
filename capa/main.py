@@ -10,8 +10,6 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
-import gzip
-import time
 import hashlib
 import logging
 import os.path
@@ -19,7 +17,6 @@ import argparse
 import datetime
 import textwrap
 import itertools
-import contextlib
 import collections
 from typing import Any, Dict, List, Tuple
 
@@ -56,14 +53,6 @@ EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 
 
 logger = logging.getLogger("capa")
-
-
-@contextlib.contextmanager
-def timing(msg: str):
-    t0 = time.time()
-    yield
-    t1 = time.time()
-    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 def set_vivisect_log_level(level):
@@ -301,40 +290,6 @@ def get_os(sample: str) -> str:
     return "unknown"
 
 
-SHELLCODE_BASE = 0x690000
-
-
-def get_shellcode_vw(sample, arch="auto"):
-    """
-    Return shellcode workspace using explicit arch or via auto detect.
-    The workspace is *not* analyzed nor saved. Its up to the caller to do this.
-    Then, they can register FLIRT analyzers or decide not to write to disk.
-    """
-    import viv_utils
-
-    with open(sample, "rb") as f:
-        sample_bytes = f.read()
-
-    if arch == "auto":
-        # choose arch with most functions, idea by Jay G.
-        vw_cands = []
-        for arch in ["i386", "amd64"]:
-            vw_cands.append(
-                viv_utils.getShellcodeWorkspace(
-                    sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False
-                )
-            )
-        if not vw_cands:
-            raise ValueError("could not generate vivisect workspace")
-        vw = max(vw_cands, key=lambda vw: len(vw.getFunctions()))
-    else:
-        vw = viv_utils.getShellcodeWorkspace(sample_bytes, arch, base=SHELLCODE_BASE, analyze=False, should_save=False)
-
-    vw.setMeta("StorageName", "%s.viv" % sample)
-
-    return vw
-
-
 def get_meta_str(vw):
     """
     Return workspace meta information string
@@ -344,58 +299,6 @@ def get_meta_str(vw):
         if k in vw.metadata:
             meta.append("%s: %s" % (k.lower(), vw.metadata[k]))
     return "%s, number of functions: %d" % (", ".join(meta), len(vw.getFunctions()))
-
-
-def load_flirt_signature(path):
-    # lazy import enables us to only require flirt here and not in IDA, for example
-    import flirt
-
-    if path.endswith(".sig"):
-        with open(path, "rb") as f:
-            with timing("flirt: parsing .sig: " + path):
-                sigs = flirt.parse_sig(f.read())
-
-    elif path.endswith(".pat"):
-        with open(path, "rb") as f:
-            with timing("flirt: parsing .pat: " + path):
-                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
-
-    elif path.endswith(".pat.gz"):
-        with gzip.open(path, "rb") as f:
-            with timing("flirt: parsing .pat.gz: " + path):
-                sigs = flirt.parse_pat(f.read().decode("utf-8").replace("\r\n", "\n"))
-
-    else:
-        raise ValueError("unexpect signature file extension: " + path)
-
-    return sigs
-
-
-def register_flirt_signature_analyzers(vw, sigpaths):
-    """
-    args:
-      vw (vivisect.VivWorkspace):
-      sigpaths (List[str]): file system paths of .sig/.pat files
-    """
-    # lazy import enables us to only require flirt here and not in IDA, for example
-    import flirt
-    import viv_utils.flirt
-
-    for sigpath in sigpaths:
-        try:
-            sigs = load_flirt_signature(sigpath)
-        except ValueError as e:
-            logger.warning("could not load %s: %s", sigpath, str(e))
-            continue
-
-        logger.debug("flirt: sig count: %d", len(sigs))
-
-        with timing("flirt: compiling sigs"):
-            matcher = flirt.compile(sigs)
-
-        analyzer = viv_utils.flirt.FlirtFunctionAnalyzer(matcher, sigpath)
-        logger.debug("registering viv function analyzer: %s", repr(analyzer))
-        viv_utils.flirt.addFlirtFunctionAnalyzer(vw, analyzer)
 
 
 def is_running_standalone() -> bool:
@@ -458,8 +361,9 @@ def get_workspace(path, format, sigpaths):
 
     supported formats:
       - pe
-      - sc32
-      - sc64
+      - elf
+      - shellcode 32-bit
+      - shellcode 64-bit
       - auto
 
     this creates and analyzes the workspace; however, it does *not* save the workspace.
@@ -480,13 +384,13 @@ def get_workspace(path, format, sigpaths):
         vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
     elif format == "sc32":
         # these are not analyzed nor saved.
-        vw = get_shellcode_vw(path, arch="i386")
+        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="i386", analyze=False)
     elif format == "sc64":
-        vw = get_shellcode_vw(path, arch="amd64")
+        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="amd64", analyze=False)
     else:
         raise ValueError("unexpected format: " + format)
 
-    register_flirt_signature_analyzers(vw, sigpaths)
+    viv_utils.flirt.register_flirt_signature_analyzers(vw, sigpaths)
 
     vw.analyze()
 
