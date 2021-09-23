@@ -105,7 +105,7 @@ def main(argv=None):
 
     analyzers = []
     for sigpath in args.signatures:
-        sigs = capa.main.load_flirt_signature(sigpath)
+        sigs = viv_utils.flirt.load_flirt_signature(sigpath)
 
         with capa.main.timing("flirt: compiling sigs"):
             matcher = flirt.compile(sigs)
