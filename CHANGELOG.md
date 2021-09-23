@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix many underlying bugs in vivisect analysis and update to version v1.0.5 #786 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
