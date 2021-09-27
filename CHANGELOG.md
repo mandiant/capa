@@ -12,15 +12,27 @@
 
 ### Bug Fixes
 
-- fix many underlying bugs in vivisect analysis and update to version v1.0.5 #786 @williballenthin
-
 ### capa explorer IDA Pro plugin
 
 ### Development
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/fireeye/capa/compare/v3.0.0...master)
-- [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/v3.0.0...master)
+- [capa v3.0.1...master](https://github.com/fireeye/capa/compare/v3.0.1...master)
+- [capa-rules v3.0.1...master](https://github.com/fireeye/capa-rules/compare/v3.0.1...master)
+
+## v3.0.1 (2021-09-27)
+
+This version updates the vivisect dependency. Users will experience less bugs and improved analysis results.
+
+Thanks to the community for highlighting issues and analysis misses. Your feedback is crucial to further improve capa.
+
+### Bug Fixes
+
+- fix many underlying bugs in vivisect analysis and update to version v1.0.5 #786 @williballenthin
+
+### Raw diffs
+- [capa v3.0.0...v3.0.1](https://github.com/fireeye/capa/compare/v3.0.0...v3.0.1)
+- [capa-rules v3.0.0...v3.0.1](https://github.com/fireeye/capa-rules/compare/v3.0.0...v3.0.1)
 
 ## v3.0.0 (2021-09-15)
 
