@@ -18,8 +18,8 @@
 ### Development
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/fireeye/capa/compare/v3.0.2...master)
-- [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/v3.0.2...master)
+- [capa v3.0.2...master](https://github.com/fireeye/capa/compare/v3.0.2...master)
+- [capa-rules v3.0.2...master](https://github.com/fireeye/capa-rules/compare/v3.0.2...master)
   
 ## v3.0.2 (2021-09-28)
   
@@ -30,8 +30,8 @@ This release fixes an issue with the standalone executables built with PyInstall
 - fix bug in PyInstaller config preventing ELF analysis #795 @mr-tz
 
 ### Raw diffs
-- [capa v3.0.1...master](https://github.com/fireeye/capa/compare/v3.0.1...v3.0.2)
-- [capa-rules v3.0.1...master](https://github.com/fireeye/capa-rules/compare/v3.0.1...v3.0.2)
+- [capa v3.0.1...v3.0.2](https://github.com/fireeye/capa/compare/v3.0.1...v3.0.2)
+- [capa-rules v3.0.1...v3.0.2](https://github.com/fireeye/capa-rules/compare/v3.0.1...v3.0.2)
 
 ## v3.0.1 (2021-09-27)
 
@@ -83,29 +83,29 @@ Also, welcome first time contributors:
 ### New Rules (80)
 
 - collection/webcam/capture-webcam-image @johnk3r
-- nursery/list-drag-and-drop-files michael.hunhoff@fireeye.com
-- nursery/monitor-clipboard-content michael.hunhoff@fireeye.com
-- nursery/monitor-local-ipv4-address-changes michael.hunhoff@fireeye.com
-- nursery/load-windows-common-language-runtime michael.hunhoff@fireeye.com
-- nursery/resize-volume-shadow-copy-storage michael.hunhoff@fireeye.com
-- nursery/add-user-account-group michael.hunhoff@fireeye.com
-- nursery/add-user-account-to-group michael.hunhoff@fireeye.com
-- nursery/add-user-account michael.hunhoff@fireeye.com
-- nursery/change-user-account-password michael.hunhoff@fireeye.com
-- nursery/delete-user-account-from-group michael.hunhoff@fireeye.com
-- nursery/delete-user-account-group michael.hunhoff@fireeye.com
-- nursery/delete-user-account michael.hunhoff@fireeye.com
-- nursery/list-domain-servers michael.hunhoff@fireeye.com
-- nursery/list-groups-for-user-account michael.hunhoff@fireeye.com
-- nursery/list-user-account-groups michael.hunhoff@fireeye.com
-- nursery/list-user-accounts-for-group michael.hunhoff@fireeye.com
-- nursery/list-user-accounts michael.hunhoff@fireeye.com
-- nursery/parse-url michael.hunhoff@fireeye.com
-- nursery/register-raw-input-devices michael.hunhoff@fireeye.com
-- anti-analysis/packer/gopacker/packed-with-gopacker jared.wilson@fireeye.com
+- nursery/list-drag-and-drop-files michael.hunhoff@mandiant.com
+- nursery/monitor-clipboard-content michael.hunhoff@mandiant.com
+- nursery/monitor-local-ipv4-address-changes michael.hunhoff@mandiant.com
+- nursery/load-windows-common-language-runtime michael.hunhoff@mandiant.com
+- nursery/resize-volume-shadow-copy-storage michael.hunhoff@mandiant.com
+- nursery/add-user-account-group michael.hunhoff@mandiant.com
+- nursery/add-user-account-to-group michael.hunhoff@mandiant.com
+- nursery/add-user-account michael.hunhoff@mandiant.com
+- nursery/change-user-account-password michael.hunhoff@mandiant.com
+- nursery/delete-user-account-from-group michael.hunhoff@mandiant.com
+- nursery/delete-user-account-group michael.hunhoff@mandiant.com
+- nursery/delete-user-account michael.hunhoff@mandiant.com
+- nursery/list-domain-servers michael.hunhoff@mandiant.com
+- nursery/list-groups-for-user-account michael.hunhoff@mandiant.com
+- nursery/list-user-account-groups michael.hunhoff@mandiant.com
+- nursery/list-user-accounts-for-group michael.hunhoff@mandiant.com
+- nursery/list-user-accounts michael.hunhoff@mandiant.com
+- nursery/parse-url michael.hunhoff@mandiant.com
+- nursery/register-raw-input-devices michael.hunhoff@mandiant.com
+- anti-analysis/packer/gopacker/packed-with-gopacker jared.wilson@mandiant.com
 - host-interaction/driver/create-device-object @mr-tz
 - host-interaction/process/create/execute-command @mr-tz
-- data-manipulation/encryption/create-new-key-via-cryptacquirecontext chuong.dong@fireeye.com
+- data-manipulation/encryption/create-new-key-via-cryptacquirecontext chuong.dong@mandiant.com
 - host-interaction/log/clfs/append-data-to-clfs-log-container blaine.stancill@mandiant.com
 - host-interaction/log/clfs/read-data-from-clfs-log-container blaine.stancill@mandiant.com
 - data-manipulation/encryption/hc-128/encrypt-data-using-hc-128-via-wolfssl blaine.stancill@mandiant.com
@@ -127,15 +127,15 @@ Also, welcome first time contributors:
 - persistence/persist-via-shell-profile-or-rc-file joakim@intezer.com
 - persistence/service/persist-via-rc-script joakim@intezer.com
 - collection/get-current-user-on-linux joakim@intezer.com
-- collection/network/get-mac-address-on-windows moritz.raabe@fireeye.com
-- host-interaction/file-system/read/read-file-on-linux moritz.raabe@fireeye.com joakim@intezer.com
-- host-interaction/file-system/read/read-file-on-windows moritz.raabe@fireeye.com
-- host-interaction/file-system/write/write-file-on-windows william.ballenthin@fireeye.com
-- host-interaction/os/info/get-system-information-on-windows moritz.raabe@fireeye.com joakim@intezer.com
-- host-interaction/process/create/create-process-on-windows moritz.raabe@fireeye.com
-- linking/runtime-linking/link-function-at-runtime-on-windows moritz.raabe@fireeye.com
+- collection/network/get-mac-address-on-windows moritz.raabe@mandiant.com
+- host-interaction/file-system/read/read-file-on-linux moritz.raabe@mandiant.com joakim@intezer.com
+- host-interaction/file-system/read/read-file-on-windows moritz.raabe@mandiant.com
+- host-interaction/file-system/write/write-file-on-windows william.ballenthin@mandiant.com
+- host-interaction/os/info/get-system-information-on-windows moritz.raabe@mandiant.com joakim@intezer.com
+- host-interaction/process/create/create-process-on-windows moritz.raabe@mandiant.com
+- linking/runtime-linking/link-function-at-runtime-on-windows moritz.raabe@mandiant.com
 - nursery/create-process-on-linux joakim@intezer.com
-- nursery/enumerate-files-on-linux william.ballenthin@fireeye.com
+- nursery/enumerate-files-on-linux william.ballenthin@mandiant.com
 - nursery/get-mac-address-on-linux joakim@intezer.com
 - nursery/get-system-information-on-linux joakim@intezer.com
 - nursery/link-function-at-runtime-on-linux joakim@intezer.com
@@ -167,8 +167,8 @@ Also, welcome first time contributors:
 ### Development
 
 ### Raw diffs
-- [capa v2.0.0...v3.0.0](https://github.com/fireeye/capa/compare/v2.0.0...v3.0.0)
-- [capa-rules v2.0.0...v3.0.0](https://github.com/fireeye/capa-rules/compare/v2.0.0...v3.0.0)
+- [capa v2.0.0...v3.0.0](https://github.com/mandiant/capa/compare/v2.0.0...v3.0.0)
+- [capa-rules v2.0.0...v3.0.0](https://github.com/mandiant/capa-rules/compare/v2.0.0...v3.0.0)
 
 
 ## v2.0.0 (2021-07-19)
@@ -187,7 +187,7 @@ A huge thanks to everyone who submitted issues, provided feedback, and contribut
 
 ### New Features
 
-- rules: update ATT&CK and MBC mappings https://github.com/fireeye/capa-rules/pull/317 @williballenthin
+- rules: update ATT&CK and MBC mappings https://github.com/mandiant/capa-rules/pull/317 @williballenthin
 - main: use FLIRT signatures to identify and ignore library code #446 @williballenthin
 - tests: update test cases and caching #545 @mr-tz
 - scripts: capa2yara.py convert capa rules to YARA rules #561 @ruppde
@@ -275,34 +275,34 @@ A huge thanks to everyone who submitted issues, provided feedback, and contribut
 - nursery/run-in-container @williballenthin
 - persistence/registry/appinitdlls/disable-appinit_dlls-code-signature-enforcement @williballenthin
 - collection/password-manager/steal-keepass-passwords-using-keefarce @Ana06
-- host-interaction/network/connectivity/check-internet-connectivity-via-wininet matthew.williams@fireeye.com michael.hunhoff@fireeye.com
+- host-interaction/network/connectivity/check-internet-connectivity-via-wininet matthew.williams@mandiant.com michael.hunhoff@mandiant.com
 - nursery/create-bits-job @mr-tz
 - nursery/execute-syscall-instruction @kulinacs @mr-tz
-- nursery/connect-to-wmi-namespace-via-wbemlocator michael.hunhoff@fireeye.com
+- nursery/connect-to-wmi-namespace-via-wbemlocator michael.hunhoff@mandiant.com
 - anti-analysis/obfuscation/obfuscated-with-callobfuscator johnk3r
 - executable/installer/inno-setup/packaged-as-an-inno-setup-installer awillia2@cisco.com
 - data-manipulation/hashing/djb2/hash-data-using-djb2 awillia2@cisco.com
-- data-manipulation/encoding/base64/decode-data-using-base64-via-dword-translation-table gilbert.elliot@fireeye.com
-- nursery/list-tcp-connections-and-listeners michael.hunhoff@fireeye.com
-- nursery/list-udp-connections-and-listeners michael.hunhoff@fireeye.com
-- nursery/log-keystrokes-via-raw-input-data michael.hunhoff@fireeye.com
-- nursery/register-http-server-url michael.hunhoff@fireeye.com
-- internal/limitation/file/internal-autoit-file-limitation.yml william.ballenthin@fireeye.com
-- internal/limitation/file/internal-dotnet-file-limitation.yml william.ballenthin@fireeye.com
-- internal/limitation/file/internal-installer-file-limitation.yml william.ballenthin@fireeye.com
-- internal/limitation/file/internal-packer-file-limitation.yml william.ballenthin@fireeye.com
+- data-manipulation/encoding/base64/decode-data-using-base64-via-dword-translation-table gilbert.elliot@mandiant.com
+- nursery/list-tcp-connections-and-listeners michael.hunhoff@mandiant.com
+- nursery/list-udp-connections-and-listeners michael.hunhoff@mandiant.com
+- nursery/log-keystrokes-via-raw-input-data michael.hunhoff@mandiant.com
+- nursery/register-http-server-url michael.hunhoff@mandiant.com
+- internal/limitation/file/internal-autoit-file-limitation.yml william.ballenthin@mandiant.com
+- internal/limitation/file/internal-dotnet-file-limitation.yml william.ballenthin@mandiant.com
+- internal/limitation/file/internal-installer-file-limitation.yml william.ballenthin@mandiant.com
+- internal/limitation/file/internal-packer-file-limitation.yml william.ballenthin@mandiant.com
 - host-interaction/network/domain/enumerate-domain-computers-via-ldap awillia2@cisco.com
 - host-interaction/network/domain/get-domain-controller-name awillia2@cisco.com
 - internal/limitation/file/internal-visual-basic-file-limitation @mr-tz
-- data-manipulation/hashing/md5/hash-data-with-md5 moritz.raabe@fireeye.com
+- data-manipulation/hashing/md5/hash-data-with-md5 moritz.raabe@mandiant.com
 - compiler/autohotkey/compiled-with-autohotkey awillia2@cisco.com
 - internal/limitation/file/internal-autohotkey-file-limitation @mr-tz
-- host-interaction/process/dump/create-process-memory-minidump michael.hunhoff@fireeye.com
-- nursery/get-storage-device-properties michael.hunhoff@fireeye.com
-- nursery/execute-shell-command-via-windows-remote-management michael.hunhoff@fireeye.com
-- nursery/get-token-privileges michael.hunhoff@fireeye.com
-- nursery/prompt-user-for-credentials michael.hunhoff@fireeye.com
-- nursery/spoof-parent-pid michael.hunhoff@fireeye.com
+- host-interaction/process/dump/create-process-memory-minidump michael.hunhoff@mandiant.com
+- nursery/get-storage-device-properties michael.hunhoff@mandiant.com
+- nursery/execute-shell-command-via-windows-remote-management michael.hunhoff@mandiant.com
+- nursery/get-token-privileges michael.hunhoff@mandiant.com
+- nursery/prompt-user-for-credentials michael.hunhoff@mandiant.com
+- nursery/spoof-parent-pid michael.hunhoff@mandiant.com
 
 ### Bug Fixes
 
@@ -322,8 +322,8 @@ A huge thanks to everyone who submitted issues, provided feedback, and contribut
 ### Development
 
 - ci: add capa release link to capa-rules tag #517 @Ana06
-- ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/fireeye/capa-rules/pull/374 #549 #604 @Ana06
-- ci, changelog: support multiple author in sync GH https://github.com/fireeye/capa-rules/pull/378 @Ana06
+- ci, changelog: update `New Rules` section in CHANGELOG automatically https://github.com/mandiant/capa-rules/pull/374 #549 #604 @Ana06
+- ci, changelog: support multiple author in sync GH https://github.com/mandiant/capa-rules/pull/378 @Ana06
 - ci, lint: check statements for single child statements #563 @mr-tz
 - ci: reject PRs without CHANGELOG update to ensure CHANGELOG is kept up-to-date #584 @Ana06
 - ci: test that scripts run #660 @mr-tz
@@ -331,8 +331,8 @@ A huge thanks to everyone who submitted issues, provided feedback, and contribut
 ### Raw diffs
 
 <!-- The diff uses v1.6.1 because master doesn't include v1.6.2 and v1.6.3 -->
-- [capa v1.6.1...v2.0.0](https://github.com/fireeye/capa/compare/v1.6.1...v2.0.0)
-- [capa-rules v1.6.1...v2.0.0](https://github.com/fireeye/capa-rules/compare/v1.6.1...v2.0.0)
+- [capa v1.6.1...v2.0.0](https://github.com/mandiant/capa/compare/v1.6.1...v2.0.0)
+- [capa-rules v1.6.1...v2.0.0](https://github.com/mandiant/capa-rules/compare/v1.6.1...v2.0.0)
 
 
 ## v1.6.3 (2021-04-29)
@@ -345,7 +345,7 @@ This release adds IDA 7.6 support to capa.
 
 ### Raw diffs
 
-  - [capa v1.6.2...v1.6.3](https://github.com/fireeye/capa/compare/v1.6.2...v1.6.3)
+  - [capa v1.6.2...v1.6.3](https://github.com/mandiant/capa/compare/v1.6.2...v1.6.3)
 
 
 ## v1.6.2 (2021-04-13)
@@ -358,7 +358,7 @@ This release backports a fix to capa 1.6: The Windows binary was built with Pyth
 
 ### Raw diffs
 
-  - [capa v1.6.1...v1.6.2](https://github.com/fireeye/capa/compare/v1.6.1...v1.6.2)
+  - [capa v1.6.1...v1.6.2](https://github.com/mandiant/capa/compare/v1.6.1...v1.6.2)
 
 
 ## v1.6.1 (2021-04-07)
@@ -426,8 +426,8 @@ This release includes several bug fixes, such as a vivisect issue that prevented
 
 ### Raw diffs
 
-  - [capa v1.6.0...v1.6.1](https://github.com/fireeye/capa/compare/v1.6.0...v1.6.1)
-  - [capa-rules v1.6.0...v1.6.1](https://github.com/fireeye/capa-rules/compare/v1.6.0...v1.6.1)
+  - [capa v1.6.0...v1.6.1](https://github.com/mandiant/capa/compare/v1.6.0...v1.6.1)
+  - [capa-rules v1.6.0...v1.6.1](https://github.com/mandiant/capa-rules/compare/v1.6.0...v1.6.1)
 
 
 ## v1.6.0 (2021-03-09)
@@ -436,7 +436,7 @@ This release adds the capa explorer rule generator plugin for IDA Pro, vivisect 
 
 ### Rule Generator IDA Plugin
 
-The capa explorer IDA plugin now helps you quickly build new capa rules using features extracted directly from your IDA database. Without leaving the plugin interface you can use the features extracted by capa explorer to develop and test new rules and save your work directly to your capa rules directory. To get started select the new `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view, and click `Analyze`. For more information check out the capa explorer [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md).
+The capa explorer IDA plugin now helps you quickly build new capa rules using features extracted directly from your IDA database. Without leaving the plugin interface you can use the features extracted by capa explorer to develop and test new rules and save your work directly to your capa rules directory. To get started select the new `Rule Generator` tab, navigate to a function in the IDA `Disassembly` view, and click `Analyze`. For more information check out the capa explorer [readme](https://github.com/mandiant/capa/blob/master/capa/ida/plugin/README.md).
 
 ![](doc/img/rulegen_expanded.png)
 
@@ -498,8 +498,8 @@ If you have workflows that rely on the Python 2 version and need future maintena
 
 ### Raw diffs
 
-  - [capa v1.5.1...v1.6.0](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
-  - [capa-rules v1.5.1...v1.6.0](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+  - [capa v1.5.1...v1.6.0](https://github.com/mandiant/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.1...v1.6.0](https://github.com/mandiant/capa-rules/compare/v1.5.1...v1.6.0)
 
 
 ## v1.5.1 (2021-02-09)
@@ -512,8 +512,8 @@ This release fixes the version number that we forgot to update for v1.5.0 (there
 
 ### Raw diffs
 
-  - [capa v1.5.0...v1.5.1](https://github.com/fireeye/capa/compare/v1.5.1...v1.6.0)
-  - [capa-rules v1.5.0...v1.5.1](https://github.com/fireeye/capa-rules/compare/v1.5.1...v1.6.0)
+  - [capa v1.5.0...v1.5.1](https://github.com/mandiant/capa/compare/v1.5.1...v1.6.0)
+  - [capa-rules v1.5.0...v1.5.1](https://github.com/mandiant/capa-rules/compare/v1.5.1...v1.6.0)
 
 
 ## v1.5.0 (2021-02-05)
@@ -528,7 +528,7 @@ This release brings support for running capa under Python 3 via [SMDA](https://g
   
 @dzbeck also added [Malware Behavior Catalog](https://github.com/MBCProject/mbc-markdown) (MBC) and ATT&CK mappings for many rules.
 
-Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/mandiant/capa/). Report issues on our [issue tracker](https://github.com/mandiant/capa/issues) and contribute new rules at [capa-rules](https://github.com/mandiant/capa-rules/).
 
 
 ### New Features
@@ -611,8 +611,8 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
   
 ### Raw diffs
 
-  - [capa v1.4.1...v1.5.0](https://github.com/fireeye/capa/compare/v1.4.1...v1.5.0)
-  - [capa-rules v1.4.0...v1.5.0](https://github.com/fireeye/capa-rules/compare/v1.4.0...v1.5.0)
+  - [capa v1.4.1...v1.5.0](https://github.com/mandiant/capa/compare/v1.4.1...v1.5.0)
+  - [capa-rules v1.4.0...v1.5.0](https://github.com/mandiant/capa-rules/compare/v1.4.0...v1.5.0)
 
 ## v1.4.1 (2020-10-23)
 
@@ -624,8 +624,8 @@ This release fixes an issue building capa on our CI server, which prevented us f
   
 ### Raw diffs
 
-  - [capa v1.4.0...v1.4.1](https://github.com/fireeye/capa/compare/v1.4.0...v1.4.1)
-  - [capa-rules v1.4.0...v1.4.1](https://github.com/fireeye/capa-rules/compare/v1.4.0...v1.4.1)  
+  - [capa v1.4.0...v1.4.1](https://github.com/mandiant/capa/compare/v1.4.0...v1.4.1)
+  - [capa-rules v1.4.0...v1.4.1](https://github.com/mandiant/capa-rules/compare/v1.4.0...v1.4.1)  
 
 ## v1.4.0 (2020-10-23)
 
@@ -636,7 +636,7 @@ This capa release includes changes to the rule parsing, enhanced feature extract
 
 @dzbeck added [Malware Behavior Catalog](https://github.com/MBCProject/mbc-markdown) (MBC) and ATT&CK mappings for 86 rules.
 
-Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/mandiant/capa/). Report issues on our [issue tracker](https://github.com/mandiant/capa/issues) and contribute new rules at [capa-rules](https://github.com/mandiant/capa-rules/).
 
 ### New features
 
@@ -739,8 +739,8 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
 
 ### Raw diffs
 
-  - [capa v1.3.0...v1.4.0](https://github.com/fireeye/capa/compare/v1.3.0...v1.4.0)
-  - [capa-rules v1.3.0...v1.4.0](https://github.com/fireeye/capa-rules/compare/v1.3.0...v1.4.0)
+  - [capa v1.3.0...v1.4.0](https://github.com/mandiant/capa/compare/v1.3.0...v1.4.0)
+  - [capa-rules v1.3.0...v1.4.0](https://github.com/mandiant/capa-rules/compare/v1.3.0...v1.4.0)
 
 ## v1.3.0 (2020-09-14)
 
@@ -754,7 +754,7 @@ This release brings newly updated mappings to the [Malware Behavior Catalog vers
   - @weslambert
   - @stevemk14ebr 
   
-Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/mandiant/capa/). Report issues on our [issue tracker](https://github.com/mandiant/capa/issues) and contribute new rules at [capa-rules](https://github.com/mandiant/capa-rules/).
 
 ### Key changes to IDA Plugin
 
@@ -764,9 +764,9 @@ The IDA Pro integration is now distributed as a real plugin, instead of a script
   - updates distributed PyPI/`pip install --upgrade` without touching your `%IDADIR%`
   - generally doing thing the "right way"
 
-How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
+How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
 
-Please refer to the plugin [readme](https://github.com/fireeye/capa/blob/master/capa/ida/plugin/README.md) for additional information on installing and using the IDA Pro plugin.
+Please refer to the plugin [readme](https://github.com/mandiant/capa/blob/master/capa/ida/plugin/README.md) for additional information on installing and using the IDA Pro plugin.
 
 Please open an issue in this repository if you notice anything weird.
  
@@ -811,8 +811,8 @@ Please open an issue in this repository if you notice anything weird.
 
 ### Raw diffs
 
-  - [capa v1.2.0...v1.3.0](https://github.com/fireeye/capa/compare/v1.2.0...v1.3.0)
-  - [capa-rules v1.2.0...v1.3.0](https://github.com/fireeye/capa-rules/compare/v1.2.0...v1.3.0)
+  - [capa v1.2.0...v1.3.0](https://github.com/mandiant/capa/compare/v1.2.0...v1.3.0)
+  - [capa-rules v1.2.0...v1.3.0](https://github.com/mandiant/capa-rules/compare/v1.2.0...v1.3.0)
 
 ## v1.2.0 (2020-08-31)
 
@@ -828,9 +828,9 @@ We received contributions from ten reverse engineers, including five new ones:
   - @edeca
   - @winniepe 
   
-Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/).
-Report issues on our [issue tracker](https://github.com/fireeye/capa/issues)
-and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/mandiant/capa/).
+Report issues on our [issue tracker](https://github.com/mandiant/capa/issues)
+and contribute new rules at [capa-rules](https://github.com/mandiant/capa-rules/).
  
 ### New features
 
@@ -909,8 +909,8 @@ and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/)
 
 ### Raw diffs
 
-  - [capa v1.1.0...v1.2.0](https://github.com/fireeye/capa/compare/v1.1.0...v1.2.0)
-  - [capa-rules v1.1.0...v1.2.0](https://github.com/fireeye/capa-rules/compare/v1.1.0...v1.2.0)
+  - [capa v1.1.0...v1.2.0](https://github.com/mandiant/capa/compare/v1.1.0...v1.2.0)
+  - [capa-rules v1.1.0...v1.2.0](https://github.com/mandiant/capa-rules/compare/v1.1.0...v1.2.0)
 
 ## v1.1.0 (2020-08-05)
 
@@ -923,7 +923,7 @@ We received contributions from eight reverse engineers, including four new ones:
   - @bitsofbinary
   - @threathive
   
-Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/fireeye/capa/). Report issues on our [issue tracker](https://github.com/fireeye/capa/issues) and contribute new rules at [capa-rules](https://github.com/fireeye/capa-rules/).
+Download a standalone binary below and checkout the readme [here on GitHub](https://github.com/mandiant/capa/). Report issues on our [issue tracker](https://github.com/mandiant/capa/issues) and contribute new rules at [capa-rules](https://github.com/mandiant/capa-rules/).
   
 ### New features
 
@@ -996,5 +996,5 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
 
 ### Raw diffs
 
-  - [capa v1.0.0...v1.1.0](https://github.com/fireeye/capa/compare/v1.0.0...v1.1.0)
-  - [capa-rules v1.0.0...v1.1.0](https://github.com/fireeye/capa-rules/compare/v1.0.0...v1.1.0)
+  - [capa v1.0.0...v1.1.0](https://github.com/mandiant/capa/compare/v1.0.0...v1.1.0)
+  - [capa-rules v1.0.0...v1.1.0](https://github.com/mandiant/capa-rules/compare/v1.0.0...v1.1.0)

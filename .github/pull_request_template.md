@@ -3,7 +3,7 @@
 Thank you for contributing to capa! <3
 
 Please read capa's CONTRIBUTING guide if you haven't done so already.
-It contains helpful information about how to contribute to capa. Check https://github.com/fireeye/capa/blob/master/.github/CONTRIBUTING.md
+It contains helpful information about how to contribute to capa. Check https://github.com/mandiant/capa/blob/master/.github/CONTRIBUTING.md
 
 Please describe the changes in this pull request (PR). Include your motivation and context to help us review.
 

@@ -20,7 +20,7 @@ Adapted for Binary Ninja by @psifertex
 This script will verify that the report matches the workspace.
 Check the log window for any errors, and/or the summary of changes.
 
-Derived from: https://github.com/fireeye/capa/blob/master/scripts/import-to-ida.py
+Derived from: https://github.com/mandiant/capa/blob/master/scripts/import-to-ida.py
 """
 import os
 import json

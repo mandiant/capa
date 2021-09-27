@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -744,7 +744,7 @@ def handle_common_args(args):
             logger.debug(" Using default embedded rules.")
             logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
             logger.debug(" You can see the current default rule set here:")
-            logger.debug("     https://github.com/fireeye/capa-rules")
+            logger.debug("     https://github.com/mandiant/capa-rules")
             logger.debug("-" * 80)
 
             rules_path = os.path.join(get_default_root(), "rules")
@@ -792,7 +792,7 @@ def main(argv=None):
         """
         By default, capa uses a default set of embedded rules.
         You can see the rule set here:
-          https://github.com/fireeye/capa-rules
+          https://github.com/mandiant/capa-rules
 
         To provide your own rule set, use the `-r` flag:
           capa  --rules /path/to/rules  suspicious.exe
@@ -989,7 +989,7 @@ def ida_main():
     logger.debug(" Using default embedded rules.")
     logger.debug(" ")
     logger.debug(" You can see the current default rule set here:")
-    logger.debug("     https://github.com/fireeye/capa-rules")
+    logger.debug("     https://github.com/mandiant/capa-rules")
     logger.debug("-" * 80)
 
     rules_path = os.path.join(get_default_root(), "rules")

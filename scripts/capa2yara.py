@@ -21,7 +21,7 @@ optional arguments:
   -t TAG, --tag TAG     filter on rule meta field values
 
 
-Copyright (C) 2020, 2021 Arnim Rupp (@ruppde) and FireEye, Inc. All Rights Reserved.
+Copyright (C) 2020, 2021 Arnim Rupp (@ruppde) and Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -57,8 +57,8 @@ var_names = ["".join(letters) for letters in itertools.product(string.ascii_lowe
 unsupported = ["characteristic", "mnemonic", "offset", "subscope", "Range"]
 # TODO shorten this list, possible stuff:
 # - 2 or more strings: e.g.
-# -- https://github.com/fireeye/capa-rules/blob/master/collection/file-managers/gather-direct-ftp-information.yml
-# -- https://github.com/fireeye/capa-rules/blob/master/collection/browser/gather-firefox-profile-information.yml
+# -- https://github.com/mandiant/capa-rules/blob/master/collection/file-managers/gather-direct-ftp-information.yml
+# -- https://github.com/mandiant/capa-rules/blob/master/collection/browser/gather-firefox-profile-information.yml
 # - count(string    (1 rule: /executable/subfile/pe/contain-an-embedded-pe-file.yml)
 # - count(match( could be done by creating the referenced rule a 2nd time with the condition, that it hits x times (only 1 rule: ./anti-analysis/anti-disasm/contain-anti-disasm-techniques.yml)
 # - it would be technically possible to get the "basic blocks" working, but the rules contain mostly other non supported statements in there => not worth the effort.
@@ -104,7 +104,7 @@ def check_feature(statement, rulename):
 def get_rule_url(path):
     path = re.sub(r"\.\.\/", "", path)
     path = re.sub(r"capa-rules\/", "", path)
-    return "https://github.com/fireeye/capa-rules/blob/master/" + path
+    return "https://github.com/mandiant/capa-rules/blob/master/" + path
 
 
 def convert_capa_number_to_yara_bytes(number):
@@ -176,7 +176,7 @@ def convert_rule(rule, rulename, cround, depth):
         elif s_type == "api" or s_type == "import":
             # TODO: is it possible in YARA to make a difference between api & import?
 
-            # https://github.com/fireeye/capa-rules/blob/master/doc/format.md#api
+            # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#api
             api = kid.value
             logger.info("doing api: " + repr(api))
 
@@ -208,7 +208,7 @@ def convert_rule(rule, rulename, cround, depth):
             yara_condition += '\tpe.exports("' + export + '") '
 
         elif s_type == "section":
-            # https://github.com/fireeye/capa-rules/blob/master/doc/format.md#section
+            # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#section
             section = kid.value
             logger.info("doing section: " + repr(section))
 
@@ -220,7 +220,7 @@ def convert_rule(rule, rulename, cround, depth):
             )
 
         elif s_type == "match":
-            # https://github.com/fireeye/capa-rules/blob/master/doc/format.md#matching-prior-rule-matches-and-namespaces
+            # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#matching-prior-rule-matches-and-namespaces
             match = kid.value
             logger.info("doing match: " + repr(match))
 
@@ -717,7 +717,7 @@ def main(argv=None):
         return -1
 
     output_yar(
-        "// Rules from FireEye's https://github.com/fireeye/capa-rules converted to YARA using https://github.com/fireeye/capa/blob/master/scripts/capa2yara.py by Arnim Rupp"
+        "// Rules from Mandiant's https://github.com/mandiant/capa-rules converted to YARA using https://github.com/mandiant/capa/blob/master/scripts/capa2yara.py by Arnim Rupp"
     )
     output_yar(
         "// Beware: These are less rules than capa (because not all fit into YARA, stats at EOF) and is less precise because e.g. capas function scopes are applied to the whole file"

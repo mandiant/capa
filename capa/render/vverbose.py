@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -193,7 +193,7 @@ def render_rules(ostream, doc):
         ## rules
         check for OutputDebugString error
         namespace  anti-analysis/anti-debugging/debugger-detection
-        author     michael.hunhoff@fireeye.com
+        author     michael.hunhoff@mandiant.com
         scope      function
         mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
         examples   Practical Malware Analysis Lab 16-02.exe_:0x401020

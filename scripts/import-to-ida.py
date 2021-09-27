@@ -20,7 +20,7 @@ and then select the existing capa report from the file system.
 This script will verify that the report matches the workspace.
 Check the output window for any errors, and/or the summary of changes.
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt

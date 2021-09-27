@@ -3,7 +3,7 @@ example::
 
     send data
     namespace    communication
-    author       william.ballenthin@fireeye.com
+    author       william.ballenthin@mandiant.com
     description  all known techniques for sending data to a potential C2 server
     scope        function
     examples     BFB9B5391A13D0AFD787E87AB90F14F5:0x13145D60
@@ -14,7 +14,7 @@ example::
                  0x10003415
                  0x10003797
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
