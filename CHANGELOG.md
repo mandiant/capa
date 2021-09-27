@@ -22,7 +22,7 @@
 
 ## v3.0.1 (2021-09-27)
 
-This version updates the vivisect dependency. Users will experience less bugs and improved analysis results.
+This version updates the version of vivisect used by capa. Users will experience fewer bugs and find improved analysis results.
 
 Thanks to the community for highlighting issues and analysis misses. Your feedback is crucial to further improve capa.
 
