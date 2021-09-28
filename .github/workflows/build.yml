@@ -41,8 +41,12 @@ jobs:
         run: pip install -e .
       - name: Build standalone executable
         run: pyinstaller .github/pyinstaller/pyinstaller.spec
-      - name: Does it run?
+      - name: Does it run (PE)?
         run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+      - name: Does it run (Shellcode)?
+        run: dist/capa "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
+      - name: Does it run (ELF)?
+        run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.asset_name }}
