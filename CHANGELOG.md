@@ -21,7 +21,7 @@
 - [capa <release>...master](https://github.com/fireeye/capa/compare/v3.0.2...master)
 - [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/v3.0.2...master)
   
-## v3.0.2
+## v3.0.2 (2021-09-28)
   
 This release fixes an issue with the standalone executables built with PyInstaller when running capa against ELF files.
 
