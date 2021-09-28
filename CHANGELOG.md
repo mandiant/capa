@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- fix bug in PyInstaller config preventing ELF analysis #795 @mr-tz
+
 ### capa explorer IDA Pro plugin
 
 ### Development
