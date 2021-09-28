@@ -1,5 +1,6 @@
 # Change Log
 
+
 ## master (unreleased)
 
 ### New Features
@@ -12,15 +13,25 @@
 
 ### Bug Fixes
 
-- fix bug in PyInstaller config preventing ELF analysis #795 @mr-tz
-
 ### capa explorer IDA Pro plugin
 
 ### Development
 
 ### Raw diffs
-- [capa v3.0.1...master](https://github.com/fireeye/capa/compare/v3.0.1...master)
-- [capa-rules v3.0.1...master](https://github.com/fireeye/capa-rules/compare/v3.0.1...master)
+- [capa <release>...master](https://github.com/fireeye/capa/compare/v3.0.2...master)
+- [capa-rules <release>...master](https://github.com/fireeye/capa-rules/compare/v3.0.2...master)
+  
+## v3.0.2
+  
+This release fixes an issue with the standalone executables built with PyInstaller when running capa against ELF files.
+
+### Bug Fixes
+
+- fix bug in PyInstaller config preventing ELF analysis #795 @mr-tz
+
+### Raw diffs
+- [capa v3.0.1...master](https://github.com/fireeye/capa/compare/v3.0.1...v3.0.2)
+- [capa-rules v3.0.1...master](https://github.com/fireeye/capa-rules/compare/v3.0.1...v3.0.2)
 
 ## v3.0.1 (2021-09-27)
 
