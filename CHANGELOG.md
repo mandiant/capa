@@ -7,8 +7,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- nursery/resolve-function-by-fnv-1a-hash still@teamt5.org
 -
 
 ### Bug Fixes
