@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -50,11 +50,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     author="Willi Ballenthin, Moritz Raabe",
     author_email="william.ballenthin@mandiant.com, moritz.raabe@mandiant.com",
-    url="https://www.github.com/fireeye/capa",
+    url="https://www.github.com/mandiant/capa",
     project_urls={
-        "Documentation": "https://github.com/fireeye/capa/tree/master/doc",
-        "Rules": "https://github.com/fireeye/capa-rules",
-        "Rules Documentation": "https://github.com/fireeye/capa-rules/tree/master/doc",
+        "Documentation": "https://github.com/mandiant/capa/tree/master/doc",
+        "Rules": "https://github.com/mandiant/capa-rules",
+        "Rules Documentation": "https://github.com/mandiant/capa-rules/tree/master/doc",
     },
     packages=setuptools.find_packages(exclude=["tests"]),
     package_dir={"capa": "capa"},

@@ -46,6 +46,6 @@ We need more practical use cases and test samples to justify the additional work
 
 
 # ATT&CK, MAEC, MBC, and other capability tagging
-capa uses namespaces to group capabilities (see https://github.com/fireeye/capa-rules/tree/master#namespace-organization).
+capa uses namespaces to group capabilities (see https://github.com/mandiant/capa-rules/tree/master#namespace-organization).
 
-The `rule.meta` field also supports `att&ck`, `mbc`, and `maec` fields to associate rules with the respective taxonomy (see https://github.com/fireeye/capa-rules/blob/master/doc/format.md#meta-block).
+The `rule.meta` field also supports `att&ck`, `mbc`, and `maec` fields to associate rules with the respective taxonomy (see https://github.com/mandiant/capa-rules/blob/master/doc/format.md#meta-block).

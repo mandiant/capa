@@ -1,8 +1,8 @@
 # Installation
-You can install capa in a few different ways. First, if you simply want to use capa, just download the [standalone binary](https://github.com/fireeye/capa/releases). If you want to use capa as a Python library, you can install the package directly from GitHub using `pip`. If you'd like to contribute patches or features to capa, you can work with a local copy of the source code.
+You can install capa in a few different ways. First, if you simply want to use capa, just download the [standalone binary](https://github.com/mandiant/capa/releases). If you want to use capa as a Python library, you can install the package directly from GitHub using `pip`. If you'd like to contribute patches or features to capa, you can work with a local copy of the source code.
 
 ## Method 1: Standalone installation
-If you simply want to use capa, use the standalone binaries we host on GitHub: https://github.com/fireeye/capa/releases. These binary executable files contain all the source code, Python interpreter, and associated resources needed to make capa run. This means you can run it without any installation! Just invoke the file using your terminal shell to see the help documentation.
+If you simply want to use capa, use the standalone binaries we host on GitHub: https://github.com/mandiant/capa/releases. These binary executable files contain all the source code, Python interpreter, and associated resources needed to make capa run. This means you can run it without any installation! Just invoke the file using your terminal shell to see the help documentation.
 
 We use PyInstaller to create these packages.
 
@@ -26,8 +26,8 @@ To install capa as a Python library use `pip` to fetch the `flare-capa` module.
 
 #### *Note*:
 This method is appropriate for integrating capa in an existing project.
-This technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/fireeye/capa-rules/) and pass the directory to the entrypoint using `-r` or set the rules path in the IDA Pro plugin.
-This technique also doesn't set up the default library identification [signatures](https://github.com/fireeye/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
+This technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/mandiant/capa-rules/) and pass the directory to the entrypoint using `-r` or set the rules path in the IDA Pro plugin.
+This technique also doesn't set up the default library identification [signatures](https://github.com/mandiant/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
 For example, to run capa with both a rule path and a signature path:
 
     capa   -r /path/to/capa-rules   -s /path/to/capa-sigs  suspicious.exe
@@ -44,16 +44,16 @@ If you'd like to review and modify the capa source code, you'll need to check it
 
 ### 1. Check out source code
 Next, clone the capa git repository.
-We use submodules to separate [code](https://github.com/fireeye/capa), [rules](https://github.com/fireeye/capa-rules), and [test data](https://github.com/fireeye/capa-testfiles).
+We use submodules to separate [code](https://github.com/mandiant/capa), [rules](https://github.com/mandiant/capa-rules), and [test data](https://github.com/mandiant/capa-testfiles).
 To clone everything use the `--recurse-submodules` option:
 - CAUTION: The capa testfiles repository contains many malware samples. If you pull down everything using this method, you may want to install to a directory that won't trigger your anti-virus software.
-- `$ git clone --recurse-submodules https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
-- `$ git clone --recurse-submodules git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
+- `$ git clone --recurse-submodules https://github.com/mandiant/capa.git /local/path/to/src` (HTTPS)
+- `$ git clone --recurse-submodules git@github.com:mandiant/capa.git /local/path/to/src` (SSH)
 
 To only get the source code and our provided rules (common), follow these steps:
 - clone repository
-  - `$ git clone https://github.com/fireeye/capa.git /local/path/to/src` (HTTPS)
-  - `$ git clone git@github.com:fireeye/capa.git /local/path/to/src` (SSH)
+  - `$ git clone https://github.com/mandiant/capa.git /local/path/to/src` (HTTPS)
+  - `$ git clone git@github.com:mandiant/capa.git /local/path/to/src` (SSH)
 - `$ cd /local/path/to/src`
 - `$ git submodule update --init rules`
 
@@ -87,7 +87,7 @@ We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter, with `-l 120`
   - [isort 5](https://pypi.org/project/isort/) code formatter, with `--profile black --length-sort --line-width 120`
   - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
-  - [capafmt](https://github.com/fireeye/capa/blob/master/scripts/capafmt.py) rule formatter
+  - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
 To install these development dependencies, run:
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -27,8 +27,8 @@ class CapaExplorerPlugin(idaapi.plugin_t):
     wanted_name = PLUGIN_NAME
     wanted_hotkey = "ALT-F5"
     comment = "IDA Pro plugin for the FLARE team's capa tool to identify capabilities in executable files."
-    website = "https://github.com/fireeye/capa"
-    help = "See https://github.com/fireeye/capa/blob/master/doc/usage.md"
+    website = "https://github.com/mandiant/capa"
+    help = "See https://github.com/mandiant/capa/blob/master/doc/usage.md"
     version = ""
     flags = 0
 

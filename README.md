@@ -1,10 +1,10 @@
-![capa](https://github.com/fireeye/capa/blob/master/.github/logo.png)
+![capa](https://github.com/mandiant/capa/blob/master/.github/logo.png)
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
-[![Last release](https://img.shields.io/github/v/release/fireeye/capa)](https://github.com/fireeye/capa/releases)
-[![Number of rules](https://img.shields.io/badge/rules-633-blue.svg)](https://github.com/fireeye/capa-rules)
-[![CI status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
-[![Downloads](https://img.shields.io/github/downloads/fireeye/capa/total)](https://github.com/fireeye/capa/releases)
+[![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
+[![Number of rules](https://img.shields.io/badge/rules-633-blue.svg)](https://github.com/mandiant/capa-rules)
+[![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
+[![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
@@ -66,11 +66,11 @@ $ capa.exe suspicious.exe
 
 # download and usage
 
-Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
+Download stable releases of the standalone capa binaries [here](https://github.com/mandiant/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
 
-To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/fireeye/capa/blob/master/doc/installation.md) for further setup instructions.
+To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-For more information about how to use capa, see [doc/usage.md](https://github.com/fireeye/capa/blob/master/doc/usage.md).
+For more information about how to use capa, see [doc/usage.md](https://github.com/mandiant/capa/blob/master/doc/usage.md).
 
 # example
 
@@ -91,7 +91,7 @@ $ capa.exe suspicious.exe -vv
 ...
 execute shell command and capture output
 namespace   c2/shell
-author      matthew.williams@fireeye.com
+author      matthew.williams@mandiant.com
 scope       function
 att&ck      Execution::Command and Scripting Interpreter::Windows Command Shell [T1059.003]
 references  https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
@@ -127,7 +127,7 @@ rule:
   meta:
     name: hash data with CRC32
     namespace: data-manipulation/checksum/crc32
-    author: moritz.raabe@fireeye.com
+    author: moritz.raabe@mandiant.com
     scope: function
     examples:
       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
@@ -142,24 +142,24 @@ rule:
       - api: RtlComputeCrc32
 ```
 
-The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
+The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you can use the [capa explorer](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) plugin.
+If you use IDA Pro, then you can use the [capa explorer](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) plugin.
 capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
-![capa + IDA Pro integration](https://github.com/fireeye/capa/blob/master/doc/img/explorer_expanded.png)
+![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
 # further information
 ## capa
-- [Installation](https://github.com/fireeye/capa/blob/master/doc/installation.md)
-- [Usage](https://github.com/fireeye/capa/blob/master/doc/usage.md)
-- [Limitations](https://github.com/fireeye/capa/blob/master/doc/limitations.md)
-- [Contributing Guide](https://github.com/fireeye/capa/blob/master/.github/CONTRIBUTING.md)
+- [Installation](https://github.com/mandiant/capa/blob/master/doc/installation.md)
+- [Usage](https://github.com/mandiant/capa/blob/master/doc/usage.md)
+- [Limitations](https://github.com/mandiant/capa/blob/master/doc/limitations.md)
+- [Contributing Guide](https://github.com/mandiant/capa/blob/master/.github/CONTRIBUTING.md)
 
 ## capa rules
-- [capa-rules repository](https://github.com/fireeye/capa-rules)
-- [capa-rules rule format](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
+- [capa-rules repository](https://github.com/mandiant/capa-rules)
+- [capa-rules rule format](https://github.com/mandiant/capa-rules/blob/master/doc/format.md)
 
 ## capa testfiles
-The [capa-testfiles repository](https://github.com/fireeye/capa-testfiles) contains the data we use to test capa's code and rules
+The [capa-testfiles repository](https://github.com/mandiant/capa-testfiles) contains the data we use to test capa's code and rules

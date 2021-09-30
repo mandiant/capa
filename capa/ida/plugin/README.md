@@ -54,7 +54,7 @@ To use capa explorer with IDA 7.4 and Python 3.8.x you must follow the instructi
 
 To use capa explorer with IDA 7.5 and Python 3.9.x you must follow the instructions provided by hex-rays [here](https://hex-rays.com/blog/python-3-9-support-for-ida-7-5/).
 
-If you encounter issues with your specific setup, please open a new [Issue](https://github.com/fireeye/capa/issues).
+If you encounter issues with your specific setup, please open a new [Issue](https://github.com/mandiant/capa/issues).
 
 #### IDA 7.6 caveat: IDA 7.6sp1 or patch required
 
@@ -86,8 +86,8 @@ You can install capa explorer using the following steps:
     ```
     $ pip install flare-capa
     ```
-3. Download the [standard collection of capa rules](https://github.com/fireeye/capa-rules) (capa explorer needs capa rules to analyze a database)
-4. Copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
+3. Download the [standard collection of capa rules](https://github.com/mandiant/capa-rules) (capa explorer needs capa rules to analyze a database)
+4. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
 
 ### Usage
 
@@ -99,7 +99,7 @@ You can install capa explorer using the following steps:
 
 When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
 remembers your selection for future runs; you can change this selection and other default settings by clicking `Settings`. We recommend 
-downloading and using the [standard collection of capa rules](https://github.com/fireeye/capa-rules) when getting started with the plugin.
+downloading and using the [standard collection of capa rules](https://github.com/mandiant/capa-rules) when getting started with the plugin.
 
 #### Tips for Program Analysis
 
@@ -125,15 +125,15 @@ downloading and using the [standard collection of capa rules](https://github.com
 ## Development
 
 capa explorer is packaged with capa so you will need to install capa locally for development. You can install capa locally by following the steps outlined in `Method 3: Inspecting the capa source code` of the [capa 
-installation guide](https://github.com/fireeye/capa/blob/master/doc/installation.md#method-3-inspecting-the-capa-source-code). Once installed, copy [capa_explorer.py](https://raw.githubusercontent.com/fireeye/capa/master/capa/ida/plugin/capa_explorer.py) 
+installation guide](https://github.com/mandiant/capa/blob/master/doc/installation.md#method-3-inspecting-the-capa-source-code). Once installed, copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) 
 to your plugins directory to install capa explorer in IDA.
 
 ### Components
 
 capa explorer consists of two main components:
 
-* An [feature extractor](https://github.com/fireeye/capa/tree/master/capa/features/extractors/ida) built on top of IDA's binary analysis engine
-  * This component uses IDAPython to extract [capa features](https://github.com/fireeye/capa-rules/blob/master/doc/format.md#extracted-features) from your IDBs such as strings, 
+* An [feature extractor](https://github.com/mandiant/capa/tree/master/capa/features/extractors/ida) built on top of IDA's binary analysis engine
+  * This component uses IDAPython to extract [capa features](https://github.com/mandiant/capa-rules/blob/master/doc/format.md#extracted-features) from your IDBs such as strings, 
 disassembly, and control flow; these extracted features are used by capa to find feature combinations that result in a rule match
-* An [interactive user interface](https://github.com/fireeye/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rule matches
+* An [interactive user interface](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) for displaying and exploring capa rule matches
   * This component integrates the feature extractor and capa, providing an interactive user interface to dissect rule matches found by capa using features extracted directly from your IDBs
