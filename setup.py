@@ -70,7 +70,7 @@ setuptools.setup(
             "pytest==6.2.5",
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.4.2",
-            "pytest-cov==2.12.1",
+            "pytest-cov==3.0.0",
             "pycodestyle==2.7.0",
             "black==21.9b0",
             "isort==5.9.3",
