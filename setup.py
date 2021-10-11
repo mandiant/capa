@@ -71,7 +71,7 @@ setuptools.setup(
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.4.2",
             "pytest-cov==3.0.0",
-            "pycodestyle==2.7.0",
+            "pycodestyle==2.8.0",
             "black==21.9b0",
             "isort==5.9.3",
             "mypy==0.910",
