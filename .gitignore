@@ -114,3 +114,4 @@ venv.bak/
 isort-output.log
 black-output.log
 rule-linter-output.log
+.vscode
