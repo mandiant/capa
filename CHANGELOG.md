@@ -7,9 +7,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - nursery/resolve-function-by-fnv-1a-hash still@teamt5.org
+- data-manipulation/encryption/encrypt-data-using-memfrob-from-glibc zander.work@mandiant.com
 -
 
 ### Bug Fixes
