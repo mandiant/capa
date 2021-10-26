@@ -5,6 +5,8 @@
 
 ### New Features
 
+- main: exit with unique error codes when bailing #802 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (1)
