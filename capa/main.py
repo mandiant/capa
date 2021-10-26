@@ -629,7 +629,6 @@ def compute_layout(rules, extractor, capabilities):
     }
 
     return layout
-     
 
 
 def install_common_args(parser, wanted=None):

@@ -140,7 +140,6 @@ def collect_metadata():
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             },
- 
         },
         "version": capa.version.__version__,
     }

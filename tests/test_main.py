@@ -385,4 +385,3 @@ def test_json_meta(capsys):
     # remember: json can't have integer keys :-(
     assert str(0x10001010) in std_json["meta"]["analysis"]["layout"]["functions"]
     assert 0x10001179 in std_json["meta"]["analysis"]["layout"]["functions"][str(0x10001010)]["matched_basic_blocks"]
- 
