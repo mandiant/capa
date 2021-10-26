@@ -129,6 +129,7 @@ def get_capa_results(args):
     meta = capa.main.collect_metadata("", path, "", extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
     meta["analysis"].update(counts)
+    meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
     return {
         "path": path,

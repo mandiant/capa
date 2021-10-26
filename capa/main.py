@@ -582,8 +582,54 @@ def collect_metadata(argv, sample_path, rules_path, extractor):
             "extractor": extractor.__class__.__name__,
             "rules": rules_path,
             "base_address": extractor.get_base_address(),
+            "layout": {
+                # this is updated after capabilities have been collected.
+                # will look like:
+                #
+                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+            },
         },
     }
+
+
+def compute_layout(rules, extractor, capabilities):
+    """
+    compute a metadata structure that links basic blocks
+    to the functions in which they're found.
+
+    only collect the basic blocks at which some rule matched.
+    otherwise, we may pollute the json document with
+    a large amount of un-referenced data.
+    """
+    functions_by_bb = {}
+    bbs_by_function = {}
+    for f in extractor.get_functions():
+        bbs_by_function[int(f)] = []
+        for bb in extractor.get_basic_blocks(f):
+            functions_by_bb[int(bb)] = int(f)
+            bbs_by_function[int(f)].append(int(bb))
+
+    matched_bbs = set()
+    for rule_name, matches in capabilities.items():
+        rule = rules[rule_name]
+        if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
+            for (addr, match) in matches:
+                assert addr in functions_by_bb
+                matched_bbs.add(addr)
+
+    layout = {
+        "functions": {
+            f: {
+                "matched_basic_blocks": [bb for bb in bbs if bb in matched_bbs]
+                # this object is open to extension in the future,
+                # such as with the function name, etc.
+            }
+            for f, bbs in bbs_by_function.items()
+        }
+    }
+
+    return layout
+     
 
 
 def install_common_args(parser, wanted=None):
@@ -948,6 +994,7 @@ def main(argv=None):
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
+    meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
