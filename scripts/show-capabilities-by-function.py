@@ -87,22 +87,34 @@ def render_matches_by_function(doc):
           - send HTTP request
           - connect to HTTP server
     """
+    functions_by_bb = {}
+    for function, info in doc["meta"]["analysis"]["layout"]["functions"].items():
+        for bb in info["matched_basic_blocks"]:
+            functions_by_bb[bb] = function
+
     ostream = rutils.StringIO()
 
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        for va in rule["matches"].keys():
-            matches_by_function[va].add(rule["meta"]["name"])
+        if rule["meta"]["scope"] == capa.rules.FUNCTION_SCOPE:
+            for va in rule["matches"].keys():
+                matches_by_function[va].add(rule["meta"]["name"])
+        elif rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
+            for va in rule["matches"].keys():
+                function = functions_by_bb[va]
+                matches_by_function[function].add(rule["meta"]["name"])
+        else:
+            # file scope
+            pass
 
     for va, feature_count in sorted(doc["meta"]["analysis"]["feature_counts"]["functions"].items()):
         va = int(va)
         if not matches_by_function.get(va, {}):
             continue
         ostream.writeln("function at 0x%X with %d features: " % (va, feature_count))
-        for rule_name in matches_by_function[va]:
+        for rule_name in sorted(matches_by_function[va]):
             ostream.writeln("  - " + rule_name)
 
-    ostream.write("\n")
     return ostream.getvalue()
 
 
@@ -190,8 +202,6 @@ def main(argv=None):
     doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
     print(render_matches_by_function(doc))
     colorama.deinit()
-
-    logger.info("done.")
 
     return 0
 
