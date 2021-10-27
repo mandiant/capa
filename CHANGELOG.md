@@ -5,13 +5,21 @@
 
 ### New Features
 
+- show in which function a BB match is #130 @williballenthin
 - main: exit with unique error codes when bailing #802 @williballenthin
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (8)
 
 - nursery/resolve-function-by-fnv-1a-hash still@teamt5.org
+- data-manipulation/encryption/encrypt-data-using-memfrob-from-glibc zander.work@mandiant.com
+- collection/group-policy/discover-group-policy-via-gpresult william.ballenthin@mandiant.com
+- host-interaction/bootloader/manipulate-safe-mode-programs william.ballenthin@mandiant.com
+- nursery/enable-safe-mode-boot william.ballenthin@mandiant.com
+- persistence/iis/persist-via-iis-module william.ballenthin@mandiant.com
+- persistence/iis/persist-via-isapi-extension william.ballenthin@mandiant.com
+- targeting/language/identify-system-language-via-api william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes

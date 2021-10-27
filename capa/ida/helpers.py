@@ -134,6 +134,12 @@ def collect_metadata():
             "format": idaapi.get_file_type_name(),
             "extractor": "ida",
             "base_address": idaapi.get_imagebase(),
+            "layout": {
+                # this is updated after capabilities have been collected.
+                # will look like:
+                #
+                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+            },
         },
         "version": capa.version.__version__,
     }

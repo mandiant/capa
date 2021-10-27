@@ -203,6 +203,11 @@ def render_rules(ostream, doc):
             api: kernel32.GetLastError @ 0x10004A87
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
+    functions_by_bb = {}
+    for function, info in doc["meta"]["analysis"]["layout"]["functions"].items():
+        for bb in info["matched_basic_blocks"]:
+            functions_by_bb[bb] = function
+
     had_match = False
     for rule in rutils.capability_rules(doc):
         count = len(rule["matches"])
@@ -247,7 +252,12 @@ def render_rules(ostream, doc):
             for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
                 ostream.write(rule["meta"]["scope"])
                 ostream.write(" @ ")
-                ostream.writeln(rutils.hex(location))
+                ostream.write(rutils.hex(location))
+
+                if rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
+                    ostream.write(" in function " + rutils.hex(functions_by_bb[location]))
+
+                ostream.write("\n")
                 render_match(ostream, match, indent=1)
         ostream.write("\n")
 

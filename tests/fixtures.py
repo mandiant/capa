@@ -182,6 +182,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "kernel32.dll_")
     elif name == "kernel32-64":
         return os.path.join(CD, "data", "kernel32-64.dll_")
+    elif name == "pma01-01":
+        return os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll_")
     elif name == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
     elif name == "pma16-01":
@@ -234,6 +236,8 @@ def get_sample_md5_by_name(name):
         return "56bed8249e7c2982a90e54e1e55391a2"
     elif name == "pma16-01":
         return "7faafc7e4a5c736ebfee6abbbc812d80"
+    elif name == "pma01-01":
+        return "290934c61de9176ad682ffdd65f0a669"
     elif name == "pma21-01":
         return "c8403fb05244e23a7931c766409b5e22"
     elif name == "al-khaser x86":
