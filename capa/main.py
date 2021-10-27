@@ -51,6 +51,16 @@ BACKEND_SMDA = "smda"
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 
+E_MISSING_RULES = -10
+E_MISSING_FILE = -11
+E_INVALID_RULE = -12
+E_CORRUPT_FILE = -13
+E_FILE_LIMITATION = -14
+E_INVALID_SIG = -15
+E_INVALID_FILE_TYPE = -16
+E_INVALID_FILE_ARCH = -17
+E_INVALID_FILE_OS = -18
+E_UNSUPPORTED_IDA_VERSION = -19
 
 logger = logging.getLogger("capa")
 
@@ -801,7 +811,7 @@ def handle_common_args(args):
                 # so in this case, we require the user to use -r to specify the rule directory.
                 logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
                 logger.error("provide your own rule set via the `-r` option.")
-                return -1
+                return E_MISSING_RULES
         else:
             rules_path = args.rules
             logger.debug("using rules path: %s", rules_path)
@@ -867,7 +877,9 @@ def main(argv=None):
     install_common_args(parser, {"sample", "format", "backend", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    handle_common_args(args)
+    ret = handle_common_args(args)
+    if ret is not None and ret != 0:
+        return ret
 
     try:
         taste = get_file_taste(args.sample)
@@ -875,7 +887,7 @@ def main(argv=None):
         # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
         # handle the IOError separately and reach into the args
         logger.error("%s", e.args[0])
-        return -1
+        return E_MISSING_FILE
 
     try:
         rules = get_rules(args.rules, disable_progress=args.quiet)
@@ -895,7 +907,7 @@ def main(argv=None):
                 logger.debug(" %d. %s", i, r)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
-        return -1
+        return E_INVALID_RULE
 
     file_extractor = None
     if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
@@ -907,24 +919,24 @@ def main(argv=None):
             file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(args.sample)
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
-            return -1
+            return E_CORRUPT_FILE
 
     elif args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
         try:
             file_extractor = capa.features.extractors.elffile.ElfFeatureExtractor(args.sample)
         except (ELFError, OverflowError) as e:
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
-            return -1
+            return E_CORRUPT_FILE
 
     if file_extractor:
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
-            return -1
+            return E_CORRUPT_FILE
         except (ELFError, OverflowError) as e:
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
-            return -1
+            return E_CORRUPT_FILE
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
@@ -933,7 +945,7 @@ def main(argv=None):
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
-                return -1
+                return E_FILE_LIMITATION
 
     try:
         if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
@@ -943,7 +955,7 @@ def main(argv=None):
             logger.debug("skipping library code matching: only have PE signatures")
     except (IOError) as e:
         logger.error("%s", str(e))
-        return -1
+        return E_INVALID_SIG
 
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
         format = "freeze"
@@ -971,14 +983,14 @@ def main(argv=None):
             )
             logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
             logger.error("-" * 80)
-            return -1
+            return E_INVALID_FILE_TYPE
         except UnsupportedArchError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to target a supported architecture.")
             logger.error(" ")
             logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
             logger.error("-" * 80)
-            return -1
+            return E_INVALID_FILE_ARCH
         except UnsupportedOSError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to target a supported OS.")
@@ -987,7 +999,7 @@ def main(argv=None):
                 " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
             )
             logger.error("-" * 80)
-            return -1
+            return E_INVALID_FILE_OS
 
     meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
@@ -999,7 +1011,7 @@ def main(argv=None):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):
-            return -1
+            return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
@@ -1026,10 +1038,10 @@ def ida_main():
     logging.getLogger().setLevel(logging.INFO)
 
     if not capa.ida.helpers.is_supported_ida_version():
-        return -1
+        return E_UNSUPPORTED_IDA_VERSION
 
     if not capa.ida.helpers.is_supported_file_type():
-        return -1
+        return E_INVALID_FILE_TYPE
 
     logger.debug("-" * 80)
     logger.debug(" Using default embedded rules.")

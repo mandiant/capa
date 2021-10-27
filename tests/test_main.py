@@ -70,7 +70,7 @@ def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
 
 def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
     NON_ASCII_FILENAME = "täst_not_there.exe"
-    assert capa.main.main(["-q", NON_ASCII_FILENAME]) == -1
+    assert capa.main.main(["-q", NON_ASCII_FILENAME]) == capa.main.E_MISSING_FILE
 
     assert NON_ASCII_FILENAME in caplog.text
 

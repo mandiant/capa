@@ -6,6 +6,7 @@
 ### New Features
 
 - show in which function a BB match is #130 @williballenthin
+- main: exit with unique error codes when bailing #802 @williballenthin
 
 ### Breaking Changes
 
