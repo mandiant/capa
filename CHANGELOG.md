@@ -22,6 +22,10 @@
 - targeting/language/identify-system-language-via-api william.ballenthin@mandiant.com
 -
 
+## Removed rules (2)
+- load-code/pe/parse-pe-exports: too many false positives in unrelated structure accesses
+- anti-analysis/anti-vm/vm-detection/execute-anti-vm-instructions: too many false positives in junk code
+
 ### Bug Fixes
 
 ### capa explorer IDA Pro plugin
