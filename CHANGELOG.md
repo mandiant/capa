@@ -1,14 +1,43 @@
 # Change Log
 
-
 ## master (unreleased)
+
+### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...master)
+- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.0.3...master)
+
+
+## v3.0.3 (2021-10-27)
+
+This is primarily a rule maintenance release:
+  - eight new rules, including all relevant techniques from [ATT&CK v10](https://medium.com/mitre-attack/introducing-attack-v10-7743870b37e3), and
+  - two rules removed, due to the prevalence of false positives
+
+We've also tweaked the status codes returned by capa.exe to be more specific and added a bit more metadata to the JSON output format.
+ 
+As always, welcome first time contributors!
+  - still@teamt5.org
+  - zander.work@mandiant.com
+                                                                                                     
 
 ### New Features
 
 - show in which function a BB match is #130 @williballenthin
 - main: exit with unique error codes when bailing #802 @williballenthin
-
-### Breaking Changes
 
 ### New Rules (8)
 
@@ -20,7 +49,6 @@
 - persistence/iis/persist-via-iis-module william.ballenthin@mandiant.com
 - persistence/iis/persist-via-isapi-extension william.ballenthin@mandiant.com
 - targeting/language/identify-system-language-via-api william.ballenthin@mandiant.com
--
 
 ## Removed rules (2)
 - load-code/pe/parse-pe-exports: too many false positives in unrelated structure accesses
@@ -28,13 +56,11 @@
 
 ### Bug Fixes
 
-### capa explorer IDA Pro plugin
-
-### Development
+- update references from FireEye to Mandiant
 
 ### Raw diffs
-- [capa v3.0.2...master](https://github.com/fireeye/capa/compare/v3.0.2...master)
-- [capa-rules v3.0.2...master](https://github.com/fireeye/capa-rules/compare/v3.0.2...master)
+- [capa v3.0.2...v3.0.3](https://github.com/fireeye/capa/compare/v3.0.2...v3.0.3)
+- [capa-rules v3.0.2...v3.0.3](https://github.com/fireeye/capa-rules/compare/v3.0.2...v3.0.3)
   
 ## v3.0.2 (2021-09-28)
   
