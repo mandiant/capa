@@ -5,6 +5,8 @@
 
 ### New Features
 
+- show in which function a BB match is #130 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (8)

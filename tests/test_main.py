@@ -375,3 +375,13 @@ def test_backend_option(capsys):
     std_json = json.loads(std.out)
     assert std_json["meta"]["analysis"]["extractor"] == "SmdaFeatureExtractor"
     assert len(std_json["rules"]) > 0
+
+
+def test_json_meta(capsys):
+    path = fixtures.get_data_path_by_name("pma01-01")
+    assert capa.main.main([path, "-j"]) == 0
+    std = capsys.readouterr()
+    std_json = json.loads(std.out)
+    # remember: json can't have integer keys :-(
+    assert str(0x10001010) in std_json["meta"]["analysis"]["layout"]["functions"]
+    assert 0x10001179 in std_json["meta"]["analysis"]["layout"]["functions"][str(0x10001010)]["matched_basic_blocks"]
