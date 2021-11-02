@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (2)
 
+- nursery/delete-windows-backup-catalog michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
