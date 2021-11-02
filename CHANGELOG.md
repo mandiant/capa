@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (2)
+### New Rules (3)
 
 - nursery/delete-windows-backup-catalog michael.hunhoff@mandiant.com
+- nursery/disable-automatic-windows-recovery-features michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
