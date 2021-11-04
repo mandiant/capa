@@ -115,3 +115,5 @@ isort-output.log
 black-output.log
 rule-linter-output.log
 .vscode
+scripts/perf/*.txt
+scripts/perf/*.svg
