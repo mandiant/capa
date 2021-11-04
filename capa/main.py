@@ -10,6 +10,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import time
 import hashlib
 import logging
 import os.path
@@ -17,6 +18,7 @@ import argparse
 import datetime
 import textwrap
 import itertools
+import contextlib
 import collections
 from typing import Any, Dict, List, Tuple
 
@@ -63,6 +65,14 @@ E_INVALID_FILE_OS = -18
 E_UNSUPPORTED_IDA_VERSION = -19
 
 logger = logging.getLogger("capa")
+
+
+@contextlib.contextmanager
+def timing(msg: str):
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 def set_vivisect_log_level(level):
