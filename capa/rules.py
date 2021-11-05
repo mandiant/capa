@@ -1044,6 +1044,8 @@ class RuleSet:
     @staticmethod
     def _get_node_cost(node):
         if isinstance(node, (capa.features.common.OS, capa.features.common.Arch, capa.features.common.Format)):
+            # we assume these are the most restrictive features:
+            # authors commonly use them at the start of rules to restrict the category of samples to inspect
             return 0
 
         # elif "everything else":
@@ -1053,16 +1055,26 @@ class RuleSet:
         # see below.
  
         elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex)):
+            # substring and regex features require a full scan of each string
+            # which we anticipate is more expensive then a hash lookup feature (e.g. mnemonic or count).
+            #
+            # TODO: compute the average cost of these feature relative to hash feature
+            # and adjust the factor accordingly.
             return 2
 
         elif isinstance(node, (ceng.Not, ceng.Range)):
+            # the cost of these nodes are defined by the complexity of their single child.
             return RuleSet._get_node_cost(node.child)
 
         elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
+            # the cost of these nodes is the full cost of their children
+            # as this is the worst-case scenario.
             return sum(map(RuleSet._get_node_cost, node.children))
         
         else:
             # this should be all hash-lookup features.
+            # we give this a arbitrary weight of 1.
+            # the only thing more "important" than this is checking OS/Arch/Format.
             return 1
 
     @staticmethod
@@ -1083,7 +1095,7 @@ class RuleSet:
 
     @staticmethod
     def _optimize_rule(rule):
-        # operates in-place
+        # this routine operates in-place
         RuleSet._optimize_statement(rule.statement)
 
     @staticmethod
