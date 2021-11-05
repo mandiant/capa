@@ -117,3 +117,4 @@ rule-linter-output.log
 .vscode
 scripts/perf/*.txt
 scripts/perf/*.svg
+scripts/perf/*.zip
