@@ -10,6 +10,7 @@ import copy
 import collections
 from typing import Set, Dict, List, Tuple, Union, Mapping, Iterable
 
+import capa.perf
 import capa.rules
 import capa.features.common
 from capa.features.common import Feature
@@ -125,6 +126,9 @@ class And(Statement):
         self.children = children
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.and"] += 1  
+
         results = [child.evaluate(ctx) for child in self.children]
         success = all(results)
         return Result(success, self, results)
@@ -138,6 +142,9 @@ class Or(Statement):
         self.children = children
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.or"] += 1  
+ 
         results = [child.evaluate(ctx) for child in self.children]
         success = any(results)
         return Result(success, self, results)
@@ -151,6 +158,9 @@ class Not(Statement):
         self.child = child
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.not"] += 1  
+  
         results = [self.child.evaluate(ctx)]
         success = not results[0]
         return Result(success, self, results)
@@ -165,6 +175,9 @@ class Some(Statement):
         self.children = children
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.some"] += 1  
+  
         results = [child.evaluate(ctx) for child in self.children]
         # note that here we cast the child result as a bool
         # because we've overridden `__bool__` above.
@@ -184,6 +197,9 @@ class Range(Statement):
         self.max = max if max is not None else (1 << 64 - 1)
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.range"] += 1  
+  
         count = len(ctx.get(self.child, []))
         if self.min == 0 and count == 0:
             return Result(True, self, [])

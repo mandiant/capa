@@ -12,6 +12,7 @@ import logging
 import collections
 from typing import Set, Dict, Union
 
+import capa.perf
 import capa.engine
 import capa.features
 import capa.features.extractors.elf
@@ -97,6 +98,8 @@ class Feature:
         return str(self)
 
     def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "capa.engine.Result":
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature." + self.name] += 1
         return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
@@ -141,6 +144,9 @@ class Substring(String):
         self.value = value
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.substring"] += 1 
+
         # mapping from string value to list of locations.
         # will unique the locations later on.
         matches = collections.defaultdict(list)
@@ -226,6 +232,9 @@ class Regex(String):
             )
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.regex"] += 1 
+                                                        
         # mapping from string value to list of locations.
         # will unique the locations later on.
         matches = collections.defaultdict(list)
@@ -309,6 +318,9 @@ class Bytes(Feature):
         self.value = value
 
     def evaluate(self, ctx):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.bytes"] += 1 
+                                                        
         for feature, locations in ctx.items():
             if not isinstance(feature, (Bytes,)):
                 continue

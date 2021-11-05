@@ -28,6 +28,7 @@ import colorama
 from pefile import PEFormatError
 from elftools.common.exceptions import ELFError
 
+import capa.perf
 import capa.rules
 import capa.engine
 import capa.version
@@ -1023,6 +1024,9 @@ def main(argv=None):
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+
+    for (counter, count) in capa.perf.counters.most_common():
+        logger.debug("perf: counter: %s: %d", counter, count)
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
