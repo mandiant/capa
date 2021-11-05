@@ -1056,10 +1056,10 @@ class RuleSet:
             return 2
 
         elif isinstance(node, (ceng.Not, ceng.Range)):
-            return 3
+            return RuleSet._get_node_cost(node.child)
 
         elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
-            return 4
+            return sum(map(RuleSet._get_node_cost, node.children))
         
         else:
             # this should be all hash-lookup features.
