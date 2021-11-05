@@ -162,10 +162,16 @@ class Or(Statement):
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.or"] += 1  
- 
-        results = [child.evaluate(ctx) for child in self.children]
-        success = any(results)
-        return Result(success, self, results)
+
+        results = []
+        for child in self.children:
+            result = child.evaluate(ctx)
+            results.append(result)
+            if result:
+                # short circuit as soon as we hit one match
+                return Result(True, self, results)
+
+        return Result(False, self, results)
 
 
 class Not(Statement):
