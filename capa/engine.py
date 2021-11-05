@@ -119,7 +119,13 @@ class Result:
 
 
 class And(Statement):
-    """match if all of the children evaluate to True."""
+    """
+    match if all of the children evaluate to True.
+
+    the order of evaluation is dicated by the property
+    `And.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, children, description=None):
         super(And, self).__init__(description=description)
@@ -129,13 +135,25 @@ class And(Statement):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.and"] += 1  
 
-        results = [child.evaluate(ctx) for child in self.children]
-        success = all(results)
-        return Result(success, self, results)
+        results = []
+        for child in self.children:
+            result = child.evaluate(ctx) 
+            results.append(result)
+            if not result:
+                # short circuit
+                return Result(False, self, results)
+
+        return Result(True, self, results)
 
 
 class Or(Statement):
-    """match if any of the children evaluate to True."""
+    """
+    match if any of the children evaluate to True.
+ 
+    the order of evaluation is dicated by the property
+    `Or.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, children, description=None):
         super(Or, self).__init__(description=description)
@@ -167,7 +185,13 @@ class Not(Statement):
 
 
 class Some(Statement):
-    """match if at least N of the children evaluate to True."""
+    """
+    match if at least N of the children evaluate to True.
+
+    the order of evaluation is dicated by the property
+    `Some.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, count, children, description=None):
         super(Some, self).__init__(description=description)
