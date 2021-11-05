@@ -207,14 +207,16 @@ class Some(Statement):
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.some"] += 1  
-  
-        results = [child.evaluate(ctx) for child in self.children]
-        # note that here we cast the child result as a bool
-        # because we've overridden `__bool__` above.
-        #
-        # we can't use `if child is True` because the instance is not True.
-        success = sum([1 for child in results if bool(child) is True]) >= self.count
-        return Result(success, self, results)
+ 
+        results = []
+        for child in self.children:
+            result = child.evaluate(ctx)
+            results.append(result)
+            if len(results) >= self.count:
+                # short circuit as soon as we hit the threshold
+                return Result(True, self, results)
+
+        return Result(False, self, results)
 
 
 class Range(Statement):
