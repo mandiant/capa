@@ -961,6 +961,8 @@ class RuleSet:
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")
 
+        rules = self._optimize_rules(rules)
+
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
@@ -1038,3 +1040,55 @@ class RuleSet:
                     rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
                     break
         return RuleSet(list(rules_filtered))
+
+    @staticmethod
+    def _get_node_cost(node):
+        if isinstance(node, (capa.features.common.OS, capa.features.common.Arch, capa.features.common.Format)):
+            return 0
+
+        # elif "everything else":
+        #   return 1
+        #
+        # this should be all hash-lookup features.
+        # see below.
+ 
+        elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex)):
+            return 2
+
+        elif isinstance(node, (ceng.Not, ceng.Range)):
+            return 3
+
+        elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
+            return 4
+        
+        else:
+            # this should be all hash-lookup features.
+            return 1
+
+    @staticmethod
+    def _optimize_statement(statement):
+        # this routine operates in-place
+
+        if isinstance(statement, (ceng.And, ceng.Or, ceng.Some)):
+            # has .children
+            statement.children = sorted(statement.children, key=lambda n: -RuleSet._get_node_cost(n))
+            return
+        elif isinstance(statement, (ceng.Not, ceng.Range)):
+            # has .child
+            RuleSet._optimize_statement(statement.child)
+            return
+        else:
+            # appears to be "simple"
+            return
+
+    @staticmethod
+    def _optimize_rule(rule):
+        # operates in-place
+        RuleSet._optimize_statement(rule.statement)
+
+    @staticmethod
+    def _optimize_rules(rules):
+        logger.debug("optimizing %d rules", len(rules))
+        for rule in rules:
+            RuleSet._optimize_rule(rule)
+        return rules
