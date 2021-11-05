@@ -1026,7 +1026,7 @@ def main(argv=None):
     meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
     for (counter, count) in capa.perf.counters.most_common():
-        logger.debug("perf: counter: %s: %d", counter, count)
+        logger.debug("perf: counter: {:}: {:,}".format(counter, count))
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
