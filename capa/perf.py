@@ -1,6 +1,7 @@
 import collections
+from typing import Dict
 
-counters = collections.Counter()
+counters: Dict[str, int] = collections.Counter()
 
 
 def reset():
