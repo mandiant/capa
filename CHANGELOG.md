@@ -5,6 +5,7 @@
 ### New Features
 
 - engine: short circuit logic nodes for better performance #824 @williballenthin
+- engine: add optimizer the order faster nodes first #829 @williballenthin
 
 ### Breaking Changes
 
