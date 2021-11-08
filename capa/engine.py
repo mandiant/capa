@@ -12,7 +12,7 @@ from typing import Set, Dict, List, Tuple, Union, Mapping, Iterable
 
 import capa.rules
 import capa.features.common
-from capa.features.common import Feature
+from capa.features.common import Result, Feature
 
 # a collection of features and the locations at which they are found.
 #
@@ -45,15 +45,9 @@ class Statement:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, features: FeatureSet) -> "Result":
+    def evaluate(self, features: FeatureSet) -> Result:
         """
         classes that inherit `Statement` must implement `evaluate`
-
-        args:
-          ctx (defaultdict[Feature, set[VA]])
-
-        returns:
-          Result
         """
         raise NotImplementedError()
 
@@ -75,46 +69,6 @@ class Statement:
             for i, child in enumerate(children):
                 if child is existing:
                     children[i] = new
-
-
-class Result:
-    """
-    represents the results of an evaluation of statements against features.
-
-    instances of this class should behave like a bool,
-    e.g. `assert Result(True, ...) == True`
-
-    instances track additional metadata about evaluation results.
-    they contain references to the statement node (e.g. an And statement),
-     as well as the children Result instances.
-
-    we need this so that we can render the tree of expressions and their results.
-    """
-
-    def __init__(self, success: bool, statement: Union[Statement, Feature], children: List["Result"], locations=None):
-        """
-        args:
-          success (bool)
-          statement (capa.engine.Statement or capa.features.Feature)
-          children (list[Result])
-          locations (iterable[VA])
-        """
-        super(Result, self).__init__()
-        self.success = success
-        self.statement = statement
-        self.children = children
-        self.locations = locations if locations is not None else ()
-
-    def __eq__(self, other):
-        if isinstance(other, bool):
-            return self.success == other
-        return False
-
-    def __bool__(self):
-        return self.success
-
-    def __nonzero__(self):
-        return self.success
 
 
 class And(Statement):
