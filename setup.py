@@ -73,7 +73,7 @@ setuptools.setup(
             "pytest-cov==3.0.0",
             "pycodestyle==2.8.0",
             "black==21.10b0",
-            "isort==5.9.3",
+            "isort==5.10.0",
             "mypy==0.910",
             "psutil==5.8.0",
             # type stubs for mypy
@@ -82,7 +82,7 @@ setuptools.setup(
             "types-PyYAML==6.0.0",
             "types-tabulate==0.8.3",
             "types-termcolor==1.1.2",
-            "types-psutil==5.8.13",
+            "types-psutil==5.8.14",
         ],
     },
     zip_safe=False,

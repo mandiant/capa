@@ -14,6 +14,8 @@
 
 ### Bug Fixes
 
+- fix circular import error #825 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
