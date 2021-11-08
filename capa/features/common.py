@@ -10,7 +10,11 @@ import re
 import codecs
 import logging
 import collections
-from typing import Set, Dict, List, Union
+from typing import TYPE_CHECKING, Set, Dict, List, Union
+
+if TYPE_CHECKING:
+    # circular import, otherwise
+    import capa.engine
 
 import capa.perf
 import capa.features
@@ -142,7 +146,7 @@ class Feature:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "Result":
+    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
         return Result(self in ctx, self, [], locations=ctx.get(self, []))
