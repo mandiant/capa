@@ -30,7 +30,6 @@ import ruamel.yaml
 import capa.perf
 import capa.engine as ceng
 import capa.features
-import capa.optimizer
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -961,8 +960,6 @@ class RuleSet:
 
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")
-
-        rules = capa.optimizer.optimize_rules(rules)
 
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
