@@ -146,13 +146,9 @@ class Feature:
     def __repr__(self):
         return str(self)
 
-<<<<<<< HEAD
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "Result":
+    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-=======
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> Result:
->>>>>>> master
         return Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
