@@ -190,7 +190,7 @@ class Substring(String):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.substring"] += 1 
+        capa.perf.counters["evaluate.feature.substring"] += 1
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
@@ -278,8 +278,8 @@ class Regex(String):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.regex"] += 1 
-                                                        
+        capa.perf.counters["evaluate.feature.regex"] += 1
+
         # mapping from string value to list of locations.
         # will unique the locations later on.
         matches = collections.defaultdict(list)
@@ -364,8 +364,8 @@ class Bytes(Feature):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.bytes"] += 1 
-                                                        
+        capa.perf.counters["evaluate.feature.bytes"] += 1
+
         for feature, locations in ctx.items():
             if not isinstance(feature, (Bytes,)):
                 continue

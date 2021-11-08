@@ -622,7 +622,7 @@ class Rule:
 
     def evaluate(self, features: FeatureSet):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.rule"] += 1 
+        capa.perf.counters["evaluate.feature.rule"] += 1
         return self.statement.evaluate(features)
 
     @classmethod
