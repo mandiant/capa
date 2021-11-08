@@ -535,7 +535,15 @@ def test_render_offset():
     assert str(capa.features.insn.Offset(1, bitness=capa.features.common.BITNESS_X64)) == "offset/x64(0x1)"
 
 
-def test_short_circuit_order():
+def test_short_circuit():
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}}) == True
+
+    # with short circuiting, only the children up until the first satisfied child are captured.
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {1}}, short_circuit=True).children) == 1
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {1}}, short_circuit=False).children) == 2
+
+
+def test_eval_order():
     # base cases.
     assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}}) == True
     assert Or([Number(1), Number(2)]).evaluate({Number(2): {1}}) == True
