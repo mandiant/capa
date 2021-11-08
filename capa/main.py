@@ -169,28 +169,27 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     n_funcs = len(functions)
 
     pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
-    with timing("match functions"):
-        for f in pb:
-            function_address = int(f)
+    for f in pb:
+        function_address = int(f)
 
-            if extractor.is_library_function(function_address):
-                function_name = extractor.get_function_name(function_address)
-                logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
-                meta["library_functions"][function_address] = function_name
-                n_libs = len(meta["library_functions"])
-                percentage = 100 * (n_libs / n_funcs)
-                if isinstance(pb, tqdm.tqdm):
-                    pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
-                continue
+        if extractor.is_library_function(function_address):
+            function_name = extractor.get_function_name(function_address)
+            logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
+            meta["library_functions"][function_address] = function_name
+            n_libs = len(meta["library_functions"])
+            percentage = 100 * (n_libs / n_funcs)
+            if isinstance(pb, tqdm.tqdm):
+                pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
+            continue
 
-            function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
-            meta["feature_counts"]["functions"][function_address] = feature_count
-            logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
+        function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
+        meta["feature_counts"]["functions"][function_address] = feature_count
+        logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
 
-            for rule_name, res in function_matches.items():
-                all_function_matches[rule_name].extend(res)
-            for rule_name, res in bb_matches.items():
-                all_bb_matches[rule_name].extend(res)
+        for rule_name, res in function_matches.items():
+            all_function_matches[rule_name].extend(res)
+        for rule_name, res in bb_matches.items():
+            all_bb_matches[rule_name].extend(res)
 
     # collection of features that captures the rule matches within function and BB scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
@@ -200,8 +199,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
         rule = ruleset[rule_name]
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
-    with timing("match file"):
-        all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
+    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     meta["feature_counts"]["file"] = feature_count
 
     matches = {
@@ -413,11 +411,9 @@ def get_workspace(path, format, sigpaths):
     else:
         raise ValueError("unexpected format: " + format)
 
-    with timing("load FLIRT"):
-        viv_utils.flirt.register_flirt_signature_analyzers(vw, sigpaths)
+    viv_utils.flirt.register_flirt_signature_analyzers(vw, sigpaths)
 
-    with timing("viv analyze"):
-        vw.analyze()
+    vw.analyze()
 
     logger.debug("%s", get_meta_str(vw))
     return vw
@@ -905,9 +901,8 @@ def main(argv=None):
         return E_MISSING_FILE
 
     try:
-        with timing("load rules"):
-            rules = get_rules(args.rules, disable_progress=args.quiet)
-            rules = capa.rules.RuleSet(rules)
+        rules = get_rules(args.rules, disable_progress=args.quiet)
+        rules = capa.rules.RuleSet(rules)
 
         logger.debug(
             "successfully loaded %s rules",
@@ -1020,8 +1015,7 @@ def main(argv=None):
 
     meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
-    with timing("find capabilities"):
-        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
