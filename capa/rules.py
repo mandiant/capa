@@ -622,7 +622,7 @@ class Rule:
 
     def evaluate(self, features: FeatureSet):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.rule"] += 1 
+        capa.perf.counters["evaluate.feature.rule"] += 1
         return self.statement.evaluate(features)
 
     @classmethod
@@ -1053,7 +1053,7 @@ class RuleSet:
         #
         # this should be all hash-lookup features.
         # see below.
- 
+
         elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex)):
             # substring and regex features require a full scan of each string
             # which we anticipate is more expensive then a hash lookup feature (e.g. mnemonic or count).
@@ -1070,7 +1070,7 @@ class RuleSet:
             # the cost of these nodes is the full cost of their children
             # as this is the worst-case scenario.
             return sum(map(RuleSet._get_node_cost, node.children))
-        
+
         else:
             # this should be all hash-lookup features.
             # we give this a arbitrary weight of 1.

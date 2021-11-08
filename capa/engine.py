@@ -87,11 +87,11 @@ class And(Statement):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.and"] += 1  
+        capa.perf.counters["evaluate.feature.and"] += 1
 
         results = []
         for child in self.children:
-            result = child.evaluate(ctx) 
+            result = child.evaluate(ctx)
             results.append(result)
             if not result:
                 # short circuit
@@ -103,7 +103,7 @@ class And(Statement):
 class Or(Statement):
     """
     match if any of the children evaluate to True.
- 
+
     the order of evaluation is dicated by the property
     `Or.children` (type: List[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
@@ -115,7 +115,7 @@ class Or(Statement):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.or"] += 1  
+        capa.perf.counters["evaluate.feature.or"] += 1
 
         results = []
         for child in self.children:
@@ -137,8 +137,8 @@ class Not(Statement):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.not"] += 1  
-  
+        capa.perf.counters["evaluate.feature.not"] += 1
+
         results = [self.child.evaluate(ctx)]
         success = not results[0]
         return Result(success, self, results)
@@ -160,8 +160,8 @@ class Some(Statement):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.some"] += 1  
- 
+        capa.perf.counters["evaluate.feature.some"] += 1
+
         results = []
         for child in self.children:
             result = child.evaluate(ctx)
@@ -184,8 +184,8 @@ class Range(Statement):
 
     def evaluate(self, ctx):
         capa.perf.counters["evaluate.feature"] += 1
-        capa.perf.counters["evaluate.feature.range"] += 1  
-  
+        capa.perf.counters["evaluate.feature.range"] += 1
+
         count = len(ctx.get(self.child, []))
         if self.min == 0 and count == 0:
             return Result(True, self, [])
