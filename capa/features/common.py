@@ -10,7 +10,7 @@ import re
 import codecs
 import logging
 import collections
-from typing import Set, Dict, Union
+from typing import Set, Dict, List, Union
 
 import capa.engine
 import capa.features
@@ -44,6 +44,52 @@ def escape_string(s: str) -> str:
     s = s.replace("\\'", "'")  # repr() may escape "'" in some edge cases, remove
     s = s.replace('"', '\\"')  # repr() does not escape '"', add
     return s
+
+
+class Result:
+    """
+    represents the results of an evaluation of statements against features.
+
+    instances of this class should behave like a bool,
+    e.g. `assert Result(True, ...) == True`
+
+    instances track additional metadata about evaluation results.
+    they contain references to the statement node (e.g. an And statement),
+     as well as the children Result instances.
+
+    we need this so that we can render the tree of expressions and their results.
+    """
+
+    def __init__(
+        self,
+        success: bool,
+        statement: Union["capa.engine.Statement", "Feature"],
+        children: List["Result"],
+        locations=None,
+    ):
+        """
+        args:
+          success (bool)
+          statement (capa.engine.Statement or capa.features.Feature)
+          children (list[Result])
+          locations (iterable[VA])
+        """
+        super(Result, self).__init__()
+        self.success = success
+        self.statement = statement
+        self.children = children
+        self.locations = locations if locations is not None else ()
+
+    def __eq__(self, other):
+        if isinstance(other, bool):
+            return self.success == other
+        return False
+
+    def __bool__(self):
+        return self.success
+
+    def __nonzero__(self):
+        return self.success
 
 
 class Feature:
@@ -96,8 +142,8 @@ class Feature:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> "capa.engine.Result":
-        return capa.engine.Result(self in ctx, self, [], locations=ctx.get(self, []))
+    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> Result:
+        return Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
         if self.bitness is not None:
@@ -170,9 +216,9 @@ class Substring(String):
             # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the substring and the matched values.
-            return capa.engine.Result(True, _MatchedSubstring(self, matches), [], locations=locations)
+            return Result(True, _MatchedSubstring(self, matches), [], locations=locations)
         else:
-            return capa.engine.Result(False, _MatchedSubstring(self, None), [])
+            return Result(False, _MatchedSubstring(self, None), [])
 
     def __str__(self):
         return "substring(%s)" % self.value
@@ -260,9 +306,9 @@ class Regex(String):
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the regex and the matched values.
             # see #262.
-            return capa.engine.Result(True, _MatchedRegex(self, matches), [], locations=locations)
+            return Result(True, _MatchedRegex(self, matches), [], locations=locations)
         else:
-            return capa.engine.Result(False, _MatchedRegex(self, None), [])
+            return Result(False, _MatchedRegex(self, None), [])
 
     def __str__(self):
         return "regex(string =~ %s)" % self.value
@@ -314,9 +360,9 @@ class Bytes(Feature):
                 continue
 
             if feature.value.startswith(self.value):
-                return capa.engine.Result(True, self, [], locations=locations)
+                return Result(True, self, [], locations=locations)
 
-        return capa.engine.Result(False, self, [])
+        return Result(False, self, [])
 
     def get_value_str(self):
         return hex_string(bytes_to_str(self.value))
