@@ -163,10 +163,14 @@ class Some(Statement):
         capa.perf.counters["evaluate.feature.some"] += 1
 
         results = []
+        satisfied_children_count = 0
         for child in self.children:
             result = child.evaluate(ctx)
             results.append(result)
-            if len(results) >= self.count:
+            if result:
+                satisfied_children_count += 1
+
+            if satisfied_children_count >= self.count:
                 # short circuit as soon as we hit the threshold
                 return Result(True, self, results)
 
