@@ -12,7 +12,6 @@ import logging
 import collections
 from typing import Set, Dict, List, Union
 
-import capa.engine
 import capa.features
 import capa.features.extractors.elf
 
