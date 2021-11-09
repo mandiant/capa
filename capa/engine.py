@@ -79,7 +79,7 @@ class And(Statement):
     """
     match if all of the children evaluate to True.
 
-    the order of evaluation is dicated by the property
+    the order of evaluation is dictated by the property
     `And.children` (type: List[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
@@ -112,7 +112,7 @@ class Or(Statement):
     """
     match if any of the children evaluate to True.
 
-    the order of evaluation is dicated by the property
+    the order of evaluation is dictated by the property
     `Or.children` (type: List[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
@@ -161,7 +161,7 @@ class Some(Statement):
     """
     match if at least N of the children evaluate to True.
 
-    the order of evaluation is dicated by the property
+    the order of evaluation is dictated by the property
     `Some.children` (type: List[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
