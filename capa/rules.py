@@ -1024,7 +1024,15 @@ class RuleSet:
         rules_with_hard_features: Set[str] = set()
         rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
 
-        def rec(rule: str, node: Union[Feature, Statement]):
+        def rec(rule: str, node: Union[Feature, Statement], under_not_statement=False):
+            """
+            walk through a rule's logic tree, indexing the easy and hard rules,
+            and the features referenced by easy rules.
+
+            args:
+                under_not_statement (bool): when True, under a `not:` statement
+                                            and therefore, don't want to index easy features.
+            """
             if isinstance(
                 node,
                 (
@@ -1045,13 +1053,16 @@ class RuleSet:
                 rules_with_hard_features.add(rule)
             elif isinstance(node, capa.features.common.Feature):
                 # easy feature: hash lookup
-                rules_with_easy_features.add(rule)
-                rules_by_feature[node].add(rule)
-            elif isinstance(node, (ceng.Not, ceng.Range)):
-                return rec(rule, node.child)
+                if under_not_statement:
+                    rules_with_easy_features.add(rule)
+                    rules_by_feature[node].add(rule)
+            elif isinstance(node, (ceng.Not)):
+                return rec(rule, node.child, under_not_statement=not under_not_statement)
+            elif isinstance(node, (ceng.Range)):
+                return rec(rule, node.child, under_not_statement=under_not_statement)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
-                    rec(rule, child)
+                    rec(rule, child, under_not_statement=under_not_statement)
             else:
                 # programming error
                 raise Exception("programming error: unexpected node type: %s" % (node))
