@@ -4,6 +4,8 @@
 
 ### New Features
 
+- engine: optimize rule evaluation by skipping rules that can't match #830 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (3)
