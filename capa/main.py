@@ -42,7 +42,7 @@ import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.elffile
-from capa.rules import Rule, RuleSet
+from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import get_file_taste
 from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
@@ -114,7 +114,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 
-        _, matches = capa.engine.match(ruleset.basic_block_rules, bb_features, int(bb))
+        _, matches = ruleset.match(Scope.BASIC_BLOCK, bb_features, int(bb))
 
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
@@ -122,7 +122,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
             for va, _ in res:
                 capa.engine.index_rule_matches(function_features, rule, [va])
 
-    _, function_matches = capa.engine.match(ruleset.function_rules, function_features, int(f))
+    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
 
 
@@ -143,7 +143,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 
     file_features.update(function_features)
 
-    _, matches = capa.engine.match(ruleset.file_rules, file_features, 0x0)
+    _, matches = ruleset.match(Scope.FILE, file_features, 0x0)
     return matches, len(file_features)
 
 
