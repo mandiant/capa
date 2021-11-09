@@ -18,7 +18,7 @@ def get_node_cost(node):
     # this should be all hash-lookup features.
     # see below.
 
-    elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex)):
+    elif isinstance(node, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)):
         # substring and regex features require a full scan of each string
         # which we anticipate is more expensive then a hash lookup feature (e.g. mnemonic or count).
         #
@@ -28,12 +28,12 @@ def get_node_cost(node):
 
     elif isinstance(node, (ceng.Not, ceng.Range)):
         # the cost of these nodes are defined by the complexity of their single child.
-        return get_node_cost(node.child)
+        return 1 + get_node_cost(node.child)
 
     elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
         # the cost of these nodes is the full cost of their children
         # as this is the worst-case scenario.
-        return sum(map(get_node_cost, node.children))
+        return 1 + sum(map(get_node_cost, node.children))
 
     else:
         # this should be all hash-lookup features.
