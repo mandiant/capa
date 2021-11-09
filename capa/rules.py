@@ -14,6 +14,7 @@ import logging
 import binascii
 import functools
 import collections
+from enum import Enum
 
 try:
     from functools import lru_cache
@@ -65,9 +66,15 @@ META_KEYS = (
 HIDDEN_META_KEYS = ("capa/nursery", "capa/path")
 
 
-FILE_SCOPE = "file"
-FUNCTION_SCOPE = "function"
-BASIC_BLOCK_SCOPE = "basic block"
+class Scope(str, Enum):
+    FILE = "file"
+    FUNCTION = "function"
+    BASIC_BLOCK = "basic block"
+
+
+FILE_SCOPE = Scope.FILE.value
+FUNCTION_SCOPE = Scope.FUNCTION.value
+BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 
 
 SUPPORTED_FEATURES = {
