@@ -112,7 +112,7 @@ class Or(Statement):
     """
     match if any of the children evaluate to True.
 
-    the order of evaluation is dicated by the property
+    the order of evaluation is dictated by the property
     `Or.children` (type: List[Statement|Feature]).
     a query optimizer may safely manipulate the order of these children.
     """
