@@ -1172,14 +1172,27 @@ class RuleSet:
 
         candidate_rule_names = set()
         for feature in features:
-            easy_rules = easy_rules_by_feature.get(feature)
-            if easy_rules:
-                candidate_rule_names.update(easy_rules)
+            easy_rule_names = easy_rules_by_feature.get(feature)
+            if easy_rule_names:
+                candidate_rule_names.update(easy_rule_names)
 
         # first, match against the set of rules that have at least one
         # feature shared with our feature set.
         candidate_rules = [self.rules[name] for name in candidate_rule_names]
         features2, easy_matches = ceng.match(candidate_rules, features, va)
+
+        # note that we've stored the updated feature set in `features2`.
+        # this contains a superset of the features in `features`;
+        # it contains additional features for any easy rule matches.
+        # we'll pass this feature set to hard rule matching, since one
+        # of those rules might rely on an easy rule match.
+        #
+        # the updated feature set from hard matching will go into `features3`.
+        # this is a superset of `features2` is a superset of `features`.
+        # ultimately, this is what we'll return to the caller.
+        #
+        # in each case, we could have assigned the updated feature set back to `features`,
+        # but this is slightly more explicit how we're tracking the data.
 
         # now, match against (topologically ordered) list of rules
         # that we can't really make any guesses about.
@@ -1187,8 +1200,8 @@ class RuleSet:
         hard_rules = [self.rules[name] for name in hard_rule_names]
         features3, hard_matches = ceng.match(hard_rules, features2, va)
 
-        # note that above, we ideally skipping matching a bunch of
-        # rules that probably would never hit.
+        # note that above, we probably are skipping matching a bunch of
+        # rules that definitely would never hit.
         # specifically, "easy rules" that don't share any features with
         # feature set.
 
