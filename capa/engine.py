@@ -217,15 +217,20 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
 
 def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
     """
-    Args:
-      rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
-      features (Mapping[capa.features.Feature, int]):
-      va (int): location of the features
+    match the given rules against the given features,
+    returning an updated set of features and the matches.
 
-    Returns:
-      Tuple[FeatureSet, MatchResults]: two-tuple with entries:
-        - set of features used for matching (which may be a superset of the given `features` argument, due to rule match features), and
-        - mapping from rule name to [(location of match, result object)]
+    the updated features are just like the input,
+    but extended to include the match features (e.g. names of rules that matched).
+    the given feature set is not modified; an updated copy is returned.
+
+    the given list of rules must be ordered topologically by dependency,
+    or else `match` statements will not be handled correctly.
+
+    this routine should be fairly optimized, but is not guaranteed to be the fastest matcher possible.
+    it has a particularly convenient signature: (rules, features) -> matches
+    other strategies can be imagined that match differently; implement these elsewhere.
+    specifically, this routine does "top down" matching of the given rules against the feature set.
     """
     results = collections.defaultdict(list)  # type: MatchResults
 
