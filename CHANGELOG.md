@@ -20,6 +20,8 @@
 
 ### Development
 
+- add profiling infrastructure #828 @williballenthin
+
 ### Raw diffs
 - [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...master)
 - [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.0.3...master)

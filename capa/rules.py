@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Union, Iterator
 import yaml
 import ruamel.yaml
 
+import capa.perf
 import capa.engine as ceng
 import capa.features
 import capa.features.file
@@ -620,6 +621,8 @@ class Rule:
             yield new_rule
 
     def evaluate(self, features: FeatureSet):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.rule"] += 1
         return self.statement.evaluate(features)
 
     @classmethod

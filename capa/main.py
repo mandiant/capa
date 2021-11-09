@@ -10,6 +10,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import time
 import hashlib
 import logging
 import os.path
@@ -17,6 +18,7 @@ import argparse
 import datetime
 import textwrap
 import itertools
+import contextlib
 import collections
 from typing import Any, Dict, List, Tuple
 
@@ -26,6 +28,7 @@ import colorama
 from pefile import PEFormatError
 from elftools.common.exceptions import ELFError
 
+import capa.perf
 import capa.rules
 import capa.engine
 import capa.version
@@ -63,6 +66,14 @@ E_INVALID_FILE_OS = -18
 E_UNSUPPORTED_IDA_VERSION = -19
 
 logger = logging.getLogger("capa")
+
+
+@contextlib.contextmanager
+def timing(msg: str):
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 def set_vivisect_log_level(level):
@@ -892,6 +903,7 @@ def main(argv=None):
     try:
         rules = get_rules(args.rules, disable_progress=args.quiet)
         rules = capa.rules.RuleSet(rules)
+
         logger.debug(
             "successfully loaded %s rules",
             # during the load of the RuleSet, we extract subscope statements into their own rules
