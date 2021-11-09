@@ -4,6 +4,8 @@
 
 ### New Features
 
+- engine: short circuit logic nodes for better performance #824 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (3)

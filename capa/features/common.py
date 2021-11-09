@@ -146,7 +146,7 @@ class Feature:
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]]) -> Result:
+    def evaluate(self, ctx: Dict["Feature", Set[int]], **kwargs) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
         return Result(self in ctx, self, [], locations=ctx.get(self, []))
@@ -192,7 +192,7 @@ class Substring(String):
         super(Substring, self).__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.substring"] += 1
 
@@ -210,6 +210,10 @@ class Substring(String):
 
             if self.value in feature.value:
                 matches[feature.value].extend(locations)
+                if short_circuit:
+                    # we found one matching string, thats sufficient to match.
+                    # don't collect other matching strings in this mode.
+                    break
 
         if matches:
             # finalize: defaultdict -> dict
@@ -280,7 +284,7 @@ class Regex(String):
                 "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
             )
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.regex"] += 1
 
@@ -302,6 +306,10 @@ class Regex(String):
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
                 matches[feature.value].extend(locations)
+                if short_circuit:
+                    # we found one matching string, thats sufficient to match.
+                    # don't collect other matching strings in this mode.
+                    break
 
         if matches:
             # finalize: defaultdict -> dict
@@ -366,7 +374,7 @@ class Bytes(Feature):
         super(Bytes, self).__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx, **kwargs):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
 
