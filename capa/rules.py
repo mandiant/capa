@@ -31,6 +31,7 @@ import ruamel.yaml
 import capa.perf
 import capa.engine as ceng
 import capa.features
+import capa.optimizer
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -627,10 +628,10 @@ class Rule:
         for new_rule in self._extract_subscope_rules_rec(self.statement):
             yield new_rule
 
-    def evaluate(self, features: FeatureSet):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.rule"] += 1
-        return self.statement.evaluate(features)
+        return self.statement.evaluate(features, short_circuit=short_circuit)
 
     @classmethod
     def from_dict(cls, d, definition):
@@ -967,6 +968,8 @@ class RuleSet:
 
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")
+
+        rules = capa.optimizer.optimize_rules(rules)
 
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)

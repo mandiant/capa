@@ -1,3 +1,34 @@
+"""
+Invoke capa multiple times and record profiling informations.
+Use the --number and --repeat options to change the number of iterations.
+By default, the script will emit a markdown table with a label pulled from git.
+
+Note: you can run this script against pre-generated .frz files to reduce the startup time.
+
+usage:
+
+    usage: profile-time.py [--number NUMBER] [--repeat REPEAT] [--label LABEL] sample
+
+    Profile capa performance
+
+    positional arguments:
+      sample                path to sample to analyze
+
+    optional arguments:
+      --number NUMBER       batch size of profile collection
+      --repeat REPEAT       batch count of profile collection
+      --label LABEL         description of the profile collection
+
+example:
+
+    $ python profile-time.py ./tests/data/kernel32.dll_.frz --number 1 --repeat 2
+
+    | label                                | count(evaluations)   | avg(time)   | min(time)   | max(time)   |
+    |--------------------------------------|----------------------|-------------|-------------|-------------|
+    | 18c30e4 main: remove perf debug msgs | 66,561,622           | 132.13s     | 125.14s     | 139.12s     |
+
+      ^^^ --label or git hash               
+"""
 import sys
 import timeit
 import logging
@@ -98,12 +129,16 @@ def main(argv=None):
                 (
                     args.label,
                     "{:,}".format(capa.perf.counters["evaluate.feature"]),
-                    "%0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)),
+                    # python documentation indicates that min(samples) should be preferred,
+                    # so lets put that first.
+                    #
+                    # https://docs.python.org/3/library/timeit.html#timeit.Timer.repeat
                     "%0.2fs" % (min(samples) / float(args.number)),
+                    "%0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)),
                     "%0.2fs" % (max(samples) / float(args.number)),
                 )
             ],
-            headers=["label", "count(evaluations)", "avg(time)", "min(time)", "max(time)"],
+            headers=["label", "count(evaluations)", "min(time)", "avg(time)", "max(time)"],
             tablefmt="github",
         )
     )
