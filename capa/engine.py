@@ -8,11 +8,16 @@
 
 import copy
 import collections
-from typing import Set, Dict, List, Tuple, Union, Mapping, Iterable
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Mapping, Iterable
 
 import capa.perf
 import capa.features.common
 from capa.features.common import Result, Feature
+
+if TYPE_CHECKING:
+    # circular import, otherwise
+    import capa.rules
+
 
 # a collection of features and the locations at which they are found.
 #
