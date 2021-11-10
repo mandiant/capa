@@ -11,7 +11,6 @@ import collections
 from typing import Set, Dict, List, Tuple, Union, Mapping, Iterable
 
 import capa.perf
-import capa.rules
 import capa.features.common
 from capa.features.common import Result, Feature
 
