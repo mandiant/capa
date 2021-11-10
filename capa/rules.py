@@ -1057,9 +1057,9 @@ class RuleSet:
                     rules_with_easy_features.add(rule)
                     rules_by_feature[node].add(rule)
             elif isinstance(node, (ceng.Not)):
-                return rec(rule, node.child, under_not_statement=not under_not_statement)
+                rec(rule, node.child, under_not_statement=not under_not_statement)
             elif isinstance(node, (ceng.Range)):
-                return rec(rule, node.child, under_not_statement=under_not_statement)
+                rec(rule, node.child, under_not_statement=under_not_statement)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
                     rec(rule, child, under_not_statement=under_not_statement)
