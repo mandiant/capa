@@ -1053,7 +1053,7 @@ class RuleSet:
                 rules_with_hard_features.add(rule)
             elif isinstance(node, capa.features.common.Feature):
                 # easy feature: hash lookup
-                if under_not_statement:
+                if not under_not_statement:
                     rules_with_easy_features.add(rule)
                     rules_by_feature[node].add(rule)
             elif isinstance(node, (ceng.Not)):
