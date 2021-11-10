@@ -51,14 +51,14 @@ def test_match_simple():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
- 
+
     features, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
     assert "test rule" in matches
     assert MatchedRule("test rule") in features
     assert MatchedRule("testns1") in features
     assert MatchedRule("testns1/testns2") in features
 
- 
+
 def test_match_range_exact():
     rule = textwrap.dedent(
         """
@@ -225,7 +225,7 @@ def test_match_matched_rules():
     assert capa.features.common.MatchedRule("test rule1") in features
     assert capa.features.common.MatchedRule("test rule2") in features
 
- 
+
 def test_match_namespace():
     rules = [
         capa.rules.Rule.from_yaml(
@@ -296,7 +296,6 @@ def test_match_namespace():
     assert "WriteFile API" in matches
     assert "file-create" not in matches
     assert "filesystem-any" in matches
-                
 
 
 def test_match_substring():
@@ -495,8 +494,8 @@ def test_match_regex_values_always_string():
         0x0,
     )
     assert capa.features.common.MatchedRule("test rule") in features
- 
- 
+
+
 def test_match_not():
     rule = textwrap.dedent(
         """
@@ -510,11 +509,11 @@ def test_match_not():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
- 
+
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
     assert "test rule" in matches
-                           
- 
+
+
 def test_match_not_not():
     rule = textwrap.dedent(
         """
@@ -529,6 +528,6 @@ def test_match_not_not():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
- 
+
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
     assert "test rule" in matches

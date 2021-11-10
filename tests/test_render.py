@@ -2,9 +2,10 @@ import textwrap
 
 import capa.rules
 import capa.render.utils
-import capa.render.result_document
 import capa.features.insn
 import capa.features.common
+import capa.render.result_document
+
 
 def test_render_number():
     assert str(capa.features.insn.Number(1)) == "number(0x1)"
@@ -16,7 +17,7 @@ def test_render_offset():
     assert str(capa.features.insn.Offset(1)) == "offset(0x1)"
     assert str(capa.features.insn.Offset(1, bitness=capa.features.common.BITNESS_X32)) == "offset/x32(0x1)"
     assert str(capa.features.insn.Offset(1, bitness=capa.features.common.BITNESS_X64)) == "offset/x64(0x1)"
- 
+
 
 def test_render_meta_attack():
     # Persistence::Boot or Logon Autostart Execution::Registry Run Keys / Startup Folder [T1547.001]

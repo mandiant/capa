@@ -785,8 +785,6 @@ def test_substring_description():
     assert (Substring("abc") in children) == True
 
 
-
-
 def test_filter_rules():
     rules = capa.rules.RuleSet(
         [
