@@ -1064,6 +1064,25 @@ class RuleSet:
                 # so, if a rule has a `not:` statement, its hard.
                 # as of writing, this is an uncommon statement, with only 6 instances in 740 rules.
                 rules_with_hard_features.add(rule)
+            elif isinstance(node, (ceng.Some)) and node.count == 0:
+                # `optional:` and `0 or more:` are tricky to deal with.
+                #
+                # when a subtree is optional, it may match, but not matching 
+                # doesn't have any impact either.
+                # now, our rule authors *should* not put this under `or:`
+                # and this is checked by the linter,
+                # but this could still happen (e.g. private rule set without linting)
+                # and would be hard to trace down.
+                #
+                # so better to be safe than sorry and consider this a hard case.
+                rules_with_hard_features.add(rule)
+            elif isinstance(node, (ceng.Range)) and node.min == 0:
+                # `count(foo): 0 or more` are tricky to deal with.
+                # because the min is 0,
+                # this subtree *can* match just about any feature
+                # (except the given one)
+                # which is a difficult set of things to compute and index.
+                rules_with_hard_features.add(rule)
             elif isinstance(node, (ceng.Range)):
                 rec(rule, node.child)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
@@ -1076,21 +1095,7 @@ class RuleSet:
         for rule in rules:
             rule_name = rule.meta["name"]
             root = rule.statement
-            if isinstance(root, ceng.Range) and root.min == 0:
-                # `optional: ...` and `count(...): 0 or more`.
-                # at the root, they might match against any feature set.
-                # this is tricky, so its a hard rule.
-                rules_with_hard_features.add(rule_name)
-                continue
-
-            elif isinstance(root, ceng.Not):
-                # this matches against anything *except* whats specified under this `not:`
-                # which is tricky, so its a hard rule.
-                rules_with_hard_features.add(rule_name)
-                continue
-
-            else:
-                rec(rule_name, root)
+            rec(rule_name, root)
 
         # if a rule has a hard feature,
         # dont consider it easy, and therefore,
