@@ -1068,7 +1068,23 @@ class RuleSet:
                 raise Exception("programming error: unexpected node type: %s" % (node))
 
         for rule in rules:
-            rec(rule.meta["name"], rule.statement)
+            rule_name = rule.meta["name"]
+            root = rule.statement
+            if isinstance(root, ceng.Range) and root.min == 0:
+                # `optional: ...` and `count(...): 0 or more`.
+                # at the root, they might match against any feature set.
+                # this is tricky, so its a hard rule.
+                rules_with_hard_features.add(rule_name)
+                continue
+
+            elif isinstance(root, ceng.Not):
+                # this matches against anything *except* whats specified under this `not:`
+                # which is tricky, so its a hard rule.
+                rules_with_hard_features.add(rule_name)
+                continue
+
+            else:
+                rec(rule_name, root)
 
         # if a rule has a hard feature,
         # dont consider it easy, and therefore,
