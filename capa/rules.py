@@ -1067,7 +1067,7 @@ class RuleSet:
             elif isinstance(node, (ceng.Some)) and node.count == 0:
                 # `optional:` and `0 or more:` are tricky to deal with.
                 #
-                # when a subtree is optional, it may match, but not matching 
+                # when a subtree is optional, it may match, but not matching
                 # doesn't have any impact either.
                 # now, our rule authors *should* not put this under `or:`
                 # and this is checked by the linter,
