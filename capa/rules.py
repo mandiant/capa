@@ -1024,14 +1024,10 @@ class RuleSet:
         rules_with_hard_features: Set[str] = set()
         rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
 
-        def rec(rule: str, node: Union[Feature, Statement], under_not_statement=False):
+        def rec(rule: str, node: Union[Feature, Statement]):
             """
             walk through a rule's logic tree, indexing the easy and hard rules,
             and the features referenced by easy rules.
-
-            args:
-                under_not_statement (bool): when True, under a `not:` statement
-                                            and therefore, don't want to index easy features.
             """
             if isinstance(
                 node,
@@ -1053,16 +1049,26 @@ class RuleSet:
                 rules_with_hard_features.add(rule)
             elif isinstance(node, capa.features.common.Feature):
                 # easy feature: hash lookup
-                if not under_not_statement:
-                    rules_with_easy_features.add(rule)
-                    rules_by_feature[node].add(rule)
+                rules_with_easy_features.add(rule)
+                rules_by_feature[node].add(rule)
             elif isinstance(node, (ceng.Not)):
-                rec(rule, node.child, under_not_statement=not under_not_statement)
+                # `not:` statements are tricky to deal with.
+                #
+                # first, features found under a `not:` should not be indexed,
+                # because they're not wanted to be found.
+                # second, `not:` can be nested under another `not:`, or two, etc.
+                # third, `not:` at the root or directly under an `or:`
+                # means the rule will match against *anything* not specified there,
+                # which is a difficult set of things to compute and index.
+                #
+                # so, if a rule has a `not:` statement, its hard.
+                # as of writing, this is an uncommon statement, with only 6 instances in 740 rules.
+                rules_with_hard_features.add(rule)
             elif isinstance(node, (ceng.Range)):
-                rec(rule, node.child, under_not_statement=under_not_statement)
+                rec(rule, node.child)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
-                    rec(rule, child, under_not_statement=under_not_statement)
+                    rec(rule, child)
             else:
                 # programming error
                 raise Exception("programming error: unexpected node type: %s" % (node))
