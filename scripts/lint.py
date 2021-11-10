@@ -363,8 +363,8 @@ class NotNotUnderAnd(Lint):
 
 
 class OptionalNotUnderAnd(Lint):
-    name = "rule contains an `optional` or `range(0, ...)` statement that's not found under an `and` statement"
-    recommendation = "clarify the rule logic and ensure `optional` and `range(0, ...)` is always found under `and`"
+    name = "rule contains an `optional` or `0 or more` statement that's not found under an `and` statement"
+    recommendation = "clarify the rule logic and ensure `optional` and `0 or more` is always found under `and`"
     violation = False
 
     def check_rule(self, ctx: Context, rule: Rule):
@@ -374,7 +374,7 @@ class OptionalNotUnderAnd(Lint):
             if isinstance(statement, capa.engine.Statement):
                 if not isinstance(statement, capa.engine.And):
                     for child in statement.get_children():
-                        if isinstance(child, capa.engine.Range) and child.min == 0:
+                        if isinstance(child, capa.engine.Some) and child.count == 0:
                             self.violation = True
 
                 for child in statement.get_children():
