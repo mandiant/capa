@@ -1024,7 +1024,7 @@ class RuleSet:
         rules_with_hard_features: Set[str] = set()
         rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
 
-        def rec(rule: str, node: Union[Feature, Statement]):
+        def rec(rule_name: str, node: Union[Feature, Statement]):
             """
             walk through a rule's logic tree, indexing the easy and hard rules,
             and the features referenced by easy rules.
@@ -1046,11 +1046,11 @@ class RuleSet:
                 ),
             ):
                 # hard feature: requires scan or match lookup
-                rules_with_hard_features.add(rule)
+                rules_with_hard_features.add(rule_name)
             elif isinstance(node, capa.features.common.Feature):
                 # easy feature: hash lookup
-                rules_with_easy_features.add(rule)
-                rules_by_feature[node].add(rule)
+                rules_with_easy_features.add(rule_name)
+                rules_by_feature[node].add(rule_name)
             elif isinstance(node, (ceng.Not)):
                 # `not:` statements are tricky to deal with.
                 #
@@ -1063,7 +1063,7 @@ class RuleSet:
                 #
                 # so, if a rule has a `not:` statement, its hard.
                 # as of writing, this is an uncommon statement, with only 6 instances in 740 rules.
-                rules_with_hard_features.add(rule)
+                rules_with_hard_features.add(rule_name)
             elif isinstance(node, (ceng.Some)) and node.count == 0:
                 # `optional:` and `0 or more:` are tricky to deal with.
                 #
@@ -1075,19 +1075,19 @@ class RuleSet:
                 # and would be hard to trace down.
                 #
                 # so better to be safe than sorry and consider this a hard case.
-                rules_with_hard_features.add(rule)
+                rules_with_hard_features.add(rule_name)
             elif isinstance(node, (ceng.Range)) and node.min == 0:
                 # `count(foo): 0 or more` are tricky to deal with.
                 # because the min is 0,
                 # this subtree *can* match just about any feature
                 # (except the given one)
                 # which is a difficult set of things to compute and index.
-                rules_with_hard_features.add(rule)
+                rules_with_hard_features.add(rule_name)
             elif isinstance(node, (ceng.Range)):
-                rec(rule, node.child)
+                rec(rule_name, node.child)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
-                    rec(rule, child)
+                    rec(rule_name, child)
             else:
                 # programming error
                 raise Exception("programming error: unexpected node type: %s" % (node))
