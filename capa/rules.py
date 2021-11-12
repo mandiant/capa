@@ -998,7 +998,7 @@ class RuleSet:
     @staticmethod
     def _index_rules_by_feature(rules) -> Tuple[Dict[Feature, Set[str]], List[str]]:
         """
-        split the given rules into to structures:
+        split the given rules into two structures:
           - "easy rules" are indexed by feature,
             such that you can quickly find the rules that contain a given feature.
           - "hard rules" are those that contain substring/regex/bytes features or match statements.
