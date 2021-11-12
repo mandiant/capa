@@ -785,37 +785,6 @@ def test_substring_description():
     assert (Substring("abc") in children) == True
 
 
-def test_regex_values_always_string():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - or:
-                            - string: /123/
-                            - string: /0x123/
-                """
-            )
-        ),
-    ]
-    features, matches = capa.engine.match(
-        capa.rules.topologically_order_rules(rules),
-        {capa.features.common.String("123"): {1}},
-        0x0,
-    )
-    assert capa.features.common.MatchedRule("test rule") in features
-
-    features, matches = capa.engine.match(
-        capa.rules.topologically_order_rules(rules),
-        {capa.features.common.String("0x123"): {1}},
-        0x0,
-    )
-    assert capa.features.common.MatchedRule("test rule") in features
-
-
 def test_filter_rules():
     rules = capa.rules.RuleSet(
         [

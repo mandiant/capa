@@ -339,6 +339,52 @@ class OrStatementWithAlwaysTrueChild(Lint):
         return self.violation
 
 
+class NotNotUnderAnd(Lint):
+    name = "rule contains a `not` statement that's not found under an `and` statement"
+    recommendation = "clarify the rule logic and ensure `not` is always found under `and`"
+    violation = False
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        self.violation = False
+
+        def rec(statement):
+            if isinstance(statement, capa.engine.Statement):
+                if not isinstance(statement, capa.engine.And):
+                    for child in statement.get_children():
+                        if isinstance(child, capa.engine.Not):
+                            self.violation = True
+
+                for child in statement.get_children():
+                    rec(child)
+
+        rec(rule.statement)
+
+        return self.violation
+
+
+class OptionalNotUnderAnd(Lint):
+    name = "rule contains an `optional` or `0 or more` statement that's not found under an `and` statement"
+    recommendation = "clarify the rule logic and ensure `optional` and `0 or more` is always found under `and`"
+    violation = False
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        self.violation = False
+
+        def rec(statement):
+            if isinstance(statement, capa.engine.Statement):
+                if not isinstance(statement, capa.engine.And):
+                    for child in statement.get_children():
+                        if isinstance(child, capa.engine.Some) and child.count == 0:
+                            self.violation = True
+
+                for child in statement.get_children():
+                    rec(child)
+
+        rec(rule.statement)
+
+        return self.violation
+
+
 class UnusualMetaField(Lint):
     name = "unusual meta field"
     recommendation = "Remove the meta field"
@@ -660,6 +706,8 @@ LOGIC_LINTS = (
     DoesntMatchExample(),
     StatementWithSingleChildStatement(),
     OrStatementWithAlwaysTrueChild(),
+    NotNotUnderAnd(),
+    OptionalNotUnderAnd(),
 )
 
 

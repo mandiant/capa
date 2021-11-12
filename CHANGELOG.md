@@ -6,6 +6,7 @@
 
 - engine: short circuit logic nodes for better performance #824 @williballenthin
 - engine: add optimizer the order faster nodes first #829 @williballenthin
+- engine: optimize rule evaluation by skipping rules that can't match #830 @williballenthin
 
 ### Breaking Changes
 
