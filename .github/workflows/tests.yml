@@ -30,7 +30,7 @@ jobs:
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: "3.8"
     - name: Install dependencies
       run: pip install -e .[dev]
     - name: Lint with isort
@@ -50,7 +50,7 @@ jobs:
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: "3.8"
     - name: Install capa
       run: pip install -e .
     - name: Run rule linter
@@ -65,13 +65,15 @@ jobs:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-10.15]
         # across all operating systems
-        python-version: [3.6, 3.9]
+        python-version: ["3.6", "3.10"]
         include:
           # on Ubuntu run these as well
           - os: ubuntu-20.04
-            python-version: 3.7
+            python-version: "3.7"
           - os: ubuntu-20.04
-            python-version: 3.8
+            python-version: "3.8"
+          - os: ubuntu-20.04
+            python-version: "3.9"
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
