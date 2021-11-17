@@ -8,12 +8,7 @@ json format:
       'base address': int(base address),
       'functions': {
         int(function va): {
-          'basic blocks': {
-            int(basic block va): {
-              'instructions': [instruction va, ...]
-            },
-            ...
-          },
+          int(basic block va): [int(instruction va), ...]
           ...
         },
         ...
