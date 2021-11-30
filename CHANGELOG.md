@@ -12,11 +12,17 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (10)
 
 - nursery/delete-windows-backup-catalog michael.hunhoff@mandiant.com
 - nursery/disable-automatic-windows-recovery-features michael.hunhoff@mandiant.com
 - nursery/capture-webcam-video @johnk3r
+- nursery/create-registry-key-via-stdregprov michael.hunhoff@mandiant.com
+- nursery/delete-registry-key-via-stdregprov michael.hunhoff@mandiant.com
+- nursery/delete-registry-value-via-stdregprov michael.hunhoff@mandiant.com
+- nursery/query-or-enumerate-registry-key-via-stdregprov michael.hunhoff@mandiant.com
+- nursery/query-or-enumerate-registry-value-via-stdregprov michael.hunhoff@mandiant.com
+- nursery/set-registry-value-via-stdregprov michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
