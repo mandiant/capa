@@ -12,7 +12,7 @@
 
 ### Breaking Changes
 
-### New Rules (13)
+### New Rules (15)
 
 - nursery/delete-windows-backup-catalog michael.hunhoff@mandiant.com
 - nursery/disable-automatic-windows-recovery-features michael.hunhoff@mandiant.com
@@ -24,6 +24,8 @@
 - nursery/query-or-enumerate-registry-value-via-stdregprov michael.hunhoff@mandiant.com
 - nursery/set-registry-value-via-stdregprov michael.hunhoff@mandiant.com
 - data-manipulation/compression/decompress-data-using-ucl jakub.jozwiak@mandiant.com
+- linking/static/wolfcrypt/linked-against-wolfcrypt jakub.jozwiak@mandiant.com
+- linking/static/wolfssl/linked-against-wolfssl jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
