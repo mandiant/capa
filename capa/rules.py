@@ -16,6 +16,8 @@ import functools
 import collections
 from enum import Enum
 
+from capa.helpers import assert_never
+
 try:
     from functools import lru_cache
 except ImportError:
@@ -1090,7 +1092,7 @@ class RuleSet:
                     rec(rule_name, child)
             else:
                 # programming error
-                raise Exception("programming error: unexpected node type: %s" % (node))
+                assert_never(node)
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1195,7 +1197,7 @@ class RuleSet:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
         else:
-            raise Exception("programming error: unexpected scope")
+            assert_never(scope)
 
         candidate_rule_names = set()
         for feature in features:
