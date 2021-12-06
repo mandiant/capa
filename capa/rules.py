@@ -1202,6 +1202,7 @@ class RuleSet:
         this routine should act just like `capa.engine.match`,
         except that it may be more performant.
         """
+        easy_rules_by_feature = {}
         if scope is Scope.FILE:
             easy_rules_by_feature = self._easy_file_rules_by_feature
             hard_rule_names = self._hard_file_rules
