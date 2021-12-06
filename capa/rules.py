@@ -1090,6 +1090,21 @@ class RuleSet:
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
                     rec(rule_name, child)
+            elif isinstance(node, ceng.Statement):
+                # unhandled type of statement.
+                # this should only happen if a new subtype of `Statement`
+                # has since been added to capa.
+                #
+                # ideally, we'd like to use mypy for exhaustiveness checking
+                # for all the subtypes of `Statement`.
+                # but, as far as i can tell, mypy does not support this type
+                # of checking.
+                #
+                # in a way, this makes some intuitive sense:
+                # the set of subtypes of type A is unbounded,
+                # because any user might come along and create a new subtype B,
+                # so mypy can't reason about this set of types.
+                assert False, f"Unhandled value: {node} ({type(node).__name__})"
             else:
                 # programming error
                 assert_never(node)
