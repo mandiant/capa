@@ -1187,13 +1187,13 @@ class RuleSet:
         this routine should act just like `capa.engine.match`,
         except that it may be more performant.
         """
-        if scope == scope.FILE:
+        if scope is Scope.FILE:
             easy_rules_by_feature = self._easy_file_rules_by_feature
             hard_rule_names = self._hard_file_rules
-        elif scope == scope.FUNCTION:
+        elif scope is Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules
-        elif scope == scope.BASIC_BLOCK:
+        elif scope is Scope.BASIC_BLOCK:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
         else:

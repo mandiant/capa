@@ -34,4 +34,4 @@ def is_runtime_ida():
 
 
 def assert_never(value: NoReturn) -> NoReturn:
-    assert False, f'Unhandled value: {value} ({type(value).__name__})'
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"
