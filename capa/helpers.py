@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
+from typing import NoReturn
 
 _hex = hex
 
@@ -30,3 +31,7 @@ def is_runtime_ida():
         return False
     else:
         return True
+
+
+def assert_never(value: NoReturn) -> NoReturn:
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"

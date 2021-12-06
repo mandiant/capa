@@ -16,6 +16,8 @@ import functools
 import collections
 from enum import Enum
 
+from capa.helpers import assert_never
+
 try:
     from functools import lru_cache
 except ImportError:
@@ -1088,9 +1090,24 @@ class RuleSet:
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
                 for child in node.children:
                     rec(rule_name, child)
+            elif isinstance(node, ceng.Statement):
+                # unhandled type of statement.
+                # this should only happen if a new subtype of `Statement`
+                # has since been added to capa.
+                #
+                # ideally, we'd like to use mypy for exhaustiveness checking
+                # for all the subtypes of `Statement`.
+                # but, as far as i can tell, mypy does not support this type
+                # of checking.
+                #
+                # in a way, this makes some intuitive sense:
+                # the set of subtypes of type A is unbounded,
+                # because any user might come along and create a new subtype B,
+                # so mypy can't reason about this set of types.
+                assert False, f"Unhandled value: {node} ({type(node).__name__})"
             else:
                 # programming error
-                raise Exception("programming error: unexpected node type: %s" % (node))
+                assert_never(node)
 
         for rule in rules:
             rule_name = rule.meta["name"]
@@ -1185,17 +1202,18 @@ class RuleSet:
         this routine should act just like `capa.engine.match`,
         except that it may be more performant.
         """
-        if scope == scope.FILE:
+        easy_rules_by_feature = {}
+        if scope is Scope.FILE:
             easy_rules_by_feature = self._easy_file_rules_by_feature
             hard_rule_names = self._hard_file_rules
-        elif scope == scope.FUNCTION:
+        elif scope is Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules
-        elif scope == scope.BASIC_BLOCK:
+        elif scope is Scope.BASIC_BLOCK:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
         else:
-            raise Exception("programming error: unexpected scope")
+            assert_never(scope)
 
         candidate_rule_names = set()
         for feature in features:
