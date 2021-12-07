@@ -12,7 +12,7 @@
 
 ### Breaking Changes
 
-### New Rules (18)
+### New Rules (19)
 
 - nursery/delete-windows-backup-catalog michael.hunhoff@mandiant.com
 - nursery/disable-automatic-windows-recovery-features michael.hunhoff@mandiant.com
@@ -29,6 +29,7 @@
 - anti-analysis/packer/pespin/packed-with-pespin jakub.jozwiak@mandiant.com
 - load-code/shellcode/execute-shellcode-via-windows-fibers jakub.jozwiak@mandiant.com
 - load-code/shellcode/execute-shellcode-via-enumuilanguages jakub.jozwiak@mandiant.com
+- anti-analysis/packer/themida/packed-with-themida william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
