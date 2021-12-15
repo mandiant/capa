@@ -51,6 +51,7 @@ META_KEYS = (
     "rule-category",
     "maec/analysis-conclusion",
     "maec/analysis-conclusion-ov",
+    "maec/malware-family",
     "maec/malware-category",
     "maec/malware-category-ov",
     "author",

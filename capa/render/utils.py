@@ -60,6 +60,8 @@ def capability_rules(doc):
             continue
         if rule["meta"].get("maec/analysis-conclusion-ov"):
             continue
+        if rule["meta"].get("maec/malware-family"):
+            continue
         if rule["meta"].get("maec/malware-category"):
             continue
         if rule["meta"].get("maec/malware-category-ov"):
