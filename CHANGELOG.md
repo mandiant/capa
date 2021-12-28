@@ -43,6 +43,8 @@
 
 ### capa explorer IDA Pro plugin
 
+- pin supported versions to >= 7.4 and < 8.0 #849 @mike-hunhoff
+
 ### Development
 
 - add profiling infrastructure #828 @williballenthin

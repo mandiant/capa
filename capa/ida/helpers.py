@@ -21,13 +21,6 @@ import capa.features.common
 
 logger = logging.getLogger("capa")
 
-# IDA version as returned by idaapi.get_kernel_version()
-SUPPORTED_IDA_VERSIONS = (
-    "7.4",
-    "7.5",
-    "7.6",
-)
-
 # file type as returned by idainfo.file_type
 SUPPORTED_FILE_TYPES = (
     idaapi.f_PE,
@@ -45,13 +38,11 @@ def inform_user_ida_ui(message):
 
 
 def is_supported_ida_version():
-    version = idaapi.get_kernel_version()
-    if version not in SUPPORTED_IDA_VERSIONS:
+    version = float(idaapi.get_kernel_version())
+    if version < 7.4 or version >= 8:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning(
-            "Your IDA Pro version is: %s. Supported versions are: %s." % (version, ", ".join(SUPPORTED_IDA_VERSIONS))
-        )
+        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 8.0." % version)
         return False
     return True
 
