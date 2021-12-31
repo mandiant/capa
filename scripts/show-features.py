@@ -86,7 +86,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures"})
+    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures", "backend"})
 
     parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
     args = parser.parse_args(args=argv)
@@ -111,7 +111,7 @@ def main(argv=None):
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
             extractor = capa.main.get_extractor(
-                args.sample, args.format, capa.main.BACKEND_VIV, sig_paths, should_save_workspace
+                args.sample, args.format, args.backend, sig_paths, should_save_workspace
             )
         except capa.main.UnsupportedFormatError:
             logger.error("-" * 80)
