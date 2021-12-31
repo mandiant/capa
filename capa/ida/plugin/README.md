@@ -39,6 +39,7 @@ capa explorer supports Python versions >= 3.6.x and the following IDA Pro versio
 * IDA 7.4
 * IDA 7.5
 * IDA 7.6 (caveat below)
+* IDA 7.7
 
 capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.6.x). Based on our testing the following matrix shows the Python versions supported
 by each supported IDA version:
