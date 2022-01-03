@@ -84,8 +84,12 @@ def extract_insn_number_features(f, bb, insn):
         return
     for operand in operands:
         try:
-            yield Number(int(operand, 16)), insn.offset
-            yield Number(int(operand, 16), bitness=get_bitness(f.smda_report)), insn.offset
+            # The result of bitwise operations is calculated as though carried out
+            # in two’s complement with an infinite number of sign bits
+            value = int(operand, 16) & ((1 << f.smda_report.bitness) - 1)
+
+            yield Number(value), insn.offset
+            yield Number(value, bitness=get_bitness(f.smda_report)), insn.offset
         except:
             continue
 

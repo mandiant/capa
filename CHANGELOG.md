@@ -40,6 +40,7 @@
 ### Bug Fixes
 
 - fix circular import error #825 @williballenthin
+- fix smda negative number extraction #430 @kn0wl3dge
 
 ### capa explorer IDA Pro plugin
 
