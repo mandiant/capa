@@ -224,7 +224,7 @@ class ExampleFileDNE(Lint):
 
 
 class InvalidAttckTechnique(Lint):
-    name = "att&ck technique is malformed"
+    name = "att&ck technique is malformed or does not exist"
     recommendation = """
     The att&ck field must respect the following format:
     <Tactic>::<Technique> [<TXXXX>]
@@ -237,7 +237,7 @@ class InvalidAttckTechnique(Lint):
 
         # This regex match the format defined in the recommandation attribute
         self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[(T\d+\.?\d*)\]$")
-        with open("scripts/attack.json", "r") as jf:
+        with open("scripts/linter-data.json", "r") as jf:
             self.techniques = json.load(jf)
 
     def check_rule(self, ctx: Context, rule: Rule):
@@ -247,13 +247,13 @@ class InvalidAttckTechnique(Lint):
                 if m:
                     tactic, technique, tid = m.group(1, 2, 3)
                     if tactic not in self.techniques.keys():
-                        self.name = "Unknown tactic: {tactic}"
+                        self.recommendation = f'Unknown tactic: "{tactic}"'
                         return True
-                    if technique not in self.techniques[tactic].keys():
-                        self.name = f"Unknown technique: {technique}"
+                    if tid not in self.techniques[tactic].keys():
+                        self.recommendation = f"Unknown technique ID: {tid}"
                         return True
-                    if self.techniques[tactic][technique] != tid:
-                        self.name = f"The technique {technique} should have ID {self.techniques[tactic][technique]} instead of {tid}"
+                    if self.techniques[tactic][tid] != technique:
+                        self.recommendation = f'{tid} should be associated to technique "{self.techniques[tactic][tid]}" instead of "{technique}"'
                         return True
         return False
 

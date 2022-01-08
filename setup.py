@@ -85,6 +85,7 @@ setuptools.setup(
             "types-tabulate==0.8.5",
             "types-termcolor==1.1.3",
             "types-psutil==5.8.19",
+            "types_requests==2.27.3",
         ],
     },
     zip_safe=False,
