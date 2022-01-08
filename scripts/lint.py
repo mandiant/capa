@@ -15,7 +15,9 @@ See the License for the specific language governing permissions and limitations 
 """
 import gc
 import os
+import re
 import sys
+import json
 import time
 import string
 import difflib
@@ -219,6 +221,41 @@ class ExampleFileDNE(Lint):
                     break
 
         return not found
+
+
+class InvalidAttckTechnique(Lint):
+    name = "att&ck technique is malformed"
+    recommendation = """
+    The att&ck field must respect the following format:
+    <Tactic>::<Technique> [<TXXXX>]
+    OR
+    <Tactic>::<Technique>::<Subtechnique> [<TXXXX.XXX>]
+    """
+
+    def __init__(self):
+        super(InvalidAttckTechnique, self).__init__()
+
+        # This regex match the format defined in the recommandation attribute
+        self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[(T\d+\.?\d*)\]$")
+        with open("scripts/attack.json", "r") as jf:
+            self.techniques = json.load(jf)
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        if "att&ck" in rule.meta.keys():
+            for r in rule.meta["att&ck"]:
+                m = self.reg.match(r)
+                if m:
+                    tactic, technique, tid = m.group(1, 2, 3)
+                    if tactic not in self.techniques.keys():
+                        self.name = "Unknown tactic: {tactic}"
+                        return True
+                    if technique not in self.techniques[tactic].keys():
+                        self.name = f"Unknown technique: {technique}"
+                        return True
+                    if self.techniques[tactic][technique] != tid:
+                        self.name = f"The technique {technique} should have ID {self.techniques[tactic][technique]} instead of {tid}"
+                        return True
+        return False
 
 
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
@@ -647,6 +684,7 @@ META_LINTS = (
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
     LibRuleHasNamespace(),
+    InvalidAttckTechnique(),
 )
 
 
