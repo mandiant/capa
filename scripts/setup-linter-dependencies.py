@@ -5,10 +5,14 @@ import requests
 from stix2 import Filter, MemoryStore, AttackPattern
 
 
-class StixExtractor:
+class MitreExtractor:
     url = ""
+    kill_chain_name = ""
 
     def __init__(self):
+        if self.kill_chain_name == "":
+            raise ValueError(f"Kill chain name not specified in class {self.__class__.__name__}")
+
         if self.url == "":
             raise ValueError(f"URL not specified in class {self.__class__.__name__}")
 
@@ -24,10 +28,6 @@ class StixExtractor:
                 stix_objects,
             )
         )
-
-
-class AttckStixExtractor(StixExtractor):
-    url = "https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json"
 
     def _get_tactics(self) -> list[dict]:
         # Only one matrix for enterprise att&ck framework
@@ -47,7 +47,7 @@ class AttckStixExtractor(StixExtractor):
                     Filter("type", "=", "attack-pattern"),
                     Filter("kill_chain_phases.phase_name", "=", tactic),
                     Filter(  # kill chain name for enterprise att&ck
-                        "kill_chain_phases.kill_chain_name", "=", "mitre-attack"
+                        "kill_chain_phases.kill_chain_name", "=", self.kill_chain_name
                     ),
                 ]
             )
@@ -72,23 +72,37 @@ class AttckStixExtractor(StixExtractor):
             data[tactic["name"]] = {}
             for technique in self._get_techniques_from_tactic(tactic["x_mitre_shortname"]):
                 tid = technique["external_references"][0]["external_id"]
+                technique_name = technique["name"].split("::")[0]
                 if technique["x_mitre_is_subtechnique"]:
                     parent_technique = self._get_parent_technique_from_subtechnique(technique)
-                    data[tactic["name"]][tid] = f"{parent_technique['name']}::{technique['name']}"
+                    data[tactic["name"]][tid] = f"{parent_technique['name']}::{technique_name}"
                 else:
-                    data[tactic["name"]][tid] = technique["name"]
+                    data[tactic["name"]][tid] = technique_name
         return data
 
 
-class MbcStixExtractor(StixExtractor):
-    ...
+class AttckExtractor(MitreExtractor):
+    url = "https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json"
+    kill_chain_name = "mitre-attack"
+
+
+class MbcExtractor(MitreExtractor):
+    url = "https://raw.githubusercontent.com/MBCProject/mbc-stix2/master/mbc/mbc.json"
+    kill_chain_name = "mitre-mbc"
+
+    def _get_tactics(self) -> list[dict]:
+        tactics = super(MbcExtractor, self)._get_tactics()
+        # We don't want the Micro-objective string inside objective names
+        for tactic in tactics:
+            tactic["name"] = tactic["name"].replace(" Micro-objective", "")
+        return tactics
 
 
 def main():
-    s = AttckStixExtractor()
-    r = s.run()
+    data = {"att&ck": AttckExtractor().run(), "mbc": MbcExtractor().run()}
+
     with open(f"{dirname(__file__)}/linter-data.json", "w") as jf:
-        json.dump(r, jf, indent=2)
+        json.dump(data, jf, indent=2)
 
 
 if __name__ == "__main__":

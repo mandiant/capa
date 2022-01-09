@@ -223,37 +223,47 @@ class ExampleFileDNE(Lint):
         return not found
 
 
-class InvalidAttckTechnique(Lint):
-    name = "att&ck technique is malformed or does not exist"
+class InvalidAttckOrMbcTechnique(Lint):
+    name = "att&ck/mbc entry is malformed or does not exist"
     recommendation = """
-    The att&ck field must respect the following format:
-    <Tactic>::<Technique> [<TXXXX>]
+    The att&ck and mbc fields must respect the following format:
+    <Tactic/Objective>::<Technique/Behavior> [<ID>]
     OR
-    <Tactic>::<Technique>::<Subtechnique> [<TXXXX.XXX>]
+    <Tactic/Objective>::<Technique/Behavior>::<Subtechnique/Method> [<ID.SubID>]
     """
 
     def __init__(self):
-        super(InvalidAttckTechnique, self).__init__()
+        super(InvalidAttckOrMbcTechnique, self).__init__()
 
         # This regex match the format defined in the recommandation attribute
-        self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[(T\d+\.?\d*)\]$")
-        with open("scripts/linter-data.json", "r") as jf:
-            self.techniques = json.load(jf)
+        self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[([A-Za-z0-9.]+)\]$")
+        with open("scripts/linter-data.json", "r") as fd:
+            self.data = json.load(fd)
+
+    def _entry_check(self, framework, category, entry, eid):
+        if category not in self.data[framework].keys():
+            self.recommendation = f'Unknown category: "{category}"'
+            return True
+        if eid not in self.data[framework][category].keys():
+            self.recommendation = f"Unknown entry ID: {eid}"
+            return True
+        if self.data[framework][category][eid] != entry:
+            self.recommendation = (
+                f'{eid} should be associated to entry "{self.data[framework][category][eid]}" instead of "{entry}"'
+            )
+            return True
+        return False
 
     def check_rule(self, ctx: Context, rule: Rule):
-        if "att&ck" in rule.meta.keys():
-            for r in rule.meta["att&ck"]:
-                m = self.reg.match(r)
-                if m:
-                    tactic, technique, tid = m.group(1, 2, 3)
-                    if tactic not in self.techniques.keys():
-                        self.recommendation = f'Unknown tactic: "{tactic}"'
+        for framework in ["mbc"]:
+            if framework in rule.meta.keys():
+                for r in rule.meta[framework]:
+                    m = self.reg.match(r)
+                    if m is None:
                         return True
-                    if tid not in self.techniques[tactic].keys():
-                        self.recommendation = f"Unknown technique ID: {tid}"
-                        return True
-                    if self.techniques[tactic][tid] != technique:
-                        self.recommendation = f'{tid} should be associated to technique "{self.techniques[tactic][tid]}" instead of "{technique}"'
+
+                    args = m.group(1, 2, 3)
+                    if self._entry_check(framework, *args):
                         return True
         return False
 
@@ -684,7 +694,7 @@ META_LINTS = (
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
     LibRuleHasNamespace(),
-    InvalidAttckTechnique(),
+    InvalidAttckOrMbcTechnique(),
 )
 
 
