@@ -40,11 +40,11 @@ def extract_os():
 
 def extract_arch():
     info = idaapi.get_inf_structure()
-    if info.procName == "metapc" and info.is_64bit():
+    if info.procname == "metapc" and info.is_64bit():
         yield Arch(ARCH_AMD64), 0x0
-    elif info.procName == "metapc" and info.is_32bit():
+    elif info.procname == "metapc" and info.is_32bit():
         yield Arch(ARCH_I386), 0x0
-    elif info.procName == "metapc":
+    elif info.procname == "metapc":
         logger.debug("unsupported architecture: non-32-bit nor non-64-bit intel")
         return
     else:
