@@ -10,6 +10,7 @@
 - support python 3.10 #816 @williballenthin
 - support aarch64 #683
 - rules: support maec/malware-family meta #841 @mr-tz
+- engine: better type annotations/exhaustiveness checking #839 @cl30
 
 ### Breaking Changes
 
@@ -49,6 +50,8 @@
 ### Development
 
 - add profiling infrastructure #828 @williballenthin
+- linter: detect shellcode extension #820 @mr-tz
+- show features script: add backend flag #430 @kn0wl3dge
 
 ### Raw diffs
 - [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...master)
