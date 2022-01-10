@@ -52,5 +52,5 @@ def extract_arch():
         #  1. handling a new architecture (e.g. aarch64)
         #
         # for (1), this logic will need to be updated as the format is implemented.
-        logger.debug("unsupported architecture: %s", info.procName)
+        logger.debug("unsupported architecture: %s", info.procname)
         return
