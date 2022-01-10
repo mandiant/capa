@@ -21,6 +21,15 @@
 - [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.1.0...master)
 
 ## v3.1.0 (2022-01-10)
+This release improves the performance of capa while also adding 23 new rules and many code quality enhancements. We profiled capa's CPU usage and optimized the way that it matches rules, such as by short circuiting when appropriate. According to our testing, the matching phase is approximately 66% faster than v3.0.3! We also added support for Python 3.10, aarch64 builds, and additional MAEC metadata in the rule headers.
+  
+This release adds 23 new rules, including nine by Jakub Jozwiak of Mandiant. @ryantxu1 and @dzbeck updated the ATT&CK and MBC mappings for many rules. Thank you!
+  
+And as always, welcome first time contributors!
+
+  - @kn0wl3dge
+  - @jtothej
+  
 
 ### New Features
 
@@ -28,7 +37,7 @@
 - engine: add optimizer the order faster nodes first #829 @williballenthin
 - engine: optimize rule evaluation by skipping rules that can't match #830 @williballenthin
 - support python 3.10 #816 @williballenthin
-- support aarch64 #683
+- support aarch64 #683 @williballenthin
 - rules: support maec/malware-family meta #841 @mr-tz
 - engine: better type annotations/exhaustiveness checking #839 @cl30
 
