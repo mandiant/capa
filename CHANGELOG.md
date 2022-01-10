@@ -38,6 +38,13 @@
 - malware-family/plugx/match-known-plugx-module still@teamt5.org
 -
 
+### Rule Changes
+
+  - update ATT&CK mappings by @ryantxu1
+  - update ATT&CK and MBC mappings by @dzbeck
+  - aplib detection by @cdong1012
+  - golang runtime detection by @stevemk14eber
+
 ### Bug Fixes
 
 - fix circular import error #825 @williballenthin
