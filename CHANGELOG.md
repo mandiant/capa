@@ -4,6 +4,26 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.1.0...master)
+- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.1.0...master)
+
+## v3.1.0 (2022-01-10)
+
+### New Features
+
 - engine: short circuit logic nodes for better performance #824 @williballenthin
 - engine: add optimizer the order faster nodes first #829 @williballenthin
 - engine: optimize rule evaluation by skipping rules that can't match #830 @williballenthin
@@ -12,7 +32,7 @@
 - rules: support maec/malware-family meta #841 @mr-tz
 - engine: better type annotations/exhaustiveness checking #839 @cl30
 
-### Breaking Changes
+### Breaking Changes: None
 
 ### New Rules (23)
 
@@ -61,8 +81,8 @@
 - show features script: add backend flag #430 @kn0wl3dge
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...master)
-- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.0.3...master)
+- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...v3.1.0)
+- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.0.3...v3.1.0)
 
 
 ## v3.0.3 (2021-10-27)
