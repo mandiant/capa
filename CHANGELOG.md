@@ -65,7 +65,6 @@ And as always, welcome first time contributors!
 - host-interaction/process/inject/inject-shellcode-using-a-file-mapping-object jakub.jozwiak@mandiant.com
 - load-code/shellcode/execute-shellcode-via-copyfile2 jakub.jozwiak@mandiant.com
 - malware-family/plugx/match-known-plugx-module still@teamt5.org
--
 
 ### Rule Changes
 
