@@ -89,8 +89,8 @@ And as always, welcome first time contributors!
 - show features script: add backend flag #430 @kn0wl3dge
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.0.3...v3.1.0)
-- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.0.3...v3.1.0)
+- [capa v3.0.3...v3.1.0](https://github.com/mandiant/capa/compare/v3.0.3...v3.1.0)
+- [capa-rules v3.0.3...v3.1.0](https://github.com/mandiant/capa-rules/compare/v3.0.3...v3.1.0)
 
 
 ## v3.0.3 (2021-10-27)
