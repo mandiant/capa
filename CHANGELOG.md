@@ -17,8 +17,8 @@
 ### Development
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/mandiant/capa/compare/v3.1.0...master)
-- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v3.1.0...master)
+- [capa v3.1.0...master](https://github.com/mandiant/capa/compare/v3.1.0...master)
+- [capa-rules v3.1.0...master](https://github.com/mandiant/capa-rules/compare/v3.1.0...master)
 
 ## v3.1.0 (2022-01-10)
 This release improves the performance of capa while also adding 23 new rules and many code quality enhancements. We profiled capa's CPU usage and optimized the way that it matches rules, such as by short circuiting when appropriate. According to our testing, the matching phase is approximately 66% faster than v3.0.3! We also added support for Python 3.10, aarch64 builds, and additional MAEC metadata in the rule headers.
