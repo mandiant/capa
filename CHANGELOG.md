@@ -29,6 +29,7 @@ And as always, welcome first time contributors!
 
   - @kn0wl3dge
   - @jtothej
+  - @cl30
   
 
 ### New Features
