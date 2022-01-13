@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- elf: fix OS detection for Linux kernel modules #867 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
