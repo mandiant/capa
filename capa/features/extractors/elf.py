@@ -250,13 +250,13 @@ def detect_elf_os(f: BinaryIO) -> str:
     for i in range(e_shnum):
         offset = i * e_shentsize
         shent = section_headers[offset : offset + e_shentsize]
- 
+
         if bitness == 32:
             sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIIIII", shent, 0x0)
         elif bitness == 64:
             sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIQQQQ", shent, 0x0)
         else:
-            raise NotImplementedError()                
+            raise NotImplementedError()
 
         SHT_NOTE = 0x7
         if sh_type != SHT_NOTE:
@@ -278,7 +278,7 @@ def detect_elf_os(f: BinaryIO) -> str:
 
         name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", name)
- 
+
         if name == "Linux":
             logger.debug("note owner: %s", "LINUX")
             ret = OS.LINUX if not ret else ret
