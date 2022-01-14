@@ -77,11 +77,13 @@ def detect_elf_os(f: BinaryIO) -> str:
         raise CorruptElfFile("not an ELF file: invalid ei_data: 0x%02x" % ei_data)
 
     if bitness == 32:
-        (e_phoff,) = struct.unpack_from(endian + "I", file_header, 0x1C)
+        (e_phoff, e_shoff) = struct.unpack_from(endian + "II", file_header, 0x1C)
         e_phentsize, e_phnum = struct.unpack_from(endian + "HH", file_header, 0x2A)
+        e_shentsize, e_shnum = struct.unpack_from(endian + "HH", file_header, 0x2E)
     elif bitness == 64:
-        (e_phoff,) = struct.unpack_from(endian + "Q", file_header, 0x20)
+        (e_phoff, e_shoff) = struct.unpack_from(endian + "QQ", file_header, 0x20)
         e_phentsize, e_phnum = struct.unpack_from(endian + "HH", file_header, 0x36)
+        e_shentsize, e_shnum = struct.unpack_from(endian + "HH", file_header, 0x3A)
     else:
         raise NotImplementedError()
 
@@ -235,6 +237,51 @@ def detect_elf_os(f: BinaryIO) -> str:
             # update only if not set
             # so we can get the debugging output of subsequent strategies
             ret = OS.LINUX if ret is None else ret
+
+    f.seek(e_shoff)
+    section_header_size = e_shnum * e_shentsize
+    section_headers = f.read(section_header_size)
+    if len(section_headers) != section_header_size:
+        logger.warning("failed to read section headers")
+        e_shnum = 0
+
+    # search for notes stored in sections that aren't visible in program headers.
+    # e.g. .note.Linux in Linux kernel modules.
+    for i in range(e_shnum):
+        offset = i * e_shentsize
+        shent = section_headers[offset : offset + e_shentsize]
+
+        if bitness == 32:
+            sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIIIII", shent, 0x0)
+        elif bitness == 64:
+            sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIQQQQ", shent, 0x0)
+        else:
+            raise NotImplementedError()
+
+        SHT_NOTE = 0x7
+        if sh_type != SHT_NOTE:
+            continue
+
+        logger.debug("sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
+
+        f.seek(sh_offset)
+        note = f.read(sh_size)
+        if len(note) != sh_size:
+            logger.warning("failed to read note content")
+            continue
+
+        namesz, descsz, type_ = struct.unpack_from(endian + "III", note, 0x0)
+        name_offset = 0xC
+        desc_offset = name_offset + align(namesz, 0x4)
+
+        logger.debug("namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
+
+        name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
+        logger.debug("name: %s", name)
+
+        if name == "Linux":
+            logger.debug("note owner: %s", "LINUX")
+            ret = OS.LINUX if not ret else ret
 
     return ret.value if ret is not None else "unknown"
 
