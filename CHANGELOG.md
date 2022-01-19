@@ -4,6 +4,8 @@
 
 ### New Features
 
+- meta: add function `calls` information, add `entry_points`, add `thunk_functions` #874 @mr-tz
+
 ### Breaking Changes
 
 ### New Rules (0)

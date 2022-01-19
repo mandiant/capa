@@ -25,6 +25,10 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def get_base_address(self):
         return self.smda_report.base_addr
 
+    def get_entry_points(self):
+        # TODO
+        pass
+
     def extract_global_features(self):
         yield from self.global_features
 
@@ -34,6 +38,10 @@ class SmdaFeatureExtractor(FeatureExtractor):
     def get_functions(self):
         for function in self.smda_report.getFunctions():
             yield function
+
+    def get_calls_from(self, va):
+        # TODO
+        pass
 
     def extract_function_features(self, f):
         yield from capa.features.extractors.smda.function.extract_features(f)

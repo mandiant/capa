@@ -157,6 +157,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             "functions": {},
         },
         "library_functions": {},
+        "thunk_functions": {},
     }  # type: Dict[str, Any]
 
     pbar = tqdm.tqdm
@@ -180,6 +181,11 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             percentage = 100 * (n_libs / n_funcs)
             if isinstance(pb, tqdm.tqdm):
                 pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
+            continue
+        elif extractor.is_thunk_function(function_address):
+            function_name = extractor.get_function_name(function_address)
+            logger.debug("skipping thunk function 0x%x (%s)", function_address, function_name)
+            meta["thunk_functions"][function_address] = function_name
             continue
 
         function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
@@ -603,11 +609,12 @@ def collect_metadata(argv, sample_path, rules_path, extractor):
             "extractor": extractor.__class__.__name__,
             "rules": rules_path,
             "base_address": extractor.get_base_address(),
+            "entry_points": extractor.get_entry_points(),
             "layout": {
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+                # "functions": { 0x401000: { ... }
             },
         },
     }
@@ -624,15 +631,22 @@ def compute_layout(rules, extractor, capabilities):
     """
     functions_by_bb = {}
     bbs_by_function = {}
+    calls_by_function = collections.defaultdict(list)
     for f in extractor.get_functions():
         bbs_by_function[int(f)] = []
         for bb in extractor.get_basic_blocks(f):
             functions_by_bb[int(bb)] = int(f)
             bbs_by_function[int(f)].append(int(bb))
+        calls_by_function[int(f)] = extractor.get_calls_from(int(f))
 
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
+
+        if rule.meta.get("capa/subscope-rule"):
+            # not included in result document
+            continue
+
         if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
             for (addr, match) in matches:
                 assert addr in functions_by_bb
@@ -641,7 +655,8 @@ def compute_layout(rules, extractor, capabilities):
     layout = {
         "functions": {
             f: {
-                "matched_basic_blocks": [bb for bb in bbs if bb in matched_bbs]
+                "matched_basic_blocks": [bb for bb in bbs if bb in matched_bbs],
+                "calls": calls_by_function.get(f, []),
                 # this object is open to extension in the future,
                 # such as with the function name, etc.
             }

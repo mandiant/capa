@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import abc
-from typing import Tuple, Iterator, SupportsInt
+from typing import List, Tuple, Iterator, SupportsInt
 
 from capa.features.common import Feature
 
@@ -60,6 +60,13 @@ class FeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_entry_points(self) -> List[int]:
+        """
+        get the programs entry points, e.g. AddressOfEntryPoint and exported functions
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, int]]:
         """
         extract features found at every scope ("global").
@@ -99,6 +106,12 @@ class FeatureExtractor:
         """
         raise NotImplementedError()
 
+    def is_thunk_function(self, va: int) -> bool:
+        """
+        is the given address a thunk function?
+        """
+        raise NotImplementedError()
+
     def is_library_function(self, va: int) -> bool:
         """
         is the given address a library function?
@@ -133,6 +146,13 @@ class FeatureExtractor:
           KeyError: when the given function does not have a name.
         """
         raise KeyError(va)
+
+    @abc.abstractmethod
+    def get_calls_from(self, va: int) -> List[int]:
+        """
+        return a function's call targets
+        """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, int]]:
@@ -273,6 +293,10 @@ class NullFeatureExtractor(FeatureExtractor):
     def get_base_address(self):
         return self.features["base address"]
 
+    def get_entry_points(self) -> List[int]:
+        # TODO
+        pass
+
     def extract_global_features(self):
         for p in self.features.get("global features", []):
             va, feature = p
@@ -286,6 +310,10 @@ class NullFeatureExtractor(FeatureExtractor):
     def get_functions(self):
         for va in sorted(self.features["functions"].keys()):
             yield va
+
+    def get_calls_from(self, va: int) -> List[int]:
+        # TODO
+        pass
 
     def extract_function_features(self, f):
         for p in self.features.get("functions", {}).get(f, {}).get("features", []):  # noqa: E127 line over-indented

@@ -51,6 +51,9 @@ class VivisectFeatureExtractor(FeatureExtractor):
         # assume there is only one file loaded into the vw
         return list(self.vw.filemeta.values())[0]["imagebase"]
 
+    def get_entry_points(self):
+        return self.vw.getEntryPoints()
+
     def extract_global_features(self):
         yield from self.global_features
 
@@ -80,5 +83,12 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def is_library_function(self, va):
         return viv_utils.flirt.is_library_function(self.vw, va)
 
+    def is_thunk_function(self, va):
+        return self.vw.isFunctionThunk(va)
+
     def get_function_name(self, va):
         return viv_utils.get_function_name(self.vw, va)
+
+    def get_calls_from(self, va):
+        # TODO compare vs. getXrefsFrom, e.g. on threads?
+        return self.vw.cfctx.getCallsFrom(va)

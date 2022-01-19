@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import idaapi
+import idautils
 
 import capa.ida.helpers
 import capa.features.extractors.elf
@@ -66,6 +67,10 @@ class IdaFeatureExtractor(FeatureExtractor):
     def get_base_address(self):
         return idaapi.get_imagebase()
 
+    def get_entry_points(self):
+        # returns list of tuples (index, ordinal, ea, name)
+        return [e[2] for e in idautils.Entries()]
+
     def extract_global_features(self):
         yield from self.global_features
 
@@ -102,6 +107,10 @@ class IdaFeatureExtractor(FeatureExtractor):
     def extract_basic_block_features(self, f, bb):
         yield from capa.features.extractors.ida.basicblock.extract_features(f, bb)
 
+    def is_thunk_function(self, va):
+        f = idaapi.get_func(va)
+        return f.flags & idaapi.FUNC_THUNK
+
     def get_instructions(self, f, bb):
         import capa.features.extractors.ida.helpers as ida_helpers
 
@@ -110,3 +119,7 @@ class IdaFeatureExtractor(FeatureExtractor):
 
     def extract_insn_features(self, f, bb, insn):
         yield from capa.features.extractors.ida.insn.extract_features(f, bb, insn)
+
+    def get_calls_from(self, va):
+        # TODO
+        pass
