@@ -235,10 +235,20 @@ class InvalidAttckOrMbcTechnique(Lint):
     def __init__(self):
         super(InvalidAttckOrMbcTechnique, self).__init__()
 
-        # This regex match the format defined in the recommandation attribute
+        try:
+            with open("scripts/linter-data.json", "r") as fd:
+                self.data = json.load(fd)
+            self.enabled_frameworks = self.data.keys()
+        except BaseException:
+            # If linter-data.json is not present, or if an error happen
+            # we log an error and lint nothing.
+            logger.warning(
+                "Could not load 'scripts/linter-data.json'. The att&ck and mbc information will not be linted."
+            )
+            self.enabled_frameworks = []
+
+        # This regex match the format defined in the recommendation attribute
         self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[([A-Za-z0-9.]+)\]$")
-        with open("scripts/linter-data.json", "r") as fd:
-            self.data = json.load(fd)
 
     def _entry_check(self, framework, category, entry, eid):
         if category not in self.data[framework].keys():
@@ -255,7 +265,7 @@ class InvalidAttckOrMbcTechnique(Lint):
         return False
 
     def check_rule(self, ctx: Context, rule: Rule):
-        for framework in ["mbc"]:
+        for framework in self.enabled_frameworks:
             if framework in rule.meta.keys():
                 for r in rule.meta[framework]:
                     m = self.reg.match(r)
