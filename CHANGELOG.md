@@ -4,6 +4,8 @@
 
 ### New Features
 
+- linter: validate ATT&CK/MBC categories and IDs #103 @kn0wl3dge
+
 ### Breaking Changes
 
 ### New Rules (0)
