@@ -1,12 +1,11 @@
-import argparse
 import json
 import logging
-from os.path import dirname
+import argparse
 from sys import argv
+from os.path import dirname
 
 import requests
 from stix2 import Filter, MemoryStore, AttackPattern
-
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -19,6 +18,7 @@ class MitreExtractor:
     url: must point to json stix location
     kill_chain_name: mitre-attack, mitre-mbc...
     """
+
     url = ""
     kill_chain_name = ""
 
@@ -63,9 +63,7 @@ class MitreExtractor:
                 [
                     Filter("type", "=", "attack-pattern"),
                     Filter("kill_chain_phases.phase_name", "=", tactic),
-                    Filter(
-                        "kill_chain_phases.kill_chain_name", "=", self.kill_chain_name
-                    ),
+                    Filter("kill_chain_phases.kill_chain_name", "=", self.kill_chain_name),
                 ]
             )
         )
@@ -105,12 +103,14 @@ class MitreExtractor:
 
 class AttckExtractor(MitreExtractor):
     """Extractor for the Mitre Enterprise Att&ck Framework."""
+
     url = "https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json"
     kill_chain_name = "mitre-attack"
 
 
 class MbcExtractor(MitreExtractor):
     """Extractor for the Mitre Malware Behavior Catalog."""
+
     url = "https://raw.githubusercontent.com/MBCProject/mbc-stix2/master/mbc/mbc.json"
     kill_chain_name = "mitre-mbc"
 
