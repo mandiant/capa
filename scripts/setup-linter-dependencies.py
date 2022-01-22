@@ -2,10 +2,11 @@ import json
 import logging
 import argparse
 from sys import argv
+from typing import Dict, List
 from os.path import dirname
 
 import requests
-from stix2 import Filter, MemoryStore, AttackPattern
+from stix2 import Filter, MemoryStore, AttackPattern  # type: ignore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -35,7 +36,7 @@ class MitreExtractor:
         self._memory_store = MemoryStore(stix_data=stix_json["objects"])
 
     @staticmethod
-    def _remove_deprecated_objetcs(stix_objects) -> list[AttackPattern]:
+    def _remove_deprecated_objetcs(stix_objects) -> List[AttackPattern]:
         """Remove any revoked or deprecated objects from queries made to the data source."""
         return list(
             filter(
@@ -44,7 +45,7 @@ class MitreExtractor:
             )
         )
 
-    def _get_tactics(self) -> list[dict]:
+    def _get_tactics(self) -> List[Dict]:
         """Get tactics IDs from Mitre matrix."""
         # Only one matrix for enterprise att&ck framework
         matrix = self._remove_deprecated_objetcs(
@@ -56,7 +57,7 @@ class MitreExtractor:
         )[0]
         return list(map(self._memory_store.get, matrix["tactic_refs"]))
 
-    def _get_techniques_from_tactic(self, tactic: str) -> list[AttackPattern]:
+    def _get_techniques_from_tactic(self, tactic: str) -> List[AttackPattern]:
         """Get techniques and sub techniques from a Mitre tactic (kill_chain_phases->phase_name)"""
         techniques = self._remove_deprecated_objetcs(
             self._memory_store.query(
@@ -82,12 +83,12 @@ class MitreExtractor:
         )[0]
         return parent_technique
 
-    def run(self) -> dict[str, dict[str, str]]:
+    def run(self) -> Dict[str, Dict[str, str]]:
         """Iterate over every technique over every tactic. If the technique is a sub technique, then
         we also search for the parent technique name.
         """
         logging.info("Starting extraction...")
-        data: dict[str, dict[str, str]] = {}
+        data: Dict[str, Dict[str, str]] = {}
         for tactic in self._get_tactics():
             data[tactic["name"]] = {}
             for technique in self._get_techniques_from_tactic(tactic["x_mitre_shortname"]):
@@ -114,7 +115,7 @@ class MbcExtractor(MitreExtractor):
     url = "https://raw.githubusercontent.com/MBCProject/mbc-stix2/master/mbc/mbc.json"
     kill_chain_name = "mitre-mbc"
 
-    def _get_tactics(self) -> list[dict]:
+    def _get_tactics(self) -> List[Dict]:
         """Override _get_tactics to edit the tactic name for Micro-objective"""
         tactics = super(MbcExtractor, self)._get_tactics()
         # We don't want the Micro-objective string inside objective names
