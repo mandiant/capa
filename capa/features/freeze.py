@@ -4,8 +4,14 @@ capa freeze file format: `| capa0000 | + zlib(utf-8(json(...)))`
 json format:
 
     {
-      'version': 1,
+      'version': 2,
       'base address': int(base address),
+      'library functions': {
+        int(function va): str(function name)
+      },
+      'thunk functions': {
+        int(function va): str(function name)
+      },
       'functions': {
         int(function va): {
           int(basic block va): [int(instruction va), ...]
@@ -59,6 +65,8 @@ import capa.features.basicblock
 import capa.features.extractors.base_extractor
 from capa.helpers import hex
 
+FREEZE_FORMAT_VERSION = 2
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,8 +93,11 @@ def dumps(extractor):
       str: the serialized features.
     """
     ret = {
-        "version": 1,
+        "version": FREEZE_FORMAT_VERSION,
         "base address": extractor.get_base_address(),
+        "entry points": extractor.get_entry_points(),
+        "library functions": {},
+        "thunk functions": {},
         "functions": {},
         "scopes": {
             "global": [],
@@ -104,6 +115,12 @@ def dumps(extractor):
 
     for f in extractor.get_functions():
         ret["functions"][hex(f)] = {}
+
+        if extractor.is_library_function(int(f)):
+            ret["library functions"][hex(f)] = extractor.get_function_name(int(f))
+
+        if extractor.is_thunk_function(int(f)):
+            ret["thunk functions"][hex(f)] = extractor.get_function_name(int(f))
 
         for feature, va in extractor.extract_function_features(f):
             ret["scopes"]["function"].append(serialize_feature(feature) + (hex(va), (hex(f),)))
@@ -147,11 +164,14 @@ def loads(s):
     """deserialize a set of features (as a NullFeatureExtractor) from a string."""
     doc = json.loads(s)
 
-    if doc.get("version") != 1:
+    if doc.get("version") != FREEZE_FORMAT_VERSION:
         raise ValueError("unsupported freeze format version: %d" % (doc.get("version")))
 
     features = {
         "base address": doc.get("base address"),
+        "entry points": doc.get("entry points"),
+        "library functions": {int(k, 0x10): v for k, v in doc.get("library functions", {}).items()},
+        "thunk functions": {int(k, 0x10): v for k, v in doc.get("thunk functions", {}).items()},
         "global features": [],
         "file features": [],
         "functions": {},

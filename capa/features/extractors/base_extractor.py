@@ -110,7 +110,7 @@ class FeatureExtractor:
         """
         is the given address a thunk function?
         """
-        raise NotImplementedError()
+        return False
 
     def is_library_function(self, va: int) -> bool:
         """
@@ -294,8 +294,7 @@ class NullFeatureExtractor(FeatureExtractor):
         return self.features["base address"]
 
     def get_entry_points(self) -> List[int]:
-        # TODO
-        pass
+        return self.features["entry points"]
 
     def extract_global_features(self):
         for p in self.features.get("global features", []):
@@ -310,6 +309,15 @@ class NullFeatureExtractor(FeatureExtractor):
     def get_functions(self):
         for va in sorted(self.features["functions"].keys()):
             yield va
+
+    def is_library_function(self, va: int) -> bool:
+        return va in self.features["library functions"]
+
+    def get_function_name(self, va: int) -> str:
+        return self.features["library functions"].get(va)
+
+    def is_thunk_function(self, va: int) -> bool:
+        return va in self.features["thunk functions"]
 
     def get_calls_from(self, va: int) -> List[int]:
         # TODO

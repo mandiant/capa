@@ -22,6 +22,9 @@ import capa.features.extractors.base_extractor
 EXTRACTOR = capa.features.extractors.base_extractor.NullFeatureExtractor(
     {
         "base address": 0x401000,
+        "entry points": [0x401000],
+        "library functions": {},
+        "thunk functions": {},
         "file features": [
             (0x402345, capa.features.common.Characteristic("embedded pe")),
         ],
