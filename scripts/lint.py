@@ -24,7 +24,6 @@ import difflib
 import hashlib
 import inspect
 import logging
-import os.path
 import pathlib
 import argparse
 import itertools
@@ -236,7 +235,7 @@ class InvalidAttckOrMbcTechnique(Lint):
         super(InvalidAttckOrMbcTechnique, self).__init__()
 
         try:
-            with open("scripts/linter-data.json", "r") as fd:
+            with open(f"{os.path.dirname(__file__)}/linter-data.json", "rb") as fd:
                 self.data = json.load(fd)
             self.enabled_frameworks = self.data.keys()
         except BaseException:
@@ -247,7 +246,7 @@ class InvalidAttckOrMbcTechnique(Lint):
             )
             self.enabled_frameworks = []
 
-        # This regex match the format defined in the recommendation attribute
+        # This regex matches the format defined in the recommendation attribute
         self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[([A-Za-z0-9.]+)\]$")
 
     def _entry_check(self, framework, category, entry, eid):

@@ -1,3 +1,37 @@
+"""
+Generate capa linter-data.json, used to validate Att&ck/MBC IDs and names.
+
+Use the --extractor option to extract data from Att&ck or MBC (or both) frameworks.
+Use the --output to choose the output json file.
+By default, the script will create a linter-data.json in the scripts/ directory for both frameworks.
+
+Note: The capa rules linter will try to load from its default location (scripts/linter-data.json).
+
+Usage:
+
+    usage: setup-linter-dependencies.py [-h] [--extractor {both,mbc,att&ck}] [--output OUTPUT]
+
+    Setup linter dependencies.
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --extractor {both,mbc,att&ck}
+                            Extractor that will be run
+      --output OUTPUT, -o OUTPUT
+                            Path to output file (lint.py will be looking for linter-data.json)
+
+
+Example:
+
+    $ python3 setup-linter-dependencies.py
+    2022-01-24 22:35:06,901 [INFO] Extracting Mitre Att&ck techniques...
+    2022-01-24 22:35:06,901 [INFO] Downloading STIX data at: https://raw.githubusercontent.com/mitre-attack/attack-stix-data/master/enterprise-attack/enterprise-attack.json
+    2022-01-24 22:35:13,001 [INFO] Starting extraction...
+    2022-01-24 22:35:39,395 [INFO] Extracting MBC behaviors...
+    2022-01-24 22:35:39,395 [INFO] Downloading STIX data at: https://raw.githubusercontent.com/MBCProject/mbc-stix2/master/mbc/mbc.json
+    2022-01-24 22:35:39,839 [INFO] Starting extraction...
+    2022-01-24 22:35:42,632 [INFO] Writing results to linter-data.json
+"""
 import json
 import logging
 import argparse
