@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- anti-analysis/obfuscation/obfuscated-with-advobfuscator jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
