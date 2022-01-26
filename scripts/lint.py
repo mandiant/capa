@@ -15,14 +15,15 @@ See the License for the specific language governing permissions and limitations 
 """
 import gc
 import os
+import re
 import sys
+import json
 import time
 import string
 import difflib
 import hashlib
 import inspect
 import logging
-import os.path
 import pathlib
 import argparse
 import itertools
@@ -219,6 +220,61 @@ class ExampleFileDNE(Lint):
                     break
 
         return not found
+
+
+class InvalidAttckOrMbcTechnique(Lint):
+    name = "att&ck/mbc entry is malformed or does not exist"
+    recommendation = """
+    The att&ck and mbc fields must respect the following format:
+    <Tactic/Objective>::<Technique/Behavior> [<ID>]
+    OR
+    <Tactic/Objective>::<Technique/Behavior>::<Subtechnique/Method> [<ID.SubID>]
+    """
+
+    def __init__(self):
+        super(InvalidAttckOrMbcTechnique, self).__init__()
+
+        try:
+            with open(f"{os.path.dirname(__file__)}/linter-data.json", "rb") as fd:
+                self.data = json.load(fd)
+            self.enabled_frameworks = self.data.keys()
+        except BaseException:
+            # If linter-data.json is not present, or if an error happen
+            # we log an error and lint nothing.
+            logger.warning(
+                "Could not load 'scripts/linter-data.json'. The att&ck and mbc information will not be linted."
+            )
+            self.enabled_frameworks = []
+
+        # This regex matches the format defined in the recommendation attribute
+        self.reg = re.compile("^([a-zA-Z| ]+)::(.*) \[([A-Za-z0-9.]+)\]$")
+
+    def _entry_check(self, framework, category, entry, eid):
+        if category not in self.data[framework].keys():
+            self.recommendation = f'Unknown category: "{category}"'
+            return True
+        if eid not in self.data[framework][category].keys():
+            self.recommendation = f"Unknown entry ID: {eid}"
+            return True
+        if self.data[framework][category][eid] != entry:
+            self.recommendation = (
+                f'{eid} should be associated to entry "{self.data[framework][category][eid]}" instead of "{entry}"'
+            )
+            return True
+        return False
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        for framework in self.enabled_frameworks:
+            if framework in rule.meta.keys():
+                for r in rule.meta[framework]:
+                    m = self.reg.match(r)
+                    if m is None:
+                        return True
+
+                    args = m.group(1, 2, 3)
+                    if self._entry_check(framework, *args):
+                        return True
+        return False
 
 
 DEFAULT_SIGNATURES = capa.main.get_default_signatures()
@@ -647,6 +703,7 @@ META_LINTS = (
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
     LibRuleHasNamespace(),
+    InvalidAttckOrMbcTechnique(),
 )
 
 

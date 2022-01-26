@@ -76,6 +76,8 @@ setuptools.setup(
             "isort==5.10.1",
             "mypy==0.931",
             "psutil==5.9.0",
+            "stix2==3.0.1",
+            "requests==2.27.1",
             # type stubs for mypy
             "types-backports==0.1.3",
             "types-colorama==0.4.7",
@@ -83,6 +85,7 @@ setuptools.setup(
             "types-tabulate==0.8.5",
             "types-termcolor==1.1.3",
             "types-psutil==5.8.19",
+            "types_requests==2.27.3",
         ],
     },
     zip_safe=False,
