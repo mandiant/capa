@@ -163,13 +163,12 @@ def render_dictionary(doc):
 
 # ==== render dictionary helpers
 def capa_details(file_path, output_format="dictionary"):
-    # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata("", file_path, RULES_PATH, extractor)
-
     # extract features and find capabilities
     extractor = capa.main.get_extractor(file_path, "auto", capa.main.BACKEND_VIV, [], False, disable_progress=True)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
+    # collect metadata (used only to make rendering more complete)
+    meta = capa.main.collect_metadata("", file_path, RULES_PATH, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
