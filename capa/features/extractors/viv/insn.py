@@ -453,6 +453,24 @@ def extract_insn_mnemonic_features(f, bb, insn):
     yield Mnemonic(insn.mnem), insn.va
 
 
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, insn):
+    """
+    parse call $+5 instruction from the given instruction.
+    """
+    if insn.mnem != "call":
+        return
+
+    if isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
+        if insn.va + 5 == insn.opers[0].getOperValue(insn):
+            yield Characteristic("call $+5"), insn.va
+
+    if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper) or isinstance(
+        insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper
+    ):
+        if insn.va + 5 == insn.opers[0].getOperAddr(insn):
+            yield Characteristic("call $+5"), insn.va
+
+
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
@@ -626,6 +644,7 @@ INSTRUCTION_HANDLERS = (
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
     extract_insn_mnemonic_features,
+    extract_insn_obfs_call_plus_5_characteristic_features,
     extract_insn_peb_access_characteristic_features,
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,

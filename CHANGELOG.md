@@ -5,6 +5,7 @@
 ### New Features
 
 - linter: validate ATT&CK/MBC categories and IDs #103 @kn0wl3dge
+- extractor: add characteristic "call $+5" feature #366 @kn0wl3dge
 
 ### Breaking Changes
 

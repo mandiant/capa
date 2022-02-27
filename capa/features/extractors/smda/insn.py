@@ -280,6 +280,20 @@ def extract_insn_mnemonic_features(f, bb, insn):
     yield Mnemonic(insn.mnemonic), insn.offset
 
 
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, insn):
+    """
+    parse call $+5 instruction from the given instruction.
+    """
+    if insn.mnemonic != "call":
+        return
+
+    if not insn.operands.startswith("0x"):
+        return
+
+    if int(insn.operands, 16) == insn.offset + 5:
+        yield Characteristic("call $+5"), insn.offset
+
+
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
@@ -389,6 +403,7 @@ INSTRUCTION_HANDLERS = (
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
     extract_insn_mnemonic_features,
+    extract_insn_obfs_call_plus_5_characteristic_features,
     extract_insn_peb_access_characteristic_features,
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,
