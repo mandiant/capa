@@ -25,7 +25,6 @@ requirements = [
     "vivisect==1.0.5",
     "smda==1.7.0",
     "pefile==2021.9.3",
-    "typing==3.7.4.3",
     "pyelftools==0.28",
 ]
 
