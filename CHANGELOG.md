@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 
+- remove typing package as a requirement for Python 3.7+ compatibility #901 @uckelman-sf
 - elf: fix OS detection for Linux kernel modules #867 @williballenthin
 
 ### capa explorer IDA Pro plugin
