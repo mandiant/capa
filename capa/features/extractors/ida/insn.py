@@ -340,6 +340,17 @@ def extract_insn_mnemonic_features(f, bb, insn):
     yield Mnemonic(idc.print_insn_mnem(insn.ea)), insn.ea
 
 
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, insn):
+    """
+    parse call $+5 instruction from the given instruction.
+    """
+    if not idaapi.is_call_insn(insn):
+        return
+
+    if insn.ea + 5 == idc.get_operand_value(insn.ea, 0):
+        yield Characteristic("call $+5"), insn.ea
+
+
 def extract_insn_peb_access_characteristic_features(f, bb, insn):
     """parse instruction peb access
 
@@ -455,6 +466,7 @@ INSTRUCTION_HANDLERS = (
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
     extract_insn_mnemonic_features,
+    extract_insn_obfs_call_plus_5_characteristic_features,
     extract_insn_peb_access_characteristic_features,
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,
