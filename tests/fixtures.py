@@ -220,6 +220,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_")
     elif name == "7351f.elf":
         return os.path.join(CD, "data", "7351f8a40c5450557b24622417fc478d.elf_")
+    elif name.startswith("79abd"):
+        return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
+    elif name.startswith("946a9"):
+        return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -269,6 +273,10 @@ def get_sample_md5_by_name(name):
         return "56a6ffe6a02941028cc8235204eef31d"
     elif name == "7351f.elf":
         return "7351f8a40c5450557b24622417fc478d"
+    elif name.startswith("79abd"):
+        return "79abd17391adc6251ecdc58d13d76baf"
+    elif name.startswith("946a9"):
+        return "946a99f36a46d335dec080d9a4371940.dll_"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -561,6 +569,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("7351f.elf", "file", Arch(ARCH_AMD64), True),
         ("7351f.elf", "function=0x408753", capa.features.common.String("/dev/null"), True),
         ("7351f.elf", "function=0x408753,bb=0x408781", capa.features.insn.API("open"), True),
+        ("79abd...", "function=0x10002385,bb=0x10002385", capa.features.common.Characteristic("call $+5"), True),
+        ("946a9...", "function=0x10001510,bb=0x100015c0", capa.features.common.Characteristic("call $+5"), True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
