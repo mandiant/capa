@@ -120,6 +120,7 @@ SUPPORTED_FEATURES = {
         capa.features.common.Characteristic("tight loop"),
         capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
+        capa.features.common.Characteristic("call $+5"),
         capa.features.common.OS,
         capa.features.common.Arch,
     },
