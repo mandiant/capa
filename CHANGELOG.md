@@ -4,28 +4,46 @@
 
 ### New Features
 
-- linter: validate ATT&CK/MBC categories and IDs #103 @kn0wl3dge
-- extractor: add characteristic "call $+5" feature #366 @kn0wl3dge
-
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (0)
 
-- anti-analysis/obfuscation/obfuscated-with-advobfuscator jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
-
-- remove typing package as a requirement for Python 3.7+ compatibility #901 @uckelman-sf
-- elf: fix OS detection for Linux kernel modules #867 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
 ### Development
 
 ### Raw diffs
-- [capa v3.1.0...master](https://github.com/mandiant/capa/compare/v3.1.0...master)
-- [capa-rules v3.1.0...master](https://github.com/mandiant/capa-rules/compare/v3.1.0...master)
+- [capa v3.2.0...master](https://github.com/mandiant/capa/compare/v3.2.0...master)
+- [capa-rules v3.2.0...master](https://github.com/mandiant/capa-rules/compare/v3.2.0...master)
+
+## v3.2.0 (2022-03-03)
+This release adds a new characteristic `characteristic: call $+5` enabling users to create more explicit rules. The linter now also validates ATT&CK and MBC categories. Additionally, many dependencies, including the vivisect backend, have been updated.
+
+One rule has been added and many more have been improved.
+
+Thanks for all the support, especially to @kn0wl3dge and first time contributor @uckelman-sf!
+
+### New Features
+
+- linter: validate ATT&CK/MBC categories and IDs #103 @kn0wl3dge
+- extractor: add characteristic "call $+5" feature #366 @kn0wl3dge
+
+### New Rules (1)
+
+- anti-analysis/obfuscation/obfuscated-with-advobfuscator jakub.jozwiak@mandiant.com
+
+### Bug Fixes
+
+- remove typing package as a requirement for Python 3.7+ compatibility #901 @uckelman-sf
+- elf: fix OS detection for Linux kernel modules #867 @williballenthin
+
+### Raw diffs
+- [capa v3.1.0...v3.2.0](https://github.com/mandiant/capa/compare/v3.1.0...v3.2.0)
+- [capa-rules v3.1.0...v3.2.0](https://github.com/mandiant/capa-rules/compare/v3.1.0...v3.2.0)
 
 ## v3.1.0 (2022-01-10)
 This release improves the performance of capa while also adding 23 new rules and many code quality enhancements. We profiled capa's CPU usage and optimized the way that it matches rules, such as by short circuiting when appropriate. According to our testing, the matching phase is approximately 66% faster than v3.0.3! We also added support for Python 3.10, aarch64 builds, and additional MAEC metadata in the rule headers.
