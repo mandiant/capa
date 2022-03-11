@@ -68,16 +68,12 @@ jobs:
           - os: ubuntu-20.04
             artifact_name: capa
             asset_name: linux
-          - os: windows-2016
-            artifact_name: capa.exe
-            asset_name: windows
     steps:
       - name: Download ${{ matrix.asset_name }}
         uses: actions/download-artifact@v2
         with:
           name: ${{ matrix.asset_name }}
       - name: Set executable flag
-        if: matrix.os != 'windows-2016'
         run: chmod +x ${{ matrix.artifact_name }}
       - name: Run capa
         run: ./${{ matrix.artifact_name }} -h
