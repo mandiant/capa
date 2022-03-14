@@ -17,7 +17,7 @@ jobs:
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
-          - os: windows-2019
+          - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
           - os: macos-10.15
@@ -68,7 +68,7 @@ jobs:
           - os: ubuntu-20.04
             artifact_name: capa
             asset_name: linux
-          - os: windows-2016
+          - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
     steps:
@@ -77,7 +77,7 @@ jobs:
         with:
           name: ${{ matrix.asset_name }}
       - name: Set executable flag
-        if: matrix.os != 'windows-2016'
+        if: matrix.os != 'windows-2022'      
         run: chmod +x ${{ matrix.artifact_name }}
       - name: Run capa
         run: ./${{ matrix.artifact_name }} -h
