@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
 -
 
 ### Bug Fixes
