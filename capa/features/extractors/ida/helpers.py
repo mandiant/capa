@@ -85,10 +85,18 @@ def get_file_imports():
         if not library:
             continue
 
+        # IDA uses section names for the library of ELF imports, like ".dynsym"
+        library = library.lstrip(".")
+
         def inspect_import(ea, function, ordinal):
             if function and function.startswith("__imp_"):
-                # handle mangled names starting
+                # handle mangled PE imports
                 function = function[len("__imp_") :]
+
+            if function and "@@" in function:
+                # handle mangled ELF imports, like "fopen@@glibc_2.2.5"
+                function, _, _ = function.partition("@@")
+
             imports[ea] = (library.lower(), function, ordinal)
             return True
 
