@@ -14,6 +14,7 @@
 ### Bug Fixes
 
 ### capa explorer IDA Pro plugin
+- improve file format extraction #918 @mike-hunhoff
 
 ### Development
 
