@@ -155,16 +155,17 @@ def extract_file_function_names():
 
 
 def extract_file_format():
-    format_name = ida_loader.get_file_type_name()
+    file_info = idaapi.get_inf_structure()
 
-    if "PE" in format_name:
+    if file_info.filetype == idaapi.f_PE:
         yield Format(FORMAT_PE), 0x0
-    elif "ELF64" in format_name:
+    elif file_info.filetype == idaapi.f_ELF:
         yield Format(FORMAT_ELF), 0x0
-    elif "ELF32" in format_name:
-        yield Format(FORMAT_ELF), 0x0
+    elif file_info.filetype == idaapi.f_BIN:
+        # no file type to return when processing a binary file, but we want to continue processing
+        return
     else:
-        raise NotImplementedError("file format: %s", format_name)
+        raise NotImplementedError("file format: %d" % file_info.filetype)
 
 
 def extract_features():
