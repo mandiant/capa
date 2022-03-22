@@ -23,7 +23,7 @@ requirements = [
     "networkx==2.5.1",
     "ruamel.yaml==0.17.21",
     "vivisect==1.0.7",
-    "smda==1.7.0",
+    "smda==1.7.1",
     "pefile==2021.9.3",
     "pyelftools==0.28",
 ]
