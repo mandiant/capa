@@ -15,6 +15,7 @@
 
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
+- remove decorators added by IDA to ELF imports #919 @mike-hunhoff
 
 ### Development
 
