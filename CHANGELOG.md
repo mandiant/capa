@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
+- nursery/get-process-image-filename michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
