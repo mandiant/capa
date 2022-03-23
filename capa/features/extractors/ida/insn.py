@@ -113,7 +113,8 @@ def extract_insn_api_features(f, bb, insn):
 
     if target_func.flags & idaapi.FUNC_LIB:
         name = idaapi.get_name(target_func.start_ea)
-        yield API(name), insn.ea
+        # IDA uses _ prefix for library functions identified using FLIRT
+        yield API(name.lstrip("_")), insn.ea
 
 
 def extract_insn_number_features(f, bb, insn):
