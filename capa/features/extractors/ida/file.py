@@ -152,6 +152,12 @@ def extract_file_function_names():
         if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
             name = idaapi.get_name(ea)
             yield FunctionName(name), ea
+            if name.startswith("_"):
+                # some linkers may prefix linked routines with a `_` to avoid name collisions.
+                # extract features for both the mangled and un-mangled representations.
+                # e.g. `_fwrite` -> `fwrite`
+                # see: https://stackoverflow.com/a/2628384/87207
+                yield FunctionName(name[1:]), ea
 
 
 def extract_file_format():

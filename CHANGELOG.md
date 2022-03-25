@@ -15,6 +15,7 @@
 -
 
 ### Bug Fixes
+- improve handling _ prefix compile/link artifact #924 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
