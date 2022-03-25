@@ -79,6 +79,8 @@ def extract_file_function_names(vw, **kwargs):
         if viv_utils.flirt.is_library_function(vw, va):
             name = viv_utils.get_function_name(vw, va)
             yield FunctionName(name), va
+            if name.startswith("_"):
+                yield FunctionName(name[1:]), va
 
 
 def extract_file_format(buf, **kwargs):

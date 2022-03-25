@@ -152,6 +152,8 @@ def extract_file_function_names():
         if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
             name = idaapi.get_name(ea)
             yield FunctionName(name), ea
+            if name.startswith("_"):
+                yield FunctionName(name[1:]), ea
 
 
 def extract_file_format():

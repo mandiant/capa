@@ -119,6 +119,8 @@ def extract_insn_api_features(f, bb, insn):
         if viv_utils.flirt.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)
             yield API(name), insn.va
+            if name.startswith("_"):
+                yield API(name[1:]), insn.va
             return
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
