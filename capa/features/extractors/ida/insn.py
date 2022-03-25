@@ -115,6 +115,10 @@ def extract_insn_api_features(f, bb, insn):
         name = idaapi.get_name(target_func.start_ea)
         yield API(name), insn.ea
         if name.startswith("_"):
+            # some linkers may prefix linked routines with a `_` to avoid name collisions.
+            # extract features for both the mangled and un-mangled representations.
+            # e.g. `_fwrite` -> `fwrite`
+            # see: https://stackoverflow.com/a/2628384/87207
             yield API(name[1:]), insn.ea
 
 
