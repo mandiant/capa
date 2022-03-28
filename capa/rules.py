@@ -126,6 +126,11 @@ SUPPORTED_FEATURES = {
         capa.features.common.OS,
         capa.features.common.Arch,
     },
+    INSTRUCTION_SCOPE: {
+        capa.features.common.Arch,
+        capa.features.common.OS,
+        capa.features.insn.Mnemonic,
+    },
 }
 
 # all basic block scope features are also function scope features
