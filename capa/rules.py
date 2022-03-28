@@ -446,7 +446,7 @@ def build_statements(d, scope: str):
         else:
             # for instruction subscopes, we support a shorthand in which the top level AND is implied.
             # the following are equivalent:
-            # 
+            #
             #     - instruction:
             #       - and:
             #         - arch: i386
