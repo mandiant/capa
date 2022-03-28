@@ -1008,6 +1008,7 @@ class RuleSet:
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
+        self.instruction_rules = self._get_rules_for_scope(rules, INSTRUCTION_SCOPE)
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
 
@@ -1018,6 +1019,9 @@ class RuleSet:
         )
         (self._easy_basic_block_rules_by_feature, self._hard_basic_block_rules) = self._index_rules_by_feature(
             self.basic_block_rules
+        )
+        (self._easy_instruction_rules_by_feature, self._hard_instruction_rules) = self._index_rules_by_feature(
+            self.instruction_rules
         )
 
     def __len__(self):
@@ -1244,6 +1248,9 @@ class RuleSet:
         elif scope is Scope.BASIC_BLOCK:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
+        elif scope is Scope.INSTRUCTION:
+            easy_rules_by_feature = self._easy_instruction_rules_by_feature
+            hard_rule_names = self._hard_instruction_rules
         else:
             assert_never(scope)
 
