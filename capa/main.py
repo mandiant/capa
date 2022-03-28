@@ -45,7 +45,7 @@ import capa.features.extractors.elffile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import get_file_taste
-from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -85,44 +85,74 @@ def set_vivisect_log_level(level):
     logging.getLogger("envi.codeflow").setLevel(level)
 
 
-def find_code_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle) -> Tuple[MatchResults, MatchResults, int]:
+def find_basic_block_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle
+) -> Tuple[FeatureSet, MatchResults]:
+    """
+    find matches for the given rules within the given basic block.
+
+    returns: tuple containing (features for basic block, match results for basic block)
+    """
+    # contains features from:
+    #  - insns
+    #  - basic blocks
+
+    # all features found within this basic block,
+    # includes features found within instructions.
+    features = collections.defaultdict(set)  # type: FeatureSet
+
+    for feature, va in itertools.chain(
+        extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
+    ):
+        features[feature].add(va)
+
+    for insn in extractor.get_instructions(f, bb):
+        # these are instruction features, which are associated with basic blocks,
+        # not instruction scope features.
+        #
+        # yes: characteristic: fs access
+        # no: instruction: ...
+        #
+        # instruction scope features are handled specially to avoid evaluating too many scopes.
+        for feature, va in itertools.chain(
+            extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
+        ):
+            features[feature].add(va)
+
+    # matches found at within this basic block.
+    _, matches = ruleset.match(Scope.BASIC_BLOCK, features, int(bb))
+
+    for rule_name, res in matches.items():
+        rule = ruleset[rule_name]
+        for va, _ in res:
+            capa.engine.index_rule_matches(features, rule, [va])
+
+    return features, matches
+
+
+def find_code_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle
+) -> Tuple[MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
 
     returns: tuple containing (match results for function, match results for basic blocks, number of features)
     """
-    # contains features from:
-    #  - insns
-    #  - function
+    # all features found within this function,
+    # includes features found within basic blocks (and instructions).
     function_features = collections.defaultdict(set)  # type: FeatureSet
+
+    # matches found at the basic block scope.
+    # might be found at different basic blocks, thats ok.
     bb_matches = collections.defaultdict(list)  # type: MatchResults
 
     for bb in extractor.get_basic_blocks(f):
-        # contains features from:
-        #  - insns
-        #  - basic blocks
-        bb_features = collections.defaultdict(set)
-
-        for feature, va in itertools.chain(
-            extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
-        ):
-            bb_features[feature].add(va)
-            function_features[feature].add(va)
-
-        for insn in extractor.get_instructions(f, bb):
-            for feature, va in itertools.chain(
-                extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
-            ):
-                bb_features[feature].add(va)
-                function_features[feature].add(va)
-
-        _, matches = ruleset.match(Scope.BASIC_BLOCK, bb_features, int(bb))
+        features, matches = find_basic_block_capabilities(ruleset, extractor, f, bb)
+        for feature, vas in features.items():
+            function_features[feature].update(vas)
 
         for rule_name, res in matches.items():
             bb_matches[rule_name].extend(res)
-            rule = ruleset[rule_name]
-            for va, _ in res:
-                capa.engine.index_rule_matches(function_features, rule, [va])
 
     for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
         function_features[feature].add(va)
