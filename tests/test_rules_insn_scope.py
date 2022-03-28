@@ -43,3 +43,81 @@ def test_rule_scope_instruction():
                 """
             )
         )
+
+
+def test_rule_subscope_instruction():
+    capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scope: function
+                features:
+                  - and:
+                    - instruction:
+                      - and:
+                        - mnemonic: mov
+                        - arch: i386
+                        - os: windows
+            """
+        )
+    )
+
+
+def test_scope_instruction_implied_and():
+    capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scope: function
+                features:
+                  - and:
+                    - instruction:
+                      - mnemonic: mov
+                      - arch: i386
+                      - os: windows
+            """
+        )
+    )
+
+
+def test_scope_instruction_description():
+    capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scope: function
+                features:
+                  - and:
+                    - instruction:
+                      - description: foo
+                      - mnemonic: mov
+                      - arch: i386
+                      - os: windows
+            """
+        )
+    )
+
+    capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scope: function
+                features:
+                  - and:
+                    - instruction:
+                      - description: foo
+                      - mnemonic: mov
+                      - arch: i386
+                      - os: windows
+            """
+        )
+    )
+

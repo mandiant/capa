@@ -437,6 +437,29 @@ def build_statements(d, scope: str):
 
         return ceng.Subscope(BASIC_BLOCK_SCOPE, build_statements(d[key][0], BASIC_BLOCK_SCOPE), description=description)
 
+    elif key == "instruction":
+        if scope not in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE):
+            raise InvalidRule("instruction subscope supported only for function and basic block scope")
+
+        if len(d[key]) == 1:
+            statements = build_statements(d[key][0], INSTRUCTION_SCOPE)
+        else:
+            # for instruction subscopes, we support a shorthand in which the top level AND is implied.
+            # the following are equivalent:
+            # 
+            #     - instruction:
+            #       - and:
+            #         - arch: i386
+            #         - mnemonic: cmp
+            #
+            #     - instruction:
+            #       - arch: i386
+            #       - mnemonic: cmp
+            #
+            statements = ceng.And([build_statements(dd, INSTRUCTION_SCOPE) for dd in d[key]])
+
+        return ceng.Subscope(INSTRUCTION_SCOPE, statements, description=description)
+
     elif key.startswith("count(") and key.endswith(")"):
         # e.g.:
         #
