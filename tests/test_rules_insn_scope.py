@@ -46,23 +46,34 @@ def test_rule_scope_instruction():
 
 
 def test_rule_subscope_instruction():
-    capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                    scope: function
-                features:
-                  - and:
-                    - instruction:
-                      - and:
-                        - mnemonic: mov
-                        - arch: i386
-                        - os: windows
-            """
-        )
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test rule
+                            scope: function
+                        features:
+                        - and:
+                            - instruction:
+                                - and:
+                                    - mnemonic: mov
+                                    - arch: i386
+                                    - os: windows
+                    """
+                )
+            )
+        ]
     )
+    # the function rule scope will have one rules:
+    #  - `test rule`
+    assert len(rules.function_rules) == 1
+
+    # the insn rule scope have one rule:
+    #  - the rule on which `test rule` depends
+    assert len(rules.instruction_rules) == 1
 
 
 def test_scope_instruction_implied_and():
