@@ -85,15 +85,17 @@ def set_vivisect_log_level(level):
     logging.getLogger("envi.codeflow").setLevel(level)
 
 
-def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle):
+def find_code_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle) -> Tuple[MatchResults, MatchResults, int]:
+    """
+    find matches for the given rules within the given function.
+
+    returns: tuple containing (match results for function, match results for basic blocks, number of features)
+    """
     # contains features from:
     #  - insns
     #  - function
     function_features = collections.defaultdict(set)  # type: FeatureSet
     bb_matches = collections.defaultdict(list)  # type: MatchResults
-
-    for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
-        function_features[feature].add(va)
 
     for bb in extractor.get_basic_blocks(f):
         # contains features from:
@@ -121,6 +123,9 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
             rule = ruleset[rule_name]
             for va, _ in res:
                 capa.engine.index_rule_matches(function_features, rule, [va])
+
+    for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
+        function_features[feature].add(va)
 
     _, function_matches = ruleset.match(Scope.FUNCTION, function_features, int(f))
     return function_matches, bb_matches, len(function_features)
@@ -182,7 +187,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
                 pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
             continue
 
-        function_matches, bb_matches, feature_count = find_function_capabilities(ruleset, extractor, f)
+        function_matches, bb_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
         meta["feature_counts"]["functions"][function_address] = feature_count
         logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
 
