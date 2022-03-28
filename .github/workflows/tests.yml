@@ -37,6 +37,8 @@ jobs:
       run: isort --profile black --length-sort --line-width 120 -c .
     - name: Lint with black
       run: black -l 120 --check .
+    - name: Lint with pycodestyle
+      run: pycodestyle --show-source capa/ scripts/ tests/
     - name: Check types with mypy
       run: mypy --config-file .github/mypy/mypy.ini capa/ scripts/ tests/
 
