@@ -74,11 +74,13 @@ class Scope(str, Enum):
     FILE = "file"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
+    INSTRUCTION = "instruction"
 
 
 FILE_SCOPE = Scope.FILE.value
 FUNCTION_SCOPE = Scope.FUNCTION.value
 BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
+INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
 
 
 SUPPORTED_FEATURES = {
