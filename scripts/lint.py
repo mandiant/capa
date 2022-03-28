@@ -247,7 +247,7 @@ class InvalidAttckOrMbcTechnique(Lint):
             self.enabled_frameworks = []
 
         # This regex matches the format defined in the recommendation attribute
-        self.reg = re.compile("^([\w\s-]+)::(.+) \[([A-Za-z0-9.]+)\]$")
+        self.reg = re.compile("^([\\w\\s-]+)::(.+) \\[([A-Za-z0-9.]+)\\]$")
 
     def _entry_check(self, framework, category, entry, eid):
         if category not in self.data[framework].keys():

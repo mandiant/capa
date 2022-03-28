@@ -83,7 +83,7 @@ BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
 
 
-SUPPORTED_FEATURES = {
+SUPPORTED_FEATURES: Dict[str, Set] = {
     FILE_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.file.Export,
