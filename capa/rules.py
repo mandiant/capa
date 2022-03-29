@@ -1086,9 +1086,21 @@ class RuleSet:
                 # hard feature: requires scan or match lookup
                 rules_with_hard_features.add(rule_name)
             elif isinstance(node, capa.features.common.Feature):
-                # easy feature: hash lookup
-                rules_with_easy_features.add(rule_name)
-                rules_by_feature[node].add(rule_name)
+                if capa.features.common.is_global_feature(node):
+                    # we don't want to index global features
+                    # because they're not very selective.
+                    #
+                    # they're global, so if they match at one location in a file,
+                    # they'll match at every location in a file.
+                    # so thats not helpful to decide how to downselect.
+                    #
+                    # and, a global rule will never be the sole selector in a rule.
+                    # TODO: probably want a lint for this.
+                    pass
+                else:
+                    # easy feature: hash lookup
+                    rules_with_easy_features.add(rule_name)
+                    rules_by_feature[node].add(rule_name)
             elif isinstance(node, (ceng.Not)):
                 # `not:` statements are tricky to deal with.
                 #
