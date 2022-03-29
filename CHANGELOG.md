@@ -4,7 +4,12 @@
 
 ### New Features
 
+ - add new scope "instruction" for matching mnemonics and operands #767 @williballenthin
+ - add new feature "operand[...]" for matching instruction operands #767 @williballenthin
+
 ### Breaking Changes
+
+  - instruction scope and operand feature are new and are not backwards compatible with older versions of capa
 
 ### New Rules (4)
 
