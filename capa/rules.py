@@ -101,7 +101,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
         capa.features.common.Format,
-   },
+    },
     FUNCTION_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.basicblock.BasicBlock,

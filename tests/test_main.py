@@ -327,7 +327,7 @@ def test_count_bb(z9324d_extractor):
 
 
 def test_instruction_scope(z9324d_extractor):
-    # .text:004071A4 68 E8 03 00 00          push    3E8h  
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
     rules = capa.rules.RuleSet(
         [
             capa.rules.Rule.from_yaml(
@@ -355,7 +355,7 @@ def test_instruction_scope(z9324d_extractor):
 def test_instruction_subscope(z9324d_extractor):
     # .text:00406F60                         sub_406F60 proc near
     # [...]
-    # .text:004071A4 68 E8 03 00 00          push    3E8h  
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
     rules = capa.rules.RuleSet(
         [
             capa.rules.Rule.from_yaml(
