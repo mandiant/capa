@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.63.0",
+    "tqdm==4.63.1",
     "pyyaml==6.0",
     "tabulate==0.8.9",
     "colorama==0.4.4",
@@ -71,9 +71,9 @@ setuptools.setup(
             "pytest-instafail==0.4.2",
             "pytest-cov==3.0.0",
             "pycodestyle==2.8.0",
-            "black==22.1.0",
+            "black==22.3.0",
             "isort==5.10.1",
-            "mypy==0.941",
+            "mypy==0.942",
             "psutil==5.9.0",
             "stix2==3.0.1",
             "requests==2.27.1",
@@ -84,7 +84,7 @@ setuptools.setup(
             "types-tabulate==0.8.6",
             "types-termcolor==1.1.3",
             "types-psutil==5.8.20",
-            "types_requests==2.27.12",
+            "types_requests==2.27.15",
         ],
     },
     zip_safe=False,

@@ -6,13 +6,16 @@
 
 ### Breaking Changes
 
-### New Rules (2)
+### New Rules (4)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
 - nursery/get-process-image-filename michael.hunhoff@mandiant.com
+- compiler/v/compiled-with-v jakub.jozwiak@mandiant.com
+- compiler/zig/compiled-with-zig jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
+- improve handling _ prefix compile/link artifact #924 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
