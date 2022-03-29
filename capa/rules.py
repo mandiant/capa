@@ -1048,6 +1048,9 @@ class RuleSet:
         at this time, a rule evaluator can't do anything special with
         the "hard rules". it must still do a full top-down match of each
         rule, in topological order.
+
+        this does not index global features, because these are not selective, and
+        won't be used as the sole feature used to match.
         """
 
         # we'll do a couple phases:
