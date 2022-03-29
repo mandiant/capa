@@ -81,9 +81,17 @@ FILE_SCOPE = Scope.FILE.value
 FUNCTION_SCOPE = Scope.FUNCTION.value
 BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
+# used only to specify supported features per scope.
+# not used to validate rules.
+GLOBAL_SCOPE = "global"
 
 
 SUPPORTED_FEATURES: Dict[str, Set] = {
+    GLOBAL_SCOPE: {
+        # these will be added to other scopes, see below.
+        capa.features.common.OS,
+        capa.features.common.Arch,
+    },
     FILE_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.file.Export,
@@ -93,20 +101,23 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
         capa.features.common.Format,
-        capa.features.common.OS,
-        capa.features.common.Arch,
-    },
+   },
     FUNCTION_SCOPE: {
-        # plus basic block scope features, see below
+        capa.features.common.MatchedRule,
         capa.features.basicblock.BasicBlock,
         capa.features.common.Characteristic("calls from"),
         capa.features.common.Characteristic("calls to"),
         capa.features.common.Characteristic("loop"),
         capa.features.common.Characteristic("recursive call"),
-        capa.features.common.OS,
-        capa.features.common.Arch,
+        # plus basic block scope features, see below
     },
     BASIC_BLOCK_SCOPE: {
+        capa.features.common.MatchedRule,
+        capa.features.common.Characteristic("tight loop"),
+        capa.features.common.Characteristic("stack string"),
+        # plus instruction scope features, see below
+    },
+    INSTRUCTION_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.insn.API,
         capa.features.insn.Number,
@@ -118,21 +129,19 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("peb access"),
         capa.features.common.Characteristic("fs access"),
         capa.features.common.Characteristic("gs access"),
-        capa.features.common.Characteristic("cross section flow"),
-        capa.features.common.Characteristic("tight loop"),
-        capa.features.common.Characteristic("stack string"),
         capa.features.common.Characteristic("indirect call"),
         capa.features.common.Characteristic("call $+5"),
-        capa.features.common.OS,
-        capa.features.common.Arch,
-    },
-    INSTRUCTION_SCOPE: {
-        capa.features.common.Arch,
-        capa.features.common.OS,
-        capa.features.insn.Mnemonic,
+        capa.features.common.Characteristic("cross section flow"),
     },
 }
 
+# global scope features are available in all other scopes
+SUPPORTED_FEATURES[INSTRUCTION_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+
+# all instruction scope features are also basic block features
+SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
 SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
 
