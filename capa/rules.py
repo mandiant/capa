@@ -125,6 +125,8 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Bytes,
         capa.features.insn.Offset,
         capa.features.insn.Mnemonic,
+        capa.features.insn.OperandImmediate,
+        capa.features.insn.OperandOffset,
         capa.features.common.Characteristic("nzxor"),
         capa.features.common.Characteristic("peb access"),
         capa.features.common.Characteristic("fs access"),
@@ -358,7 +360,14 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
             # the string "10" that needs to become the number 10.
             if value_type == "bytes":
                 value = parse_bytes(value)
-            elif value_type in ("number", "offset") or value_type.startswith(("number/", "offset/")):
+            elif (
+                value_type in ("number", "offset")
+                or value_type.startswith(("number/", "offset/"))
+                or (
+                    value_type.startswith("operand[")
+                    and (value_type.endswith("].immediate") or value_type.endswith("].offset"))
+                )
+            ):
                 try:
                     value = parse_int(value)
                 except ValueError:
@@ -525,6 +534,37 @@ def build_statements(d, scope: str):
             raise InvalidRule("unexpected range: %s" % (count))
     elif key == "string" and not isinstance(d[key], str):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
+
+    elif key.startswith("operand[") and key.endswith("].immediate"):
+        index = key[len("operand[") : -len("].immediate")]
+        try:
+            index = int(index)
+        except ValueError:
+            raise InvalidRule("operand index must be an integer")
+
+        value, description = parse_description(d[key], key, d.get("description"))
+        try:
+            feature = capa.features.insn.OperandImmediate(index, value, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e))
+        ensure_feature_valid_for_scope(scope, feature)
+        return feature
+
+    elif key.startswith("operand[") and key.endswith("].offset"):
+        index = key[len("operand[") : -len("].offset")]
+        try:
+            index = int(index)
+        except ValueError:
+            raise InvalidRule("operand index must be an integer")
+
+        value, description = parse_description(d[key], key, d.get("description"))
+        try:
+            feature = capa.features.insn.OperandOffset(index, value, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e))
+        ensure_feature_valid_for_scope(scope, feature)
+        return feature
+
     elif (
         (key == "os" and d[key] not in capa.features.common.VALID_OS)
         or (key == "format" and d[key] not in capa.features.common.VALID_FORMAT)
