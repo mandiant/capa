@@ -17,7 +17,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic, OperandOffset, OperandImmediate
 from capa.features.common import (
     BITNESS_X32,
     BITNESS_X64,
@@ -554,6 +554,7 @@ def extract_op_number_features(f, bb, insn, i, oper):
 
     yield Number(v), insn.va
     yield Number(v, bitness=get_bitness(f.vw)), insn.va
+    yield OperandImmediate(i, v), insn.va
 
 
 def extract_op_offset_features(f, bb, insn, i, oper):
@@ -582,6 +583,7 @@ def extract_op_offset_features(f, bb, insn, i, oper):
 
         yield Offset(v), insn.va
         yield Offset(v, bitness=get_bitness(f.vw)), insn.va
+        yield OperandOffset(i, v), insn.va
 
     # like: [esi + ecx + 16384]
     #        reg   ^     ^
@@ -593,6 +595,7 @@ def extract_op_offset_features(f, bb, insn, i, oper):
 
         yield Offset(v), insn.va
         yield Offset(v, bitness=get_bitness(f.vw)), insn.va
+        yield OperandOffset(i, v), insn.va
 
 
 def extract_op_string_features(f, bb, insn, i, oper):

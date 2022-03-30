@@ -418,6 +418,12 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
+        # insn/operand.immediate
+        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandImmediate(1, 0xFF), True),
+        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandImmediate(0, 0xFF), False),
+        # insn/operand.offset
+        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(0, 4), True),
+        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(1, 4), False),
         # insn/number
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
