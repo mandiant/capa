@@ -178,7 +178,6 @@ class MatchedRule(Feature):
 
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
-
         super(Characteristic, self).__init__(value, description=description)
 
 
