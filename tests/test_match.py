@@ -533,7 +533,7 @@ def test_match_not_not():
     assert "test rule" in matches
 
 
-def test_match_operand_immediate():
+def test_match_operand_number():
     rule = textwrap.dedent(
         """
         rule:
@@ -541,22 +541,22 @@ def test_match_operand_immediate():
                 name: test rule
             features:
                 - and:
-                    - operand[0].immediate: 0x10
+                    - operand[0].number: 0x10
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
 
-    assert capa.features.insn.OperandImmediate(0, 0x10) in {capa.features.insn.OperandImmediate(0, 0x10)}
+    assert capa.features.insn.OperandNumber(0, 0x10) in {capa.features.insn.OperandNumber(0, 0x10)}
 
-    _, matches = match([r], {capa.features.insn.OperandImmediate(0, 0x10): {1, 2}}, 0x0)
+    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x10): {1, 2}}, 0x0)
     assert "test rule" in matches
 
     # mismatching index
-    _, matches = match([r], {capa.features.insn.OperandImmediate(1, 0x10): {1, 2}}, 0x0)
+    _, matches = match([r], {capa.features.insn.OperandNumber(1, 0x10): {1, 2}}, 0x0)
     assert "test rule" not in matches
 
     # mismatching value
-    _, matches = match([r], {capa.features.insn.OperandImmediate(0, 0x11): {1, 2}}, 0x0)
+    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x11): {1, 2}}, 0x0)
     assert "test rule" not in matches
 
 

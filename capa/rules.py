@@ -125,7 +125,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Bytes,
         capa.features.insn.Offset,
         capa.features.insn.Mnemonic,
-        capa.features.insn.OperandImmediate,
+        capa.features.insn.OperandNumber,
         capa.features.insn.OperandOffset,
         capa.features.common.Characteristic("nzxor"),
         capa.features.common.Characteristic("peb access"),
@@ -365,7 +365,7 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
                 or value_type.startswith(("number/", "offset/"))
                 or (
                     value_type.startswith("operand[")
-                    and (value_type.endswith("].immediate") or value_type.endswith("].offset"))
+                    and (value_type.endswith("].number") or value_type.endswith("].offset"))
                 )
             ):
                 try:
@@ -535,8 +535,8 @@ def build_statements(d, scope: str):
     elif key == "string" and not isinstance(d[key], str):
         raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
 
-    elif key.startswith("operand[") and key.endswith("].immediate"):
-        index = key[len("operand[") : -len("].immediate")]
+    elif key.startswith("operand[") and key.endswith("].number"):
+        index = key[len("operand[") : -len("].number")]
         try:
             index = int(index)
         except ValueError:
@@ -544,7 +544,7 @@ def build_statements(d, scope: str):
 
         value, description = parse_description(d[key], key, d.get("description"))
         try:
-            feature = capa.features.insn.OperandImmediate(index, value, description=description)
+            feature = capa.features.insn.OperandNumber(index, value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)

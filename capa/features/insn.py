@@ -60,13 +60,13 @@ class _Operand(Feature):
         return (self.__class__.__name__, [self.index, self.value])
 
 
-class OperandImmediate(_Operand):
+class OperandNumber(_Operand):
     # cached names so we don't do extra string formatting every ctor
-    NAMES = ["operand[%d].immediate" % i for i in range(MAX_OPERAND_INDEX)]
+    NAMES = ["operand[%d].number" % i for i in range(MAX_OPERAND_INDEX)]
 
-    # operand[i].immediate: 0x12
+    # operand[i].number: 0x12
     def __init__(self, index: int, value: int, description=None):
-        super(OperandImmediate, self).__init__(index, value, description=description)
+        super(OperandNumber, self).__init__(index, value, description=description)
         self.name = self.NAMES[index]
 
     def get_value_str(self) -> str:
