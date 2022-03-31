@@ -17,7 +17,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandOffset, OperandNumber
+from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import (
     BITNESS_X32,
     BITNESS_X64,
