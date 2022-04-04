@@ -21,5 +21,5 @@ import capa.features.file
     fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
 )
-def test_dotnetfile_features(sample, scope, feature, expected):
+def test_dnfile_features(sample, scope, feature, expected):
     fixtures.do_test_feature_presence(fixtures.get_pefile_extractor, sample, scope, feature, expected)

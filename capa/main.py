@@ -42,7 +42,7 @@ import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.elffile
-import capa.features.extractors.dotnetfile
+import capa.features.extractors.dnfile_
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import get_file_taste, is_dotnet_file
@@ -938,7 +938,7 @@ def main(argv=None):
         is_dotnet = is_dotnet_file(file_extractor.pe)
         if is_dotnet:
             # TODO try/except
-            file_extractor = capa.features.extractors.dotnetfile.DotnetfileFeatureExtractor(args.sample)
+            file_extractor = capa.features.extractors.dnfile_.DnfileFeatureExtractor(args.sample)
 
     elif args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
         try:
@@ -958,7 +958,7 @@ def main(argv=None):
             return E_CORRUPT_FILE
 
         if is_dotnet:
-            # TODO has_dotnetfile_limitation...
+            # TODO has_dnfile_limitation...
             pass
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
@@ -984,7 +984,7 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     elif is_dotnet:
-        # TODO extractor = capa.features.extractors.dotnet.extractor.DotnetFeatureExtractor(...)
+        # TODO extractor = capa.features.extractors.dotnet.extractor.DnFeatureExtractor(...)
         pass
     else:
         format = args.format
