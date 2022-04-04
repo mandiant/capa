@@ -120,3 +120,5 @@ scripts/perf/*.svg
 scripts/perf/*.zip
 .direnv
 .envrc
+.DS_Store
+*/.DS_Store
