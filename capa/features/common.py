@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
+import abc
 import codecs
 import logging
 import collections
@@ -96,7 +97,7 @@ class Result:
         return self.success
 
 
-class Feature:
+class Feature(abc.ABC):
     def __init__(self, value: Union[str, int, bytes], bitness=None, description=None):
         """
         Args:

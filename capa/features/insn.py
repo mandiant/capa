@@ -5,6 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import abc
+
 import capa.render.utils
 from capa.features.common import Feature
 
@@ -43,7 +45,7 @@ class Mnemonic(Feature):
 MAX_OPERAND_INDEX = 3
 
 
-class _Operand(Feature):
+class _Operand(Feature, abc.ABC):
     # superclass: don't use directly
     # subclasses should set self.name and provide the value string formatter
     def __init__(self, index: int, value: int, description=None):
