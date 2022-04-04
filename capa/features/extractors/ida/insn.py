@@ -12,7 +12,7 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import (
     BITNESS_X32,
     BITNESS_X64,
@@ -143,7 +143,11 @@ def extract_insn_number_features(f, bb, insn):
         #   .text:00401145 add esp, 0Ch
         return
 
-    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_imm, idaapi.o_mem)):
+    for i, op in enumerate(insn.ops):
+        if op.type == idaapi.o_void:
+            break
+        if op.type not in (idaapi.o_imm, idaapi.o_mem):
+            continue
         # skip things like:
         #   .text:00401100 shr eax, offset loc_C
         if capa.features.extractors.ida.helpers.is_op_offset(insn, op):
@@ -156,6 +160,7 @@ def extract_insn_number_features(f, bb, insn):
 
         yield Number(const), insn.ea
         yield Number(const, bitness=get_bitness(f.ctx)), insn.ea
+        yield OperandNumber(i, const), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -208,9 +213,14 @@ def extract_insn_offset_features(f, bb, insn):
     example:
         .text:0040112F cmp [esi+4], ebx
     """
-    for op in capa.features.extractors.ida.helpers.get_insn_ops(insn, target_ops=(idaapi.o_phrase, idaapi.o_displ)):
+    for i, op in enumerate(insn.ops):
+        if op.type == idaapi.o_void:
+            break
+        if op.type not in (idaapi.o_phrase, idaapi.o_displ):
+            continue
         if capa.features.extractors.ida.helpers.is_op_stack_var(insn.ea, op.n):
             continue
+
         p_info = capa.features.extractors.ida.helpers.get_op_phrase_info(op)
         op_off = p_info.get("offset", 0)
         if idaapi.is_mapped(op_off):
@@ -225,6 +235,7 @@ def extract_insn_offset_features(f, bb, insn):
 
         yield Offset(op_off), insn.ea
         yield Offset(op_off, bitness=get_bitness(f.ctx)), insn.ea
+        yield OperandOffset(i, op_off), insn.ea
 
 
 def contains_stack_cookie_keywords(s):
