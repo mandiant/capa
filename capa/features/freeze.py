@@ -67,6 +67,7 @@ def serialize_feature(feature):
 
 
 KNOWN_FEATURES = {F.__name__: F for F in capa.features.common.Feature.__subclasses__()}
+KNOWN_FEATURES.update({F.__name__: F for F in capa.features.insn._Operand.__subclasses__()})
 
 
 def deserialize_feature(doc):
