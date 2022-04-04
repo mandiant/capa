@@ -43,7 +43,7 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DotnetfileFeatureExtractor(FeatureExtractor):
+class DnfileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
         super(DotnetfileFeatureExtractor, self).__init__()
         self.path = path
@@ -67,25 +67,25 @@ class DotnetfileFeatureExtractor(FeatureExtractor):
         yield None, 0x0
 
     def get_functions(self):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def extract_function_features(self, f):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def get_basic_blocks(self, f):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def extract_basic_block_features(self, f, bb):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def get_instructions(self, f, bb):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def extract_insn_features(self, f, bb, insn):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def is_library_function(self, va):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
 
     def get_function_name(self, va):
-        raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")
+        raise NotImplementedError("DotnetfileFeatureExtract can only be used to extract file features")
