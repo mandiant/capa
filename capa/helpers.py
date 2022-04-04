@@ -11,6 +11,12 @@ from typing import NoReturn
 
 from pefile import PE
 
+import capa.features
+
+EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
+EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+
+
 _hex = hex
 
 
@@ -43,3 +49,20 @@ def is_dotnet_file(pe: PE) -> bool:
     image_directory_entry_com_descriptor = 14
     com_dir = pe.OPTIONAL_HEADER.DATA_DIRECTORY[image_directory_entry_com_descriptor]
     return not (com_dir.Size == 0 and com_dir.VirtualAddress == 0)
+
+
+def use_pe_format(format_: str, taste: bytes):
+    return format_ == "pe" or (format_ == "auto" and taste.startswith(b"MZ"))
+
+
+def use_freeze_format(format_: str, taste: bytes):
+    return (format_ == "freeze") or (format_ == "auto" and capa.features.freeze.is_freeze(taste))
+
+
+def get_format_via_file_extension(sample: str, format_: str) -> str:
+    if sample.endswith(EXTENSIONS_SHELLCODE_32):
+        return "sc32"
+    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
+        return "sc64"
+    else:
+        return format_
