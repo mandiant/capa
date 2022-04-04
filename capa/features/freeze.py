@@ -51,6 +51,7 @@ See the License for the specific language governing permissions and limitations 
 import json
 import zlib
 import logging
+from typing import Dict, Type
 
 import capa.features.file
 import capa.features.insn
@@ -58,6 +59,7 @@ import capa.features.common
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
 from capa.helpers import hex
+from capa.features.common import Feature
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +68,8 @@ def serialize_feature(feature):
     return feature.freeze_serialize()
 
 
-KNOWN_FEATURES = {F.__name__: F for F in capa.features.common.Feature.__subclasses__()}
-KNOWN_FEATURES.update({F.__name__: F for F in capa.features.insn._Operand.__subclasses__()})
+KNOWN_FEATURES: Dict[str, Type[Feature]] = {F.__name__: F for F in capa.features.common.Feature.__subclasses__()}
+KNOWN_FEATURES.update({F.__name__: F for F in capa.features.insn._Operand.__subclasses__()})  # type: ignore
 
 
 def deserialize_feature(doc):
