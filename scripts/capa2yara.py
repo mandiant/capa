@@ -311,7 +311,7 @@ def convert_rule(rule, rulename, cround, depth):
 
         return yara_strings, yara_condition
 
-    ############################## end def do_statement
+    # end: def do_statement
 
     yara_strings_list = []
     yara_condition_list = []
@@ -390,7 +390,9 @@ def convert_rule(rule, rulename, cround, depth):
                 logger.info("kid coming: " + repr(kid.name))
                 # logger.info("grandchildren: " + repr(kid.children))
 
-                ##### here we go into RECURSION  ##################################################################################
+                #
+                # here we go into RECURSION
+                #
                 yara_strings_sub, yara_condition_sub, rule_comment_sub, incomplete_sub = convert_rule(
                     kid, rulename, cround, depth
                 )
@@ -496,9 +498,7 @@ def convert_rule(rule, rulename, cround, depth):
 
         yara_condition = "\n\t" + yara_condition_list[0]
 
-    logger.info(
-        f"################# end of convert_rule() #strings: {len(yara_strings_list)} #conditions: {len(yara_condition_list)}"
-    )
+    logger.info(f"# end of convert_rule() #strings: {len(yara_strings_list)} #conditions: {len(yara_condition_list)}")
     logger.info(f"strings: {yara_strings} conditions: {yara_condition}")
 
     return yara_strings, yara_condition, rule_comment, incomplete
@@ -617,7 +617,7 @@ def convert_rules(rules, namespaces, cround):
 
                             # examples in capa can contain the same hash several times with different offset, so check if it's already there:
                             # (keeping the offset might be interessting for some but breaks yara-ci for checking of the final rules
-                            if not value in seen_hashes:
+                            if value not in seen_hashes:
                                 yara_meta += "\t" + meta_name + ' = "' + value + '"\n'
                                 seen_hashes.append(value)
 

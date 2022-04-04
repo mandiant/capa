@@ -531,3 +531,57 @@ def test_match_not_not():
 
     _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
     assert "test rule" in matches
+
+
+def test_match_operand_number():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - and:
+                    - operand[0].number: 0x10
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    assert capa.features.insn.OperandNumber(0, 0x10) in {capa.features.insn.OperandNumber(0, 0x10)}
+
+    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x10): {1, 2}}, 0x0)
+    assert "test rule" in matches
+
+    # mismatching index
+    _, matches = match([r], {capa.features.insn.OperandNumber(1, 0x10): {1, 2}}, 0x0)
+    assert "test rule" not in matches
+
+    # mismatching value
+    _, matches = match([r], {capa.features.insn.OperandNumber(0, 0x11): {1, 2}}, 0x0)
+    assert "test rule" not in matches
+
+
+def test_match_operand_offset():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - and:
+                    - operand[0].offset: 0x10
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    assert capa.features.insn.OperandOffset(0, 0x10) in {capa.features.insn.OperandOffset(0, 0x10)}
+
+    _, matches = match([r], {capa.features.insn.OperandOffset(0, 0x10): {1, 2}}, 0x0)
+    assert "test rule" in matches
+
+    # mismatching index
+    _, matches = match([r], {capa.features.insn.OperandOffset(1, 0x10): {1, 2}}, 0x0)
+    assert "test rule" not in matches
+
+    # mismatching value
+    _, matches = match([r], {capa.features.insn.OperandOffset(0, 0x11): {1, 2}}, 0x0)
+    assert "test rule" not in matches

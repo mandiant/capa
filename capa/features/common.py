@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
+import abc
 import codecs
 import logging
 import collections
@@ -96,7 +97,7 @@ class Result:
         return self.success
 
 
-class Feature:
+class Feature(abc.ABC):
     def __init__(self, value: Union[str, int, bytes], bitness=None, description=None):
         """
         Args:
@@ -168,6 +169,8 @@ class Feature:
             kwargs = args[-1]
             args = args[:-1]
             return cls(*args, **kwargs)
+        else:
+            return cls(*args)
 
 
 class MatchedRule(Feature):
@@ -178,7 +181,6 @@ class MatchedRule(Feature):
 
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
-
         super(Characteristic, self).__init__(value, description=description)
 
 

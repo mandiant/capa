@@ -22,6 +22,14 @@ def test_smda_features(sample, scope, feature, expected):
     if scope.__name__ == "file" and isinstance(feature, capa.features.file.FunctionName) and expected is True:
         pytest.xfail("SMDA has no function ID")
 
+    if "bb=" in scope.__name__ and isinstance(feature, capa.features.insn.OperandNumber) and expected is True:
+        # SMDA not currently maintained, see: https://github.com/mandiant/capa/issues/937
+        pytest.xfail("SMDA doesn't support operand numbers")
+
+    if "bb=" in scope.__name__ and isinstance(feature, capa.features.insn.OperandOffset) and expected is True:
+        # SMDA not currently maintained, see: https://github.com/mandiant/capa/issues/937
+        pytest.xfail("SMDA doesn't support operand offsets")
+
     fixtures.do_test_feature_presence(fixtures.get_smda_extractor, sample, scope, feature, expected)
 
 
