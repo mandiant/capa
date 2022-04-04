@@ -4,6 +4,8 @@
 
 ### New Features
 
+- main: detect dotnet binaries @mr-tz
+
 ### Breaking Changes
 
 ### New Rules (4)

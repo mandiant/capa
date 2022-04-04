@@ -224,6 +224,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
     elif name.startswith("946a9"):
         return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
+    elif name.startswith("b9f5b"):
+        return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -276,7 +278,9 @@ def get_sample_md5_by_name(name):
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"
     elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940.dll_"
+        return "946a99f36a46d335dec080d9a4371940"
+    elif name.startswith("b9f5b"):
+        return "b9f5bd514485fb06da39beff051b9fdc"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -577,6 +581,16 @@ FEATURE_PRESENCE_TESTS = sorted(
     key=lambda t: (t[0], t[1]),
 )
 
+FEATURE_PRESENCE_TESTS_DOTNET = sorted(
+    [
+        ("b9f5b", "file", Arch(ARCH_I386), True),
+        ("b9f5b", "file", Arch(ARCH_AMD64), False),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
 FEATURE_PRESENCE_TESTS_IDA = [
     # file/imports
     # IDA can recover more names of APIs imported by ordinal
@@ -689,3 +703,8 @@ def al_khaser_x86_extractor():
 @pytest.fixture
 def pingtaest_extractor():
     return get_extractor(get_data_path_by_name("pingtaest"))
+
+
+@pytest.fixture
+def b9f5b_extractor():
+    return get_extractor(get_data_path_by_name("b9f5b"))

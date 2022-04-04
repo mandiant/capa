@@ -9,6 +9,8 @@
 import os
 from typing import NoReturn
 
+from pefile import PE
+
 _hex = hex
 
 
@@ -35,3 +37,9 @@ def is_runtime_ida():
 
 def assert_never(value: NoReturn) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
+
+
+def is_dotnet_file(pe: PE) -> bool:
+    image_directory_entry_com_descriptor = 14
+    com_dir = pe.OPTIONAL_HEADER.DATA_DIRECTORY[image_directory_entry_com_descriptor]
+    return not (com_dir.Size == 0 and com_dir.VirtualAddress == 0)

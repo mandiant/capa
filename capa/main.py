@@ -42,9 +42,10 @@ import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.elffile
+import capa.features.extractors.dotnetfile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import get_file_taste
+from capa.helpers import get_file_taste, is_dotnet_file
 from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -922,8 +923,9 @@ def main(argv=None):
         return E_INVALID_RULE
 
     file_extractor = None
+    is_dotnet = False
     if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
-        # these pefile and elffile file feature extractors are pretty light weight: they don't do any code analysis.
+        # these pefile and elffile file feature extractors are pretty lightweight: they don't do any code analysis.
         # so we can fairly quickly determine if the given file has "pure" file-scope rules
         # that indicate a limitation (like "file is packed based on section names")
         # and avoid doing a full code analysis on difficult/impossible binaries.
@@ -932,6 +934,11 @@ def main(argv=None):
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
+
+        is_dotnet = is_dotnet_file(file_extractor.pe)
+        if is_dotnet:
+            # TODO try/except
+            file_extractor = capa.features.extractors.dotnetfile.DotnetfileFeatureExtractor(args.sample)
 
     elif args.format == "elf" or (args.format == "auto" and taste.startswith(b"\x7fELF")):
         try:
@@ -950,9 +957,12 @@ def main(argv=None):
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
 
+        if is_dotnet:
+            # TODO has_dotnetfile_limitation...
+            pass
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        if has_file_limitation(rules, pure_file_capabilities):
+        elif has_file_limitation(rules, pure_file_capabilities):
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
@@ -960,11 +970,11 @@ def main(argv=None):
                 return E_FILE_LIMITATION
 
     try:
-        if args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ")):
+        if not is_dotnet and (args.format == "pe" or (args.format == "auto" and taste.startswith(b"MZ"))):
             sig_paths = get_signatures(args.signatures)
         else:
             sig_paths = []
-            logger.debug("skipping library code matching: only have PE signatures")
+            logger.debug("skipping library code matching: only have native PE signatures")
     except (IOError) as e:
         logger.error("%s", str(e))
         return E_INVALID_SIG
@@ -973,6 +983,9 @@ def main(argv=None):
         format = "freeze"
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
+    elif is_dotnet:
+        # TODO extractor = capa.features.extractors.dotnet.extractor.DotnetFeatureExtractor(...)
+        pass
     else:
         format = args.format
         if format == "auto" and args.sample.endswith(EXTENSIONS_SHELLCODE_32):
