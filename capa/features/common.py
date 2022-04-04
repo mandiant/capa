@@ -169,6 +169,8 @@ class Feature(abc.ABC):
             kwargs = args[-1]
             args = args[:-1]
             return cls(*args, **kwargs)
+        else:
+            return cls(*args)
 
 
 class MatchedRule(Feature):
