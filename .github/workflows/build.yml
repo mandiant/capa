@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [master]
+    branches: [master, dotnet-main]
   release:
     types: [edited, published]
 
