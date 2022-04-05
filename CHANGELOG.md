@@ -13,6 +13,7 @@
 
   - instruction scope and operand feature are new and are not backwards compatible with older versions of capa
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
+  - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
 
 ### New Rules (4)
 
