@@ -161,10 +161,10 @@ class MissingScope(Lint):
 
 class InvalidScope(Lint):
     name = "invalid scope"
-    recommendation = "Use only file, function, or basic block rule scopes"
+    recommendation = "Use only file, function, basic block, or instruction rule scopes"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scope") not in ("file", "function", "basic block")
+        return rule.meta.get("scope") not in ("file", "function", "basic block", "instruction")
 
 
 class MissingAuthor(Lint):
