@@ -9,7 +9,7 @@ import os
 import logging
 from typing import NoReturn
 
-import capa.features
+import capa.features.extractors.common
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
 
