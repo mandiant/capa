@@ -9,7 +9,7 @@ import os
 import logging
 from typing import NoReturn
 
-import capa.main
+import capa.features
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
@@ -66,9 +66,24 @@ def log_unsupported_format_error():
 
 
 def get_auto_format(path: str) -> str:
-    format_ = capa.main.get_format(path)
+    format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
     if format_ == FORMAT_UNKNOWN:
-        raise capa.main.UnsupportedFormatError()
+        raise UnsupportedFormatError()
     return format_
+
+
+def get_format(sample: str) -> str:
+    with open(sample, "rb") as f:
+        buf = f.read()
+
+    for feature, _ in capa.features.extractors.common.extract_format(buf):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return FORMAT_UNKNOWN
+
+
+class UnsupportedFormatError(ValueError):
+    pass

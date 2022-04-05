@@ -45,7 +45,8 @@ import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import get_file_taste, log_unsupported_format_error, get_auto_format
+from capa.helpers import get_file_taste, log_unsupported_format_error, get_auto_format, get_format, \
+    UnsupportedFormatError
 from capa.features.common import (
     FORMAT_PE,
     FORMAT_ELF,
@@ -54,7 +55,6 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
-    FORMAT_UNKNOWN,
 )
 from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
 
@@ -227,6 +227,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     return matches, meta
 
 
+# TODO move all to helpers?
 def has_rule_with_namespace(rules, capabilities, rule_cat):
     for rule_name in capabilities.keys():
         if rules.rules[rule_name].meta.get("namespace", "").startswith(rule_cat):
@@ -272,17 +273,6 @@ def is_supported_format(sample: str) -> bool:
         taste = f.read(0x100)
 
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
-
-
-def get_format(sample: str) -> str:
-    with open(sample, "rb") as f:
-        buf = f.read()
-
-    for feature, _ in capa.features.extractors.common.extract_format(buf):
-        assert isinstance(feature.value, str)
-        return feature.value
-
-    return FORMAT_UNKNOWN
 
 
 def is_supported_arch(sample: str) -> bool:
@@ -373,10 +363,7 @@ def get_default_signatures() -> List[str]:
     return ret
 
 
-class UnsupportedFormatError(ValueError):
-    pass
-
-
+# TODO move?
 class UnsupportedArchError(ValueError):
     pass
 

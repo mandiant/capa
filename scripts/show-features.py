@@ -113,7 +113,7 @@ def main(argv=None):
             extractor = capa.main.get_extractor(
                 args.sample, args.format, args.backend, sig_paths, should_save_workspace
             )
-        except capa.main.UnsupportedFormatError:
+        except capa.helpers.UnsupportedFormatError:
             logger.error("-" * 80)
             logger.error(" Input file does not appear to be a PE file.")
             logger.error(" ")
