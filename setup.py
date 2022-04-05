@@ -98,5 +98,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Topic :: Security",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )
