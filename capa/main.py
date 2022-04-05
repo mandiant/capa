@@ -558,32 +558,33 @@ def is_nursery_rule_path(path: str) -> bool:
     return "nursery" in path
 
 
-def get_rules(rule_path: str, disable_progress=False) -> List[Rule]:
-    if not os.path.exists(rule_path):
-        raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
+def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
+    rule_file_paths = []
+    for rule_path in rule_paths:
+        if not os.path.exists(rule_path):
+            raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
 
-    rule_paths = []
-    if os.path.isfile(rule_path):
-        rule_paths.append(rule_path)
-    elif os.path.isdir(rule_path):
-        logger.debug("reading rules from directory %s", rule_path)
-        for root, dirs, files in os.walk(rule_path):
-            if ".github" in root:
-                # the .github directory contains CI config in capa-rules
-                # this includes some .yml files
-                # these are not rules
-                continue
-
-            for file in files:
-                if not file.endswith(".yml"):
-                    if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
-                        # expect to see .git* files, readme.md, format.md, and maybe a .git directory
-                        # other things maybe are rules, but are mis-named.
-                        logger.warning("skipping non-.yml file: %s", file)
+        if os.path.isfile(rule_path):
+            rule_file_paths.append(rule_path)
+        elif os.path.isdir(rule_path):
+            logger.debug("reading rules from directory %s", rule_path)
+            for root, dirs, files in os.walk(rule_path):
+                if ".github" in root:
+                    # the .github directory contains CI config in capa-rules
+                    # this includes some .yml files
+                    # these are not rules
                     continue
 
-                rule_path = os.path.join(root, file)
-                rule_paths.append(rule_path)
+                for file in files:
+                    if not file.endswith(".yml"):
+                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                            # expect to see .git* files, readme.md, format.md, and maybe a .git directory
+                            # other things maybe are rules, but are mis-named.
+                            logger.warning("skipping non-.yml file: %s", file)
+                        continue
+
+                    rule_path = os.path.join(root, file)
+                    rule_file_paths.append(rule_path)
 
     rules = []  # type: List[Rule]
 
@@ -593,14 +594,14 @@ def get_rules(rule_path: str, disable_progress=False) -> List[Rule]:
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for rule_path in pbar(list(rule_paths), desc="loading ", unit=" rules"):
+    for rule_file_path in pbar(list(rule_file_paths), desc="loading ", unit=" rules"):
         try:
-            rule = capa.rules.Rule.from_yaml_file(rule_path)
+            rule = capa.rules.Rule.from_yaml_file(rule_file_path)
         except capa.rules.InvalidRule:
             raise
         else:
-            rule.meta["capa/path"] = rule_path
-            if is_nursery_rule_path(rule_path):
+            rule.meta["capa/path"] = rule_file_path
+            if is_nursery_rule_path(rule_file_path):
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
@@ -649,8 +650,8 @@ def collect_metadata(argv, sample_path, rules_path, extractor):
     sha1.update(buf)
     sha256.update(buf)
 
-    if rules_path != RULES_PATH_DEFAULT_STRING:
-        rules_path = os.path.abspath(os.path.normpath(rules_path))
+    if rules_path != [RULES_PATH_DEFAULT_STRING]:
+        rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
     format = get_format(sample_path)
     arch = get_arch(sample_path)
@@ -813,7 +814,8 @@ def install_common_args(parser, wanted=None):
             "-r",
             "--rules",
             type=str,
-            default=RULES_PATH_DEFAULT_STRING,
+            default=[RULES_PATH_DEFAULT_STRING],
+            action="append",
             help="path to rule file or directory, use embedded rules by default",
         )
 
@@ -875,7 +877,7 @@ def handle_common_args(args):
         raise RuntimeError("unexpected --color value: " + args.color)
 
     if hasattr(args, "rules"):
-        if args.rules == RULES_PATH_DEFAULT_STRING:
+        if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
             logger.debug(" Using default embedded rules.")
             logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
@@ -895,7 +897,9 @@ def handle_common_args(args):
                 return E_MISSING_RULES
         else:
             rules_path = args.rules
-            logger.debug("using rules path: %s", rules_path)
+            rules_path.remove(RULES_PATH_DEFAULT_STRING)
+            for rule_path in rules_path:
+                logger.debug("using rules path: %s", rule_path)
 
         args.rules = rules_path
 
