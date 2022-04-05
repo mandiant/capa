@@ -897,7 +897,8 @@ def handle_common_args(args):
                 return E_MISSING_RULES
         else:
             rules_path = args.rules
-            rules_path.remove(RULES_PATH_DEFAULT_STRING)
+            if RULES_PATH_DEFAULT_STRING in rules_path:
+                rules_path.remove(RULES_PATH_DEFAULT_STRING)
             for rule_path in rules_path:
                 logger.debug("using rules path: %s", rule_path)
 
