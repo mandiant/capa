@@ -22,16 +22,16 @@ class API(Feature):
 
 
 class Number(Feature):
-    def __init__(self, value: int, bitness=None, description=None):
-        super(Number, self).__init__(value, bitness=bitness, description=description)
+    def __init__(self, value: int, description=None):
+        super(Number, self).__init__(value, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)
 
 
 class Offset(Feature):
-    def __init__(self, value: int, bitness=None, description=None):
-        super(Offset, self).__init__(value, bitness=bitness, description=description)
+    def __init__(self, value: int, description=None):
+        super(Offset, self).__init__(value, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)
@@ -53,7 +53,7 @@ class _Operand(Feature, abc.ABC):
         self.index = index
 
     def __hash__(self):
-        return hash((self.name, self.value, self.bitness))
+        return hash((self.name, self.value))
 
     def __eq__(self, other):
         return super().__eq__(other) and self.index == other.index

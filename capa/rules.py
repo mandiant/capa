@@ -257,20 +257,8 @@ def parse_feature(key: str):
         return capa.features.common.Bytes
     elif key == "number":
         return capa.features.insn.Number
-    elif key.startswith("number/"):
-        bitness = key.partition("/")[2]
-        # the other handlers here return constructors for features,
-        # and we want to as well,
-        # however, we need to preconfigure one of the arguments (`bitness`).
-        # so, instead we return a partially-applied function that
-        #  provides `bitness` to the feature constructor.
-        # it forwards any other arguments provided to the closure along to the constructor.
-        return functools.partial(capa.features.insn.Number, bitness=bitness)
     elif key == "offset":
         return capa.features.insn.Offset
-    elif key.startswith("offset/"):
-        bitness = key.partition("/")[2]
-        return functools.partial(capa.features.insn.Offset, bitness=bitness)
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
