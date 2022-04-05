@@ -11,6 +11,7 @@
 ### Breaking Changes
 
   - instruction scope and operand feature are new and are not backwards compatible with older versions of capa
+  - Python 3.7 is now the minimum supported Python version #866 @williballenthin
 
 ### New Rules (4)
 
