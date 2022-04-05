@@ -45,8 +45,15 @@ import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import get_file_taste, log_unsupported_format_error, get_auto_format, get_format, \
-    UnsupportedFormatError
+from capa.helpers import (
+    get_format,
+    get_file_taste,
+    get_auto_format,
+    log_unsupported_os_error,
+    log_unsupported_arch_error,
+    log_unsupported_format_error,
+)
+from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
     FORMAT_PE,
     FORMAT_ELF,
@@ -363,15 +370,6 @@ def get_default_signatures() -> List[str]:
     return ret
 
 
-# TODO move?
-class UnsupportedArchError(ValueError):
-    pass
-
-
-class UnsupportedOSError(ValueError):
-    pass
-
-
 def get_workspace(path, format_, sigpaths):
     """
     load the program at the given path into a vivisect workspace using the given format.
@@ -415,10 +413,6 @@ def get_workspace(path, format_, sigpaths):
 
     logger.debug("%s", get_meta_str(vw))
     return vw
-
-
-class UnsupportedRuntimeError(RuntimeError):
-    pass
 
 
 # TODO get_extractors -> List[FeatureExtractor]?
@@ -1011,20 +1005,10 @@ def main(argv=None):
             log_unsupported_format_error()
             return E_INVALID_FILE_TYPE
         except UnsupportedArchError:
-            logger.error("-" * 80)
-            logger.error(" Input file does not appear to target a supported architecture.")
-            logger.error(" ")
-            logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
-            logger.error("-" * 80)
+            log_unsupported_arch_error()
             return E_INVALID_FILE_ARCH
         except UnsupportedOSError:
-            logger.error("-" * 80)
-            logger.error(" Input file does not appear to target a supported OS.")
-            logger.error(" ")
-            logger.error(
-                " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
-            )
-            logger.error("-" * 80)
+            log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
     meta = collect_metadata(argv, args.sample, args.rules, extractor)

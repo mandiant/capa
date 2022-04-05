@@ -75,8 +75,10 @@ import capa.rules
 import capa.engine
 import capa.helpers
 import capa.features
+import capa.exceptions
 import capa.features.common
 import capa.features.freeze
+from capa.helpers import log_unsupported_runtime_error
 
 logger = logging.getLogger("capa.show-features")
 
@@ -113,25 +115,11 @@ def main(argv=None):
             extractor = capa.main.get_extractor(
                 args.sample, args.format, args.backend, sig_paths, should_save_workspace
             )
-        except capa.helpers.UnsupportedFormatError:
-            logger.error("-" * 80)
-            logger.error(" Input file does not appear to be a PE file.")
-            logger.error(" ")
-            logger.error(
-                " capa currently only supports analyzing PE files (or shellcode, when using --format sc32|sc64)."
-            )
-            logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-            logger.error("-" * 80)
+        except capa.exceptions.UnsupportedFormatError:
+            capa.helpers.log_unsupported_format_error()
             return -1
-        except capa.main.UnsupportedRuntimeError:
-            logger.error("-" * 80)
-            logger.error(" Unsupported runtime or Python interpreter.")
-            logger.error(" ")
-            logger.error(" capa supports running under Python 2.7 using Vivisect for binary analysis.")
-            logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
-            logger.error(" ")
-            logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
-            logger.error("-" * 80)
+        except capa.exceptions.UnsupportedRuntimeError:
+            log_unsupported_runtime_error()
             return -1
 
     if not args.function:

@@ -4,7 +4,7 @@
 
 ### New Features
 
-- main: detect dotnet binaries @mr-tz
+- main: detect dotnet binaries #955 @mr-tz
 
 ### Breaking Changes
 

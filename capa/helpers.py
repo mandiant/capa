@@ -10,6 +10,7 @@ import logging
 from typing import NoReturn
 
 import capa.features
+from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
@@ -54,17 +55,6 @@ def get_format_from_extension(sample: str) -> str:
     return FORMAT_UNKNOWN
 
 
-def log_unsupported_format_error():
-    logger.error("-" * 80)
-    logger.error(" Input file does not appear to be a PE or ELF file.")
-    logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
-    )
-    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-    logger.error("-" * 80)
-
-
 def get_auto_format(path: str) -> str:
     format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
@@ -85,5 +75,41 @@ def get_format(sample: str) -> str:
     return FORMAT_UNKNOWN
 
 
-class UnsupportedFormatError(ValueError):
-    pass
+def log_unsupported_format_error():
+    logger.error("-" * 80)
+    logger.error(" Input file does not appear to be a PE or ELF file.")
+    logger.error(" ")
+    logger.error(
+        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
+    )
+    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+    logger.error("-" * 80)
+
+
+def log_unsupported_os_error():
+    logger.error("-" * 80)
+    logger.error(" Input file does not appear to target a supported OS.")
+    logger.error(" ")
+    logger.error(
+        " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
+    )
+    logger.error("-" * 80)
+
+
+def log_unsupported_arch_error():
+    logger.error("-" * 80)
+    logger.error(" Input file does not appear to target a supported architecture.")
+    logger.error(" ")
+    logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
+    logger.error("-" * 80)
+
+
+def log_unsupported_runtime_error():
+    logger.error("-" * 80)
+    logger.error(" Unsupported runtime or Python interpreter.")
+    logger.error(" ")
+    logger.error(" capa supports running under Python 2.7 using Vivisect for binary analysis.")
+    logger.error(" It can also run within IDA Pro, using either Python 2.7 or 3.5+.")
+    logger.error(" ")
+    logger.error(" If you're seeing this message on the command line, please ensure you're running Python 2.7.")
+    logger.error("-" * 80)

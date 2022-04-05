@@ -2,7 +2,7 @@ import logging
 
 import dnfile
 
-from capa.features.common import ARCH_I386, ARCH_AMD64, Arch, ARCH_ANY, OS, OS_ANY, Format, FORMAT_DOTNET
+from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
