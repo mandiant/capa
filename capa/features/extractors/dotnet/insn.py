@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple, Union, Callable, Generator
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union, Callable, Generator, Any
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -17,25 +17,28 @@ from capa.features.insn import API, Number
 from capa.features.common import String
 
 
+def get_imports(ctx):
+    """ """
+    if "imports_cache" not in ctx:
+        ctx["imports_cache"] = capa.features.extractors.dotnet.helpers.get_imports(ctx["pe"])
+    return ctx["imports_cache"]
+
+
 def extract_insn_api_features(f: CilMethodBody, insn: Instruction) -> Generator[Tuple[API, int], None, None]:
-    """parse instruction API features
+    """parse instruction API features"""
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
 
-    see https://www.ntcore.com/files/dotnetformat.htm
+    name = get_imports(f.ctx).get(insn.operand.value, "")
+    if not name:
+        return
 
-    10 - MemberRef Table
-        Each row represents an imported method.
-            Class (index into the TypeRef, ModuleRef, MethodDef, TypeSpec or TypeDef tables)
-    01 - TypeRef Table
-        Each row represents an imported class, its namespace and the assembly which contains it.
-            TypeName (index into String heap)
-            TypeNamespace (index into String heap)
-    """
-    if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        if isinstance(insn.operand, dnfile.mdtable.MemberRefRow):
-            if isinstance(insn.operand.Class.row, (dnfile.mdtable.TypeRefRow,)):
-                class_name = capa.features.extractors.dotnet.helpers.get_imported_class_name(insn.operand)
-                method_name = insn.operand.Name
-                yield API(f"{class_name}::{method_name}"), insn.offset
+    if "::" in name:
+        yield API(name), insn.offset
+    else:
+        dll, _, symbol = name.rpartition(".")
+        for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+            yield API(name_variant), insn.offset
 
 
 def extract_insn_number_features(f: CilMethodBody, insn: Instruction) -> Generator[Tuple[Number, int], None, None]:
@@ -47,7 +50,8 @@ def extract_insn_number_features(f: CilMethodBody, insn: Instruction) -> Generat
 def extract_insn_string_features(f: CilMethodBody, insn: Instruction) -> Generator[Tuple[String, int], None, None]:
     """parse instruction string features"""
     if insn.is_ldstr():
-        yield String(insn.operand), insn.offset
+        user_string = capa.features.extractors.dotnet.helpers.resolve_token(f.ctx["pe"], insn.operand)
+        yield String(user_string), insn.offset
 
 
 def extract_features(
@@ -68,16 +72,25 @@ INSTRUCTION_HANDLERS = (
 
 def main(args):
     """ """
-    dn = dnfile.dnPE(args.path)
+    pe: dnPE = dnfile.dnPE(args.path)
 
-    features = []
-    for row in dn.net.mdtables.MethodDef:
-        if row.ImplFlags.miIL:
-            try:
-                body = read_dotnet_method_body(dn, row)
-            except MethodBodyFormatError as e:
-                print(e)
-                continue
+    # data structure shared across functions yielded here.
+    # useful for caching analysis relevant across a single workspace.
+    ctx = {}
+    ctx["pe"] = pe
+
+    features: List[Any] = []
+    for row in pe.net.mdtables.MethodDef:
+        if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
+            continue
+
+        try:
+            body: CilMethodBody = get_method_body(pe, row)
+        except MethodBodyFormatError as e:
+            print(e)
+            continue
+
+        setattr(body, "ctx", ctx)
 
         for insn in body.instructions:
             features.extend(list(extract_features(body, insn)))
@@ -91,7 +104,7 @@ if __name__ == "__main__":
     """ """
     import argparse
 
-    from capa.features.extractors.dotnet.helpers import read_dotnet_method_body
+    from capa.features.extractors.dotnet.helpers import get_method_body
 
     parser = argparse.ArgumentParser(prog="parse instruction features from .NET PE")
     parser.add_argument("path", type=str, help="full path to .NET PE")
