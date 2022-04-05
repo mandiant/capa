@@ -962,7 +962,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
-    parser.add_argument("rules", type=str, help="Path to rules")
+    parser.add_argument("rules", type=str, action="append", help="Path to rules")
     parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
     parser.add_argument(
         "--thorough",
