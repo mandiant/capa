@@ -108,8 +108,6 @@ def test_rule_descriptions():
                   - description: and description
                 - and:
                   - description: and description
-                  - offset/x64: 0x50 = offset/x64 description
-                  - offset/x64: 0x30 = offset/x64 description
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
