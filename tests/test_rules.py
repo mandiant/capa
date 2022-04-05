@@ -23,8 +23,6 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
-    BITNESS_X32,
-    BITNESS_X64,
     Arch,
     Format,
     String,
@@ -531,39 +529,6 @@ def test_invalid_number():
         )
 
 
-def test_number_bitness():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - number/x32: 2
-            """
-        )
-    )
-    assert r.evaluate({Number(2, bitness=BITNESS_X32): {1}}) == True
-
-    assert r.evaluate({Number(2): {1}}) == False
-    assert r.evaluate({Number(2, bitness=BITNESS_X64): {1}}) == False
-
-
-def test_number_bitness_symbol():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - number/x32: 2 = some constant
-            """
-        )
-    )
-    assert r.evaluate({Number(2, bitness=BITNESS_X32, description="some constant"): {1}}) == True
-
-
 def test_offset_symbol():
     rule = textwrap.dedent(
         """
@@ -607,39 +572,6 @@ def test_count_offset_symbol():
     assert r.evaluate({Offset(2): {1, 2}}) == False
     assert r.evaluate({Offset(0x100, description="symbol name"): {1}}) == False
     assert r.evaluate({Offset(0x100, description="symbol name"): {1, 2, 3}}) == True
-
-
-def test_offset_bitness():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - offset/x32: 2
-            """
-        )
-    )
-    assert r.evaluate({Offset(2, bitness=BITNESS_X32): {1}}) == True
-
-    assert r.evaluate({Offset(2): {1}}) == False
-    assert r.evaluate({Offset(2, bitness=BITNESS_X64): {1}}) == False
-
-
-def test_offset_bitness_symbol():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - offset/x32: 2 = some constant
-            """
-        )
-    )
-    assert r.evaluate({Offset(2, bitness=BITNESS_X32, description="some constant"): {1}}) == True
 
 
 def test_invalid_offset():
