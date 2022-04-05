@@ -49,7 +49,11 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.path = path
         self.pe = dnfile.dnPE(path)
 
+    def is_dotnet_file(self) -> bool:
+        return bool(self.pe.net)
+
     def get_base_address(self):
+        # TODO token or rva depending on type
         raise NotImplementedError("N/A")
 
     def extract_global_features(self):

@@ -432,7 +432,14 @@ class OS(Feature):
 
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
+FORMAT_DOTNET = "dotnet"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
+# internal only, not to be used in rules
+FORMAT_AUTO = "auto"
+FORMAT_SC32 = "sc32"
+FORMAT_SC64 = "sc64"
+FORMAT_FREEZE = "freeze"
+FORMAT_UNKNOWN = "unknown"
 
 
 class Format(Feature):

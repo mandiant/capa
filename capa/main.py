@@ -45,13 +45,24 @@ import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
-from capa.helpers import use_pe_format, get_file_taste, is_dotnet_file, use_freeze_format, get_format_via_file_extension
+from capa.helpers import get_file_taste, log_unsupported_format_error, get_auto_format
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    FORMAT_AUTO,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_DOTNET,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+)
 from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 BACKEND_VIV = "vivisect"
 BACKEND_SMDA = "smda"
+BACKEND_DOTNET = "dotnet"
 
 E_MISSING_RULES = -10
 E_MISSING_FILE = -11
@@ -271,7 +282,7 @@ def get_format(sample: str) -> str:
         assert isinstance(feature.value, str)
         return feature.value
 
-    return "unknown"
+    return FORMAT_UNKNOWN
 
 
 def is_supported_arch(sample: str) -> bool:
@@ -394,18 +405,19 @@ def get_workspace(path, format_, sigpaths):
     import viv_utils
 
     logger.debug("generating vivisect workspace for: %s", path)
-    if format_ == "auto":
+    # TODO should not be auto at this point, anymore
+    if format_ == FORMAT_AUTO:
         if not is_supported_format(path):
             raise UnsupportedFormatError()
 
         # don't analyze, so that we can add our Flirt function analyzer first.
         vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
-    elif format_ in {"pe", "elf"}:
+    elif format_ in {FORMAT_PE, FORMAT_ELF}:
         vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
-    elif format_ == "sc32":
+    elif format_ == FORMAT_SC32:
         # these are not analyzed nor saved.
         vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="i386", analyze=False)
-    elif format_ == "sc64":
+    elif format_ == FORMAT_SC64:
         vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="amd64", analyze=False)
     else:
         raise ValueError("unexpected format: " + format_)
@@ -422,6 +434,7 @@ class UnsupportedRuntimeError(RuntimeError):
     pass
 
 
+# TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
     path: str, format_: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
 ) -> FeatureExtractor:
@@ -431,7 +444,7 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
-    if format_ not in ("sc32", "sc64"):
+    if format_ not in (FORMAT_SC32, FORMAT_SC64):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
 
@@ -440,6 +453,10 @@ def get_extractor(
 
         if not is_supported_os(path):
             raise UnsupportedOSError()
+
+    if format_ == FORMAT_DOTNET:
+        # TODO return capa.features.extractors.dotnet.extractor.DnFeatureExtractor(...)
+        raise NotImplementedError("DnFeatureExtractor")
 
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
@@ -474,16 +491,17 @@ def get_extractor(
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
 
 
-def get_file_extractors(sample: str, format_: str, taste: bytes) -> List[FeatureExtractor]:
-    file_extractors = list()
-    if use_pe_format(format_, taste):
-        pe_file_extractor = capa.features.extractors.pefile.PefileFeatureExtractor(sample)
-        file_extractors.append(pe_file_extractor)
+def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
+    file_extractors: List[FeatureExtractor] = list()
 
-        if is_dotnet_file(pe_file_extractor.pe):
-            file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
+    if format_ == capa.features.extractors.common.FORMAT_PE:
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
 
-    elif format_ == "elf" or (format_ == "auto" and taste.startswith(b"\x7fELF")):
+        dnfile_extractor = capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample)
+        if dnfile_extractor.is_dotnet_file():
+            file_extractors.append(dnfile_extractor)
+
+    elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     return file_extractors
@@ -726,19 +744,20 @@ def install_common_args(parser, wanted=None):
 
     if "format" in wanted:
         formats = [
-            ("auto", "(default) detect file type automatically"),
-            ("pe", "Windows PE file"),
-            ("elf", "Executable and Linkable Format"),
-            ("sc32", "32-bit shellcode"),
-            ("sc64", "64-bit shellcode"),
-            ("freeze", "features previously frozen by capa"),
+            (FORMAT_AUTO, "(default) detect file type automatically"),
+            (FORMAT_PE, "Windows PE file"),
+            (FORMAT_DOTNET, ".NET PE file"),
+            (FORMAT_ELF, "Executable and Linkable Format"),
+            (FORMAT_SC32, "32-bit shellcode"),
+            (FORMAT_SC64, "64-bit shellcode"),
+            (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
         parser.add_argument(
             "-f",
             "--format",
             choices=[f[0] for f in formats],
-            default="auto",
+            default=FORMAT_AUTO,
             help="select sample format, %s" % format_help,
         )
 
@@ -907,12 +926,20 @@ def main(argv=None):
         return ret
 
     try:
-        taste = get_file_taste(args.sample)
+        _ = get_file_taste(args.sample)
     except IOError as e:
         # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
         # handle the IOError separately and reach into the args
         logger.error("%s", e.args[0])
         return E_MISSING_FILE
+
+    format_ = args.format
+    if format_ == FORMAT_AUTO:
+        try:
+            format_ = get_auto_format(args.sample)
+        except UnsupportedFormatError:
+            log_unsupported_format_error()
+            return E_INVALID_FILE_TYPE
 
     try:
         rules = get_rules(args.rules, disable_progress=args.quiet)
@@ -939,8 +966,11 @@ def main(argv=None):
     # so we can fairly quickly determine if the given file has "pure" file-scope rules
     # that indicate a limitation (like "file is packed based on section names")
     # and avoid doing a full code analysis on difficult/impossible binaries.
+    #
+    # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
+    # various limitations
     try:
-        file_extractors = get_file_extractors(args.sample, args.format, taste)
+        file_extractors = get_file_extractors(args.sample, format_)
     except PEFormatError as e:
         logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
@@ -948,7 +978,6 @@ def main(argv=None):
         logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
 
-    is_dotnet = False
     for file_extractor in file_extractors:
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
@@ -969,21 +998,14 @@ def main(argv=None):
                 return E_FILE_LIMITATION
 
         if isinstance(file_extractor, capa.features.extractors.dnfile_.DnfileFeatureExtractor):
-            is_dotnet = True
+            format_ = FORMAT_DOTNET
 
-    if use_freeze_format(args.format, taste):
+    if format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
-    # TODO
-    # elif is_dotnet:
-    #     # TODO extractor = capa.features.extractors.dotnet.extractor.DnFeatureExtractor(...)
-    #     pass
     else:
-        if args.format == "auto":
-            format_ = get_format_via_file_extension(args.sample, args.format)
-
         try:
-            if use_pe_format(format_, taste):
+            if format_ == FORMAT_PE:
                 sig_paths = get_signatures(args.signatures)
             else:
                 sig_paths = []
@@ -999,14 +1021,7 @@ def main(argv=None):
                 args.sample, format_, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
             )
         except UnsupportedFormatError:
-            logger.error("-" * 80)
-            logger.error(" Input file does not appear to be a PE or ELF file.")
-            logger.error(" ")
-            logger.error(
-                " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
-            )
-            logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-            logger.error("-" * 80)
+            log_unsupported_format_error()
             return E_INVALID_FILE_TYPE
         except UnsupportedArchError:
             logger.error("-" * 80)

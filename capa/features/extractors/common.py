@@ -8,7 +8,8 @@ import pefile
 import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Arch, Format, String
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String
+from capa.features.freeze import is_freeze
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ def extract_format(buf):
         yield Format(FORMAT_PE), 0x0
     elif buf.startswith(b"\x7fELF"):
         yield Format(FORMAT_ELF), 0x0
+    elif is_freeze(buf):
+        yield Format(FORMAT_FREEZE), 0x0
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)

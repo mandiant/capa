@@ -5,17 +5,18 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import os
+import logging
 from typing import NoReturn
 
-from pefile import PE
-
-import capa.features
+import capa.main
+from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 
+
+logger = logging.getLogger("capa")
 
 _hex = hex
 
@@ -45,24 +46,29 @@ def assert_never(value: NoReturn) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 
-def is_dotnet_file(pe: PE) -> bool:
-    image_directory_entry_com_descriptor = 14
-    com_dir = pe.OPTIONAL_HEADER.DATA_DIRECTORY[image_directory_entry_com_descriptor]
-    return not (com_dir.Size == 0 and com_dir.VirtualAddress == 0)
-
-
-def use_pe_format(format_: str, taste: bytes):
-    return format_ == "pe" or (format_ == "auto" and taste.startswith(b"MZ"))
-
-
-def use_freeze_format(format_: str, taste: bytes):
-    return (format_ == "freeze") or (format_ == "auto" and capa.features.freeze.is_freeze(taste))
-
-
-def get_format_via_file_extension(sample: str, format_: str) -> str:
+def get_format_from_extension(sample: str) -> str:
     if sample.endswith(EXTENSIONS_SHELLCODE_32):
-        return "sc32"
+        return FORMAT_SC32
     elif sample.endswith(EXTENSIONS_SHELLCODE_64):
-        return "sc64"
-    else:
-        return format_
+        return FORMAT_SC64
+    return FORMAT_UNKNOWN
+
+
+def log_unsupported_format_error():
+    logger.error("-" * 80)
+    logger.error(" Input file does not appear to be a PE or ELF file.")
+    logger.error(" ")
+    logger.error(
+        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
+    )
+    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+    logger.error("-" * 80)
+
+
+def get_auto_format(path: str) -> str:
+    format_ = capa.main.get_format(path)
+    if format_ == FORMAT_UNKNOWN:
+        format_ = get_format_from_extension(path)
+    if format_ == FORMAT_UNKNOWN:
+        raise capa.main.UnsupportedFormatError()
+    return format_
