@@ -52,12 +52,12 @@ import json
 import zlib
 import logging
 
+import capa.helpers
 import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
-from capa.helpers import hex
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +84,7 @@ def dumps(extractor):
     returns:
       str: the serialized features.
     """
+    hex = capa.helpers.hex
     ret = {
         "version": 1,
         "base address": extractor.get_base_address(),

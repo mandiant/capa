@@ -9,9 +9,9 @@ import os
 import logging
 from typing import NoReturn
 
-import capa.features.extractors.common
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
+from capa.features.extractors.common import extract_format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
@@ -68,7 +68,7 @@ def get_format(sample: str) -> str:
     with open(sample, "rb") as f:
         buf = f.read()
 
-    for feature, _ in capa.features.extractors.common.extract_format(buf):
+    for feature, _ in extract_format(buf):
         assert isinstance(feature.value, str)
         return feature.value
 
