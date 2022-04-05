@@ -62,7 +62,7 @@ def render_meta(ostream, doc):
         ("arch", doc["meta"]["analysis"]["arch"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
-        ("rules", doc["meta"]["analysis"]["rules"]),
+        ("rules", ", ".join(doc["meta"]["analysis"]["rules"])),
         ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
         ("library function count", len(doc["meta"]["analysis"]["library_functions"])),
         (
