@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Generator, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Generator
 from itertools import chain
 
 if TYPE_CHECKING:
@@ -40,12 +40,12 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
         return self.offset
 
 
-def make_token(table: int, rid: int) -> int:
+def generate_dotnet_token(table: int, rid: int) -> int:
     """ """
     return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
 
 
-def resolve_token(pe: dnPE, token: Token) -> Any:
+def resolve_dotnet_token(pe: dnPE, token: Token) -> Any:
     """ """
     if isinstance(token, StringToken):
         return pe.net.user_strings.get_us(token.rid).value
@@ -67,7 +67,7 @@ def resolve_token(pe: dnPE, token: Token) -> Any:
         return InvalidToken(token.value)
 
 
-def get_method_body(pe: dnPE, row: MethodDefRow) -> CilMethodBody:
+def read_dotnet_method_body(pe: dnPE, row: MethodDefRow) -> CilMethodBody:
     """ """
     return CilMethodBody(DnfileMethodBodyReader(pe, row))
 
@@ -99,7 +99,7 @@ def get_class_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
             continue
 
         class_imp = f"{get_class_import_name(row)}::{row.Name}"
-        token = make_token(MetadataTables.MemberRef.value, rid + 1)
+        token = generate_dotnet_token(MetadataTables.MemberRef.value, rid + 1)
 
         yield token, class_imp
 
@@ -132,15 +132,35 @@ def get_native_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
         # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
         # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
         # MethodDef table token to help us later record native import method calls made from CIL
-        member_forwarded_token = make_token(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
+        member_forwarded_token = generate_dotnet_token(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
 
         yield member_forwarded_token, native_imp
 
 
-def get_imports(pe: dnPE) -> Dict[int, str]:
+def get_dotnet_imports(pe: dnPE) -> Dict[int, str]:
     """ """
     imps: Dict[int, str] = {}
 
     for (token, imp) in chain(get_class_imports(pe), get_native_imports(pe)):
         imps[token] = imp
+
     return imps
+
+
+def get_dotnet_methods(pe: dnPE) -> Generator[CilMethodBody, None, None]:
+    """read managed methods from MethodDef table"""
+    if not hasattr(pe.net.mdtables, "MethodDef"):
+        return
+
+    for row in pe.net.mdtables.MethodDef:
+        if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
+            # skip methods that do not have a method body
+            continue
+
+        try:
+            body: CilMethodBody = read_dotnet_method_body(pe, row)
+        except MethodBodyFormatError:
+            # TODO: logging?
+            continue
+
+        yield body
