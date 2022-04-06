@@ -877,6 +877,8 @@ def handle_common_args(args):
         raise RuntimeError("unexpected --color value: " + args.color)
 
     if hasattr(args, "rules"):
+        rules_paths: List[str] = []
+
         if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
             logger.debug(" Using default embedded rules.")
@@ -885,9 +887,9 @@ def handle_common_args(args):
             logger.debug("     https://github.com/mandiant/capa-rules")
             logger.debug("-" * 80)
 
-            rules_path = os.path.join(get_default_root(), "rules")
+            default_rule_path = os.path.join(get_default_root(), "rules")
 
-            if not os.path.exists(rules_path):
+            if not os.path.exists(default_rule_path):
                 # when a users installs capa via pip,
                 # this pulls down just the source code - not the default rules.
                 # i'm not sure the default rules should even be written to the library directory,
@@ -895,14 +897,18 @@ def handle_common_args(args):
                 logger.error("default embedded rules not found! (maybe you installed capa as a library?)")
                 logger.error("provide your own rule set via the `-r` option.")
                 return E_MISSING_RULES
+
+            rules_paths.append(default_rule_path)
         else:
-            rules_path = args.rules
-            if RULES_PATH_DEFAULT_STRING in rules_path:
-                rules_path.remove(RULES_PATH_DEFAULT_STRING)
-            for rule_path in rules_path:
+            rules_paths = args.rules
+
+            if RULES_PATH_DEFAULT_STRING in rules_paths:
+                rules_paths.remove(RULES_PATH_DEFAULT_STRING)
+
+            for rule_path in rules_paths:
                 logger.debug("using rules path: %s", rule_path)
 
-        args.rules = rules_path
+        args.rules = rules_paths
 
     if hasattr(args, "signatures"):
         if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
