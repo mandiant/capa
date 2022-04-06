@@ -141,8 +141,8 @@ def extract_insn_number_features(f, bb, insn):
             #     add eax, 0x10
             #
             # assume 0x10 is also an offset (imagine eax is a pointer).
-            yield Offset(const), insn.va
-            yield OperandOffset(i, const), insn.va
+            yield Offset(const), insn.ea
+            yield OperandOffset(i, const), insn.ea
 
 
 def extract_insn_bytes_features(f, bb, insn):
@@ -224,8 +224,8 @@ def extract_insn_offset_features(f, bb, insn):
             #     lea eax, [ebx + 1]
             #
             # assume 1 is also an offset (imagine ebx is a zero register).
-            yield Number(op_off), insn.va
-            yield OperandNumber(i, op_off), insn.va
+            yield Number(op_off), insn.ea
+            yield OperandNumber(i, op_off), insn.ea
 
 
 def contains_stack_cookie_keywords(s):
