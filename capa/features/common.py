@@ -410,7 +410,9 @@ VALID_BITNESS = (BITNESS_X32, BITNESS_X64)
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64)
+# dotnet
+ARCH_ANY = "any"
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
 
 
 class Arch(Feature):
@@ -422,8 +424,10 @@ class Arch(Feature):
 OS_WINDOWS = "windows"
 OS_LINUX = "linux"
 OS_MACOS = "macos"
+# dotnet
+OS_ANY = "any"
 VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
-VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS})
+VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
 
 
 class OS(Feature):
@@ -434,7 +438,14 @@ class OS(Feature):
 
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF)
+FORMAT_DOTNET = "dotnet"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
+# internal only, not to be used in rules
+FORMAT_AUTO = "auto"
+FORMAT_SC32 = "sc32"
+FORMAT_SC64 = "sc64"
+FORMAT_FREEZE = "freeze"
+FORMAT_UNKNOWN = "unknown"
 
 
 class Format(Feature):

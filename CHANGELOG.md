@@ -4,14 +4,15 @@
 
 ### New Features
 
- - add new scope "instruction" for matching mnemonics and operands #767 @williballenthin
- - add new feature "operand[{0, 1, 2}].number" for matching instruction operand immediate values #767 @williballenthin
- - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
+- add new scope "instruction" for matching mnemonics and operands #767 @williballenthin
+- add new feature "operand[{0, 1, 2}].number" for matching instruction operand immediate values #767 @williballenthin
+- add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
+- main: detect dotnet binaries #955 @mr-tz
 
 ### Breaking Changes
 
-  - instruction scope and operand feature are new and are not backwards compatible with older versions of capa
-  - Python 3.7 is now the minimum supported Python version #866 @williballenthin
+- instruction scope and operand feature are new and are not backwards compatible with older versions of capa
+- Python 3.7 is now the minimum supported Python version #866 @williballenthin
 
 ### New Rules (4)
 
