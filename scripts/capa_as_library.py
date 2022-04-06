@@ -17,7 +17,7 @@ from capa.engine import *
 RULES_PATH = "/tmp/capa/rules/"
 
 # load rules from disk
-rules = capa.rules.RuleSet(capa.main.get_rules(RULES_PATH, disable_progress=True))
+rules = capa.rules.RuleSet(capa.main.get_rules([RULES_PATH], disable_progress=True))
 
 # == Render ddictionary helpers
 def render_meta(doc, ostream):

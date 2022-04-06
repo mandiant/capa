@@ -209,7 +209,17 @@ def render_rules(ostream, doc):
             functions_by_bb[bb] = function
 
     had_match = False
-    for rule in rutils.capability_rules(doc):
+
+    for (_, _, rule) in sorted(
+        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc["rules"].values())
+    ):
+        # default scope hides things like lib rules, malware-category rules, etc.
+        # but in vverbose mode, we really want to show everything.
+        #
+        # still ignore subscope rules because they're stitched into the final document.
+        if rule["meta"].get("capa/subscope"):
+            continue
+
         count = len(rule["matches"])
         if count == 1:
             capability = rutils.bold(rule["meta"]["name"])

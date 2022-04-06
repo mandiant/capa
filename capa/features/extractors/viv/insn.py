@@ -18,28 +18,12 @@ import envi.archs.amd64.disasm
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import (
-    BITNESS_X32,
-    BITNESS_X64,
-    MAX_BYTES_FEATURE_SIZE,
-    THUNK_CHAIN_DEPTH_DELTA,
-    Bytes,
-    String,
-    Characteristic,
-)
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
-
-
-def get_bitness(vw):
-    bitness = vw.getMeta("Architecture")
-    if bitness == "i386":
-        return BITNESS_X32
-    elif bitness == "amd64":
-        return BITNESS_X64
 
 
 def interface_extract_instruction_XXX(f, bb, insn):
@@ -553,7 +537,6 @@ def extract_op_number_features(f, bb, insn, i, oper):
         return
 
     yield Number(v), insn.va
-    yield Number(v, bitness=get_bitness(f.vw)), insn.va
     yield OperandNumber(i, v), insn.va
 
 
@@ -582,7 +565,6 @@ def extract_op_offset_features(f, bb, insn, i, oper):
         v = oper.disp
 
         yield Offset(v), insn.va
-        yield Offset(v, bitness=get_bitness(f.vw)), insn.va
         yield OperandOffset(i, v), insn.va
 
     # like: [esi + ecx + 16384]
@@ -594,7 +576,6 @@ def extract_op_offset_features(f, bb, insn, i, oper):
         v = oper.disp
 
         yield Offset(v), insn.va
-        yield Offset(v, bitness=get_bitness(f.vw)), insn.va
         yield OperandOffset(i, v), insn.va
 
 

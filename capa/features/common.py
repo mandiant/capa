@@ -98,33 +98,23 @@ class Result:
 
 
 class Feature(abc.ABC):
-    def __init__(self, value: Union[str, int, bytes], bitness=None, description=None):
+    def __init__(self, value: Union[str, int, bytes], description=None):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
-          bitness (str): one of the VALID_BITNESS values, or None.
-            When None, then the feature applies to any bitness.
-            Modifies the feature name from `feature` to `feature/bitness`, like `offset/x32`.
           description (str): a human-readable description that explains the feature value.
         """
         super(Feature, self).__init__()
-
-        if bitness is not None:
-            if bitness not in VALID_BITNESS:
-                raise ValueError("bitness '%s' must be one of %s" % (bitness, VALID_BITNESS))
-            self.name = self.__class__.__name__.lower() + "/" + bitness
-        else:
-            self.name = self.__class__.__name__.lower()
+        self.name = self.__class__.__name__.lower()
 
         self.value = value
-        self.bitness = bitness
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, self.value, self.bitness))
+        return hash((self.name, self.value))
 
     def __eq__(self, other):
-        return self.name == other.name and self.value == other.value and self.bitness == other.bitness
+        return self.name == other.name and self.value == other.value
 
     def get_value_str(self) -> str:
         """
@@ -153,10 +143,7 @@ class Feature(abc.ABC):
         return Result(self in ctx, self, [], locations=ctx.get(self, []))
 
     def freeze_serialize(self):
-        if self.bitness is not None:
-            return (self.__class__.__name__, [self.value, {"bitness": self.bitness}])
-        else:
-            return (self.__class__.__name__, [self.value])
+        return (self.__class__.__name__, [self.value])
 
     @classmethod
     def freeze_deserialize(cls, args):
@@ -398,13 +385,6 @@ class Bytes(Feature):
     @classmethod
     def freeze_deserialize(cls, args):
         return cls(*[codecs.decode(x, "hex") for x in args])
-
-
-# identifiers for supported bitness names that tweak a feature
-# for example, offset/x32
-BITNESS_X32 = "x32"
-BITNESS_X64 = "x64"
-VALID_BITNESS = (BITNESS_X32, BITNESS_X64)
 
 
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types

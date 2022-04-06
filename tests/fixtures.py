@@ -22,19 +22,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.common import (
-    OS,
-    OS_LINUX,
-    ARCH_I386,
-    FORMAT_PE,
-    ARCH_AMD64,
-    FORMAT_ELF,
-    OS_WINDOWS,
-    BITNESS_X32,
-    BITNESS_X64,
-    Arch,
-    Format,
-)
+from capa.features.common import OS, OS_LINUX, ARCH_I386, FORMAT_PE, ARCH_AMD64, FORMAT_ELF, OS_WINDOWS, Arch, Format
 
 CD = os.path.dirname(__file__)
 
@@ -431,10 +419,6 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/number: stack adjustments
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
-        # insn/number: bitness flavors
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF, bitness=BITNESS_X64), False),
         # insn/number: negative
         ("mimikatz", "function=0x401553", capa.features.insn.Number(0xFFFFFFFF), True),
         ("mimikatz", "function=0x43e543", capa.features.insn.Number(0xFFFFFFF0), True),
@@ -450,10 +434,6 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/offset: negative
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-        # insn/offset: bitness flavors
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X32), True),
-        ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x0, bitness=BITNESS_X64), False),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),

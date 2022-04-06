@@ -22,16 +22,16 @@ class API(Feature):
 
 
 class Number(Feature):
-    def __init__(self, value: int, bitness=None, description=None):
-        super(Number, self).__init__(value, bitness=bitness, description=description)
+    def __init__(self, value: int, description=None):
+        super(Number, self).__init__(value, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)
 
 
 class Offset(Feature):
-    def __init__(self, value: int, bitness=None, description=None):
-        super(Offset, self).__init__(value, bitness=bitness, description=description)
+    def __init__(self, value: int, description=None):
+        super(Offset, self).__init__(value, description=description)
 
     def get_value_str(self):
         return capa.render.utils.hex(self.value)
@@ -42,7 +42,11 @@ class Mnemonic(Feature):
         super(Mnemonic, self).__init__(value, description=description)
 
 
-MAX_OPERAND_INDEX = 3
+# max number of operands to consider for a given instrucion.
+# since we only support Intel and .NET, we can assume this is 3
+# which covers cases up to e.g. "vinserti128 ymm0,ymm0,ymm5,1"
+MAX_OPERAND_COUNT = 4
+MAX_OPERAND_INDEX = MAX_OPERAND_COUNT - 1
 
 
 class _Operand(Feature, abc.ABC):
@@ -53,7 +57,7 @@ class _Operand(Feature, abc.ABC):
         self.index = index
 
     def __hash__(self):
-        return hash((self.name, self.value, self.bitness))
+        return hash((self.name, self.value))
 
     def __eq__(self, other):
         return super().__eq__(other) and self.index == other.index
@@ -64,7 +68,7 @@ class _Operand(Feature, abc.ABC):
 
 class OperandNumber(_Operand):
     # cached names so we don't do extra string formatting every ctor
-    NAMES = ["operand[%d].number" % i for i in range(MAX_OPERAND_INDEX)]
+    NAMES = ["operand[%d].number" % i for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].number: 0x12
     def __init__(self, index: int, value: int, description=None):
@@ -78,7 +82,7 @@ class OperandNumber(_Operand):
 
 class OperandOffset(_Operand):
     # cached names so we don't do extra string formatting every ctor
-    NAMES = ["operand[%d].offset" % i for i in range(MAX_OPERAND_INDEX)]
+    NAMES = ["operand[%d].offset" % i for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].offset: 0x12
     def __init__(self, index: int, value: int, description=None):
