@@ -22,14 +22,16 @@ def test_dnfile_features(sample, scope, feature, expected):
 
 
 @parametrize(
-    "function,expected",
+    "extractor,function,expected",
     [
-        ("is_dotnet_file", True),
-        ("get_entry_point", 0x6000007),
-        ("get_runtime_version", (2, 5)),
-        ("get_meta_version_string", "v2.0.50727"),
+        ("b9f5b_dnfile_extractor", "is_dotnet_file", True),
+        ("b9f5b_dnfile_extractor", "is_mixed_mode", False),
+        ("mixed_mode_x86_dnfile_extractor", "is_mixed_mode", True),
+        ("b9f5b_dnfile_extractor", "get_entry_point", 0x6000007),
+        ("b9f5b_dnfile_extractor", "get_runtime_version", (2, 5)),
+        ("b9f5b_dnfile_extractor", "get_meta_version_string", "v2.0.50727"),
     ],
 )
-def test_dnfile_extractor(b9f5b_extractor, function, expected):
-    func = getattr(b9f5b_extractor, function)
+def test_dnfile_extractor(request, extractor, function, expected):
+    func = getattr(request.getfixturevalue(extractor), function)
     assert func() == expected
