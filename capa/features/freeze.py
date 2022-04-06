@@ -59,6 +59,7 @@ import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
+from capa.features.common import Feature
 
 logger = logging.getLogger(__name__)
 

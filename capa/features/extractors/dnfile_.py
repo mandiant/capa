@@ -2,6 +2,7 @@ import logging
 from typing import Tuple, Iterator
 
 import dnfile
+import pefile
 
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -18,11 +19,11 @@ def extract_file_os(**kwargs):
 
 
 def extract_file_arch(pe, **kwargs):
-    # TODO differences for versions < 4.5?
-    # via https://stackoverflow.com/a/23614024/10548020
-    if pe.net.Flags.CLR_32BITREQUIRED and pe.net.Flags.CLR_PREFER_32BIT:
+    # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
+    # .NET 4.5 added option: any CPU, 32-bit preferred
+    if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
         yield Arch(ARCH_I386), 0x0
-    elif not pe.net.Flags.CLR_32BITREQUIRED and not pe.net.Flags.CLR_PREFER_32BIT:
+    elif not pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
         yield Arch(ARCH_AMD64), 0x0
     else:
         yield Arch(ARCH_ANY), 0x0
@@ -63,6 +64,9 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
     def get_base_address(self) -> int:
+        return 0x0
+
+    def get_entry_point(self) -> int:
         return self.pe.net.struct.EntryPointTokenOrRva
 
     def extract_global_features(self):
@@ -78,7 +82,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
 
     def get_meta_version_string(self) -> str:
-        return self.pe.net.metadata.struct.Version.decode("utf-8")
+        return self.pe.net.metadata.struct.Version.rstrip(b"\x00").decode("utf-8")
 
     def get_functions(self):
         raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
