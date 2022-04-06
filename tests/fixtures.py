@@ -495,8 +495,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
         ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
         # yes, this is also a number (imagine edx is zero):
-        #    .text:00471406 8D 72 01                lea     esi, [edx+1]
-        ("mimikatz", "function=0x47136D,bb=0x471406,insn=0x471406", capa.features.insn.Number(0x1), True),
+        #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
+        ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
