@@ -218,7 +218,7 @@ def extract_insn_offset_features(f, bb, insn):
         yield Offset(op_off), insn.ea
         yield OperandOffset(i, op_off), insn.ea
 
-        if i == 1 and op.type == idaapi.o_phrase:
+        if insn.itype == idaapi.NN_lea and i == 1 and op.type == idaapi.o_displ:
             # for pattern like:
             #
             #     lea eax, [ebx + 1]

@@ -576,7 +576,7 @@ def extract_op_offset_features(f, bb, insn, i, oper):
         yield Offset(v), insn.va
         yield OperandOffset(i, v), insn.va
 
-        if i == 1 and not f.vw.probeMemory(v, 1, envi.memory.MM_READ):
+        if insn.mnem == "lea" and i == 1 and not f.vw.probeMemory(v, 1, envi.memory.MM_READ):
             # for pattern like:
             #
             #     lea eax, [ebx + 1]
