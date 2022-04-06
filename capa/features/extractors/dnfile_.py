@@ -1,8 +1,9 @@
 import logging
+from typing import Tuple, Iterator
 
 import dnfile
 
-from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format
+from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -27,20 +28,9 @@ def extract_file_arch(pe, **kwargs):
         yield Arch(ARCH_ANY), 0x0
 
 
-def extract_file_features(pe, buf):
-    """
-    extract file features from given workspace
-
-    args:
-      pe (pefile.PE): the parsed PE
-      buf: the raw sample bytes
-
-    yields:
-      Tuple[Feature, VA]: a feature and its location.
-    """
-
+def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe, buf=buf):
+        for feature, va in file_handler(pe=pe):
             yield feature, va
 
 
@@ -54,19 +44,9 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe, buf):
-    """
-    extract global features from given workspace
-
-    args:
-      pe (pefile.PE): the parsed PE
-      buf: the raw sample bytes
-
-    yields:
-      Tuple[Feature, VA]: a feature and its location.
-    """
+def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe, buf=buf):
+        for feature, va in handler(pe=pe):
             yield feature, va
 
 
@@ -82,23 +62,23 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
-    def is_dotnet_file(self) -> bool:
-        return bool(self.pe.net)
-
     def get_base_address(self) -> int:
         return self.pe.net.struct.EntryPointTokenOrRva
 
     def extract_global_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
-
-        yield from extract_global_features(self.pe, buf)
+        yield from extract_global_features(self.pe)
 
     def extract_file_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        yield from extract_file_features(self.pe)
 
-        yield from extract_file_features(self.pe, buf)
+    def is_dotnet_file(self) -> bool:
+        return bool(self.pe.net)
+
+    def get_runtime_version(self) -> Tuple[int, int]:
+        return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
+
+    def get_meta_version_string(self) -> str:
+        return self.pe.net.metadata.struct.Version.decode("utf-8")
 
     def get_functions(self):
         raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
