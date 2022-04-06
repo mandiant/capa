@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, dotnet-main ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, dotnet-main ]
 
 # save workspaces to speed up testing
 env:
