@@ -62,7 +62,7 @@ def render_meta(ostream, doc):
         ("arch", doc["meta"]["analysis"]["arch"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
-        ("rules", doc["meta"]["analysis"]["rules"][0]),
+        ("rules", "\n".join(doc["meta"]["analysis"]["rules"])),
         ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
         ("library function count", len(doc["meta"]["analysis"]["library_functions"])),
         (
@@ -71,19 +71,6 @@ def render_meta(ostream, doc):
             + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values()),
         ),
     ]
-
-    # when there are multiple rule paths,
-    # display each one on its own line, like:
-    #
-    #     base address            0x10000000
-    #     rules                   /path/1
-    #                             /path/2
-    #     function count          2
-    if len(doc["meta"]["analysis"]["rules"]) > 1:
-        idx = rows.index(("rules", doc["meta"]["analysis"]["rules"][0])) + 1
-        for rule in doc["meta"]["analysis"]["rules"][1:]:
-            rows.insert(idx, ("", rule))
-            idx += 1
 
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
