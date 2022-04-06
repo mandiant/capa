@@ -162,6 +162,14 @@ def extract_basic_block_features(extractor, f, bb):
     return features
 
 
+# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+def extract_instruction_features(extractor, f, bb, insn):
+    features = collections.defaultdict(set)
+    for feature, va in extractor.extract_insn_features(f, bb, insn):
+        features[feature].add(va)
+    return features
+
+
 # note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
@@ -292,6 +300,13 @@ def get_basic_block(extractor, f, va):
     raise ValueError("basic block not found")
 
 
+def get_instruction(extractor, f, bb, va):
+    for insn in extractor.get_instructions(f, bb):
+        if int(insn) == va:
+            return insn
+    raise ValueError("instruction not found")
+
+
 def resolve_scope(scope):
     if scope == "file":
 
@@ -303,8 +318,32 @@ def resolve_scope(scope):
 
         inner_file.__name__ = scope
         return inner_file
+    elif "insn=" in scope:
+        # like `function=0x401000,bb=0x40100A,insn=0x40100A`
+        assert "function=" in scope
+        assert "bb=" in scope
+        assert "insn=" in scope
+        fspec, _, spec = scope.partition(",")
+        bbspec, _, ispec = spec.partition(",")
+        fva = int(fspec.partition("=")[2], 0x10)
+        bbva = int(bbspec.partition("=")[2], 0x10)
+        iva = int(ispec.partition("=")[2], 0x10)
+
+        def inner_insn(extractor):
+            f = get_function(extractor, fva)
+            bb = get_basic_block(extractor, f, bbva)
+            insn = get_instruction(extractor, f, bb, iva)
+            features = extract_instruction_features(extractor, f, bb, insn)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_insn.__name__ = scope
+        return inner_insn
     elif "bb=" in scope:
         # like `function=0x401000,bb=0x40100A`
+        assert "function=" in scope
+        assert "bb=" in scope
         fspec, _, bbspec = scope.partition(",")
         fva = int(fspec.partition("=")[2], 0x10)
         bbva = int(bbspec.partition("=")[2], 0x10)
