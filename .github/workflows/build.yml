@@ -36,6 +36,8 @@ jobs:
       - if: matrix.os == 'ubuntu-18.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Install PyInstaller
+        run: pip install --upgrade pip setuptools
+      - name: Install PyInstaller
         run: pip install 'pyinstaller==4.2'
       - name: Install capa
         run: pip install -e .
