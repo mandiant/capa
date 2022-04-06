@@ -52,6 +52,9 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
       - CreateFileA
       - CreateFile
     """
+    # normalize dll name
+    dll = dll.lower()
+
     # kernel32.CreateFileA
     yield "%s.%s" % (dll, symbol)
 

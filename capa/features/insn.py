@@ -12,11 +12,6 @@ from capa.features.common import Feature
 
 class API(Feature):
     def __init__(self, name: str, description=None):
-        # Downcase library name if given
-        if "." in name:
-            modname, _, impname = name.rpartition(".")
-            name = modname.lower() + "." + impname
-
         super(API, self).__init__(name, description=description)
 
 
