@@ -4,7 +4,8 @@ on:
   push:
     branches: [ master, dotnet-main ]
   pull_request:
-    branches: [ master, dotnet-main ]
+    # TODO remove dotnet-main-2
+    branches: [ master, dotnet-main, dotnet-main-2 ]
 
 # save workspaces to speed up testing
 env:

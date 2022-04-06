@@ -68,6 +68,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
+        #  True: native EP: Token
         #  False: managed EP: RVA
         return self.pe.net.struct.EntryPointTokenOrRva
 

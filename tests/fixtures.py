@@ -31,8 +31,6 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
-    BITNESS_X32,
-    BITNESS_X64,
     FORMAT_DOTNET,
     Arch,
     Format,
