@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import abc
 
 import capa.render.utils
 from capa.features.common import Feature
@@ -34,3 +35,51 @@ class Offset(Feature):
 class Mnemonic(Feature):
     def __init__(self, value: str, description=None):
         super(Mnemonic, self).__init__(value, description=description)
+
+
+MAX_OPERAND_INDEX = 3
+
+
+class _Operand(Feature, abc.ABC):
+    # superclass: don't use directly
+    # subclasses should set self.name and provide the value string formatter
+    def __init__(self, index: int, value: int, description=None):
+        super(_Operand, self).__init__(value, description=description)
+        self.index = index
+
+    def __hash__(self):
+        return hash((self.name, self.value, self.bitness))
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.index == other.index
+
+    def freeze_serialize(self):
+        return (self.__class__.__name__, [self.index, self.value])
+
+
+class OperandNumber(_Operand):
+    # cached names so we don't do extra string formatting every ctor
+    NAMES = ["operand[%d].number" % i for i in range(MAX_OPERAND_INDEX)]
+
+    # operand[i].number: 0x12
+    def __init__(self, index: int, value: int, description=None):
+        super(OperandNumber, self).__init__(index, value, description=description)
+        self.name = self.NAMES[index]
+
+    def get_value_str(self) -> str:
+        assert isinstance(self.value, int)
+        return capa.render.utils.hex(self.value)
+
+
+class OperandOffset(_Operand):
+    # cached names so we don't do extra string formatting every ctor
+    NAMES = ["operand[%d].offset" % i for i in range(MAX_OPERAND_INDEX)]
+
+    # operand[i].offset: 0x12
+    def __init__(self, index: int, value: int, description=None):
+        super(OperandOffset, self).__init__(index, value, description=description)
+        self.name = self.NAMES[index]
+
+    def get_value_str(self) -> str:
+        assert isinstance(self.value, int)
+        return capa.render.utils.hex(self.value)

@@ -218,7 +218,7 @@ def extract_insn_offset_features(f, bb, insn):
     #     mov eax, [esi + ecx + 16384]
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
-        if not "ptr" in operand:
+        if "ptr" not in operand:
             continue
         if "esp" in operand or "ebp" in operand or "rbp" in operand:
             continue

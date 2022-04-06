@@ -17,7 +17,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import (
     BITNESS_X32,
     BITNESS_X64,
@@ -171,37 +171,6 @@ def extract_insn_api_features(f, bb, insn):
                 yield API(name), insn.va
 
 
-def extract_insn_number_features(f, bb, insn):
-    """parse number features from the given instruction."""
-    # example:
-    #
-    #     push    3136B0h         ; dwControlCode
-    for oper in insn.opers:
-        # this is for both x32 and x64
-        if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
-            continue
-
-        if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-            v = oper.getOperValue(oper)
-        else:
-            v = oper.getOperAddr(oper)
-
-        if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
-            # this is a valid address
-            # assume its not also a constant.
-            continue
-
-        if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:
-            # skip things like:
-            #
-            #    .text:00401140                 call    sub_407E2B
-            #    .text:00401145                 add     esp, 0Ch
-            return
-
-        yield Number(v), insn.va
-        yield Number(v, bitness=get_bitness(f.vw)), insn.va
-
-
 def derefs(vw, p):
     """
     recursively follow the given pointer, yielding the valid memory addresses along the way.
@@ -338,75 +307,6 @@ def read_string(vw, offset: int) -> str:
             return read_memory(vw, offset, ulen).decode("utf-16")
 
     raise ValueError("not a string", offset)
-
-
-def extract_insn_string_features(f, bb, insn):
-    """parse string features from the given instruction."""
-    # example:
-    #
-    #     push    offset aAcr     ; "ACR  > "
-
-    for oper in insn.opers:
-        if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
-            v = oper.getOperValue(oper)
-        elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
-            # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
-            v = oper.imm
-        elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
-            # like 0x401000 in `mov eax, 0x401000[2 * ebx]`
-            v = oper.imm
-        elif isinstance(oper, envi.archs.amd64.disasm.Amd64RipRelOper):
-            v = oper.getOperAddr(insn)
-        else:
-            continue
-
-        for v in derefs(f.vw, v):
-            try:
-                s = read_string(f.vw, v)
-            except ValueError:
-                continue
-            else:
-                yield String(s.rstrip("\x00")), insn.va
-
-
-def extract_insn_offset_features(f, bb, insn):
-    """parse structure offset features from the given instruction."""
-    # example:
-    #
-    #     .text:0040112F    cmp     [esi+4], ebx
-    for oper in insn.opers:
-
-        # this is for both x32 and x64
-        # like [esi + 4]
-        #       reg   ^
-        #             disp
-        if isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
-            if oper.reg == envi.archs.i386.regs.REG_ESP:
-                continue
-
-            if oper.reg == envi.archs.i386.regs.REG_EBP:
-                continue
-
-            # TODO: do x64 support for real.
-            if oper.reg == envi.archs.amd64.regs.REG_RBP:
-                continue
-
-            # viv already decodes offsets as signed
-            v = oper.disp
-
-            yield Offset(v), insn.va
-            yield Offset(v, bitness=get_bitness(f.vw)), insn.va
-
-        # like: [esi + ecx + 16384]
-        #        reg   ^     ^
-        #              index ^
-        #                    disp
-        elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
-            # viv already decodes offsets as signed
-            v = oper.disp
-
-            yield Offset(v), insn.va
-            yield Offset(v, bitness=get_bitness(f.vw)), insn.va
 
 
 def is_security_cookie(f, bb, insn) -> bool:
@@ -625,6 +525,121 @@ def extract_function_indirect_call_characteristic_features(f, bb, insn):
         yield Characteristic("indirect call"), insn.va
 
 
+def extract_op_number_features(f, bb, insn, i, oper):
+    """parse number features from the given operand."""
+    # example:
+    #
+    #     push    3136B0h         ; dwControlCode
+
+    # this is for both x32 and x64
+    if not isinstance(oper, (envi.archs.i386.disasm.i386ImmOper, envi.archs.i386.disasm.i386ImmMemOper)):
+        return
+
+    if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
+        v = oper.getOperValue(oper)
+    else:
+        v = oper.getOperAddr(oper)
+
+    if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
+        # this is a valid address
+        # assume its not also a constant.
+        return
+
+    if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:
+        # skip things like:
+        #
+        #    .text:00401140                 call    sub_407E2B
+        #    .text:00401145                 add     esp, 0Ch
+        return
+
+    yield Number(v), insn.va
+    yield Number(v, bitness=get_bitness(f.vw)), insn.va
+    yield OperandNumber(i, v), insn.va
+
+
+def extract_op_offset_features(f, bb, insn, i, oper):
+    """parse structure offset features from the given operand."""
+    # example:
+    #
+    #     .text:0040112F    cmp     [esi+4], ebx
+
+    # this is for both x32 and x64
+    # like [esi + 4]
+    #       reg   ^
+    #             disp
+    if isinstance(oper, envi.archs.i386.disasm.i386RegMemOper):
+        if oper.reg == envi.archs.i386.regs.REG_ESP:
+            return
+
+        if oper.reg == envi.archs.i386.regs.REG_EBP:
+            return
+
+        # TODO: do x64 support for real.
+        if oper.reg == envi.archs.amd64.regs.REG_RBP:
+            return
+
+        # viv already decodes offsets as signed
+        v = oper.disp
+
+        yield Offset(v), insn.va
+        yield Offset(v, bitness=get_bitness(f.vw)), insn.va
+        yield OperandOffset(i, v), insn.va
+
+    # like: [esi + ecx + 16384]
+    #        reg   ^     ^
+    #              index ^
+    #                    disp
+    elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
+        # viv already decodes offsets as signed
+        v = oper.disp
+
+        yield Offset(v), insn.va
+        yield Offset(v, bitness=get_bitness(f.vw)), insn.va
+        yield OperandOffset(i, v), insn.va
+
+
+def extract_op_string_features(f, bb, insn, i, oper):
+    """parse string features from the given operand."""
+    # example:
+    #
+    #     push    offset aAcr     ; "ACR  > "
+
+    if isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
+        v = oper.getOperValue(oper)
+    elif isinstance(oper, envi.archs.i386.disasm.i386ImmMemOper):
+        # like 0x10056CB4 in `lea eax, dword [0x10056CB4]`
+        v = oper.imm
+    elif isinstance(oper, envi.archs.i386.disasm.i386SibOper):
+        # like 0x401000 in `mov eax, 0x401000[2 * ebx]`
+        v = oper.imm
+    elif isinstance(oper, envi.archs.amd64.disasm.Amd64RipRelOper):
+        v = oper.getOperAddr(insn)
+    else:
+        return
+
+    for v in derefs(f.vw, v):
+        try:
+            s = read_string(f.vw, v)
+        except ValueError:
+            continue
+        else:
+            yield String(s.rstrip("\x00")), insn.va
+
+
+def extract_operand_features(f, bb, insn):
+    for i, oper in enumerate(insn.opers):
+        for op_handler in OPERAND_HANDLERS:
+            for feature, va in op_handler(f, bb, insn, i, oper):
+                yield feature, va
+
+
+OPERAND_HANDLERS = (
+    extract_op_number_features,
+    extract_op_offset_features,
+    extract_op_string_features,
+)
+
+
 def extract_features(f, bb, insn):
     """
     extract features from the given insn.
@@ -644,10 +659,7 @@ def extract_features(f, bb, insn):
 
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
-    extract_insn_number_features,
-    extract_insn_string_features,
     extract_insn_bytes_features,
-    extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
     extract_insn_mnemonic_features,
     extract_insn_obfs_call_plus_5_characteristic_features,
@@ -656,4 +668,5 @@ INSTRUCTION_HANDLERS = (
     extract_insn_segment_access_features,
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
+    extract_operand_features,
 )

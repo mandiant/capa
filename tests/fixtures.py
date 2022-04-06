@@ -24,6 +24,7 @@ import capa.features.common
 import capa.features.basicblock
 from capa.features.common import (
     OS,
+    OS_ANY,
     OS_LINUX,
     ARCH_I386,
     FORMAT_PE,
@@ -32,6 +33,7 @@ from capa.features.common import (
     OS_WINDOWS,
     BITNESS_X32,
     BITNESS_X64,
+    FORMAT_DOTNET,
     Arch,
     Format,
 )
@@ -134,6 +136,12 @@ def get_pefile_extractor(path):
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 
+def get_dnfile_extractor(path):
+    import capa.features.extractors.dnfile_
+
+    return capa.features.extractors.dnfile_.DnfileFeatureExtractor(path)
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -224,6 +232,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
     elif name.startswith("946a9"):
         return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
+    elif name.startswith("b9f5b"):
+        return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -276,7 +286,9 @@ def get_sample_md5_by_name(name):
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"
     elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940.dll_"
+        return "946a99f36a46d335dec080d9a4371940"
+    elif name.startswith("b9f5b"):
+        return "b9f5bd514485fb06da39beff051b9fdc"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -418,6 +430,12 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("xor"), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("in"), False),
         ("mimikatz", "function=0x40105D", capa.features.insn.Mnemonic("out"), False),
+        # insn/operand.number
+        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandNumber(1, 0xFF), True),
+        ("mimikatz", "function=0x40105D,bb=0x401073", capa.features.insn.OperandNumber(0, 0xFF), False),
+        # insn/operand.offset
+        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(0, 4), True),
+        ("mimikatz", "function=0x40105D,bb=0x4010B0", capa.features.insn.OperandOffset(1, 4), False),
         # insn/number
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xFF), True),
         ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x3136B0), True),
@@ -577,6 +595,18 @@ FEATURE_PRESENCE_TESTS = sorted(
     key=lambda t: (t[0], t[1]),
 )
 
+FEATURE_PRESENCE_TESTS_DOTNET = sorted(
+    [
+        ("b9f5b", "file", Arch(ARCH_I386), True),
+        ("b9f5b", "file", Arch(ARCH_AMD64), False),
+        ("b9f5b", "file", OS(OS_ANY), True),
+        ("b9f5b", "file", Format(FORMAT_DOTNET), True),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
 FEATURE_PRESENCE_TESTS_IDA = [
     # file/imports
     # IDA can recover more names of APIs imported by ordinal
@@ -689,3 +719,8 @@ def al_khaser_x86_extractor():
 @pytest.fixture
 def pingtaest_extractor():
     return get_extractor(get_data_path_by_name("pingtaest"))
+
+
+@pytest.fixture
+def b9f5b_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("b9f5b"))

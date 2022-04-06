@@ -235,8 +235,8 @@ class Subscope(Statement):
     the engine should preprocess rules to extract subscope statements into their own rules.
     """
 
-    def __init__(self, scope, child):
-        super(Subscope, self).__init__()
+    def __init__(self, scope, child, description=None):
+        super(Subscope, self).__init__(description=description)
         self.scope = scope
         self.child = child
 

@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import copy
 
-import capa.rules
 import capa.engine
 import capa.render.utils
 import capa.features.common

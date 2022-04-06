@@ -326,6 +326,62 @@ def test_count_bb(z9324d_extractor):
     assert "count bb" in capabilities
 
 
+def test_instruction_scope(z9324d_extractor):
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: push 1000
+                        namespace: test
+                        scope: instruction
+                      features:
+                        - and:
+                          - mnemonic: push
+                          - number: 1000
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    assert "push 1000" in capabilities
+    assert 0x4071A4 in set(map(lambda result: result[0], capabilities["push 1000"]))
+
+
+def test_instruction_subscope(z9324d_extractor):
+    # .text:00406F60                         sub_406F60 proc near
+    # [...]
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: push 1000 on i386
+                        namespace: test
+                        scope: function
+                      features:
+                        - and:
+                          - arch: i386
+                          - instruction:
+                            - mnemonic: push
+                            - number: 1000
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    assert "push 1000 on i386" in capabilities
+    assert 0x406F60 in set(map(lambda result: result[0], capabilities["push 1000 on i386"]))
+
+
 def test_fix262(pma16_01_extractor, capsys):
     # tests rules can be loaded successfully and all output modes
     path = pma16_01_extractor.path
