@@ -196,7 +196,6 @@ def render_rules(ostream, doc):
         author     michael.hunhoff@mandiant.com
         scope      function
         mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
-        examples   Practical Malware Analysis Lab 16-02.exe_:0x401020
         function @ 0x10004706
           and:
             api: kernel32.SetLastError @ 0x100047C2
@@ -232,6 +231,13 @@ def render_rules(ostream, doc):
         rows = []
         for key in capa.rules.META_KEYS:
             if key == "name" or key not in rule["meta"]:
+                continue
+
+            if key == "examples":
+                # I can't think of a reason that an analyst would pivot to the concrete example
+                # directly from the capa output.
+                # the more likely flow is to review the rule and go from there.
+                # so, don't make the output messy by showing the examples.
                 continue
 
             v = rule["meta"][key]
