@@ -221,7 +221,12 @@ def extract_insn_offset_features(f, bb, insn):
         if (
             insn.itype == idaapi.NN_lea
             and i == 1
-            and op.type == idaapi.o_phrase
+            # o_displ is used for both:
+            #   [eax+1]
+            #   [eax+ebx+2]
+            and op.type == idaapi.o_displ
+            # but the SIB is only present for [eax+ebx+2]
+            # which we don't want
             and not capa.features.extractors.ida.helpers.has_sib(op)
         ):
             # for pattern like:
