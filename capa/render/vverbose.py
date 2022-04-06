@@ -39,7 +39,13 @@ def render_locations(ostream, match):
 def render_statement(ostream, match, statement, indent=0):
     ostream.write("  " * indent)
     if statement["type"] in ("and", "or", "optional", "not", "subscope"):
-        ostream.write(statement["type"])
+        if statement["type"] == "subscope":
+            # emit `basic block:`
+            # rather than `subscope:`
+            ostream.write(statement["subscope"])
+        else:
+            # emit `and:`
+            ostream.write(statement["type"])
         ostream.write(":")
         if statement.get("description"):
             ostream.write(" = %s" % statement["description"])
