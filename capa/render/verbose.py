@@ -72,6 +72,13 @@ def render_meta(ostream, doc):
         ),
     ]
 
+    # when there are multiple rule paths,
+    # display each one on its own line, like:
+    #
+    #     base address            0x10000000
+    #     rules                   /path/1
+    #                             /path/2
+    #     function count          2
     if len(doc["meta"]["analysis"]["rules"]) > 1:
         idx = rows.index(("rules", doc["meta"]["analysis"]["rules"][0])) + 1
         for rule in doc["meta"]["analysis"]["rules"][1:]:
