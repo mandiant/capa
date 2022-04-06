@@ -63,7 +63,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
 )
-from capa.features.extractors.base_extractor import FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"

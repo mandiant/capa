@@ -22,7 +22,21 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.common import OS, OS_LINUX, ARCH_I386, FORMAT_PE, ARCH_AMD64, FORMAT_ELF, OS_WINDOWS, Arch, Format
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    BITNESS_X32,
+    BITNESS_X64,
+    FORMAT_DOTNET,
+    Arch,
+    Format,
+)
 
 CD = os.path.dirname(__file__)
 
@@ -120,6 +134,12 @@ def get_pefile_extractor(path):
     import capa.features.extractors.pefile
 
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+
+def get_dnfile_extractor(path):
+    import capa.features.extractors.dnfile_
+
+    return capa.features.extractors.dnfile_.DnfileFeatureExtractor(path)
 
 
 def extract_global_features(extractor):
@@ -571,6 +591,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
     [
         ("b9f5b", "file", Arch(ARCH_I386), True),
         ("b9f5b", "file", Arch(ARCH_AMD64), False),
+        ("b9f5b", "file", OS(OS_ANY), True),
+        ("b9f5b", "file", Format(FORMAT_DOTNET), True),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -693,4 +715,4 @@ def pingtaest_extractor():
 
 @pytest.fixture
 def b9f5b_extractor():
-    return get_extractor(get_data_path_by_name("b9f5b"))
+    return get_dnfile_extractor(get_data_path_by_name("b9f5b"))

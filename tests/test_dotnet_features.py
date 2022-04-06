@@ -22,4 +22,18 @@ import capa.features.file
     indirect=["sample", "scope"],
 )
 def test_dnfile_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_pefile_extractor, sample, scope, feature, expected)
+    fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
+
+
+@parametrize(
+    "function,expected",
+    [
+        ("is_dotnet_file", True),
+        ("get_entry_point", 0x6000007),
+        ("get_runtime_version", (2, 5)),
+        ("get_meta_version_string", "v2.0.50727"),
+    ],
+)
+def test_dnfile_extractor(b9f5b_extractor, function, expected):
+    func = getattr(b9f5b_extractor, function)
+    assert func() == expected
