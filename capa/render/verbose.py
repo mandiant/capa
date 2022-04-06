@@ -62,7 +62,7 @@ def render_meta(ostream, doc):
         ("arch", doc["meta"]["analysis"]["arch"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
         ("base address", hex(doc["meta"]["analysis"]["base_address"])),
-        ("rules", ", ".join(doc["meta"]["analysis"]["rules"])),
+        ("rules", doc["meta"]["analysis"]["rules"][0]),
         ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
         ("library function count", len(doc["meta"]["analysis"]["library_functions"])),
         (
@@ -71,6 +71,13 @@ def render_meta(ostream, doc):
             + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values()),
         ),
     ]
+
+    if len(doc["meta"]["analysis"]["rules"]) > 1:
+        idx = rows.index(("rules", doc["meta"]["analysis"]["rules"][0])) + 1
+        for rule in doc["meta"]["analysis"]["rules"][1:]:
+            rows.insert(idx, ("", rule))
+            idx += 1
+
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
 
