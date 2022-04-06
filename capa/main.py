@@ -506,8 +506,9 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
-        # TODO return capa.features.extractors.dotnet.extractor.DnFeatureExtractor(...)
-        raise NotImplementedError("DnFeatureExtractor")
+        import capa.features.extractors.dotnet.extractor
+
+        return capa.features.extractors.dotnet.extractor.DnfileFeatureExtractor(path)
 
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig

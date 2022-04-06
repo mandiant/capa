@@ -27,6 +27,7 @@ requirements = [
     "pefile==2021.9.3",
     "pyelftools==0.28",
     "dnfile==0.10.0",
+    "dncil==1.0.0",
 ]
 
 # this sets __version__

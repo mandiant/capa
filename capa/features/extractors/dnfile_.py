@@ -4,21 +4,36 @@ from typing import Tuple, Iterator
 import dnfile
 import pefile
 
+import capa.features.extractors.helpers
+from capa.features.file import Import
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.dotnet.helpers import get_dotnet_imports
 
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs):
+def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
     yield Format(FORMAT_DOTNET), 0x0
 
 
-def extract_file_os(**kwargs):
+def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
+    for (token, imp) in get_dotnet_imports(pe).items():
+        if "::" in imp:
+            # like System.IO.File::OpenRead
+            yield Import(imp), token
+        else:
+            # like kernel32.CreateFileA
+            dll, _, symbol = imp.rpartition(".")
+            for symbol_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+                yield Import(symbol_variant), token
+
+
+def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
     yield OS(OS_ANY), 0x0
 
 
-def extract_file_arch(pe, **kwargs):
+def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, int]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
@@ -36,11 +51,9 @@ def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
 
 
 FILE_HANDLERS = (
-    # extract_file_export_names,
-    # extract_file_import_names,
-    # extract_file_section_names,
-    # extract_file_strings,
-    # extract_file_function_names,
+    extract_file_import_names,
+    # TODO extract_file_strings,
+    # TODO extract_file_function_names,
     extract_file_format,
 )
 

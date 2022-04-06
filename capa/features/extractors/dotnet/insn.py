@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union, Generator
+from typing import TYPE_CHECKING, Dict, Tuple, Iterator
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
     from dncil.cil.body import CilMethodBody
+    from capa.features.common import Feature
 
 from dncil.clr.token import StringToken
 from dncil.cil.opcode import OpCodes
@@ -15,16 +16,13 @@ from capa.features.common import String
 from capa.features.extractors.dotnet.helpers import get_dotnet_imports
 
 
-def get_imports(ctx):
-    """ """
+def get_imports(ctx: Dict) -> Dict:
     if "imports_cache" not in ctx:
         ctx["imports_cache"] = get_dotnet_imports(ctx["pe"])
     return ctx["imports_cache"]
 
 
-def extract_insn_api_features(
-    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Generator[Tuple[API, int], None, None]:
+def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
     """parse instruction API features"""
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
@@ -45,7 +43,7 @@ def extract_insn_api_features(
 
 def extract_insn_number_features(
     f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Generator[Tuple[Number, int], None, None]:
+) -> Iterator[Tuple[Number, int]]:
     """parse instruction number features"""
     if insn.is_ldc():
         yield Number(insn.get_ldc()), insn.offset
@@ -53,7 +51,7 @@ def extract_insn_number_features(
 
 def extract_insn_string_features(
     f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Generator[Tuple[String, int], None, None]:
+) -> Iterator[Tuple[String, int]]:
     """parse instruction string features"""
     if not insn.is_ldstr():
         return
@@ -65,13 +63,11 @@ def extract_insn_string_features(
     yield String(user_string), insn.offset
 
 
-def extract_features(
-    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Generator[Tuple[Union[API, String, Number], int], None, None]:
+def extract_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Feature, int]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for (feature, ea) in inst_handler(f, bb, insn):
-            yield feature, ea
+        for (feature, offset) in inst_handler(f, bb, insn):
+            yield feature, offset
 
 
 INSTRUCTION_HANDLERS = (
@@ -79,35 +75,3 @@ INSTRUCTION_HANDLERS = (
     extract_insn_number_features,
     extract_insn_string_features,
 )
-
-
-def main(args):
-    """ """
-    pe: dnPE = dnfile.dnPE(args.path)
-
-    ctx = {}
-    ctx["pe"] = pe
-
-    features: List[Any] = []
-    for method in get_dotnet_methods(pe):
-        setattr(method, "ctx", ctx)
-        for insn in method.instructions:
-            features.extend(list(extract_features(method, method, insn)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    """ """
-    import argparse
-
-    import dnfile
-
-    from capa.features.extractors.dotnet.helpers import get_dotnet_methods
-
-    parser = argparse.ArgumentParser(prog="parse instruction features from .NET PE")
-    parser.add_argument("path", type=str, help="full path to .NET PE")
-
-    main(parser.parse_args())

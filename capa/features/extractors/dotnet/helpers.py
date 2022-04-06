@@ -1,52 +1,42 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Generator
+from typing import Any, Dict, Tuple, Iterator
 from itertools import chain
 
-if TYPE_CHECKING:
-    from dnfile.mdtable import MemberRefRow
-    from dnfile.mdtable import MethodDefRow
-    from dnfile import dnPE
-
 import dnfile
-from dnfile.enums import MetadataTables
 from dncil.cil.body import CilMethodBody
+from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
 # key indexes to dotnet metadata tables
-DOTNET_META_TABLES_BY_INDEX = {table.value: table.name for table in MetadataTables}
+DOTNET_META_TABLES_BY_INDEX = {table.value: table.name for table in dnfile.enums.MetadataTables}
 
 
 class DnfileMethodBodyReader(CilMethodBodyReaderBase):
-    def __init__(self, pe: dnPE, row: MethodDefRow):
-        """ """
-        self.pe: dnPE = pe
+    def __init__(self, pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow):
+        self.pe: dnfile.dnPE = pe
         self.offset: int = self.pe.get_offset_from_rva(row.Rva)
 
     def read(self, n: int) -> bytes:
-        """ """
         data: bytes = self.pe.get_data(self.pe.get_rva_from_offset(self.offset), n)
         self.offset += n
         return data
 
     def tell(self) -> int:
-        """ """
         return self.offset
 
     def seek(self, offset: int) -> int:
-        """ """
         self.offset = offset
         return self.offset
 
 
 def generate_dotnet_token(table: int, rid: int) -> int:
-    """ """
     return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
 
 
-def resolve_dotnet_token(pe: dnPE, token: Token) -> Any:
-    """ """
+def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
+    """map generic token to string or table row"""
     if isinstance(token, StringToken):
         return pe.net.user_strings.get_us(token.rid).value
 
@@ -67,18 +57,21 @@ def resolve_dotnet_token(pe: dnPE, token: Token) -> Any:
         return InvalidToken(token.value)
 
 
-def read_dotnet_method_body(pe: dnPE, row: MethodDefRow) -> CilMethodBody:
-    """ """
+def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -> CilMethodBody:
+    """read dotnet method body"""
     return CilMethodBody(DnfileMethodBodyReader(pe, row))
 
 
-def get_class_import_name(row: MemberRefRow) -> str:
-    """ """
+def get_class_import_name(row: dnfile.mdtable.MemberRefRow) -> str:
+    """get class import name from TypeRef table"""
+    if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
+        return ""
+    # like System.IO.File
     return f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}"
 
 
-def get_class_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
-    """parse class imports
+def get_class_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get class imports from MemberRef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
 
@@ -98,14 +91,15 @@ def get_class_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
         if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
             continue
 
-        class_imp = f"{get_class_import_name(row)}::{row.Name}"
-        token = generate_dotnet_token(MetadataTables.MemberRef.value, rid + 1)
+        token = generate_dotnet_token(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
+        # like System.IO.File::OpenRead
+        imp = f"{get_class_import_name(row)}::{row.Name}"
 
-        yield token, class_imp
+        yield token, imp
 
 
-def get_native_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
-    """parse native imports
+def get_native_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get native p/invoke calls from ImplMap table
 
     see https://www.ntcore.com/files/dotnetformat.htm
 
@@ -122,23 +116,23 @@ def get_native_imports(pe: dnPE) -> Generator[Tuple[int, str], None, None]:
         dll: str = row.ImportScope.row.Name
         symbol: str = row.ImportName
 
-        # like Kernel32.dll
-        if dll and "." in dll:
-            dll = dll.split(".")[0].lower()
-
-        # like kernel32.CreateFileA
-        native_imp: str = f"{dll}.{symbol}"
-
         # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
         # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
         # MethodDef table token to help us later record native import method calls made from CIL
-        member_forwarded_token = generate_dotnet_token(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
+        token: int = generate_dotnet_token(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
 
-        yield member_forwarded_token, native_imp
+        # like Kernel32.dll
+        if dll and "." in dll:
+            dll = dll.split(".")[0]
+
+        # like kernel32.CreateFileA
+        imp: str = f"{dll}.{symbol}"
+
+        yield token, imp
 
 
-def get_dotnet_imports(pe: dnPE) -> Dict[int, str]:
-    """ """
+def get_dotnet_imports(pe: dnfile.dnPE) -> Dict[int, str]:
+    """get class imports and native p/invoke calls"""
     imps: Dict[int, str] = {}
 
     for (token, imp) in chain(get_class_imports(pe), get_native_imports(pe)):
@@ -147,8 +141,8 @@ def get_dotnet_imports(pe: dnPE) -> Dict[int, str]:
     return imps
 
 
-def get_dotnet_methods(pe: dnPE) -> Generator[CilMethodBody, None, None]:
-    """read managed methods from MethodDef table"""
+def get_dotnet_methods(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
+    """get managed methods from MethodDef table"""
     if not hasattr(pe.net.mdtables, "MethodDef"):
         return
 
@@ -160,7 +154,7 @@ def get_dotnet_methods(pe: dnPE) -> Generator[CilMethodBody, None, None]:
         try:
             body: CilMethodBody = read_dotnet_method_body(pe, row)
         except MethodBodyFormatError:
-            # TODO: logging?
+            # TODO
             continue
 
         yield body

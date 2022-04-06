@@ -122,6 +122,12 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
+    for feature, va in extractor.extract_global_features():
+        if va:
+            print("global: 0x%08x: %s" % (va, feature))
+        else:
+            print("global: 0x00000000: %s" % (feature))
+
     if not args.function:
         for feature, va in extractor.extract_file_features():
             if va:
