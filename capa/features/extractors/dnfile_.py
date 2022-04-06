@@ -30,7 +30,7 @@ def extract_file_arch(pe, **kwargs):
 
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe):
+        for feature, va in file_handler(pe=pe):  # type: ignore
             yield feature, va
 
 
@@ -46,7 +46,7 @@ FILE_HANDLERS = (
 
 def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe):
+        for feature, va in handler(pe=pe):  # type: ignore
             yield feature, va
 
 
