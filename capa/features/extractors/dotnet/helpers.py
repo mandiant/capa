@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, Iterator, Optional
-from itertools import chain
+from typing import Any, Tuple, Iterator, Optional
 
 import dnfile
 from dncil.cil.body import CilMethodBody
@@ -60,9 +59,13 @@ def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
         return InvalidToken(token.value)
 
 
-def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -> CilMethodBody:
+def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -> Optional[CilMethodBody]:
     """read dotnet method body"""
-    return CilMethodBody(DnfileMethodBodyReader(pe, row))
+    try:
+        return CilMethodBody(DnfileMethodBodyReader(pe, row))
+    except MethodBodyFormatError as e:
+        print(e)
+        return None
 
 
 def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
@@ -84,8 +87,8 @@ def get_class_import_name(row: dnfile.mdtable.MemberRefRow) -> str:
     return f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}"
 
 
-def get_class_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
-    """get class imports from MemberRef table
+def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get managed imports from MemberRef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
 
@@ -112,8 +115,8 @@ def get_class_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         yield token, imp
 
 
-def get_native_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
-    """get native p/invoke calls from ImplMap table
+def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get unmanaged imports from ImplMap table
 
     see https://www.ntcore.com/files/dotnetformat.htm
 
@@ -145,16 +148,6 @@ def get_native_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         yield token, imp
 
 
-def get_dotnet_imports(pe: dnfile.dnPE) -> Dict[int, str]:
-    """get class imports and native p/invoke calls"""
-    imps: Dict[int, str] = {}
-
-    for (token, imp) in chain(get_class_imports(pe), get_native_imports(pe)):
-        imps[token] = imp
-
-    return imps
-
-
 def get_dotnet_methods(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
     """get managed methods from MethodDef table"""
     if not hasattr(pe.net.mdtables, "MethodDef"):
@@ -165,10 +158,8 @@ def get_dotnet_methods(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
             # skip methods that do not have a method body
             continue
 
-        try:
-            body: CilMethodBody = read_dotnet_method_body(pe, row)
-        except MethodBodyFormatError:
-            # TODO
+        body: Optional[CilMethodBody] = read_dotnet_method_body(pe, row)
+        if body is None:
             continue
 
         yield body

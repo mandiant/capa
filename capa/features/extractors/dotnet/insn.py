@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Tuple, Iterator, Optional
+from itertools import chain
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -13,12 +14,19 @@ from dncil.cil.opcode import OpCodes
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String
-from capa.features.extractors.dotnet.helpers import get_dotnet_imports, read_dotnet_user_string
+from capa.features.extractors.dotnet.helpers import (
+    read_dotnet_user_string,
+    get_dotnet_managed_imports,
+    get_dotnet_unmanaged_imports,
+)
 
 
 def get_imports(ctx: Dict) -> Dict:
     if "imports_cache" not in ctx:
-        ctx["imports_cache"] = get_dotnet_imports(ctx["pe"])
+        ctx["imports_cache"] = {
+            token: imp
+            for (token, imp) in chain(get_dotnet_managed_imports(ctx["pe"]), get_dotnet_unmanaged_imports(ctx["pe"]))
+        }
     return ctx["imports_cache"]
 
 

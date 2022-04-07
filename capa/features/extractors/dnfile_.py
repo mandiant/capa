@@ -1,5 +1,6 @@
 import logging
 from typing import Tuple, Iterator
+from itertools import chain
 
 import dnfile
 import pefile
@@ -8,7 +9,7 @@ import capa.features.extractors.helpers
 from capa.features.file import Import
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.dotnet.helpers import get_dotnet_imports
+from capa.features.extractors.dotnet.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
-    for (token, imp) in get_dotnet_imports(pe).items():
+    for (token, imp) in chain(get_dotnet_managed_imports(pe), get_dotnet_unmanaged_imports(pe)):
         if "::" in imp:
             # like System.IO.File::OpenRead
             yield Import(imp), token

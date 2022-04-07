@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Tuple, Iterator
+from itertools import chain
 
 if TYPE_CHECKING:
     import dnfile
@@ -9,12 +10,12 @@ if TYPE_CHECKING:
 import capa.features.extractors.helpers
 from capa.features.file import Import
 from capa.features.common import FORMAT_DOTNET, Format
-from capa.features.extractors.dotnet.helpers import get_dotnet_imports
+from capa.features.extractors.dotnet.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
 
 def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, int]]:
     """extract file imports"""
-    for (token, imp) in get_dotnet_imports(pe).items():
+    for (token, imp) in chain(get_dotnet_managed_imports(pe), get_dotnet_unmanaged_imports(pe)):
         if "::" in imp:
             # like System.IO.File::OpenRead
             yield Import(imp), token
