@@ -15,12 +15,13 @@
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
 
-### New Rules (4)
+### New Rules (5)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
 - nursery/get-process-image-filename michael.hunhoff@mandiant.com
 - compiler/v/compiled-with-v jakub.jozwiak@mandiant.com
 - compiler/zig/compiled-with-zig jakub.jozwiak@mandiant.com
+- anti-analysis/packer/huan/packed-with-huan jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
