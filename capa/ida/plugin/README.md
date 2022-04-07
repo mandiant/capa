@@ -34,19 +34,18 @@ For more information on the FLARE team's open-source framework, capa, check out 
 
 ### Requirements
 
-capa explorer supports Python versions >= 3.6.x and the following IDA Pro versions:
+capa explorer supports Python versions >= 3.7.x and the following IDA Pro versions:
 
 * IDA 7.4
 * IDA 7.5
 * IDA 7.6 (caveat below)
 * IDA 7.7
 
-capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.6.x). Based on our testing the following matrix shows the Python versions supported
+capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.7.x). Based on our testing the following matrix shows the Python versions supported
 by each supported IDA version:
 
 | | IDA 7.4 | IDA 7.5 | IDA 7.6 |
 | --- | --- | --- | --- |
-| Python 3.6.x | Yes | Yes | Yes |
 | Python 3.7.x | Yes | Yes | Yes |
 | Python 3.8.x | Partial (see below) | Yes | Yes |
 | Python 3.9.x | No | Partial (see below) | Yes |

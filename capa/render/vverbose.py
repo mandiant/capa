@@ -39,7 +39,13 @@ def render_locations(ostream, match):
 def render_statement(ostream, match, statement, indent=0):
     ostream.write("  " * indent)
     if statement["type"] in ("and", "or", "optional", "not", "subscope"):
-        ostream.write(statement["type"])
+        if statement["type"] == "subscope":
+            # emit `basic block:`
+            # rather than `subscope:`
+            ostream.write(statement["subscope"])
+        else:
+            # emit `and:`
+            ostream.write(statement["type"])
         ostream.write(":")
         if statement.get("description"):
             ostream.write(" = %s" % statement["description"])
@@ -196,7 +202,6 @@ def render_rules(ostream, doc):
         author     michael.hunhoff@mandiant.com
         scope      function
         mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
-        examples   Practical Malware Analysis Lab 16-02.exe_:0x401020
         function @ 0x10004706
           and:
             api: kernel32.SetLastError @ 0x100047C2
@@ -209,7 +214,17 @@ def render_rules(ostream, doc):
             functions_by_bb[bb] = function
 
     had_match = False
-    for rule in rutils.capability_rules(doc):
+
+    for (_, _, rule) in sorted(
+        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc["rules"].values())
+    ):
+        # default scope hides things like lib rules, malware-category rules, etc.
+        # but in vverbose mode, we really want to show everything.
+        #
+        # still ignore subscope rules because they're stitched into the final document.
+        if rule["meta"].get("capa/subscope"):
+            continue
+
         count = len(rule["matches"])
         if count == 1:
             capability = rutils.bold(rule["meta"]["name"])
@@ -222,6 +237,13 @@ def render_rules(ostream, doc):
         rows = []
         for key in capa.rules.META_KEYS:
             if key == "name" or key not in rule["meta"]:
+                continue
+
+            if key == "examples":
+                # I can't think of a reason that an analyst would pivot to the concrete example
+                # directly from the capa output.
+                # the more likely flow is to review the rule and go from there.
+                # so, don't make the output messy by showing the examples.
                 continue
 
             v = rule["meta"][key]

@@ -43,7 +43,7 @@ import capa.rules
 import capa.engine
 import capa.features
 import capa.features.insn
-from capa.features.common import BITNESS_X32, BITNESS_X64, String
+from capa.features.common import String
 
 logger = logging.getLogger("capa2yara")
 
@@ -703,7 +703,7 @@ def main(argv=None):
     logging.getLogger("capa2yara").setLevel(level)
 
     try:
-        rules = capa.main.get_rules(args.rules, disable_progress=True)
+        rules = capa.main.get_rules([args.rules], disable_progress=True)
         namespaces = capa.rules.index_rules_by_namespace(list(rules))
         rules = capa.rules.RuleSet(rules)
         logger.info("successfully loaded %s rules (including subscope rules which will be ignored)", len(rules))

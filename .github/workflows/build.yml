@@ -35,8 +35,10 @@ jobs:
           python-version: 3.8
       - if: matrix.os == 'ubuntu-18.04'
         run: sudo apt-get install -y libyaml-dev
+      - name: Upgrade pip, setuptools
+        run: pip install --upgrade pip setuptools
       - name: Install PyInstaller
-        run: pip install 'pyinstaller==4.2'
+        run: pip install 'pyinstaller==4.10'
       - name: Install capa
         run: pip install -e .
       - name: Build standalone executable

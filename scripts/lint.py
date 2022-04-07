@@ -162,10 +162,10 @@ class MissingScope(Lint):
 
 class InvalidScope(Lint):
     name = "invalid scope"
-    recommendation = "Use only file, function, or basic block rule scopes"
+    recommendation = "Use only file, function, basic block, or instruction rule scopes"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scope") not in ("file", "function", "basic block")
+        return rule.meta.get("scope") not in ("file", "function", "basic block", "instruction")
 
 
 class MissingAuthor(Lint):
@@ -963,7 +963,7 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
-    parser.add_argument("rules", type=str, help="Path to rules")
+    parser.add_argument("rules", type=str, action="append", help="Path to rules")
     parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
     parser.add_argument(
         "--thorough",
