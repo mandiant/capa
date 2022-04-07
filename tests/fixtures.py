@@ -37,6 +37,7 @@ from capa.features.common import (
 )
 
 CD = os.path.dirname(__file__)
+DNFILE_TESTFILES = "dnfile-testfiles"
 
 
 @contextlib.contextmanager
@@ -240,6 +241,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
     elif name.startswith("b9f5b"):
         return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    elif name.startswith("mixed-mode-64"):
+        return os.path.join(CD, "data", DNFILE_TESTFILES, "mixed-mode", "ModuleCode", "bin", "ModuleCode_amd64.exe")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -652,6 +655,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
     [
         ("b9f5b", "file", Arch(ARCH_I386), True),
         ("b9f5b", "file", Arch(ARCH_AMD64), False),
+        ("mixed-mode-64", "file", Arch(ARCH_AMD64), True),
+        ("mixed-mode-64", "file", Arch(ARCH_I386), False),
         ("b9f5b", "file", OS(OS_ANY), True),
         ("b9f5b", "file", Format(FORMAT_DOTNET), True),
     ],
@@ -775,5 +780,10 @@ def pingtaest_extractor():
 
 
 @pytest.fixture
-def b9f5b_extractor():
+def b9f5b_dnfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("b9f5b"))
+
+
+@pytest.fixture
+def mixed_mode_64_dnfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("mixed-mode-64"))

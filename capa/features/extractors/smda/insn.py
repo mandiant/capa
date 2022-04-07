@@ -5,7 +5,11 @@ import struct
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.helpers
+<<<<<<< HEAD
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+=======
+from capa.features.insn import API, Number, Offset, Mnemonic
+>>>>>>> 65552575 (Update dotnet-main (#979))
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -69,7 +73,13 @@ def extract_insn_number_features(f, bb, insn):
             # The result of bitwise operations is calculated as though carried out
             # in two’s complement with an infinite number of sign bits
             value = int(operand, 16) & ((1 << f.smda_report.bitness) - 1)
+<<<<<<< HEAD
         except ValueError:
+=======
+
+            yield Number(value), insn.offset
+        except:
+>>>>>>> 65552575 (Update dotnet-main (#979))
             continue
         else:
             yield Number(value), insn.offset
@@ -240,7 +250,10 @@ def extract_insn_offset_features(f, bb, insn):
             continue
 
         yield Offset(number), insn.offset
+<<<<<<< HEAD
         yield OperandOffset(i, number), insn.offset
+=======
+>>>>>>> 65552575 (Update dotnet-main (#979))
 
 
 def is_security_cookie(f, bb, insn):
