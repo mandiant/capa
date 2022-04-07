@@ -37,7 +37,8 @@ from capa.features.common import (
 )
 
 CD = os.path.dirname(__file__)
-DNFILE_TESTFILES = "dnfile-testfiles"
+DOTNET_DIR = os.path.join(CD, "data", "dotnet")
+DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
 
 
 @contextlib.contextmanager
@@ -242,7 +243,7 @@ def get_data_path_by_name(name):
     elif name.startswith("b9f5b"):
         return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
     elif name.startswith("mixed-mode-64"):
-        return os.path.join(CD, "data", DNFILE_TESTFILES, "mixed-mode", "ModuleCode", "bin", "ModuleCode_amd64.exe")
+        return os.path.join(DNFILE_TESTFILES, "mixed-mode", "ModuleCode", "bin", "ModuleCode_amd64.exe")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
