@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple, Iterator
+from typing import Any, Dict, Tuple, Iterator, Optional
 from itertools import chain
 
 import dnfile
@@ -38,7 +38,10 @@ def generate_dotnet_token(table: int, rid: int) -> int:
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
     """map generic token to string or table row"""
     if isinstance(token, StringToken):
-        return pe.net.user_strings.get_us(token.rid).value
+        user_string: Optional[str] = read_dotnet_user_string(pe, token)
+        if user_string is None:
+            return InvalidToken(token.value)
+        return user_string
 
     table_name: str = DOTNET_META_TABLES_BY_INDEX.get(token.table, "")
     if not table_name:
@@ -60,6 +63,17 @@ def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
 def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -> CilMethodBody:
     """read dotnet method body"""
     return CilMethodBody(DnfileMethodBodyReader(pe, row))
+
+
+def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
+    """read user string from #US stream"""
+    try:
+        user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
+    except UnicodeDecodeError:
+        return None
+    if user_string is None:
+        return None
+    return user_string.value
 
 
 def get_class_import_name(row: dnfile.mdtable.MemberRefRow) -> str:

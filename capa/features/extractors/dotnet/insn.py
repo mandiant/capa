@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Tuple, Iterator
+from typing import TYPE_CHECKING, Dict, Tuple, Iterator, Optional
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -13,7 +13,7 @@ from dncil.cil.opcode import OpCodes
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String
-from capa.features.extractors.dotnet.helpers import get_dotnet_imports
+from capa.features.extractors.dotnet.helpers import get_dotnet_imports, read_dotnet_user_string
 
 
 def get_imports(ctx: Dict) -> Dict:
@@ -59,7 +59,10 @@ def extract_insn_string_features(
     if not isinstance(insn.operand, StringToken):
         return
 
-    user_string = f.ctx["pe"].net.user_strings.get_us(insn.operand.rid).value
+    user_string: Optional[str] = read_dotnet_user_string(f.ctx["pe"], insn.operand)
+    if user_string is None:
+        return
+
     yield String(user_string), insn.offset
 
 
