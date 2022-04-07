@@ -12,7 +12,7 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -135,6 +135,15 @@ def extract_insn_number_features(f, bb, insn):
         yield Number(const), insn.ea
         yield OperandNumber(i, const), insn.ea
 
+        if insn.itype == idaapi.NN_add and 0 < const < MAX_STRUCTURE_SIZE and op.type == idaapi.o_imm:
+            # for pattern like:
+            #
+            #     add eax, 0x10
+            #
+            # assume 0x10 is also an offset (imagine eax is a pointer).
+            yield Offset(const), insn.ea
+            yield OperandOffset(i, const), insn.ea
+
 
 def extract_insn_bytes_features(f, bb, insn):
     """parse referenced byte sequences
@@ -208,6 +217,25 @@ def extract_insn_offset_features(f, bb, insn):
 
         yield Offset(op_off), insn.ea
         yield OperandOffset(i, op_off), insn.ea
+
+        if (
+            insn.itype == idaapi.NN_lea
+            and i == 1
+            # o_displ is used for both:
+            #   [eax+1]
+            #   [eax+ebx+2]
+            and op.type == idaapi.o_displ
+            # but the SIB is only present for [eax+ebx+2]
+            # which we don't want
+            and not capa.features.extractors.ida.helpers.has_sib(op)
+        ):
+            # for pattern like:
+            #
+            #     lea eax, [ebx + 1]
+            #
+            # assume 1 is also an offset (imagine ebx is a zero register).
+            yield Number(op_off), insn.ea
+            yield OperandNumber(i, op_off), insn.ea
 
 
 def contains_stack_cookie_keywords(s):

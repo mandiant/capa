@@ -162,6 +162,14 @@ def extract_basic_block_features(extractor, f, bb):
     return features
 
 
+# f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
+def extract_instruction_features(extractor, f, bb, insn):
+    features = collections.defaultdict(set)
+    for feature, va in extractor.extract_insn_features(f, bb, insn):
+        features[feature].add(va)
+    return features
+
+
 # note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
@@ -292,6 +300,13 @@ def get_basic_block(extractor, f, va):
     raise ValueError("basic block not found")
 
 
+def get_instruction(extractor, f, bb, va):
+    for insn in extractor.get_instructions(f, bb):
+        if int(insn) == va:
+            return insn
+    raise ValueError("instruction not found")
+
+
 def resolve_scope(scope):
     if scope == "file":
 
@@ -303,8 +318,32 @@ def resolve_scope(scope):
 
         inner_file.__name__ = scope
         return inner_file
+    elif "insn=" in scope:
+        # like `function=0x401000,bb=0x40100A,insn=0x40100A`
+        assert "function=" in scope
+        assert "bb=" in scope
+        assert "insn=" in scope
+        fspec, _, spec = scope.partition(",")
+        bbspec, _, ispec = spec.partition(",")
+        fva = int(fspec.partition("=")[2], 0x10)
+        bbva = int(bbspec.partition("=")[2], 0x10)
+        iva = int(ispec.partition("=")[2], 0x10)
+
+        def inner_insn(extractor):
+            f = get_function(extractor, fva)
+            bb = get_basic_block(extractor, f, bbva)
+            insn = get_instruction(extractor, f, bb, iva)
+            features = extract_instruction_features(extractor, f, bb, insn)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_insn.__name__ = scope
+        return inner_insn
     elif "bb=" in scope:
         # like `function=0x401000,bb=0x40100A`
+        assert "function=" in scope
+        assert "bb=" in scope
         fspec, _, bbspec = scope.partition(",")
         fva = int(fspec.partition("=")[2], 0x10)
         bbva = int(bbspec.partition("=")[2], 0x10)
@@ -434,6 +473,30 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/offset: negative
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
         ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
+        #
+        # insn/offset from mnemonic: add
+        #
+        # should not be considered, too big for an offset:
+        #    .text:00401D85 81 C1 00 00 00 80       add     ecx, 80000000h
+        ("mimikatz", "function=0x401D64,bb=0x401D73,insn=0x401D85", capa.features.insn.Offset(0x80000000), False),
+        # should not be considered, relative to stack:
+        #    .text:00401CF6 83 C4 10                add     esp, 10h
+        ("mimikatz", "function=0x401CC7,bb=0x401CDE,insn=0x401CF6", capa.features.insn.Offset(0x10), False),
+        # yes, this is also a offset (imagine eax is a pointer):
+        #    .text:0040223C 83 C0 04                add     eax, 4
+        ("mimikatz", "function=0x402203,bb=0x402221,insn=0x40223C", capa.features.insn.Offset(0x4), True),
+        #
+        # insn/number from mnemonic: lea
+        #
+        # should not be considered, lea operand invalid encoding
+        #    .text:00471EE6 8D 1C 81                lea     ebx, [ecx+eax*4]
+        ("mimikatz", "function=0x471EAB,bb=0x471ED8,insn=0x471EE6", capa.features.insn.Number(0x4), False),
+        # should not be considered, lea operand invalid encoding
+        #    .text:004717B1 8D 4C 31 D0             lea     ecx, [ecx+esi-30h]
+        ("mimikatz", "function=0x47153B,bb=0x4717AB,insn=0x4717B1", capa.features.insn.Number(-0x30), False),
+        # yes, this is also a number (imagine edx is zero):
+        #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
+        ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
