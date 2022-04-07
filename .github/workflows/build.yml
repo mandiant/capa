@@ -3,6 +3,8 @@ name: build
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   release:
     types: [edited, published]
 
@@ -11,6 +13,7 @@ jobs:
     name: PyInstaller for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-18.04
@@ -37,12 +40,12 @@ jobs:
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
         run: pip install --upgrade pip setuptools
-      - name: Install PyInstaller
-        run: pip install 'pyinstaller==4.10'
-      - name: Install capa
-        run: pip install -e .
+      - name: Install capa with build requirements
+        run: pip install -e .[build]
       - name: Build standalone executable
-        run: pyinstaller .github/pyinstaller/pyinstaller.spec
+        run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
+      - name: Debug
+        run: file dist/capa; ls -l dist
       - name: Does it run (PE)?
         run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
