@@ -81,6 +81,9 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return 0x0
 
     def get_entry_point(self) -> int:
+        # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
+        #  True: native EP: Token
+        #  False: managed EP: RVA
         return self.pe.net.struct.EntryPointTokenOrRva
 
     def extract_global_features(self):
@@ -91,6 +94,9 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def is_dotnet_file(self) -> bool:
         return bool(self.pe.net)
+
+    def is_mixed_mode(self) -> bool:
+        return not bool(self.pe.net.Flags.CLR_ILONLY)
 
     def get_runtime_version(self) -> Tuple[int, int]:
         return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion

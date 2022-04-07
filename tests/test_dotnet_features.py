@@ -6,14 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-# b9f5bd514485fb06da39beff051b9fdc
-
 import pytest
 import fixtures
 from fixtures import *
 from fixtures import parametrize
-
-import capa.features.file
 
 
 @parametrize(
@@ -26,14 +22,16 @@ def test_dnfile_features(sample, scope, feature, expected):
 
 
 @parametrize(
-    "function,expected",
+    "extractor,function,expected",
     [
-        ("is_dotnet_file", True),
-        ("get_entry_point", 0x6000007),
-        ("get_runtime_version", (2, 5)),
-        ("get_meta_version_string", "v2.0.50727"),
+        ("b9f5b_dnfile_extractor", "is_dotnet_file", True),
+        ("b9f5b_dnfile_extractor", "is_mixed_mode", False),
+        ("mixed_mode_64_dnfile_extractor", "is_mixed_mode", True),
+        ("b9f5b_dnfile_extractor", "get_entry_point", 0x6000007),
+        ("b9f5b_dnfile_extractor", "get_runtime_version", (2, 5)),
+        ("b9f5b_dnfile_extractor", "get_meta_version_string", "v2.0.50727"),
     ],
 )
-def test_dnfile_extractor(b9f5b_extractor, function, expected):
-    func = getattr(b9f5b_extractor, function)
-    assert func() == expected
+def test_dnfile_extractor(request, extractor, function, expected):
+    extractor_function = getattr(request.getfixturevalue(extractor), function)
+    assert extractor_function() == expected

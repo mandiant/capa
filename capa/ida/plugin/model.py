@@ -581,10 +581,6 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             "mnemonic",
             "number",
             "offset",
-            "number/x32",
-            "number/x64",
-            "offset/x32",
-            "offset/x64",
         ):
             # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)
