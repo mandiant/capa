@@ -5,7 +5,7 @@ import struct
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -64,13 +64,14 @@ def extract_insn_number_features(f, bb, insn):
         #    .text:00401140                 call    sub_407E2B
         #    .text:00401145                 add     esp, 0Ch
         return
-    for operand in operands:
+    for i, operand in enumerate(operands):
         try:
             # The result of bitwise operations is calculated as though carried out
             # in two’s complement with an infinite number of sign bits
             value = int(operand, 16) & ((1 << f.smda_report.bitness) - 1)
 
             yield Number(value), insn.offset
+            yield OperandNumber(i, value), insn.offset
         except:
             continue
 
@@ -198,7 +199,7 @@ def extract_insn_offset_features(f, bb, insn):
     #     mov eax, [esi + 4]
     #     mov eax, [esi + ecx + 16384]
     operands = [o.strip() for o in insn.operands.split(",")]
-    for operand in operands:
+    for i, operand in enumerate(operands):
         if "ptr" not in operand:
             continue
         if "esp" in operand or "ebp" in operand or "rbp" in operand:
@@ -213,6 +214,7 @@ def extract_insn_offset_features(f, bb, insn):
             number = int(number_int.group("num"))
             number = -1 * number if number_int.group().startswith("-") else number
         yield Offset(number), insn.offset
+        yield OperandOffset(i, number), insn.offset
 
 
 def is_security_cookie(f, bb, insn):
