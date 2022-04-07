@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Tuple, Iterator, Optional
 
 import dnfile
@@ -7,6 +8,8 @@ from dncil.cil.body import CilMethodBody
 from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
+
+logger = logging.getLogger(__name__)
 
 # key indexes to dotnet metadata tables
 DOTNET_META_TABLES_BY_INDEX = {table.value: table.name for table in dnfile.enums.MetadataTables}
@@ -63,8 +66,8 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
     """read dotnet method body"""
     try:
         return CilMethodBody(DnfileMethodBodyReader(pe, row))
-    except MethodBodyFormatError:
-        # TODO
+    except MethodBodyFormatError as e:
+        logger.warn("bad MethodDef row @ 0x%08x (%s)" % (row.Rva, e))
         return None
 
 
