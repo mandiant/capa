@@ -63,8 +63,8 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
     """read dotnet method body"""
     try:
         return CilMethodBody(DnfileMethodBodyReader(pe, row))
-    except MethodBodyFormatError as e:
-        print(e)
+    except MethodBodyFormatError:
+        # TODO
         return None
 
 

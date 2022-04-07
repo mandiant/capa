@@ -34,6 +34,8 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from capa.features.extractors.dotnet.file.extract_features(self.pe)
 
     def get_functions(self):
+        # data structure shared across functions yielded here.
+        # useful for caching analysis relevant across a single workspace.
         ctx = {}
         ctx["pe"] = self.pe
 
@@ -54,7 +56,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from []
 
     def get_instructions(self, f, bb):
-        # each dotnet method is considered 1 basic block
         yield from f.instructions
 
     def extract_insn_features(self, f, bb, insn):
