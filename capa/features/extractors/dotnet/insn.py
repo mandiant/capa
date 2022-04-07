@@ -35,7 +35,7 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name = get_imports(f.ctx).get(insn.operand.value, "")
+    name: str = get_imports(f.ctx).get(insn.operand.value, "")
     if not name:
         return
 

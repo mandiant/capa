@@ -111,9 +111,9 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
             continue
 
-        token = generate_dotnet_token(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
+        token: int = generate_dotnet_token(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
         # like System.IO.File::OpenRead
-        imp = f"{get_class_import_name(row)}::{row.Name}"
+        imp: str = f"{get_class_import_name(row)}::{row.Name}"
 
         yield token, imp
 
