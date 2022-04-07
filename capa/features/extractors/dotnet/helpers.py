@@ -82,14 +82,6 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     return user_string.value
 
 
-def get_class_import_name(row: dnfile.mdtable.MemberRefRow) -> str:
-    """get class import name from TypeRef table"""
-    if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
-        return ""
-    # like System.IO.File
-    return f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}"
-
-
 def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
     """get managed imports from MemberRef table
 
@@ -113,7 +105,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
 
         token: int = generate_dotnet_token(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
         # like System.IO.File::OpenRead
-        imp: str = f"{get_class_import_name(row)}::{row.Name}"
+        imp: str = f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}::{row.Name}"
 
         yield token, imp
 
