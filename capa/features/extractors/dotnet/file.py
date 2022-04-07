@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     import dnfile
     from capa.features.common import Feature
 
+import capa.features.extractors
 import capa.features.extractors.helpers
 from capa.features.file import Import
 from capa.features.common import FORMAT_DOTNET, Format
@@ -27,7 +28,7 @@ def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, int]]:
 
 
 def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
-    yield Format(FORMAT_DOTNET), 0x0
+    yield from capa.features.extractors.dnfile_.extract_file_format()
 
 
 def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
