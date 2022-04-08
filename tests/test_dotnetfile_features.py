@@ -18,6 +18,12 @@ from fixtures import parametrize
     indirect=["sample", "scope"],
 )
 def test_dotnetfile_features(sample, scope, feature, expected):
+    if scope.__name__ != "file":
+        pytest.xfail("pefile only extracts file scope features")
+
+    if isinstance(feature, capa.features.file.FunctionName):
+        pytest.xfail("pefile doesn't extract function names")
+
     fixtures.do_test_feature_presence(fixtures.get_dotnetfile_extractor, sample, scope, feature, expected)
 
 
