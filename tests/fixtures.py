@@ -711,7 +711,7 @@ FEATURE_COUNT_TESTS = [
 ]
 
 
-FEATURE_COUNT_TESTS_DOTNET = []
+FEATURE_COUNT_TESTS_DOTNET = []  # type: ignore
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
