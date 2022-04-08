@@ -67,7 +67,7 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
     try:
         return CilMethodBody(DnfileMethodBodyReader(pe, row))
     except MethodBodyFormatError as e:
-        logger.warn("bad MethodDef row @ 0x%08x (%s)" % (row.Rva, e))
+        logger.warn("failed to parse managed method body @ 0x%08x (%s)" % (row.Rva, e))
         return None
 
 
