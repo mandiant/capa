@@ -54,7 +54,7 @@ class DNTokenOffsetAddress(Address):
     def __init__(self, token: Token, offset: int):
         assert offset >= 0
         self.token = token
-        self.rva = offset
+        self.offset = offset
 
 
 class _NoAddress(Address):

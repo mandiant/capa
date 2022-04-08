@@ -589,7 +589,9 @@ def extract_op_number_features(
         yield OperandOffset(i, v), ihandle.address
 
 
-def extract_op_offset_features(fhandle: FunctionHandle, bb, ihandle: InsnHandle, i, oper: envi.Operand) -> Iterator[Tuple[Feature, Address]]:
+def extract_op_offset_features(
+    fhandle: FunctionHandle, bb, ihandle: InsnHandle, i, oper: envi.Operand
+) -> Iterator[Tuple[Feature, Address]]:
     """parse structure offset features from the given operand."""
     # example:
     #

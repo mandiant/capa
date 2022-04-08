@@ -29,7 +29,15 @@ import capa.render.utils as rutils
 import capa.render.result_document
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.features.address import Address, AbsoluteVirtualAddress, DNTokenAddress, FileOffsetAddress, NO_ADDRESS, RelativeVirtualAddress, DNTokenOffsetAddress
+from capa.features.address import (
+    NO_ADDRESS,
+    Address,
+    DNTokenAddress,
+    FileOffsetAddress,
+    DNTokenOffsetAddress,
+    AbsoluteVirtualAddress,
+    RelativeVirtualAddress,
+)
 
 
 def format_address(address: Address) -> str:
