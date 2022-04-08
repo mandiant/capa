@@ -43,6 +43,7 @@ import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
+import capa.features.extractors.dotnetfile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
@@ -64,6 +65,24 @@ from capa.features.common import (
     FORMAT_FREEZE,
 )
 from capa.features.address import NO_ADDRESS
+from capa.helpers import (
+    get_format,
+    get_file_taste,
+    get_auto_format,
+    log_unsupported_os_error,
+    log_unsupported_arch_error,
+    log_unsupported_format_error,
+)
+from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_ELF,
+    FORMAT_AUTO,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_DOTNET,
+    FORMAT_FREEZE,
+)
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -505,8 +524,9 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
-        # TODO return capa.features.extractors.dotnet.extractor.DnFeatureExtractor(...)
-        raise NotImplementedError("DnFeatureExtractor")
+        import capa.features.extractors.dnfile.extractor
+
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
@@ -1058,7 +1078,7 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-        if isinstance(file_extractor, capa.features.extractors.dnfile_.DnfileFeatureExtractor):
+        if isinstance(file_extractor, capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor):
             format_ = FORMAT_DOTNET
 
     if format_ == FORMAT_FREEZE:

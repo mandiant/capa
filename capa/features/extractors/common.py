@@ -12,6 +12,8 @@ import capa.features.extractors.pefile
 from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String
+from capa.features.freeze import is_freeze
 
 logger = logging.getLogger(__name__)
 

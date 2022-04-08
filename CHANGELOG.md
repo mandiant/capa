@@ -9,6 +9,8 @@
 - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
 - main: detect dotnet binaries #955 @mr-tz
 - render: support Addresses that aren't simple integers, like .NET token+offset #981 @williballenthin
+- extract additional offset/number features in certain circumstances #320 @williballenthin
+- add detection and basic feature extraction for dotnet #987 @mr-tz, @mike-hunhoff, @williballenthin
 
 ### Breaking Changes
 

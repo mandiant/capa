@@ -10,6 +10,8 @@ from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -271,10 +273,10 @@ def is_security_cookie(f, bb, insn):
     for index, block in enumerate(f.getBlocks()):
         # expect security cookie init in first basic block within first bytes (instructions)
         block_instructions = [i for i in block.getInstructions()]
-        if index == 0 and ih.address < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
+        if index == 0 and insn.address < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
             return True
         # ... or within last bytes (instructions) before a return
-        if block_instructions[-1].mnemonic.startswith("ret") and ih.address > (
+        if block_instructions[-1].mnemonic.startswith("ret") and insn.address > (
             block_instructions[-1].offset - SECURITY_COOKIE_BYTES_DELTA
         ):
             return True
