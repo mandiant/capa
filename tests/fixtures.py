@@ -36,7 +36,6 @@ from capa.features.common import (
     Format,
 )
 
-
 CD = os.path.dirname(__file__)
 DOTNET_DIR = os.path.join(CD, "data", "dotnet")
 DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
