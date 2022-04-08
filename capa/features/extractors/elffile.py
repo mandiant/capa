@@ -15,6 +15,7 @@ from elftools.elf.elffile import ELFFile, SymbolTableSection
 import capa.features.extractors.common
 from capa.features.file import Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
+from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.elf import Arch as ElfArch
 from capa.features.extractors.base_extractor import FeatureExtractor
 
@@ -39,15 +40,15 @@ def extract_file_import_names(elf, **kwargs):
             if symbol.name and symbol.entry.st_info.type == "STT_FUNC":
                 # TODO symbol address
                 # TODO symbol version info?
-                yield Import(symbol.name), 0x0
+                yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
 def extract_file_section_names(elf, **kwargs):
     for section in elf.iter_sections():
         if section.name:
-            yield Section(section.name), section.header.sh_addr
+            yield Section(section.name), AbsoluteVirtualAddress(section.header.sh_addr)
         elif section.is_null():
-            yield Section("NULL"), section.header.sh_addr
+            yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
 def extract_file_strings(buf, **kwargs):
@@ -58,31 +59,31 @@ def extract_file_os(elf, buf, **kwargs):
     # our current approach does not always get an OS value, e.g. for packed samples
     # for file limitation purposes, we're more lax here
     try:
-        os = next(capa.features.extractors.common.extract_os(buf))
-        yield os
+        os_tuple = next(capa.features.extractors.common.extract_os(buf))
+        yield os_tuple
     except StopIteration:
-        yield OS("unknown"), 0x0
+        yield OS("unknown"), NO_ADDRESS
 
 
 def extract_file_format(**kwargs):
-    yield Format(FORMAT_ELF), 0x0
+    yield Format(FORMAT_ELF), NO_ADDRESS
 
 
 def extract_file_arch(elf, **kwargs):
     # TODO merge with capa.features.extractors.elf.detect_elf_arch()
     arch = elf.get_machine_arch()
     if arch == "x86":
-        yield Arch(ElfArch.I386), 0x0
+        yield Arch(ElfArch.I386), NO_ADDRESS
     elif arch == "x64":
-        yield Arch(ElfArch.AMD64), 0x0
+        yield Arch(ElfArch.AMD64), NO_ADDRESS
     else:
         logger.warning("unsupported architecture: %s", arch)
 
 
 def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(elf=elf, buf=buf):  # type: ignore
-            yield feature, va
+        for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
+            yield feature, addr
 
 
 FILE_HANDLERS = (
@@ -97,8 +98,8 @@ FILE_HANDLERS = (
 
 def extract_global_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
     for global_handler in GLOBAL_HANDLERS:
-        for feature, va in global_handler(elf=elf, buf=buf):  # type: ignore
-            yield feature, va
+        for feature, addr in global_handler(elf=elf, buf=buf):  # type: ignore
+            yield feature, addr
 
 
 GLOBAL_HANDLERS = (
@@ -118,21 +119,21 @@ class ElfFeatureExtractor(FeatureExtractor):
         # virtual address of the first segment with type LOAD
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
-                return segment.header.p_vaddr
+                return AbsoluteVirtualAddress(segment.header.p_vaddr)
 
     def extract_global_features(self):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, va in extract_global_features(self.elf, buf):
-            yield feature, va
+        for feature, addr in extract_global_features(self.elf, buf):
+            yield feature, addr
 
     def extract_file_features(self):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, va in extract_file_features(self.elf, buf):
-            yield feature, va
+        for feature, addr in extract_file_features(self.elf, buf):
+            yield feature, addr
 
     def get_functions(self):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
