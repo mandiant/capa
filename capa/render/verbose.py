@@ -29,6 +29,24 @@ import capa.render.utils as rutils
 import capa.render.result_document
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.features.address import Address, AbsoluteVirtualAddress, DNTokenAddress, FileOffsetAddress, NO_ADDRESS, RelativeVirtualAddress, DNTokenOffsetAddress
+
+
+def format_address(address: Address) -> str:
+    if isinstance(address, AbsoluteVirtualAddress):
+        return rutils.hex(int(address))
+    elif isinstance(address, RelativeVirtualAddress):
+        return f"base address+{rutils.hex(int(address))}"
+    elif isinstance(address, FileOffsetAddress):
+        return f"file+{rutils.hex(int(address))}"
+    elif isinstance(address, DNTokenAddress):
+        return str(address)
+    elif isinstance(address, DNTokenOffsetAddress):
+        return f"{str(address.token)}+{rutils.hex(int(address.offset))}"
+    elif address == NO_ADDRESS:
+        return "global"
+    else:
+        raise ValueError("unexpected address type")
 
 
 def render_meta(ostream, doc):
@@ -109,7 +127,7 @@ def render_rules(ostream, doc):
 
         if rule["meta"]["scope"] != capa.rules.FILE_SCOPE:
             locations = doc["rules"][rule["meta"]["name"]]["matches"].keys()
-            rows.append(("matches", "\n".join(map(rutils.hex, locations))))
+            rows.append(("matches", "\n".join(map(format_address, locations))))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")

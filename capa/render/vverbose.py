@@ -18,22 +18,24 @@ from capa.engine import MatchResults
 
 
 def render_locations(ostream, match):
+    import capa.render.verbose as v
+
     # its possible to have an empty locations array here,
     # such as when we're in MODE_FAILURE and showing the logic
     # under a `not` statement (which will have no matched locations).
     locations = list(sorted(match.get("locations", [])))
     if len(locations) == 1:
         ostream.write(" @ ")
-        ostream.write(rutils.hex(locations[0]))
+        ostream.write(v.format_address(locations[0]))
     elif len(locations) > 1:
         ostream.write(" @ ")
         if len(locations) > 4:
             # don't display too many locations, because it becomes very noisy.
             # probably only the first handful of locations will be useful for inspection.
-            ostream.write(", ".join(map(rutils.hex, locations[0:4])))
+            ostream.write(", ".join(map(v.format_address, locations[0:4])))
             ostream.write(", and %d more..." % (len(locations) - 4))
         else:
-            ostream.write(", ".join(map(rutils.hex, locations)))
+            ostream.write(", ".join(map(v.format_address, locations)))
 
 
 def render_statement(ostream, match, statement, indent=0):
@@ -274,10 +276,10 @@ def render_rules(ostream, doc):
             for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
                 ostream.write(rule["meta"]["scope"])
                 ostream.write(" @ ")
-                ostream.write(rutils.hex(location))
+                ostream.write(capa.render.verbose.format_address(location))
 
                 if rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
-                    ostream.write(" in function " + rutils.hex(functions_by_bb[location]))
+                    ostream.write(" in function " + capa.render.verbose.format_address(functions_by_bb[location]))
 
                 ostream.write("\n")
                 render_match(ostream, match, indent=1)
