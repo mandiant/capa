@@ -17,21 +17,27 @@ from fixtures import parametrize
     fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
 )
-def test_dnfile_features(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
+def test_dotnetfile_features(sample, scope, feature, expected):
+    if scope.__name__ != "file":
+        pytest.xfail("dotnetfile only extracts file scope features")
+
+    if isinstance(feature, capa.features.file.FunctionName):
+        pytest.xfail("dotnetfile doesn't extract function names")
+
+    fixtures.do_test_feature_presence(fixtures.get_dotnetfile_extractor, sample, scope, feature, expected)
 
 
 @parametrize(
     "extractor,function,expected",
     [
-        ("b9f5b_dnfile_extractor", "is_dotnet_file", True),
-        ("b9f5b_dnfile_extractor", "is_mixed_mode", False),
-        ("mixed_mode_64_dnfile_extractor", "is_mixed_mode", True),
-        ("b9f5b_dnfile_extractor", "get_entry_point", 0x6000007),
-        ("b9f5b_dnfile_extractor", "get_runtime_version", (2, 5)),
-        ("b9f5b_dnfile_extractor", "get_meta_version_string", "v2.0.50727"),
+        ("b9f5b_dotnetfile_extractor", "is_dotnet_file", True),
+        ("b9f5b_dotnetfile_extractor", "is_mixed_mode", False),
+        ("mixed_mode_64_dotnetfile_extractor", "is_mixed_mode", True),
+        ("b9f5b_dotnetfile_extractor", "get_entry_point", 0x6000007),
+        ("b9f5b_dotnetfile_extractor", "get_runtime_version", (2, 5)),
+        ("b9f5b_dotnetfile_extractor", "get_meta_version_string", "v2.0.50727"),
     ],
 )
-def test_dnfile_extractor(request, extractor, function, expected):
+def test_dotnetfile_extractor(request, extractor, function, expected):
     extractor_function = getattr(request.getfixturevalue(extractor), function)
     assert extractor_function() == expected
