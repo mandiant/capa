@@ -585,16 +585,17 @@ def extract_op_number_features(
         #     add eax, 0x10
         #
         # assume 0x10 is also an offset (imagine eax is a pointer).
-        yield Offset(v), insn.va
-        yield OperandOffset(i, v), insn.va
+        yield Offset(v), ihandle.address
+        yield OperandOffset(i, v), ihandle.address
 
 
-def extract_op_offset_features(f, bb, ihandle: InsnHandle, i, oper: envi.Operand) -> Iterator[Tuple[Feature, Address]]:
+def extract_op_offset_features(fhandle: FunctionHandle, bb, ihandle: InsnHandle, i, oper: envi.Operand) -> Iterator[Tuple[Feature, Address]]:
     """parse structure offset features from the given operand."""
     # example:
     #
     #     .text:0040112F    cmp     [esi+4], ebx
     insn: envi.Opcode = ihandle.inner
+    f: viv_utils.Function = fhandle.inner
 
     # this is for both x32 and x64
     # like [esi + 4]
@@ -623,8 +624,8 @@ def extract_op_offset_features(f, bb, ihandle: InsnHandle, i, oper: envi.Operand
             #     lea eax, [ebx + 1]
             #
             # assume 1 is also an offset (imagine ebx is a zero register).
-            yield Number(v), insn.va
-            yield OperandNumber(i, v), insn.va
+            yield Number(v), ihandle.address
+            yield OperandNumber(i, v), ihandle.address
 
     # like: [esi + ecx + 16384]
     #        reg   ^     ^
