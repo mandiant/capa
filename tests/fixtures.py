@@ -136,10 +136,10 @@ def get_pefile_extractor(path):
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 
-def get_dnfile_extractor(path):
-    import capa.features.extractors.dnfile_
+def get_dotnetfile_extractor(path):
+    import capa.features.extractors.dotnetfile
 
-    return capa.features.extractors.dnfile_.DnfileFeatureExtractor(path)
+    return capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
 
 
 def extract_global_features(extractor):
@@ -781,10 +781,10 @@ def pingtaest_extractor():
 
 
 @pytest.fixture
-def b9f5b_dnfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("b9f5b"))
+def b9f5b_dotnetfile_extractor():
+    return get_dotnetfile_extractor(get_data_path_by_name("b9f5b"))
 
 
 @pytest.fixture
-def mixed_mode_64_dnfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("mixed-mode-64"))
+def mixed_mode_64_dotnetfile_extractor():
+    return get_dotnetfile_extractor(get_data_path_by_name("mixed-mode-64"))

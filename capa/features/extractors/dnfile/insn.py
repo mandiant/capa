@@ -14,7 +14,7 @@ from dncil.cil.opcode import OpCodes
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String
-from capa.features.extractors.dotnet.helpers import (
+from capa.features.extractors.dnfile.helpers import (
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_unmanaged_imports,

@@ -41,8 +41,8 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
-import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
+import capa.features.extractors.dotnetfile
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
@@ -506,9 +506,9 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
-        import capa.features.extractors.dotnet.extractor
+        import capa.features.extractors.dnfile.extractor
 
-        return capa.features.extractors.dotnet.extractor.DnfileFeatureExtractor(path)
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     if backend == "smda":
         from smda.SmdaConfig import SmdaConfig
@@ -549,9 +549,9 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
     if format_ == capa.features.extractors.common.FORMAT_PE:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
 
-        dnfile_extractor = capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample)
-        if dnfile_extractor.is_dotnet_file():
-            file_extractors.append(dnfile_extractor)
+        dotnetfile_extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(sample)
+        if dotnetfile_extractor.is_dotnet_file():
+            file_extractors.append(dotnetfile_extractor)
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
@@ -1060,7 +1060,7 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-        if isinstance(file_extractor, capa.features.extractors.dnfile_.DnfileFeatureExtractor):
+        if isinstance(file_extractor, capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor):
             format_ = FORMAT_DOTNET
 
     if format_ == FORMAT_FREEZE:

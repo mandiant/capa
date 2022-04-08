@@ -11,11 +11,11 @@ import capa.features.extractors
 
 
 def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, int]]:
-    yield from capa.features.extractors.dnfile_.extract_file_import_names(pe)
+    yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe)
 
 
 def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
-    yield from capa.features.extractors.dnfile_.extract_file_format(pe=pe)
+    yield from capa.features.extractors.dotnetfile.extract_file_format(pe=pe)
 
 
 def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:

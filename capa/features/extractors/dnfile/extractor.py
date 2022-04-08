@@ -8,10 +8,10 @@ if TYPE_CHECKING:
 import dnfile
 
 import capa.features.extractors
-import capa.features.extractors.dotnet.file
-import capa.features.extractors.dotnet.insn
+import capa.features.extractors.dnfile.file
+import capa.features.extractors.dnfile.insn
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.dotnet.helpers import get_dotnet_managed_method_bodies
+from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
@@ -21,8 +21,8 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, int]] = []
-        self.global_features.extend(capa.features.extractors.dnfile_.extract_file_os(pe=self.pe))
-        self.global_features.extend(capa.features.extractors.dnfile_.extract_file_arch(pe=self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
     def get_base_address(self):
         return 0x0
@@ -31,7 +31,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.dotnet.file.extract_features(self.pe)
+        yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
 
     def get_functions(self):
         # data structure shared across functions yielded here.
@@ -59,4 +59,4 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from f.instructions
 
     def extract_insn_features(self, f, bb, insn):
-        yield from capa.features.extractors.dotnet.insn.extract_features(f, bb, insn)
+        yield from capa.features.extractors.dnfile.insn.extract_features(f, bb, insn)

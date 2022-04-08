@@ -9,7 +9,7 @@ import capa.features.extractors.helpers
 from capa.features.file import Import
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.dotnet.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
+from capa.features.extractors.dnfile.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
 logger = logging.getLogger(__name__)
 
@@ -71,9 +71,9 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DnfileFeatureExtractor(FeatureExtractor):
+class DotnetFileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(DnfileFeatureExtractor, self).__init__()
+        super(DotnetFileFeatureExtractor, self).__init__()
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
@@ -105,25 +105,25 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return self.pe.net.metadata.struct.Version.rstrip(b"\x00").decode("utf-8")
 
     def get_functions(self):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def extract_function_features(self, f):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def get_basic_blocks(self, f):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def extract_basic_block_features(self, f, bb):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def get_instructions(self, f, bb):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def extract_insn_features(self, f, bb, insn):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def is_library_function(self, va):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
 
     def get_function_name(self, va):
-        raise NotImplementedError("DnfileFeatureExtractor can only be used to extract file features")
+        raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")
