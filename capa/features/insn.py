@@ -24,6 +24,10 @@ class Number(Feature):
         return capa.render.utils.hex(self.value)
 
 
+# max recognized structure size (and therefore, offset size)
+MAX_STRUCTURE_SIZE = 0x10000
+
+
 class Offset(Feature):
     def __init__(self, value: int, description=None):
         super(Offset, self).__init__(value, description=description)
