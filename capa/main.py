@@ -120,7 +120,7 @@ def find_instruction_capabilities(
         features[feature].add(addr)
 
     # matches found at this instruction.
-    _, matches = ruleset.match(Scope.INSTRUCTION, features, int(insn))
+    _, matches = ruleset.match(Scope.INSTRUCTION, features, insn.address)
 
     for rule_name, res in matches.items():
         rule = ruleset[rule_name]
@@ -160,7 +160,7 @@ def find_basic_block_capabilities(
         features[feature].add(va)
 
     # matches found within this basic block.
-    _, matches = ruleset.match(Scope.BASIC_BLOCK, features, int(bb))
+    _, matches = ruleset.match(Scope.BASIC_BLOCK, features, bb.address)
 
     for rule_name, res in matches.items():
         rule = ruleset[rule_name]
@@ -204,7 +204,7 @@ def find_code_capabilities(
     for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
         function_features[feature].add(va)
 
-    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, int(f))
+    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, f.address)
     return function_matches, bb_matches, insn_matches, len(function_features)
 
 
@@ -253,12 +253,10 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
     pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
     for f in pb:
-        function_address = int(f)
-
-        if extractor.is_library_function(function_address):
-            function_name = extractor.get_function_name(function_address)
-            logger.debug("skipping library function 0x%x (%s)", function_address, function_name)
-            meta["library_functions"][function_address] = function_name
+        if extractor.is_library_function(f.address):
+            function_name = extractor.get_function_name(f.address)
+            logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
+            meta["library_functions"][f.address] = function_name
             n_libs = len(meta["library_functions"])
             percentage = 100 * (n_libs / n_funcs)
             if isinstance(pb, tqdm.tqdm):
@@ -266,8 +264,8 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             continue
 
         function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
-        meta["feature_counts"]["functions"][function_address] = feature_count
-        logger.debug("analyzed function 0x%x and extracted %d features", function_address, feature_count)
+        meta["feature_counts"]["functions"][f.address] = feature_count
+        logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
 
         for rule_name, res in function_matches.items():
             all_function_matches[rule_name].extend(res)
@@ -710,10 +708,10 @@ def compute_layout(rules, extractor, capabilities):
     functions_by_bb = {}
     bbs_by_function = {}
     for f in extractor.get_functions():
-        bbs_by_function[int(f)] = []
+        bbs_by_function[f.address] = []
         for bb in extractor.get_basic_blocks(f):
-            functions_by_bb[int(bb)] = int(f)
-            bbs_by_function[int(f)].append(int(bb))
+            functions_by_bb[bb.address] = f.address
+            bbs_by_function[f.address].append(bb.address)
 
     matched_bbs = set()
     for rule_name, matches in capabilities.items():

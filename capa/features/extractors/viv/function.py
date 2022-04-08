@@ -31,14 +31,17 @@ def interface_extract_function_XXX(f: FunctionHandle) -> Iterator[Tuple[Feature,
 
 
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    f: viv_utils.Function = fhandle.inner
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
-        yield Characteristic("calls to"), src
+        yield Characteristic("calls to"), fhandle.address
 
 
 def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse if a function has a loop
     """
+    f: viv_utils.Function = fhandle.inner
+
     edges = []
 
     for bb in f.basic_blocks:
@@ -54,7 +57,7 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
                     edges.append((bb.va, bva))
 
     if edges and loops.has_loop(edges):
-        yield Characteristic("loop"), f.va
+        yield Characteristic("loop"), fhandle.address
 
 
 def extract_features(f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

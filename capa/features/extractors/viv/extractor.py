@@ -62,26 +62,29 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def get_functions(self):
         for va in sorted(self.vw.getFunctions()):
-            yield viv_utils.Function(self.vw, va)
+            yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va))
 
     def extract_function_features(self, f):
         yield from capa.features.extractors.viv.function.extract_features(f)
 
-    def get_basic_blocks(self, f):
-        return f.basic_blocks
+    def get_basic_blocks(self, fh: FunctionHandle):
+        f: viv_utils.Function = fh.inner
+        for bb in f.basic_blocks:
+            yield BBHandle(address=AbsoluteVirtualAddress(bb.va), inner=bb)
 
     def extract_basic_block_features(self, f, bb):
         yield from capa.features.extractors.viv.basicblock.extract_features(f, bb)
 
-    def get_instructions(self, f, bb):
+    def get_instructions(self, f, bbh: BBHandle):
+        bb: viv_utils.BasicBlock = bbh.inner
         for insn in bb.instructions:
-            yield InstructionHandle(insn)
+            yield InsnHandle(address=AbsoluteVirtualAddress(insn.va), inner=insn)
 
     def extract_insn_features(self, f, bb, insn):
         yield from capa.features.extractors.viv.insn.extract_features(f, bb, insn)
 
-    def is_library_function(self, va):
-        return viv_utils.flirt.is_library_function(self.vw, va)
+    def is_library_function(self, addr):
+        return viv_utils.flirt.is_library_function(self.vw, addr)
 
-    def get_function_name(self, va):
-        return viv_utils.get_function_name(self.vw, va)
+    def get_function_name(self, addr):
+        return viv_utils.get_function_name(self.vw, addr)
