@@ -6,11 +6,12 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Characteristic
+from capa.features.address import FileOffsetAddress, AbsoluteVirtualAddress
 
 
 def extract_file_embedded_pe(buf, **kwargs):
     for offset, _ in capa.features.extractors.helpers.carve_pe(buf, 1):
-        yield Characteristic("embedded pe"), offset
+        yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
 def extract_file_export_names(buf, **kwargs):
@@ -18,7 +19,7 @@ def extract_file_export_names(buf, **kwargs):
 
     if lief_binary is not None:
         for function in lief_binary.exported_functions:
-            yield Export(function.name), function.address
+            yield Export(function.name), AbsoluteVirtualAddress(function.address)
 
 
 def extract_file_import_names(smda_report, buf):
@@ -33,10 +34,10 @@ def extract_file_import_names(smda_report, buf):
             va = func.iat_address + smda_report.base_addr
             if func.name:
                 for name in capa.features.extractors.helpers.generate_symbols(library_name, func.name):
-                    yield Import(name), va
+                    yield Import(name), AbsoluteVirtualAddress(va)
             elif func.is_ordinal:
                 for name in capa.features.extractors.helpers.generate_symbols(library_name, "#%s" % func.ordinal):
-                    yield Import(name), va
+                    yield Import(name), AbsoluteVirtualAddress(va)
 
 
 def extract_file_section_names(buf, **kwargs):
@@ -46,7 +47,7 @@ def extract_file_section_names(buf, **kwargs):
     if lief_binary and lief_binary.sections:
         base_address = lief_binary.optional_header.imagebase
         for section in lief_binary.sections:
-            yield Section(section.name), base_address + section.virtual_address
+            yield Section(section.name), AbsoluteVirtualAddress(base_address + section.virtual_address)
 
 
 def extract_file_strings(buf, **kwargs):
@@ -54,10 +55,10 @@ def extract_file_strings(buf, **kwargs):
     extract ASCII and UTF-16 LE strings from file
     """
     for s in capa.features.extractors.strings.extract_ascii_strings(buf):
-        yield String(s.s), s.offset
+        yield String(s.s), FileOffsetAddress(s.offset)
 
     for s in capa.features.extractors.strings.extract_unicode_strings(buf):
-        yield String(s.s), s.offset
+        yield String(s.s), FileOffsetAddress(s.offset)
 
 
 def extract_file_function_names(smda_report, **kwargs):
@@ -87,8 +88,8 @@ def extract_features(smda_report, buf):
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(smda_report=smda_report, buf=buf):
-            yield feature, va
+        for feature, addr in file_handler(smda_report=smda_report, buf=buf):
+            yield feature, addr
 
 
 FILE_HANDLERS = (
