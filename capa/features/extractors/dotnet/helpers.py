@@ -75,7 +75,8 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     """read user string from #US stream"""
     try:
         user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as e:
+        logger.warn("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
         return None
     if user_string is None:
         return None
