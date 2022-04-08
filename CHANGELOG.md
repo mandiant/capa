@@ -8,6 +8,7 @@
 - add new feature "operand[{0, 1, 2}].number" for matching instruction operand immediate values #767 @williballenthin
 - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
 - main: detect dotnet binaries #955 @mr-tz
+- render: support Addresses that aren't simple integers, like .NET token+offset #981 @williballenthin
 
 ### Breaking Changes
 
@@ -15,6 +16,7 @@
   - Python 3.7 is now the minimum supported Python version #866 @williballenthin
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
+  - extractors must use handles to identify functions/basic blocks/instructions #981 @williballenthin
 
 ### New Rules (5)
 
