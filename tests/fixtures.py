@@ -22,9 +22,23 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.features.common import OS, OS_LINUX, ARCH_I386, FORMAT_PE, ARCH_AMD64, FORMAT_ELF, OS_WINDOWS, Arch, Format
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    FORMAT_DOTNET,
+    Arch,
+    Format,
+)
 
 CD = os.path.dirname(__file__)
+DOTNET_DIR = os.path.join(CD, "data", "dotnet")
+DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
 
 
 @contextlib.contextmanager
@@ -120,6 +134,19 @@ def get_pefile_extractor(path):
     import capa.features.extractors.pefile
 
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+
+def get_dotnetfile_extractor(path):
+    import capa.features.extractors.dotnetfile
+
+    return capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+
+
+@lru_cache(maxsize=1)
+def get_dnfile_extractor(path):
+    import capa.features.extractors.dnfile.extractor
+
+    return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
 
 def extract_global_features(extractor):
@@ -220,6 +247,14 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
     elif name.startswith("946a9"):
         return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
+    elif name.startswith("b9f5b"):
+        return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
+    elif name.startswith("mixed-mode-64"):
+        return os.path.join(DNFILE_TESTFILES, "mixed-mode", "ModuleCode", "bin", "ModuleCode_amd64.exe")
+    elif name.startswith("hello-world"):
+        return os.path.join(DNFILE_TESTFILES, "hello-world", "hello-world.exe")
+    elif name.startswith("_1c444"):
+        return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -272,7 +307,9 @@ def get_sample_md5_by_name(name):
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"
     elif name.startswith("946a9"):
-        return "946a99f36a46d335dec080d9a4371940.dll_"
+        return "946a99f36a46d335dec080d9a4371940"
+    elif name.startswith("b9f5b"):
+        return "b9f5bd514485fb06da39beff051b9fdc"
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -626,6 +663,39 @@ FEATURE_PRESENCE_TESTS = sorted(
     key=lambda t: (t[0], t[1]),
 )
 
+FEATURE_PRESENCE_TESTS_DOTNET = sorted(
+    [
+        ("b9f5b", "file", Arch(ARCH_I386), True),
+        ("b9f5b", "file", Arch(ARCH_AMD64), False),
+        ("mixed-mode-64", "file", Arch(ARCH_AMD64), True),
+        ("mixed-mode-64", "file", Arch(ARCH_I386), False),
+        ("b9f5b", "file", OS(OS_ANY), True),
+        ("b9f5b", "file", Format(FORMAT_DOTNET), True),
+        ("hello-world", "function=0x250", capa.features.common.String("Hello World!"), True),
+        ("hello-world", "function=0x250, bb=0x250, insn=0x252", capa.features.common.String("Hello World!"), True),
+        ("hello-world", "function=0x250", capa.features.insn.API("System.Console::WriteLine"), True),
+        ("hello-world", "file", capa.features.file.Import("System.Console::WriteLine"), True),
+        ("_1c444", "file", capa.features.file.Import("gdi32.CreateCompatibleBitmap"), True),
+        ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
+        ("_1c444", "file", capa.features.file.Import("gdi32::CreateCompatibleBitmap"), False),
+        ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
+        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), True),
+        ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
+        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
+        ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
+        (
+            "_1c444",
+            "function=0x1F68, bb=0x1F68, insn=0x1FF9",
+            capa.features.insn.API("System.Drawing.Image::FromHbitmap"),
+            True,
+        ),
+        ("_1c444", "function=0x1F68, bb=0x1F68, insn=0x1FF9", capa.features.insn.API("FromHbitmap"), False),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
 FEATURE_PRESENCE_TESTS_IDA = [
     # file/imports
     # IDA can recover more names of APIs imported by ordinal
@@ -639,6 +709,9 @@ FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
     ("mimikatz", "function=0x40B1F1", capa.features.common.Characteristic("calls to"), 3),
 ]
+
+
+FEATURE_COUNT_TESTS_DOTNET = []  # type: ignore
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
@@ -738,3 +811,23 @@ def al_khaser_x86_extractor():
 @pytest.fixture
 def pingtaest_extractor():
     return get_extractor(get_data_path_by_name("pingtaest"))
+
+
+@pytest.fixture
+def b9f5b_dotnetfile_extractor():
+    return get_dotnetfile_extractor(get_data_path_by_name("b9f5b"))
+
+
+@pytest.fixture
+def mixed_mode_64_dotnetfile_extractor():
+    return get_dotnetfile_extractor(get_data_path_by_name("mixed-mode-64"))
+
+
+@pytest.fixture
+def hello_world_dnfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("hello-world"))
+
+
+@pytest.fixture
+def _1c444_dnfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("1c444..."))

@@ -48,7 +48,7 @@ jobs:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
       with:
-        submodules: true
+        submodules: recursive
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
@@ -78,7 +78,7 @@ jobs:
     - name: Checkout capa with submodules
       uses: actions/checkout@v2
       with:
-        submodules: true
+        submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
