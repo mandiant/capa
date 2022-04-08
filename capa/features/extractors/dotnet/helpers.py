@@ -33,7 +33,7 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
         return self.offset
 
 
-def generate_dotnet_token(table: int, rid: int) -> int:
+def calculate_dotnet_token_value(table: int, rid: int) -> int:
     return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
 
 
@@ -103,7 +103,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
             continue
 
-        token: int = generate_dotnet_token(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
+        token: int = calculate_dotnet_token_value(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
         # like System.IO.File::OpenRead
         imp: str = f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}::{row.Name}"
 
@@ -131,7 +131,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
         # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
         # MethodDef table token to help us later record native import method calls made from CIL
-        token: int = generate_dotnet_token(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
+        token: int = calculate_dotnet_token_value(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
 
         # like Kernel32.dll
         if dll and "." in dll:
