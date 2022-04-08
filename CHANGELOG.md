@@ -12,6 +12,7 @@
 ### Breaking Changes
 
   - instruction scope and operand feature are new and are not backwards compatible with older versions of capa
+  - Python 3.7 is now the minimum supported Python version #866 @williballenthin
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
 

@@ -22,6 +22,7 @@ class Address(abc.ABC):
 
 class AbsoluteVirtualAddress(int, Address):
     """an absolute memory address"""
+
     def __new__(cls, v):
         assert v > 0
         return int.__new__(cls, v)
@@ -35,6 +36,7 @@ class RelativeVirtualAddress(int, Address):
 
 class FileOffsetAddress(int, Address):
     """an address relative to the start of a file"""
+
     def __new__(cls, v):
         assert v > 0
         return int.__new__(cls, v)
@@ -42,6 +44,7 @@ class FileOffsetAddress(int, Address):
 
 class DNTokenAddress(Token, Address):
     """a .NET token"""
+
     pass
 
 

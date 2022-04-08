@@ -19,7 +19,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -579,6 +579,15 @@ def extract_op_number_features(
     yield Number(v), ihandle.address
     yield OperandNumber(i, v), ihandle.address
 
+    if insn.mnem == "add" and 0 < v < MAX_STRUCTURE_SIZE and isinstance(oper, envi.archs.i386.disasm.i386ImmOper):
+        # for pattern like:
+        #
+        #     add eax, 0x10
+        #
+        # assume 0x10 is also an offset (imagine eax is a pointer).
+        yield Offset(v), insn.va
+        yield OperandOffset(i, v), insn.va
+
 
 def extract_op_offset_features(f, bb, ihandle: InsnHandle, i, oper: envi.Operand) -> Iterator[Tuple[Feature, Address]]:
     """parse structure offset features from the given operand."""
@@ -607,6 +616,15 @@ def extract_op_offset_features(f, bb, ihandle: InsnHandle, i, oper: envi.Operand
 
         yield Offset(v), ihandle.address
         yield OperandOffset(i, v), ihandle.address
+
+        if insn.mnem == "lea" and i == 1 and not f.vw.probeMemory(v, 1, envi.memory.MM_READ):
+            # for pattern like:
+            #
+            #     lea eax, [ebx + 1]
+            #
+            # assume 1 is also an offset (imagine ebx is a zero register).
+            yield Number(v), insn.va
+            yield OperandNumber(i, v), insn.va
 
     # like: [esi + ecx + 16384]
     #        reg   ^     ^
