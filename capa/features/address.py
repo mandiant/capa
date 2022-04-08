@@ -24,7 +24,7 @@ class AbsoluteVirtualAddress(int, Address):
     """an absolute memory address"""
 
     def __new__(cls, v):
-        assert v > 0
+        assert v >= 0
         return int.__new__(cls, v)
 
 
@@ -38,7 +38,7 @@ class FileOffsetAddress(int, Address):
     """an address relative to the start of a file"""
 
     def __new__(cls, v):
-        assert v > 0
+        assert v >= 0
         return int.__new__(cls, v)
 
 
@@ -51,10 +51,10 @@ class DNTokenAddress(Token, Address):
 class DNTokenOffsetAddress(Address):
     """an offset into an object specified by a .NET token"""
 
-    def __init__(self, token: Token, rva: int):
-        assert rva > 0
+    def __init__(self, token: Token, offset: int):
+        assert offset >= 0
         self.token = token
-        self.rva = rva
+        self.rva = offset
 
 
 class _NoAddress(Address):
