@@ -143,7 +143,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         yield token, imp
 
 
-def get_dotnet_methods(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
+def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
     """get managed methods from MethodDef table"""
     if not hasattr(pe.net.mdtables, "MethodDef"):
         return

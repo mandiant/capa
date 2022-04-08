@@ -11,7 +11,7 @@ import capa.features.extractors
 import capa.features.extractors.dotnet.file
 import capa.features.extractors.dotnet.insn
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.dotnet.helpers import get_dotnet_methods
+from capa.features.extractors.dotnet.helpers import get_dotnet_managed_method_bodies
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
@@ -39,7 +39,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
         ctx = {}
         ctx["pe"] = self.pe
 
-        for f in get_dotnet_methods(self.pe):
+        for f in get_dotnet_managed_method_bodies(self.pe):
             setattr(f, "ctx", ctx)
             yield f
 
