@@ -12,7 +12,7 @@ import idautils
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ida.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
