@@ -1,34 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple, Iterator
-from itertools import chain
+from typing import TYPE_CHECKING, Tuple, Iterator
 
 if TYPE_CHECKING:
     import dnfile
-    from capa.features.common import Feature
+    from capa.features.common import Feature, Format
+    from capa.features.file import Import
 
 import capa.features.extractors
-import capa.features.extractors.helpers
-from capa.features.file import Import
-from capa.features.common import FORMAT_DOTNET, Format
-from capa.features.extractors.dotnet.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
 
 def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, int]]:
-    """extract file imports"""
-    for (token, imp) in chain(get_dotnet_managed_imports(pe), get_dotnet_unmanaged_imports(pe)):
-        if "::" in imp:
-            # like System.IO.File::OpenRead
-            yield Import(imp), token
-        else:
-            # like kernel32.CreateFileA
-            dll, _, symbol = imp.rpartition(".")
-            for symbol_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-                yield Import(symbol_variant), token
+    yield from capa.features.extractors.dnfile_.extract_file_import_names(pe)
 
 
 def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
-    yield from capa.features.extractors.dnfile_.extract_file_format()
+    yield from capa.features.extractors.dnfile_.extract_file_format(pe=pe)
 
 
 def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
