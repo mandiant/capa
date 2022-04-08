@@ -382,3 +382,8 @@ def get_function_blocks(f):
 def is_basic_block_return(bb):
     """check if basic block is return block"""
     return bb.type == idaapi.fcb_ret
+
+
+def has_sib(oper) -> bool:
+    # via: https://reverseengineering.stackexchange.com/a/14300
+    return oper.specflag1 == 1

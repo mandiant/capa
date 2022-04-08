@@ -5,7 +5,7 @@ import struct
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number, Offset, Mnemonic
+from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -64,15 +64,25 @@ def extract_insn_number_features(f, bb, insn):
         #    .text:00401140                 call    sub_407E2B
         #    .text:00401145                 add     esp, 0Ch
         return
-    for operand in operands:
+    for i, operand in enumerate(operands):
         try:
             # The result of bitwise operations is calculated as though carried out
             # in two’s complement with an infinite number of sign bits
             value = int(operand, 16) & ((1 << f.smda_report.bitness) - 1)
-
-            yield Number(value), insn.offset
-        except:
+        except ValueError:
             continue
+        else:
+            yield Number(value), insn.offset
+            yield OperandNumber(i, value), insn.offset
+
+            if insn.mnemonic == "add" and 0 < value < MAX_STRUCTURE_SIZE:
+                # for pattern like:
+                #
+                #     add eax, 0x10
+                #
+                # assume 0x10 is also an offset (imagine eax is a pointer).
+                yield Offset(value), insn.offset
+                yield OperandOffset(i, value), insn.offset
 
 
 def read_bytes(smda_report, va, num_bytes=None):
@@ -198,11 +208,10 @@ def extract_insn_offset_features(f, bb, insn):
     #     mov eax, [esi + 4]
     #     mov eax, [esi + ecx + 16384]
     operands = [o.strip() for o in insn.operands.split(",")]
-    for operand in operands:
-        if "ptr" not in operand:
-            continue
+    for i, operand in enumerate(operands):
         if "esp" in operand or "ebp" in operand or "rbp" in operand:
             continue
+
         number = 0
         number_hex = re.search(PATTERN_HEXNUM, operand)
         number_int = re.search(PATTERN_SINGLENUM, operand)
@@ -212,7 +221,26 @@ def extract_insn_offset_features(f, bb, insn):
         elif number_int:
             number = int(number_int.group("num"))
             number = -1 * number if number_int.group().startswith("-") else number
+
+        if "ptr" not in operand:
+            if (
+                insn.mnemonic == "lea"
+                and i == 1
+                and (operand.count("+") + operand.count("-")) == 1
+                and operand.count("*") == 0
+            ):
+                # for pattern like:
+                #
+                #     lea eax, [ebx + 1]
+                #
+                # assume 1 is also an offset (imagine ebx is a zero register).
+                yield Number(number), insn.offset
+                yield OperandNumber(i, number), insn.offset
+
+            continue
+
         yield Offset(number), insn.offset
+        yield OperandOffset(i, number), insn.offset
 
 
 def is_security_cookie(f, bb, insn):
