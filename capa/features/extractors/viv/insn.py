@@ -17,11 +17,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-<<<<<<< HEAD
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-=======
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
->>>>>>> 65552575 (Update dotnet-main (#979))
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
