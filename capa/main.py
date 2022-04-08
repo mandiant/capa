@@ -114,18 +114,18 @@ def find_instruction_capabilities(
     # all features found for the instruction.
     features = collections.defaultdict(set)  # type: FeatureSet
 
-    for feature, va in itertools.chain(
+    for feature, addr in itertools.chain(
         extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
     ):
-        features[feature].add(va)
+        features[feature].add(addr)
 
     # matches found at this instruction.
     _, matches = ruleset.match(Scope.INSTRUCTION, features, int(insn))
 
     for rule_name, res in matches.items():
         rule = ruleset[rule_name]
-        for va, _ in res:
-            capa.engine.index_rule_matches(features, rule, [va])
+        for addr, _ in res:
+            capa.engine.index_rule_matches(features, rule, [addr])
 
     return features, matches
 

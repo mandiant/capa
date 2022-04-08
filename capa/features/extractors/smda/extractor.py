@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from smda.common.SmdaReport import SmdaReport
 
 import capa.features.extractors.common
@@ -6,6 +8,8 @@ import capa.features.extractors.smda.insn
 import capa.features.extractors.smda.global_
 import capa.features.extractors.smda.function
 import capa.features.extractors.smda.basicblock
+from capa.features.common import Feature
+from capa.features.address import Address
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 
@@ -18,7 +22,7 @@ class SmdaFeatureExtractor(FeatureExtractor):
             self.buf = f.read()
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features = []
+        self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
         self.global_features.extend(capa.features.extractors.smda.global_.extract_arch(self.smda_report))
 

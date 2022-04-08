@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
+from typing import List, Tuple
 
 import viv_utils
 import viv_utils.flirt
@@ -16,7 +17,9 @@ import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.global_
 import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.common import Feature
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +46,13 @@ class VivisectFeatureExtractor(FeatureExtractor):
             self.buf = f.read()
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features = []
+        self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf))
         self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
     def get_base_address(self):
         # assume there is only one file loaded into the vw
-        return list(self.vw.filemeta.values())[0]["imagebase"]
+        return AbsoluteVirtualAddress(list(self.vw.filemeta.values())[0]["imagebase"])
 
     def extract_global_features(self):
         yield from self.global_features

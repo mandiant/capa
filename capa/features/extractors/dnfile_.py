@@ -5,34 +5,35 @@ import dnfile
 import pefile
 
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
 def extract_file_format(**kwargs):
-    yield Format(FORMAT_DOTNET), 0x0
+    yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 
 def extract_file_os(**kwargs):
-    yield OS(OS_ANY), 0x0
+    yield OS(OS_ANY), NO_ADDRESS
 
 
 def extract_file_arch(pe, **kwargs):
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
-        yield Arch(ARCH_I386), 0x0
+        yield Arch(ARCH_I386), NO_ADDRESS
     elif not pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
-        yield Arch(ARCH_AMD64), 0x0
+        yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        yield Arch(ARCH_ANY), 0x0
+        yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe):  # type: ignore
-            yield feature, va
+        for feature, address in file_handler(pe=pe):  # type: ignore
+            yield feature, address
 
 
 FILE_HANDLERS = (
@@ -45,10 +46,10 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe):  # type: ignore
-            yield feature, va
+        for feature, addr in handler(pe=pe):  # type: ignore
+            yield feature, addr
 
 
 GLOBAL_HANDLERS = (
@@ -63,8 +64,8 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
-    def get_base_address(self) -> int:
-        return 0x0
+    def get_base_address(self) -> AbsoluteVirtualAddress:
+        return AbsoluteVirtualAddress(0x0)
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT

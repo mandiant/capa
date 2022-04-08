@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+from typing import List, Tuple, Callable, Iterator
 import envi
 import envi.exc
 import viv_utils
@@ -18,7 +19,9 @@ import envi.archs.amd64.disasm
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
 from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -26,19 +29,21 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def interface_extract_instruction_XXX(f, bb, insn):
+def interface_extract_instruction_XXX(
+    f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse features from the given instruction.
 
     args:
-      f (viv_utils.Function): the function to process.
-      bb (viv_utils.BasicBlock): the basic block to process.
-      insn (vivisect...Instruction): the instruction to process.
+      f: the function to process.
+      bb: the basic block to process.
+      insn: the instruction to process.
 
     yields:
-      (Feature, int): the feature and the address at which its found.
+      (Feature, Address): the feature and the address at which its found.
     """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
+    ...
 
 
 def get_imports(vw):
@@ -610,8 +615,8 @@ def extract_op_string_features(f, bb, insn, i, oper):
 def extract_operand_features(f, bb, insn):
     for i, oper in enumerate(insn.opers):
         for op_handler in OPERAND_HANDLERS:
-            for feature, va in op_handler(f, bb, insn, i, oper):
-                yield feature, va
+            for feature, addr in op_handler(f, bb, insn, i, oper):
+                yield feature, addr
 
 
 OPERAND_HANDLERS = (
@@ -621,7 +626,7 @@ OPERAND_HANDLERS = (
 )
 
 
-def extract_features(f, bb, insn):
+def extract_features(f, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given insn.
 
@@ -631,11 +636,11 @@ def extract_features(f, bb, insn):
       insn (vivisect...Instruction): the instruction to process.
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this insn.
+      Tuple[Feature, Address]: the features and their location found in this insn.
     """
     for insn_handler in INSTRUCTION_HANDLERS:
-        for feature, va in insn_handler(f, bb, insn):
-            yield feature, va
+        for feature, addr in insn_handler(f, bb, insn):
+            yield feature, addr
 
 
 INSTRUCTION_HANDLERS = (
