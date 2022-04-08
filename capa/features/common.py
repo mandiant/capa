@@ -11,7 +11,7 @@ import abc
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union
+from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional, Sequence
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 import capa.perf
 import capa.features
 import capa.features.extractors.elf
+from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
@@ -70,20 +71,13 @@ class Result:
         success: bool,
         statement: Union["capa.engine.Statement", "Feature"],
         children: List["Result"],
-        locations=None,
+        locations: Optional[Set[Address]] = None,
     ):
-        """
-        args:
-          success (bool)
-          statement (capa.engine.Statement or capa.features.Feature)
-          children (list[Result])
-          locations (iterable[VA])
-        """
         super(Result, self).__init__()
         self.success = success
         self.statement = statement
         self.children = children
-        self.locations = locations if locations is not None else ()
+        self.locations = locations if locations is not None else set()
 
     def __eq__(self, other):
         if isinstance(other, bool):
@@ -137,10 +131,10 @@ class Feature(abc.ABC):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]], **kwargs) -> Result:
+    def evaluate(self, ctx: Dict["Feature", Set[Address]], **kwargs) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-        return Result(self in ctx, self, [], locations=ctx.get(self, []))
+        return Result(self in ctx, self, [], locations=ctx.get(self, set()))
 
     def freeze_serialize(self):
         return (self.__class__.__name__, [self.value])

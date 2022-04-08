@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Mapping, Iterable
 import capa.perf
 import capa.features.common
 from capa.features.common import Result, Feature
+from capa.features.address import Address
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 # to collect the locations of a feature, do: `features[Number(0x10)]`
 #
 # aliased here so that the type can be documented and xref'd.
-FeatureSet = Dict[Feature, Set[int]]
+FeatureSet = Dict[Feature, Set[Address]]
 
 
 class Statement:
@@ -257,10 +258,10 @@ class Subscope(Statement):
 #         inspect(match_details)
 #
 # aliased here so that the type can be documented and xref'd.
-MatchResults = Mapping[str, List[Tuple[int, Result]]]
+MatchResults = Mapping[str, List[Tuple[Address, Result]]]
 
 
-def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[int]):
+def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[Address]):
     """
     record into the given featureset that the given rule matched at the given locations.
 
@@ -277,7 +278,7 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
             namespace, _, _ = namespace.rpartition("/")
 
 
-def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tuple[FeatureSet, MatchResults]:
+def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -> Tuple[FeatureSet, MatchResults]:
     """
     match the given rules against the given features,
     returning an updated set of features and the matches.
@@ -315,10 +316,10 @@ def match(rules: List["capa.rules.Rule"], features: FeatureSet, va: int) -> Tupl
             # sanity check
             assert bool(res) is True
 
-            results[rule.name].append((va, res))
+            results[rule.name].append((addr, res))
             # we need to update the current `features`
             # because subsequent iterations of this loop may use newly added features,
             # such as rule or namespace matches.
-            index_rule_matches(features, rule, [va])
+            index_rule_matches(features, rule, [addr])
 
     return (features, results)

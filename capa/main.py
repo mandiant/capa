@@ -63,6 +63,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
 )
+from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -224,7 +225,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 
     file_features.update(function_features)
 
-    _, matches = ruleset.match(Scope.FILE, file_features, 0x0)
+    _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
     return matches, len(file_features)
 
 
