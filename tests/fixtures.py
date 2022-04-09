@@ -325,21 +325,21 @@ def sample(request):
 
 def get_function(extractor, fva):
     for f in extractor.get_functions():
-        if int(f) == fva:
+        if str(f) == fva:
             return f
     raise ValueError("function not found")
 
 
 def get_basic_block(extractor, f, va):
     for bb in extractor.get_basic_blocks(f):
-        if int(bb) == va:
+        if str(bb) == va:
             return bb
     raise ValueError("basic block not found")
 
 
 def get_instruction(extractor, f, bb, va):
     for insn in extractor.get_instructions(f, bb):
-        if int(insn) == va:
+        if str(insn) == va:
             return insn
     raise ValueError("instruction not found")
 
@@ -824,10 +824,10 @@ def mixed_mode_64_dotnetfile_extractor():
 
 
 @pytest.fixture
-def hello_world_dnfile_extractor():
+def hello_world_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("hello-world"))
 
 
 @pytest.fixture
-def _1c444_dnfile_extractor():
+def _1c444_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("1c444..."))

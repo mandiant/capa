@@ -24,12 +24,12 @@ def test_dnfile_features(sample, scope, feature, expected):
 @parametrize(
     "extractor,function,expected",
     [
-        ("b9f5b_dnfile_extractor", "is_dotnet_file", True),
-        ("b9f5b_dnfile_extractor", "is_mixed_mode", False),
-        ("mixed_mode_64_dnfile_extractor", "is_mixed_mode", True),
-        ("b9f5b_dnfile_extractor", "get_entry_point", 0x6000007),
-        ("b9f5b_dnfile_extractor", "get_runtime_version", (2, 5)),
-        ("b9f5b_dnfile_extractor", "get_meta_version_string", "v2.0.50727"),
+        ("b9f5b_dotnetfile_extractor", "is_dotnet_file", True),
+        ("b9f5b_dotnetfile_extractor", "is_mixed_mode", False),
+        ("mixed_mode_64_dotnetfile_extractor", "is_mixed_mode", True),
+        ("b9f5b_dotnetfile_extractor", "get_entry_point", 0x6000007),
+        ("b9f5b_dotnetfile_extractor", "get_runtime_version", (2, 5)),
+        ("b9f5b_dotnetfile_extractor", "get_meta_version_string", "v2.0.50727"),
     ],
 )
 def test_dnfile_extractor(request, extractor, function, expected):

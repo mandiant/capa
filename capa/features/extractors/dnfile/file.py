@@ -14,22 +14,23 @@ if TYPE_CHECKING:
     import dnfile
     from capa.features.common import Feature, Format
     from capa.features.file import Import
+    from capa.features.address import Address
 
 import capa.features.extractors
 
 
-def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, int]]:
+def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe)
 
 
-def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
+def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_format(pe=pe)
 
 
-def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for (feature, token) in file_handler(pe):
-            yield feature, token
+        for (feature, address) in file_handler(pe):
+            yield feature, address
 
 
 FILE_HANDLERS = (

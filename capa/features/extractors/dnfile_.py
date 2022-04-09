@@ -11,15 +11,15 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs):
+def extract_file_format(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 
-def extract_file_os(**kwargs):
+def extract_file_os(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe, **kwargs):
+def extract_file_arch(pe, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:

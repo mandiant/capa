@@ -3,7 +3,7 @@ import struct
 from typing import Tuple, Iterator
 
 from capa.features.common import Feature, Characteristic
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle

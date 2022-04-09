@@ -65,24 +65,6 @@ from capa.features.common import (
     FORMAT_FREEZE,
 )
 from capa.features.address import NO_ADDRESS
-from capa.helpers import (
-    get_format,
-    get_file_taste,
-    get_auto_format,
-    log_unsupported_os_error,
-    log_unsupported_arch_error,
-    log_unsupported_format_error,
-)
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
-from capa.features.common import (
-    FORMAT_PE,
-    FORMAT_ELF,
-    FORMAT_AUTO,
-    FORMAT_SC32,
-    FORMAT_SC64,
-    FORMAT_DOTNET,
-    FORMAT_FREEZE,
-)
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"

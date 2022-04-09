@@ -19,26 +19,10 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-<<<<<<< HEAD
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
-||||||| de312d8
-from capa.features.insn import API, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import (
-    BITNESS_X32,
-    BITNESS_X64,
-    MAX_BYTES_FEATURE_SIZE,
-    THUNK_CHAIN_DEPTH_DELTA,
-    Bytes,
-    String,
-    Characteristic,
-)
-=======
-from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
->>>>>>> 580a2d7e4519ea5d353650d66468020968f0f27d
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -46,23 +30,7 @@ from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_i
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-<<<<<<< HEAD
-def interface_extract_instruction_XXX(
-    f: FunctionHandle, bb: BBHandle, insn: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
-||||||| de312d8
-def get_bitness(vw):
-    bitness = vw.getMeta("Architecture")
-    if bitness == "i386":
-        return BITNESS_X32
-    elif bitness == "amd64":
-        return BITNESS_X64
-
-
 def interface_extract_instruction_XXX(f, bb, insn):
-=======
-def interface_extract_instruction_XXX(f, bb, insn):
->>>>>>> 580a2d7e4519ea5d353650d66468020968f0f27d
     """
     parse features from the given instruction.
 
