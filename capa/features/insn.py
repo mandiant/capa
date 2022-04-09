@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import abc
+from typing import Union
 
 import capa.render.utils
 from capa.features.common import Feature
@@ -17,11 +18,16 @@ class API(Feature):
 
 
 class Number(Feature):
-    def __init__(self, value: int, description=None):
+    def __init__(self, value: Union[int, float], description=None):
         super(Number, self).__init__(value, description=description)
 
     def get_value_str(self):
-        return capa.render.utils.hex(self.value)
+        if isinstance(self.value, int):
+            return capa.render.utils.hex(self.value)
+        elif isinstance(self.value, float):
+            return str(self.value)
+        else:
+            raise ValueError("invalid value type")
 
 
 # max recognized structure size (and therefore, offset size)
