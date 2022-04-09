@@ -11,10 +11,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, Tuple, Iterator, Optional
 from itertools import chain
 
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
     from dncil.cil.body import CilMethodBody
     from capa.features.common import Feature
+    from capa.features.address import Address
 
 from dncil.clr.token import StringToken
 from dncil.cil.opcode import OpCodes
@@ -38,8 +41,11 @@ def get_imports(ctx: Dict) -> Dict:
     return ctx["imports_cache"]
 
 
-def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
+def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction API features"""
+    f: CilMethodBody = fh.inner
+    insn: Instruction = ih.inner
+
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
@@ -49,26 +55,27 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
 
     if "::" in name:
         # like System.IO.File::OpenRead
-        yield API(name), insn.offset
+        yield API(name), ih.address
     else:
         # like kernel32.CreateFileA
         dll, _, symbol = name.rpartition(".")
         for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-            yield API(name_variant), insn.offset
+            yield API(name_variant), ih.address
 
 
-def extract_insn_number_features(
-    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Iterator[Tuple[Number, int]]:
+def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction number features"""
+    insn: Instruction = ih.inner
+
     if insn.is_ldc():
-        yield Number(insn.get_ldc()), insn.offset
+        yield Number(insn.get_ldc()), ih.address
 
 
-def extract_insn_string_features(
-    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
-) -> Iterator[Tuple[String, int]]:
+def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction string features"""
+    f: CilMethodBody = fh.inner
+    insn: Instruction = ih.inner
+
     if not insn.is_ldstr():
         return
 
@@ -79,14 +86,14 @@ def extract_insn_string_features(
     if user_string is None:
         return
 
-    yield String(user_string), insn.offset
+    yield String(user_string), ih.address
 
 
-def extract_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Feature, int]]:
+def extract_features(f: FunctionHandle, bb: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for (feature, offset) in inst_handler(f, bb, insn):
-            yield feature, offset
+        for (feature, addr) in inst_handler(f, bb, insn):
+            yield feature, addr
 
 
 INSTRUCTION_HANDLERS = (

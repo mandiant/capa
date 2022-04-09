@@ -8,17 +8,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple
+
+from capa.features.address import Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 
 if TYPE_CHECKING:
     from capa.features.common import Feature
 
 import dnfile
+from dncil.clr.token import Token
 
 import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
 
 
@@ -28,12 +31,12 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
         # pre-compute these because we'll yield them at *every* scope.
-        self.global_features: List[Tuple[Feature, int]] = []
+        self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
     def get_base_address(self):
-        return 0x0
+        return AbsoluteVirtualAddress(0x0)
 
     def extract_global_features(self):
         yield from self.global_features
@@ -42,14 +45,8 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
 
     def get_functions(self):
-        # data structure shared across functions yielded here.
-        # useful for caching analysis relevant across a single workspace.
-        ctx = {}
-        ctx["pe"] = self.pe
-
-        for f in get_dotnet_managed_method_bodies(self.pe):
-            setattr(f, "ctx", ctx)
-            yield f
+        for token, f in get_dotnet_managed_method_bodies(self.pe):
+            yield FunctionHandle(address=DNTokenAddress(Token(token)), inner=f, ctx={"pe": self.pe})
 
     def extract_function_features(self, f):
         # TODO
@@ -57,14 +54,18 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def get_basic_blocks(self, f):
         # each dotnet method is considered 1 basic block
-        yield f
+        yield BBHandle(
+            address=f.address,
+            inner=f.inner,
+        )
 
     def extract_basic_block_features(self, f, bb):
         # we don't support basic block features
         yield from []
 
     def get_instructions(self, f, bb):
-        yield from f.instructions
+        for insn in bb.inner.instructions:
+            yield InsnHandle(address=DNTokenOffsetAddress(bb.address.token, insn.offset), inner=insn)
 
     def extract_insn_features(self, f, bb, insn):
         yield from capa.features.extractors.dnfile.insn.extract_features(f, bb, insn)

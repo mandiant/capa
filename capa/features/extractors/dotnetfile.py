@@ -4,51 +4,53 @@ from itertools import chain
 
 import dnfile
 import pefile
+from dncil.clr.token import Token
 
 import capa.features.extractors.helpers
 from capa.features.file import Import
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
-    yield Format(FORMAT_DOTNET), 0x0
+def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
+    yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 
-def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
+def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
     for (token, imp) in chain(get_dotnet_managed_imports(pe), get_dotnet_unmanaged_imports(pe)):
         if "::" in imp:
             # like System.IO.File::OpenRead
-            yield Import(imp), token
+            yield Import(imp), DNTokenAddress(Token(token))
         else:
             # like kernel32.CreateFileA
             dll, _, symbol = imp.rpartition(".")
             for symbol_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-                yield Import(symbol_variant), token
+                yield Import(symbol_variant), DNTokenAddress(Token(token))
 
 
-def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
-    yield OS(OS_ANY), 0x0
+def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
+    yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, int]]:
+def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
-        yield Arch(ARCH_I386), 0x0
+        yield Arch(ARCH_I386), NO_ADDRESS
     elif not pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
-        yield Arch(ARCH_AMD64), 0x0
+        yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        yield Arch(ARCH_ANY), 0x0
+        yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe):  # type: ignore
-            yield feature, va
+        for feature, addr in file_handler(pe=pe):  # type: ignore
+            yield feature, addr
 
 
 FILE_HANDLERS = (
@@ -59,7 +61,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
         for feature, va in handler(pe=pe):  # type: ignore
             yield feature, va
@@ -77,8 +79,8 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
-    def get_base_address(self) -> int:
-        return 0x0
+    def get_base_address(self):
+        return AbsoluteVirtualAddress(0x0)
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
