@@ -49,7 +49,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name: str = get_imports(f.ctx).get(insn.operand.value, "")
+    name: str = get_imports(fh.ctx).get(insn.operand.value, "")
     if not name:
         return
 
@@ -82,7 +82,7 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
     if not isinstance(insn.operand, StringToken):
         return
 
-    user_string: Optional[str] = read_dotnet_user_string(f.ctx["pe"], insn.operand)
+    user_string: Optional[str] = read_dotnet_user_string(fh.ctx["pe"], insn.operand)
     if user_string is None:
         return
 
