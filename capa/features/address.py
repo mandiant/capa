@@ -42,10 +42,20 @@ class FileOffsetAddress(int, Address):
         return int.__new__(cls, v)
 
 
-class DNTokenAddress(Token, Address):
+class DNTokenAddress(Address):
     """a .NET token"""
 
-    pass
+    def __init__(self, token: Token):
+        self.token = token
+
+    def __lt__(self, other):
+        return (self.token.table, self.token.rid) < (other.token.table, other.token.rid)
+
+    def __hash__(self):
+        return hash((self.token.table, self.token.rid))
+
+    def __str__(self):
+        return str(self.token)
 
 
 class DNTokenOffsetAddress(Address):
