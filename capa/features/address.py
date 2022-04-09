@@ -49,10 +49,10 @@ class DNTokenAddress(Address):
         self.token = token
 
     def __lt__(self, other):
-        return (self.token.table, self.token.rid) < (other.token.table, other.token.rid)
+        return self.token.value < other.token.value
 
     def __hash__(self):
-        return hash((self.token.table, self.token.rid))
+        return hash(self.token.value)
 
     def __str__(self):
         return str(self.token)
@@ -65,6 +65,15 @@ class DNTokenOffsetAddress(Address):
         assert offset >= 0
         self.token = token
         self.offset = offset
+
+    def __lt__(self, other):
+        return (self.token.value, self.offset) < (other.token.value, other.offset)
+
+    def __hash__(self):
+        return hash((self.token.value, self.offset))
+
+    def __str__(self):
+        return f"{self.token:s}+{hex(self.offset)}"
 
 
 class _NoAddress(Address):
