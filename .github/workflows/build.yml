@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     name: PyInstaller for ${{ matrix.os }}
+    needs: tests
     runs-on: ${{ matrix.os }}
     strategy:
       # set to false for debugging
