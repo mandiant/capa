@@ -43,7 +43,7 @@ jobs:
       - name: Install capa with build requirements
         run: pip install -e .[build]
       - name: Build standalone executable
-        run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
+        run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec --icon .github/pyinstaller/logo.ico
       - name: Debug
         run: file dist/capa; ls -l dist
       - name: Does it run (PE)?
