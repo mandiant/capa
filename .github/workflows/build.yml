@@ -13,7 +13,8 @@ jobs:
     name: PyInstaller for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      # set to false for debugging
+      fail-fast: true
       matrix:
         include:
           - os: ubuntu-18.04
@@ -43,9 +44,7 @@ jobs:
       - name: Install capa with build requirements
         run: pip install -e .[build]
       - name: Build standalone executable
-        run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec --icon .github/pyinstaller/logo.ico
-      - name: Debug
-        run: file dist/capa; ls -l dist
+        run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
         run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
