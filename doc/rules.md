@@ -36,11 +36,12 @@ This is so that new versions of capa can update rule syntax, such as by adding n
 Otherwise, using rules with a mismatched version of capa may lead to errors like:
 
 ```
-TODO
+$ capa   --rules /path/to/mismatched/rules    suspicious.exe
+ERROR:lint:invalid rule: injection.yml: invalid rule: unexpected statement: instruction
 ```                
 
 You can check the version of capa you're currently using like this:
-
+                         
 ```console
 $ capa --version
 capa 3.0.3
