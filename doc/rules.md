@@ -43,7 +43,7 @@ You can check the version of capa you're currently using like this:
 
 ```console
 $ capa --version
-TODO
+capa 3.0.3
 ```
 
 #### download release archive
