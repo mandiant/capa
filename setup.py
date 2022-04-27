@@ -88,6 +88,9 @@ setuptools.setup(
             "types-psutil==5.8.22",
             "types_requests==2.27.20",
         ],
+        "build": [
+            "pyinstaller==5.0",
+        ],
     },
     zip_safe=False,
     keywords="capa malware analysis capability detection FLARE",
