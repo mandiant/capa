@@ -167,3 +167,7 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
             continue
 
         yield body
+
+
+def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
+    return getattr(pe.net.mdtables, table_name, None) is not None

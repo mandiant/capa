@@ -6,10 +6,15 @@ import dnfile
 import pefile
 
 import capa.features.extractors.helpers
-from capa.features.file import Import
+from capa.features.file import Import, FunctionName
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.dnfile.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
+from capa.features.extractors.dnfile.helpers import (
+    is_dotnet_table_valid,
+    get_dotnet_managed_imports,
+    calculate_dotnet_token_value,
+    get_dotnet_unmanaged_imports,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +33,34 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
             dll, _, symbol = imp.rpartition(".")
             for symbol_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
                 yield Import(symbol_variant), token
+
+
+def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, int]]:
+    """
+    see https://www.ntcore.com/files/dotnetformat.htm
+    
+    02 - TypeDef Table
+        Each row represents a class in the current assembly.
+            TypeName (index into String heap)
+            TypeNamespace (index into String heap)
+            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
+    """
+    if not is_dotnet_table_valid(pe, "TypeDef"):
+        return
+
+    for row in pe.net.mdtables.TypeDef.rows:
+        for index in row.MethodList:
+            # like File::OpenRead
+            name = f"{row.TypeName}::{index.row.Name}"
+
+            # ECMA II.22.37: TypeNamespace can be null or non-null
+            if row.TypeNamespace:
+                # like System.IO.File::OpenRead
+                name = f"{row.TypeNamespace}.{name}"
+
+            token = calculate_dotnet_token_value(index.table.number, index.row_index)
+
+            yield FunctionName(name), token
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
@@ -54,7 +87,7 @@ def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
 FILE_HANDLERS = (
     extract_file_import_names,
     # TODO extract_file_strings,
-    # TODO extract_file_function_names,
+    extract_file_function_names,
     extract_file_format,
 )
 
