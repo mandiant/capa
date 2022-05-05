@@ -18,7 +18,7 @@ requirements = [
     "termcolor==1.1.0",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.6.11",
+    "viv-utils[flirt]==0.7.1",
     "halo==0.0.31",
     "networkx==2.5.1",
     "ruamel.yaml==0.17.21",
@@ -68,7 +68,7 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest==7.1.1",
+            "pytest==7.1.2",
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.4.2",
             "pytest-cov==3.0.0",
@@ -82,11 +82,14 @@ setuptools.setup(
             # type stubs for mypy
             "types-backports==0.1.3",
             "types-colorama==0.4.12",
-            "types-PyYAML==6.0.6",
+            "types-PyYAML==6.0.7",
             "types-tabulate==0.8.7",
             "types-termcolor==1.1.3",
             "types-psutil==5.8.22",
-            "types_requests==2.27.19",
+            "types_requests==2.27.20",
+        ],
+        "build": [
+            "pyinstaller==5.0",
         ],
     },
     zip_safe=False,
