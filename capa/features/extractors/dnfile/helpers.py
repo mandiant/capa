@@ -171,3 +171,32 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
 
 def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
     return getattr(pe.net.mdtables, table_name, None) is not None
+
+
+def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get managed method names from TypeDef table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    02 - TypeDef Table
+        Each row represents a class in the current assembly.
+            TypeName (index into String heap)
+            TypeNamespace (index into String heap)
+            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
+    """
+    if not is_dotnet_table_valid(pe, "TypeDef"):
+        return
+
+    for row in pe.net.mdtables.TypeDef.rows:
+        for index in row.MethodList:
+            # like File::OpenRead
+            name = f"{row.TypeName}::{index.row.Name}"
+
+            # ECMA II.22.37: TypeNamespace can be null or non-null
+            if row.TypeNamespace:
+                # like System.IO.File::OpenRead
+                name = f"{row.TypeNamespace}.{name}"
+
+            token = calculate_dotnet_token_value(index.table.number, index.row_index)
+
+            yield token, name
