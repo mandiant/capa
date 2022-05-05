@@ -22,7 +22,7 @@ requirements = [
     "halo==0.0.31",
     "networkx==2.5.1",
     "ruamel.yaml==0.17.21",
-    "vivisect==1.0.7",
+    "vivisect==1.0.8",
     "smda==1.7.1",
     "pefile==2021.9.3",
     "pyelftools==0.28",
@@ -81,12 +81,12 @@ setuptools.setup(
             "requests==2.27.1",
             # type stubs for mypy
             "types-backports==0.1.3",
-            "types-colorama==0.4.12",
+            "types-colorama==0.4.13",
             "types-PyYAML==6.0.7",
             "types-tabulate==0.8.7",
             "types-termcolor==1.1.3",
             "types-psutil==5.8.22",
-            "types_requests==2.27.20",
+            "types_requests==2.27.25",
         ],
         "build": [
             "pyinstaller==5.0",
