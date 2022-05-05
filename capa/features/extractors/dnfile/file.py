@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Tuple, Iterator
 
 if TYPE_CHECKING:
     import dnfile
-    from capa.features.common import Feature, Format
+    from capa.features.common import Feature, Format, String
     from capa.features.file import Import, FunctionName
 
 import capa.features.extractors
@@ -29,6 +29,10 @@ def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
 def extract_file_function_names(pe: dnfile.dnPE) -> Iterator[Tuple[FunctionName, int]]:
     yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=pe)
 
+    
+def extract_file_strings(pe: dnfile.dnPE) -> Iterator[Tuple[String, int]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_strings(pe=pe)
+
 
 def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
@@ -38,7 +42,7 @@ def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
 
 FILE_HANDLERS = (
     extract_file_import_names,
-    # TODO extract_file_strings,
     extract_file_function_names,
+    extract_file_strings,
     extract_file_format,
 )
