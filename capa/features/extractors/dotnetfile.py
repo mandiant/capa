@@ -1,6 +1,5 @@
 import logging
 from typing import Tuple, Iterator
-from itertools import chain
 
 import dnfile
 import pefile
