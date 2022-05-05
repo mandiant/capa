@@ -112,11 +112,17 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
             continue
 
-        token: int = calculate_dotnet_token_value(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
-        # like System.IO.File::OpenRead
-        imp: str = f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}::{row.Name}"
+        # like File::OpenRead
+        name = f"{row.Class.row.TypeName}::{row.Name}"
 
-        yield token, imp
+        # ECMA II.22.38: TypeNamespace can be null or non-null
+        if row.Class.row.TypeNamespace:
+            # like System.IO.File::OpenRead
+            name = f"{row.Class.row.TypeNamespace}.{name}"
+
+        token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
+
+        yield token, name
 
 
 def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
@@ -147,9 +153,9 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             dll = dll.split(".")[0]
 
         # like kernel32.CreateFileA
-        imp: str = f"{dll}.{symbol}"
+        name: str = f"{dll}.{symbol}"
 
-        yield token, imp
+        yield token, name
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
@@ -187,7 +193,7 @@ def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]
     if not is_dotnet_table_valid(pe, "TypeDef"):
         return
 
-    for row in pe.net.mdtables.TypeDef.rows:
+    for row in pe.net.mdtables.TypeDef:
         for index in row.MethodList:
             # like File::OpenRead
             name = f"{row.TypeName}::{index.row.Name}"
