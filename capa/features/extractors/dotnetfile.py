@@ -24,15 +24,15 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
-    for (token, imp) in chain(get_dotnet_managed_imports(pe), get_dotnet_unmanaged_imports(pe)):
-        if "::" in imp:
-            # like System.IO.File::OpenRead
-            yield Import(imp), token
-        else:
-            # like kernel32.CreateFileA
-            dll, _, symbol = imp.rpartition(".")
-            for symbol_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-                yield Import(symbol_variant), token
+    for (token, name) in get_dotnet_managed_imports(pe):
+        # like System.IO.File::OpenRead
+        yield Import(name), token
+
+    for (token, name) in get_dotnet_unmanaged_imports(pe):
+        # like kernel32.CreateFileA
+        dll, _, symbol = name.rpartition(".")
+        for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+            yield Import(name_variant), token
 
 
 def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, int]]:
