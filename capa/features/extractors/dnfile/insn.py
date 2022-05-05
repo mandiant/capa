@@ -37,7 +37,7 @@ def get_imports(ctx: Dict) -> Dict:
             ctx["imports_cache"][token] = name
         for (token, name) in get_dotnet_unmanaged_imports(ctx["pe"]):
             ctx["imports_cache"][token] = name
-    
+
     return ctx["imports_cache"]
 
 
@@ -47,7 +47,7 @@ def get_methods(ctx: Dict) -> Dict:
 
         for (token, name) in get_dotnet_managed_method_names(ctx["pe"]):
             ctx["methods_cache"][token] = name
-    
+
     return ctx["methods_cache"]
 
 
