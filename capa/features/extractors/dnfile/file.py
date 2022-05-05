@@ -29,7 +29,7 @@ def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, int]]:
 def extract_file_function_names(pe: dnfile.dnPE) -> Iterator[Tuple[FunctionName, int]]:
     yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=pe)
 
-    
+
 def extract_file_strings(pe: dnfile.dnPE) -> Iterator[Tuple[String, int]]:
     yield from capa.features.extractors.dotnetfile.extract_file_strings(pe=pe)
 
