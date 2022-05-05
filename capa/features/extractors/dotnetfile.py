@@ -7,7 +7,18 @@ import pefile
 
 import capa.features.extractors.helpers
 from capa.features.file import Import
-from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    ARCH_ANY,
+    ARCH_I386,
+    ARCH_AMD64,
+    FORMAT_DOTNET,
+    Arch,
+    Format,
+    String,
+    Feature,
+)
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_imports, get_dotnet_unmanaged_imports
 
@@ -45,6 +56,10 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, int]]:
         yield Arch(ARCH_ANY), 0x0
 
 
+def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, int]]:
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
+
+
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler(pe=pe):  # type: ignore
@@ -53,7 +68,7 @@ def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
 
 FILE_HANDLERS = (
     extract_file_import_names,
-    # TODO extract_file_strings,
+    extract_file_strings,
     # TODO extract_file_function_names,
     extract_file_format,
 )

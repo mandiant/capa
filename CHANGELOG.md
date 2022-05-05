@@ -9,6 +9,7 @@
  - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
  - extract additional offset/number features in certain circumstances #320 @williballenthin
  - add detection and basic feature extraction for dotnet #987 @mr-tz, @mike-hunhoff, @williballenthin
+ - add file string extraction for dotnet files #1012 @mike-hunhoff
 
 ### Breaking Changes
 
