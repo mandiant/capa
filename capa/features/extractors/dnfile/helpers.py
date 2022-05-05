@@ -105,7 +105,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    if not hasattr(pe.net.mdtables, "MemberRef") or pe.net.mdtables.MemberRef is None:
+    if not is_dotnet_table_valid(pe, "MemberRef"):
         return
 
     for (rid, row) in enumerate(pe.net.mdtables.MemberRef):
@@ -136,7 +136,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             ImportName (index into the String heap)
             ImportScope (index into the ModuleRef table)
     """
-    if not hasattr(pe.net.mdtables, "ImplMap") or pe.net.mdtables.ImplMap is None:
+    if not is_dotnet_table_valid(pe, "ImplMap"):
         return
 
     for row in pe.net.mdtables.ImplMap:
@@ -160,7 +160,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
     """get managed methods from MethodDef table"""
-    if not hasattr(pe.net.mdtables, "MethodDef") or pe.net.mdtables.MethodDef is None:
+    if not is_dotnet_table_valid(pe, "MethodDef"):
         return
 
     for row in pe.net.mdtables.MethodDef:
