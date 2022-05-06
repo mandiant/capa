@@ -21,6 +21,7 @@ from capa.features.common import (
 )
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
+    is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
@@ -71,7 +72,7 @@ def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, in
 
 
 def extract_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
-    if not bool(pe.net.Flags.CLR_ILONLY):
+    if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), 0x0
 
 
@@ -127,7 +128,7 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         return bool(self.pe.net)
 
     def is_mixed_mode(self) -> bool:
-        return not bool(self.pe.net.Flags.CLR_ILONLY)
+        return is_dotnet_mixed_mode(self.pe)
 
     def get_runtime_version(self) -> Tuple[int, int]:
         return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
