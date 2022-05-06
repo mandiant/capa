@@ -56,8 +56,11 @@ def get_methods(ctx: Dict) -> Dict:
 
 
 def get_callee_name(ctx: Dict, token: int) -> str:
+    """map dotnet token to method name"""
     name: str = get_managed_imports(ctx).get(token, "")
     if not name:
+        # we must check unmanaged imports before managed methods because we map forwarded managed methods
+        # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
         name = get_unmanaged_imports(ctx).get(token, "")
         if not name:
             name = get_methods(ctx).get(token, "")
