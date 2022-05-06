@@ -1,17 +1,13 @@
 name: build
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types:
-      - completed
+  pull_request:
+    branches: [ master ]
   release:
     types: [edited, published]
 
 jobs:
   build:
-    # only build on release or if tests pass
-    if: ${{ github.event_name == 'release' }} || ${{ github.event.workflow_run.conclusion == 'success' }}
     name: PyInstaller for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
