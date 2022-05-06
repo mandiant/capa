@@ -1,11 +1,6 @@
 name: tag
 
 on:
-  # TODO remove after testing
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
   release:
     types: [published]
 
@@ -34,10 +29,9 @@ jobs:
         name=${{ github.event.release.tag_name }}
         name-major="$(cut -d '.' -f1 <<< "$name")"
         git tag $name-major -m "https://github.com/mandiant/capa/releases/$name"
-    # TODO enable after testing
-#    - name: Push tag to capa-rules
-#      uses: ad-m/github-push-action@master
-#      with:
-#        repository: mandiant/capa-rules
-#        github_token: ${{ secrets.CAPA_TOKEN }}
-#        tags: true
+    - name: Push tag to capa-rules
+      uses: ad-m/github-push-action@master
+      with:
+        repository: mandiant/capa-rules
+        github_token: ${{ secrets.CAPA_TOKEN }}
+        tags: true
