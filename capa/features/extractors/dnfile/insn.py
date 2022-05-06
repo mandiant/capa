@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Tuple, Iterator, Optional
-from itertools import chain
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -26,16 +25,30 @@ from capa.features.extractors.dnfile.helpers import (
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_unmanaged_imports,
+    get_dotnet_managed_method_names,
 )
 
 
 def get_imports(ctx: Dict) -> Dict:
     if "imports_cache" not in ctx:
-        ctx["imports_cache"] = {
-            token: imp
-            for (token, imp) in chain(get_dotnet_managed_imports(ctx["pe"]), get_dotnet_unmanaged_imports(ctx["pe"]))
-        }
+        ctx["imports_cache"] = {}
+
+        for (token, name) in get_dotnet_managed_imports(ctx["pe"]):
+            ctx["imports_cache"][token] = name
+        for (token, name) in get_dotnet_unmanaged_imports(ctx["pe"]):
+            ctx["imports_cache"][token] = name
+
     return ctx["imports_cache"]
+
+
+def get_methods(ctx: Dict) -> Dict:
+    if "methods_cache" not in ctx:
+        ctx["methods_cache"] = {}
+
+        for (token, name) in get_dotnet_managed_method_names(ctx["pe"]):
+            ctx["methods_cache"][token] = name
+
+    return ctx["methods_cache"]
 
 
 def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
@@ -44,6 +57,9 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
         return
 
     name: str = get_imports(f.ctx).get(insn.operand.value, "")
+    if not name:
+        name = get_methods(f.ctx).get(insn.operand.value, "")
+
     if not name:
         return
 

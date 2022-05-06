@@ -10,6 +10,7 @@
  - extract additional offset/number features in certain circumstances #320 @williballenthin
  - add detection and basic feature extraction for dotnet #987 @mr-tz, @mike-hunhoff, @williballenthin
  - add file string extraction for dotnet files #1012 @mike-hunhoff
+ - add file function-name extraction for dotnet files #1015 @mike-hunhoff
 
 ### Breaking Changes
 

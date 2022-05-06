@@ -105,18 +105,24 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    if not hasattr(pe.net.mdtables, "MemberRef") or pe.net.mdtables.MemberRef is None:
+    if not is_dotnet_table_valid(pe, "MemberRef"):
         return
 
     for (rid, row) in enumerate(pe.net.mdtables.MemberRef):
         if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
             continue
 
-        token: int = calculate_dotnet_token_value(dnfile.enums.MetadataTables.MemberRef.value, rid + 1)
-        # like System.IO.File::OpenRead
-        imp: str = f"{row.Class.row.TypeNamespace}.{row.Class.row.TypeName}::{row.Name}"
+        # like File::OpenRead
+        name = f"{row.Class.row.TypeName}::{row.Name}"
 
-        yield token, imp
+        # ECMA II.22.38: TypeNamespace can be null or non-null
+        if row.Class.row.TypeNamespace:
+            # like System.IO.File::OpenRead
+            name = f"{row.Class.row.TypeNamespace}.{name}"
+
+        token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
+
+        yield token, name
 
 
 def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
@@ -130,7 +136,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             ImportName (index into the String heap)
             ImportScope (index into the ModuleRef table)
     """
-    if not hasattr(pe.net.mdtables, "ImplMap") or pe.net.mdtables.ImplMap is None:
+    if not is_dotnet_table_valid(pe, "ImplMap"):
         return
 
     for row in pe.net.mdtables.ImplMap:
@@ -147,14 +153,14 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             dll = dll.split(".")[0]
 
         # like kernel32.CreateFileA
-        imp: str = f"{dll}.{symbol}"
+        name: str = f"{dll}.{symbol}"
 
-        yield token, imp
+        yield token, name
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
     """get managed methods from MethodDef table"""
-    if not hasattr(pe.net.mdtables, "MethodDef") or pe.net.mdtables.MethodDef is None:
+    if not is_dotnet_table_valid(pe, "MethodDef"):
         return
 
     for row in pe.net.mdtables.MethodDef:
@@ -167,3 +173,36 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
             continue
 
         yield body
+
+
+def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
+    return bool(getattr(pe.net.mdtables, table_name, None))
+
+
+def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get managed method names from TypeDef table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    02 - TypeDef Table
+        Each row represents a class in the current assembly.
+            TypeName (index into String heap)
+            TypeNamespace (index into String heap)
+            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
+    """
+    if not is_dotnet_table_valid(pe, "TypeDef"):
+        return
+
+    for row in pe.net.mdtables.TypeDef:
+        for index in row.MethodList:
+            # like File::OpenRead
+            name = f"{row.TypeName}::{index.row.Name}"
+
+            # ECMA II.22.37: TypeNamespace can be null or non-null
+            if row.TypeNamespace:
+                # like System.IO.File::OpenRead
+                name = f"{row.TypeNamespace}.{name}"
+
+            token = calculate_dotnet_token_value(index.table.number, index.row_index)
+
+            yield token, name
