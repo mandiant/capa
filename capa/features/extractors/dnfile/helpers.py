@@ -176,7 +176,7 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
 
 
 def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
-    return getattr(pe.net.mdtables, table_name, None) is not None
+    return bool(getattr(pe.net.mdtables, table_name, None))
 
 
 def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
