@@ -693,6 +693,13 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
         (
             "_1c444",
+            "function=0x1F59, bb=0x1F59, insn=0x1F5B",
+            capa.features.common.Characteristic("unmanaged call"),
+            True,
+        ),
+        ("_1c444", "function=0x2544", capa.features.common.Characteristic("unmanaged call"), False),
+        (
+            "_1c444",
             "function=0x1F68, bb=0x1F68, insn=0x1FF9",
             capa.features.insn.API("System.Drawing.Image::FromHbitmap"),
             True,

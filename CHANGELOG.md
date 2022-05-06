@@ -11,6 +11,7 @@
  - add detection and basic feature extraction for dotnet #987 @mr-tz, @mike-hunhoff, @williballenthin
  - add file string extraction for dotnet files #1012 @mike-hunhoff
  - add file function-name extraction for dotnet files #1015 @mike-hunhoff
+ - add unmanaged call characteristic for dotnet files #1023 @mike-hunhoff
  - add mixed mode characteristic feature extraction for dotnet files #1024 @mike-hunhoff
 
 ### Breaking Changes
