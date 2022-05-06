@@ -15,6 +15,7 @@
  - add mixed mode characteristic feature extraction for dotnet files #1024 @mike-hunhoff
  - emit class and namespace features for dotnet files #1030 @mike-hunhoff
  - render: support Addresses that aren't simple integers, like .NET token+offset #981 @williballenthin
+ - document rule tags and branches #1006 @williballenthin, @mr-tz
 
 ### Breaking Changes
 
