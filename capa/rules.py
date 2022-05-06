@@ -101,6 +101,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
         capa.features.common.Format,
+        capa.features.common.Characteristic("mixed mode"),
     },
     FUNCTION_SCOPE: {
         capa.features.common.MatchedRule,

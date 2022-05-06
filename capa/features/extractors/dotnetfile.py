@@ -17,6 +17,7 @@ from capa.features.common import (
     Format,
     String,
     Feature,
+    Characteristic,
 )
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
@@ -69,6 +70,11 @@ def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, in
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
 
 
+def extract_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
+    if not bool(pe.net.Flags.CLR_ILONLY):
+        yield Characteristic("mixed mode"), 0x0
+
+
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
         for feature, va in file_handler(pe=pe):  # type: ignore
@@ -80,6 +86,7 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_strings,
     extract_file_format,
+    extract_mixed_mode_characteristic_features,
 )
 
 
