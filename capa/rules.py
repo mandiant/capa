@@ -134,6 +134,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("indirect call"),
         capa.features.common.Characteristic("call $+5"),
         capa.features.common.Characteristic("cross section flow"),
+        capa.features.common.Characteristic("unmanaged call"),
     },
 }
 
