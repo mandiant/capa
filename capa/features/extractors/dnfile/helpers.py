@@ -206,3 +206,7 @@ def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
 
             yield token, name
+
+
+def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
+    return not bool(pe.net.Flags.CLR_ILONLY)
