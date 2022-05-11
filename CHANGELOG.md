@@ -8,6 +8,11 @@
  - add new feature "operand[{0, 1, 2}].number" for matching instruction operand immediate values #767 @williballenthin
  - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
  - extract additional offset/number features in certain circumstances #320 @williballenthin
+ - add detection and basic feature extraction for dotnet #987 @mr-tz, @mike-hunhoff, @williballenthin
+ - add file string extraction for dotnet files #1012 @mike-hunhoff
+ - add file function-name extraction for dotnet files #1015 @mike-hunhoff
+ - add unmanaged call characteristic for dotnet files #1023 @mike-hunhoff
+ - add mixed mode characteristic feature extraction for dotnet files #1024 @mike-hunhoff
 
 ### Breaking Changes
 
@@ -16,13 +21,14 @@
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
 
-### New Rules (5)
+### New Rules (6)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
 - nursery/get-process-image-filename michael.hunhoff@mandiant.com
 - compiler/v/compiled-with-v jakub.jozwiak@mandiant.com
 - compiler/zig/compiled-with-zig jakub.jozwiak@mandiant.com
 - anti-analysis/packer/huan/packed-with-huan jakub.jozwiak@mandiant.com
+- internal/limitation/file/internal-dotnet-file-limitation william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
