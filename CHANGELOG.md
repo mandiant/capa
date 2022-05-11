@@ -27,6 +27,7 @@
 
 ### Bug Fixes
 - improve handling _ prefix compile/link artifact #924 @mike-hunhoff
+- better detect OS in ELF samples #988 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
