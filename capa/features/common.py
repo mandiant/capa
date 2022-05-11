@@ -92,7 +92,7 @@ class Result:
 
 
 class Feature(abc.ABC):
-    def __init__(self, value: Union[str, int, bytes], description=None):
+    def __init__(self, value: Union[str, int, float, bytes], description=None):
         """
         Args:
           value (any): the value of the feature, such as the number or string.

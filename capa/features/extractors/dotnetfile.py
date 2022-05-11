@@ -6,9 +6,6 @@ import pefile
 from dncil.clr.token import Token
 
 import capa.features.extractors.helpers
-from capa.features.file import Import
-from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
-from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.file import Import, FunctionName
 from capa.features.common import (
     OS,
@@ -23,6 +20,7 @@ from capa.features.common import (
     Feature,
     Characteristic,
 )
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     is_dotnet_mixed_mode,
@@ -53,7 +51,7 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
 
 def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, Address]]:
     for (token, name) in get_dotnet_managed_method_names(pe):
-        yield FunctionName(name), token
+        yield FunctionName(name), DNTokenAddress(Token(token))
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
@@ -77,7 +75,7 @@ def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, Ad
 
 def extract_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, Address]]:
     if is_dotnet_mixed_mode(pe):
-        yield Characteristic("mixed mode"), 0x0
+        yield Characteristic("mixed mode"), NO_ADDRESS
 
 
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:

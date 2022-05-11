@@ -23,7 +23,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import tabulate
-
 import dnfile.mdtable
 
 import capa.rules

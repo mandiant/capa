@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 import capa.features.extractors
 
+
 def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe=pe)
 
@@ -25,7 +26,7 @@ def extract_file_import_names(pe: dnfile.dnPE) -> Iterator[Tuple[Import, Address
 def extract_file_format(pe: dnfile.dnPE) -> Iterator[Tuple[Format, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_format(pe=pe)
 
-    
+
 def extract_file_function_names(pe: dnfile.dnPE) -> Iterator[Tuple[FunctionName, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=pe)
 

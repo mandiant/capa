@@ -16,7 +16,7 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 logger = logging.getLogger(__name__)
 
 
-def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
