@@ -101,6 +101,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
         capa.features.common.Format,
+        capa.features.common.Characteristic("mixed mode"),
     },
     FUNCTION_SCOPE: {
         capa.features.common.MatchedRule,
@@ -134,6 +135,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("indirect call"),
         capa.features.common.Characteristic("call $+5"),
         capa.features.common.Characteristic("cross section flow"),
+        capa.features.common.Characteristic("unmanaged call"),
     },
 }
 
@@ -258,6 +260,13 @@ def parse_feature(key: str):
     elif key == "number":
         return capa.features.insn.Number
     elif key == "offset":
+        return capa.features.insn.Offset
+    # TODO remove x32/x64 flavor keys once fixed master/rules
+    elif key.startswith("number/"):
+        logger.warning("x32/x64 flavor currently not supported and deprecated")
+        return capa.features.insn.Number
+    elif key.startswith("offset/"):
+        logger.warning("x32/x64 flavor currently not supported and deprecated")
         return capa.features.insn.Offset
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic

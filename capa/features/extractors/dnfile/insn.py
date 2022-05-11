@@ -8,8 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Tuple, Iterator, Optional
-from itertools import chain
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Iterator, Optional
 
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -19,26 +18,56 @@ if TYPE_CHECKING:
     from capa.features.common import Feature
     from capa.features.address import Address
 
-from dncil.clr.token import StringToken
+import dnfile
+from dncil.clr.token import StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
-from capa.features.common import String
+from capa.features.common import String, Characteristic
 from capa.features.extractors.dnfile.helpers import (
+    resolve_dotnet_token,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_unmanaged_imports,
+    get_dotnet_managed_method_names,
 )
 
 
-def get_imports(ctx: Dict) -> Dict:
-    if "imports_cache" not in ctx:
-        ctx["imports_cache"] = {
-            token: imp
-            for (token, imp) in chain(get_dotnet_managed_imports(ctx["pe"]), get_dotnet_unmanaged_imports(ctx["pe"]))
-        }
-    return ctx["imports_cache"]
+def get_managed_imports(ctx: Dict) -> Dict:
+    if "managed_imports_cache" not in ctx:
+        ctx["managed_imports_cache"] = {}
+        for (token, name) in get_dotnet_managed_imports(ctx["pe"]):
+            ctx["managed_imports_cache"][token] = name
+    return ctx["managed_imports_cache"]
+
+
+def get_unmanaged_imports(ctx: Dict) -> Dict:
+    if "unmanaged_imports_cache" not in ctx:
+        ctx["unmanaged_imports_cache"] = {}
+        for (token, name) in get_dotnet_unmanaged_imports(ctx["pe"]):
+            ctx["unmanaged_imports_cache"][token] = name
+    return ctx["unmanaged_imports_cache"]
+
+
+def get_methods(ctx: Dict) -> Dict:
+    if "methods_cache" not in ctx:
+        ctx["methods_cache"] = {}
+        for (token, name) in get_dotnet_managed_method_names(ctx["pe"]):
+            ctx["methods_cache"][token] = name
+    return ctx["methods_cache"]
+
+
+def get_callee_name(ctx: Dict, token: int) -> str:
+    """map dotnet token to method name"""
+    name: str = get_managed_imports(ctx).get(token, "")
+    if not name:
+        # we must check unmanaged imports before managed methods because we map forwarded managed methods
+        # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
+        name = get_unmanaged_imports(ctx).get(token, "")
+        if not name:
+            name = get_methods(ctx).get(token, "")
+    return name
 
 
 def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -49,7 +78,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name: str = get_imports(fh.ctx).get(insn.operand.value, "")
+    name: str = get_callee_name(f.ctx, insn.operand.value)
     if not name:
         return
 
@@ -89,7 +118,23 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
     yield String(user_string), ih.address
 
 
-def extract_features(f: FunctionHandle, bb: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_unmanaged_call_characteristic_features(
+    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
+) -> Iterator[Tuple[Characteristic, Address]]:
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
+
+    token: Any = resolve_dotnet_token(f.ctx["pe"], insn.operand)
+    if isinstance(token, InvalidToken):
+        return
+    if not isinstance(token, dnfile.mdtable.MethodDefRow):
+        return
+
+    if any((token.Flags.mdPinvokeImpl, token.ImplFlags.miUnmanaged, token.ImplFlags.miNative)):
+        yield Characteristic("unmanaged call"), insn.offset
+
+
+def extract_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
         for (feature, addr) in inst_handler(f, bb, insn):
@@ -100,4 +145,5 @@ INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
     extract_insn_string_features,
+    extract_unmanaged_call_characteristic_features,
 )
