@@ -24,6 +24,8 @@ See the License for the specific language governing permissions and limitations 
 """
 import tabulate
 
+import dnfile.mdtable
+
 import capa.rules
 import capa.render.utils as rutils
 import capa.render.result_document
@@ -50,7 +52,9 @@ def format_address(address: Address) -> str:
     elif isinstance(address, DNTokenAddress):
         return str(address)
     elif isinstance(address, DNTokenOffsetAddress):
-        return f"{str(address.token)}+{rutils.hex(int(address.offset))}"
+        name = dnfile.mdtable.ClrMetaDataTableFactory._table_number_map[address.token.table].name
+        rid = address.token.rid
+        return f"{name}[{rid}]+{rutils.hex(int(address.offset))}"
     elif address == NO_ADDRESS:
         return "global"
     else:
