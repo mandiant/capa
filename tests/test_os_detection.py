@@ -9,10 +9,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import pytest
+from fixtures import *
 
 import capa.features.extractors.elf
-
-from fixtures import *
 
 
 def test_elf_section_gnu_abi_tag():
@@ -20,9 +19,8 @@ def test_elf_section_gnu_abi_tag():
     with open(path, "rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
-                                                                       
+
 def test_elf_program_header_gnu_abi_tag():
     path = get_data_path_by_name("7351f.elf")
     with open(path, "rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
-                                                                       

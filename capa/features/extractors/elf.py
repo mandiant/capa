@@ -306,7 +306,6 @@ def detect_elf_os(f: BinaryIO) -> str:
                 # so we can get the debugging output of subsequent strategies
                 ret = GNU_ABI_TAG[abi_tag] if not ret else ret
                 logger.debug("abi tag: %s earliest compatible kernel: %d.%d.%d", ret, kmajor, kminor, kpatch)
- 
 
     return ret.value if ret is not None else "unknown"
 
