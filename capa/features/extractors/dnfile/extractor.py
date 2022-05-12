@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Iterator
 
 from capa.features.address import Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 
@@ -44,7 +44,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
     def extract_file_features(self):
         yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
 
-    def get_functions(self):
+    def get_functions(self) -> Iterator[FunctionHandle]:
         for token, f in get_dotnet_managed_method_bodies(self.pe):
             yield FunctionHandle(address=DNTokenAddress(Token(token)), inner=f, ctx={"pe": self.pe})
 
@@ -52,20 +52,20 @@ class DnfileFeatureExtractor(FeatureExtractor):
         # TODO
         yield from []
 
-    def get_basic_blocks(self, f):
+    def get_basic_blocks(self, f) -> Iterator[BBHandle]:
         # each dotnet method is considered 1 basic block
         yield BBHandle(
             address=f.address,
             inner=f.inner,
         )
 
-    def extract_basic_block_features(self, f, bb):
+    def extract_basic_block_features(self, fh, bbh):
         # we don't support basic block features
         yield from []
 
-    def get_instructions(self, f, bb):
-        for insn in bb.inner.instructions:
-            yield InsnHandle(address=DNTokenOffsetAddress(bb.address.token, insn.offset - f.inner.offset), inner=insn)
+    def get_instructions(self, fh, bbh):
+        for insn in bbh.inner.instructions:
+            yield InsnHandle(address=DNTokenOffsetAddress(bbh.address.token, insn.offset - fh.inner.offset), inner=insn)
 
-    def extract_insn_features(self, f, bb, insn):
-        yield from capa.features.extractors.dnfile.insn.extract_features(f, bb, insn)
+    def extract_insn_features(self, fh, bbh, ih) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.dnfile.insn.extract_features(fh, bbh, ih)

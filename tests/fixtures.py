@@ -13,6 +13,7 @@ import binascii
 import itertools
 import contextlib
 import collections
+from typing import Set, Dict
 from functools import lru_cache
 
 import pytest
@@ -34,7 +35,10 @@ from capa.features.common import (
     FORMAT_DOTNET,
     Arch,
     Format,
+    Feature,
 )
+from capa.features.address import Address
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 CD = os.path.dirname(__file__)
 DOTNET_DIR = os.path.join(CD, "data", "dotnet")
@@ -190,10 +194,10 @@ def extract_basic_block_features(extractor, f, bb):
 
 
 # f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
-def extract_instruction_features(extractor, f, bb, insn):
+def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Address]]:
     features = collections.defaultdict(set)
-    for feature, va in extractor.extract_insn_features(f, bb, insn):
-        features[feature].add(va)
+    for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
+        features[feature].add(addr)
     return features
 
 
@@ -323,24 +327,24 @@ def sample(request):
     return resolve_sample(request.param)
 
 
-def get_function(extractor, fva):
-    for f in extractor.get_functions():
-        if str(f) == fva:
-            return f
+def get_function(extractor, fva: int) -> FunctionHandle:
+    for fh in extractor.get_functions():
+        if fh.address == fva:
+            return fh
     raise ValueError("function not found")
 
 
-def get_basic_block(extractor, f, va):
-    for bb in extractor.get_basic_blocks(f):
-        if str(bb) == va:
-            return bb
+def get_basic_block(extractor, fh: FunctionHandle, va: int) -> BBHandle:
+    for bbh in extractor.get_basic_blocks(fh):
+        if bbh.address == va:
+            return bbh
     raise ValueError("basic block not found")
 
 
-def get_instruction(extractor, f, bb, va):
-    for insn in extractor.get_instructions(f, bb):
-        if str(insn) == va:
-            return insn
+def get_instruction(extractor, fh: FunctionHandle, bbh: BBHandle, va: int) -> InsnHandle:
+    for ih in extractor.get_instructions(fh, bbh):
+        if ih.address == va:
+            return ih
     raise ValueError("instruction not found")
 
 
@@ -367,10 +371,10 @@ def resolve_scope(scope):
         iva = int(ispec.partition("=")[2], 0x10)
 
         def inner_insn(extractor):
-            f = get_function(extractor, fva)
-            bb = get_basic_block(extractor, f, bbva)
-            insn = get_instruction(extractor, f, bb, iva)
-            features = extract_instruction_features(extractor, f, bb, insn)
+            fh = get_function(extractor, fva)
+            bbh = get_basic_block(extractor, fh, bbva)
+            ih = get_instruction(extractor, fh, bbh, iva)
+            features = extract_instruction_features(extractor, fh, bbh, ih)
             for k, vs in extract_global_features(extractor).items():
                 features[k].update(vs)
             return features

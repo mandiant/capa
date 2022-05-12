@@ -16,7 +16,7 @@ import envi.archs.amd64.disasm
 from vivisect import VivWorkspace
 
 if TYPE_CHECKING:
-    from capa.features.extractors.viv.extractor import InstructionHandle
+    from capa.features.extractors.viv.extractor import VivInstructionHandle
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper
@@ -135,7 +135,7 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Union[int
     raise NotFoundError()
 
 
-def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None) -> bool:
+def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional["VivInstructionHandle"] = None) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
@@ -143,7 +143,7 @@ def is_indirect_call(vw: VivWorkspace, va: int, insn: Optional["InstructionHandl
 
 
 def resolve_indirect_call(
-    vw: VivWorkspace, va: int, insn: Optional["InstructionHandle"] = None
+    vw: VivWorkspace, va: int, insn: Optional["VivInstructionHandle"] = None
 ) -> Tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.

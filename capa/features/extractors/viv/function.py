@@ -17,7 +17,7 @@ from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def interface_extract_function_XXX(f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse features from the given function.
 
@@ -33,7 +33,7 @@ def interface_extract_function_XXX(f: FunctionHandle) -> Iterator[Tuple[Feature,
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     f: viv_utils.Function = fhandle.inner
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
-        yield Characteristic("calls to"), fhandle.address
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(src)
 
 
 def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -60,18 +60,18 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
         yield Characteristic("loop"), fhandle.address
 
 
-def extract_features(f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given function.
 
     args:
-      f (viv_utils.Function): the function from which to extract features
+      fh: the function handle from which to extract features
 
     yields:
       Tuple[Feature, int]: the features and their location found in this function.
     """
     for func_handler in FUNCTION_HANDLERS:
-        for feature, addr in func_handler(f):
+        for feature, addr in func_handler(fh):
             yield feature, addr
 
 

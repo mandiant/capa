@@ -5,14 +5,18 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+from typing import Any, Dict, Tuple, Iterator
 
 import idc
 import idaapi
 import idautils
 import ida_bytes
 
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import FunctionHandle
 
-def find_byte_sequence(start, end, seq):
+
+def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
     args:
@@ -20,32 +24,32 @@ def find_byte_sequence(start, end, seq):
         end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
-    seq = " ".join(["%02x" % b for b in seq])
+    seqstr = " ".join(["%02x" % b for b in seq])
     while True:
-        ea = idaapi.find_binary(start, end, seq, 0, idaapi.SEARCH_DOWN)
+        # TODO find_binary: Deprecated. Please use ida_bytes.bin_search() instead.
+        ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
         if ea == idaapi.BADADDR:
             break
         start = ea + 1
         yield ea
 
 
-def get_functions(start=None, end=None, skip_thunks=False, skip_libs=False):
+def get_functions(
+    start: int = None, end: int = None, skip_thunks: bool = False, skip_libs: bool = False
+) -> Iterator[FunctionHandle]:
     """get functions, range optional
 
     args:
         start: min virtual address
         end: max virtual address
-
-    ret:
-        yield func_t*
     """
     for ea in idautils.Functions(start=start, end=end):
         f = idaapi.get_func(ea)
         if not (skip_thunks and (f.flags & idaapi.FUNC_THUNK) or skip_libs and (f.flags & idaapi.FUNC_LIB)):
-            yield f
+            yield FunctionHandle(address=AbsoluteVirtualAddress(ea), inner=f)
 
 
-def get_segments(skip_header_segments=False):
+def get_segments(skip_header_segments=False) -> Iterator[idaapi.segment_t]:
     """get list of segments (sections) in the binary image
 
     args:
@@ -57,7 +61,7 @@ def get_segments(skip_header_segments=False):
             yield seg
 
 
-def get_segment_buffer(seg):
+def get_segment_buffer(seg: idaapi.segment_t) -> bytes:
     """return bytes stored in a given segment
 
     decrease buffer size until IDA is able to read bytes from the segment
@@ -75,7 +79,7 @@ def get_segment_buffer(seg):
     return buff if buff else b""
 
 
-def get_file_imports():
+def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
     """get file imports"""
     imports = {}
 
@@ -105,14 +109,12 @@ def get_file_imports():
     return imports
 
 
-def get_instructions_in_range(start, end):
+def get_instructions_in_range(start: int, end: int) -> Iterator[idaapi.insn_t]:
     """yield instructions in range
 
     args:
         start: virtual address (inclusive)
         end: virtual address (exclusive)
-    yield:
-        (insn_t*)
     """
     for head in idautils.Heads(start, end):
         insn = idautils.DecodeInstruction(head)
@@ -120,7 +122,7 @@ def get_instructions_in_range(start, end):
             yield insn
 
 
-def is_operand_equal(op1, op2):
+def is_operand_equal(op1: idaapi.op_t, op2: idaapi.op_t) -> bool:
     """compare two IDA op_t"""
     if op1.flags != op2.flags:
         return False
@@ -146,7 +148,7 @@ def is_operand_equal(op1, op2):
     return True
 
 
-def is_basic_block_equal(bb1, bb2):
+def is_basic_block_equal(bb1: idaapi.BasicBlock, bb2: idaapi.BasicBlock) -> bool:
     """compare two IDA BasicBlock"""
     if bb1.start_ea != bb2.start_ea:
         return False
@@ -160,12 +162,12 @@ def is_basic_block_equal(bb1, bb2):
     return True
 
 
-def basic_block_size(bb):
+def basic_block_size(bb: idaapi.BasicBlock) -> int:
     """calculate size of basic block"""
     return bb.end_ea - bb.start_ea
 
 
-def read_bytes_at(ea, count):
+def read_bytes_at(ea: int, count: int) -> bytes:
     """ """
     # check if byte has a value, see get_wide_byte doc
     if not idc.is_loaded(ea):
@@ -178,10 +180,10 @@ def read_bytes_at(ea, count):
         return idc.get_bytes(ea, count)
 
 
-def find_string_at(ea, min=4):
+def find_string_at(ea: int, min_: int = 4) -> str:
     """check if ASCII string exists at a given virtual address"""
     found = idaapi.get_strlit_contents(ea, -1, idaapi.STRTYPE_C)
-    if found and len(found) > min:
+    if found and len(found) > min_:
         try:
             found = found.decode("ascii")
             # hacky check for IDA bug; get_strlit_contents also reads Unicode as
@@ -195,7 +197,7 @@ def find_string_at(ea, min=4):
     return ""
 
 
-def get_op_phrase_info(op):
+def get_op_phrase_info(op: idaapi.op_t) -> Dict:
     """parse phrase features from operand
 
     Pretty much dup of sark's implementation:
@@ -232,23 +234,23 @@ def get_op_phrase_info(op):
     return {"base": base, "index": index, "scale": scale, "offset": offset}
 
 
-def is_op_write(insn, op):
+def is_op_write(insn: idaapi.insn_t, op: idaapi.op_t) -> bool:
     """Check if an operand is written to (destination operand)"""
     return idaapi.has_cf_chg(insn.get_canon_feature(), op.n)
 
 
-def is_op_read(insn, op):
+def is_op_read(insn: idaapi.insn_t, op: idaapi.op_t) -> bool:
     """Check if an operand is read from (source operand)"""
     return idaapi.has_cf_use(insn.get_canon_feature(), op.n)
 
 
-def is_op_offset(insn, op):
+def is_op_offset(insn: idaapi.insn_t, op: idaapi.op_t) -> bool:
     """Check is an operand has been marked as an offset (by auto-analysis or manually)"""
     flags = idaapi.get_flags(insn.ea)
     return ida_bytes.is_off(flags, op.n)
 
 
-def is_sp_modified(insn):
+def is_sp_modified(insn: idaapi.insn_t) -> bool:
     """determine if instruction modifies SP, ESP, RSP"""
     for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
         if op.reg == idautils.procregs.sp.reg and is_op_write(insn, op):
@@ -257,7 +259,7 @@ def is_sp_modified(insn):
     return False
 
 
-def is_bp_modified(insn):
+def is_bp_modified(insn: idaapi.insn_t) -> bool:
     """check if instruction modifies BP, EBP, RBP"""
     for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
         if op.reg == idautils.procregs.bp.reg and is_op_write(insn, op):
@@ -266,12 +268,12 @@ def is_bp_modified(insn):
     return False
 
 
-def is_frame_register(reg):
+def is_frame_register(reg: int) -> bool:
     """check if register is sp or bp"""
     return reg in (idautils.procregs.sp.reg, idautils.procregs.bp.reg)
 
 
-def get_insn_ops(insn, target_ops=()):
+def get_insn_ops(insn: idaapi.insn_t, target_ops: Tuple[Any] = None) -> idaapi.op_t:
     """yield op_t for instruction, filter on type if specified"""
     for op in insn.ops:
         if op.type == idaapi.o_void:
@@ -282,12 +284,12 @@ def get_insn_ops(insn, target_ops=()):
         yield op
 
 
-def is_op_stack_var(ea, index):
+def is_op_stack_var(ea: int, index: int) -> bool:
     """check if operand is a stack variable"""
     return idaapi.is_stkvar(idaapi.get_flags(ea), index)
 
 
-def mask_op_val(op):
+def mask_op_val(op: idaapi.op_t) -> int:
     """mask value by data type
 
     necessary due to a bug in AMD64
@@ -307,26 +309,18 @@ def mask_op_val(op):
     return masks.get(op.dtype, op.value) & op.value
 
 
-def is_function_recursive(f):
-    """check if function is recursive
-
-    args:
-        f (IDA func_t)
-    """
+def is_function_recursive(f: idaapi.func_t) -> bool:
+    """check if function is recursive"""
     for ref in idautils.CodeRefsTo(f.start_ea, True):
         if f.contains(ref):
             return True
     return False
 
 
-def is_basic_block_tight_loop(bb):
+def is_basic_block_tight_loop(bb: idaapi.BasicBlock) -> bool:
     """check basic block loops to self
 
     true if last instruction in basic block branches to basic block start
-
-    args:
-        f (IDA func_t)
-        bb (IDA BasicBlock)
     """
     bb_end = idc.prev_head(bb.end_ea)
     if bb.start_ea < bb_end:
@@ -336,7 +330,7 @@ def is_basic_block_tight_loop(bb):
     return False
 
 
-def find_data_reference_from_insn(insn, max_depth=10):
+def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> int:
     """search for data reference from instruction, return address of instruction if no reference exists"""
     depth = 0
     ea = insn.ea
@@ -366,24 +360,18 @@ def find_data_reference_from_insn(insn, max_depth=10):
     return ea
 
 
-def get_function_blocks(f):
-    """yield basic blocks contained in specified function
-
-    args:
-        f (IDA func_t)
-    yield:
-        block (IDA BasicBlock)
-    """
+def get_function_blocks(f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
+    """yield basic blocks contained in specified function"""
     # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
     for block in idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT)):
         yield block
 
 
-def is_basic_block_return(bb):
+def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:
     """check if basic block is return block"""
     return bb.type == idaapi.fcb_ret
 
 
-def has_sib(oper) -> bool:
+def has_sib(oper: idaapi.op_t) -> bool:
     # via: https://reverseengineering.stackexchange.com/a/14300
     return oper.specflag1 == 1

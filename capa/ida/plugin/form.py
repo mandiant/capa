@@ -12,6 +12,7 @@ import json
 import logging
 import itertools
 import collections
+from typing import Set, Dict
 
 import idaapi
 import ida_kernwin
@@ -26,6 +27,7 @@ import capa.render.json
 import capa.features.common
 import capa.render.result_document
 import capa.features.extractors.ida.extractor
+from capa.features.common import Feature
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -33,9 +35,11 @@ from capa.ida.plugin.view import (
     CapaExplorerRulgenPreview,
     CapaExplorerRulegenFeatures,
 )
+from capa.features.address import Address
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
+from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
 settings = ida_settings.IDASettings("capa")
@@ -66,27 +70,27 @@ def trim_function_name(f, max_length=25):
     return n
 
 
-def find_func_features(f, extractor):
+def find_func_features(fh: FunctionHandle, extractor):
     """ """
-    func_features = collections.defaultdict(set)
-    bb_features = collections.defaultdict(dict)
+    func_features: Dict[Feature, Set] = collections.defaultdict(set)
+    bb_features: Dict[Address, Dict] = collections.defaultdict(dict)
 
-    for (feature, ea) in extractor.extract_function_features(f):
-        func_features[feature].add(ea)
+    for (feature, addr) in extractor.extract_function_features(fh):
+        func_features[feature].add(addr)
 
-    for bb in extractor.get_basic_blocks(f):
+    for bbh in extractor.get_basic_blocks(fh):
         _bb_features = collections.defaultdict(set)
 
-        for (feature, ea) in extractor.extract_basic_block_features(f, bb):
-            _bb_features[feature].add(ea)
-            func_features[feature].add(ea)
+        for (feature, addr) in extractor.extract_basic_block_features(fh, bbh):
+            _bb_features[feature].add(addr)
+            func_features[feature].add(addr)
 
-        for insn in extractor.get_instructions(f, bb):
-            for (feature, ea) in extractor.extract_insn_features(f, bb, insn):
-                _bb_features[feature].add(ea)
-                func_features[feature].add(ea)
+        for insn in extractor.get_instructions(fh, bbh):
+            for (feature, addr) in extractor.extract_insn_features(fh, bbh, insn):
+                _bb_features[feature].add(addr)
+                func_features[feature].add(addr)
 
-        bb_features[int(bb)] = _bb_features
+        bb_features[bbh.address] = _bb_features
 
     return func_features, bb_features
 
@@ -173,9 +177,9 @@ class CapaExplorerFeatureExtractor(capa.features.extractors.ida.extractor.IdaFea
         super(CapaExplorerFeatureExtractor, self).__init__()
         self.indicator = CapaExplorerProgressIndicator()
 
-    def extract_function_features(self, f):
-        self.indicator.update("function at 0x%X" % f.start_ea)
-        return super(CapaExplorerFeatureExtractor, self).extract_function_features(f)
+    def extract_function_features(self, fh: FunctionHandle):
+        self.indicator.update("function at 0x%X" % fh.inner.start_ea)
+        return super(CapaExplorerFeatureExtractor, self).extract_function_features(fh)
 
 
 class QLineEditClicked(QtWidgets.QLineEdit):
@@ -861,7 +865,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             # must use extractor to get function, as capa analysis requires casted object
             extractor = CapaExplorerFeatureExtractor()
         except Exception as e:
-            logger.error("Failed to load IDA feature extractor (error: %s)" % e)
+            logger.error("Failed to load IDA feature extractor (error: %s)", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -894,7 +898,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                         for (ea, _) in res:
                             func_features[capa.features.common.MatchedRule(name)].add(ea)
                 except Exception as e:
-                    logger.error("Failed to match function/basic block rule scope (error: %s)" % e)
+                    logger.error("Failed to match function/basic block rule scope (error: %s)", e)
                     return False
             else:
                 func_features = {}
@@ -902,7 +906,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
         except Exception as e:
-            logger.error("Failed to extract function features (error: %s)" % e)
+            logger.error("Failed to extract function features (error: %s)", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -928,10 +932,10 @@ class CapaExplorerForm(idaapi.PluginForm):
                     for (ea, _) in res:
                         file_features[capa.features.common.MatchedRule(name)].add(ea)
             except Exception as e:
-                logger.error("Failed to match file scope rules (error: %s)" % e)
+                logger.error("Failed to match file scope rules (error: %s)", e)
                 return False
         except Exception as e:
-            logger.error("Failed to extract file features (error: %s)" % e)
+            logger.error("Failed to extract file features (error: %s)", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -953,7 +957,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
-            logger.error("Failed to render views (error: %s)" % e)
+            logger.error("Failed to render views (error: %s)", e)
             return False
 
         return True

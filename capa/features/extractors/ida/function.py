@@ -5,31 +5,27 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+from typing import Tuple, Iterator
 
 import idaapi
 import idautils
 
 import capa.features.extractors.ida.helpers
-from capa.features.common import Characteristic
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def extract_function_calls_to(f):
-    """extract callers to a function
-
-    args:
-        f (IDA func_t)
-    """
-    for ea in idautils.CodeRefsTo(f.start_ea, True):
-        yield Characteristic("calls to"), ea
+def extract_function_calls_to(fh: FunctionHandle):
+    """extract callers to a function"""
+    for ea in idautils.CodeRefsTo(fh.inner.start_ea, True):
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(ea)
 
 
-def extract_function_loop(f):
-    """extract loop indicators from a function
-
-    args:
-        f (IDA func_t)
-    """
+def extract_function_loop(fh: FunctionHandle):
+    """extract loop indicators from a function"""
+    f: idaapi.func_t = fh.inner
     edges = []
 
     # construct control flow graph
@@ -41,25 +37,16 @@ def extract_function_loop(f):
         yield Characteristic("loop"), f.start_ea
 
 
-def extract_recursive_call(f):
-    """extract recursive function call
-
-    args:
-        f (IDA func_t)
-    """
-    if capa.features.extractors.ida.helpers.is_function_recursive(f):
-        yield Characteristic("recursive call"), f.start_ea
+def extract_recursive_call(fh: FunctionHandle):
+    """extract recursive function call"""
+    if capa.features.extractors.ida.helpers.is_function_recursive(fh.inner):
+        yield Characteristic("recursive call"), fh.address
 
 
-def extract_features(f):
-    """extract function features
-
-    arg:
-        f (IDA func_t)
-    """
+def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
-        for (feature, ea) in func_handler(f):
-            yield feature, ea
+        for (feature, addr) in func_handler(fh):
+            yield feature, addr
 
 
 FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
@@ -68,8 +55,8 @@ FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_r
 def main():
     """ """
     features = []
-    for f in capa.features.extractors.ida.get_functions(skip_thunks=True, skip_libs=True):
-        features.extend(list(extract_features(f)))
+    for fhandle in capa.features.extractors.ida.helpers.get_functions(skip_thunks=True, skip_libs=True):
+        features.extend(list(extract_features(fhandle)))
 
     import pprint
 

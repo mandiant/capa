@@ -7,27 +7,26 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import struct
+from typing import Tuple, Iterator
 
 import idc
 import idaapi
 import idautils
-import ida_loader
 
+import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, Format, String, Characteristic
+from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, Feature, Characteristic
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
-def check_segment_for_pe(seg):
+def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[Tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for IDA from:
     https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
-
-    args:
-        seg (IDA segment_t)
     """
     seg_max = seg.end_ea
     mz_xor = [
@@ -60,13 +59,13 @@ def check_segment_for_pe(seg):
             continue
 
         if idc.get_bytes(peoff, 2) == pex:
-            yield (off, i)
+            yield off, i
 
         for nextres in capa.features.extractors.ida.helpers.find_byte_sequence(off + 1, seg.end_ea, mzx):
             todo.append((nextres, mzx, pex, i))
 
 
-def extract_file_embedded_pe():
+def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features
 
     IDA must load resource sections for this to be complete
@@ -75,16 +74,16 @@ def extract_file_embedded_pe():
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
         for (ea, _) in check_segment_for_pe(seg):
-            yield Characteristic("embedded pe"), ea
+            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
-def extract_file_export_names():
+def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
     for (_, _, ea, name) in idautils.Entries():
-        yield Export(name), ea
+        yield Export(name), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_import_names():
+def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
     """extract function imports
 
     1. imports by ordinal:
@@ -96,11 +95,12 @@ def extract_file_import_names():
      - importname
     """
     for (ea, info) in capa.features.extractors.ida.helpers.get_file_imports().items():
+        addr = AbsoluteVirtualAddress(ea)
         if info[1] and info[2]:
             # e.g. in mimikatz: ('cabinet', 'FCIAddFile', 11L)
             # extract by name here and by ordinal below
             for name in capa.features.extractors.helpers.generate_symbols(info[0], info[1]):
-                yield Import(name), ea
+                yield Import(name), addr
             dll = info[0]
             symbol = "#%d" % (info[2])
         elif info[1]:
@@ -113,10 +113,10 @@ def extract_file_import_names():
             continue
 
         for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-            yield Import(name), ea
+            yield Import(name), addr
 
 
-def extract_file_section_names():
+def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
     """extract section names
 
     IDA must load resource sections for this to be complete
@@ -124,10 +124,10 @@ def extract_file_section_names():
         - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
-        yield Section(idaapi.get_segm_name(seg)), seg.start_ea
+        yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
 
 
-def extract_file_strings():
+def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings
 
     IDA must load resource sections for this to be complete
@@ -136,37 +136,33 @@ def extract_file_strings():
     """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
-
-        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
-            yield String(s.s), (seg.start_ea + s.offset)
-
-        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
-            yield String(s.s), (seg.start_ea + s.offset)
+        yield from capa.features.extractors.common.extract_file_strings(seg_buff)
 
 
-def extract_file_function_names():
+def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     """
     extract the names of statically-linked library functions.
     """
     for ea in idautils.Functions():
+        addr = AbsoluteVirtualAddress(ea)
         if idaapi.get_func(ea).flags & idaapi.FUNC_LIB:
             name = idaapi.get_name(ea)
-            yield FunctionName(name), ea
+            yield FunctionName(name), addr
             if name.startswith("_"):
                 # some linkers may prefix linked routines with a `_` to avoid name collisions.
                 # extract features for both the mangled and un-mangled representations.
                 # e.g. `_fwrite` -> `fwrite`
                 # see: https://stackoverflow.com/a/2628384/87207
-                yield FunctionName(name[1:]), ea
+                yield FunctionName(name[1:]), addr
 
 
-def extract_file_format():
+def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
     file_info = idaapi.get_inf_structure()
 
     if file_info.filetype == idaapi.f_PE:
-        yield Format(FORMAT_PE), 0x0
+        yield Format(FORMAT_PE), NO_ADDRESS
     elif file_info.filetype == idaapi.f_ELF:
-        yield Format(FORMAT_ELF), 0x0
+        yield Format(FORMAT_ELF), NO_ADDRESS
     elif file_info.filetype == idaapi.f_BIN:
         # no file type to return when processing a binary file, but we want to continue processing
         return
@@ -174,11 +170,11 @@ def extract_file_format():
         raise NotImplementedError("file format: %d" % file_info.filetype)
 
 
-def extract_features():
+def extract_features() -> Iterator[Tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler():
-            yield feature, va
+        for feature, addr in file_handler():
+            yield feature, addr
 
 
 FILE_HANDLERS = (

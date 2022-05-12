@@ -216,6 +216,8 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
         @param parent: parent node
         @param location: virtual address of function as seen by IDA
         """
+        # location can be an Address now, so need to get the VA
+        location = int(location)
         super(CapaExplorerFunctionItem, self).__init__(
             parent, [self.fmt % idaapi.get_name(location), location_to_hex(location), ""], can_check
         )

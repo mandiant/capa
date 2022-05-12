@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Iterator
 
 import viv_utils
 import viv_utils.flirt
@@ -24,7 +24,7 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 logger = logging.getLogger(__name__)
 
 
-class InstructionHandle:
+class VivInstructionHandle:
     """this acts like a vivisect.Opcode but with an __int__() method"""
 
     def __init__(self, inner):
@@ -60,28 +60,30 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def extract_file_features(self):
         yield from capa.features.extractors.viv.file.extract_features(self.vw, self.buf)
 
-    def get_functions(self):
+    def get_functions(self) -> Iterator[FunctionHandle]:
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va))
 
-    def extract_function_features(self, f):
-        yield from capa.features.extractors.viv.function.extract_features(f)
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.viv.function.extract_features(fh)
 
-    def get_basic_blocks(self, fh: FunctionHandle):
+    def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         f: viv_utils.Function = fh.inner
         for bb in f.basic_blocks:
             yield BBHandle(address=AbsoluteVirtualAddress(bb.va), inner=bb)
 
-    def extract_basic_block_features(self, f, bb):
-        yield from capa.features.extractors.viv.basicblock.extract_features(f, bb)
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.viv.basicblock.extract_features(fh, bbh)
 
-    def get_instructions(self, f, bbh: BBHandle):
+    def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         bb: viv_utils.BasicBlock = bbh.inner
         for insn in bb.instructions:
             yield InsnHandle(address=AbsoluteVirtualAddress(insn.va), inner=insn)
 
-    def extract_insn_features(self, f, bb, insn):
-        yield from capa.features.extractors.viv.insn.extract_features(f, bb, insn)
+    def extract_insn_features(
+        self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.viv.insn.extract_features(fh, bbh, ih)
 
     def is_library_function(self, addr):
         return viv_utils.flirt.is_library_function(self.vw, addr)
