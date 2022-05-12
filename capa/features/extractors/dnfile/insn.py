@@ -72,13 +72,12 @@ def get_callee_name(ctx: Dict, token: int) -> str:
 
 def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction API features"""
-    f: CilMethodBody = fh.inner
     insn: Instruction = ih.inner
 
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name: str = get_callee_name(f.ctx, insn.operand.value)
+    name: str = get_callee_name(fh.ctx, insn.operand.value)
     if not name:
         return
 
@@ -119,12 +118,13 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
 
 
 def extract_unmanaged_call_characteristic_features(
-    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
+    fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Characteristic, Address]]:
+    insn: Instruction = ih.inner
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    token: Any = resolve_dotnet_token(f.ctx["pe"], insn.operand)
+    token: Any = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
     if isinstance(token, InvalidToken):
         return
     if not isinstance(token, dnfile.mdtable.MethodDefRow):
@@ -134,10 +134,10 @@ def extract_unmanaged_call_characteristic_features(
         yield Characteristic("unmanaged call"), insn.offset
 
 
-def extract_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for (feature, addr) in inst_handler(f, bb, insn):
+        for (feature, addr) in inst_handler(fh, bbh, ih):
             yield feature, addr
 
 

@@ -39,6 +39,7 @@ from capa.features.common import (
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 CD = os.path.dirname(__file__)
 DOTNET_DIR = os.path.join(CD, "data", "dotnet")
@@ -169,26 +170,26 @@ def extract_file_features(extractor):
 
 
 # f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
-def extract_function_features(extractor, f):
+def extract_function_features(extractor, fh):
     features = collections.defaultdict(set)
-    for bb in extractor.get_basic_blocks(f):
-        for insn in extractor.get_instructions(f, bb):
-            for feature, va in extractor.extract_insn_features(f, bb, insn):
+    for bb in extractor.get_basic_blocks(fh):
+        for insn in extractor.get_instructions(fh, bb):
+            for feature, va in extractor.extract_insn_features(fh, bb, insn):
                 features[feature].add(va)
-        for feature, va in extractor.extract_basic_block_features(f, bb):
+        for feature, va in extractor.extract_basic_block_features(fh, bb):
             features[feature].add(va)
-    for feature, va in extractor.extract_function_features(f):
+    for feature, va in extractor.extract_function_features(fh):
         features[feature].add(va)
     return features
 
 
 # f may not be hashable (e.g. ida func_t) so cannot @lru_cache this
-def extract_basic_block_features(extractor, f, bb):
+def extract_basic_block_features(extractor, fh, bbh):
     features = collections.defaultdict(set)
-    for insn in extractor.get_instructions(f, bb):
-        for feature, va in extractor.extract_insn_features(f, bb, insn):
+    for insn in extractor.get_instructions(fh, bbh):
+        for feature, va in extractor.extract_insn_features(fh, bbh, insn):
             features[feature].add(va)
-    for feature, va in extractor.extract_basic_block_features(f, bb):
+    for feature, va in extractor.extract_basic_block_features(fh, bbh):
         features[feature].add(va)
     return features
 
@@ -329,21 +330,40 @@ def sample(request):
 
 def get_function(extractor, fva: int) -> FunctionHandle:
     for fh in extractor.get_functions():
-        if fh.address == fva:
+        if isinstance(extractor, DnfileFeatureExtractor):
+            addr = fh.inner.offset
+        else:
+            addr = fh.address
+        if addr == fva:
             return fh
     raise ValueError("function not found")
 
 
+def get_function_by_token(extractor, token: int) -> FunctionHandle:
+    for fh in extractor.get_functions():
+        if fh.address.token.value == token:
+            return fh
+    raise ValueError("function not found by token")
+
+
 def get_basic_block(extractor, fh: FunctionHandle, va: int) -> BBHandle:
     for bbh in extractor.get_basic_blocks(fh):
-        if bbh.address == va:
+        if isinstance(extractor, DnfileFeatureExtractor):
+            addr = bbh.inner.offset
+        else:
+            addr = bbh.address
+        if addr == va:
             return bbh
     raise ValueError("basic block not found")
 
 
 def get_instruction(extractor, fh: FunctionHandle, bbh: BBHandle, va: int) -> InsnHandle:
     for ih in extractor.get_instructions(fh, bbh):
-        if ih.address == va:
+        if isinstance(extractor, DnfileFeatureExtractor):
+            addr = ih.inner.offset
+        else:
+            addr = ih.address
+        if addr == va:
             return ih
     raise ValueError("instruction not found")
 
@@ -390,22 +410,25 @@ def resolve_scope(scope):
         bbva = int(bbspec.partition("=")[2], 0x10)
 
         def inner_bb(extractor):
-            f = get_function(extractor, fva)
-            bb = get_basic_block(extractor, f, bbva)
-            features = extract_basic_block_features(extractor, f, bb)
+            fh = get_function(extractor, fva)
+            bbh = get_basic_block(extractor, fh, bbva)
+            features = extract_basic_block_features(extractor, fh, bbh)
             for k, vs in extract_global_features(extractor).items():
                 features[k].update(vs)
             return features
 
         inner_bb.__name__ = scope
         return inner_bb
-    elif scope.startswith("function"):
-        # like `function=0x401000`
+    elif scope.startswith(("function", "token")):
+        # like `function=0x401000` or `token=0x6000001`
         va = int(scope.partition("=")[2], 0x10)
 
         def inner_function(extractor):
-            f = get_function(extractor, va)
-            features = extract_function_features(extractor, f)
+            if scope.startswith("token"):
+                fh = get_function_by_token(extractor, va)
+            else:
+                fh = get_function(extractor, va)
+            features = extract_function_features(extractor, fh)
             for k, vs in extract_global_features(extractor).items():
                 features[k].update(vs)
             return features
@@ -702,6 +725,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             True,
         ),
         ("_1c444", "function=0x2544", capa.features.common.Characteristic("unmanaged call"), False),
+        # same as above but using token instead of function
+        ("_1c444", "token=0x6000088", capa.features.common.Characteristic("unmanaged call"), False),
         (
             "_1c444",
             "function=0x1F68, bb=0x1F68, insn=0x1FF9",
