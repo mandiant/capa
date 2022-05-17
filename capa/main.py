@@ -172,7 +172,7 @@ def find_basic_block_capabilities(
 
 
 def find_code_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle
+    ruleset: RuleSet, extractor: FeatureExtractor, fh: FunctionHandle
 ) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
@@ -191,8 +191,8 @@ def find_code_capabilities(
     # might be found at different instructions, thats ok.
     insn_matches = collections.defaultdict(list)  # type: MatchResults
 
-    for bb in extractor.get_basic_blocks(f):
-        features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, f, bb)
+    for bb in extractor.get_basic_blocks(fh):
+        features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, fh, bb)
         for feature, vas in features.items():
             function_features[feature].update(vas)
 
@@ -202,10 +202,10 @@ def find_code_capabilities(
         for rule_name, res in imatches.items():
             insn_matches[rule_name].extend(res)
 
-    for feature, va in itertools.chain(extractor.extract_function_features(f), extractor.extract_global_features()):
+    for feature, va in itertools.chain(extractor.extract_function_features(fh), extractor.extract_global_features()):
         function_features[feature].add(va)
 
-    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, f.address)
+    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
     return function_matches, bb_matches, insn_matches, len(function_features)
 
 

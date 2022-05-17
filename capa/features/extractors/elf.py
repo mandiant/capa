@@ -47,7 +47,10 @@ class OS(str, Enum):
     NACL = "nacl"
 
 
-def detect_elf_os(f: BinaryIO) -> str:
+def detect_elf_os(f) -> str:
+    """
+    f: type Union[BinaryIO, IDAIO]
+    """
     f.seek(0x0)
     file_header = f.read(0x40)
 

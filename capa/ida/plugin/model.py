@@ -6,7 +6,8 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from collections import deque, defaultdict
+from typing import List
+from collections import deque
 
 import idc
 import idaapi
@@ -545,6 +546,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param location: address of feature
         @param display: text to display in plugin UI
         """
+
+        # convert to offset from locations: List[Address]
+        try:
+            location = int(location)
+        except TypeError:
+            # e.g. capa.features.address._NoAddress, global features
+            return
+
         # special handling for characteristic pending type
         if feature["type"] == "characteristic":
             if feature[feature["type"]] in ("embedded pe",):

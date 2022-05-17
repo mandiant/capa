@@ -130,23 +130,26 @@ def main(argv=None):
         for feature, addr in extractor.extract_file_features():
             print("file: %s: %s" % (capa.render.verbose.format_address(addr), feature))
 
-    functions = extractor.get_functions()
+    function_handles = extractor.get_functions()
 
     if args.function:
         if args.format == "freeze":
-            functions = tuple(filter(lambda f: f == args.function, functions))
+            # TODO fix
+            function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            functions = tuple(filter(lambda f: str(f) == args.function, functions))
+            function_handles = tuple(
+                filter(lambda fh: capa.render.verbose.format_address(fh.address) == args.function, function_handles)
+            )
 
-            if args.function not in [str(f) for f in functions]:
+            if args.function not in [capa.render.verbose.format_address(fh.address) for fh in function_handles]:
                 print("%s not a function" % args.function)
                 return -1
 
-        if len(functions) == 0:
+        if len(function_handles) == 0:
             print("%s not a function", args.function)
             return -1
 
-    print_features(functions, extractor)
+    print_features(function_handles, extractor)
 
     return 0
 
@@ -166,16 +169,16 @@ def ida_main():
             print("file: %s: %s" % (capa.render.verbose.format_address(addr), feature))
         return
 
-    functions = extractor.get_functions()
+    function_handles = extractor.get_functions()
 
     if function:
-        functions = tuple(filter(lambda f: f.start_ea == function, functions))
+        function_handles = tuple(filter(lambda fh: fh.inner.start_ea == function, function_handles))
 
-        if len(functions) == 0:
+        if len(function_handles) == 0:
             print("0x%X not a function" % function)
             return -1
 
-    print_features(functions, extractor)
+    print_features(function_handles, extractor)
 
     return 0
 

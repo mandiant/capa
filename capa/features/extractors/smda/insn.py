@@ -271,10 +271,10 @@ def is_security_cookie(f, bb, insn):
     for index, block in enumerate(f.getBlocks()):
         # expect security cookie init in first basic block within first bytes (instructions)
         block_instructions = [i for i in block.getInstructions()]
-        if index == 0 and insn.address < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
+        if index == 0 and insn.offset < (block_instructions[0].offset + SECURITY_COOKIE_BYTES_DELTA):
             return True
         # ... or within last bytes (instructions) before a return
-        if block_instructions[-1].mnemonic.startswith("ret") and insn.address > (
+        if block_instructions[-1].mnemonic.startswith("ret") and insn.offset > (
             block_instructions[-1].offset - SECURITY_COOKIE_BYTES_DELTA
         ):
             return True

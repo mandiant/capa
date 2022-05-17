@@ -39,19 +39,19 @@ class SmdaFeatureExtractor(FeatureExtractor):
         for function in self.smda_report.getFunctions():
             yield FunctionHandle(address=AbsoluteVirtualAddress(function.offset), inner=function)
 
-    def extract_function_features(self, f):
-        yield from capa.features.extractors.smda.function.extract_features(f)
+    def extract_function_features(self, fh):
+        yield from capa.features.extractors.smda.function.extract_features(fh)
 
-    def get_basic_blocks(self, f):
-        for bb in f.getBlocks():
+    def get_basic_blocks(self, fh):
+        for bb in fh.inner.getBlocks():
             yield BBHandle(address=AbsoluteVirtualAddress(bb.offset), inner=bb)
 
-    def extract_basic_block_features(self, f, bb):
-        yield from capa.features.extractors.smda.basicblock.extract_features(f, bb)
+    def extract_basic_block_features(self, fh, bbh):
+        yield from capa.features.extractors.smda.basicblock.extract_features(fh, bbh)
 
-    def get_instructions(self, f, bb):
-        for smda_ins in bb.getInstructions():
+    def get_instructions(self, fh, bbh):
+        for smda_ins in bbh.inner.getInstructions():
             yield InsnHandle(address=AbsoluteVirtualAddress(smda_ins.offset), inner=smda_ins)
 
-    def extract_insn_features(self, f, bb, insn):
-        yield from capa.features.extractors.smda.insn.extract_features(f, bb, insn)
+    def extract_insn_features(self, fh, bbh, ih):
+        yield from capa.features.extractors.smda.insn.extract_features(fh, bbh, ih)

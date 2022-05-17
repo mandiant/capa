@@ -27,6 +27,9 @@ class AbsoluteVirtualAddress(int, Address):
         assert v >= 0
         return int.__new__(cls, v)
 
+    def __str__(self):
+        return str(self)
+
 
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
@@ -40,6 +43,9 @@ class FileOffsetAddress(int, Address):
     def __new__(cls, v):
         assert v >= 0
         return int.__new__(cls, v)
+
+    def __str__(self):
+        return str(self)
 
 
 class DNTokenAddress(Address):
