@@ -203,7 +203,7 @@ def format_dotnet_classname(namespace: str, class_: str) -> str:
     return name
 
 
-def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[dnfile.base.MDTableRow]:
+def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
     if not is_dotnet_table_valid(pe, name):
         return
     for row in getattr(pe.net.mdtables, name):
