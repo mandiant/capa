@@ -27,6 +27,7 @@ import capa.render.json
 import capa.features.common
 import capa.render.result_document
 import capa.features.extractors.ida.extractor
+from capa.engine import FeatureSet
 from capa.features.common import Feature
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
@@ -35,7 +36,7 @@ from capa.ida.plugin.view import (
     CapaExplorerRulgenPreview,
     CapaExplorerRulegenFeatures,
 )
-from capa.features.address import Address
+from capa.features.address import NO_ADDRESS, Address
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
@@ -95,7 +96,7 @@ def find_func_features(fh: FunctionHandle, extractor):
     return func_features, bb_features
 
 
-def find_func_matches(f, ruleset, func_features, bb_features):
+def find_func_matches(f: FunctionHandle, ruleset, func_features, bb_features):
     """ """
     func_matches = collections.defaultdict(list)
     bb_matches = collections.defaultdict(list)
@@ -112,7 +113,7 @@ def find_func_matches(f, ruleset, func_features, bb_features):
                 func_features[capa.features.common.MatchedRule(name)].add(ea)
 
     # find rule matches for function, function features include rule matches for basic blocks
-    _, matches = capa.engine.match(ruleset.function_rules, func_features, int(f))
+    _, matches = capa.engine.match(ruleset.function_rules, func_features, f.address)
     for (name, res) in matches.items():
         func_matches[name].extend(res)
 
@@ -121,19 +122,19 @@ def find_func_matches(f, ruleset, func_features, bb_features):
 
 def find_file_features(extractor):
     """ """
-    file_features = collections.defaultdict(set)
-    for (feature, ea) in extractor.extract_file_features():
-        if ea:
-            file_features[feature].add(ea)
+    file_features = collections.defaultdict(set)  # type: FeatureSet
+    for (feature, addr) in extractor.extract_file_features():
+        if addr:
+            file_features[feature].add(addr)
         else:
             if feature not in file_features:
                 file_features[feature] = set()
     return file_features
 
 
-def find_file_matches(ruleset, file_features):
+def find_file_matches(ruleset, file_features: FeatureSet):
     """ """
-    _, matches = capa.engine.match(ruleset.file_rules, file_features, 0x0)
+    _, matches = capa.engine.match(ruleset.file_rules, file_features, NO_ADDRESS)
     return matches
 
 
@@ -876,10 +877,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f:
-                f = extractor.get_function(f.start_ea)
-                self.rulegen_current_function = f
+                fh: FunctionHandle = extractor.get_function(f.start_ea)
+                self.rulegen_current_function = fh
 
-                func_features, bb_features = find_func_features(f, extractor)
+                func_features, bb_features = find_func_features(fh, extractor)
                 self.rulegen_func_features_cache = collections.defaultdict(set, copy.copy(func_features))
                 self.rulegen_bb_features_cache = collections.defaultdict(dict, copy.copy(bb_features))
 
@@ -890,13 +891,13 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     # add function and bb rule matches to function features, for display purposes
-                    func_matches, bb_matches = find_func_matches(f, self.ruleset_cache, func_features, bb_features)
-                    for (name, res) in itertools.chain(func_matches.items(), bb_matches.items()):
+                    func_matches, bb_matches = find_func_matches(fh, self.ruleset_cache, func_features, bb_features)
+                    for (name, addrs) in itertools.chain(func_matches.items(), bb_matches.items()):
                         rule = self.ruleset_cache[name]
                         if rule.meta.get("capa/subscope-rule"):
                             continue
-                        for (ea, _) in res:
-                            func_features[capa.features.common.MatchedRule(name)].add(ea)
+                        for (addr, _) in addrs:
+                            func_features[capa.features.common.MatchedRule(name)].add(addr)
                 except Exception as e:
                     logger.error("Failed to match function/basic block rule scope (error: %s)", e)
                     return False
@@ -916,7 +917,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         try:
             file_features = find_file_features(extractor)
-            self.rulegen_file_features_cache = collections.defaultdict(dict, copy.copy(file_features))
+            self.rulegen_file_features_cache = copy.copy(file_features)
 
             if ida_kernwin.user_cancelled():
                 logger.info("User cancelled analysis.")
@@ -925,12 +926,12 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             try:
                 # add file matches to file features, for display purposes
-                for (name, res) in find_file_matches(self.ruleset_cache, file_features).items():
+                for (name, addrs) in find_file_matches(self.ruleset_cache, file_features).items():
                     rule = self.ruleset_cache[name]
                     if rule.meta.get("capa/subscope-rule"):
                         continue
-                    for (ea, _) in res:
-                        file_features[capa.features.common.MatchedRule(name)].add(ea)
+                    for (addr, _) in addrs:
+                        file_features[capa.features.common.MatchedRule(name)].add(addr)
             except Exception as e:
                 logger.error("Failed to match file scope rules (error: %s)", e)
                 return False
@@ -946,7 +947,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             # load preview and feature tree
             self.view_rulegen_preview.load_preview_meta(
-                f.start_ea if f else None,
+                fh.address if fh else None,
                 settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, "<insert_author>"),
                 settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function"),
             )
@@ -957,7 +958,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
-            logger.error("Failed to render views (error: %s)", e)
+            logger.error("Failed to render views (error: %s)", e, exc_info=True)
             return False
 
         return True
