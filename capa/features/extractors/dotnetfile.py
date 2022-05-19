@@ -14,18 +14,23 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_DOTNET,
     Arch,
+    Class,
     Format,
     String,
     Feature,
+    Namespace,
     Characteristic,
 )
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     is_dotnet_mixed_mode,
+    is_dotnet_table_valid,
+    format_dotnet_classname,
+    format_dotnet_methodname,
     get_dotnet_managed_imports,
+    get_dotnet_managed_methods,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
-    get_dotnet_managed_method_names,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,9 +41,9 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
-    for (token, name) in get_dotnet_managed_imports(pe):
+    for (token, namespace, class_, method) in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
-        yield Import(name), token
+        yield Import(format_dotnet_methodname(namespace, class_, method)), token
 
     for (token, name) in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
@@ -48,8 +53,43 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
 
 
 def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, int]]:
-    for (token, name) in get_dotnet_managed_method_names(pe):
-        yield FunctionName(name), token
+    for (token, namespace, class_, method) in get_dotnet_managed_methods(pe):
+        yield FunctionName(format_dotnet_methodname(namespace, class_, method)), token
+
+
+def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, int]]:
+    if not all((is_dotnet_table_valid(pe, "TypeDef"), is_dotnet_table_valid(pe, "TypeRef"))):
+        return
+
+    namespaces = set()
+    for (rid, row) in enumerate(pe.net.mdtables.TypeDef):
+        if not row.TypeNamespace:
+            continue
+        namespaces.add(row.TypeNamespace)
+
+    for (rid, row) in enumerate(pe.net.mdtables.TypeRef):
+        if not row.TypeNamespace:
+            continue
+        namespaces.add(row.TypeNamespace)
+
+    for namespace in namespaces:
+        yield Namespace(namespace), 0x0
+
+
+def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, int]]:
+    if not all((is_dotnet_table_valid(pe, "TypeDef"), is_dotnet_table_valid(pe, "TypeRef"))):
+        return
+
+    for (rid, row) in enumerate(pe.net.mdtables.TypeDef):
+        name = format_dotnet_classname(row.TypeNamespace, row.TypeName)
+        token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
+
+        yield Class(name), token
+
+    for (rid, row) in enumerate(pe.net.mdtables.TypeRef):
+        name = format_dotnet_classname(row.TypeNamespace, row.TypeName)
+        token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
+        yield Class(name), token
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
@@ -71,7 +111,7 @@ def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, in
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
 
 
-def extract_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
+def extract_file_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), 0x0
 
@@ -87,7 +127,9 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_strings,
     extract_file_format,
-    extract_mixed_mode_characteristic_features,
+    extract_file_mixed_mode_characteristic_features,
+    extract_file_namespace_features,
+    extract_file_class_features,
 )
 
 

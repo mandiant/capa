@@ -176,6 +176,16 @@ class String(Feature):
         super(String, self).__init__(value, description=description)
 
 
+class Class(Feature):
+    def __init__(self, value: str, description=None):
+        super(Class, self).__init__(value, description=description)
+
+
+class Namespace(Feature):
+    def __init__(self, value: str, description=None):
+        super(Namespace, self).__init__(value, description=description)
+
+
 class Substring(String):
     def __init__(self, value: str, description=None):
         super(Substring, self).__init__(value, description=description)

@@ -86,12 +86,14 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     except UnicodeDecodeError as e:
         logger.warn("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
         return None
+
     if user_string is None:
         return None
+
     return user_string.value
 
 
-def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str, str]]:
     """get managed imports from MemberRef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -109,20 +111,12 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
         return
 
     for (rid, row) in enumerate(pe.net.mdtables.MemberRef):
-        if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow,)):
+        if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
             continue
-
-        # like File::OpenRead
-        name = f"{row.Class.row.TypeName}::{row.Name}"
-
-        # ECMA II.22.38: TypeNamespace can be null or non-null
-        if row.Class.row.TypeNamespace:
-            # like System.IO.File::OpenRead
-            name = f"{row.Class.row.TypeNamespace}.{name}"
 
         token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
 
-        yield token, name
+        yield token, row.Class.row.TypeNamespace, row.Class.row.TypeName, row.Name
 
 
 def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
@@ -179,7 +173,7 @@ def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
     return bool(getattr(pe.net.mdtables, table_name, None))
 
 
-def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str, str]]:
     """get managed method names from TypeDef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -195,18 +189,27 @@ def get_dotnet_managed_method_names(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]
 
     for row in pe.net.mdtables.TypeDef:
         for index in row.MethodList:
-            # like File::OpenRead
-            name = f"{row.TypeName}::{index.row.Name}"
-
-            # ECMA II.22.37: TypeNamespace can be null or non-null
-            if row.TypeNamespace:
-                # like System.IO.File::OpenRead
-                name = f"{row.TypeNamespace}.{name}"
-
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
 
-            yield token, name
+            yield token, row.TypeNamespace, row.TypeName, index.row.Name
 
 
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
     return not bool(pe.net.Flags.CLR_ILONLY)
+
+
+def format_dotnet_methodname(namespace, class_, method):
+    # like File::OpenRead
+    name: str = f"{class_}::{method}"
+    if namespace:
+        # like System.IO.File::OpenRead
+        name = f"{namespace}.{name}"
+    return name
+
+
+def format_dotnet_classname(namespace, class_):
+    name: str = class_
+    if namespace:
+        # like System.IO.File::OpenRead
+        name = f"{namespace}.{name}"
+    return name

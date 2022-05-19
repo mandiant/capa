@@ -101,6 +101,8 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
         capa.features.common.Format,
+        capa.features.common.Class,
+        capa.features.common.Namespace,
         capa.features.common.Characteristic("mixed mode"),
     },
     FUNCTION_SCOPE: {
@@ -136,6 +138,8 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("call $+5"),
         capa.features.common.Characteristic("cross section flow"),
         capa.features.common.Characteristic("unmanaged call"),
+        capa.features.common.Class,
+        capa.features.common.Namespace,
     },
 }
 
@@ -289,8 +293,11 @@ def parse_feature(key: str):
     elif key == "format":
         return capa.features.common.Format
     elif key == "arch":
-
         return capa.features.common.Arch
+    elif key == "class":
+        return capa.features.common.Class
+    elif key == "namespace":
+        return capa.features.common.Namespace
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 

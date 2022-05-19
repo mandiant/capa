@@ -16,26 +16,28 @@ if TYPE_CHECKING:
     from capa.features.common import Feature
 
 import dnfile
-from dncil.clr.token import StringToken, InvalidToken
+from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
-from capa.features.common import String, Characteristic
+from capa.features.common import Class, String, Namespace, Characteristic
 from capa.features.extractors.dnfile.helpers import (
     resolve_dotnet_token,
+    format_dotnet_classname,
     read_dotnet_user_string,
+    format_dotnet_methodname,
     get_dotnet_managed_imports,
+    get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
-    get_dotnet_managed_method_names,
 )
 
 
 def get_managed_imports(ctx: Dict) -> Dict:
     if "managed_imports_cache" not in ctx:
         ctx["managed_imports_cache"] = {}
-        for (token, name) in get_dotnet_managed_imports(ctx["pe"]):
-            ctx["managed_imports_cache"][token] = name
+        for (token, namespace, class_, method) in get_dotnet_managed_imports(ctx["pe"]):
+            ctx["managed_imports_cache"][token] = format_dotnet_methodname(namespace, class_, method)
     return ctx["managed_imports_cache"]
 
 
@@ -50,8 +52,8 @@ def get_unmanaged_imports(ctx: Dict) -> Dict:
 def get_methods(ctx: Dict) -> Dict:
     if "methods_cache" not in ctx:
         ctx["methods_cache"] = {}
-        for (token, name) in get_dotnet_managed_method_names(ctx["pe"]):
-            ctx["methods_cache"][token] = name
+        for (token, namespace, class_, method) in get_dotnet_managed_methods(ctx["pe"]):
+            ctx["methods_cache"][token] = format_dotnet_methodname(namespace, class_, method)
     return ctx["methods_cache"]
 
 
@@ -84,6 +86,40 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
         dll, _, symbol = name.rpartition(".")
         for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
             yield API(name_variant), insn.offset
+
+
+def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Class, int]]:
+    """parse instruction class features"""
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
+
+    row = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+
+    if not isinstance(row, dnfile.mdtable.MemberRefRow):
+        return
+    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+        return
+
+    yield Class(format_dotnet_classname(row.Class.row.TypeNamespace, row.Class.row.TypeName)), insn.offset
+
+
+def extract_insn_namespace_features(
+    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
+) -> Iterator[Tuple[Namespace, int]]:
+    """parse instruction namespace features"""
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
+
+    row = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+
+    if not isinstance(row, dnfile.mdtable.MemberRefRow):
+        return
+    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+        return
+    if not row.Class.row.TypeNamespace:
+        return
+
+    yield Namespace(row.Class.row.TypeNamespace), insn.offset
 
 
 def extract_insn_number_features(
@@ -138,5 +174,7 @@ INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
     extract_insn_string_features,
+    extract_insn_namespace_features,
+    extract_insn_class_features,
     extract_unmanaged_call_characteristic_features,
 )
