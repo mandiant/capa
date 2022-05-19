@@ -25,7 +25,7 @@ from capa.features.common import (
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     is_dotnet_mixed_mode,
-    is_dotnet_table_valid,
+    iter_dotnet_table,
     format_dotnet_classname,
     format_dotnet_methodname,
     get_dotnet_managed_imports,
@@ -59,32 +59,37 @@ def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Fun
 
 
 def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, int]]:
-    if not all((is_dotnet_table_valid(pe, "TypeDef"), is_dotnet_table_valid(pe, "TypeRef"))):
-        return
+    """emit namespace features from TypeRef and TypeDef tables"""
 
+    # namespaces may be referenced multiple times, so we need to filter
     namespaces = set()
-    for row in itertools.chain(pe.net.mdtables.TypeDef, pe.net.mdtables.TypeRef):
-        if not row.TypeNamespace:
-            continue
+
+    for row in iter_dotnet_table(pe, "TypeDef"):
         namespaces.add(row.TypeNamespace)
 
+    for row in iter_dotnet_table(pe, "TypeRef"):
+        namespaces.add(row.TypeNamespace)
+
+    # namespaces may be empty, discard
+    namespaces.discard("")
+
     for namespace in namespaces:
+        # namespace do not have an associated token, so we yield 0x0
         yield Namespace(namespace), 0x0
 
 
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, int]]:
-    if not all((is_dotnet_table_valid(pe, "TypeDef"), is_dotnet_table_valid(pe, "TypeRef"))):
-        return
-
-    for (rid, row) in enumerate(pe.net.mdtables.TypeDef):
+    """emit class features from TypeRef and TypeDef tables"""
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
         name = format_dotnet_classname(row.TypeNamespace, row.TypeName)
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
 
         yield Class(name), token
 
-    for (rid, row) in enumerate(pe.net.mdtables.TypeRef):
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
         name = format_dotnet_classname(row.TypeNamespace, row.TypeName)
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
+
         yield Class(name), token
 
 

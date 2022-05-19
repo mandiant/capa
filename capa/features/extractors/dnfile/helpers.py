@@ -198,7 +198,7 @@ def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
     return not bool(pe.net.Flags.CLR_ILONLY)
 
 
-def format_dotnet_methodname(namespace, class_, method):
+def format_dotnet_methodname(namespace: str, class_: str, method: str) -> str:
     # like File::OpenRead
     name: str = f"{class_}::{method}"
     if namespace:
@@ -207,9 +207,16 @@ def format_dotnet_methodname(namespace, class_, method):
     return name
 
 
-def format_dotnet_classname(namespace, class_):
+def format_dotnet_classname(namespace: str, class_: str) -> str:
     name: str = class_
     if namespace:
         # like System.IO.File::OpenRead
         name = f"{namespace}.{name}"
     return name
+
+
+def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[dnfile.base.MDTableRow]:
+    if not is_dotnet_table_valid(pe, name):
+        return
+    for row in getattr(pe.net.mdtables, name):
+        yield row
