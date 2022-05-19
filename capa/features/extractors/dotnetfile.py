@@ -24,8 +24,8 @@ from capa.features.common import (
 )
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
-    is_dotnet_mixed_mode,
     iter_dotnet_table,
+    is_dotnet_mixed_mode,
     format_dotnet_classname,
     format_dotnet_methodname,
     get_dotnet_managed_imports,
