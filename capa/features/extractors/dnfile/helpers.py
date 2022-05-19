@@ -107,10 +107,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str,
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    if not is_dotnet_table_valid(pe, "MemberRef"):
-        return
-
-    for (rid, row) in enumerate(pe.net.mdtables.MemberRef):
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "MemberRef")):
         if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
             continue
 
@@ -130,10 +127,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
             ImportName (index into the String heap)
             ImportScope (index into the ModuleRef table)
     """
-    if not is_dotnet_table_valid(pe, "ImplMap"):
-        return
-
-    for row in pe.net.mdtables.ImplMap:
+    for row in iter_dotnet_table(pe, "ImplMap"):
         dll: str = row.ImportScope.row.Name
         symbol: str = row.ImportName
 
@@ -154,10 +148,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
     """get managed methods from MethodDef table"""
-    if not is_dotnet_table_valid(pe, "MethodDef"):
-        return
-
-    for row in pe.net.mdtables.MethodDef:
+    for row in iter_dotnet_table(pe, "MethodDef"):
         if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
             # skip methods that do not have a method body
             continue
@@ -184,10 +175,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str,
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
     """
-    if not is_dotnet_table_valid(pe, "TypeDef"):
-        return
-
-    for row in pe.net.mdtables.TypeDef:
+    for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.MethodList:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
 
