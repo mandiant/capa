@@ -1,4 +1,5 @@
 import logging
+import itertools
 from typing import Tuple, Iterator
 
 import dnfile
@@ -62,12 +63,7 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         return
 
     namespaces = set()
-    for (rid, row) in enumerate(pe.net.mdtables.TypeDef):
-        if not row.TypeNamespace:
-            continue
-        namespaces.add(row.TypeNamespace)
-
-    for (rid, row) in enumerate(pe.net.mdtables.TypeRef):
+    for row in itertools.chain(pe.net.mdtables.TypeDef, pe.net.mdtables.TypeRef):
         if not row.TypeNamespace:
             continue
         namespaces.add(row.TypeNamespace)
