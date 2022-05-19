@@ -93,7 +93,7 @@ def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instr
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    row = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+    row: Any = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
 
     if not isinstance(row, dnfile.mdtable.MemberRefRow):
         return
@@ -110,7 +110,7 @@ def extract_insn_namespace_features(
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    row = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+    row: Any = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
 
     if not isinstance(row, dnfile.mdtable.MemberRefRow):
         return
