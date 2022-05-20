@@ -77,7 +77,7 @@ class DnMethod(DnClass):
         return DnMethod.format_name(self.namespace, self.classname, self.methodname)
 
     @staticmethod
-    def format_name(namespace: str, classname: str, methodname: str): # type: ignore
+    def format_name(namespace: str, classname: str, methodname: str):  # type: ignore
         # like File::OpenRead
         name: str = f"{classname}::{methodname}"
         if namespace:
