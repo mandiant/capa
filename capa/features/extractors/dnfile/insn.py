@@ -23,10 +23,9 @@ import capa.features.extractors.helpers
 from capa.features.insn import API, Number
 from capa.features.common import Class, String, Namespace, Characteristic
 from capa.features.extractors.dnfile.helpers import (
+    DnClass,
     resolve_dotnet_token,
-    format_dotnet_classname,
     read_dotnet_user_string,
-    format_dotnet_methodname,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
@@ -36,24 +35,24 @@ from capa.features.extractors.dnfile.helpers import (
 def get_managed_imports(ctx: Dict) -> Dict:
     if "managed_imports_cache" not in ctx:
         ctx["managed_imports_cache"] = {}
-        for (token, namespace, class_, method) in get_dotnet_managed_imports(ctx["pe"]):
-            ctx["managed_imports_cache"][token] = format_dotnet_methodname(namespace, class_, method)
+        for method in get_dotnet_managed_imports(ctx["pe"]):
+            ctx["managed_imports_cache"][method.token] = method
     return ctx["managed_imports_cache"]
 
 
 def get_unmanaged_imports(ctx: Dict) -> Dict:
     if "unmanaged_imports_cache" not in ctx:
         ctx["unmanaged_imports_cache"] = {}
-        for (token, name) in get_dotnet_unmanaged_imports(ctx["pe"]):
-            ctx["unmanaged_imports_cache"][token] = name
+        for imp in get_dotnet_unmanaged_imports(ctx["pe"]):
+            ctx["unmanaged_imports_cache"][imp.token] = imp
     return ctx["unmanaged_imports_cache"]
 
 
 def get_methods(ctx: Dict) -> Dict:
     if "methods_cache" not in ctx:
         ctx["methods_cache"] = {}
-        for (token, namespace, class_, method) in get_dotnet_managed_methods(ctx["pe"]):
-            ctx["methods_cache"][token] = format_dotnet_methodname(namespace, class_, method)
+        for method in get_dotnet_managed_methods(ctx["pe"]):
+            ctx["methods_cache"][method.token] = method
     return ctx["methods_cache"]
 
 
@@ -66,7 +65,7 @@ def get_callee_name(ctx: Dict, token: int) -> str:
         name = get_unmanaged_imports(ctx).get(token, "")
         if not name:
             name = get_methods(ctx).get(token, "")
-    return name
+    return str(name)
 
 
 def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
@@ -100,7 +99,9 @@ def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instr
     if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
         return
 
-    yield Class(format_dotnet_classname(row.Class.row.TypeNamespace, row.Class.row.TypeName)), insn.offset
+    class_ = DnClass(insn.operand.value, row.Class.row.TypeNamespace, row.Class.row.TypeName)
+
+    yield Class(str(class_)), insn.offset
 
 
 def extract_insn_namespace_features(

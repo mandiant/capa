@@ -41,8 +41,60 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
         return self.offset
 
 
-def calculate_dotnet_token_value(table: int, rid: int) -> int:
-    return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
+class DnClass(object):
+    def __init__(self, token: int, namespace: str, classname: str):
+        self.token: int = token
+        self.namespace: str = namespace
+        self.classname: str = classname
+
+    def __hash__(self):
+        return hash((self.token,))
+
+    def __eq__(self, other):
+        return self.token == other.token
+
+    def __str__(self):
+        name: str = self.classname
+        if self.namespace:
+            # like System.IO.File::OpenRead
+            name = f"{self.namespace}.{name}"
+        return name
+
+    def __repr__(self):
+        return str(self)
+
+
+class DnMethod(DnClass):
+    def __init__(self, token: int, namespace: str, classname: str, methodname: str):
+        super(DnMethod, self).__init__(token, namespace, classname)
+        self.methodname: str = methodname
+
+    def __str__(self):
+        # like File::OpenRead
+        name: str = f"{self.classname}::{self.methodname}"
+        if self.namespace:
+            # like System.IO.File::OpenRead
+            name = f"{self.namespace}.{name}"
+        return name
+
+
+class DnUnmanagedMethod:
+    def __init__(self, token: int, modulename: str, methodname: str):
+        self.token: int = token
+        self.modulename: str = modulename
+        self.methodname: str = methodname
+
+    def __hash__(self):
+        return hash((self.token,))
+
+    def __eq__(self, other):
+        return self.token == other.token
+
+    def __str__(self):
+        return f"{self.modulename}.{self.methodname}"
+
+    def __repr__(self):
+        return str(self)
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
@@ -93,7 +145,7 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     return user_string.value
 
 
-def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str, str]]:
+def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnMethod]:
     """get managed imports from MemberRef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -112,38 +164,24 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str,
             continue
 
         token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
+        yield DnMethod(token, row.Class.row.TypeNamespace, row.Class.row.TypeName, row.Name)
 
-        yield token, row.Class.row.TypeNamespace, row.Class.row.TypeName, row.Name
 
-
-def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
-    """get unmanaged imports from ImplMap table
+def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
+    """get managed method names from TypeDef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
 
-    28 - ImplMap Table
-        ImplMap table holds information about unmanaged methods that can be reached from managed code, using PInvoke dispatch
-            MemberForwarded (index into the Field or MethodDef table; more precisely, a MemberForwarded coded index)
-            ImportName (index into the String heap)
-            ImportScope (index into the ModuleRef table)
+    02 - TypeDef Table
+        Each row represents a class in the current assembly.
+            TypeName (index into String heap)
+            TypeNamespace (index into String heap)
+            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
     """
-    for row in iter_dotnet_table(pe, "ImplMap"):
-        dll: str = row.ImportScope.row.Name
-        symbol: str = row.ImportName
-
-        # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
-        # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
-        # MethodDef table token to help us later record native import method calls made from CIL
-        token: int = calculate_dotnet_token_value(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
-
-        # like Kernel32.dll
-        if dll and "." in dll:
-            dll = dll.split(".")[0]
-
-        # like kernel32.CreateFileA
-        name: str = f"{dll}.{symbol}"
-
-        yield token, name
+    for row in iter_dotnet_table(pe, "TypeDef"):
+        for index in row.MethodList:
+            token = calculate_dotnet_token_value(index.table.number, index.row_index)
+            yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
@@ -160,47 +198,44 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
         yield body
 
 
+def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]:
+    """get unmanaged imports from ImplMap table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    28 - ImplMap Table
+        ImplMap table holds information about unmanaged methods that can be reached from managed code, using PInvoke dispatch
+            MemberForwarded (index into the Field or MethodDef table; more precisely, a MemberForwarded coded index)
+            ImportName (index into the String heap)
+            ImportScope (index into the ModuleRef table)
+    """
+    for row in iter_dotnet_table(pe, "ImplMap"):
+        modulename: str = row.ImportScope.row.Name
+        methodname: str = row.ImportName
+
+        # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
+        # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
+        # MethodDef table token to help us later record native import method calls made from CIL
+        token: int = calculate_dotnet_token_value(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
+
+        # like Kernel32.dll
+        if modulename and "." in modulename:
+            modulename = modulename.split(".")[0]
+
+        # like kernel32.CreateFileA
+        yield DnUnmanagedMethod(token, modulename, methodname)
+
+
+def calculate_dotnet_token_value(table: int, rid: int) -> int:
+    return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
+
+
 def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
     return bool(getattr(pe.net.mdtables, table_name, None))
 
 
-def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[Tuple[int, str, str, str]]:
-    """get managed method names from TypeDef table
-
-    see https://www.ntcore.com/files/dotnetformat.htm
-
-    02 - TypeDef Table
-        Each row represents a class in the current assembly.
-            TypeName (index into String heap)
-            TypeNamespace (index into String heap)
-            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
-    """
-    for row in iter_dotnet_table(pe, "TypeDef"):
-        for index in row.MethodList:
-            token = calculate_dotnet_token_value(index.table.number, index.row_index)
-
-            yield token, row.TypeNamespace, row.TypeName, index.row.Name
-
-
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
     return not bool(pe.net.Flags.CLR_ILONLY)
-
-
-def format_dotnet_methodname(namespace: str, class_: str, method: str) -> str:
-    # like File::OpenRead
-    name: str = f"{class_}::{method}"
-    if namespace:
-        # like System.IO.File::OpenRead
-        name = f"{namespace}.{name}"
-    return name
-
-
-def format_dotnet_classname(namespace: str, class_: str) -> str:
-    name: str = class_
-    if namespace:
-        # like System.IO.File::OpenRead
-        name = f"{namespace}.{name}"
-    return name
 
 
 def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
