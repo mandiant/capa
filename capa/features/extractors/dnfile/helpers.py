@@ -54,14 +54,18 @@ class DnClass(object):
         return self.token == other.token
 
     def __str__(self):
-        name: str = self.classname
-        if self.namespace:
-            # like System.IO.File::OpenRead
-            name = f"{self.namespace}.{name}"
-        return name
+        return DnClass.format_name(self.namespace, self.classname)
 
     def __repr__(self):
         return str(self)
+
+    @staticmethod
+    def format_name(namespace: str, classname: str):
+        name: str = classname
+        if namespace:
+            # like System.IO.File::OpenRead
+            name = f"{namespace}.{name}"
+        return name
 
 
 class DnMethod(DnClass):
@@ -70,11 +74,15 @@ class DnMethod(DnClass):
         self.methodname: str = methodname
 
     def __str__(self):
+        return DnMethod.format_name(self.namespace, self.classname, self.methodname)
+
+    @staticmethod
+    def format_name(namespace: str, classname: str, methodname: str): # type: ignore
         # like File::OpenRead
-        name: str = f"{self.classname}::{self.methodname}"
-        if self.namespace:
+        name: str = f"{classname}::{methodname}"
+        if namespace:
             # like System.IO.File::OpenRead
-            name = f"{self.namespace}.{name}"
+            name = f"{namespace}.{name}"
         return name
 
 
@@ -91,10 +99,14 @@ class DnUnmanagedMethod:
         return self.token == other.token
 
     def __str__(self):
-        return f"{self.modulename}.{self.methodname}"
+        return DnUnmanagedMethod.format_name(self.modulename, self.methodname)
 
     def __repr__(self):
         return str(self)
+
+    @staticmethod
+    def format_name(modulename, methodname):
+        return f"{modulename}.{methodname}"
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:

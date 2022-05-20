@@ -100,9 +100,7 @@ def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instr
     if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
         return
 
-    class_ = DnClass(insn.operand.value, row.Class.row.TypeNamespace, row.Class.row.TypeName)
-
-    yield Class(str(class_)), insn.offset
+    yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), insn.offset
 
 
 def extract_insn_namespace_features(

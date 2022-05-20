@@ -81,15 +81,11 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
     """emit class features from TypeRef and TypeDef tables"""
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
-        class_ = DnClass(token, row.TypeNamespace, row.TypeName)
-
-        yield Class(str(class_)), class_.token
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
 
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
-        class_ = DnClass(token, row.TypeNamespace, row.TypeName)
-
-        yield Class(str(class_)), class_.token
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
