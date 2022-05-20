@@ -58,7 +58,7 @@ def get_methods(ctx: Dict) -> Dict:
     return ctx["methods_cache"]
 
 
-def get_callee_name(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
+def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
     """map dotnet token to method name"""
     callee: Union[DnMethod, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
     if not callee:
@@ -75,7 +75,7 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee_name(f.ctx, insn.operand.value)
+    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(f.ctx, insn.operand.value)
     if callee is None:
         return
 
