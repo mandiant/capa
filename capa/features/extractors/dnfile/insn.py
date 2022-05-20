@@ -59,7 +59,7 @@ def get_methods(ctx: Dict) -> Dict:
 
 
 def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
-    """map dotnet token to method name"""
+    """map dotnet token to un/managed method"""
     callee: Union[DnMethod, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
     if not callee:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
