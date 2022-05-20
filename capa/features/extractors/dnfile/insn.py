@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Iterator, Optional
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Union, Iterator, Optional
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -24,6 +24,8 @@ from capa.features.insn import API, Number
 from capa.features.common import Class, String, Namespace, Characteristic
 from capa.features.extractors.dnfile.helpers import (
     DnClass,
+    DnMethod,
+    DnUnmanagedMethod,
     resolve_dotnet_token,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
@@ -56,16 +58,16 @@ def get_methods(ctx: Dict) -> Dict:
     return ctx["methods_cache"]
 
 
-def get_callee_name(ctx: Dict, token: int) -> str:
+def get_callee_name(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
     """map dotnet token to method name"""
-    name: str = get_managed_imports(ctx).get(token, "")
-    if not name:
+    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
+    if not callee:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        name = get_unmanaged_imports(ctx).get(token, "")
-        if not name:
-            name = get_methods(ctx).get(token, "")
-    return str(name)
+        callee = get_unmanaged_imports(ctx).get(token, None)
+        if not callee:
+            callee = get_methods(ctx).get(token, None)
+    return callee
 
 
 def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
@@ -73,18 +75,17 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name: str = get_callee_name(f.ctx, insn.operand.value)
-    if not name:
+    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee_name(f.ctx, insn.operand.value)
+    if callee is None:
         return
 
-    if "::" in name:
-        # like System.IO.File::OpenRead
-        yield API(name), insn.offset
-    else:
+    if isinstance(callee, DnUnmanagedMethod):
         # like kernel32.CreateFileA
-        dll, _, symbol = name.rpartition(".")
-        for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-            yield API(name_variant), insn.offset
+        for name in capa.features.extractors.helpers.generate_symbols(callee.modulename, callee.methodname):
+            yield API(name), insn.offset
+    else:
+        # like System.IO.File::Delete
+        yield API(str(callee)), insn.offset
 
 
 def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Class, int]]:
