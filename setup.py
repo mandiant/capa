@@ -76,7 +76,7 @@ setuptools.setup(
             "black==22.3.0",
             "isort==5.10.1",
             "mypy==0.950",
-            "psutil==5.9.0",
+            "psutil==5.9.1",
             "stix2==3.0.1",
             "requests==2.27.1",
             # type stubs for mypy
