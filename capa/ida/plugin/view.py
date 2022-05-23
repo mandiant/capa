@@ -18,6 +18,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
+from capa.features.address import NO_ADDRESS
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750
@@ -1010,6 +1011,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
 
         def format_address(e):
+            if e == NO_ADDRESS:
+                return ""
             return "%X" % e if e else ""
 
         def format_feature(feature):
@@ -1020,7 +1023,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 value = '"%s"' % capa.features.common.escape_string(value)
             return "%s(%s)" % (name, value)
 
-        for (feature, eas) in sorted(features.items(), key=lambda k: sorted(k[1])):
+        for (feature, addrs) in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
                 # filter basic blocks for now, we may want to add these back in some time
                 # in the future
@@ -1032,7 +1035,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
             # level 1
             if feature not in self.parent_items:
-                if len(eas) > 1:
+                if len(addrs) > 1:
                     self.parent_items[feature] = self.new_parent_node(
                         self.parent_items[type(feature)], (format_feature(feature),), feature=feature
                     )
@@ -1042,18 +1045,18 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                     )
 
             # level n > 1
-            if len(eas) > 1:
-                for ea in sorted(eas):
+            if len(addrs) > 1:
+                for addr in sorted(addrs):
                     self.new_leaf_node(
-                        self.parent_items[feature], (format_feature(feature), format_address(ea)), feature=feature
+                        self.parent_items[feature], (format_feature(feature), format_address(addr)), feature=feature
                     )
             else:
-                if eas:
-                    ea = eas.pop()
+                if addrs:
+                    addr = addrs.pop()
                 else:
                     # some features may not have an address e.g. "format"
-                    ea = ""
-                for (i, v) in enumerate((format_feature(feature), format_address(ea))):
+                    addr = ""
+                for (i, v) in enumerate((format_feature(feature), format_address(addr))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 
