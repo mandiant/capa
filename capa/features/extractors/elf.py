@@ -47,6 +47,19 @@ class OS(str, Enum):
     NACL = "nacl"
 
 
+# via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
+# and here: https://github.com/bminor/binutils-gdb/blob/34c54daa337da9fadf87d2706d6a590ae1f88f4d/include/elf/common.h#L933-L939
+GNU_ABI_TAG = {
+    0: OS.LINUX,
+    1: OS.HURD,
+    2: OS.SOLARIS,
+    3: OS.FREEBSD,
+    4: OS.NETBSD,
+    5: OS.SYLLABLE,
+    6: OS.NACL,
+}
+
+
 def detect_elf_os(f: BinaryIO) -> str:
     f.seek(0x0)
     file_header = f.read(0x40)
@@ -141,7 +154,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         PT_NOTE = 0x4
 
         (p_type,) = struct.unpack_from(endian + "I", phent, 0x0)
-        logger.debug("p_type: 0x%04x", p_type)
+        logger.debug("ph:p_type: 0x%04x", p_type)
         if p_type != PT_NOTE:
             continue
 
@@ -152,7 +165,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         else:
             raise NotImplementedError()
 
-        logger.debug("p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
+        logger.debug("ph:p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
 
         f.seek(p_offset)
         note = f.read(p_filesz)
@@ -164,7 +177,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         name_offset = 0xC
         desc_offset = name_offset + align(namesz, 0x4)
 
-        logger.debug("namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
+        logger.debug("ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
 
         name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", name)
@@ -178,17 +191,6 @@ def detect_elf_os(f: BinaryIO) -> str:
 
             desc = note[desc_offset : desc_offset + descsz]
             abi_tag, kmajor, kminor, kpatch = struct.unpack_from(endian + "IIII", desc, 0x0)
-            # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
-            # and here: https://github.com/bminor/binutils-gdb/blob/34c54daa337da9fadf87d2706d6a590ae1f88f4d/include/elf/common.h#L933-L939
-            GNU_ABI_TAG = {
-                0: OS.LINUX,
-                1: OS.HURD,
-                2: OS.SOLARIS,
-                3: OS.FREEBSD,
-                4: OS.NETBSD,
-                5: OS.SYLLABLE,
-                6: OS.NACL,
-            }
             logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
 
             if abi_tag in GNU_ABI_TAG:
@@ -262,7 +264,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         if sh_type != SHT_NOTE:
             continue
 
-        logger.debug("sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
+        logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
 
         f.seek(sh_offset)
         note = f.read(sh_size)
@@ -274,7 +276,7 @@ def detect_elf_os(f: BinaryIO) -> str:
         name_offset = 0xC
         desc_offset = name_offset + align(namesz, 0x4)
 
-        logger.debug("namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
+        logger.debug("sh:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
 
         name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", name)
@@ -282,6 +284,28 @@ def detect_elf_os(f: BinaryIO) -> str:
         if name == "Linux":
             logger.debug("note owner: %s", "LINUX")
             ret = OS.LINUX if not ret else ret
+        elif name == "OpenBSD":
+            logger.debug("note owner: %s", "OPENBSD")
+            ret = OS.OPENBSD if not ret else ret
+        elif name == "NetBSD":
+            logger.debug("note owner: %s", "NETBSD")
+            ret = OS.NETBSD if not ret else ret
+        elif name == "FreeBSD":
+            logger.debug("note owner: %s", "FREEBSD")
+            ret = OS.FREEBSD if not ret else ret
+        elif name == "GNU":
+            if descsz < 16:
+                continue
+
+            desc = note[desc_offset : desc_offset + descsz]
+            abi_tag, kmajor, kminor, kpatch = struct.unpack_from(endian + "IIII", desc, 0x0)
+            logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
+
+            if abi_tag in GNU_ABI_TAG:
+                # update only if not set
+                # so we can get the debugging output of subsequent strategies
+                ret = GNU_ABI_TAG[abi_tag] if not ret else ret
+                logger.debug("abi tag: %s earliest compatible kernel: %d.%d.%d", ret, kmajor, kminor, kpatch)
 
     return ret.value if ret is not None else "unknown"
 
