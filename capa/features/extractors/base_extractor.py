@@ -323,53 +323,53 @@ class NullFeatureExtractor(FeatureExtractor):
             yield feature, va
 
     def get_functions(self):
-        for va in sorted(self.features["functions"].keys()):
-            yield va
+        for addr in sorted(self.features["functions"].keys()):
+            yield FunctionHandle(addr, None)
 
     def extract_function_features(self, f):
-        for p in self.features.get("functions", {}).get(f, {}).get("features", []):  # noqa: E127 line over-indented
-            va, feature = p
-            yield feature, va
+        for p in self.features.get("functions", {}).get(f.address, {}).get("features", []):  # noqa: E127 line over-indented
+            addr, feature = p
+            yield feature, addr
 
     def get_basic_blocks(self, f):
-        for va in sorted(
+        for addr in sorted(
             self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
+            .get(f.address, {})
             .get("basic blocks", {})
             .keys()
         ):
-            yield va
+            yield BBHandle(addr, None)
 
     def extract_basic_block_features(self, f, bb):
         for p in (
             self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
+            .get(f.address, {})
             .get("basic blocks", {})
-            .get(bb, {})
+            .get(bb.address, {})
             .get("features", [])
         ):
-            va, feature = p
-            yield feature, va
+            addr, feature = p
+            yield feature, addr
 
     def get_instructions(self, f, bb):
-        for va in sorted(
+        for addr in sorted(
             self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
+            .get(f.address, {})
             .get("basic blocks", {})
-            .get(bb, {})
+            .get(bb.address, {})
             .get("instructions", {})
             .keys()
         ):
-            yield va
+            yield InsnHandle(addr, None)
 
     def extract_insn_features(self, f, bb, insn):
         for p in (
             self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
+            .get(f.address, {})
             .get("basic blocks", {})
-            .get(bb, {})
+            .get(bb.address, {})
             .get("instructions", {})
-            .get(insn, {})
+            .get(insn.address, {})
             .get("features", [])
         ):
             va, feature = p
