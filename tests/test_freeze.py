@@ -68,7 +68,10 @@ def test_null_feature_extractor():
 
     assert addresses(EXTRACTOR.get_functions()) == [AbsoluteVirtualAddress(0x401000)]
     assert addresses(EXTRACTOR.get_basic_blocks(fh)) == [AbsoluteVirtualAddress(0x401000)]
-    assert addresses(EXTRACTOR.get_instructions(fh, bbh)) == [AbsoluteVirtualAddress(0x401000), AbsoluteVirtualAddress(0x401002)]
+    assert addresses(EXTRACTOR.get_instructions(fh, bbh)) == [
+        AbsoluteVirtualAddress(0x401000),
+        AbsoluteVirtualAddress(0x401002),
+    ]
 
     rules = capa.rules.RuleSet(
         [

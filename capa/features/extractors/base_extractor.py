@@ -327,7 +327,9 @@ class NullFeatureExtractor(FeatureExtractor):
             yield FunctionHandle(addr, None)
 
     def extract_function_features(self, f):
-        for p in self.features.get("functions", {}).get(f.address, {}).get("features", []):  # noqa: E127 line over-indented
+        for p in (
+            self.features.get("functions", {}).get(f.address, {}).get("features", [])
+        ):  # noqa: E127 line over-indented
             addr, feature = p
             yield feature, addr
 

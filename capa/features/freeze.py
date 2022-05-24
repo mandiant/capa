@@ -54,7 +54,7 @@ See the License for the specific language governing permissions and limitations 
 import json
 import zlib
 import logging
-from typing import Dict, Type
+from typing import Any, Dict, List, Type
 
 import capa.helpers
 import capa.features.file
@@ -63,9 +63,9 @@ import capa.features.common
 import capa.features.address
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
-from capa.features.address import Address
-from capa.features.common import Feature
 from capa.helpers import assert_never
+from capa.features.common import Feature
+from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +77,13 @@ def serialize_feature(feature):
 KNOWN_FEATURES: Dict[str, Type[Feature]] = {F.__name__: F for F in capa.features.common.Feature.__subclasses__()}
 KNOWN_FEATURES.update({F.__name__: F for F in capa.features.insn._Operand.__subclasses__()})  # type: ignore
 
+
 def deserialize_feature(doc):
     F = KNOWN_FEATURES[doc[0]]
     return F.freeze_deserialize(doc[1])
 
 
-def serialize_address(a: Address) -> any:
+def serialize_address(a: Address) -> Any:
     if isinstance(a, capa.features.address.AbsoluteVirtualAddress):
         return ("absolute", int(a))
 
@@ -99,13 +100,16 @@ def serialize_address(a: Address) -> any:
         return ("dn token offset", a.token, a.offset)
 
     elif a == capa.features.address.NO_ADDRESS:
-        return ("no address")
+        return ("no address",)
+
+    elif isinstance(a, capa.features.address.Address):
+        raise ValueError("don't use an Address instance directly")
 
     else:
         assert_never(a)
 
 
-def deserialize_address(doc: any) -> Address:
+def deserialize_address(doc: List[Any]) -> Address:
     atype = doc[0]
 
     if atype == "absolute":
@@ -123,7 +127,7 @@ def deserialize_address(doc: any) -> Address:
     elif atype == "dn token offset":
         return capa.features.address.DNTokenOffsetAddress(doc[1], doc[2])
 
-    elif doc == "no address":
+    elif atype == "no address":
         return capa.features.address.NO_ADDRESS
 
     else:
@@ -207,7 +211,9 @@ def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
     if doc.get("version") != 2:
         raise ValueError("unsupported freeze format version: %d" % (doc.get("version")))
 
-    features = {
+    # typing: unfortunately we have to cast this to Any
+    # because mypy gets confused that the values of the dict have different types.
+    features: Any = {
         "base address": deserialize_address(doc.get("base address")),
         "global features": [],
         "file features": [],
@@ -264,7 +270,7 @@ def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
         addr, loc = feature[2:]
         addr = deserialize_address(addr)
         loc = list(map(deserialize_address, loc))
-        faddr, = loc
+        (faddr,) = loc
 
         # decode the feature from the pair like:
         #
