@@ -62,9 +62,10 @@ import capa.engine
 import capa.helpers
 import capa.features
 import capa.exceptions
+import capa.render.verbose
 import capa.render.utils as rutils
 import capa.features.freeze
-import capa.render.result_document
+import capa.render.result_document as rd
 from capa.helpers import get_file_taste
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
@@ -90,31 +91,36 @@ def render_matches_by_function(doc):
           - connect to HTTP server
     """
     functions_by_bb = {}
-    for function, info in doc["meta"]["analysis"]["layout"]["functions"].items():
-        for bb in info["matched_basic_blocks"]:
-            functions_by_bb[bb] = function
+    functions_by_bb = {}
+    for finfo in doc["meta"]["analysis"]["layout"]["functions"]:
+        faddress = rd.deserialize_address(finfo["address"])
+
+        for bb in finfo["matched_basic_blocks"]:
+            bbaddress = rd.deserialize_address(bb["address"])
+            functions_by_bb[bbaddress] = faddress
 
     ostream = rutils.StringIO()
 
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         if rule["meta"]["scope"] == capa.rules.FUNCTION_SCOPE:
-            for va in rule["matches"].keys():
-                matches_by_function[va].add(rule["meta"]["name"])
+            for addr, _ in rule["matches"]:
+                addr = rd.deserialize_address(addr)
+                matches_by_function[addr].add(rule["meta"]["name"])
         elif rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
-            for va in rule["matches"].keys():
-                function = functions_by_bb[va]
+            for addr, _ in rule["matches"]:
+                function = functions_by_bb[rd.deserialize_address(addr)]
                 matches_by_function[function].add(rule["meta"]["name"])
         else:
             # file scope
             pass
 
-    for va, feature_count in sorted(doc["meta"]["analysis"]["feature_counts"]["functions"].items()):
-        va = int(va)
-        if not matches_by_function.get(va, {}):
+    for f in doc["meta"]["analysis"]["feature_counts"]["functions"]:
+        addr = rd.deserialize_address(f["address"])
+        if not matches_by_function.get(addr, {}):
             continue
-        ostream.writeln("function at 0x%X with %d features: " % (va, feature_count))
-        for rule_name in sorted(matches_by_function[va]):
+        ostream.writeln("function at %s with %d features: " % (capa.render.verbose.format_address(addr), f["count"]))
+        for rule_name in sorted(matches_by_function[addr]):
             ostream.writeln("  - " + rule_name)
 
     return ostream.getvalue()
@@ -187,7 +193,7 @@ def main(argv=None):
     #  - when not an interactive session, and disable coloring
     # renderers should use coloring and assume it will be stripped out if necessary.
     colorama.init()
-    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    doc = rd.convert_capabilities_to_result_document(meta, rules, capabilities)
     print(render_matches_by_function(doc))
     colorama.deinit()
 
