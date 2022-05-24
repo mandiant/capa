@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
+from typing import List
 
 from fixtures import *
 
@@ -18,33 +19,34 @@ import capa.features.common
 import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
+from capa.features.address import AbsoluteVirtualAddress
 
 EXTRACTOR = capa.features.extractors.base_extractor.NullFeatureExtractor(
     {
-        "base address": 0x401000,
+        "base address": AbsoluteVirtualAddress(0x401000),
         "file features": [
-            (0x402345, capa.features.common.Characteristic("embedded pe")),
+            (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
         ],
         "functions": {
-            0x401000: {
+            AbsoluteVirtualAddress(0x401000): {
                 "features": [
-                    (0x401000, capa.features.common.Characteristic("indirect call")),
+                    (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("indirect call")),
                 ],
                 "basic blocks": {
-                    0x401000: {
+                    AbsoluteVirtualAddress(0x401000): {
                         "features": [
-                            (0x401000, capa.features.common.Characteristic("tight loop")),
+                            (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("tight loop")),
                         ],
                         "instructions": {
-                            0x401000: {
+                            AbsoluteVirtualAddress(0x401000): {
                                 "features": [
-                                    (0x401000, capa.features.insn.Mnemonic("xor")),
-                                    (0x401000, capa.features.common.Characteristic("nzxor")),
+                                    (AbsoluteVirtualAddress(0x401000), capa.features.insn.Mnemonic("xor")),
+                                    (AbsoluteVirtualAddress(0x401000), capa.features.common.Characteristic("nzxor")),
                                 ],
                             },
-                            0x401002: {
+                            AbsoluteVirtualAddress(0x401002): {
                                 "features": [
-                                    (0x401002, capa.features.insn.Mnemonic("mov")),
+                                    (AbsoluteVirtualAddress(0x401002), capa.features.insn.Mnemonic("mov")),
                                 ],
                             },
                         },
@@ -56,10 +58,17 @@ EXTRACTOR = capa.features.extractors.base_extractor.NullFeatureExtractor(
 )
 
 
+def addresses(s) -> List[Address]:
+    return list(sorted(map(lambda i: i.address, s)))
+
+
 def test_null_feature_extractor():
-    assert list(EXTRACTOR.get_functions()) == [0x401000]
-    assert list(EXTRACTOR.get_basic_blocks(0x401000)) == [0x401000]
-    assert list(EXTRACTOR.get_instructions(0x401000, 0x0401000)) == [0x401000, 0x401002]
+    fh = FunctionHandle(AbsoluteVirtualAddress(0x401000), None)
+    bbh = BBHandle(AbsoluteVirtualAddress(0x401000), None)
+
+    assert addresses(EXTRACTOR.get_functions()) == [AbsoluteVirtualAddress(0x401000)]
+    assert addresses(EXTRACTOR.get_basic_blocks(fh)) == [AbsoluteVirtualAddress(0x401000)]
+    assert addresses(EXTRACTOR.get_instructions(fh, bbh)) == [AbsoluteVirtualAddress(0x401000), AbsoluteVirtualAddress(0x401002)]
 
     rules = capa.rules.RuleSet(
         [
@@ -90,48 +99,19 @@ def compare_extractors(a, b):
       a (capa.features.extractors.NullFeatureExtractor)
       b (capa.features.extractors.NullFeatureExtractor)
     """
-
-    # TODO: ordering of these things probably doesn't work yet
-
     assert list(a.extract_file_features()) == list(b.extract_file_features())
-    assert list(a.get_functions()) == list(b.get_functions())
+
+    assert addresses(a.get_functions()) == addresses(b.get_functions())
     for f in a.get_functions():
-        assert list(a.get_basic_blocks(f)) == list(b.get_basic_blocks(f))
+        assert addresses(a.get_basic_blocks(f)) == addresses(b.get_basic_blocks(f))
         assert list(a.extract_function_features(f)) == list(b.extract_function_features(f))
 
         for bb in a.get_basic_blocks(f):
-            assert list(a.get_instructions(f, bb)) == list(b.get_instructions(f, bb))
+            assert addresses(a.get_instructions(f, bb)) == addresses(b.get_instructions(f, bb))
             assert list(a.extract_basic_block_features(f, bb)) == list(b.extract_basic_block_features(f, bb))
 
             for insn in a.get_instructions(f, bb):
                 assert list(a.extract_insn_features(f, bb, insn)) == list(b.extract_insn_features(f, bb, insn))
-
-
-def compare_extractors_viv_null(viv_ext, null_ext):
-    """
-    almost identical to compare_extractors but adds casts to ints since the VivisectFeatureExtractor returns objects
-    and NullFeatureExtractor returns ints
-
-    args:
-      viv_ext (capa.features.extractors.viv.extractor.VivisectFeatureExtractor)
-      null_ext (capa.features.extractors.NullFeatureExtractor)
-    """
-    assert list(viv_ext.extract_file_features()) == list(null_ext.extract_file_features())
-    assert list(map(int, viv_ext.get_functions())) == list(null_ext.get_functions())
-    for f in viv_ext.get_functions():
-        assert list(map(int, viv_ext.get_basic_blocks(f))) == list(null_ext.get_basic_blocks(int(f)))
-        assert list(viv_ext.extract_function_features(f)) == list(null_ext.extract_function_features(int(f)))
-
-        for bb in viv_ext.get_basic_blocks(f):
-            assert list(map(int, viv_ext.get_instructions(f, bb))) == list(null_ext.get_instructions(int(f), int(bb)))
-            assert list(viv_ext.extract_basic_block_features(f, bb)) == list(
-                null_ext.extract_basic_block_features(int(f), int(bb))
-            )
-
-            for insn in viv_ext.get_instructions(f, bb):
-                assert list(viv_ext.extract_insn_features(f, bb, insn)) == list(
-                    null_ext.extract_insn_features(int(f), int(bb), int(insn))
-                )
 
 
 def test_freeze_s_roundtrip():
@@ -184,4 +164,4 @@ def test_freeze_load_sample(tmpdir, z9324d_extractor):
     with open(o.strpath, "rb") as f:
         null_extractor = capa.features.freeze.load(f.read())
 
-    compare_extractors_viv_null(z9324d_extractor, null_extractor)
+    compare_extractors(z9324d_extractor, null_extractor)
