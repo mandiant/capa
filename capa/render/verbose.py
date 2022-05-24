@@ -28,6 +28,7 @@ import dnfile.mdtable
 import capa.rules
 import capa.render.utils as rutils
 import capa.render.result_document
+import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.features.address import (
@@ -90,14 +91,14 @@ def render_meta(ostream, doc):
         ("format", doc["meta"]["analysis"]["format"]),
         ("arch", doc["meta"]["analysis"]["arch"]),
         ("extractor", doc["meta"]["analysis"]["extractor"]),
-        ("base address", hex(doc["meta"]["analysis"]["base_address"])),
+        ("base address", format_address(rd.deserialize_address(doc["meta"]["analysis"]["base_address"]))),
         ("rules", "\n".join(doc["meta"]["analysis"]["rules"])),
         ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
         ("library function count", len(doc["meta"]["analysis"]["library_functions"])),
         (
             "total feature count",
             doc["meta"]["analysis"]["feature_counts"]["file"]
-            + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values()),
+            + sum(map(lambda f: f["count"], doc["meta"]["analysis"]["feature_counts"]["functions"])),
         ),
     ]
 
@@ -137,8 +138,8 @@ def render_rules(ostream, doc):
             rows.append((key, v))
 
         if rule["meta"]["scope"] != capa.rules.FILE_SCOPE:
-            locations = doc["rules"][rule["meta"]["name"]]["matches"].keys()
-            rows.append(("matches", "\n".join(map(format_address, locations))))
+            locations = list(map(lambda m: m[0], doc["rules"][rule["meta"]["name"]]["matches"]))
+            rows.append(("matches", "\n".join(map(lambda d: format_address(rd.deserialize_address(d)), locations))))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
@@ -160,5 +161,5 @@ def render_verbose(doc):
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    doc = rd.convert_capabilities_to_result_document(meta, rules, capabilities)
     return render_verbose(doc)

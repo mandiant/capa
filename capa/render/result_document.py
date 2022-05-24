@@ -6,12 +6,67 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import copy
+from typing import Any, List
 
 import capa.engine
 import capa.render.utils
 import capa.features.common
+import capa.features.address
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.helpers import assert_never
+from capa.features.address import Address
+
+
+def serialize_address(a: Address) -> Any:
+    if isinstance(a, capa.features.address.AbsoluteVirtualAddress):
+        return ("absolute", int(a))
+
+    elif isinstance(a, capa.features.address.RelativeVirtualAddress):
+        return ("relative", int(a))
+
+    elif isinstance(a, capa.features.address.FileOffsetAddress):
+        return ("file", int(a))
+
+    elif isinstance(a, capa.features.address.DNTokenAddress):
+        return ("dn token", a.token)
+
+    elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
+        return ("dn token offset", a.token, a.offset)
+
+    elif a == capa.features.address.NO_ADDRESS:
+        return ("no address",)
+
+    elif isinstance(a, capa.features.address.Address):
+        raise ValueError("don't use an Address instance directly")
+
+    else:
+        assert_never(a)
+
+
+def deserialize_address(doc: List[Any]) -> Address:
+    atype = doc[0]
+
+    if atype == "absolute":
+        return capa.features.address.AbsoluteVirtualAddress(doc[1])
+
+    elif atype == "relative":
+        return capa.features.address.RelativeVirtualAddress(doc[1])
+
+    elif atype == "file":
+        return capa.features.address.FileOffsetAddress(doc[1])
+
+    elif atype == "dn token":
+        return capa.features.address.DNTokenAddress(doc[1])
+
+    elif atype == "dn token offset":
+        return capa.features.address.DNTokenOffsetAddress(doc[1], doc[2])
+
+    elif atype == "no address":
+        return capa.features.address.NO_ADDRESS
+
+    else:
+        assert_never(atype)
 
 
 def convert_statement_to_result_document(statement):
@@ -74,7 +129,13 @@ def convert_feature_to_result_document(feature):
     if feature.description:
         result["description"] = feature.description
     if feature.name in ("regex", "substring"):
-        result["matches"] = feature.matches
+        if feature.matches:
+            # regex featur matches are a dict from the capture group to list of location addresses
+            result["matches"] = {k: list(map(serialize_address, vs)) for k, vs in feature.matches.items()}
+        else:
+            # there were no matches
+            pass
+
     return result
 
 
@@ -120,10 +181,10 @@ def convert_match_to_result_document(rules, capabilities, result):
     # so only add `locations` to feature nodes.
     if isinstance(result.statement, capa.features.common.Feature):
         if bool(result.success):
-            doc["locations"] = result.locations
+            doc["locations"] = list(map(serialize_address, result.locations))
     elif isinstance(result.statement, capa.engine.Range):
         if bool(result.success):
-            doc["locations"] = result.locations
+            doc["locations"] = list(map(serialize_address, result.locations))
 
     # if we have a `match` statement, then we're referencing another rule or namespace.
     # this could an external rule (written by a human), or
@@ -164,7 +225,7 @@ def convert_match_to_result_document(rules, capabilities, result):
                     },
                 }
 
-            for location in doc["locations"]:
+            for location in result.locations:
                 doc["children"].append(convert_match_to_result_document(rules, capabilities, rule_matches[location]))
         else:
             # this is a namespace that we're matching
@@ -196,7 +257,7 @@ def convert_match_to_result_document(rules, capabilities, result):
                     # this would be a breaking change and require updates to the renderers.
                     # in the meantime, the above might be sufficient.
                     rule_matches = {address: result for (address, result) in capabilities[rule.name]}
-                    for location in doc["locations"]:
+                    for location in result.locations:
                         # doc[locations] contains all matches for the given namespace.
                         # for example, the feature might be `match: anti-analysis/packer`
                         # which matches against "generic unpacker" and "UPX".
@@ -280,30 +341,27 @@ def convert_capabilities_to_result_document(meta, rules: RuleSet, capabilities: 
      to render as text.
 
     see examples of substructures in above routines.
-
-    schema:
-
-    ```json
-    {
-      "meta": {...},
-      "rules: {
-        $rule-name: {
-          "meta": {...copied from rule.meta...},
-          "matches: {
-            $address: {...match details...},
-            ...
-          }
-        },
-        ...
-      }
-    }
-    ```
-
-    Args:
-      meta (Dict[str, Any]):
-      rules (RuleSet):
-      capabilities (Dict[str, List[Tuple[int, Result]]]):
     """
+    meta["analysis"]["base_address"] = serialize_address(meta["analysis"]["base_address"])
+
+    meta["analysis"]["feature_counts"]["functions"] = [
+        {"address": serialize_address(address), "count": count}
+        for address, count in meta["analysis"]["feature_counts"]["functions"].items()
+    ]
+
+    meta["analysis"]["library_functions"] = [
+        {"address": serialize_address(address), "name": name}
+        for address, name in meta["analysis"]["library_functions"].items()
+    ]
+
+    meta["analysis"]["layout"]["functions"] = [
+        {
+            "address": serialize_address(faddr),
+            "matched_basic_blocks": list({"address": serialize_address(bb)} for bb in f["matched_basic_blocks"]),
+        }
+        for faddr, f in meta["analysis"]["layout"]["functions"].items()
+    ]
+
     doc = {
         "meta": meta,
         "rules": {},
@@ -320,9 +378,10 @@ def convert_capabilities_to_result_document(meta, rules: RuleSet, capabilities: 
         doc["rules"][rule_name] = {
             "meta": rule_meta,
             "source": rule.definition,
-            "matches": {
-                addr: convert_match_to_result_document(rules, capabilities, match) for (addr, match) in matches
-            },
+            "matches": [
+                [serialize_address(addr), convert_match_to_result_document(rules, capabilities, match)]
+                for (addr, match) in matches
+            ],
         }
 
     return doc

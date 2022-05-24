@@ -438,6 +438,9 @@ def test_json_meta(capsys):
     assert capa.main.main([path, "-j"]) == 0
     std = capsys.readouterr()
     std_json = json.loads(std.out)
-    # remember: json can't have integer keys :-(
-    assert str(0x10001010) in std_json["meta"]["analysis"]["layout"]["functions"]
-    assert 0x10001179 in std_json["meta"]["analysis"]["layout"]["functions"][str(0x10001010)]["matched_basic_blocks"]
+
+    assert ["absolute", 0x10001010] in map(lambda f: f["address"], std_json["meta"]["analysis"]["layout"]["functions"])
+
+    for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
+        if addr == ["absolute", 0x10001010]:
+            assert {"address": ["absolute", 0x10001179]} in info["matched_basic_blocks"]

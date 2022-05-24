@@ -12,9 +12,10 @@ import capa.rules
 import capa.render.utils as rutils
 import capa.render.verbose
 import capa.features.common
-import capa.render.result_document
+import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.features.freeze import deserialize_address
 
 
 def render_locations(ostream, match):
@@ -26,16 +27,16 @@ def render_locations(ostream, match):
     locations = list(sorted(match.get("locations", [])))
     if len(locations) == 1:
         ostream.write(" @ ")
-        ostream.write(v.format_address(locations[0]))
+        ostream.write(v.format_address(rd.deserialize_address(locations[0])))
     elif len(locations) > 1:
         ostream.write(" @ ")
         if len(locations) > 4:
             # don't display too many locations, because it becomes very noisy.
             # probably only the first handful of locations will be useful for inspection.
-            ostream.write(", ".join(map(v.format_address, locations[0:4])))
+            ostream.write(", ".join(map(lambda d: v.format_address(rd.deserialize_address(d)), locations[0:4])))
             ostream.write(", and %d more..." % (len(locations) - 4))
         else:
-            ostream.write(", ".join(map(v.format_address, locations)))
+            ostream.write(", ".join(map(lambda d: v.format_address(rd.deserialize_address(d)), locations)))
 
 
 def render_statement(ostream, match, statement, indent=0):
@@ -211,9 +212,12 @@ def render_rules(ostream, doc):
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
     functions_by_bb = {}
-    for function, info in doc["meta"]["analysis"]["layout"]["functions"].items():
-        for bb in info["matched_basic_blocks"]:
-            functions_by_bb[bb] = function
+    for finfo in doc["meta"]["analysis"]["layout"]["functions"]:
+        faddress = rd.deserialize_address(finfo["address"])
+
+        for bb in finfo["matched_basic_blocks"]:
+            bbaddress = rd.deserialize_address(bb["address"])
+            functions_by_bb[bbaddress] = faddress
 
     had_match = False
 
@@ -264,16 +268,19 @@ def render_rules(ostream, doc):
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
         if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
-            matches = list(doc["rules"][rule["meta"]["name"]]["matches"].values())
+            matches = doc["rules"][rule["meta"]["name"]]["matches"]
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
                 # because we do the file-scope evaluation a single time.
                 # but i'm not 100% sure if this is/will always be true.
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
                 raise RuntimeError("unexpected file scope match count: %d" % (len(matches)))
-            render_match(ostream, matches[0], indent=0)
+            first_address, first_match = matches[0]
+            render_match(ostream, first_match, indent=0)
         else:
-            for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"].items()):
+            for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"]):
+                location = rd.deserialize_address(location)
+
                 ostream.write(rule["meta"]["scope"])
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
@@ -302,5 +309,5 @@ def render_vverbose(doc):
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    doc = rd.convert_capabilities_to_result_document(meta, rules, capabilities)
     return render_vverbose(doc)
