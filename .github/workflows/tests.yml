@@ -22,22 +22,22 @@ jobs:
         number=$(grep '\- *$' CHANGELOG.md | wc -l)
         if [ $number != 1 ]; then exit 1; fi
 
-      tests:
-        name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-          fail-fast: false
-          matrix:
-            os: [ubuntu-20.04, windows-2019, macos-10.15]
-            python-version: ["3.8", "3.10"]
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v2
-          with:
-            python-version: ${{ matrix.python-version }}
-        - name: Install dependencies
-          run: pip install -e .[dev]
-        - name: Run tests
-          run: pytest -v tests/
+  tests:
+    name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+        python-version: ["3.8", "3.10"]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: pip install -e .[dev]
+    - name: Run tests
+      run: pytest -v tests/
