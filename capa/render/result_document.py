@@ -40,6 +40,9 @@ def serialize_address(a: Address) -> Any:
     elif isinstance(a, capa.features.address.Address) and not issubclass(type(a), capa.features.address.Address):
         raise ValueError("don't use an Address instance directly")
 
+    elif isinstance(a, capa.features.address.Address):
+        raise ValueError("don't use an Address instance directly")
+
     else:
         assert_never(a)
 
