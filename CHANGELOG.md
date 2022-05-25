@@ -22,6 +22,7 @@
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
   - extractors must use handles to identify functions/basic blocks/instructions #981 @williballenthin
+  - the freeze file format schema was updated, including format version bump to v2 #986 @williballenthin
 
 ### New Rules (6)
 
