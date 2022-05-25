@@ -76,9 +76,10 @@ import capa.engine
 import capa.helpers
 import capa.features
 import capa.exceptions
-import capa.render.verbose
+import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
+import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
 
 logger = logging.getLogger("capa.show-features")
@@ -124,11 +125,11 @@ def main(argv=None):
             return -1
 
     for feature, addr in extractor.extract_global_features():
-        print("global: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+        print("global: %s: %s" % (v.format_address(addr), feature))
 
     if not args.function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+            print("file: %s: %s" % (v.format_address(addr), feature))
 
     function_handles = extractor.get_functions()
 
@@ -138,10 +139,10 @@ def main(argv=None):
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
             function_handles = tuple(
-                filter(lambda fh: capa.render.verbose.format_address(fh.address) == args.function, function_handles)
+                filter(lambda fh: v.format_address(fh.address) == args.function, function_handles)
             )
 
-            if args.function not in [capa.render.verbose.format_address(fh.address) for fh in function_handles]:
+            if args.function not in [v.format_address(fh.address) for fh in function_handles]:
                 print("%s not a function" % args.function)
                 return -1
 
@@ -166,7 +167,7 @@ def ida_main():
 
     if not function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+            print("file: %s: %s" % (v.format_address(addr), feature))
         return
 
     function_handles = extractor.get_functions()
@@ -183,29 +184,35 @@ def ida_main():
     return 0
 
 
-def print_features(functions, extractor):
+def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
             logger.debug(
-                "skipping library function %s (%s)", capa.render.verbose.format_address(f.address), function_name
+                "skipping library function %s (%s)", v.format_address(f.address), function_name
             )
             continue
 
-        print("func: %s" % (capa.render.verbose.format_address(f.address)))
+        print("func: %s" % (v.format_address(f.address)))
 
         for feature, addr in extractor.extract_function_features(f):
             if capa.features.common.is_global_feature(feature):
                 continue
 
-            print("func: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+            if f.address != addr:
+                print(" func: %s: %s -> %s" % (v.format_address(f.address), feature, v.format_address(addr)))
+            else:
+                print(" func: %s: %s" % (v.format_address(f.address), feature))
 
         for bb in extractor.get_basic_blocks(f):
             for feature, addr in extractor.extract_basic_block_features(f, bb):
                 if capa.features.common.is_global_feature(feature):
                     continue
 
-                print("bb: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+                if bb.address != addr:
+                    print(" bb: %s: %s -> %s" % (v.format_address(bb.address), feature, v.format_address(addr)))
+                else:
+                    print(" bb: %s: %s" % (v.format_address(bb.address), feature))
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, addr in extractor.extract_insn_features(f, bb, insn):
@@ -213,7 +220,11 @@ def print_features(functions, extractor):
                         continue
 
                     try:
-                        print("insn: %s: %s" % (capa.render.verbose.format_address(addr), feature))
+                        if insn.address != addr:
+                            print("  insn: %s: %s: %s -> %s" % (v.format_address(f.address), v.format_address(insn.address), feature, v.format_address(addr)))
+                        else:
+                            print("  insn: %s: %s" % (v.format_address(insn.address), feature))
+
                     except UnicodeEncodeError:
                         # may be an issue while piping to less and encountering non-ascii characters
                         continue
