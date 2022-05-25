@@ -11,10 +11,10 @@ See the License for the specific language governing permissions and limitations 
 """
 import zlib
 import logging
-import collections
 from enum import Enum
-from typing import Any, Set, Dict, List, Type, Tuple
+from typing import Any, Set, Dict, List
 
+from devtools import debug
 from pydantic import Field, BaseModel
 
 import capa.helpers
@@ -25,6 +25,7 @@ import capa.features.address
 import capa.features.basicblock
 import capa.features.extractors.base_extractor
 from capa.helpers import assert_never
+from capa.features.freeze.features import Feature, feature_from_capa
 
 logger = logging.getLogger(__name__)
 
@@ -99,26 +100,6 @@ class Address(HashableModel):
 
         else:
             assert_never(self.type)
-
-
-KNOWN_FEATURES: Dict[str, Type[capa.features.common.Feature]] = {
-    F.__name__: F for F in capa.features.common.Feature.__subclasses__()
-}
-KNOWN_FEATURES.update({F.__name__: F for F in capa.features.insn._Operand.__subclasses__()})  # type: ignore
-
-
-class Feature(HashableModel):
-    name: str
-    args: Tuple[Any, ...]
-
-    @classmethod
-    def from_capa(cls, f: capa.features.common.Feature) -> "Feature":
-        name, args = f.freeze_serialize()
-        return cls(name=name, args=tuple(args))
-
-    def to_capa(self) -> capa.features.common.Feature:
-        F = KNOWN_FEATURES[self.name]
-        return F.freeze_deserialize(self.args)
 
 
 class GlobalFeature(HashableModel):
@@ -222,7 +203,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
     for feature, _ in extractor.extract_global_features():
         global_features.append(
             GlobalFeature(
-                feature=Feature.from_capa(feature),
+                feature=feature_from_capa(feature),
             )
         )
 
@@ -230,7 +211,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
     for feature, address in extractor.extract_file_features():
         file_features.append(
             FileFeature(
-                feature=Feature.from_capa(feature),
+                feature=feature_from_capa(feature),
                 address=Address.from_capa(address),
             )
         )
@@ -242,7 +223,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
             FunctionFeature(
                 function=faddr,
                 address=Address.from_capa(addr),
-                feature=Feature.from_capa(feature),
+                feature=feature_from_capa(feature),
             )
             for feature, addr in extractor.extract_function_features(f)
         ]
@@ -254,7 +235,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                 BasicBlockFeature(
                     basic_block=bbaddr,
                     address=Address.from_capa(addr),
-                    feature=Feature.from_capa(feature),
+                    feature=feature_from_capa(feature),
                 )
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
@@ -266,10 +247,11 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                     InstructionFeature(
                         instruction=iaddr,
                         address=Address.from_capa(addr),
-                        feature=Feature.from_capa(feature),
+                        feature=debug(feature_from_capa(feature)),
                     )
                     for feature, addr in extractor.extract_insn_features(f, bb, insn)
                 ]
+
                 instructions.append(
                     InstructionFeatures(
                         address=iaddr,

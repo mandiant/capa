@@ -131,7 +131,7 @@ def test_freeze_bytes_roundtrip():
 
 
 def roundtrip_feature(feature):
-    assert feature == capa.features.freeze.Feature.from_capa(feature).to_capa()
+    assert feature == capa.features.freeze.feature_from_capa(feature).to_capa()
 
 
 def test_serialize_features():
@@ -146,6 +146,7 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Export("BaseThreadInitThunk"))
     roundtrip_feature(capa.features.file.Import("kernel32.IsWow64Process"))
     roundtrip_feature(capa.features.file.Import("#11"))
+    roundtrip_feature(capa.features.insn.OperandOffset(0, 0x8))
 
 
 def test_freeze_sample(tmpdir, z9324d_extractor):
