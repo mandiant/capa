@@ -68,7 +68,7 @@ class _Operand(Feature, abc.ABC):
         return super().__eq__(other) and self.index == other.index
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, [self.index, self.value])
+        return (self.__class__.__name__, (self.index, self.value))
 
 
 class OperandNumber(_Operand):

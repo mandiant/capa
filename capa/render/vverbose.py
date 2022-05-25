@@ -15,7 +15,6 @@ import capa.features.common
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.features.freeze import deserialize_address
 
 
 def render_locations(ostream, match):

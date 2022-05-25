@@ -20,7 +20,7 @@ class BasicBlock(Feature):
         return ""
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, [])
+        return (self.__class__.__name__, ())
 
     @classmethod
     def freeze_deserialize(cls, args):

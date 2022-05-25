@@ -107,6 +107,9 @@ class Feature(abc.ABC):
     def __hash__(self):
         return hash((self.name, self.value))
 
+    def __lt__(self, other):
+        return self.freeze_serialize() < other.freeze_serialize()
+
     def __eq__(self, other):
         return self.name == other.name and self.value == other.value
 
@@ -137,7 +140,7 @@ class Feature(abc.ABC):
         return Result(self in ctx, self, [], locations=ctx.get(self, set()))
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, [self.value])
+        return (self.__class__.__name__, (self.value, ))
 
     @classmethod
     def freeze_deserialize(cls, args):
@@ -374,7 +377,7 @@ class Bytes(Feature):
         return hex_string(bytes_to_str(self.value))
 
     def freeze_serialize(self):
-        return (self.__class__.__name__, [bytes_to_str(self.value).upper()])
+        return (self.__class__.__name__, (bytes_to_str(self.value).upper(), ))
 
     @classmethod
     def freeze_deserialize(cls, args):

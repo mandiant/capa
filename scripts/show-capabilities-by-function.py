@@ -62,8 +62,8 @@ import capa.engine
 import capa.helpers
 import capa.features
 import capa.exceptions
-import capa.render.verbose
 import capa.render.utils as rutils
+import capa.render.verbose
 import capa.features.freeze
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
