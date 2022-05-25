@@ -138,9 +138,7 @@ def main(argv=None):
             # TODO fix
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            function_handles = tuple(
-                filter(lambda fh: v.format_address(fh.address) == args.function, function_handles)
-            )
+            function_handles = tuple(filter(lambda fh: v.format_address(fh.address) == args.function, function_handles))
 
             if args.function not in [v.format_address(fh.address) for fh in function_handles]:
                 print("%s not a function" % args.function)
@@ -188,9 +186,7 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
-            logger.debug(
-                "skipping library function %s (%s)", v.format_address(f.address), function_name
-            )
+            logger.debug("skipping library function %s (%s)", v.format_address(f.address), function_name)
             continue
 
         print("func: %s" % (v.format_address(f.address)))
@@ -221,7 +217,15 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
 
                     try:
                         if insn.address != addr:
-                            print("  insn: %s: %s: %s -> %s" % (v.format_address(f.address), v.format_address(insn.address), feature, v.format_address(addr)))
+                            print(
+                                "  insn: %s: %s: %s -> %s"
+                                % (
+                                    v.format_address(f.address),
+                                    v.format_address(insn.address),
+                                    feature,
+                                    v.format_address(addr),
+                                )
+                            )
                         else:
                             print("  insn: %s: %s" % (v.format_address(insn.address), feature))
 
