@@ -107,11 +107,17 @@ class Feature(abc.ABC):
     def __hash__(self):
         return hash((self.name, self.value))
 
-    def __lt__(self, other):
-        return self.freeze_serialize() < other.freeze_serialize()
-
     def __eq__(self, other):
         return self.name == other.name and self.value == other.value
+
+    def __lt__(self, other):
+        # TODO: this is a huge hack!
+        import capa.features.freeze.features
+
+        return (
+            capa.features.freeze.features.feature_from_capa(self).json()
+            < capa.features.freeze.features.feature_from_capa(other).json()
+        )
 
     def get_value_str(self) -> str:
         """
@@ -138,23 +144,6 @@ class Feature(abc.ABC):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
         return Result(self in ctx, self, [], locations=ctx.get(self, set()))
-
-    def freeze_serialize(self):
-        return (self.__class__.__name__, (self.value,))
-
-    @classmethod
-    def freeze_deserialize(cls, args):
-        # as you can see below in code,
-        # if the last argument is a dictionary,
-        # consider it to be kwargs passed to the feature constructor.
-        if len(args) == 1:
-            return cls(*args)
-        elif isinstance(args[-1], dict):
-            kwargs = args[-1]
-            args = args[:-1]
-            return cls(*args, **kwargs)
-        else:
-            return cls(*args)
 
 
 class MatchedRule(Feature):
@@ -375,13 +364,6 @@ class Bytes(Feature):
 
     def get_value_str(self):
         return hex_string(bytes_to_str(self.value))
-
-    def freeze_serialize(self):
-        return (self.__class__.__name__, (bytes_to_str(self.value).upper(),))
-
-    @classmethod
-    def freeze_deserialize(cls, args):
-        return cls(*[codecs.decode(x, "hex") for x in args])
 
 
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types

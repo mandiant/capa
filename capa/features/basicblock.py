@@ -18,10 +18,3 @@ class BasicBlock(Feature):
 
     def get_value_str(self):
         return ""
-
-    def freeze_serialize(self):
-        return (self.__class__.__name__, ())
-
-    @classmethod
-    def freeze_deserialize(cls, args):
-        return cls()
