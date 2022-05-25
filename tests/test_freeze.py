@@ -106,14 +106,14 @@ def compare_extractors(a, b):
 
         for bb in a.get_basic_blocks(f):
             assert addresses(a.get_instructions(f, bb)) == addresses(b.get_instructions(f, bb))
-            assert list(sorted(set(a.extract_basic_block_features(f, bb)))) == list(sorted(set(b.extract_basic_block_features(f, bb))))
+            assert list(sorted(set(a.extract_basic_block_features(f, bb)))) == list(
+                sorted(set(b.extract_basic_block_features(f, bb)))
+            )
 
             for insn in a.get_instructions(f, bb):
-                try:
-                    assert list(sorted(set(a.extract_insn_features(f, bb, insn)))) == list(sorted(set(b.extract_insn_features(f, bb, insn))))
-                except Exception as e:
-                    from IPython import embed; embed()
-                    raise
+                assert list(sorted(set(a.extract_insn_features(f, bb, insn)))) == list(
+                    sorted(set(b.extract_insn_features(f, bb, insn)))
+                )
 
 
 def test_freeze_str_roundtrip():
