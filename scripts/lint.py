@@ -905,7 +905,7 @@ def lint(ctx: Context):
     with tqdm.contrib.logging.tqdm_logging_redirect(ctx.rules.rules.items(), unit="rule") as pbar:
         with redirecting_print_to_tqdm():
             for name, rule in pbar:
-                if rule.meta.get("capa/subscope-rule", False):
+                if rule.is_subscope_rule():
                     continue
 
                 pbar.set_description(width("linting rule: %s" % (name), 48))

@@ -894,7 +894,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     func_matches, bb_matches = find_func_matches(fh, self.ruleset_cache, func_features, bb_features)
                     for (name, addrs) in itertools.chain(func_matches.items(), bb_matches.items()):
                         rule = self.ruleset_cache[name]
-                        if rule.meta.get("capa/subscope-rule"):
+                        if rule.is_subscope_rule():
                             continue
                         for (addr, _) in addrs:
                             func_features[capa.features.common.MatchedRule(name)].add(addr)
@@ -928,7 +928,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 # add file matches to file features, for display purposes
                 for (name, addrs) in find_file_matches(self.ruleset_cache, file_features).items():
                     rule = self.ruleset_cache[name]
-                    if rule.meta.get("capa/subscope-rule"):
+                    if rule.is_subscope_rule():
                         continue
                     for (addr, _) in addrs:
                         file_features[capa.features.common.MatchedRule(name)].add(addr)

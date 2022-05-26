@@ -685,6 +685,9 @@ class Rule:
                 for new_rule in self._extract_subscope_rules_rec(child):
                     yield new_rule
 
+    def is_subscope_rule(self):
+        return bool(self.meta.get("capa/subscope-rule", False))
+
     def extract_subscope_rules(self):
         """
         scan through the statements of this rule,
@@ -1246,7 +1249,7 @@ class RuleSet:
         #  at lower scope, e.g. function scope.
         # so, we find all dependencies of all rules, and later will filter them down.
         for rule in rules:
-            if rule.meta.get("capa/subscope-rule", False):
+            if rule.is_subscope_rule(scope):
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
