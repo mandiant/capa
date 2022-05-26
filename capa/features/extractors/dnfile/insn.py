@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Iterator, Optional
+from typing import TYPE_CHECKING, Any, Dict, Tuple, Union, Iterator, Optional
 
 if TYPE_CHECKING:
     from dncil.cil.instruction import Instruction
@@ -16,55 +16,58 @@ if TYPE_CHECKING:
     from capa.features.common import Feature
 
 import dnfile
-from dncil.clr.token import StringToken, InvalidToken
+from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
-from capa.features.common import String, Characteristic
+from capa.features.common import Class, String, Namespace, Characteristic
 from capa.features.extractors.dnfile.helpers import (
+    DnClass,
+    DnMethod,
+    DnUnmanagedMethod,
     resolve_dotnet_token,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
+    get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
-    get_dotnet_managed_method_names,
 )
 
 
 def get_managed_imports(ctx: Dict) -> Dict:
     if "managed_imports_cache" not in ctx:
         ctx["managed_imports_cache"] = {}
-        for (token, name) in get_dotnet_managed_imports(ctx["pe"]):
-            ctx["managed_imports_cache"][token] = name
+        for method in get_dotnet_managed_imports(ctx["pe"]):
+            ctx["managed_imports_cache"][method.token] = method
     return ctx["managed_imports_cache"]
 
 
 def get_unmanaged_imports(ctx: Dict) -> Dict:
     if "unmanaged_imports_cache" not in ctx:
         ctx["unmanaged_imports_cache"] = {}
-        for (token, name) in get_dotnet_unmanaged_imports(ctx["pe"]):
-            ctx["unmanaged_imports_cache"][token] = name
+        for imp in get_dotnet_unmanaged_imports(ctx["pe"]):
+            ctx["unmanaged_imports_cache"][imp.token] = imp
     return ctx["unmanaged_imports_cache"]
 
 
 def get_methods(ctx: Dict) -> Dict:
     if "methods_cache" not in ctx:
         ctx["methods_cache"] = {}
-        for (token, name) in get_dotnet_managed_method_names(ctx["pe"]):
-            ctx["methods_cache"][token] = name
+        for method in get_dotnet_managed_methods(ctx["pe"]):
+            ctx["methods_cache"][method.token] = method
     return ctx["methods_cache"]
 
 
-def get_callee_name(ctx: Dict, token: int) -> str:
-    """map dotnet token to method name"""
-    name: str = get_managed_imports(ctx).get(token, "")
-    if not name:
+def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
+    """map dotnet token to un/managed method"""
+    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
+    if not callee:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        name = get_unmanaged_imports(ctx).get(token, "")
-        if not name:
-            name = get_methods(ctx).get(token, "")
-    return name
+        callee = get_unmanaged_imports(ctx).get(token, None)
+        if not callee:
+            callee = get_methods(ctx).get(token, None)
+    return callee
 
 
 def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[API, int]]:
@@ -72,18 +75,51 @@ def extract_insn_api_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruc
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    name: str = get_callee_name(f.ctx, insn.operand.value)
-    if not name:
+    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(f.ctx, insn.operand.value)
+    if callee is None:
         return
 
-    if "::" in name:
-        # like System.IO.File::OpenRead
-        yield API(name), insn.offset
-    else:
+    if isinstance(callee, DnUnmanagedMethod):
         # like kernel32.CreateFileA
-        dll, _, symbol = name.rpartition(".")
-        for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-            yield API(name_variant), insn.offset
+        for name in capa.features.extractors.helpers.generate_symbols(callee.modulename, callee.methodname):
+            yield API(name), insn.offset
+    else:
+        # like System.IO.File::Delete
+        yield API(str(callee)), insn.offset
+
+
+def extract_insn_class_features(f: CilMethodBody, bb: CilMethodBody, insn: Instruction) -> Iterator[Tuple[Class, int]]:
+    """parse instruction class features"""
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
+
+    row: Any = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+
+    if not isinstance(row, dnfile.mdtable.MemberRefRow):
+        return
+    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+        return
+
+    yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), insn.offset
+
+
+def extract_insn_namespace_features(
+    f: CilMethodBody, bb: CilMethodBody, insn: Instruction
+) -> Iterator[Tuple[Namespace, int]]:
+    """parse instruction namespace features"""
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        return
+
+    row: Any = resolve_dotnet_token(f.ctx["pe"], Token(insn.operand.value))
+
+    if not isinstance(row, dnfile.mdtable.MemberRefRow):
+        return
+    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+        return
+    if not row.Class.row.TypeNamespace:
+        return
+
+    yield Namespace(row.Class.row.TypeNamespace), insn.offset
 
 
 def extract_insn_number_features(
@@ -138,5 +174,7 @@ INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
     extract_insn_string_features,
+    extract_insn_namespace_features,
+    extract_insn_class_features,
     extract_unmanaged_call_characteristic_features,
 )

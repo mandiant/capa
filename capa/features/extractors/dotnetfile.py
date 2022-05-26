@@ -1,4 +1,5 @@
 import logging
+import itertools
 from typing import Tuple, Iterator
 
 import dnfile
@@ -14,18 +15,23 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_DOTNET,
     Arch,
+    Class,
     Format,
     String,
     Feature,
+    Namespace,
     Characteristic,
 )
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
+    DnClass,
+    DnMethod,
+    iter_dotnet_table,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
+    get_dotnet_managed_methods,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
-    get_dotnet_managed_method_names,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,20 +42,50 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
-    for (token, name) in get_dotnet_managed_imports(pe):
+    for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
-        yield Import(name), token
+        yield Import(str(method)), method.token
 
-    for (token, name) in get_dotnet_unmanaged_imports(pe):
+    for imp in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
-        dll, _, symbol = name.rpartition(".")
-        for name_variant in capa.features.extractors.helpers.generate_symbols(dll, symbol):
-            yield Import(name_variant), token
+        for name in capa.features.extractors.helpers.generate_symbols(imp.modulename, imp.methodname):
+            yield Import(name), imp.token
 
 
 def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, int]]:
-    for (token, name) in get_dotnet_managed_method_names(pe):
-        yield FunctionName(name), token
+    for method in get_dotnet_managed_methods(pe):
+        yield FunctionName(str(method)), method.token
+
+
+def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, int]]:
+    """emit namespace features from TypeRef and TypeDef tables"""
+
+    # namespaces may be referenced multiple times, so we need to filter
+    namespaces = set()
+
+    for row in iter_dotnet_table(pe, "TypeDef"):
+        namespaces.add(row.TypeNamespace)
+
+    for row in iter_dotnet_table(pe, "TypeRef"):
+        namespaces.add(row.TypeNamespace)
+
+    # namespaces may be empty, discard
+    namespaces.discard("")
+
+    for namespace in namespaces:
+        # namespace do not have an associated token, so we yield 0x0
+        yield Namespace(namespace), 0x0
+
+
+def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, int]]:
+    """emit class features from TypeRef and TypeDef tables"""
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
+        token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
+
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
+        token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
@@ -71,7 +107,7 @@ def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, in
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
 
 
-def extract_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
+def extract_file_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
     if is_dotnet_mixed_mode(pe):
         yield Characteristic("mixed mode"), 0x0
 
@@ -87,7 +123,9 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_strings,
     extract_file_format,
-    extract_mixed_mode_characteristic_features,
+    extract_file_mixed_mode_characteristic_features,
+    extract_file_namespace_features,
+    extract_file_class_features,
 )
 
 
