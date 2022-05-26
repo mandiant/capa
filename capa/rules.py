@@ -54,7 +54,7 @@ META_KEYS = (
     "maec/malware-family",
     "maec/malware-category",
     "maec/malware-category-ov",
-    "author",
+    "authors",
     "description",
     "lib",
     "scope",

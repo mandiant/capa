@@ -170,10 +170,10 @@ class InvalidScope(Lint):
 
 class MissingAuthor(Lint):
     name = "missing author"
-    recommendation = "Add meta.author so that users know who to contact with questions"
+    recommendation = "Add meta.authors so that users know who to contact with questions"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "author" not in rule.meta
+        return "authors" not in rule.meta
 
 
 class MissingExamples(Lint):
