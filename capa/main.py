@@ -591,7 +591,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
 
                 for file in files:
                     if not file.endswith(".yml"):
-                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                        if not ("/.git" in root or file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
                             # expect to see .git* files, readme.md, format.md, and maybe a .git directory
                             # other things maybe are rules, but are mis-named.
                             logger.warning("skipping non-.yml file: %s", file)
