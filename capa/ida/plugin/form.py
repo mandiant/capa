@@ -650,14 +650,16 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rule_paths.append(rule_path)
             elif os.path.isdir(rule_path):
                 for root, dirs, files in os.walk(rule_path):
-                    if ".github" in root:
+                    if ".git" in root:
                         # the .github directory contains CI config in capa-rules
                         # this includes some .yml files
                         # these are not rules
+                        # additionally, .git has files that are not .yml and generate the warning
+                        # skip those too
                         continue
                     for file in files:
                         if not file.endswith(".yml"):
-                            if not ("/.git" in root or file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                            if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
                                 # expect to see .git* files, readme.md, format.md, and maybe a .git directory
                                 # other things maybe are rules, but are mis-named.
                                 logger.warning("skipping non-.yml file: %s", file)
