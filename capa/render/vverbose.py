@@ -12,6 +12,8 @@ import capa.rules
 import capa.render.utils as rutils
 import capa.render.verbose
 import capa.features.common
+import capa.features.freeze as frz
+import capa.features.freeze.features as frzf
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
@@ -23,22 +25,22 @@ def render_locations(ostream, match):
     # its possible to have an empty locations array here,
     # such as when we're in MODE_FAILURE and showing the logic
     # under a `not` statement (which will have no matched locations).
-    locations = list(sorted(match.get("locations", [])))
+    locations = list(sorted(match.locations))
     if len(locations) == 1:
         ostream.write(" @ ")
-        ostream.write(v.format_address(rd.deserialize_address(locations[0])))
+        ostream.write(v.format_address(locations[0]))
     elif len(locations) > 1:
         ostream.write(" @ ")
         if len(locations) > 4:
             # don't display too many locations, because it becomes very noisy.
             # probably only the first handful of locations will be useful for inspection.
-            ostream.write(", ".join(map(lambda d: v.format_address(rd.deserialize_address(d)), locations[0:4])))
+            ostream.write(", ".join(map(v.format_address, locations[0:4])))
             ostream.write(", and %d more..." % (len(locations) - 4))
         else:
-            ostream.write(", ".join(map(lambda d: v.format_address(rd.deserialize_address(d)), locations)))
+            ostream.write(", ".join(map(v.format_address, locations)))
 
 
-def render_statement(ostream, match, statement, indent=0):
+def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0):
     ostream.write("  " * indent)
     if statement["type"] in ("and", "or", "optional", "not", "subscope"):
         if statement["type"] == "subscope":
@@ -99,7 +101,7 @@ def render_string_value(s):
     return '"%s"' % capa.features.common.escape_string(s)
 
 
-def render_feature(ostream, match, feature, indent=0):
+def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature["type"]
@@ -142,11 +144,11 @@ def render_feature(ostream, match, feature, indent=0):
             ostream.write("\n")
 
 
-def render_node(ostream, match, node, indent=0):
-    if node["type"] == "statement":
-        render_statement(ostream, match, node["statement"], indent=indent)
-    elif node["type"] == "feature":
-        render_feature(ostream, match, node["feature"], indent=indent)
+def render_node(ostream, match: rd.Match, node: rd.Node, indent=0):
+    if isinstance(node, rd.Statement):
+        render_statement(ostream, match, node.statement, indent=indent)
+    elif isinstance(node, rd.Feature):
+        render_feature(ostream, match, node.feature, indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 
@@ -159,11 +161,11 @@ MODE_SUCCESS = "success"
 MODE_FAILURE = "failure"
 
 
-def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
+def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
     child_mode = mode
     if mode == MODE_SUCCESS:
         # display only nodes that evaluated successfully.
-        if not match["success"]:
+        if not match.success:
             return
         # optional statement with no successful children is empty
         if match["node"].get("statement", {}).get("type") == "optional" and not any(
@@ -188,13 +190,13 @@ def render_match(ostream, match, indent=0, mode=MODE_SUCCESS):
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(ostream, match, match["node"], indent=indent)
+    render_node(ostream, match, match.node, indent=indent)
 
-    for child in match["children"]:
+    for child in match.children:
         render_match(ostream, child, indent=indent + 1, mode=child_mode)
 
 
-def render_rules(ostream, doc):
+def render_rules(ostream, doc: rd.ResultDocument):
     """
     like:
 
@@ -211,37 +213,37 @@ def render_rules(ostream, doc):
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
     functions_by_bb = {}
-    for finfo in doc["meta"]["analysis"]["layout"]["functions"]:
-        faddress = rd.deserialize_address(finfo["address"])
+    for finfo in doc.meta.analysis.layout.functions:
+        faddress = finfo.address.to_capa()
 
-        for bb in finfo["matched_basic_blocks"]:
-            bbaddress = rd.deserialize_address(bb["address"])
+        for bb in finfo.matched_basic_blocks:
+            bbaddress = bb.address.to_capa()
             functions_by_bb[bbaddress] = faddress
 
     had_match = False
 
     for (_, _, rule) in sorted(
-        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc["rules"].values())
+        map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())
     ):
         # default scope hides things like lib rules, malware-category rules, etc.
         # but in vverbose mode, we really want to show everything.
         #
         # still ignore subscope rules because they're stitched into the final document.
-        if rule["meta"].get("capa/subscope"):
+        if rule.meta.is_subscope_rule:
             continue
 
-        count = len(rule["matches"])
+        count = len(rule.matches)
         if count == 1:
-            capability = rutils.bold(rule["meta"]["name"])
+            capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
+            capability = "%s (%d matches)" % (rutils.bold(rule.meta.name), count)
 
         ostream.writeln(capability)
         had_match = True
 
         rows = []
         for key in capa.rules.META_KEYS:
-            if key == "name" or key not in rule["meta"]:
+            if key == "name":
                 continue
 
             if key == "examples":
@@ -251,11 +253,11 @@ def render_rules(ostream, doc):
                 # so, don't make the output messy by showing the examples.
                 continue
 
-            v = rule["meta"][key]
+            v = getattr(rule.meta, key)
             if not v:
                 continue
 
-            if key in ("att&ck", "mbc"):
+            if key in ("attack", "mbc"):
                 v = [rutils.format_parts_id(vv) for vv in v]
 
             if isinstance(v, list) and len(v) == 1:
@@ -266,8 +268,8 @@ def render_rules(ostream, doc):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
-        if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
-            matches = doc["rules"][rule["meta"]["name"]]["matches"]
+        if rule.meta.scope == capa.rules.FILE_SCOPE:
+            matches = doc.rules[rule.meta.name].matches
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
                 # because we do the file-scope evaluation a single time.
@@ -277,15 +279,13 @@ def render_rules(ostream, doc):
             first_address, first_match = matches[0]
             render_match(ostream, first_match, indent=0)
         else:
-            for location, match in sorted(doc["rules"][rule["meta"]["name"]]["matches"]):
-                location = rd.deserialize_address(location)
-
-                ostream.write(rule["meta"]["scope"])
+            for location, match in sorted(doc.rules[rule.meta.name].matches):
+                ostream.write(rule.meta.scope)
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
-                if rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
-                    ostream.write(" in function " + capa.render.verbose.format_address(functions_by_bb[location]))
+                if rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+                    ostream.write(" in function " + capa.render.verbose.format_address(functions_by_bb[location.to_capa()]))
 
                 ostream.write("\n")
                 render_match(ostream, match, indent=1)
@@ -295,7 +295,7 @@ def render_rules(ostream, doc):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_vverbose(doc):
+def render_vverbose(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
     capa.render.verbose.render_meta(ostream, doc)
@@ -308,5 +308,4 @@ def render_vverbose(doc):
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    doc = rd.convert_capabilities_to_result_document(meta, rules, capabilities)
-    return render_vverbose(doc)
+    return render_vverbose(rd.ResultDocument.from_capa(meta, rules, capabilities))
