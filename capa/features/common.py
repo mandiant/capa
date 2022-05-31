@@ -220,11 +220,11 @@ class _MatchedSubstring(Substring):
     note: this type should only ever be constructed by `Substring.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, substring: Substring, matches):
+    def __init__(self, substring: Substring, matches: Dict[str, Set[Address]]):
         """
         args:
-          substring (Substring): the substring feature that matches.
-          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
+          substring: the substring feature that matches.
+          match: mapping from matching string to its locations.
         """
         super(_MatchedSubstring, self).__init__(str(substring.value), description=substring.description)
         # we want this to collide with the name of `Substring` above,
@@ -317,11 +317,11 @@ class _MatchedRegex(Regex):
     note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, regex: Regex, matches):
+    def __init__(self, regex: Regex, matches: Dict[str, Set[Address]]):
         """
         args:
-          regex (Regex): the regex feature that matches.
-          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
+          regex: the regex feature that matches.
+          matches: mapping from matching string to its locations.
         """
         super(_MatchedRegex, self).__init__(str(regex.value), description=regex.description)
         # we want this to collide with the name of `Regex` above,

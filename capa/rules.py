@@ -1249,7 +1249,7 @@ class RuleSet:
         #  at lower scope, e.g. function scope.
         # so, we find all dependencies of all rules, and later will filter them down.
         for rule in rules:
-            if rule.is_subscope_rule(scope):
+            if rule.is_subscope_rule():
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
