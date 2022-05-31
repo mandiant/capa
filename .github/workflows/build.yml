@@ -38,7 +38,7 @@ jobs:
       - if: matrix.os == 'ubuntu-18.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
-        run: pip install --upgrade pip setuptools
+        run: python -m pip install --upgrade pip setuptools
       - name: Install capa with build requirements
         run: pip install -e .[build]
       - name: Build standalone executable
