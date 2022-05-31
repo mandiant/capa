@@ -86,7 +86,7 @@ setuptools.setup(
             "types-tabulate==0.8.9",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.22",
-            "types_requests==2.27.27",
+            "types_requests==2.27.29",
         ],
         "build": [
             "pyinstaller==5.0.1",
