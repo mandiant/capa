@@ -8,8 +8,15 @@
 import abc
 from typing import Union
 
-import capa.render.utils
 from capa.features.common import Feature
+
+
+def hex(n: int) -> str:
+    """render the given number using upper case hex, like: 0x123ABC"""
+    if n < 0:
+        return "-0x%X" % (-n)
+    else:
+        return "0x%X" % n
 
 
 class API(Feature):
@@ -23,7 +30,7 @@ class Number(Feature):
 
     def get_value_str(self):
         if isinstance(self.value, int):
-            return capa.render.utils.hex(self.value)
+            return hex(self.value)
         elif isinstance(self.value, float):
             return str(self.value)
         else:
@@ -39,7 +46,7 @@ class Offset(Feature):
         super(Offset, self).__init__(value, description=description)
 
     def get_value_str(self):
-        return capa.render.utils.hex(self.value)
+        return hex(self.value)
 
 
 class Mnemonic(Feature):
@@ -79,7 +86,7 @@ class OperandNumber(_Operand):
 
     def get_value_str(self) -> str:
         assert isinstance(self.value, int)
-        return capa.render.utils.hex(self.value)
+        return hex(self.value)
 
 
 class OperandOffset(_Operand):
@@ -93,4 +100,4 @@ class OperandOffset(_Operand):
 
     def get_value_str(self) -> str:
         assert isinstance(self.value, int)
-        return capa.render.utils.hex(self.value)
+        return hex(self.value)

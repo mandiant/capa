@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and limitations 
 import zlib
 import logging
 from enum import Enum
-from typing import Any, Set, Dict, List
+from typing import Any, Set, Dict, List, Tuple
 
 from devtools import debug
 from pydantic import Field, BaseModel
@@ -158,28 +158,28 @@ class InstructionFeature(HashableModel):
 
 class InstructionFeatures(BaseModel):
     address: Address
-    features: List[InstructionFeature]
+    features: Tuple[InstructionFeature, ...]
 
 
 class BasicBlockFeatures(BaseModel):
     address: Address
-    features: List[BasicBlockFeature]
-    instructions: List[InstructionFeatures]
+    features: Tuple[BasicBlockFeature, ...]
+    instructions: Tuple[InstructionFeatures, ...]
 
 
 class FunctionFeatures(BaseModel):
     address: Address
-    features: List[FunctionFeature]
-    basic_blocks: List[BasicBlockFeatures] = Field(alias="basic block")
+    features: Tuple[FunctionFeature, ...]
+    basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic block")
 
     class Config:
         allow_population_by_field_name = True
 
 
 class Features(BaseModel):
-    global_: List[GlobalFeature] = Field(alias="global")
-    file: List[FileFeature]
-    functions: List[FunctionFeatures]
+    global_: Tuple[GlobalFeature, ...] = Field(alias="global")
+    file: Tuple[FileFeature, ...]
+    functions: Tuple[FunctionFeatures, ...]
 
     class Config:
         allow_population_by_field_name = True
