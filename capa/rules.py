@@ -54,7 +54,7 @@ META_KEYS = (
     "maec/malware-family",
     "maec/malware-category",
     "maec/malware-category-ov",
-    "author",
+    "authors",
     "description",
     "lib",
     "scope",
@@ -1298,6 +1298,12 @@ class RuleSet:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
                     rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
                     break
+                if isinstance(v, list):
+                    for vv in v:
+                        if tag in vv:
+                            logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, vv)
+                            rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
+                            break
         return RuleSet(list(rules_filtered))
 
     def match(self, scope: Scope, features: FeatureSet, va: int) -> Tuple[FeatureSet, ceng.MatchResults]:

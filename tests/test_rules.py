@@ -42,7 +42,8 @@ def test_rule_yaml():
         rule:
             meta:
                 name: test rule
-                author: user@domain.com
+                authors:
+                    - user@domain.com
                 scope: function
                 examples:
                     - foo1234
@@ -724,7 +725,8 @@ def test_filter_rules():
                     rule:
                         meta:
                             name: rule 1
-                            author: joe
+                            authors:
+                              - joe
                         features:
                             - api: CreateFile
                     """
@@ -803,7 +805,8 @@ def test_filter_rules_missing_dependency():
                         rule:
                             meta:
                                 name: rule 1
-                                author: joe
+                                authors:
+                                  - joe
                             features:
                                 - match: rule 2
                         """

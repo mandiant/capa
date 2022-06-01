@@ -43,9 +43,8 @@ import capa.rules
 import capa.engine
 import capa.helpers
 import capa.features.insn
-import capa.features.common
 from capa.rules import Rule, RuleSet
-from capa.features.common import Feature
+from capa.features.common import String, Feature, Substring
 
 logger = logging.getLogger("lint")
 
@@ -168,12 +167,12 @@ class InvalidScope(Lint):
         return rule.meta.get("scope") not in ("file", "function", "basic block", "instruction")
 
 
-class MissingAuthor(Lint):
-    name = "missing author"
-    recommendation = "Add meta.author so that users know who to contact with questions"
+class MissingAuthors(Lint):
+    name = "missing authors"
+    recommendation = "Add meta.authors so that users know who to contact with questions"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "author" not in rule.meta
+        return "authors" not in rule.meta
 
 
 class MissingExamples(Lint):
@@ -490,7 +489,7 @@ class FeatureStringTooShort(Lint):
 
     def check_features(self, ctx: Context, features: List[Feature]):
         for feature in features:
-            if isinstance(feature, (capa.features.common.String, capa.features.common.Substring)):
+            if isinstance(feature, (String, Substring)):
                 assert isinstance(feature.value, str)
                 if len(feature.value) < 4:
                     self.recommendation = self.recommendation.format(feature.value)
@@ -697,7 +696,7 @@ def lint_scope(ctx: Context, rule: Rule):
 META_LINTS = (
     MissingNamespace(),
     NamespaceDoesntMatchRulePath(),
-    MissingAuthor(),
+    MissingAuthors(),
     MissingExamples(),
     MissingExampleOffset(),
     ExampleFileDNE(),
