@@ -138,20 +138,35 @@ def get_smda_extractor(path):
 def get_pefile_extractor(path):
     import capa.features.extractors.pefile
 
-    return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
 
 
 def get_dotnetfile_extractor(path):
     import capa.features.extractors.dotnetfile
 
-    return capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
 
 
 @lru_cache(maxsize=1)
 def get_dnfile_extractor(path):
     import capa.features.extractors.dnfile.extractor
 
-    return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
 
 
 def extract_global_features(extractor):
@@ -881,4 +896,4 @@ def hello_world_dotnetfile_extractor():
 
 @pytest.fixture
 def _1c444_dotnetfile_extractor():
-    return get_dnfile_extractor(get_data_path_by_name("1c444..."))
+    return get_dnfile_extractor(get_data_path_by_name("_1c444"))

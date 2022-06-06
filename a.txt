@@ -1,0 +1,536 @@
+func: 0x004026c0
+func: 0x004026c0: characteristic(loop)
+
+bb  : 0x004026c0: basic block
+insn: 0x004026c0: mnemonic(push)
+insn: 0x004026c1: mnemonic(mov)
+insn: 0x004026c3: mnemonic(push)
+insn: 0x004026c3: number(0xFFFFFFFF)
+insn: 0x004026c3: operand[0].number(0xFFFFFFFF)
+insn: 0x004026c5: bytes(8B 54 24 08 8D 42 0C 8B 4A A8 33 C8 E8 6E 52 FF FF 8B 4A FC 33 C8 E8 64 52 FF FF B8 EC 55 41 00 E9 69 65 FF FF CC CC CC CC CC CC CC CC CC CC CC 8D 8D CC FE FF FF E9 15 14 FF FF 8D B5 AC FE FF FF E9 AA 36 FF FF 8B 54 24 08 8D 42 0C 8B 8A 8C FE FF FF 33 C8 E8 25 52 FF FF 8B 4A FC 33 C8 E8 1B 52 FF FF B8 20 56 41 00 E9 20 65 FF FF CC CC 8B 4D F0 83 E9 48 E9 B5 2B FF FF 8B 54 24 08 8D 42 0C 8B 4A F8 33 C8 E8 F3 51 FF FF B8 4C 56 41 00 E9 F8 64 FF FF CC CC CC CC CC CC CC CC CC CC 6A 40 68 D8 3D 41 00 B9 94 70 41 00 E8 5F 14 FF FF 68 30 01 41 00 E8 1A 5A FF FF 59 C3 CC CC CC 6A 40 68 D8 3D 41 00 B9 B0 70 41 00 E8 3F 14 FF FF 68 60 01 41 00 E8 FA 59 FF FF 59 C3 CC CC CC 68 10 82 41 00 E8 C6 2E FF FF 68 90 01 41 00 E8 E1 59 FF FF 59 C3 68 1D 02 41 00 E8 D5 59 FF FF)
+insn: 0x004026c5: mnemonic(push)
+insn: 0x004026ca: mnemonic(mov)
+insn: 0x004026ca: characteristic(fs access)
+insn: 0x004026ca: number(0x0)
+insn: 0x004026ca: operand[1].number(0x0)
+insn: 0x004026d0: mnemonic(push)
+insn: 0x004026d1: mnemonic(sub)
+insn: 0x004026d1: number(0x48)
+insn: 0x004026d1: operand[1].number(0x48)
+insn: 0x004026d4: mnemonic(mov)
+insn: 0x004026d9: mnemonic(xor)
+insn: 0x004026db: mnemonic(mov)
+insn: 0x004026de: mnemonic(push)
+insn: 0x004026df: mnemonic(push)
+insn: 0x004026e0: mnemonic(push)
+insn: 0x004026e1: mnemonic(push)
+insn: 0x004026e2: mnemonic(lea)
+insn: 0x004026e5: mnemonic(mov)
+insn: 0x004026e5: characteristic(fs access)
+insn: 0x004026e5: number(0x0)
+insn: 0x004026e5: operand[0].number(0x0)
+insn: 0x004026eb: mnemonic(mov)
+insn: 0x004026ee: mnemonic(xor)
+insn: 0x004026f0: mnemonic(mov)
+insn: 0x004026f0: number(0xF)
+insn: 0x004026f0: operand[1].number(0xF)
+insn: 0x004026f7: mnemonic(mov)
+insn: 0x004026fa: mnemonic(mov)
+insn: 0x004026fd: mnemonic(mov)
+insn: 0x00402700: mnemonic(cmp)
+insn: 0x00402700: number(0x4)
+insn: 0x00402700: operand[1].number(0x4)
+insn: 0x00402703: mnemonic(jc)
+
+bb  : 0x00402709: basic block
+insn: 0x00402709: mnemonic(lea)
+insn: 0x00402709: offset(-0xA)
+insn: 0x00402709: operand[1].offset(-0xA)
+insn: 0x0040270d: mnemonic(lea)
+insn: 0x0040270d: offset(0xF)
+insn: 0x0040270d: operand[1].offset(0xF)
+insn: 0x00402710: mnemonic(mov)
+insn: 0x00402713: mnemonic(cmp)
+insn: 0x00402715: mnemonic(jnc)
+
+bb  : 0x0040271b: basic block
+insn: 0x0040271b: mnemonic(mov)
+insn: 0x0040271b: offset(0x0)
+insn: 0x0040271b: operand[1].offset(0x0)
+insn: 0x0040271d: mnemonic(cmp)
+insn: 0x0040271d: number(0x3D)
+insn: 0x0040271d: operand[1].number(0x3D)
+insn: 0x0040271f: mnemonic(jz)
+
+bb  : 0x00402721: basic block
+insn: 0x00402721: mnemonic(cmp)
+insn: 0x00402721: number(0x44)
+insn: 0x00402721: operand[1].number(0x44)
+insn: 0x00402723: mnemonic(jnz)
+
+bb  : 0x00402729: basic block
+insn: 0x00402729: mnemonic(lea)
+insn: 0x00402729: offset(-0x10)
+insn: 0x00402729: operand[1].offset(-0x10)
+insn: 0x0040272c: mnemonic(mov)
+insn: 0x0040272f: mnemonic(mov)
+insn: 0x0040272f: offset(0x0)
+insn: 0x0040272f: operand[1].offset(0x0)
+insn: 0x00402731: mnemonic(cmp)
+insn: 0x00402731: number(0x33)
+insn: 0x00402731: operand[1].number(0x33)
+insn: 0x00402733: mnemonic(jnz)
+
+bb  : 0x00402735: basic block
+insn: 0x00402735: mnemonic(mov)
+insn: 0x00402735: number(0x6)
+insn: 0x00402735: operand[1].number(0x6)
+insn: 0x0040273c: mnemonic(jmp)
+
+bb  : 0x0040273e: basic block
+insn: 0x0040273e: mnemonic(cmp)
+insn: 0x0040273e: number(0x34)
+insn: 0x0040273e: operand[1].number(0x34)
+insn: 0x00402740: mnemonic(jnz)
+
+bb  : 0x00402742: basic block
+insn: 0x00402742: mnemonic(mov)
+insn: 0x00402742: number(0x8)
+insn: 0x00402742: operand[1].number(0x8)
+insn: 0x00402749: mnemonic(jmp)
+
+bb  : 0x0040274b: basic block
+insn: 0x0040274b: mnemonic(cmp)
+insn: 0x0040274b: number(0x35)
+insn: 0x0040274b: operand[1].number(0x35)
+insn: 0x0040274d: mnemonic(jnz)
+
+bb  : 0x0040274f: basic block
+insn: 0x0040274f: mnemonic(mov)
+insn: 0x0040274f: number(0x1)
+insn: 0x0040274f: operand[1].number(0x1)
+insn: 0x00402756: mnemonic(jmp)
+
+bb  : 0x00402758: basic block
+insn: 0x00402758: mnemonic(cmp)
+insn: 0x00402758: number(0x36)
+insn: 0x00402758: operand[1].number(0x36)
+insn: 0x0040275a: mnemonic(jnz)
+
+bb  : 0x00402760: basic block
+insn: 0x00402760: mnemonic(mov)
+insn: 0x00402760: number(0x3)
+insn: 0x00402760: operand[1].number(0x3)
+
+bb  : 0x00402767: basic block
+insn: 0x00402767: mnemonic(mov)
+insn: 0x00402767: offset(0x1)
+insn: 0x00402767: operand[1].offset(0x1)
+insn: 0x0040276a: mnemonic(cmp)
+insn: 0x0040276a: number(0x31)
+insn: 0x0040276a: operand[1].number(0x31)
+insn: 0x0040276c: mnemonic(jl)
+
+bb  : 0x00402772: basic block
+insn: 0x00402772: mnemonic(cmp)
+insn: 0x00402772: number(0x34)
+insn: 0x00402772: operand[1].number(0x34)
+insn: 0x00402774: mnemonic(jg)
+
+bb  : 0x0040277a: basic block
+insn: 0x0040277a: mnemonic(mov)
+insn: 0x0040277a: offset(0x2)
+insn: 0x0040277a: operand[1].offset(0x2)
+insn: 0x0040277d: mnemonic(cmp)
+insn: 0x0040277d: number(0x39)
+insn: 0x0040277d: operand[1].number(0x39)
+insn: 0x00402780: mnemonic(jg)
+
+bb  : 0x00402786: basic block
+insn: 0x00402786: mnemonic(cmp)
+insn: 0x00402786: number(0x30)
+insn: 0x00402786: operand[1].number(0x30)
+insn: 0x00402789: mnemonic(jl)
+
+bb  : 0x0040278f: basic block
+insn: 0x0040278f: mnemonic(movsx)
+insn: 0x00402792: mnemonic(movsx)
+insn: 0x00402795: mnemonic(lea)
+insn: 0x00402795: offset(-0xF0)
+insn: 0x00402795: operand[1].offset(-0xF0)
+insn: 0x0040279c: mnemonic(lea)
+insn: 0x0040279c: offset(-0x3D)
+insn: 0x0040279c: operand[1].offset(-0x3D)
+insn: 0x004027a0: mnemonic(cmp)
+insn: 0x004027a0: number(0x1B)
+insn: 0x004027a0: operand[1].number(0x1B)
+insn: 0x004027a3: mnemonic(ja)
+
+bb  : 0x004027a9: basic block
+insn: 0x004027a9: mnemonic(mov)
+insn: 0x004027a9: offset(0x3)
+insn: 0x004027a9: operand[1].offset(0x3)
+insn: 0x004027ac: mnemonic(cmp)
+insn: 0x004027ac: number(0x39)
+insn: 0x004027ac: operand[1].number(0x39)
+insn: 0x004027ae: mnemonic(jg)
+
+bb  : 0x004027b4: basic block
+insn: 0x004027b4: mnemonic(cmp)
+insn: 0x004027b4: number(0x30)
+insn: 0x004027b4: operand[1].number(0x30)
+insn: 0x004027b6: mnemonic(jl)
+
+bb  : 0x004027bc: basic block
+insn: 0x004027bc: mnemonic(mov)
+insn: 0x004027bc: offset(0x4)
+insn: 0x004027bc: operand[1].offset(0x4)
+insn: 0x004027bf: mnemonic(cmp)
+insn: 0x004027bf: number(0x39)
+insn: 0x004027bf: operand[1].number(0x39)
+insn: 0x004027c2: mnemonic(jg)
+
+bb  : 0x004027c8: basic block
+insn: 0x004027c8: mnemonic(cmp)
+insn: 0x004027c8: number(0x30)
+insn: 0x004027c8: operand[1].number(0x30)
+insn: 0x004027cb: mnemonic(jl)
+
+bb  : 0x004027d1: basic block
+insn: 0x004027d1: mnemonic(movsx)
+insn: 0x004027d4: mnemonic(lea)
+insn: 0x004027d4: offset(-0xF0)
+insn: 0x004027d4: operand[1].offset(-0xF0)
+insn: 0x004027db: mnemonic(movsx)
+insn: 0x004027de: mnemonic(lea)
+insn: 0x004027de: offset(-0x30)
+insn: 0x004027de: operand[1].offset(-0x30)
+insn: 0x004027e2: mnemonic(test)
+insn: 0x004027e4: mnemonic(jz)
+
+bb  : 0x004027ea: basic block
+insn: 0x004027ea: mnemonic(cmp)
+insn: 0x004027ea: number(0xC)
+insn: 0x004027ea: operand[1].number(0xC)
+insn: 0x004027ed: mnemonic(ja)
+
+bb  : 0x004027f3: basic block
+insn: 0x004027f3: mnemonic(cmp)
+insn: 0x004027f3: offset(0x6)
+insn: 0x004027f3: operand[0].offset(0x6)
+insn: 0x004027f3: number(0x30)
+insn: 0x004027f3: operand[1].number(0x30)
+insn: 0x004027f7: mnemonic(jnz)
+
+bb  : 0x004027fd: basic block
+insn: 0x004027fd: mnemonic(cmp)
+insn: 0x004027fd: offset(0x7)
+insn: 0x004027fd: operand[0].offset(0x7)
+insn: 0x004027fd: number(0x31)
+insn: 0x004027fd: operand[1].number(0x31)
+insn: 0x00402801: mnemonic(jnz)
+
+bb  : 0x00402807: basic block
+insn: 0x00402807: mnemonic(mov)
+insn: 0x00402807: offset(0x5)
+insn: 0x00402807: operand[1].offset(0x5)
+insn: 0x0040280a: mnemonic(cmp)
+insn: 0x0040280a: number(0x32)
+insn: 0x0040280a: operand[1].number(0x32)
+insn: 0x0040280c: mnemonic(jz)
+
+bb  : 0x0040280e: basic block
+insn: 0x0040280e: mnemonic(cmp)
+insn: 0x0040280e: number(0x31)
+insn: 0x0040280e: operand[1].number(0x31)
+insn: 0x00402810: mnemonic(jnz)
+
+bb  : 0x00402816: basic block
+insn: 0x00402816: mnemonic(mov)
+insn: 0x0040281a: mnemonic(mov)
+insn: 0x0040281a: number(0x1)
+insn: 0x0040281a: operand[1].number(0x1)
+insn: 0x0040281c: mnemonic(lea)
+insn: 0x0040281c: offset(0x0)
+insn: 0x0040281c: operand[1].offset(0x0)
+
+bb  : 0x00402820: basic block
+insn: 0x00402820: mnemonic(movzx)
+insn: 0x00402823: mnemonic(mov)
+insn: 0x00402825: mnemonic(sub)
+insn: 0x00402827: mnemonic(mov)
+insn: 0x00402827: offset(0x0)
+insn: 0x00402827: operand[1].offset(0x0)
+insn: 0x00402829: mnemonic(sub)                   <<<<<<<<<<<<<xxx
+insn: 0x00402829: number(0x30)                    <<<<<<<<<<<<<xxx
+insn: 0x00402829: operand[1].number(0x30)
+insn: 0x0040282b: mnemonic(cmp)                   <<<<<<<<<<<<<xxx
+insn: 0x0040282b: number(0x9)                    <<<<<<<<<<<<<xxx
+insn: 0x0040282b: operand[1].number(0x9)
+insn: 0x0040282d: mnemonic(ja)
+
+bb  : 0x00402833: basic block
+insn: 0x00402833: mnemonic(and)
+insn: 0x00402833: number(0x80000001)
+insn: 0x00402833: operand[1].number(0x80000001)
+insn: 0x00402839: mnemonic(jns)
+
+bb  : 0x0040283b: basic block
+insn: 0x0040283b: mnemonic(dec)
+insn: 0x0040283c: mnemonic(or)
+insn: 0x0040283c: number(0xFFFFFFFE)
+insn: 0x0040283c: operand[1].number(0xFFFFFFFE)
+insn: 0x0040283f: mnemonic(inc)
+
+bb  : 0x00402840: basic block
+insn: 0x00402840: mnemonic(jnz)
+
+bb  : 0x00402842: basic block
+insn: 0x00402842: mnemonic(add)                   <<<<<<<<<<<<<xxx
+insn: 0x00402844: mnemonic(cmp)                    <<<<<<<<<<<<<xxx
+insn: 0x00402844: number(0x9)                  <<<<<<<<<<<<<xxx
+insn: 0x00402844: operand[1].number(0x9)
+insn: 0x00402846: mnemonic(jbe)
+
+bb  : 0x00402848: basic block
+insn: 0x00402848: mnemonic(add)
+insn: 0x00402848: number(0xF7)
+insn: 0x00402848: operand[1].number(0xF7)
+
+bb  : 0x0040284a: basic block
+insn: 0x0040284a: mnemonic(movzx)
+insn: 0x0040284d: mnemonic(inc)
+insn: 0x0040284f: mnemonic(add)
+insn: 0x00402852: mnemonic(cmp)
+insn: 0x00402852: number(0xF)
+insn: 0x00402852: operand[1].number(0xF)
+insn: 0x00402855: mnemonic(jbe)
+
+bb  : 0x00402857: basic block
+insn: 0x00402857: mnemonic(movzx)
+insn: 0x0040285a: mnemonic(cdq)              <<<<<<<<<<<<<<<<<<<xxx
+insn: 0x0040285b: mnemonic(mov)
+insn: 0x0040285b: number(0xA)             <<<<<<<<<<<<<<<<<<<xxx
+insn: 0x0040285b: operand[1].number(0xA)
+insn: 0x00402860: mnemonic(idiv)             <<<<<<<<<<<<<<<<<<<xxx
+insn: 0x00402862: mnemonic(test)
+insn: 0x00402864: mnemonic(jnz)
+
+bb  : 0x0040286a: basic block
+insn: 0x0040286a: mnemonic(mov)
+insn: 0x0040286a: number(0x8)
+insn: 0x0040286a: operand[1].number(0x8)
+insn: 0x0040286c: mnemonic(lea)
+insn: 0x0040286c: offset(0x0)
+insn: 0x0040286c: operand[1].offset(0x0)
+
+bb  : 0x00402870: basic block
+insn: 0x00402870: mnemonic(movsx)
+insn: 0x00402873: mnemonic(mov)
+insn: 0x00402873: offset(0x0)
+insn: 0x00402873: operand[1].offset(0x0)
+insn: 0x00402876: mnemonic(add)
+insn: 0x00402878: mnemonic(cmp)
+insn: 0x00402878: number(0x39)
+insn: 0x00402878: operand[1].number(0x39)
+insn: 0x0040287b: mnemonic(jg)
+
+bb  : 0x0040287d: basic block
+insn: 0x0040287d: mnemonic(cmp)
+insn: 0x0040287d: number(0x30)
+insn: 0x0040287d: operand[1].number(0x30)
+insn: 0x00402880: mnemonic(jl)
+
+bb  : 0x00402882: basic block
+insn: 0x00402882: mnemonic(inc)
+insn: 0x00402884: mnemonic(cmp)
+insn: 0x00402884: number(0x1E)
+insn: 0x00402884: operand[1].number(0x1E)
+insn: 0x00402887: mnemonic(jle)
+
+bb  : 0x00402889: basic block
+insn: 0x00402889: mnemonic(jmp)
+
+bb  : 0x0040288b: basic block
+insn: 0x0040288b: mnemonic(cmp)
+insn: 0x0040288b: number(0xA)
+insn: 0x0040288b: operand[1].number(0xA)
+insn: 0x0040288e: mnemonic(jle)
+
+bb  : 0x00402894: basic block
+insn: 0x00402894: mnemonic(cmp)
+insn: 0x00402894: offset(0x0)
+insn: 0x00402894: operand[0].offset(0x0)
+insn: 0x00402894: number(0x3F)
+insn: 0x00402894: operand[1].number(0x3F)
+insn: 0x00402897: mnemonic(mov)
+insn: 0x00402899: mnemonic(jnz)
+
+bb  : 0x0040289b: basic block
+insn: 0x0040289b: mnemonic(lea)
+insn: 0x0040289b: offset(0x1)
+insn: 0x0040289b: operand[1].offset(0x1)
+
+bb  : 0x0040289e: basic block
+insn: 0x0040289e: mnemonic(test)
+insn: 0x004028a0: mnemonic(jnz)
+
+bb  : 0x004028a2: basic block
+insn: 0x004028a2: mnemonic(lea)
+insn: 0x004028a2: offset(0x1F)
+insn: 0x004028a2: operand[1].offset(0x1F)
+
+bb  : 0x004028a5: basic block
+insn: 0x004028a5: mnemonic(mov)
+insn: 0x004028a8: mnemonic(mov)
+insn: 0x004028ab: mnemonic(mov)
+insn: 0x004028ad: mnemonic(cmp)
+insn: 0x004028ad: number(0x10)
+insn: 0x004028ad: operand[1].number(0x10)
+insn: 0x004028b0: mnemonic(jnc)
+
+bb  : 0x004028b2: basic block
+insn: 0x004028b2: mnemonic(lea)
+
+bb  : 0x004028b5: basic block
+insn: 0x004028b5: mnemonic(mov)
+insn: 0x004028b8: mnemonic(lea)
+insn: 0x004028b8: offset(0x0)
+insn: 0x004028b8: operand[1].offset(0x0)
+insn: 0x004028bb: mnemonic(cmp)
+insn: 0x004028bb: number(0x10)
+insn: 0x004028bb: operand[1].number(0x10)
+insn: 0x004028be: mnemonic(jnc)
+
+bb  : 0x004028c0: basic block
+insn: 0x004028c0: mnemonic(lea)
+
+bb  : 0x004028c3: basic block
+insn: 0x004028c3: mnemonic(mov)
+insn: 0x004028c6: mnemonic(push)
+insn: 0x004028c7: mnemonic(push)
+insn: 0x004028c8: mnemonic(lea)
+insn: 0x004028cb: mnemonic(push)
+insn: 0x004028cc: mnemonic(mov)
+insn: 0x004028cf: mnemonic(mov)
+insn: 0x004028cf: number(0xF)
+insn: 0x004028cf: operand[1].number(0xF)
+insn: 0x004028d6: mnemonic(mov)
+insn: 0x004028d6: number(0x0)
+insn: 0x004028d6: operand[1].number(0x0)
+insn: 0x004028dd: mnemonic(mov)
+insn: 0x004028dd: number(0x0)
+insn: 0x004028dd: operand[1].number(0x0)
+insn: 0x004028e1: mnemonic(call)
+insn: 0x004047b0: characteristic(calls from)
+insn: 0x004028e6: mnemonic(mov)
+insn: 0x004028e6: number(0x1)
+insn: 0x004028e6: operand[1].number(0x1)
+insn: 0x004028ea: mnemonic(cmp)
+insn: 0x004028ea: number(0x10)
+insn: 0x004028ea: operand[1].number(0x10)
+insn: 0x004028ee: mnemonic(mov)
+insn: 0x004028f1: mnemonic(jnc)
+
+bb  : 0x004028f3: basic block
+insn: 0x004028f3: mnemonic(lea)
+
+bb  : 0x004028f6: basic block
+insn: 0x004028f6: mnemonic(test)
+insn: 0x004028f8: mnemonic(jz)
+
+bb  : 0x004028fa: basic block
+insn: 0x004028fa: mnemonic(sub)
+
+bb  : 0x004028fc: basic block
+insn: 0x004028fc: mnemonic(test)
+insn: 0x004028fe: mnemonic(jz)
+
+bb  : 0x00402900: basic block
+insn: 0x00402900: mnemonic(sub)
+
+bb  : 0x00402902: basic block
+insn: 0x00402902: mnemonic(lea)
+insn: 0x00402905: mnemonic(push)
+insn: 0x00402906: mnemonic(push)
+insn: 0x00402907: mnemonic(mov)
+insn: 0x00402909: mnemonic(lea)
+insn: 0x0040290c: mnemonic(call)
+insn: 0x004045c0: characteristic(calls from)
+insn: 0x00402911: mnemonic(mov)
+insn: 0x00402911: number(0x10)
+insn: 0x00402911: operand[1].number(0x10)
+insn: 0x00402916: mnemonic(mov)
+insn: 0x00402916: number(0x0)
+insn: 0x00402916: operand[1].number(0x0)
+insn: 0x0040291a: mnemonic(cmp)
+insn: 0x0040291d: mnemonic(jc)
+
+bb  : 0x0040291f: basic block
+insn: 0x0040291f: mnemonic(mov)
+insn: 0x00402922: mnemonic(push)
+insn: 0x00402923: mnemonic(call)
+insn: 0x00405aac: characteristic(calls from)
+insn: 0x00402928: mnemonic(add)
+
+bb  : 0x0040292b: basic block
+insn: 0x0040292b: mnemonic(mov)
+insn: 0x0040292e: mnemonic(cmp)
+insn: 0x00402931: mnemonic(jnc)
+
+bb  : 0x00402933: basic block
+insn: 0x00402933: mnemonic(lea)
+
+bb  : 0x00402936: basic block
+insn: 0x00402936: bytes(0A 00 00 00 20 75 73 65 72 3D 00 00 0A 70 72 6F 63 3D 00 00 64 61 74 61 3D 00 00 00 75 00 73 00 65 00 72 00 61 00 67 00 65 00 6E 00 74 00 00 00 2F 00 67 00 61 00 74 00 65 00 77 00 61 00 79 00 2E 00 70 00 68 00 70 00 00 00 00 00 50 00 4F 00 53 00 54 00 00 00 00 00 00 00 00 00 43 00 6F 00 6E 00 74 00 65 00 6E 00 74 00 2D 00 74 00 79 00 70 00 65 00 3A 00 20 00 61 00 70 00 70 00 6C 00 69 00 63 00 61 00 74 00 69 00 6F 00 6E 00 2F 00 78 00 2D 00 77 00 77 00 77 00 2D 00 66 00 6F 00 72 00 6D 00 2D 00 75 00 72 00 6C 00 65 00 6E 00 63 00 6F 00 64 00 65 00 64 00 00 00 76 65 63 74 6F 72 3C 54 3E 20 74 6F 6F 20 6C 6F 6E 67 00 00 62 61 64 20 63 61 73 74 00 00 00 00 20 4A 41 00 10 21 40 00 D0 49 41 00 10 21 40 00 88 49 41 00 C0 37 40 00 90 2C 40 00 A0 2C 40 00 B0 2C 40 00)
+insn: 0x00402936: mnemonic(push)
+insn: 0x0040293b: mnemonic(push)
+insn: 0x0040293c: mnemonic(push)
+insn: 0x0040293d: mnemonic(push)
+insn: 0x00402942: mnemonic(call)
+insn: 0x00404100: characteristic(calls from)
+insn: 0x00402947: mnemonic(add)
+insn: 0x0040294a: mnemonic(push)
+insn: 0x0040294b: mnemonic(call)
+insn: 0x00404100: characteristic(calls from)
+insn: 0x00402950: mnemonic(lea)
+insn: 0x00402950: offset(0xF)
+insn: 0x00402950: operand[1].offset(0xF)
+insn: 0x00402953: mnemonic(mov)
+insn: 0x00402956: mnemonic(add)
+
+bb  : 0x00402959: basic block
+insn: 0x00402959: mnemonic(inc)
+insn: 0x0040295a: mnemonic(cmp)
+insn: 0x0040295c: mnemonic(jc)
+
+bb  : 0x00402962: basic block
+insn: 0x00402962: mnemonic(cmp)
+insn: 0x00402962: number(0x10)
+insn: 0x00402962: operand[1].number(0x10)
+insn: 0x00402966: mnemonic(jc)
+
+bb  : 0x00402968: basic block
+insn: 0x00402968: mnemonic(mov)
+insn: 0x0040296b: mnemonic(push)
+insn: 0x0040296c: mnemonic(call)
+insn: 0x00405aac: characteristic(calls from)
+insn: 0x00402971: mnemonic(add)
+
+bb  : 0x00402974: basic block
+insn: 0x00402974: mnemonic(mov)
+insn: 0x00402977: mnemonic(mov)
+insn: 0x00402977: characteristic(fs access)
+insn: 0x00402977: number(0x0)
+insn: 0x00402977: operand[0].number(0x0)
+insn: 0x0040297e: mnemonic(pop)
+insn: 0x0040297f: mnemonic(pop)
+insn: 0x00402980: mnemonic(pop)
+insn: 0x00402981: mnemonic(pop)
+insn: 0x00402982: mnemonic(mov)
+insn: 0x00402985: mnemonic(xor)
+insn: 0x00402987: mnemonic(call)
+insn: 0x0040523f: characteristic(calls from)
+insn: 0x0040298c: mnemonic(mov)
+insn: 0x0040298e: mnemonic(pop)
+insn: 0x0040298f: mnemonic(ret)
