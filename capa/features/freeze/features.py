@@ -55,7 +55,7 @@ class FeatureModel(BaseModel):
             return capa.features.common.String(self.string, description=self.description)
 
         elif isinstance(self, BasicBlockFeature):
-            return capa.features.basicblock.BasicBlock()
+            return capa.features.basicblock.BasicBlock(description=self.description)
 
         elif isinstance(self, APIFeature):
             return capa.features.insn.API(self.api, description=self.description)
@@ -130,7 +130,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         return StringFeature(string=f.value, description=f.description)
 
     elif isinstance(f, capa.features.basicblock.BasicBlock):
-        return BasicBlockFeature()
+        return BasicBlockFeature(description=f.description)
 
     elif isinstance(f, capa.features.insn.API):
         return APIFeature(api=f.value, description=f.description)
@@ -233,6 +233,7 @@ class StringFeature(FeatureModel):
 
 class BasicBlockFeature(FeatureModel):
     type: str = "basic block"
+    description: Optional[str]
 
 
 class APIFeature(FeatureModel):

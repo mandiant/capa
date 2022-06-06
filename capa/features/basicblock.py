@@ -10,8 +10,8 @@ from capa.features.common import Feature
 
 
 class BasicBlock(Feature):
-    def __init__(self):
-        super(BasicBlock, self).__init__(None)
+    def __init__(self, description=None):
+        super(BasicBlock, self).__init__(None, description=description)
 
     def __str__(self):
         return "basic block"
