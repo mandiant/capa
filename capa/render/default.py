@@ -133,7 +133,7 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     for tactic, techniques in sorted(tactics.items()):
         inner_rows = []
         for (technique, subtechnique, id) in sorted(techniques):
-            if subtechnique is None:
+            if not subtechnique:
                 inner_rows.append("%s %s" % (rutils.bold(technique), id))
             else:
                 inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
@@ -176,7 +176,7 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
     for objective, behaviors in sorted(objectives.items()):
         inner_rows = []
         for (behavior, method, id) in sorted(behaviors):
-            if method is None:
+            if not method:
                 inner_rows.append("%s [%s]" % (rutils.bold(behavior), id))
             else:
                 inner_rows.append("%s::%s [%s]" % (rutils.bold(behavior), method, id))
