@@ -101,6 +101,22 @@ class Address(HashableModel):
         else:
             assert_never(self.type)
 
+    def __lt__(self, other: "Address") -> bool:
+        if self.type != other.type:
+            return self.type < other.type
+
+        if self.type in (AddressType.ABSOLUTE, AddressType.RELATIVE, AddressType.FILE):
+            return self.value < other.value
+
+        elif self.type in (AddressType.DN_TOKEN, AddressType.DN_TOKEN_OFFSET):
+            return self.value < other.value
+
+        elif self.type is AddressType.NO_ADDRESS:
+            return True
+
+        else:
+            raise RuntimeError("unreachable")
+
 
 class GlobalFeature(HashableModel):
     feature: Feature
