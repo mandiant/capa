@@ -85,6 +85,10 @@ from capa.helpers import log_unsupported_runtime_error
 logger = logging.getLogger("capa.show-features")
 
 
+def format_address(addr: capa.features.address.Address) -> str:
+    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -125,11 +129,11 @@ def main(argv=None):
             return -1
 
     for feature, addr in extractor.extract_global_features():
-        print("global: %s: %s" % (v.format_address(addr), feature))
+        print("global: %s: %s" % (format_address(addr), feature))
 
     if not args.function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (v.format_address(addr), feature))
+            print("file: %s: %s" % (format_address(addr), feature))
 
     function_handles = extractor.get_functions()
 
@@ -138,9 +142,9 @@ def main(argv=None):
             # TODO fix
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            function_handles = tuple(filter(lambda fh: v.format_address(fh.address) == args.function, function_handles))
+            function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
 
-            if args.function not in [v.format_address(fh.address) for fh in function_handles]:
+            if args.function not in [format_address(fh.address) for fh in function_handles]:
                 print("%s not a function" % args.function)
                 return -1
 
@@ -165,7 +169,7 @@ def ida_main():
 
     if not function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (v.format_address(addr), feature))
+            print("file: %s: %s" % (format_address(addr), feature))
         return
 
     function_handles = extractor.get_functions()
@@ -180,10 +184,6 @@ def ida_main():
     print_features(function_handles, extractor)
 
     return 0
-
-
-def format_address(addr: capa.features.address.Address) -> str:
-    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
 
 
 def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
