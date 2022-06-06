@@ -54,6 +54,12 @@ class FeatureModel(BaseModel):
         elif isinstance(self, StringFeature):
             return capa.features.common.String(self.string, description=self.description)
 
+        elif isinstance(self, ClassFeature):
+            return capa.features.common.Class(self.class_, description=self.description)
+
+        elif isinstance(self, NamespaceFeature):
+            return capa.features.common.Namespace(self.namespace, description=self.description)
+
         elif isinstance(self, BasicBlockFeature):
             return capa.features.basicblock.BasicBlock(description=self.description)
 
@@ -128,6 +134,12 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
 
     elif isinstance(f, capa.features.common.String):
         return StringFeature(string=f.value, description=f.description)
+
+    elif isinstance(f, capa.features.common.Class):
+        return ClassFeature(class_=f.value, description=f.description)
+
+    elif isinstance(f, capa.features.common.Namespace):
+        return NamespaceFeature(namespace=f.value, description=f.description)
 
     elif isinstance(f, capa.features.basicblock.BasicBlock):
         return BasicBlockFeature(description=f.description)
@@ -231,6 +243,18 @@ class StringFeature(FeatureModel):
     description: Optional[str]
 
 
+class ClassFeature(FeatureModel):
+    type: str = "class"
+    class_: str = Field(alias="class")
+    description: Optional[str]
+
+
+class NamespaceFeature(FeatureModel):
+    type: str = "namespace"
+    namespace: str
+    description: Optional[str]
+
+
 class BasicBlockFeature(FeatureModel):
     type: str = "basic block"
     description: Optional[str]
@@ -293,6 +317,8 @@ Feature = Union[
     SubstringFeature,
     RegexFeature,
     StringFeature,
+    ClassFeature,
+    NamespaceFeature,
     APIFeature,
     NumberFeature,
     BytesFeature,

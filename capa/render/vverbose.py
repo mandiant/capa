@@ -131,6 +131,8 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     if isinstance(feature, frzf.ImportFeature):
         # fixup access to Python reserved name
         value = feature.import_
+    if isinstance(feature, frzf.ClassFeature):
+        value = feature.class_
     else:
         value = getattr(feature, key)
 
