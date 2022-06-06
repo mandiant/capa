@@ -10,6 +10,7 @@ from typing import Any, Dict, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 
+import capa.rules
 import capa.engine
 import capa.features.common
 import capa.features.freeze as frz
@@ -168,11 +169,11 @@ class SubscopeStatement(StatementModel):
 
 
 Statement = Union[
+    OptionalStatement,
     AndStatement,
     OrStatement,
     NotStatement,
     SomeStatement,
-    OptionalStatement,
     RangeStatement,
     SubscopeStatement,
 ]
@@ -183,60 +184,38 @@ class StatementNode(FrozenModel):
     statement: Statement
 
 
-def statement_from_capa(node: capa.engine.Statement) -> StatementNode:
+def statement_from_capa(node: capa.engine.Statement) -> Statement:
     if isinstance(node, capa.engine.And):
-        return StatementNode(
-            statement=AndStatement(
-                description=node.description,
-            )
-        )
+        return AndStatement(description=node.description)
 
     elif isinstance(node, capa.engine.Or):
-        return StatementNode(
-            statement=OrStatement(
-                description=node.description,
-            )
-        )
+        return OrStatement(description=node.description)
 
     elif isinstance(node, capa.engine.Not):
-        return StatementNode(
-            statement=NotStatement(
-                description=node.description,
-            )
-        )
+        return NotStatement(description=node.description)
 
     elif isinstance(node, capa.engine.Some):
         if node.count == 0:
-            return StatementNode(
-                statement=OptionalStatement(
-                    description=node.description,
-                )
-            )
+            return OptionalStatement(description=node.description)
 
         else:
-            return StatementNode(
-                statement=SomeStatement(
-                    description=node.description,
-                    count=node.count,
-                )
+            return SomeStatement(
+                description=node.description,
+                count=node.count,
             )
 
     elif isinstance(node, capa.engine.Range):
-        return StatementNode(
-            statement=RangeStatement(
-                description=node.description,
-                min=node.min,
-                max=node.max,
-                child=frz.feature_from_capa(node.child),
-            )
+        return RangeStatement(
+            description=node.description,
+            min=node.min,
+            max=node.max,
+            child=frz.feature_from_capa(node.child),
         )
 
     elif isinstance(node, capa.engine.Subscope):
-        return StatementNode(
-            statement=SubscopeStatement(
-                description=node.description,
-                scope=capa.rules.Scope(node.scope),
-            )
+        return SubscopeStatement(
+            description=node.description,
+            scope=capa.rules.Scope(node.scope),
         )
 
     else:
@@ -288,7 +267,6 @@ class Match(BaseModel):
         success = bool(result)
 
         node = node_from_capa(result.statement)
-
         children = [Match.from_capa(rules, capabilities, child) for child in result.children]
 
         # logic expression, like `and`, don't have locations - their children do.
@@ -485,7 +463,7 @@ class MBCSpec(FrozenModel):
             method=method,
             id=id,
         )
-        
+
 
 class MaecMetadata(FrozenModel):
     analysis_conclusion: Optional[str] = Field(None, alias="analysis-conclusion")
@@ -526,7 +504,6 @@ class RuleMetadata(FrozenModel):
             references=rule.meta.get("references", []),
             examples=rule.meta.get("examples", []),
             description=rule.meta.get("description", ""),
-
             lib=rule.meta.get("lib", False),
             capa_subscope=rule.meta.get("capa/subscope", False),
             maec=MaecMetadata(
@@ -535,7 +512,7 @@ class RuleMetadata(FrozenModel):
                 malware_family=rule.meta.get("maec/malware-family"),
                 malware_category=rule.meta.get("maec/malware-category"),
                 malware_category_ov=rule.meta.get("maec/malware-category-ov"),
-            )
+            ),
         )
 
     class Config:
