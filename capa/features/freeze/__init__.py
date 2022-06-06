@@ -12,9 +12,8 @@ See the License for the specific language governing permissions and limitations 
 import zlib
 import logging
 from enum import Enum
-from typing import Any, Set, Dict, List, Tuple
+from typing import Any, List, Tuple
 
-from devtools import debug
 from pydantic import Field, BaseModel
 
 import capa.helpers
@@ -263,7 +262,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                     InstructionFeature(
                         instruction=iaddr,
                         address=Address.from_capa(addr),
-                        feature=debug(feature_from_capa(feature)),
+                        feature=feature_from_capa(feature),
                     )
                     for feature, addr in extractor.extract_insn_features(f, bb, insn)
                 ]

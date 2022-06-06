@@ -1,5 +1,5 @@
 import binascii
-from typing import Any, Union, Optional
+from typing import Union, Optional
 
 from pydantic import Field, BaseModel
 
