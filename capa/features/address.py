@@ -15,8 +15,8 @@ class Address(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def __str__(self):
-        # implement str so the address can be rendered in capa output
+    def __repr__(self):
+        # implement repr to help during debugging
         ...
 
 
@@ -27,14 +27,15 @@ class AbsoluteVirtualAddress(int, Address):
         assert v >= 0
         return int.__new__(cls, v)
 
-    def __str__(self):
-        return str(self)
+    def __repr__(self):
+        return f"absolute(0x{self:x})"
 
 
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 
-    pass
+    def __repr__(self):
+        return f"relative(0x{self:x})"
 
 
 class FileOffsetAddress(int, Address):
@@ -44,8 +45,8 @@ class FileOffsetAddress(int, Address):
         assert v >= 0
         return int.__new__(cls, v)
 
-    def __str__(self):
-        return str(self)
+    def __repr__(self):
+        return f"file(0x{self:x})"
 
 
 class DNTokenAddress(Address):
@@ -60,8 +61,8 @@ class DNTokenAddress(Address):
     def __hash__(self):
         return hash(self.token.value)
 
-    def __str__(self):
-        return str(self.token)
+    def __repr__(self):
+        return f"token({self.token})"
 
 
 class DNTokenOffsetAddress(Address):
@@ -78,8 +79,8 @@ class DNTokenOffsetAddress(Address):
     def __hash__(self):
         return hash((self.token.value, self.offset))
 
-    def __str__(self):
-        return f"{self.token:s}+{hex(self.offset)}"
+    def __repr__(self):
+        return f"token({self.token})+(0x{self.offset:x})"
 
 
 class _NoAddress(Address):
@@ -89,7 +90,7 @@ class _NoAddress(Address):
     def __hash__(self):
         return hash(0)
 
-    def __str__(self):
+    def __repr__(self):
         return "no address"
 
 
