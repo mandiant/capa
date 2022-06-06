@@ -24,7 +24,7 @@ requirements = [
     "ruamel.yaml==0.17.21",
     "vivisect==1.0.8",
     "smda==1.7.1",
-    "pefile==2021.9.3",
+    "pefile==2022.5.30",
     "pyelftools==0.28",
     "dnfile==0.11.0",
     "dncil==1.0.0",
