@@ -1051,6 +1051,9 @@ def main(argv=None):
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
 
+        if isinstance(file_extractor, capa.features.extractors.dnfile_.DnfileFeatureExtractor):
+            format_ = FORMAT_DOTNET
+
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
         if has_file_limitation(rules, pure_file_capabilities):
@@ -1059,9 +1062,6 @@ def main(argv=None):
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
-
-        if isinstance(file_extractor, capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor):
-            format_ = FORMAT_DOTNET
 
     if format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
