@@ -182,23 +182,27 @@ def ida_main():
     return 0
 
 
+def format_address(addr: capa.features.address.Address) -> str:
+    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
+
+
 def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
-            logger.debug("skipping library function %s (%s)", v.format_address(f.address), function_name)
+            logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
             continue
 
-        print("func: %s" % (v.format_address(f.address)))
+        print("func: %s" % (format_address(f.address)))
 
         for feature, addr in extractor.extract_function_features(f):
             if capa.features.common.is_global_feature(feature):
                 continue
 
             if f.address != addr:
-                print(" func: %s: %s -> %s" % (v.format_address(f.address), feature, v.format_address(addr)))
+                print(" func: %s: %s -> %s" % (format_address(f.address), feature, format_address(addr)))
             else:
-                print(" func: %s: %s" % (v.format_address(f.address), feature))
+                print(" func: %s: %s" % (format_address(f.address), feature))
 
         for bb in extractor.get_basic_blocks(f):
             for feature, addr in extractor.extract_basic_block_features(f, bb):
@@ -206,9 +210,9 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
                     continue
 
                 if bb.address != addr:
-                    print(" bb: %s: %s -> %s" % (v.format_address(bb.address), feature, v.format_address(addr)))
+                    print(" bb: %s: %s -> %s" % (format_address(bb.address), feature, format_address(addr)))
                 else:
-                    print(" bb: %s: %s" % (v.format_address(bb.address), feature))
+                    print(" bb: %s: %s" % (format_address(bb.address), feature))
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, addr in extractor.extract_insn_features(f, bb, insn):
@@ -220,14 +224,14 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
                             print(
                                 "  insn: %s: %s: %s -> %s"
                                 % (
-                                    v.format_address(f.address),
-                                    v.format_address(insn.address),
+                                    format_address(f.address),
+                                    format_address(insn.address),
                                     feature,
-                                    v.format_address(addr),
+                                    format_address(addr),
                                 )
                             )
                         else:
-                            print("  insn: %s: %s" % (v.format_address(insn.address), feature))
+                            print("  insn: %s: %s" % (format_address(insn.address), feature))
 
                     except UnicodeEncodeError:
                         # may be an issue while piping to less and encountering non-ascii characters
