@@ -48,7 +48,6 @@ logger = logging.getLogger(__name__)
 META_KEYS = (
     "name",
     "namespace",
-    "rule-category",
     "maec/analysis-conclusion",
     "maec/analysis-conclusion-ov",
     "maec/malware-family",
