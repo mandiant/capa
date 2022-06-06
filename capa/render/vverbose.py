@@ -128,7 +128,11 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature.type
-    value = getattr(feature, key)
+    if isinstance(feature, frzf.ImportFeature):
+        # fixup access to Python reserved name
+        value = feature.import_
+    else:
+        value = getattr(feature, key)
 
     if key not in ("regex", "substring"):
         # like:
