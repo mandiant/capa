@@ -24,19 +24,6 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 logger = logging.getLogger(__name__)
 
 
-class VivInstructionHandle:
-    """this acts like a vivisect.Opcode but with an __int__() method"""
-
-    def __init__(self, inner):
-        self._inner = inner
-
-    def __int__(self):
-        return self.va
-
-    def __getattr__(self, name):
-        return getattr(self._inner, name)
-
-
 class VivisectFeatureExtractor(FeatureExtractor):
     def __init__(self, vw, path):
         super(VivisectFeatureExtractor, self).__init__()
