@@ -76,8 +76,8 @@ setuptools.setup(
             "pycodestyle==2.8.0",
             "black==22.3.0",
             "isort==5.10.1",
-            "mypy==0.950",
-            "psutil==5.9.0",
+            "mypy==0.960",
+            "psutil==5.9.1",
             "stix2==3.0.1",
             "requests==2.27.1",
             # type stubs for mypy
@@ -87,10 +87,10 @@ setuptools.setup(
             "types-tabulate==0.8.9",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.22",
-            "types_requests==2.27.25",
+            "types_requests==2.27.29",
         ],
         "build": [
-            "pyinstaller==5.0.1",
+            "pyinstaller==5.1",
         ],
     },
     zip_safe=False,

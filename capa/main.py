@@ -583,12 +583,13 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
         elif os.path.isdir(rule_path):
             logger.debug("reading rules from directory %s", rule_path)
             for root, dirs, files in os.walk(rule_path):
-                if ".github" in root:
+                if ".git" in root:
                     # the .github directory contains CI config in capa-rules
                     # this includes some .yml files
                     # these are not rules
+                    # additionally, .git has files that are not .yml and generate the warning
+                    # skip those too
                     continue
-
                 for file in files:
                     if not file.endswith(".yml"):
                         if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
@@ -596,7 +597,6 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
                             # other things maybe are rules, but are mis-named.
                             logger.warning("skipping non-.yml file: %s", file)
                         continue
-
                     rule_path = os.path.join(root, file)
                     rule_file_paths.append(rule_path)
 

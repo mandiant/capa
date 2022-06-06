@@ -15,7 +15,8 @@ EXPECTED = textwrap.dedent(
     rule:
       meta:
         name: test rule
-        author: user@domain.com
+        authors:
+          - user@domain.com
         scope: function
         examples:
           - foo1234
@@ -38,7 +39,8 @@ def test_rule_reformat_top_level_elements():
               - number: 2
           meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
             examples:
               - foo1234
@@ -55,7 +57,8 @@ def test_rule_reformat_indentation():
         rule:
          meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
             examples:
             - foo1234
@@ -75,7 +78,8 @@ def test_rule_reformat_order():
         """
         rule:
           meta:
-            author: user@domain.com
+            authors:
+              - user@domain.com
             examples:
               - foo1234
               - bar5678
@@ -98,7 +102,8 @@ def test_rule_reformat_meta_update():
         """
         rule:
           meta:
-            author: user@domain.com
+            authors:
+              - user@domain.com
             examples:
               - foo1234
               - bar5678
@@ -124,7 +129,8 @@ def test_rule_reformat_string_description():
         rule:
           meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
           features:
             - and:

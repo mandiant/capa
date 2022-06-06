@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
-from typing import TYPE_CHECKING, Set, List, Deque, Tuple, Union, Optional
+from typing import Set, List, Deque, Tuple, Union, Optional
 
 import envi
 import vivisect.const
@@ -15,8 +15,7 @@ import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
 from vivisect import VivWorkspace
 
-if TYPE_CHECKING:
-    from capa.features.extractors.viv.extractor import VivInstructionHandle
+from capa.features.extractors.viv.extractor import VivInstructionHandle
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper

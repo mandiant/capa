@@ -8,12 +8,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple, Iterator
-
-from capa.features.address import Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
-
-if TYPE_CHECKING:
-    from capa.features.common import Feature
+from typing import List, Tuple, Iterator
 
 import dnfile
 from dncil.clr.token import Token
@@ -21,6 +16,8 @@ from dncil.clr.token import Token
 import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
+from capa.features.common import Feature
+from capa.features.address import Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
 

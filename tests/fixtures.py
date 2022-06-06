@@ -252,6 +252,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
     elif name.startswith("946a9"):
         return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
+    elif name.startswith("2f7f5f"):
+        return os.path.join(CD, "data", "2f7f5fb5de175e770d7eae87666f9831.elf_")
     elif name.startswith("b9f5b"):
         return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
     elif name.startswith("mixed-mode-64"):
@@ -704,8 +706,13 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::.ctor"), True),
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::.cctor"), False),
         ("hello-world", "file", capa.features.common.String("Hello World!"), True),
+        ("hello-world", "file", capa.features.common.Class("HelloWorld"), True),
+        ("hello-world", "file", capa.features.common.Class("System.Console"), True),
+        ("hello-world", "file", capa.features.common.Namespace("System.Diagnostics"), True),
         ("hello-world", "function=0x250", capa.features.common.String("Hello World!"), True),
         ("hello-world", "function=0x250, bb=0x250, insn=0x252", capa.features.common.String("Hello World!"), True),
+        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Class("System.Console"), True),
+        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Namespace("System"), True),
         ("hello-world", "function=0x250", capa.features.insn.API("System.Console::WriteLine"), True),
         ("hello-world", "file", capa.features.file.Import("System.Console::WriteLine"), True),
         ("_1c444", "file", capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"), True),
