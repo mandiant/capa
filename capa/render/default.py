@@ -11,8 +11,9 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
-import capa.render.result_document as rd
 import capa.features.freeze as frz
+import capa.render.result_document as rd
+import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.render.utils import StringIO
@@ -60,8 +61,8 @@ def find_subrule_matches(doc: rd.ResultDocument):
             for child in node.children:
                 rec(child)
 
-        elif isinstance(node, rd.FeatureNode) and isinstance(node.feature, frz.features.MatchFeature):
-            matches.add(node.node.feature.match)
+        elif isinstance(node, rd.FeatureNode) and isinstance(node.feature, frzf.MatchFeature):
+            matches.add(node.feature.match)
 
     for rule in rutils.capability_rules(doc):
         for address, node in rule.matches:

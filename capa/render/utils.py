@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import io
-from typing import Iterator, Union
+from typing import Union, Iterator
 
 import termcolor
 
@@ -41,9 +41,7 @@ def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
 
 def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
-    for (_, _, rule) in sorted(
-        map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())
-    ):
+    for (_, _, rule) in sorted(map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())):
         if rule.meta.lib:
             continue
         if rule.meta.is_subscope_rule:

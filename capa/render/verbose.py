@@ -23,14 +23,15 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 from tarfile import FIFOTYPE
+
 import tabulate
 import dnfile.mdtable
 
 import capa.rules
 import capa.render.utils as rutils
+import capa.features.freeze as frz
 import capa.render.result_document
 import capa.render.result_document as rd
-import capa.features.freeze as frz
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 
