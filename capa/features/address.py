@@ -80,7 +80,7 @@ class DNTokenOffsetAddress(Address):
         return hash((self.token.value, self.offset))
 
     def __repr__(self):
-        return f"token({self.token})+(0x{self.offset:x})"
+        return f"token(0x{self.token.value:x})+(0x{self.offset:x})"
 
 
 class _NoAddress(Address):
