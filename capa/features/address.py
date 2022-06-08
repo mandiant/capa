@@ -62,7 +62,7 @@ class DNTokenAddress(Address):
         return hash(self.token.value)
 
     def __repr__(self):
-        return f"token({self.token})"
+        return f"token(0x{self.token.value:x})"
 
 
 class DNTokenOffsetAddress(Address):
