@@ -216,7 +216,7 @@ class Substring(String):
             # instead, return a new instance that has a reference to both the substring and the matched values.
             return Result(True, _MatchedSubstring(self, matches), [], locations=locations)
         else:
-            return Result(False, _MatchedSubstring(self, None), [])
+            return Result(False, _MatchedSubstring(self, {}), [])
 
     def __str__(self):
         return "substring(%s)" % self.value
@@ -313,7 +313,7 @@ class Regex(String):
             # see #262.
             return Result(True, _MatchedRegex(self, matches), [], locations=locations)
         else:
-            return Result(False, _MatchedRegex(self, None), [])
+            return Result(False, _MatchedRegex(self, {}), [])
 
     def __str__(self):
         return "regex(string =~ %s)" % self.value
