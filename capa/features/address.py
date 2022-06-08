@@ -5,6 +5,10 @@ from dncil.clr.token import Token
 
 class Address(abc.ABC):
     @abc.abstractmethod
+    def __eq__(self, other):
+        ...
+
+    @abc.abstractmethod
     def __lt__(self, other):
         # implement < so that addresses can be sorted from low to high
         ...
@@ -55,6 +59,9 @@ class DNTokenAddress(Address):
     def __init__(self, token: Token):
         self.token = token
 
+    def __eq__(self, other):
+        return self.token.value == other.token.value
+
     def __lt__(self, other):
         return self.token.value < other.token.value
 
@@ -73,6 +80,9 @@ class DNTokenOffsetAddress(Address):
         self.token = token
         self.offset = offset
 
+    def __eq__(self, other):
+        return (self.token.value, self.offset) == (other.token.value, other.offset)
+
     def __lt__(self, other):
         return (self.token.value, self.offset) < (other.token.value, other.offset)
 
@@ -84,6 +94,9 @@ class DNTokenOffsetAddress(Address):
 
 
 class _NoAddress(Address):
+    def __eq__(self, other):
+        return True
+
     def __lt__(self, other):
         return False
 
