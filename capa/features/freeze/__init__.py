@@ -14,6 +14,7 @@ import logging
 from enum import Enum
 from typing import Any, List, Tuple
 
+import dncil.clr.token
 from pydantic import Field, BaseModel
 
 import capa.helpers
@@ -107,8 +108,15 @@ class Address(HashableModel):
         if self.type in (AddressType.ABSOLUTE, AddressType.RELATIVE, AddressType.FILE):
             return self.value < other.value
 
+        elif self.type in AddressType.DN_TOKEN:
+            assert isinstance(self.value, dncil.clr.token.Token)
+            return self.value.value < other.value.value
+
         elif self.type in (AddressType.DN_TOKEN, AddressType.DN_TOKEN_OFFSET):
-            return self.value < other.value
+            assert isinstance(self.value[0], dncil.clr.token.Token)
+            a = (self.value[0].value, self.value[1])
+            b = (other.value[0].value, other.value[1])
+            return a < b
 
         elif self.type is AddressType.NO_ADDRESS:
             return True
