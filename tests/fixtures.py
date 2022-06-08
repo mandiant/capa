@@ -277,6 +277,8 @@ def get_data_path_by_name(name):
         return os.path.join(DNFILE_TESTFILES, "hello-world", "hello-world.exe")
     elif name.startswith("_1c444"):
         return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
+    elif name.startswith("_692f"):
+        return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -897,3 +899,8 @@ def hello_world_dotnetfile_extractor():
 @pytest.fixture
 def _1c444_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_1c444"))
+
+
+@pytest.fixture
+def _692f_dotnetfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("_692f"))
