@@ -161,7 +161,7 @@ def extract_unmanaged_call_characteristic_features(
         return
 
     if any((token.Flags.mdPinvokeImpl, token.ImplFlags.miUnmanaged, token.ImplFlags.miNative)):
-        yield Characteristic("unmanaged call"), insn.offset
+        yield Characteristic("unmanaged call"), ih.address
 
 
 def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
