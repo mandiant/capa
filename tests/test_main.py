@@ -441,7 +441,7 @@ def test_json_meta(capsys):
     std = capsys.readouterr()
     std_json = json.loads(std.out)
 
-    assert ["absolute", 0x10001010] in map(lambda f: f["address"], std_json["meta"]["analysis"]["layout"]["functions"])
+    assert {"type": "absolute", "value": 0x10001010} in list(map(lambda f: f["address"], std_json["meta"]["analysis"]["layout"]["functions"]))
 
     for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
         if addr == ["absolute", 0x10001010]:
