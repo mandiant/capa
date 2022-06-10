@@ -26,6 +26,7 @@ from tarfile import FIFOTYPE
 
 import tabulate
 import dnfile.mdtable
+import dncil.clr.token
 
 import capa.rules
 import capa.render.utils as rutils
@@ -44,9 +45,13 @@ def format_address(address: frz.Address) -> str:
     elif address.type == frz.AddressType.FILE:
         return f"file+{rutils.hex(address.value)}"
     elif address.type == frz.AddressType.DN_TOKEN:
-        return str(address.value)
+        token = dncil.clr.token.Token(address.value)
+        name = dnfile.mdtable.ClrMetaDataTableFactory._table_number_map[token.table].name
+        rid = token.rid
+        return f"{name}[{rid}]"
     elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
         token, offset = address.value
+        token = dncil.clr.token.Token(token)
         name = dnfile.mdtable.ClrMetaDataTableFactory._table_number_map[token.table].name
         rid = token.rid
         return f"{name}[{rid}]+{rutils.hex(offset)}"
