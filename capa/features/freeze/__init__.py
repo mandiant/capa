@@ -60,12 +60,10 @@ class Address(HashableModel):
             return cls(type=AddressType.FILE, value=int(a))
 
         elif isinstance(a, capa.features.address.DNTokenAddress):
-            # TODO: probably need serialization here
-            return cls(type=AddressType.DN_TOKEN, value=a.token)
+            return cls(type=AddressType.DN_TOKEN, value=a.token.value)
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
-            # TODO: probably need serialization here
-            return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
+            return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token.value, a.offset))
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -90,10 +88,11 @@ class Address(HashableModel):
             return capa.features.address.FileOffsetAddress(self.value)
 
         elif self.type is AddressType.DN_TOKEN:
-            return capa.features.address.DNTokenAddress(self.value)
+            return capa.features.address.DNTokenAddress(dncil.clr.token.Token(self.value))
 
         elif self.type is AddressType.DN_TOKEN_OFFSET:
-            return capa.features.address.DNTokenOffsetAddress(*self.value)
+            token, offset = self.value
+            return capa.features.address.DNTokenOffsetAddress(dncil.clr.token.Token(token), offset)
 
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
