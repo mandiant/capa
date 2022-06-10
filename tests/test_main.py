@@ -461,7 +461,7 @@ def test_main_dotnet(_1c444_dotnetfile_extractor):
 
 def test_main_dotnet2(_692f_dotnetfile_extractor):
     # tests rules can be loaded successfully and all output modes
-    path = _1c444_dotnetfile_extractor.path
+    path = _692f_dotnetfile_extractor.path
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0
