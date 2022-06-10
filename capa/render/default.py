@@ -51,22 +51,22 @@ def find_subrule_matches(doc: rd.ResultDocument):
     """
     matches = set([])
 
-    def rec(node: rd.Match):
-        if not node.success:
+    def rec(match: rd.Match):
+        if not match.success:
             # there's probably a bug here for rules that do `not: match: ...`
             # but we don't have any examples of this yet
             return
 
-        elif isinstance(node, rd.StatementNode):
-            for child in node.children:
+        elif isinstance(match.node, rd.StatementNode):
+            for child in match.children:
                 rec(child)
 
-        elif isinstance(node, rd.FeatureNode) and isinstance(node.feature, frzf.MatchFeature):
-            matches.add(node.feature.match)
+        elif isinstance(match.node, rd.FeatureNode) and isinstance(match.node.feature, frzf.MatchFeature):
+            matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for address, node in rule.matches:
-            rec(node)
+        for address, match in rule.matches:
+            rec(match)
 
     return matches
 
