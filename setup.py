@@ -78,7 +78,7 @@ setuptools.setup(
             "mypy==0.960",
             "psutil==5.9.1",
             "stix2==3.0.1",
-            "requests==2.27.1",
+            "requests==2.28.0",
             # type stubs for mypy
             "types-backports==0.1.3",
             "types-colorama==0.4.14",
