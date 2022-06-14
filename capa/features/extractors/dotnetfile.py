@@ -152,7 +152,7 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
     def get_base_address(self):
-        return AbsoluteVirtualAddress(0x0)
+        return NO_ADDRESS
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT

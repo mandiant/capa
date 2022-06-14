@@ -17,7 +17,7 @@ import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
 from capa.features.common import Feature
-from capa.features.address import Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
 
@@ -33,7 +33,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
     def get_base_address(self):
-        return AbsoluteVirtualAddress(0x0)
+        return NO_ADDRESS
 
     def extract_global_features(self):
         yield from self.global_features
