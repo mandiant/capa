@@ -8,11 +8,10 @@
 
 import os
 import copy
-import json
 import logging
 import itertools
 import collections
-from typing import Set, Dict
+from typing import Set, Dict, Optional
 
 import idaapi
 import ida_kernwin
@@ -32,8 +31,8 @@ from capa.features.common import Feature
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
-    CapaExplorerRulgenEditor,
-    CapaExplorerRulgenPreview,
+    CapaExplorerRulegenEditor,
+    CapaExplorerRulegenPreview,
     CapaExplorerRulegenFeatures,
 )
 from capa.features.address import NO_ADDRESS, Address
@@ -250,8 +249,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         self.parent = None
         self.ida_hooks = None
-        self.doc = None
+        self.doc: Optional[capa.render.result_document.ResultDocument] = None
 
+        self.rule_paths = None
         self.rules_cache = None
         self.ruleset_cache = None
 
@@ -489,8 +489,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_header_label.setText("Features")
         self.view_rulegen_header_label.setFont(font)
 
-        self.view_rulegen_preview = CapaExplorerRulgenPreview(parent=self.parent)
-        self.view_rulegen_editor = CapaExplorerRulgenEditor(self.view_rulegen_preview, parent=self.parent)
+        self.view_rulegen_preview = CapaExplorerRulegenPreview(parent=self.parent)
+        self.view_rulegen_editor = CapaExplorerRulegenEditor(self.view_rulegen_preview, parent=self.parent)
         self.view_rulegen_features = CapaExplorerRulegenFeatures(self.view_rulegen_editor, parent=self.parent)
 
         self.view_rulegen_preview.textChanged.connect(self.slot_rulegen_preview_update)
@@ -622,6 +622,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_capa_rules(self):
         """ """
+        self.rule_paths = None
         self.ruleset_cache = None
         self.rules_cache = None
 
@@ -706,6 +707,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return False
 
+        self.rule_paths = rule_paths
         self.ruleset_cache = ruleset
         self.rules_cache = rules
 
@@ -755,7 +757,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             update_wait_box("extracting features")
 
             try:
-                meta = capa.ida.helpers.collect_metadata()
+                meta = capa.ida.helpers.collect_metadata(self.rule_paths)
                 capabilities, counts = capa.main.find_capabilities(self.ruleset_cache, extractor, disable_progress=True)
                 meta["analysis"].update(counts)
                 meta["analysis"]["layout"] = capa.main.compute_layout(self.ruleset_cache, extractor, capabilities)
@@ -802,11 +804,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             update_wait_box("rendering results")
 
             try:
-                self.doc = capa.render.result_document.convert_capabilities_to_result_document(
-                    meta, self.ruleset_cache, capabilities
-                )
+                self.doc = capa.render.result_document.ResultDocument.from_capa(meta, self.ruleset_cache, capabilities)
             except Exception as e:
-                logger.error("Failed to render results (error: %s)", e)
+                logger.error("Failed to collect results (error: %s)", e)
                 return False
 
         try:
@@ -1158,7 +1158,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No program analysis to save.")
             return
 
-        s = json.dumps(self.doc, sort_keys=True, cls=capa.render.json.CapaJsonObjectEncoder).encode("utf-8")
+        s = self.doc.json().encode("utf-8")
 
         path = self.ask_user_capa_json_file()
         if not path:

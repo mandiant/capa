@@ -173,13 +173,13 @@ def resize_columns_to_content(header):
         header.resizeSection(0, MAX_SECTION_SIZE)
 
 
-class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
+class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
 
     INDENT = " " * 2
 
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerRulgenPreview, self).__init__(parent)
+        super(CapaExplorerRulegenPreview, self).__init__(parent)
 
         self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
@@ -284,7 +284,7 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
                 self.set_selection(select_start_ppos, select_end_ppos, len(self.toPlainText()))
                 self.verticalScrollBar().setSliderPosition(scroll_ppos)
         else:
-            super(CapaExplorerRulgenPreview, self).keyPressEvent(e)
+            super(CapaExplorerRulegenPreview, self).keyPressEvent(e)
 
     def count_previous_lines_from_block(self, block):
         """calculate number of lines preceding block"""
@@ -304,13 +304,13 @@ class CapaExplorerRulgenPreview(QtWidgets.QTextEdit):
         self.setTextCursor(cursor)
 
 
-class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
+class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     updated = QtCore.pyqtSignal()
 
     def __init__(self, preview, parent=None):
         """ """
-        super(CapaExplorerRulgenEditor, self).__init__(parent)
+        super(CapaExplorerRulegenEditor, self).__init__(parent)
 
         self.preview = preview
 
@@ -374,18 +374,18 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
     def dragMoveEvent(self, e):
         """ """
-        super(CapaExplorerRulgenEditor, self).dragMoveEvent(e)
+        super(CapaExplorerRulegenEditor, self).dragMoveEvent(e)
 
     def dragEventEnter(self, e):
         """ """
-        super(CapaExplorerRulgenEditor, self).dragEventEnter(e)
+        super(CapaExplorerRulegenEditor, self).dragEventEnter(e)
 
     def dropEvent(self, e):
         """ """
         if not self.indexAt(e.pos()).isValid():
             return
 
-        super(CapaExplorerRulgenEditor, self).dropEvent(e)
+        super(CapaExplorerRulegenEditor, self).dropEvent(e)
 
         self.update_preview()
         expand_tree(self.invisibleRootItem())
@@ -439,7 +439,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         """ """
         expression, o = action.data()
         if "basic block" in expression and "basic block" not in o.text(
-            CapaExplorerRulgenEditor.get_column_feature_index()
+            CapaExplorerRulegenEditor.get_column_feature_index()
         ):
             # current expression is "basic block", and not changing to "basic block" expression
             children = o.takeChildren()
@@ -447,7 +447,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
             for child in children:
                 new_parent.addChild(child)
             new_parent.setExpanded(True)
-        o.setText(CapaExplorerRulgenEditor.get_column_feature_index(), expression)
+        o.setText(CapaExplorerRulegenEditor.get_column_feature_index(), expression)
 
     def slot_clear_all(self, action):
         """ """
@@ -458,7 +458,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         if not self.indexAt(pos).isValid():
             # user selected invalid index
             self.load_custom_context_menu_invalid_index(pos)
-        elif self.itemAt(pos).capa_type == CapaExplorerRulgenEditor.get_node_type_expression():
+        elif self.itemAt(pos).capa_type == CapaExplorerRulegenEditor.get_node_type_expression():
             # user selected expression node
             self.load_custom_context_menu_expression(pos)
         else:
@@ -470,8 +470,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def slot_item_double_clicked(self, o, column):
         """ """
         if column in (
-            CapaExplorerRulgenEditor.get_column_comment_index(),
-            CapaExplorerRulgenEditor.get_column_description_index(),
+            CapaExplorerRulegenEditor.get_column_comment_index(),
+            CapaExplorerRulegenEditor.get_column_description_index(),
         ):
             o.setFlags(o.flags() | QtCore.Qt.ItemIsEditable)
             self.editItem(o, column)
@@ -557,7 +557,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         font = QtGui.QFont()
         font.setBold(True)
 
-        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
+        o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
 
     def style_feature_node(self, o):
         """ """
@@ -568,8 +568,8 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         font.setWeight(QtGui.QFont.Medium)
         brush.setColor(QtGui.QColor(*COLOR_GREEN_RGB))
 
-        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
-        o.setForeground(CapaExplorerRulgenEditor.get_column_feature_index(), brush)
+        o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
+        o.setForeground(CapaExplorerRulegenEditor.get_column_feature_index(), brush)
 
     def style_comment_node(self, o):
         """ """
@@ -577,22 +577,22 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         font.setBold(True)
         font.setFamily("Courier")
 
-        o.setFont(CapaExplorerRulgenEditor.get_column_feature_index(), font)
+        o.setFont(CapaExplorerRulegenEditor.get_column_feature_index(), font)
 
     def set_expression_node(self, o):
         """ """
-        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
+        setattr(o, "capa_type", CapaExplorerRulegenEditor.get_node_type_expression())
         self.style_expression_node(o)
 
     def set_feature_node(self, o):
         """ """
-        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
+        setattr(o, "capa_type", CapaExplorerRulegenEditor.get_node_type_feature())
         o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
         self.style_feature_node(o)
 
     def set_comment_node(self, o):
         """ """
-        setattr(o, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
+        setattr(o, "capa_type", CapaExplorerRulegenEditor.get_node_type_comment())
         o.setFlags(o.flags() & ~QtCore.Qt.ItemIsDropEnabled)
 
         self.style_comment_node(o)
@@ -694,11 +694,11 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
 
         # we need to set our own type so we can control the GUI accordingly
         if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- optional:")):
-            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_expression())
+            setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_expression())
         elif feature.startswith("#"):
-            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_comment())
+            setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_comment())
         else:
-            setattr(node, "capa_type", CapaExplorerRulgenEditor.get_node_type_feature())
+            setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_feature())
 
         # format the node based on its type
         (self.set_expression_node, self.set_feature_node, self.set_comment_node)[node.capa_type](node)
@@ -760,7 +760,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
         """ """
         for feature in filter(
             lambda o: o.capa_type
-            in (CapaExplorerRulgenEditor.get_node_type_feature(), CapaExplorerRulgenEditor.get_node_type_comment()),
+            in (CapaExplorerRulegenEditor.get_node_type_feature(), CapaExplorerRulegenEditor.get_node_type_comment()),
             tuple(iterate_tree(self)),
         ):
             if feature in ignore:
@@ -772,7 +772,7 @@ class CapaExplorerRulgenEditor(QtWidgets.QTreeWidget):
     def get_expressions(self, selected=False, ignore=()):
         """ """
         for expression in filter(
-            lambda o: o.capa_type == CapaExplorerRulgenEditor.get_node_type_expression(), tuple(iterate_tree(self))
+            lambda o: o.capa_type == CapaExplorerRulegenEditor.get_node_type_expression(), tuple(iterate_tree(self))
         ):
             if expression in ignore:
                 continue

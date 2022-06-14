@@ -75,7 +75,7 @@ class Analysis(FrozenModel):
 class Metadata(FrozenModel):
     timestamp: datetime.datetime
     version: str
-    argv: Tuple[str, ...]
+    argv: Optional[Tuple[str, ...]]
     sample: Sample
     analysis: Analysis
 
@@ -84,7 +84,7 @@ class Metadata(FrozenModel):
         return cls(
             timestamp=meta["timestamp"],
             version=meta["version"],
-            argv=meta["argv"],
+            argv=meta["argv"] if "argv" in meta else None,
             sample=Sample(
                 md5=meta["sample"]["md5"],
                 sha1=meta["sample"]["sha1"],

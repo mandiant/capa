@@ -1147,7 +1147,7 @@ def ida_main():
     rules = get_rules(rules_path)
     rules = capa.rules.RuleSet(rules)
 
-    meta = capa.ida.helpers.collect_metadata()
+    meta = capa.ida.helpers.collect_metadata([rules_path])
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
     meta["analysis"].update(counts)

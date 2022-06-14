@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import List
+from typing import Set, Dict, List, Tuple
 from collections import deque
 
 import idc
@@ -17,6 +17,8 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.common
+import capa.render.result_document as rd
+import capa.features.freeze.features as frzf
 from capa.ida.plugin.item import (
     CapaExplorerDataItem,
     CapaExplorerRuleItem,
@@ -30,6 +32,7 @@ from capa.ida.plugin.item import (
     CapaExplorerStringViewItem,
     CapaExplorerInstructionViewItem,
 )
+from capa.features.address import Address, AbsoluteVirtualAddress
 
 # default highlight color used in IDA window
 DEFAULT_HIGHLIGHT = 0xE6C700
@@ -343,7 +346,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         return item.childCount()
 
-    def render_capa_doc_statement_node(self, parent, statement, locations, doc):
+    def render_capa_doc_statement_node(
+        self,
+        parent: CapaExplorerDataItem,
+        match: rd.Match,
+        statement: rd.Statement,
+        locations: List[Address],
+        doc: rd.ResultDocument,
+    ):
         """render capa statement read from doc
 
         @param parent: parent to which new child is assigned
@@ -351,132 +361,141 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param locations: locations of children (applies to range only?)
         @param doc: result doc
         """
-        if statement["type"] in ("and", "or", "optional"):
-            display = statement["type"]
-            if statement.get("description"):
-                display += " (%s)" % statement["description"]
+
+        if isinstance(statement, (rd.AndStatement, rd.OrStatement, rd.OptionalStatement)):
+            display = statement.type
+            if statement.description:
+                display += " (%s)" % statement.description
             return CapaExplorerDefaultItem(parent, display)
-        elif statement["type"] == "not":
+        elif isinstance(statement, rd.NotStatement):
             # TODO: do we display 'not'
             pass
-        elif statement["type"] == "some":
-            display = "%d or more" % statement["count"]
-            if statement.get("description"):
-                display += " (%s)" % statement["description"]
+        elif isinstance(statement, rd.SomeStatement):
+            display = "%d or more" % statement.count
+            if statement.description:
+                display += " (%s)" % statement.description
             return CapaExplorerDefaultItem(parent, display)
-        elif statement["type"] == "range":
+        elif isinstance(statement, rd.RangeStatement):
             # `range` is a weird node, its almost a hybrid of statement + feature.
             # it is a specific feature repeated multiple times.
             # there's no additional logic in the feature part, just the existence of a feature.
             # so, we have to inline some of the feature rendering here.
-            display = "count(%s): " % self.capa_doc_feature_to_display(statement["child"])
+            display = "count(%s): " % self.capa_doc_feature_to_display(statement.child)
 
-            if statement["max"] == statement["min"]:
-                display += "%d" % (statement["min"])
-            elif statement["min"] == 0:
-                display += "%d or fewer" % (statement["max"])
-            elif statement["max"] == (1 << 64 - 1):
-                display += "%d or more" % (statement["min"])
+            if statement.max == statement.min:
+                display += "%d" % (statement.min)
+            elif statement.min == 0:
+                display += "%d or fewer" % (statement.max)
+            elif statement.max == (1 << 64 - 1):
+                display += "%d or more" % (statement.min)
             else:
-                display += "between %d and %d" % (statement["min"], statement["max"])
+                display += "between %d and %d" % (statement.min, statement.max)
 
-            if statement.get("description"):
-                display += " (%s)" % statement["description"]
+            if statement.description:
+                display += " (%s)" % statement.description
 
             parent2 = CapaExplorerFeatureItem(parent, display=display)
 
             for location in locations:
                 # for each location render child node for range statement
-                self.render_capa_doc_feature(parent2, statement["child"], location, doc)
+                self.render_capa_doc_feature(parent2, match, statement.child, location, doc)
 
             return parent2
-        elif statement["type"] == "subscope":
-            display = statement[statement["type"]]
-            if statement.get("description"):
-                display += " (%s)" % statement["description"]
+        elif isinstance(statement, rd.SubscopeStatement):
+            display = str(statement.scope)
+            if statement.description:
+                display += " (%s)" % statement.description
             return CapaExplorerSubscopeItem(parent, display)
         else:
             raise RuntimeError("unexpected match statement type: " + str(statement))
 
-    def render_capa_doc_match(self, parent, match, doc):
+    def render_capa_doc_match(self, parent: CapaExplorerDataItem, match: rd.Match, doc: rd.ResultDocument):
         """render capa match read from doc
 
         @param parent: parent node to which new child is assigned
         @param match: match read from doc
         @param doc: result doc
         """
-        if not match["success"]:
+        if not match.success:
             # TODO: display failed branches at some point? Help with debugging rules?
             return
 
         # optional statement with no successful children is empty
-        if match["node"].get("statement", {}).get("type") == "optional" and not any(
-            map(lambda m: m["success"], match["children"])
-        ):
-            return
+        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.OptionalStatement):
+            if not any(map(lambda m: m.success, match.children)):
+                return
 
-        if match["node"]["type"] == "statement":
+        if isinstance(match.node, rd.StatementNode):
             parent2 = self.render_capa_doc_statement_node(
-                parent, match["node"]["statement"], match.get("locations", []), doc
+                parent, match, match.node.statement, [addr.to_capa() for addr in match.locations], doc
             )
-        elif match["node"]["type"] == "feature":
+        elif isinstance(match.node, rd.FeatureNode):
             parent2 = self.render_capa_doc_feature_node(
-                parent, match["node"]["feature"], match.get("locations", []), doc
+                parent, match, match.node.feature, [addr.to_capa() for addr in match.locations], doc
             )
         else:
-            raise RuntimeError("unexpected node type: " + str(match["node"]["type"]))
+            raise RuntimeError("unexpected node type: " + str(match.node.type))
 
-        for child in match.get("children", []):
+        for child in match.children:
             self.render_capa_doc_match(parent2, child, doc)
 
-    def render_capa_doc_by_function(self, doc):
+    def render_capa_doc_by_function(self, doc: rd.ResultDocument):
         """ """
-        matches_by_function = {}
+        matches_by_function: Dict[int, Tuple[CapaExplorerFunctionItem, Set[str]]] = {}
         for rule in rutils.capability_rules(doc):
-            for ea in rule["matches"].keys():
+            for location_, _ in rule.matches:
+                location = location_.to_capa()
+                # within IDA, assume that all addresses are virtual addresses.
+                assert isinstance(location, AbsoluteVirtualAddress)
+                ea = int(location)
+
                 ea = capa.ida.helpers.get_func_start_ea(ea)
                 if ea is None:
                     # file scope, skip rendering in this mode
                     continue
                 if not matches_by_function.get(ea, ()):
                     # new function root
-                    matches_by_function[ea] = (CapaExplorerFunctionItem(self.root_node, ea, can_check=False), [])
+                    matches_by_function[ea] = (
+                        CapaExplorerFunctionItem(self.root_node, location, can_check=False),
+                        set(),
+                    )
                 function_root, match_cache = matches_by_function[ea]
-                if rule["meta"]["name"] in match_cache:
+                if rule.meta.name in match_cache:
                     # rule match already rendered for this function root, skip it
                     continue
-                match_cache.append(rule["meta"]["name"])
+                match_cache.add(rule.meta.name)
                 CapaExplorerRuleItem(
                     function_root,
-                    rule["meta"]["name"],
-                    rule["meta"].get("namespace"),
-                    len(rule["matches"]),
-                    rule["source"],
+                    rule.meta.name,
+                    rule.meta.namespace or "",
+                    len(rule.matches),
+                    rule.source,
                     can_check=False,
                 )
 
-    def render_capa_doc_by_program(self, doc):
+    def render_capa_doc_by_program(self, doc: rd.ResultDocument):
         """ """
         for rule in rutils.capability_rules(doc):
-            rule_name = rule["meta"]["name"]
-            rule_namespace = rule["meta"].get("namespace")
-            parent = CapaExplorerRuleItem(
-                self.root_node, rule_name, rule_namespace, len(rule["matches"]), rule["source"]
-            )
+            rule_name = rule.meta.name
+            rule_namespace = rule.meta.namespace or ""
+            parent = CapaExplorerRuleItem(self.root_node, rule_name, rule_namespace, len(rule.matches), rule.source)
 
-            for (location, match) in doc["rules"][rule["meta"]["name"]]["matches"].items():
-                if rule["meta"]["scope"] == capa.rules.FILE_SCOPE:
+            for (location_, match) in rule.matches:
+                location = location_.to_capa()
+
+                parent2: CapaExplorerDataItem
+                if rule.meta.scope == capa.rules.FILE_SCOPE:
                     parent2 = parent
-                elif rule["meta"]["scope"] == capa.rules.FUNCTION_SCOPE:
+                elif rule.meta.scope == capa.rules.FUNCTION_SCOPE:
                     parent2 = CapaExplorerFunctionItem(parent, location)
-                elif rule["meta"]["scope"] == capa.rules.BASIC_BLOCK_SCOPE:
+                elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
                     parent2 = CapaExplorerBlockItem(parent, location)
                 else:
-                    raise RuntimeError("unexpected rule scope: " + str(rule["meta"]["scope"]))
+                    raise RuntimeError("unexpected rule scope: " + str(rule.meta.scope))
 
                 self.render_capa_doc_match(parent2, match, doc)
 
-    def render_capa_doc(self, doc, by_function):
+    def render_capa_doc(self, doc: rd.ResultDocument, by_function: bool):
         """render capa features specified in doc
 
         @param doc: capa result doc
@@ -492,24 +511,32 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         # inform model changes have ended
         self.endResetModel()
 
-    def capa_doc_feature_to_display(self, feature):
+    def capa_doc_feature_to_display(self, feature: frzf.Feature):
         """convert capa doc feature type string to display string for ui
 
         @param feature: capa feature read from doc
         """
-        key = feature["type"]
-        value = feature[feature["type"]]
+        key = feature.type
+        value = getattr(feature, feature.type)
+
         if value:
-            if key == "string":
+            if isinstance(feature, frzf.StringFeature):
                 value = '"%s"' % capa.features.common.escape_string(value)
-            if feature.get("description", ""):
-                return "%s(%s = %s)" % (key, value, feature["description"])
+            if feature.description:
+                return "%s(%s = %s)" % (key, value, feature.description)
             else:
                 return "%s(%s)" % (key, value)
         else:
             return "%s" % key
 
-    def render_capa_doc_feature_node(self, parent, feature, locations, doc):
+    def render_capa_doc_feature_node(
+        self,
+        parent: CapaExplorerDataItem,
+        match: rd.Match,
+        feature: frzf.Feature,
+        locations: List[Address],
+        doc: rd.ResultDocument,
+    ):
         """process capa doc feature node
 
         @param parent: parent node to which child is assigned
@@ -523,6 +550,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             # only one location for feature so no need to nest children
             parent2 = self.render_capa_doc_feature(
                 parent,
+                match,
                 feature,
                 next(iter(locations)),
                 doc,
@@ -533,11 +561,19 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             parent2 = CapaExplorerFeatureItem(parent, display)
 
             for location in sorted(locations):
-                self.render_capa_doc_feature(parent2, feature, location, doc)
+                self.render_capa_doc_feature(parent2, match, feature, location, doc)
 
         return parent2
 
-    def render_capa_doc_feature(self, parent, feature, location, doc, display="-"):
+    def render_capa_doc_feature(
+        self,
+        parent: CapaExplorerDataItem,
+        match: rd.Match,
+        feature: frzf.Feature,
+        location: Address,
+        doc: rd.ResultDocument,
+        display="-",
+    ):
         """render capa feature read from doc
 
         @param parent: parent node to which new child is assigned
@@ -547,71 +583,82 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param display: text to display in plugin UI
         """
 
-        # convert to offset from locations: List[Address]
-        try:
-            location = int(location)
-        except TypeError:
-            # e.g. capa.features.address._NoAddress, global features
-            return
-
         # special handling for characteristic pending type
-        if feature["type"] == "characteristic":
-            if feature[feature["type"]] in ("embedded pe",):
+        if isinstance(feature, frzf.CharacteristicFeature):
+            characteristic = feature.characteristic
+            if characteristic in ("embedded pe",):
                 return CapaExplorerByteViewItem(parent, display, location)
 
-            if feature[feature["type"]] in ("loop", "recursive call", "tight loop"):
+            if characteristic in ("loop", "recursive call", "tight loop"):
                 return CapaExplorerFeatureItem(parent, display=display)
 
             # default to instruction view for all other characteristics
             return CapaExplorerInstructionViewItem(parent, display, location)
 
-        if feature["type"] == "match":
+        elif isinstance(feature, frzf.MatchFeature):
             # display content of rule for all rule matches
-            return CapaExplorerRuleMatchItem(
-                parent, display, source=doc["rules"].get(feature[feature["type"]], {}).get("source", "")
-            )
+            matched_rule_name = feature.match
+            return CapaExplorerRuleMatchItem(parent, display, source=doc.rules[matched_rule_name].source)
 
-        if feature["type"] in ("regex", "substring"):
-            for s, locations in feature["matches"].items():
+        # wb: 614: substring feature?
+        elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
+            for capture, locations in sorted(match.captures.items()):
                 if location in locations:
                     return CapaExplorerStringViewItem(
-                        parent, display, location, '"' + capa.features.common.escape_string(s) + '"'
+                        parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
                     )
 
             # programming error: the given location should always be found in the regex matches
             raise ValueError("regex match at location not found")
 
-        if feature["type"] == "basicblock":
+        elif isinstance(feature, frzf.BasicBlockFeature):
             return CapaExplorerBlockItem(parent, location)
 
-        if feature["type"] in (
-            "bytes",
-            "api",
-            "mnemonic",
-            "number",
-            "offset",
+        elif isinstance(
+            feature,
+            (
+                frzf.BytesFeature,
+                frzf.APIFeature,
+                frzf.MnemonicFeature,
+                frzf.NumberFeature,
+                frzf.OffsetFeature,
+            ),
         ):
             # display instruction preview
             return CapaExplorerInstructionViewItem(parent, display, location)
 
-        if feature["type"] in ("section",):
+        elif isinstance(feature, frzf.SectionFeature):
             # display byte preview
             return CapaExplorerByteViewItem(parent, display, location)
 
-        if feature["type"] in ("string",):
+        elif isinstance(feature, frzf.StringFeature):
             # display string preview
             return CapaExplorerStringViewItem(
-                parent, display, location, '"%s"' % capa.features.common.escape_string(feature[feature["type"]])
+                parent, display, location, '"%s"' % capa.features.common.escape_string(feature.string)
             )
 
-        if feature["type"] in ("import", "export", "function-name"):
+        elif isinstance(
+            feature,
+            (
+                frzf.ImportFeature,
+                frzf.ExportFeature,
+                frzf.FunctionNameFeature,
+            ),
+        ):
             # display no preview
             return CapaExplorerFeatureItem(parent, location=location, display=display)
 
-        if feature["type"] in ("arch", "os", "format"):
+        elif isinstance(
+            feature,
+            (
+                frzf.ArchFeature,
+                frzf.OSFeature,
+                frzf.FormatFeature,
+            ),
+        ):
             return CapaExplorerFeatureItem(parent, display=display)
 
-        raise RuntimeError("unexpected feature type: " + str(feature["type"]))
+        raise RuntimeError("unexpected feature type: " + str(feature.type))
 
     def update_function_name(self, old_name, new_name):
         """update all instances of old function name with new function name
