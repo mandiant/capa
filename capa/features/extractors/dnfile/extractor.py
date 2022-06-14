@@ -62,7 +62,10 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def get_instructions(self, fh, bbh):
         for insn in bbh.inner.instructions:
-            yield InsnHandle(address=DNTokenOffsetAddress(bbh.address.token, insn.offset - fh.inner.offset), inner=insn)
+            yield InsnHandle(
+                address=DNTokenOffsetAddress(bbh.address.token, insn.offset - (fh.inner.offset + fh.inner.header_size)),
+                inner=insn,
+            )
 
     def extract_insn_features(self, fh, bbh, ih) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.dnfile.insn.extract_features(fh, bbh, ih)
