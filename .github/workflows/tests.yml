@@ -4,8 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    # TODO cleanup these
-    branches: [ master, dotnet-main, feature-981 ]
+    branches: [ master ]
 
 # save workspaces to speed up testing
 env:
