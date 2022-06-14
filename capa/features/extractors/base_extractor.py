@@ -8,11 +8,12 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Iterator, Union
+from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
+import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import Address, AbsoluteVirtualAddress
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -89,7 +90,7 @@ class FeatureExtractor:
         super(FeatureExtractor, self).__init__()
 
     @abc.abstractmethod
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, NO_ADDRESS]:
+    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         """
         fetch the preferred load address at which the sample was analyzed.
 
