@@ -8,11 +8,11 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Iterator
+from typing import Any, Dict, Tuple, Iterator, Union
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -89,9 +89,13 @@ class FeatureExtractor:
         super(FeatureExtractor, self).__init__()
 
     @abc.abstractmethod
-    def get_base_address(self) -> AbsoluteVirtualAddress:
+    def get_base_address(self) -> Union[AbsoluteVirtualAddress, NO_ADDRESS]:
         """
         fetch the preferred load address at which the sample was analyzed.
+
+        when the base address is `NO_ADDRESS`, then the loader has no concept of a preferred load address.
+        such as: shellcode, .NET modules, etc.
+        in these scenarios, RelativeVirtualAddresses aren't used.
         """
         raise NotImplementedError()
 
