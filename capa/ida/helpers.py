@@ -132,7 +132,7 @@ def collect_metadata(rules):
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
-        # "argv" is not relevant here
+        "argv": [],
         "sample": {
             "md5": md5,
             "sha1": "",  # not easily accessible
