@@ -68,6 +68,7 @@ import capa
 import capa.main
 import capa.rules
 import capa.render.json
+import capa.render.result_document as rd
 
 logger = logging.getLogger("capa")
 
@@ -126,19 +127,14 @@ def get_capa_results(args):
             "error": "unexpected error: %s" % (e),
         }
 
-    meta = capa.main.collect_metadata("", path, "", extractor)
+    meta = capa.main.collect_metadata([], path, [], extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
-    return {
-        "path": path,
-        "status": "ok",
-        "ok": {
-            "meta": meta,
-            "capabilities": capabilities,
-        },
-    }
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+
+    return {"path": path, "status": "ok", "ok": doc.dict(exclude_none=True)}
 
 
 def main(argv=None):
@@ -205,11 +201,7 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                meta = result["ok"]["meta"]
-                capabilities = result["ok"]["capabilities"]
-                # our renderer expects to emit a json document for a single sample
-                # so we deserialize the json document, store it in a larger dict, and we'll subsequently re-encode.
-                results[result["path"]] = json.loads(capa.render.json.render(meta, rules, capabilities))
+                results[result["path"]] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
             else:
                 raise ValueError("unexpected status: %s" % (result["status"]))
 
