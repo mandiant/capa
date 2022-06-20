@@ -64,6 +64,9 @@ def test_render_meta_mbc():
         rule:
           meta:
             name: test rule
+            scope: function
+            authors:
+              - foo
             mbc:
               - {:s}
           features:
@@ -73,12 +76,12 @@ def test_render_meta_mbc():
         )
     )
     r = capa.rules.Rule.from_yaml(rule)
-    rule_meta = capa.render.result_document.convert_meta_to_result_document(r.meta)
-    attack = rule_meta["mbc"][0]
+    rule_meta = capa.render.result_document.RuleMetadata.from_capa(r)
+    mbc = rule_meta.mbc[0]
 
-    assert attack["id"] == id
-    assert attack["objective"] == objective
-    assert attack["behavior"] == behavior
-    assert attack["method"] == method
+    assert mbc.id == id
+    assert mbc.objective == objective
+    assert mbc.behavior == behavior
+    assert mbc.method == method
 
-    assert capa.render.utils.format_parts_id(attack) == canonical
+    assert capa.render.utils.format_parts_id(mbc) == canonical
