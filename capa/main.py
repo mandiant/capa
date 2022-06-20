@@ -44,6 +44,7 @@ import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
+import capa.features.extractors.base_extractor
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
@@ -652,7 +653,12 @@ def get_signatures(sigs_path):
     return paths
 
 
-def collect_metadata(argv, sample_path, rules_path, extractor):
+def collect_metadata(
+    argv: List[str],
+    sample_path: str,
+    rules_path: List[str],
+    extractor: capa.features.extractors.base_extractor.FeatureExtractor,
+):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
