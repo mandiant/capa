@@ -4,6 +4,7 @@ from typing import Tuple, Iterator
 
 import dnfile
 import pefile
+from dncil.clr.token import Token
 
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
@@ -22,6 +23,7 @@ from capa.features.common import (
     Namespace,
     Characteristic,
 )
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     DnClass,
@@ -37,27 +39,27 @@ from capa.features.extractors.dnfile.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def extract_file_format(**kwargs) -> Iterator[Tuple[Format, int]]:
-    yield Format(FORMAT_DOTNET), 0x0
+def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
+    yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 
-def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, int]]:
+def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
-        yield Import(str(method)), method.token
+        yield Import(str(method)), DNTokenAddress(Token(method.token))
 
     for imp in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
         for name in capa.features.extractors.helpers.generate_symbols(imp.modulename, imp.methodname):
-            yield Import(name), imp.token
+            yield Import(name), DNTokenAddress(Token(imp.token))
 
 
-def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, int]]:
+def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, Address]]:
     for method in get_dotnet_managed_methods(pe):
-        yield FunctionName(str(method)), method.token
+        yield FunctionName(str(method)), DNTokenAddress(Token(method.token))
 
 
-def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, int]]:
+def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, Address]]:
     """emit namespace features from TypeRef and TypeDef tables"""
 
     # namespaces may be referenced multiple times, so we need to filter
@@ -74,48 +76,50 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
 
     for namespace in namespaces:
         # namespace do not have an associated token, so we yield 0x0
-        yield Namespace(namespace), 0x0
+        yield Namespace(namespace), NO_ADDRESS
 
 
-def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, int]]:
+def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
-        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), DNTokenAddress(Token(token))
 
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
-        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), token
+        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), DNTokenAddress(Token(token))
 
 
-def extract_file_os(**kwargs) -> Iterator[Tuple[OS, int]]:
-    yield OS(OS_ANY), 0x0
+def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
+    yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, int]]:
+def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
-        yield Arch(ARCH_I386), 0x0
+        yield Arch(ARCH_I386), NO_ADDRESS
     elif not pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
-        yield Arch(ARCH_AMD64), 0x0
+        yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        yield Arch(ARCH_ANY), 0x0
+        yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, int]]:
+def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, Address]]:
     yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
 
 
-def extract_file_mixed_mode_characteristic_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Characteristic, int]]:
+def extract_file_mixed_mode_characteristic_features(
+    pe: dnfile.dnPE, **kwargs
+) -> Iterator[Tuple[Characteristic, Address]]:
     if is_dotnet_mixed_mode(pe):
-        yield Characteristic("mixed mode"), 0x0
+        yield Characteristic("mixed mode"), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe):  # type: ignore
-            yield feature, va
+        for feature, addr in file_handler(pe=pe):  # type: ignore
+            yield feature, addr
 
 
 FILE_HANDLERS = (
@@ -129,7 +133,7 @@ FILE_HANDLERS = (
 )
 
 
-def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, int]]:
+def extract_global_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for handler in GLOBAL_HANDLERS:
         for feature, va in handler(pe=pe):  # type: ignore
             yield feature, va
@@ -147,8 +151,8 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
-    def get_base_address(self) -> int:
-        return 0x0
+    def get_base_address(self):
+        return NO_ADDRESS
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT

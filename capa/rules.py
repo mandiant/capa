@@ -12,7 +12,6 @@ import uuid
 import codecs
 import logging
 import binascii
-import functools
 import collections
 from enum import Enum
 
@@ -40,6 +39,7 @@ import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
+from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,6 @@ logger = logging.getLogger(__name__)
 META_KEYS = (
     "name",
     "namespace",
-    "rule-category",
     "maec/analysis-conclusion",
     "maec/analysis-conclusion-ov",
     "maec/malware-family",
@@ -692,6 +691,9 @@ class Rule:
                 for new_rule in self._extract_subscope_rules_rec(child):
                     yield new_rule
 
+    def is_subscope_rule(self):
+        return bool(self.meta.get("capa/subscope-rule", False))
+
     def extract_subscope_rules(self):
         """
         scan through the statements of this rule,
@@ -1253,7 +1255,7 @@ class RuleSet:
         #  at lower scope, e.g. function scope.
         # so, we find all dependencies of all rules, and later will filter them down.
         for rule in rules:
-            if rule.meta.get("capa/subscope-rule", False):
+            if rule.is_subscope_rule():
                 continue
 
             scope_rules.update(get_rules_and_dependencies(rules, rule.name))
@@ -1306,7 +1308,7 @@ class RuleSet:
                             break
         return RuleSet(list(rules_filtered))
 
-    def match(self, scope: Scope, features: FeatureSet, va: int) -> Tuple[FeatureSet, ceng.MatchResults]:
+    def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
         """
         match rules from this ruleset at the given scope against the given features.
 
@@ -1338,7 +1340,7 @@ class RuleSet:
         # first, match against the set of rules that have at least one
         # feature shared with our feature set.
         candidate_rules = [self.rules[name] for name in candidate_rule_names]
-        features2, easy_matches = ceng.match(candidate_rules, features, va)
+        features2, easy_matches = ceng.match(candidate_rules, features, addr)
 
         # note that we've stored the updated feature set in `features2`.
         # this contains a superset of the features in `features`;
@@ -1357,7 +1359,7 @@ class RuleSet:
         # that we can't really make any guesses about.
         # these are rules with hard features, like substring/regex/bytes and match statements.
         hard_rules = [self.rules[name] for name in hard_rule_names]
-        features3, hard_matches = ceng.match(hard_rules, features2, va)
+        features3, hard_matches = ceng.match(hard_rules, features2, addr)
 
         # note that above, we probably are skipping matching a bunch of
         # rules that definitely would never hit.

@@ -5,29 +5,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import json
-
+import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.render.result_document import convert_capabilities_to_result_document
-
-
-class CapaJsonObjectEncoder(json.JSONEncoder):
-    """JSON encoder that emits Python sets as sorted lists"""
-
-    def default(self, obj):
-        if isinstance(obj, (list, dict, int, float, bool, type(None))) or isinstance(obj, str):
-            return json.JSONEncoder.default(self, obj)
-        elif isinstance(obj, set):
-            return list(sorted(obj))
-        else:
-            # probably will TypeError
-            return json.JSONEncoder.default(self, obj)
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    return json.dumps(
-        convert_capabilities_to_result_document(meta, rules, capabilities),
-        cls=CapaJsonObjectEncoder,
-        sort_keys=True,
-    )
+    return rd.ResultDocument.from_capa(meta, rules, capabilities).json(exclude_none=True)

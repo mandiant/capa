@@ -1,12 +1,15 @@
 import re
 import string
 import struct
+from typing import Tuple, Iterator
 
-from smda.common.SmdaReport import SmdaReport
+import smda
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Characteristic
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -15,17 +18,20 @@ PATTERN_HEXNUM = re.compile(r"[+\-] (?P<num>0x[a-fA-F0-9]+)")
 PATTERN_SINGLENUM = re.compile(r"[+\-] (?P<num>[0-9])")
 
 
-def extract_insn_api_features(f, bb, insn):
+def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse API features from the given instruction."""
-    if insn.offset in f.apirefs:
-        api_entry = f.apirefs[insn.offset]
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
+    if ih.address in f.apirefs:
+        api_entry = f.apirefs[ih.address]
         # reformat
         dll_name, api_name = api_entry.split("!")
         dll_name = dll_name.split(".")[0]
         dll_name = dll_name.lower()
         for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
-            yield API(name), insn.offset
-    elif insn.offset in f.outrefs:
+            yield API(name), ih.address
+    elif ih.address in f.outrefs:
         current_function = f
         current_instruction = insn
         for index in range(THUNK_CHAIN_DEPTH_DELTA):
@@ -44,7 +50,7 @@ def extract_insn_api_features(f, bb, insn):
                             dll_name = dll_name.split(".")[0]
                             dll_name = dll_name.lower()
                             for name in capa.features.extractors.helpers.generate_symbols(dll_name, api_name):
-                                yield API(name), insn.offset
+                                yield API(name), ih.address
                     elif referenced_function.num_instructions == 1 and referenced_function.num_outrefs == 1:
                         current_function = referenced_function
                         current_instruction = [i for i in referenced_function.getInstructions()][0]
@@ -52,11 +58,14 @@ def extract_insn_api_features(f, bb, insn):
                     return
 
 
-def extract_insn_number_features(f, bb, insn):
+def extract_insn_number_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse number features from the given instruction."""
     # example:
     #
     #     push    3136B0h         ; dwControlCode
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
     operands = [o.strip() for o in insn.operands.split(",")]
     if insn.mnemonic == "add" and operands[0] in ["esp", "rsp"]:
         # skip things like:
@@ -72,8 +81,8 @@ def extract_insn_number_features(f, bb, insn):
         except ValueError:
             continue
         else:
-            yield Number(value), insn.offset
-            yield OperandNumber(i, value), insn.offset
+            yield Number(value), ih.address
+            yield OperandNumber(i, value), ih.address
 
             if insn.mnemonic == "add" and 0 < value < MAX_STRUCTURE_SIZE:
                 # for pattern like:
@@ -81,8 +90,8 @@ def extract_insn_number_features(f, bb, insn):
                 #     add eax, 0x10
                 #
                 # assume 0x10 is also an offset (imagine eax is a pointer).
-                yield Offset(value), insn.offset
-                yield OperandOffset(i, value), insn.offset
+                yield Offset(value), ih.address
+                yield OperandOffset(i, value), ih.address
 
 
 def read_bytes(smda_report, va, num_bytes=None):
@@ -131,12 +140,15 @@ def derefs(smda_report, p):
         p = val
 
 
-def extract_insn_bytes_features(f, bb, insn):
+def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse byte sequence features from the given instruction.
     example:
         #     push    offset iid_004118d4_IShellLinkA ; riid
     """
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
     for data_ref in insn.getDataRefs():
         for v in derefs(f.smda_report, data_ref):
             bytes_read = read_bytes(f.smda_report, v)
@@ -145,7 +157,7 @@ def extract_insn_bytes_features(f, bb, insn):
             if capa.features.extractors.helpers.all_zeros(bytes_read):
                 continue
 
-            yield Bytes(bytes_read), insn.offset
+            yield Bytes(bytes_read), ih.address
 
 
 def detect_ascii_len(smda_report, offset):
@@ -189,24 +201,29 @@ def read_string(smda_report, offset):
         return read_bytes(smda_report, offset, ulen).decode("utf-16")
 
 
-def extract_insn_string_features(f, bb, insn):
+def extract_insn_string_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse string features from the given instruction."""
     # example:
     #
     #     push    offset aAcr     ; "ACR  > "
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
     for data_ref in insn.getDataRefs():
         for v in derefs(f.smda_report, data_ref):
             string_read = read_string(f.smda_report, v)
             if string_read:
-                yield String(string_read.rstrip("\x00")), insn.offset
+                yield String(string_read.rstrip("\x00")), ih.address
 
 
-def extract_insn_offset_features(f, bb, insn):
+def extract_insn_offset_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse structure offset features from the given instruction."""
     # examples:
     #
     #     mov eax, [esi + 4]
     #     mov eax, [esi + ecx + 16384]
+    insn: smda.Insn = ih.inner
+
     operands = [o.strip() for o in insn.operands.split(",")]
     for i, operand in enumerate(operands):
         if "esp" in operand or "ebp" in operand or "rbp" in operand:
@@ -234,13 +251,13 @@ def extract_insn_offset_features(f, bb, insn):
                 #     lea eax, [ebx + 1]
                 #
                 # assume 1 is also an offset (imagine ebx is a zero register).
-                yield Number(number), insn.offset
-                yield OperandNumber(i, number), insn.offset
+                yield Number(number), ih.address
+                yield OperandNumber(i, number), ih.address
 
             continue
 
-        yield Offset(number), insn.offset
-        yield OperandOffset(i, number), insn.offset
+        yield Offset(number), ih.address
+        yield OperandOffset(i, number), ih.address
 
 
 def is_security_cookie(f, bb, insn):
@@ -264,11 +281,16 @@ def is_security_cookie(f, bb, insn):
     return False
 
 
-def extract_insn_nzxor_characteristic_features(f, bb, insn):
+def extract_insn_nzxor_characteristic_features(
+    fh: FunctionHandle, bh: BBHandle, ih: InsnHandle
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse non-zeroing XOR instruction from the given instruction.
     ignore expected non-zeroing XORs, e.g. security cookies.
     """
+    f: smda.Function = fh.inner
+    bb: smda.BasicBlock = bh.inner
+    insn: smda.Insn = ih.inner
 
     if insn.mnemonic not in ("xor", "xorpd", "xorps", "pxor"):
         return
@@ -280,18 +302,20 @@ def extract_insn_nzxor_characteristic_features(f, bb, insn):
     if is_security_cookie(f, bb, insn):
         return
 
-    yield Characteristic("nzxor"), insn.offset
+    yield Characteristic("nzxor"), ih.address
 
 
-def extract_insn_mnemonic_features(f, bb, insn):
+def extract_insn_mnemonic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse mnemonic features from the given instruction."""
-    yield Mnemonic(insn.mnemonic), insn.offset
+    yield Mnemonic(ih.inner.mnemonic), ih.address
 
 
-def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, insn):
+def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
+    insn: smda.Insn = ih.inner
+
     if insn.mnemonic != "call":
         return
 
@@ -299,13 +323,14 @@ def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, insn):
         return
 
     if int(insn.operands, 16) == insn.offset + 5:
-        yield Characteristic("call $+5"), insn.offset
+        yield Characteristic("call $+5"), ih.address
 
 
-def extract_insn_peb_access_characteristic_features(f, bb, insn):
+def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
+    insn: smda.Insn = ih.inner
 
     if insn.mnemonic not in ["push", "mov"]:
         return
@@ -313,65 +338,75 @@ def extract_insn_peb_access_characteristic_features(f, bb, insn):
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
         if "fs:" in operand and "0x30" in operand:
-            yield Characteristic("peb access"), insn.offset
+            yield Characteristic("peb access"), ih.address
         elif "gs:" in operand and "0x60" in operand:
-            yield Characteristic("peb access"), insn.offset
+            yield Characteristic("peb access"), ih.address
 
 
-def extract_insn_segment_access_features(f, bb, insn):
+def extract_insn_segment_access_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse the instruction for access to fs or gs"""
+    insn: smda.Insn = ih.inner
+
     operands = [o.strip() for o in insn.operands.split(",")]
     for operand in operands:
         if "fs:" in operand:
-            yield Characteristic("fs access"), insn.offset
+            yield Characteristic("fs access"), ih.address
         elif "gs:" in operand:
-            yield Characteristic("gs access"), insn.offset
+            yield Characteristic("gs access"), ih.address
 
 
-def extract_insn_cross_section_cflow(f, bb, insn):
+def extract_insn_cross_section_cflow(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     inspect the instruction for a CALL or JMP that crosses section boundaries.
     """
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
     if insn.mnemonic in ["call", "jmp"]:
-        if insn.offset in f.apirefs:
+        if ih.address in f.apirefs:
             return
 
         smda_report = insn.smda_function.smda_report
-        if insn.offset in f.outrefs:
-            for target in f.outrefs[insn.offset]:
-                if smda_report.getSection(insn.offset) != smda_report.getSection(target):
-                    yield Characteristic("cross section flow"), insn.offset
+        if ih.address in f.outrefs:
+            for target in f.outrefs[ih.address]:
+                if smda_report.getSection(ih.address) != smda_report.getSection(target):
+                    yield Characteristic("cross section flow"), ih.address
         elif insn.operands.startswith("0x"):
             target = int(insn.operands, 16)
-            if smda_report.getSection(insn.offset) != smda_report.getSection(target):
-                yield Characteristic("cross section flow"), insn.offset
+            if smda_report.getSection(ih.address) != smda_report.getSection(target):
+                yield Characteristic("cross section flow"), ih.address
 
 
 # this is a feature that's most relevant at the function scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_calls_from(f, bb, insn):
+def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+    f: smda.Function = fh.inner
+    insn: smda.Insn = ih.inner
+
     if insn.mnemonic != "call":
         return
 
-    if insn.offset in f.outrefs:
-        for outref in f.outrefs[insn.offset]:
-            yield Characteristic("calls from"), outref
+    if ih.address in f.outrefs:
+        for outref in f.outrefs[ih.address]:
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(outref)
 
             if outref == f.offset:
                 # if we found a jump target and it's the function address
                 # mark as recursive
-                yield Characteristic("recursive call"), outref
-    if insn.offset in f.apirefs:
-        yield Characteristic("calls from"), insn.offset
+                yield Characteristic("recursive call"), AbsoluteVirtualAddress(outref)
+    if ih.address in f.apirefs:
+        yield Characteristic("calls from"), ih.address
 
 
 # this is a feature that's most relevant at the function or basic block scope,
 # however, its most efficient to extract at the instruction scope.
-def extract_function_indirect_call_characteristic_features(f, bb, insn):
+def extract_function_indirect_call_characteristic_features(f, bb, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract indirect function call characteristic (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
     """
+    insn: smda.Insn = ih.inner
+
     if insn.mnemonic != "call":
         return
     if insn.operands.startswith("0x"):
@@ -383,7 +418,7 @@ def extract_function_indirect_call_characteristic_features(f, bb, insn):
     # call edx
     # call dword ptr [eax+50h]
     # call qword ptr [rsp+78h]
-    yield Characteristic("indirect call"), insn.offset
+    yield Characteristic("indirect call"), ih.address
 
 
 def extract_features(f, bb, insn):
@@ -391,16 +426,16 @@ def extract_features(f, bb, insn):
     extract features from the given insn.
 
     args:
-      f (smda.common.SmdaFunction): the function to process.
-      bb (smda.common.SmdaBasicBlock): the basic block to process.
-      insn (smda.common.SmdaInstruction): the instruction to process.
+      f: the function to process.
+      bb: the basic block to process.
+      insn: the instruction to process.
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this insn.
+      Tuple[Feature, Address]: the features and their location found in this insn.
     """
     for insn_handler in INSTRUCTION_HANDLERS:
-        for feature, va in insn_handler(f, bb, insn):
-            yield feature, va
+        for feature, addr in insn_handler(f, bb, insn):
+            yield feature, addr
 
 
 INSTRUCTION_HANDLERS = (

@@ -11,6 +11,7 @@ import textwrap
 
 import fixtures
 from fixtures import *
+from fixtures import _692f_dotnetfile_extractor, _1c444_dotnetfile_extractor
 
 import capa.main
 import capa.rules
@@ -438,6 +439,31 @@ def test_json_meta(capsys):
     assert capa.main.main([path, "-j"]) == 0
     std = capsys.readouterr()
     std_json = json.loads(std.out)
-    # remember: json can't have integer keys :-(
-    assert str(0x10001010) in std_json["meta"]["analysis"]["layout"]["functions"]
-    assert 0x10001179 in std_json["meta"]["analysis"]["layout"]["functions"][str(0x10001010)]["matched_basic_blocks"]
+
+    assert {"type": "absolute", "value": 0x10001010} in list(
+        map(lambda f: f["address"], std_json["meta"]["analysis"]["layout"]["functions"])
+    )
+
+    for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
+        if addr == ["absolute", 0x10001010]:
+            assert {"address": ["absolute", 0x10001179]} in info["matched_basic_blocks"]
+
+
+def test_main_dotnet(_1c444_dotnetfile_extractor):
+    # tests rules can be loaded successfully and all output modes
+    path = _1c444_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0
+
+
+def test_main_dotnet2(_692f_dotnetfile_extractor):
+    # tests rules can be loaded successfully and all output modes
+    path = _692f_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0

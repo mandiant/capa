@@ -11,7 +11,6 @@ from typing import NoReturn
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
-from capa.features.extractors.common import extract_format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
@@ -65,6 +64,9 @@ def get_auto_format(path: str) -> str:
 
 
 def get_format(sample: str) -> str:
+    # imported locally to avoid import cycle
+    from capa.features.extractors.common import extract_format
+
     with open(sample, "rb") as f:
         buf = f.read()
 

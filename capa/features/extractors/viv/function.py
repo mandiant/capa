@@ -5,36 +5,43 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+from typing import Tuple, Iterator
 
 import envi
+import viv_utils
 import vivisect.const
 
-from capa.features.common import Characteristic
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.base_extractor import FunctionHandle
 
 
-def interface_extract_function_XXX(f):
+def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse features from the given function.
 
     args:
-      f (viv_utils.Function): the function to process.
+      f: the function to process.
 
     yields:
-      (Feature, int): the feature and the address at which its found.
+      (Feature, Address): the feature and the address at which its found.
     """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
+    ...
 
 
-def extract_function_calls_to(f):
+def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    f: viv_utils.Function = fhandle.inner
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
-        yield Characteristic("calls to"), src
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(src)
 
 
-def extract_function_loop(f):
+def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse if a function has a loop
     """
+    f: viv_utils.Function = fhandle.inner
+
     edges = []
 
     for bb in f.basic_blocks:
@@ -50,22 +57,22 @@ def extract_function_loop(f):
                     edges.append((bb.va, bva))
 
     if edges and loops.has_loop(edges):
-        yield Characteristic("loop"), f.va
+        yield Characteristic("loop"), fhandle.address
 
 
-def extract_features(f):
+def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given function.
 
     args:
-      f (viv_utils.Function): the function from which to extract features
+      fh: the function handle from which to extract features
 
     yields:
       Tuple[Feature, int]: the features and their location found in this function.
     """
     for func_handler in FUNCTION_HANDLERS:
-        for feature, va in func_handler(f):
-            yield feature, va
+        for feature, addr in func_handler(fh):
+            yield feature, addr
 
 
 FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop)

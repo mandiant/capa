@@ -196,9 +196,12 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
             yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
 
-def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]:
+def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
-    for row in iter_dotnet_table(pe, "MethodDef"):
+    if not hasattr(pe.net.mdtables, "MethodDef"):
+        return
+
+    for (rid, row) in enumerate(pe.net.mdtables.MethodDef):
         if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
             # skip methods that do not have a method body
             continue
@@ -207,7 +210,8 @@ def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[CilMethodBody]
         if body is None:
             continue
 
-        yield body
+        token: int = calculate_dotnet_token_value(dnfile.enums.MetadataTables.MethodDef.value, rid + 1)
+        yield token, body
 
 
 def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]:

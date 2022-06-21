@@ -7,8 +7,11 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import io
+from typing import Union, Iterator
 
 import termcolor
+
+import capa.render.result_document as rd
 
 
 def bold(s: str) -> str:
@@ -29,42 +32,29 @@ def hex(n: int) -> str:
         return "0x%X" % n
 
 
-def parse_parts_id(s: str):
-    id = ""
-    parts = s.split("::")
-    if len(parts) > 0:
-        last = parts.pop()
-        last, _, id = last.rpartition(" ")
-        id = id.lstrip("[").rstrip("]")
-        parts.append(last)
-    return parts, id
-
-
-def format_parts_id(data):
+def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     """
     format canonical representation of ATT&CK/MBC parts and ID
     """
-    return "%s [%s]" % ("::".join(data["parts"]), data["id"])
+    return "%s [%s]" % ("::".join(data.parts), data.id)
 
 
-def capability_rules(doc):
+def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
-    for (_, _, rule) in sorted(
-        map(lambda rule: (rule["meta"].get("namespace", ""), rule["meta"]["name"], rule), doc["rules"].values())
-    ):
-        if rule["meta"].get("lib"):
+    for (_, _, rule) in sorted(map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())):
+        if rule.meta.lib:
             continue
-        if rule["meta"].get("capa/subscope"):
+        if rule.meta.is_subscope_rule:
             continue
-        if rule["meta"].get("maec/analysis-conclusion"):
+        if rule.meta.maec.analysis_conclusion:
             continue
-        if rule["meta"].get("maec/analysis-conclusion-ov"):
+        if rule.meta.maec.analysis_conclusion_ov:
             continue
-        if rule["meta"].get("maec/malware-family"):
+        if rule.meta.maec.malware_family:
             continue
-        if rule["meta"].get("maec/malware-category"):
+        if rule.meta.maec.malware_category:
             continue
-        if rule["meta"].get("maec/malware-category-ov"):
+        if rule.meta.maec.malware_category_ov:
             continue
 
         yield rule

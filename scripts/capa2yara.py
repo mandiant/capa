@@ -535,7 +535,7 @@ def convert_rules(rules, namespaces, cround):
 
         rule_name = convert_rule_name(rule.name)
 
-        if rule.meta.get("capa/subscope-rule", False):
+        if rule.is_subscope_rule():
             logger.info("skipping sub scope rule capa: " + rule.name)
             continue
 

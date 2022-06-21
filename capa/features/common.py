@@ -11,7 +11,7 @@ import abc
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union
+from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional, Sequence
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 import capa.perf
 import capa.features
 import capa.features.extractors.elf
+from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
 MAX_BYTES_FEATURE_SIZE = 0x100
@@ -70,20 +71,13 @@ class Result:
         success: bool,
         statement: Union["capa.engine.Statement", "Feature"],
         children: List["Result"],
-        locations=None,
+        locations: Optional[Set[Address]] = None,
     ):
-        """
-        args:
-          success (bool)
-          statement (capa.engine.Statement or capa.features.Feature)
-          children (list[Result])
-          locations (iterable[VA])
-        """
         super(Result, self).__init__()
         self.success = success
         self.statement = statement
         self.children = children
-        self.locations = locations if locations is not None else ()
+        self.locations = locations if locations is not None else set()
 
     def __eq__(self, other):
         if isinstance(other, bool):
@@ -98,7 +92,7 @@ class Result:
 
 
 class Feature(abc.ABC):
-    def __init__(self, value: Union[str, int, bytes], description=None):
+    def __init__(self, value: Union[str, int, float, bytes], description=None):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
@@ -115,6 +109,15 @@ class Feature(abc.ABC):
 
     def __eq__(self, other):
         return self.name == other.name and self.value == other.value
+
+    def __lt__(self, other):
+        # TODO: this is a huge hack!
+        import capa.features.freeze.features
+
+        return (
+            capa.features.freeze.features.feature_from_capa(self).json()
+            < capa.features.freeze.features.feature_from_capa(other).json()
+        )
 
     def get_value_str(self) -> str:
         """
@@ -137,27 +140,10 @@ class Feature(abc.ABC):
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[int]], **kwargs) -> Result:
+    def evaluate(self, ctx: Dict["Feature", Set[Address]], **kwargs) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-        return Result(self in ctx, self, [], locations=ctx.get(self, []))
-
-    def freeze_serialize(self):
-        return (self.__class__.__name__, [self.value])
-
-    @classmethod
-    def freeze_deserialize(cls, args):
-        # as you can see below in code,
-        # if the last argument is a dictionary,
-        # consider it to be kwargs passed to the feature constructor.
-        if len(args) == 1:
-            return cls(*args)
-        elif isinstance(args[-1], dict):
-            kwargs = args[-1]
-            args = args[:-1]
-            return cls(*args, **kwargs)
-        else:
-            return cls(*args)
+        return Result(self in ctx, self, [], locations=ctx.get(self, set()))
 
 
 class MatchedRule(Feature):
@@ -230,7 +216,7 @@ class Substring(String):
             # instead, return a new instance that has a reference to both the substring and the matched values.
             return Result(True, _MatchedSubstring(self, matches), [], locations=locations)
         else:
-            return Result(False, _MatchedSubstring(self, None), [])
+            return Result(False, _MatchedSubstring(self, {}), [])
 
     def __str__(self):
         return "substring(%s)" % self.value
@@ -244,11 +230,11 @@ class _MatchedSubstring(Substring):
     note: this type should only ever be constructed by `Substring.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, substring: Substring, matches):
+    def __init__(self, substring: Substring, matches: Dict[str, Set[Address]]):
         """
         args:
-          substring (Substring): the substring feature that matches.
-          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
+          substring: the substring feature that matches.
+          match: mapping from matching string to its locations.
         """
         super(_MatchedSubstring, self).__init__(str(substring.value), description=substring.description)
         # we want this to collide with the name of `Substring` above,
@@ -327,7 +313,7 @@ class Regex(String):
             # see #262.
             return Result(True, _MatchedRegex(self, matches), [], locations=locations)
         else:
-            return Result(False, _MatchedRegex(self, None), [])
+            return Result(False, _MatchedRegex(self, {}), [])
 
     def __str__(self):
         return "regex(string =~ %s)" % self.value
@@ -341,11 +327,11 @@ class _MatchedRegex(Regex):
     note: this type should only ever be constructed by `Regex.evaluate()`. it is not part of the public API.
     """
 
-    def __init__(self, regex: Regex, matches):
+    def __init__(self, regex: Regex, matches: Dict[str, Set[Address]]):
         """
         args:
-          regex (Regex): the regex feature that matches.
-          match (Dict[string, List[int]]|None): mapping from matching string to its locations.
+          regex: the regex feature that matches.
+          matches: mapping from matching string to its locations.
         """
         super(_MatchedRegex, self).__init__(str(regex.value), description=regex.description)
         # we want this to collide with the name of `Regex` above,
@@ -388,13 +374,6 @@ class Bytes(Feature):
 
     def get_value_str(self):
         return hex_string(bytes_to_str(self.value))
-
-    def freeze_serialize(self):
-        return (self.__class__.__name__, [bytes_to_str(self.value).upper()])
-
-    @classmethod
-    def freeze_deserialize(cls, args):
-        return cls(*[codecs.decode(x, "hex") for x in args])
 
 
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types

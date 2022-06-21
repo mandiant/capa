@@ -1,9 +1,12 @@
 import string
 import struct
+from typing import Tuple, Iterator
 
-from capa.features.common import Characteristic
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
 def _bb_has_tight_loop(f, bb):
@@ -13,10 +16,10 @@ def _bb_has_tight_loop(f, bb):
     return bb.offset in f.blockrefs[bb.offset] if bb.offset in f.blockrefs else False
 
 
-def extract_bb_tight_loop(f, bb):
+def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
-    if _bb_has_tight_loop(f, bb):
-        yield Characteristic("tight loop"), bb.offset
+    if _bb_has_tight_loop(f.inner, bb.inner):
+        yield Characteristic("tight loop"), bb.address
 
 
 def _bb_has_stackstring(f, bb):
@@ -37,10 +40,10 @@ def get_operands(smda_ins):
     return [o.strip() for o in smda_ins.operands.split(",")]
 
 
-def extract_stackstring(f, bb):
+def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for stackstring indicators"""
-    if _bb_has_stackstring(f, bb):
-        yield Characteristic("stack string"), bb.offset
+    if _bb_has_stackstring(f.inner, bb.inner):
+        yield Characteristic("stack string"), bb.address
 
 
 def is_mov_imm_to_stack(smda_ins):
@@ -107,21 +110,21 @@ def get_printable_len(instr):
     return 0
 
 
-def extract_features(f, bb):
+def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
     args:
-      f (smda.common.SmdaFunction): the function from which to extract features
-      bb (smda.common.SmdaBasicBlock): the basic block to process.
+      f: the function from which to extract features
+      bb: the basic block to process.
 
     yields:
-      Tuple[Feature, int]: the features and their location found in this basic block.
+      Tuple[Feature, Address]: the features and their location found in this basic block.
     """
-    yield BasicBlock(), bb.offset
+    yield BasicBlock(), bb.address
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, va in bb_handler(f, bb):
-            yield feature, va
+        for feature, addr in bb_handler(f, bb):
+            yield feature, addr
 
 
 BASIC_BLOCK_HANDLERS = (

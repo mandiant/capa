@@ -8,6 +8,7 @@
 
 import logging
 import datetime
+import contextlib
 
 import idc
 import idaapi
@@ -107,14 +108,31 @@ def get_file_sha256():
     return sha256
 
 
-def collect_metadata():
+def collect_metadata(rules):
     """ """
     md5 = get_file_md5()
     sha256 = get_file_sha256()
 
+    info: idaapi.idainfo = idaapi.get_inf_structure()
+    if info.procname == "metapc" and info.is_64bit():
+        arch = "x86_64"
+    elif info.procname == "metapc" and info.is_32bit():
+        arch = "x86"
+    else:
+        arch = "unknown arch"
+
+    format_name: str = ida_loader.get_file_type_name()
+    if "PE" in format_name:
+        os = "windows"
+    elif "ELF" in format_name:
+        with contextlib.closing(capa.ida.helpers.IDAIO()) as f:
+            os = capa.features.extractors.elf.detect_elf_os(f)
+    else:
+        os = "unknown os"
+
     return {
         "timestamp": datetime.datetime.now().isoformat(),
-        # "argv" is not relevant here
+        "argv": [],
         "sample": {
             "md5": md5,
             "sha1": "",  # not easily accessible
@@ -123,7 +141,10 @@ def collect_metadata():
         },
         "analysis": {
             "format": idaapi.get_file_type_name(),
+            "arch": arch,
+            "os": os,
             "extractor": "ida",
+            "rules": rules,
             "base_address": idaapi.get_imagebase(),
             "layout": {
                 # this is updated after capabilities have been collected.
@@ -131,6 +152,12 @@ def collect_metadata():
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             },
+            # ignore these for now - not used by IDA plugin.
+            "feature_counts": {
+                "file": {},
+                "functions": {},
+            },
+            "library_functions": {},
         },
         "version": capa.version.__version__,
     }

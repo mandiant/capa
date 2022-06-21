@@ -17,6 +17,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
+from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def extract_file_embedded_pe(buf, **kwargs):
     for offset, _ in capa.features.extractors.helpers.carve_pe(buf, 1):
-        yield Characteristic("embedded pe"), offset
+        yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
 def extract_file_export_names(pe, **kwargs):
@@ -39,7 +40,7 @@ def extract_file_export_names(pe, **kwargs):
             except UnicodeDecodeError:
                 continue
             va = base_address + export.address
-            yield Export(name), va
+            yield Export(name), AbsoluteVirtualAddress(va)
 
 
 def extract_file_import_names(pe, **kwargs):
@@ -71,7 +72,7 @@ def extract_file_import_names(pe, **kwargs):
                         continue
 
                 for name in capa.features.extractors.helpers.generate_symbols(modname, impname):
-                    yield Import(name), imp.address
+                    yield Import(name), AbsoluteVirtualAddress(imp.address)
 
 
 def extract_file_section_names(pe, **kwargs):
@@ -83,7 +84,7 @@ def extract_file_section_names(pe, **kwargs):
         except UnicodeDecodeError:
             continue
 
-        yield Section(name), base_address + section.VirtualAddress
+        yield Section(name), AbsoluteVirtualAddress(base_address + section.VirtualAddress)
 
 
 def extract_file_strings(buf, **kwargs):
@@ -103,18 +104,18 @@ def extract_file_function_names(**kwargs):
 def extract_file_os(**kwargs):
     # assuming PE -> Windows
     # though i suppose they're also used by UEFI
-    yield OS(OS_WINDOWS), 0x0
+    yield OS(OS_WINDOWS), NO_ADDRESS
 
 
 def extract_file_format(**kwargs):
-    yield Format(FORMAT_PE), 0x0
+    yield Format(FORMAT_PE), NO_ADDRESS
 
 
 def extract_file_arch(pe, **kwargs):
     if pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_I386"]:
-        yield Arch(ARCH_I386), 0x0
+        yield Arch(ARCH_I386), NO_ADDRESS
     elif pe.FILE_HEADER.Machine == pefile.MACHINE_TYPE["IMAGE_FILE_MACHINE_AMD64"]:
-        yield Arch(ARCH_AMD64), 0x0
+        yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
         logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
@@ -176,7 +177,7 @@ class PefileFeatureExtractor(FeatureExtractor):
         self.pe = pefile.PE(path)
 
     def get_base_address(self):
-        return self.pe.OPTIONAL_HEADER.ImageBase
+        return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
 
     def extract_global_features(self):
         with open(self.path, "rb") as f:

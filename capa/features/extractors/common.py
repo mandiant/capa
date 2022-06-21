@@ -2,36 +2,38 @@ import io
 import logging
 import binascii
 import contextlib
+from typing import Tuple, Iterator
 
 import pefile
 
 import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
 from capa.features.freeze import is_freeze
+from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
 logger = logging.getLogger(__name__)
 
 
-def extract_file_strings(buf, **kwargs):
+def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
     for s in capa.features.extractors.strings.extract_ascii_strings(buf):
-        yield String(s.s), s.offset
+        yield String(s.s), FileOffsetAddress(s.offset)
 
     for s in capa.features.extractors.strings.extract_unicode_strings(buf):
-        yield String(s.s), s.offset
+        yield String(s.s), FileOffsetAddress(s.offset)
 
 
-def extract_format(buf):
+def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(b"MZ"):
-        yield Format(FORMAT_PE), 0x0
+        yield Format(FORMAT_PE), NO_ADDRESS
     elif buf.startswith(b"\x7fELF"):
-        yield Format(FORMAT_ELF), 0x0
+        yield Format(FORMAT_ELF), NO_ADDRESS
     elif is_freeze(buf):
-        yield Format(FORMAT_FREEZE), 0x0
+        yield Format(FORMAT_FREEZE), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
@@ -41,7 +43,7 @@ def extract_format(buf):
         return
 
 
-def extract_arch(buf):
+def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(b"MZ"):
         yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
 
@@ -53,7 +55,7 @@ def extract_arch(buf):
             logger.debug("unsupported arch: %s", arch)
             return
 
-        yield Arch(arch), 0x0
+        yield Arch(arch), NO_ADDRESS
 
     else:
         # we likely end up here:
@@ -70,9 +72,9 @@ def extract_arch(buf):
         return
 
 
-def extract_os(buf):
+def extract_os(buf) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(b"MZ"):
-        yield OS(OS_WINDOWS), 0x0
+        yield OS(OS_WINDOWS), NO_ADDRESS
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
@@ -81,7 +83,7 @@ def extract_os(buf):
             logger.debug("unsupported os: %s", os)
             return
 
-        yield OS(os), 0x0
+        yield OS(os), NO_ADDRESS
 
     else:
         # we likely end up here:

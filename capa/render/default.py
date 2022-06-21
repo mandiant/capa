@@ -11,7 +11,9 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
-import capa.render.result_document
+import capa.features.freeze as frz
+import capa.render.result_document as rd
+import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.render.utils import StringIO
@@ -27,50 +29,49 @@ def width(s: str, character_count: int) -> str:
         return s
 
 
-def render_meta(doc, ostream: StringIO):
+def render_meta(doc: rd.ResultDocument, ostream: StringIO):
     rows = [
-        (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
-        ("sha1", doc["meta"]["sample"]["sha1"]),
-        ("sha256", doc["meta"]["sample"]["sha256"]),
-        ("os", doc["meta"]["analysis"]["os"]),
-        ("format", doc["meta"]["analysis"]["format"]),
-        ("arch", doc["meta"]["analysis"]["arch"]),
-        ("path", doc["meta"]["sample"]["path"]),
+        (width("md5", 22), width(doc.meta.sample.md5, 82)),
+        ("sha1", doc.meta.sample.sha1),
+        ("sha256", doc.meta.sample.sha256),
+        ("os", doc.meta.analysis.os),
+        ("format", doc.meta.analysis.format),
+        ("arch", doc.meta.analysis.arch),
+        ("path", doc.meta.sample.path),
     ]
 
     ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
     ostream.write("\n")
 
 
-def find_subrule_matches(doc):
+def find_subrule_matches(doc: rd.ResultDocument):
     """
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
     matches = set([])
 
-    def rec(node):
-        if not node["success"]:
+    def rec(match: rd.Match):
+        if not match.success:
             # there's probably a bug here for rules that do `not: match: ...`
             # but we don't have any examples of this yet
             return
 
-        elif node["node"]["type"] == "statement":
-            for child in node["children"]:
+        elif isinstance(match.node, rd.StatementNode):
+            for child in match.children:
                 rec(child)
 
-        elif node["node"]["type"] == "feature":
-            if node["node"]["feature"]["type"] == "match":
-                matches.add(node["node"]["feature"]["match"])
+        elif isinstance(match.node, rd.FeatureNode) and isinstance(match.node.feature, frzf.MatchFeature):
+            matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for node in rule["matches"].values():
-            rec(node)
+        for address, match in rule.matches:
+            rec(match)
 
     return matches
 
 
-def render_capabilities(doc, ostream: StringIO):
+def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -86,18 +87,18 @@ def render_capabilities(doc, ostream: StringIO):
 
     rows = []
     for rule in rutils.capability_rules(doc):
-        if rule["meta"]["name"] in subrule_matches:
+        if rule.meta.name in subrule_matches:
             # rules that are also matched by other rules should not get rendered by default.
             # this cuts down on the amount of output while giving approx the same detail.
             # see #224
             continue
 
-        count = len(rule["matches"])
+        count = len(rule.matches)
         if count == 1:
-            capability = rutils.bold(rule["meta"]["name"])
+            capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
-        rows.append((capability, rule["meta"]["namespace"]))
+            capability = "%s (%d matches)" % (rutils.bold(rule.meta.name), count)
+        rows.append((capability, rule.meta.namespace))
 
     if rows:
         ostream.write(
@@ -108,7 +109,7 @@ def render_capabilities(doc, ostream: StringIO):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_attack(doc, ostream: StringIO):
+def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -126,17 +127,14 @@ def render_attack(doc, ostream: StringIO):
     """
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if not rule["meta"].get("att&ck"):
-            continue
-
-        for attack in rule["meta"]["att&ck"]:
-            tactics[attack["tactic"]].add((attack["technique"], attack.get("subtechnique"), attack["id"]))
+        for attack in rule.meta.attack:
+            tactics[attack.tactic].add((attack.technique, attack.subtechnique, attack.id))
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
         inner_rows = []
         for (technique, subtechnique, id) in sorted(techniques):
-            if subtechnique is None:
+            if not subtechnique:
                 inner_rows.append("%s %s" % (rutils.bold(technique), id))
             else:
                 inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
@@ -156,7 +154,7 @@ def render_attack(doc, ostream: StringIO):
         ostream.write("\n")
 
 
-def render_mbc(doc, ostream: StringIO):
+def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -172,17 +170,14 @@ def render_mbc(doc, ostream: StringIO):
     """
     objectives = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if not rule["meta"].get("mbc"):
-            continue
-
-        for mbc in rule["meta"]["mbc"]:
-            objectives[mbc["objective"]].add((mbc["behavior"], mbc.get("method"), mbc["id"]))
+        for mbc in rule.meta.mbc:
+            objectives[mbc.objective].add((mbc.behavior, mbc.method, mbc.id))
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
         inner_rows = []
         for (behavior, method, id) in sorted(behaviors):
-            if method is None:
+            if not method:
                 inner_rows.append("%s [%s]" % (rutils.bold(behavior), id))
             else:
                 inner_rows.append("%s::%s [%s]" % (rutils.bold(behavior), method, id))
@@ -200,7 +195,7 @@ def render_mbc(doc, ostream: StringIO):
         ostream.write("\n")
 
 
-def render_default(doc):
+def render_default(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
     render_meta(doc, ostream)
@@ -215,5 +210,5 @@ def render_default(doc):
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    doc = capa.render.result_document.convert_capabilities_to_result_document(meta, rules, capabilities)
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
     return render_default(doc)

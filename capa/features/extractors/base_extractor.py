@@ -7,23 +7,60 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import abc
-from typing import Tuple, Iterator, SupportsInt
+import dataclasses
+from typing import Any, Dict, Tuple, Union, Iterator
+from dataclasses import dataclass
 
+import capa.features.address
 from capa.features.common import Feature
+from capa.features.address import Address, AbsoluteVirtualAddress
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
-# the only requirement of these handles are that they support `__int__`,
-# so that they can be rendered as addresses.
+# you can use the `.address` property to get and render the address of the feature.
 #
 # these handles are only consumed by routines on
 # the feature extractor from which they were created.
-#
-# int(FunctionHandle) -> function start address
-# int(BBHandle) -> BasicBlock start address
-# int(InsnHandle) -> instruction address
-FunctionHandle = SupportsInt
-BBHandle = SupportsInt
-InsnHandle = SupportsInt
+
+
+@dataclass
+class FunctionHandle:
+    """reference to a function recognized by a feature extractor.
+
+    Attributes:
+        address: the address of the function.
+        inner: extractor-specific data.
+        ctx: a context object for the extractor.
+    """
+
+    address: Address
+    inner: Any
+    ctx: Dict[str, Any] = dataclasses.field(default_factory=dict)
+
+
+@dataclass
+class BBHandle:
+    """reference to a basic block recognized by a feature extractor.
+
+    Attributes:
+        address: the address of the basic block start address.
+        inner: extractor-specific data.
+    """
+
+    address: Address
+    inner: Any
+
+
+@dataclass
+class InsnHandle:
+    """reference to a instruction recognized by a feature extractor.
+
+    Attributes:
+        address: the address of the instruction address.
+        inner: extractor-specific data.
+    """
+
+    address: Address
+    inner: Any
 
 
 class FeatureExtractor:
@@ -53,14 +90,18 @@ class FeatureExtractor:
         super(FeatureExtractor, self).__init__()
 
     @abc.abstractmethod
-    def get_base_address(self) -> int:
+    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         """
         fetch the preferred load address at which the sample was analyzed.
+
+        when the base address is `NO_ADDRESS`, then the loader has no concept of a preferred load address.
+        such as: shellcode, .NET modules, etc.
+        in these scenarios, RelativeVirtualAddresses aren't used.
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_global_features(self) -> Iterator[Tuple[Feature, int]]:
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         """
         extract features found at every scope ("global").
 
@@ -71,12 +112,12 @@ class FeatureExtractor:
                 print('0x%x: %s', va, feature)
 
         yields:
-          Tuple[Feature, int]: feature and its location
+          Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_file_features(self) -> Iterator[Tuple[Feature, int]]:
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         """
         extract file-scope features.
 
@@ -87,7 +128,7 @@ class FeatureExtractor:
                 print('0x%x: %s', va, feature)
 
         yields:
-          Tuple[Feature, int]: feature and its location
+          Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -99,32 +140,33 @@ class FeatureExtractor:
         """
         raise NotImplementedError()
 
-    def is_library_function(self, va: int) -> bool:
+    def is_library_function(self, addr: Address) -> bool:
         """
         is the given address a library function?
         the backend may implement its own function matching algorithm, or none at all.
-        we accept a VA here, rather than function object, to handle addresses identified in instructions.
+        we accept an address here, rather than function object,
+         to handle addresses identified in instructions.
 
         this information is used to:
           - filter out matches in library functions (by default), and
           - recognize when to fetch symbol names for called (non-API) functions
 
         args:
-          va (int): the virtual address of a function.
+          addr (Address): the address of a function.
 
         returns:
           bool: True if the given address is the start of a library function.
         """
         return False
 
-    def get_function_name(self, va: int) -> str:
+    def get_function_name(self, addr: Address) -> str:
         """
         fetch any recognized name for the given address.
         this is only guaranteed to return a value when the given function is a recognized library function.
         we accept a VA here, rather than function object, to handle addresses identified in instructions.
 
         args:
-          va (int): the virtual address of a function.
+          addr (Address): the address of a function.
 
         returns:
           str: the function name
@@ -132,10 +174,10 @@ class FeatureExtractor:
         raises:
           KeyError: when the given function does not have a name.
         """
-        raise KeyError(va)
+        raise KeyError(addr)
 
     @abc.abstractmethod
-    def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, int]]:
+    def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         """
         extract function-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -144,14 +186,14 @@ class FeatureExtractor:
 
             extractor = VivisectFeatureExtractor(vw, path)
             for function in extractor.get_functions():
-                for feature, va in extractor.extract_function_features(function):
-                    print('0x%x: %s', va, feature)
+                for feature, address in extractor.extract_function_features(function):
+                    print('0x%x: %s', address, feature)
 
         args:
           f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
 
         yields:
-          Tuple[Feature, int]: feature and its location
+          Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -164,7 +206,7 @@ class FeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, int]]:
+    def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
         """
         extract basic block-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -174,15 +216,15 @@ class FeatureExtractor:
             extractor = VivisectFeatureExtractor(vw, path)
             for function in extractor.get_functions():
                 for bb in extractor.get_basic_blocks(function):
-                    for feature, va in extractor.extract_basic_block_features(function, bb):
-                        print('0x%x: %s', va, feature)
+                    for feature, address in extractor.extract_basic_block_features(function, bb):
+                        print('0x%x: %s', address, feature)
 
         args:
           f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
           bb [BBHandle]: an opaque value previously fetched from `.get_basic_blocks()`.
 
         yields:
-          Tuple[Feature, int]: feature and its location
+          Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
 
@@ -195,7 +237,9 @@ class FeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def extract_insn_features(self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, int]]:
+    def extract_insn_features(
+        self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
         """
         extract instruction-scope features.
         the arguments are opaque values previously provided by `.get_functions()`, etc.
@@ -206,8 +250,8 @@ class FeatureExtractor:
             for function in extractor.get_functions():
                 for bb in extractor.get_basic_blocks(function):
                     for insn in extractor.get_instructions(function, bb):
-                        for feature, va in extractor.extract_insn_features(function, bb, insn):
-                            print('0x%x: %s', va, feature)
+                        for feature, address in extractor.extract_insn_features(function, bb, insn):
+                            print('0x%x: %s', address, feature)
 
         args:
           f [FunctionHandle]: an opaque value previously fetched from `.get_functions()`.
@@ -215,123 +259,6 @@ class FeatureExtractor:
           insn [InsnHandle]: an opaque value previously fetched from `.get_instructions()`.
 
         yields:
-          Tuple[Feature, int]: feature and its location
+          Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
-
-
-class NullFeatureExtractor(FeatureExtractor):
-    """
-    An extractor that extracts some user-provided features.
-    The structure of the single parameter is demonstrated in the example below.
-
-    This is useful for testing, as we can provide expected values and see if matching works.
-    Also, this is how we represent features deserialized from a freeze file.
-
-    example::
-
-        extractor = NullFeatureExtractor({
-            'base address: 0x401000,
-            'global features': [
-                (0x0, capa.features.Arch('i386')),
-                (0x0, capa.features.OS('linux')),
-            ],
-            'file features': [
-                (0x402345, capa.features.Characteristic('embedded pe')),
-            ],
-            'functions': {
-                0x401000: {
-                    'features': [
-                        (0x401000, capa.features.Characteristic('nzxor')),
-                    ],
-                    'basic blocks': {
-                        0x401000: {
-                            'features': [
-                                (0x401000, capa.features.Characteristic('tight-loop')),
-                            ],
-                            'instructions': {
-                                0x401000: {
-                                    'features': [
-                                        (0x401000, capa.features.Characteristic('nzxor')),
-                                    ],
-                                },
-                                0x401002: ...
-                            }
-                        },
-                        0x401005: ...
-                    }
-                },
-                0x40200: ...
-            }
-        )
-    """
-
-    def __init__(self, features):
-        super(NullFeatureExtractor, self).__init__()
-        self.features = features
-
-    def get_base_address(self):
-        return self.features["base address"]
-
-    def extract_global_features(self):
-        for p in self.features.get("global features", []):
-            va, feature = p
-            yield feature, va
-
-    def extract_file_features(self):
-        for p in self.features.get("file features", []):
-            va, feature = p
-            yield feature, va
-
-    def get_functions(self):
-        for va in sorted(self.features["functions"].keys()):
-            yield va
-
-    def extract_function_features(self, f):
-        for p in self.features.get("functions", {}).get(f, {}).get("features", []):  # noqa: E127 line over-indented
-            va, feature = p
-            yield feature, va
-
-    def get_basic_blocks(self, f):
-        for va in sorted(
-            self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
-            .get("basic blocks", {})
-            .keys()
-        ):
-            yield va
-
-    def extract_basic_block_features(self, f, bb):
-        for p in (
-            self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
-            .get("basic blocks", {})
-            .get(bb, {})
-            .get("features", [])
-        ):
-            va, feature = p
-            yield feature, va
-
-    def get_instructions(self, f, bb):
-        for va in sorted(
-            self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
-            .get("basic blocks", {})
-            .get(bb, {})
-            .get("instructions", {})
-            .keys()
-        ):
-            yield va
-
-    def extract_insn_features(self, f, bb, insn):
-        for p in (
-            self.features.get("functions", {})  # noqa: E127 line over-indented
-            .get(f, {})
-            .get("basic blocks", {})
-            .get(bb, {})
-            .get("instructions", {})
-            .get(insn, {})
-            .get("features", [])
-        ):
-            va, feature = p
-            yield feature, va

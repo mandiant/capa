@@ -8,27 +8,30 @@
 
 import string
 import struct
+from typing import Tuple, Iterator
 
 import envi
 import envi.archs.i386.disasm
 
-from capa.features.common import Characteristic
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f, bb):
+def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse features from the given basic block.
 
     args:
-      f (viv_utils.Function): the function to process.
-      bb (viv_utils.BasicBlock): the basic block to process.
+      f: the function to process.
+      bb: the basic block to process.
 
     yields:
-      (Feature, int): the feature and the address at which its found.
+      (Feature, Address): the feature and the address at which its found.
     """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
+    ...
 
 
 def _bb_has_tight_loop(f, bb):
@@ -44,10 +47,10 @@ def _bb_has_tight_loop(f, bb):
     return False
 
 
-def extract_bb_tight_loop(f, bb):
+def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
-    if _bb_has_tight_loop(f, bb):
-        yield Characteristic("tight loop"), bb.va
+    if _bb_has_tight_loop(f, bb.inner):
+        yield Characteristic("tight loop"), bb.address
 
 
 def _bb_has_stackstring(f, bb):
@@ -67,10 +70,10 @@ def _bb_has_stackstring(f, bb):
     return False
 
 
-def extract_stackstring(f, bb):
+def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for stackstring indicators"""
-    if _bb_has_stackstring(f, bb):
-        yield Characteristic("stack string"), bb.va
+    if _bb_has_stackstring(f, bb.inner):
+        yield Characteristic("stack string"), bb.address
 
 
 def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
@@ -143,7 +146,7 @@ def is_printable_utf16le(chars: bytes) -> bool:
     return False
 
 
-def extract_features(f, bb):
+def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -154,10 +157,10 @@ def extract_features(f, bb):
     yields:
       Tuple[Feature, int]: the features and their location found in this basic block.
     """
-    yield BasicBlock(), bb.va
+    yield BasicBlock(), AbsoluteVirtualAddress(bb.inner.va)
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, va in bb_handler(f, bb):
-            yield feature, va
+        for feature, addr in bb_handler(f, bb):
+            yield feature, addr
 
 
 BASIC_BLOCK_HANDLERS = (

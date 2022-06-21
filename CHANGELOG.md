@@ -14,6 +14,7 @@
  - add unmanaged call characteristic for dotnet files #1023 @mike-hunhoff
  - add mixed mode characteristic feature extraction for dotnet files #1024 @mike-hunhoff
  - emit class and namespace features for dotnet files #1030 @mike-hunhoff
+ - render: support Addresses that aren't simple integers, like .NET token+offset #981 @williballenthin
 
 ### Breaking Changes
 
@@ -21,6 +22,8 @@
   - Python 3.7 is now the minimum supported Python version #866 @williballenthin
   - remove /x32 and /x64 flavors of number and operand features #932 @williballenthin
   - the tool now accepts multiple paths to rules, and JSON doc updated accordingly @williballenthin
+  - extractors must use handles to identify functions/basic blocks/instructions #981 @williballenthin
+  - the freeze file format schema was updated, including format version bump to v2 #986 @williballenthin
 
 ### New Rules (7)
 
