@@ -13,7 +13,7 @@ import setuptools
 requirements = [
     "tqdm==4.64.0",
     "pyyaml==6.0",
-    "tabulate==0.8.9",
+    "tabulate==0.8.10",
     "colorama==0.4.5",
     "termcolor==1.1.0",
     "wcwidth==0.2.5",
