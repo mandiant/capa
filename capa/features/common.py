@@ -414,6 +414,7 @@ FORMAT_AUTO = "auto"
 FORMAT_SC32 = "sc32"
 FORMAT_SC64 = "sc64"
 FORMAT_FREEZE = "freeze"
+FORMAT_CS = "script_cs"
 FORMAT_UNKNOWN = "unknown"
 
 
