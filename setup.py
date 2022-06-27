@@ -84,7 +84,7 @@ setuptools.setup(
             "types-backports==0.1.3",
             "types-colorama==0.4.14",
             "types-PyYAML==6.0.8",
-            "types-tabulate==0.8.9",
+            "types-tabulate==0.8.11",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.27.30",
