@@ -1,7 +1,7 @@
-from typing import Tuple, Union, Iterator
+from typing import List, Tuple, Union, Iterator
 
 import capa.features.extractors.scripts
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
@@ -9,13 +9,23 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str, format_: str):
         super().__init__()
         self.path = path
-        self.languages = [capa.features.extractors.scripts.get_language_from_format(format_)]
+        self.language = capa.features.extractors.scripts.get_language_from_format(format_)
+        with open(self.path, "rb") as f:
+            self.buf = f.read()
+
+        # pre-compute these because we'll yield them at *every* scope.
+        self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features.extend(
+            capa.features.extractors.scripts.extract_language(self.language, FileOffsetRangeAddress(0, len(self.buf)))
+        )
+        self.global_features.extend(capa.features.extractors.scripts.extract_os())
+        self.global_features.extend(capa.features.extractors.scripts.extract_arch())
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         return NO_ADDRESS
 
     def extract_global_features(self):
-        raise NotImplementedError("not implemented")
+        yield from self.global_features
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError("not implemented")
@@ -27,21 +37,21 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         raise NotImplementedError("not implemented")
 
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
-        raise NotImplementedError("not implemented")
+        yield from []
 
     def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError("not implemented")
 
-    def get_instructions(self, f: FunctionHandle, bb: BBHandle):
-        raise NotImplementedError("not implemented")
+    def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
+        yield from []
 
     def extract_insn_features(
         self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
     ) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError("not implemented")
 
-    def is_library_function(self, addr: Address) -> bool:
-        raise NotImplementedError("not implemented")
+    def is_library_function(self, addr) -> bool:
+        return False
 
-    def get_function_name(self, addr: Address) -> str:
-        raise NotImplementedError("not implemented")
+    def get_function_name(self, addr) -> str:
+        return self.buf[addr.start_byte : addr.end_byte].decode()

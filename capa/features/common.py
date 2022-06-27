@@ -405,6 +405,12 @@ class OS(Feature):
         self.name = "os"
 
 
+class ScriptLanguage(Feature):
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description=description)
+        self.name = "script language"
+
+
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
 FORMAT_DOTNET = "dotnet"
