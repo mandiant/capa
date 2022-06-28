@@ -52,9 +52,9 @@ capa 3.0.3
 The releases page is [here](https://github.com/mandiant/capa-rules/tags/).
 Find the most recent release corresponding to your major version of capa and download the ZIP archive.
 Here are some quick links:
-  - v1: [v1.6.3](https://github.com/mandiant/capa-rules/releases/tag/v1.6.1)
-  - v2: [v2.0.0](https://github.com/mandiant/capa-rules/releases/tag/v2.0.0)
-  - v3: [v3.0.3](https://github.com/mandiant/capa-rules/releases/tag/v3.0.3)
+  - v1: [v1](https://github.com/mandiant/capa-rules/releases/tag/v1)
+  - v2: [v2](https://github.com/mandiant/capa-rules/releases/tag/v2)
+  - v3: [v3](https://github.com/mandiant/capa-rules/releases/tag/v3)
 
 #### clone with git
 
