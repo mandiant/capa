@@ -8,13 +8,14 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
-You run it against a PE, ELF, or shellcode file and it tells you what it thinks the program can do.
+You run it against a PE, ELF, .NET, or shellcode file and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
 Check out:
 - the overview in our first [capa blog post](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
 - the major version 2.0 updates described in our [second blog post](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
 - the major version 3.0 (ELF support) described in the [third blog post](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3)
+- the major version 4.0 (.NET support) described in the TODO
 
 ```
 $ capa.exe suspicious.exe
