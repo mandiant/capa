@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union, Iterator
 
 import capa.features.extractors.scripts
+import capa.features.extractors.ts.engine
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
@@ -12,6 +13,8 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         self.language = capa.features.extractors.scripts.get_language_from_format(format_)
         with open(self.path, "rb") as f:
             self.buf = f.read()
+        self.engine = capa.features.extractors.ts.engine.TreeSitterExtractorEngine(self.language)
+        self.tree = self.engine.parse(self.buf)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
@@ -31,7 +34,8 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         raise NotImplementedError("not implemented")
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        raise NotImplementedError("not implemented")
+        for node, _ in self.engine.get_functions(self.tree):
+            yield FunctionHandle(address=FileOffsetRangeAddress(node.start_byte, node.end_byte), inner=node)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError("not implemented")
