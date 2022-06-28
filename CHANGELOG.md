@@ -26,6 +26,8 @@
   - extractors must use handles to identify functions/basic blocks/instructions #981 @williballenthin
   - the freeze file format schema was updated, including format version bump to v2 #986 @williballenthin
 
+Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issues/937), we plan to remove the SMDA backend for v5. If you rely on this backend, please reach out so we can discuss extending the support for SMDA or transitioning your workflow to use vivisect.
+
 ### New Rules (7)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
