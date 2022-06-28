@@ -28,7 +28,7 @@ to modify the rule text directly and the `Editor` pane to construct and rearrang
 
 ![](../../../doc/img/rulegen_expanded.png)
 
-For more information on the FLARE team's open-source framework, capa, check out the overview in our first [blog](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
+For more information on the FLARE team's open-source framework, capa, check out the overview in our first [blog](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities).
 
 ## Getting Started
 
