@@ -222,6 +222,25 @@ class ExampleFileDNE(Lint):
         return not found
 
 
+class IncorrectValueType(Lint):
+    name = "incorrect value type"
+    recommendation = "Change value type"
+    recommendation_template = 'Change type of "{:s}" from "{:s}" to "{:s}'
+    types = {
+        "references": list,
+        "authors": list,
+    }
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        for k, expected in self.types.items():
+            value = rule.meta.get(k)
+            found = type(value)
+            if value and found != expected:
+                self.recommendation = self.recommendation_template.format(k, str(found), str(expected))
+                return True
+        return False
+
+
 class InvalidAttckOrMbcTechnique(Lint):
     name = "att&ck/mbc entry is malformed or does not exist"
     recommendation = """
@@ -700,6 +719,7 @@ META_LINTS = (
     MissingExamples(),
     MissingExampleOffset(),
     ExampleFileDNE(),
+    IncorrectValueType(),
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
     LibRuleHasNamespace(),
