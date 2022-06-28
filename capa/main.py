@@ -65,6 +65,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_SCRIPT,
 )
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -345,11 +346,11 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
     return False
 
 
-def is_supported_script(format_: str):
+def is_script_format(format_: str):
     """
     If the script format was recognized, then it is supported.
     """
-    return format_.startswith("script")
+    return format_ == FORMAT_SCRIPT
 
 
 def is_supported_format(sample: str) -> bool:
@@ -521,10 +522,10 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
-    if is_supported_script(format_):
+    if format_ == FORMAT_SCRIPT:
         import capa.features.extractors.ts.extractor
 
-        return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path, format_)
+        return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
 
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
         if not is_supported_format(path):
@@ -705,7 +706,7 @@ def collect_metadata(
 
     format_ = get_format(sample_path)
 
-    if is_supported_script(format_):
+    if format_ == FORMAT_SCRIPT:
         arch = get_script_arch()
         os_ = get_script_os()
     else:

@@ -10,16 +10,12 @@ import logging
 from typing import NoReturn
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_CS, FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
+from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_SCRIPT, FORMAT_UNKNOWN
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-<<<<<<< HEAD
 EXTENSIONS_ELF = "elf_"
-=======
-EXTENSION_CS = "cs"
-
->>>>>>> Added initial capa control flow for scripts in C#.
+EXTENSIONS_SUPPORTED_SCRIPTS = "cs"
 
 logger = logging.getLogger("capa")
 
@@ -56,8 +52,8 @@ def get_format_from_extension(sample: str) -> str:
         return FORMAT_SC32
     elif sample.endswith(EXTENSIONS_SHELLCODE_64):
         return FORMAT_SC64
-    elif sample.endswith(EXTENSION_CS):
-        return FORMAT_CS
+    elif sample.endswith(EXTENSIONS_SUPPORTED_SCRIPTS):
+        return FORMAT_SCRIPT
     return FORMAT_UNKNOWN
 
 

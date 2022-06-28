@@ -8,10 +8,10 @@ from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandl
 
 
 class TreeSitterFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, format_: str):
+    def __init__(self, path: str):
         super().__init__()
         self.path = path
-        self.language = capa.features.extractors.script.get_language_from_format(format_)
+        self.language = capa.features.extractors.script.get_language_from_ext(path)
         with open(self.path, "rb") as f:
             self.buf = f.read()
         self.engine = capa.features.extractors.ts.engine.TreeSitterExtractorEngine(self.language)
