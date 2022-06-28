@@ -44,15 +44,11 @@ def format_address(address: frz.Address) -> str:
         return f"file+{rutils.hex(address.value)}"
     elif address.type == frz.AddressType.DN_TOKEN:
         token = dncil.clr.token.Token(address.value)
-        name = dnfile.mdtable.ClrMetaDataTableFactory._table_number_map[token.table].name
-        rid = token.rid
-        return f"{name}[{rid}]"
+        return f"token({rutils.hex(token.value)})"
     elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
         token, offset = address.value
         token = dncil.clr.token.Token(token)
-        name = dnfile.mdtable.ClrMetaDataTableFactory._table_number_map[token.table].name
-        rid = token.rid
-        return f"{name}[{rid}]+{rutils.hex(offset)}"
+        return f"token({rutils.hex(token.value)})+{rutils.hex(offset)}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
