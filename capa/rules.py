@@ -264,13 +264,6 @@ def parse_feature(key: str):
         return capa.features.insn.Number
     elif key == "offset":
         return capa.features.insn.Offset
-    # TODO remove x32/x64 flavor keys once fixed master/rules
-    elif key.startswith("number/"):
-        logger.warning("x32/x64 flavor currently not supported and deprecated")
-        return capa.features.insn.Number
-    elif key.startswith("offset/"):
-        logger.warning("x32/x64 flavor currently not supported and deprecated")
-        return capa.features.insn.Offset
     elif key == "mnemonic":
         return capa.features.insn.Mnemonic
     elif key == "basic blocks":
