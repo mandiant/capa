@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import Address, NO_ADDRESS
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 

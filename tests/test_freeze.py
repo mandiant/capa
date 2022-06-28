@@ -156,7 +156,6 @@ def test_freeze_sample(tmpdir, z9324d_extractor):
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-
 @pytest.mark.parametrize(
     "extractor",
     [
