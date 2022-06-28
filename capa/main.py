@@ -1031,15 +1031,15 @@ def main(argv=None):
         logger.error("%s", str(e))
         logger.error(
             "Please ensure you're using the rules that correspond to your major version of capa (%s)",
-            capa.version.get_major_version()
+            capa.version.get_major_version(),
         )
         logger.error(
             "You can check out these rules with the following command:\n    %s",
-            capa.version.get_rules_checkout_command()
+            capa.version.get_rules_checkout_command(),
         )
         logger.error(
             "Or, for more details, see the rule set documentation here: %s",
-            "https://github.com/mandiant/capa/blob/master/doc/rules.md"
+            "https://github.com/mandiant/capa/blob/master/doc/rules.md",
         )
         return E_INVALID_RULE
 
