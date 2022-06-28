@@ -704,6 +704,10 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.error(
                 "Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/mandiant/capa-rules."
             )
+            logger.error(
+                "Please try to use the rule branch for your capa version (see doc/rules.md):\n  %s",
+                capa.version.get_rules_checkout_command(),
+            )
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return False
 

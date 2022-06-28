@@ -1029,6 +1029,10 @@ def main(argv=None):
                 logger.debug(" %d. %s", i, r)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
+        logger.error(
+            "Please try to use the rule branch for your capa version (see doc/rules.md):\n  %s",
+            capa.version.get_rules_checkout_command(),
+        )
         return E_INVALID_RULE
 
     # file feature extractors are pretty lightweight: they don't do any code analysis.
