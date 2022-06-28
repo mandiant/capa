@@ -43,7 +43,6 @@ import capa.rules
 import capa.engine
 import capa.features
 import capa.features.insn
-from capa.features.common import String
 
 logger = logging.getLogger("capa2yara")
 
