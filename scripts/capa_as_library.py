@@ -149,7 +149,7 @@ def render_mbc(doc, result):
 
 
 def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
-    result = dict()
+    result: Dict[str, Any] = dict()
     render_meta(doc, result)
     render_attack(doc, result)
     render_mbc(doc, result)
