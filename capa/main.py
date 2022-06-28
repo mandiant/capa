@@ -103,6 +103,7 @@ def set_vivisect_log_level(level):
     logging.getLogger("vtrace").setLevel(level)
     logging.getLogger("envi").setLevel(level)
     logging.getLogger("envi.codeflow").setLevel(level)
+    logging.getLogger("Elf").setLevel(level)
 
 
 def find_instruction_capabilities(
