@@ -23,6 +23,7 @@ jobs:
             artifact_name: capa.exe
             asset_name: windows
           - os: macos-10.15
+            # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
     steps:
