@@ -26,7 +26,13 @@ To install capa as a Python library use `pip` to fetch the `flare-capa` module.
 
 #### *Note*:
 This method is appropriate for integrating capa in an existing project.
-This technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/mandiant/capa-rules/) and pass the directory to the entrypoint using `-r` or set the rules path in the IDA Pro plugin.
+This technique doesn't pull the default rule set, so you should check it out separately from [capa-rules](https://github.com/mandiant/capa-rules/) and pass the directory to the entrypoint using `-r` or set the rules path in the IDA Pro plugin:
+
+```console
+$ git clone https://github.com/mandiant/capa-rules.git -b v3 /local/path/to/rules
+$ capa     -r /local/path/to/rules   suspicious.exe
+```
+
 This technique also doesn't set up the default library identification [signatures](https://github.com/mandiant/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
 For example, to run capa with both a rule path and a signature path:
 

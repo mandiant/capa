@@ -21,6 +21,7 @@ jobs:
         git config user.name 'Capa Bot'
         name=${{ github.event.release.tag_name }}
         git tag $name -m "https://github.com/mandiant/capa/releases/$name"
+        # TODO update branch name-major=${name%%.*}
     - name: Push tag to capa-rules
       uses: ad-m/github-push-action@master
       with:
