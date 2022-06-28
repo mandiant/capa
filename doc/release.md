@@ -38,6 +38,12 @@
 - [ ] Create a PR with the updated [CHANGELOG.md](https://github.com/mandiant/capa/blob/master/CHANGELOG.md) and [capa/version.py](https://github.com/mandiant/capa/blob/master/capa/version.py). Copy this checklist in the PR description.
 - [ ] After PR review, merge the PR and [create the release in GH](https://github.com/mandiant/capa/releases/new) using text from the [CHANGELOG.md](https://github.com/mandiant/capa/blob/master/CHANGELOG.md).
 - [ ] Verify GH actions [upload artifacts](https://github.com/mandiant/capa/releases), [publish to PyPI](https://pypi.org/project/flare-capa) and [create a tag in capa rules](https://github.com/mandiant/capa-rules/tags) upon completion.
+- [ ] Manually update capa rules major version rule branch
+  ```commandline
+  [capa/rules] $ git pull master
+  [capa/rules] $ git checkout v3  # create if new major version: git checkout -b vX
+  [capa/rules] $ git merge master
+  [capa/rules] $ git push origin v3
+  ```
 - [ ] [Spread the word](https://twitter.com)
 - [ ] Update internal service
-
