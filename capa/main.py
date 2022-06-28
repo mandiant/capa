@@ -41,9 +41,9 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
+import capa.features.extractors.script
 import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
-import capa.features.extractors.scripts
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 from capa.rules import Rule, Scope, RuleSet
@@ -381,7 +381,7 @@ def get_arch(sample: str) -> str:
 
 
 def get_script_arch() -> str:
-    for feature, _ in capa.features.extractors.scripts.extract_arch():
+    for feature, _ in capa.features.extractors.script.extract_arch():
         assert isinstance(feature.value, str)
         return feature.value
 
@@ -407,7 +407,7 @@ def get_os(sample: str) -> str:
 
 
 def get_script_os() -> str:
-    for feature, _ in capa.features.extractors.scripts.extract_os():
+    for feature, _ in capa.features.extractors.script.extract_os():
         assert isinstance(feature.value, str)
         return feature.value
 

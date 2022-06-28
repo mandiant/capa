@@ -1,7 +1,8 @@
 from typing import List, Tuple, Union, Iterator
 
-import capa.features.extractors.scripts
+import capa.features.extractors.script
 import capa.features.extractors.ts.engine
+import capa.features.extractors.ts.global_
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
@@ -10,28 +11,21 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str, format_: str):
         super().__init__()
         self.path = path
-        self.language = capa.features.extractors.scripts.get_language_from_format(format_)
+        self.language = capa.features.extractors.script.get_language_from_format(format_)
         with open(self.path, "rb") as f:
             self.buf = f.read()
         self.engine = capa.features.extractors.ts.engine.TreeSitterExtractorEngine(self.language)
         self.tree = self.engine.parse(self.buf)
 
-        # pre-compute these because we'll yield them at *every* scope.
-        self.global_features: List[Tuple[Feature, Address]] = []
-        self.global_features.extend(
-            capa.features.extractors.scripts.extract_language(self.language, FileOffsetRangeAddress(0, len(self.buf)))
-        )
-        self.global_features.extend(capa.features.extractors.scripts.extract_os())
-        self.global_features.extend(capa.features.extractors.scripts.extract_arch())
-
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         return NO_ADDRESS
 
-    def extract_global_features(self):
-        yield from self.global_features
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+        ctx = capa.features.extractors.ts.global_.GlobalScriptContext(self.language, self.tree)
+        yield from capa.features.extractors.ts.global_.extract_features(ctx)
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
-        raise NotImplementedError("not implemented")
+        yield from []
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for node, _ in self.engine.get_functions(self.tree):
@@ -44,7 +38,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         yield from []
 
     def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
-        raise NotImplementedError("not implemented")
+        yield from []
 
     def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
         yield from []
