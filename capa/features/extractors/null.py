@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import Address
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
@@ -40,8 +40,8 @@ class NullFeatureExtractor(FeatureExtractor):
         return self.base_address
 
     def extract_global_features(self):
-        for address, feature in self.global_features:
-            yield feature, address
+        for feature in self.global_features:
+            yield feature, NO_ADDRESS
 
     def extract_file_features(self):
         for address, feature in self.file_features:

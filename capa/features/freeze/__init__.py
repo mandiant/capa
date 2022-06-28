@@ -18,6 +18,7 @@ import dncil.clr.token
 from pydantic import Field, BaseModel
 
 import capa.helpers
+import capa.version
 import capa.features.file
 import capa.features.insn
 import capa.features.common
@@ -194,9 +195,18 @@ class Features(BaseModel):
         allow_population_by_field_name = True
 
 
+class Extractor(BaseModel):
+    name: str
+    version: str = capa.version.__version__
+
+    class Config:
+        allow_population_by_field_name = True
+
+
 class Freeze(BaseModel):
     version: int = 2
     base_address: Address = Field(alias="base address")
+    extractor: Extractor
     features: Features
 
     class Config:
@@ -293,6 +303,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
     freeze = Freeze(
         version=2,
         base_address=Address.from_capa(extractor.get_base_address()),
+        extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )
 

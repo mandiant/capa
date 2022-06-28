@@ -156,13 +156,21 @@ def test_freeze_sample(tmpdir, z9324d_extractor):
     assert capa.features.freeze.main([path, o, "-v"]) == 0
 
 
-def test_freeze_load_sample(tmpdir, z9324d_extractor):
+@pytest.mark.parametrize(
+    "extractor",
+    [
+        pytest.param("z9324d_extractor"),
+    ],
+)
+def test_freeze_load_sample(tmpdir, request, extractor):
     o = tmpdir.mkdir("capa").join("test.frz")
 
+    extractor = request.getfixturevalue(extractor)
+
     with open(o.strpath, "wb") as f:
-        f.write(capa.features.freeze.dump(z9324d_extractor))
+        f.write(capa.features.freeze.dump(extractor))
 
     with open(o.strpath, "rb") as f:
         null_extractor = capa.features.freeze.load(f.read())
 
-    compare_extractors(z9324d_extractor, null_extractor)
+    compare_extractors(extractor, null_extractor)
