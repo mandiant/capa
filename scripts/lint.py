@@ -105,6 +105,7 @@ class FilenameDoesntMatchRuleName(Lint):
     def check_rule(self, ctx: Context, rule: Rule):
         expected = rule.name
         expected = expected.lower()
+        expected = expected.replace(".net", "dotnet")
         expected = expected.replace(" ", "-")
         expected = expected.replace("(", "")
         expected = expected.replace(")", "")
