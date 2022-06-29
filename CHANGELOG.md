@@ -28,7 +28,7 @@
 
 Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issues/937), we plan to remove the SMDA backend for v5. If you rely on this backend, please reach out so we can discuss extending the support for SMDA or transitioning your workflow to use vivisect.
 
-### New Rules (9)
+### New Rules (11)
 
 - data-manipulation/encryption/aes/manually-build-aes-constants huynh.t.nhan@gmail.com
 - nursery/get-process-image-filename michael.hunhoff@mandiant.com
@@ -39,6 +39,8 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 - nursery/get-os-information-via-kuser_shared_data @mr-tz
 - load-code/pe/resolve-function-by-parsing-PE-exports sara-rn
 - anti-analysis/packer/huan/packed-with-huan jakub.jozwiak@mandiant.com
+- nursery/execute-dotnet-assembly anushka.virgaonkar@mandiant.com
+- nursery/invoke-dotnet-assembly-method anushka.virgaonkar@mandiant.com
 -
 
 ### Bug Fixes
