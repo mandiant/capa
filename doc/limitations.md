@@ -5,7 +5,7 @@ If capa detects that a program may be packed using its rules it warns the user.
 
 
 # Installers, run-time programs, etc.
-capa cannot handle installers, run-time programs like .NET applications, or other packaged applications like AutoIt well. This means that the results may be misleading or incomplete.
+capa cannot handle installers, run-time programs, or other packaged applications like AutoIt well. This means that the results may be misleading or incomplete.
 
 If capa detects an installer, run-time program, etc. it warns the user.
 

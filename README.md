@@ -8,13 +8,14 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
-You run it against a PE, ELF, or shellcode file and it tells you what it thinks the program can do.
+You run it against a PE, ELF, .NET module, or shellcode file and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
 Check out:
 - the overview in our first [capa blog post](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
 - the major version 2.0 updates described in our [second blog post](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
 - the major version 3.0 (ELF support) described in the [third blog post](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3)
+- the major version 4.0 (.NET support) described in the TODO
 
 ```
 $ capa.exe suspicious.exe
@@ -95,23 +96,32 @@ author      matthew.williams@mandiant.com
 scope       function
 att&ck      Execution::Command and Scripting Interpreter::Windows Command Shell [T1059.003]
 references  https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
-examples    Practical Malware Analysis Lab 14-02.exe_:0x4011C0
-function @ 0x10003A13
+function @ 0x4011C0
   and:
-    match: create a process with modified I/O handles and window @ 0x10003A13
+    match: create a process with modified I/O handles and window @ 0x4011C0
       and:
+        number: 257 = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW @ 0x4012B8
         or:
-          api: kernel32.CreateProcess @ 0x10003D6D
-        number: 0x101 @ 0x10003B03
-        or:
-          number: 0x44 @ 0x10003ADC
-        optional:
-          api: kernel32.GetStartupInfo @ 0x10003AE4
-    match: create pipe @ 0x10003A13
+          number: 68 = StartupInfo.cb (size) @ 0x401282
+        or: = API functions that accept a pointer to a STARTUPINFO structure
+          api: kernel32.CreateProcess @ 0x401343
+    match: create pipe @ 0x4011C0
       or:
-        api: kernel32.CreatePipe @ 0x10003ACB
+        api: kernel32.CreatePipe @ 0x40126F, 0x401280
+    optional:
+      match: create thread @ 0x40136A, 0x4013BA
+        or:
+          and:
+            os: windows
+            or:
+              api: kernel32.CreateThread @ 0x4013D7
+        or:
+          and:
+            os: windows
+            or:
+              api: kernel32.CreateThread @ 0x401395
     or:
-      string: cmd.exe /c  @ 0x10003AED
+      string: "cmd.exe" @ 0x4012FD
 ...
 ```
 
@@ -127,17 +137,27 @@ rule:
   meta:
     name: hash data with CRC32
     namespace: data-manipulation/checksum/crc32
-    author: moritz.raabe@mandiant.com
+    authors:
+      - moritz.raabe@mandiant.com
     scope: function
+    mbc:
+      - Data::Checksum::CRC32 [C0032.001]
     examples:
       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
       - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
+      - 7EFF498DE13CC734262F87E6B3EF38AB:0x100084A6
   features:
     - or:
       - and:
         - mnemonic: shr
-        - number: 0xEDB88320
+        - or:
+          - number: 0xEDB88320
+          - bytes: 00 00 00 00 96 30 07 77 2C 61 0E EE BA 51 09 99 19 C4 6D 07 8F F4 6A 70 35 A5 63 E9 A3 95 64 9E = crc32_tab
         - number: 8
+        - characteristic: nzxor
+      - and:
+        - number: 0x8320
+        - number: 0xEDB8
         - characteristic: nzxor
       - api: RtlComputeCrc32
 ```
