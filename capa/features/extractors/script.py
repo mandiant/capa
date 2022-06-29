@@ -1,7 +1,7 @@
 import os
 from typing import Tuple, Iterator
 
-from capa.features.common import OS, OS_ANY, ARCH_ANY, Arch, Feature, ScriptLanguage
+from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, Feature, ScriptLanguage
 from capa.features.address import NO_ADDRESS, Address, FileOffsetRangeAddress
 
 LANG_CS = "c_sharp"
@@ -19,8 +19,12 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
+def extract_format() -> Iterator[Tuple[Feature, Address]]:
+    yield Format(FORMAT_SCRIPT), NO_ADDRESS
+
+
 def get_language_from_ext(path: str):
     _, ext = os.path.splitext(path)
     if ext == ".cs":
         return LANG_CS
-    raise ValueError("{path} has an unrecognized or an unsupported extension.")
+    raise ValueError(f"{path} has an unrecognized or an unsupported extension.")

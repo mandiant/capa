@@ -1,34 +1,22 @@
-from dataclasses import dataclass
-
-from tree_sitter import Tree
+from typing import Tuple, Iterator
 
 import capa.features.extractors.script
-from capa.features.address import FileOffsetRangeAddress
+from capa.features.common import Feature
+from capa.features.address import Address
 
 
-@dataclass
-class GlobalScriptContext:
-    language: str
-    tree: Tree
-
-
-def extract_arch(ctx: GlobalScriptContext):
+def extract_arch() -> Iterator[Tuple[Feature, Address]]:
     yield from capa.features.extractors.script.extract_arch()
 
 
-def extract_language(ctx: GlobalScriptContext):
-    node = ctx.tree.root_node
-    addr = FileOffsetRangeAddress(node.start_byte, node.end_byte)
-    yield from capa.features.extractors.script.extract_language(ctx.language, addr)
-
-
-def extract_os(ctx: GlobalScriptContext):
+def extract_os() -> Iterator[Tuple[Feature, Address]]:
     yield from capa.features.extractors.script.extract_os()
 
 
-def extract_features(ctx: GlobalScriptContext):
+def extract_features() -> Iterator[Tuple[Feature, Address]]:
     for glob_handler in GLOBAL_HANDLERS:
-        yield glob_handler(ctx)
+        for feature, addr in glob_handler():
+            yield feature, addr
 
 
-GLOBAL_HANDLERS = (extract_arch, extract_os, extract_language)
+GLOBAL_HANDLERS = (extract_arch, extract_os)

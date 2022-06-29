@@ -4,6 +4,7 @@ from tree_sitter import Language
 from tree_sitter.binding import Query
 
 import capa.features.extractors.ts.build
+from capa.features.extractors.script import LANG_CS
 
 
 @dataclass
@@ -21,7 +22,7 @@ class QueryBinding:
 
     def __init__(self, language: str):
         self.language = Language(capa.features.extractors.ts.build.build_dir, language)
-        if language == "c_sharp":
+        if language == LANG_CS:
             self.new_object = self.language.query("(object_creation_expression) @object.new")
             self.new_object_field_name = "type"
             self.function_def = self.language.query("(local_function_statement) @function.def")
