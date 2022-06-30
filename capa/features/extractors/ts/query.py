@@ -19,6 +19,7 @@ class QueryBinding:
     string_literal: Query
     integer_literal: Query
     namespace: Query
+    global_statement: Query
 
     def __init__(self, language: str):
         self.language = Language(capa.features.extractors.ts.build.build_dir, language)
@@ -32,5 +33,6 @@ class QueryBinding:
             self.string_literal = self.language.query("(string_literal) @string-literal")
             self.integer_literal = self.language.query("(integer_literal) @integer-literal")
             self.namespace = self.language.query("(using_directive\n\t(qualified_name) @namespace)")
+            self.global_statement = self.language.query("(global_statement) @global-statement")
         else:
             raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")

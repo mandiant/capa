@@ -1,9 +1,10 @@
-from typing import List, Tuple, Union, Iterator
+from typing import Tuple, Union, Iterator
 
 import capa.features.extractors.script
 import capa.features.extractors.ts.file
 import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
+import capa.features.extractors.ts.function
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -30,7 +31,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
             yield FunctionHandle(address=self.engine.get_address(node), inner=node)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
-        raise NotImplementedError("not implemented")
+        yield from capa.features.extractors.ts.function.extract_features(f, self.engine)
 
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
         yield from []
@@ -39,7 +40,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         yield from []
 
     def get_instructions(self, f: FunctionHandle, bb: BBHandle) -> Iterator[InsnHandle]:
-        yield InsnHandle(address=self.engine.get_default_address(), inner=self.engine.tree.root_node)
+        yield from []
 
     def extract_insn_features(
         self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
