@@ -12,8 +12,8 @@ class QueryBinding:
     language: Language
     new_object: Query
     new_object_field_name: str
-    function_def: Query
-    function_def_field_name: str
+    function_definition: Query
+    function_definition_field_name: str
     function_call: Query
     function_call_field_name: str
     string_literal: Query
@@ -26,8 +26,8 @@ class QueryBinding:
         if language == LANG_CS:
             self.new_object = self.language.query("(object_creation_expression) @object.new")
             self.new_object_field_name = "type"
-            self.function_def = self.language.query("(local_function_statement) @function.def")
-            self.function_def_field_name = "name"
+            self.function_definition = self.language.query("(local_function_statement) @function.definition")
+            self.function_definition_field_name = "name"
             self.function_call = self.language.query("(invocation_expression) @function.call")
             self.function_call_field_name = "function"
             self.string_literal = self.language.query("(string_literal) @string-literal")

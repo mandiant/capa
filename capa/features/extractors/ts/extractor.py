@@ -27,7 +27,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         yield from capa.features.extractors.ts.file.extract_features(self.engine)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        for node, _ in self.engine.get_all_functions():
+        for node, _ in self.engine.get_function_definitions():
             yield FunctionHandle(address=self.engine.get_address(node), inner=node)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
