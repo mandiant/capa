@@ -29,6 +29,7 @@ requirements = [
     "dnfile==0.11.0",
     "dncil==1.0.0",
     "pydantic==1.9.1",
+    "tree_sitter==0.20.0",
 ]
 
 # this sets __version__
