@@ -180,7 +180,15 @@ def convert_rule(rule, rulename, cround, depth):
             logger.info("doing api: " + repr(api))
 
             #    e.g. kernel32.CreateNamedPipe => look for kernel32.dll and CreateNamedPipe
-            if "." in api:
+            # TODO: improve .NET API call handling
+            if "::" in api:
+                mod, api = api.split("::")
+
+                var_name = "api_" + var_names.pop(0)
+                yara_strings += "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
+                yara_condition += "\t$" + var_name + " "
+
+            elif api.count(".") == 1:
                 dll, api = api.split(".")
 
                 # usage of regex is needed and /i because string search for "CreateMutex" in imports() doesn't look for e.g. CreateMutexA
