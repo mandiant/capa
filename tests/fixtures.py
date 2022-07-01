@@ -44,6 +44,7 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 CD = os.path.dirname(__file__)
 DOTNET_DIR = os.path.join(CD, "data", "dotnet")
 DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
+SCRIPT_DIR = os.path.join(CD, "data", "scripts")
 
 
 @contextlib.contextmanager
@@ -169,6 +170,13 @@ def get_dnfile_extractor(path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_ts_extractor_engine(language, path):
+    import capa.features.extractors.ts.engine
+
+    return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, path)
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -279,6 +287,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
     elif name.startswith("_692f"):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
+    elif name.startswith("cs_f397cb"):
+        return os.path.join(SCRIPT_DIR, "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.cs_")
+    elif name.startswith("aspx_f397cb"):
+        return os.path.join(SCRIPT_DIR, "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.aspx_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -904,3 +916,8 @@ def _1c444_dotnetfile_extractor():
 @pytest.fixture
 def _692f_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_692f"))
+
+
+@pytest.fixture
+def cs_f397cb_extractor_engine():
+    return get_ts_extractor_engine("c_sharp", get_data_path_by_name("cs_f397cb"))
