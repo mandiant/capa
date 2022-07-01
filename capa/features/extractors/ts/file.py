@@ -13,13 +13,15 @@ def extract_file_format(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Fea
 
 
 def extract_language(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.script.extract_language(engine.get_language(), engine.get_default_address())
+    yield from capa.features.extractors.script.extract_language(engine.language, engine.get_default_address())
 
 
 def extract_file_strings(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for global_node, _ in engine.get_global_statements():
         for node, _ in engine.get_string_literals(global_node):
-            yield String(engine.get_range(node).strip('"')), engine.get_address(node)
+            s = engine.get_range(node).strip('"')
+            if len(s) > 0:
+                yield String(engine.get_range(node).strip('"')), engine.get_address(node)
 
 
 def extract_file_integer_literals(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -29,7 +31,7 @@ def extract_file_integer_literals(engine: TreeSitterExtractorEngine) -> Iterator
 
 
 def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, _ in engine.get_all_namespaces():
+    for node, _ in engine.get_namespaces():
         yield Namespace(engine.get_range(node)), engine.get_address(node)
 
 

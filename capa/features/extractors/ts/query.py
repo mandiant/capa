@@ -32,7 +32,9 @@ class QueryBinding:
             self.function_call_field_name = "function"
             self.string_literal = self.language.query("(string_literal) @string-literal")
             self.integer_literal = self.language.query("(integer_literal) @integer-literal")
-            self.namespace = self.language.query("(using_directive\n\t(qualified_name) @namespace)")
+            self.namespace = self.language.query(
+                "(using_directive [(identifier) @namespace (qualified_name) @namespace])"
+            )
             self.global_statement = self.language.query("(global_statement) @global-statement")
         else:
             raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
