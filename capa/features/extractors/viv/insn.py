@@ -502,7 +502,8 @@ def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
     # see Lab21-01.exe_:0x140001178
     elif isinstance(insn.opers[0], envi.archs.i386.disasm.i386PcRelOper):
         target = insn.opers[0].getOperValue(insn)
-        yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
+        if target >= 0:
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
 
     # call via IAT, x64
     elif isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
