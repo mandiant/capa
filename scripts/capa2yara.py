@@ -180,7 +180,8 @@ def convert_rule(rule, rulename, cround, depth):
             logger.info("doing api: " + repr(api))
 
             #    e.g. kernel32.CreateNamedPipe => look for kernel32.dll and CreateNamedPipe
-            if "." in api:
+            # TODO: properly handle .NET API calls
+            if api.count(".") == 1:
                 dll, api = api.split(".")
 
                 # usage of regex is needed and /i because string search for "CreateMutex" in imports() doesn't look for e.g. CreateMutexA
