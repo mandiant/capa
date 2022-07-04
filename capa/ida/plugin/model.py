@@ -540,6 +540,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """process capa doc feature node
 
         @param parent: parent node to which child is assigned
+        @param match: match information
         @param feature: capa doc feature node
         @param locations: locations identified for feature
         @param doc: capa doc
@@ -577,6 +578,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """render capa feature read from doc
 
         @param parent: parent node to which new child is assigned
+        @param match: match information
         @param feature: feature read from doc
         @param doc: capa feature doc
         @param location: address of feature
@@ -602,8 +604,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         # wb: 614: substring feature?
         elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
-            for capture, locations in sorted(match.captures.items()):
-                if location in locations:
+            for capture, addrs in sorted(match.captures.items()):
+                if location in [addr.value for addr in addrs]:
                     return CapaExplorerStringViewItem(
                         parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
                     )
