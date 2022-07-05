@@ -13,7 +13,7 @@ import binascii
 import itertools
 import contextlib
 import collections
-from typing import Set, Dict
+from typing import Set, Dict, Union
 from functools import lru_cache
 
 import pytest
@@ -38,6 +38,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import Address
+from capa.features.extractors.ts.extractor import TreeSitterFeatureExtractor
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
@@ -175,6 +176,13 @@ def get_ts_extractor_engine(language, path):
     import capa.features.extractors.ts.engine
 
     return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, path)
+
+
+@lru_cache(maxsize=1)
+def get_ts_extractor(path):
+    import capa.features.extractors.ts.extractor
+
+    return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
 
 
 def extract_global_features(extractor):
@@ -359,9 +367,13 @@ def sample(request):
     return resolve_sample(request.param)
 
 
-def get_function(extractor, fva: int) -> FunctionHandle:
+def get_function(extractor, fva: Union[int, tuple]) -> FunctionHandle:
+    if isinstance(fva, tuple) and not isinstance(extractor, TreeSitterFeatureExtractor):
+        raise ValueError("invalid fva format")
     for fh in extractor.get_functions():
-        if isinstance(extractor, DnfileFeatureExtractor):
+        if isinstance(extractor, TreeSitterFeatureExtractor):
+            addr = (fh.inner.start_byte, fh.inner.end_byte)
+        elif isinstance(extractor, DnfileFeatureExtractor):
             addr = fh.inner.offset
         else:
             addr = fh.address
@@ -473,6 +485,37 @@ def resolve_scope(scope):
 @pytest.fixture
 def scope(request):
     return resolve_scope(request.param)
+
+
+def resolve_scope_ts(scope):
+    if scope == "global":
+        inner_fn = lambda extractor: extract_global_features(extractor)
+    elif scope == "file":
+
+        def inner_fn(extractor):
+            features = extract_file_features(extractor)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    elif scope.startswith("function"):
+        # like `function=(155, 192)`
+        def inner_fn(extractor):
+            fh = get_function(extractor, eval(scope.partition("=")[2]))
+            features = extract_function_features(extractor, fh)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+    else:
+        raise ValueError("unexpected scope fixture")
+    inner_fn.__name__ = scope
+    return inner_fn
+
+
+@pytest.fixture
+def scope_ts(request):
+    return resolve_scope_ts(request.param)
 
 
 def make_test_id(values):

@@ -1,10 +1,13 @@
 from typing import List, Tuple
 
 import pytest
+import fixtures
 from fixtures import *
 from tree_sitter import Node, Tree
 
-from capa.features.address import FileOffsetRangeAddress
+from capa.features.file import Import
+from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, String, Namespace, ScriptLanguage
+from capa.features.address import NO_ADDRESS, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS
 from capa.features.extractors.ts.query import QueryBinding
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
@@ -24,10 +27,6 @@ def do_test_ts_engine_init(engine: TreeSitterExtractorEngine):
 
 def do_test_range(engine: TreeSitterExtractorEngine, node: Node, expected_range: str, startswith: bool = False):
     assert engine.get_range(node).startswith(expected_range) if startswith else engine.get_range(node) == expected_range
-
-
-def do_test_id_range(engine: TreeSitterExtractorEngine, node: Node, expected_id_range: str, startswith: bool = False):
-    do_test_range(engine, engine.get_object_id(node), expected_id_range, startswith)
 
 
 def do_test_range_address(engine: TreeSitterExtractorEngine, node: Node):
@@ -235,8 +234,6 @@ def do_test_ts_engine_function_names_parsing(
                 "global statements": [
                     'string stdout = "";',
                     'string stderr = "";',
-                    "void die() {",
-                    "void Page_Load(object sender, System.EventArgs e) {",
                 ],
                 "all import names": ["System.Diagnostics.ProcessStartInfo", "System.Diagnostics.Process"],
                 "all function names": [],
@@ -259,3 +256,24 @@ def test_ts_engine(request: pytest.FixtureRequest, engine_str: str, expected_dic
     do_test_ts_engine_global_statements_parsing(engine, expected_dict["global statements"])
     do_test_ts_engine_namespaces_parsing(engine, expected_dict["namespaces"])
     do_test_ts_engine_default_range_address(engine)
+
+
+FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
+    [
+        ("cs_f397cb", "global", Arch(ARCH_ANY), True),
+        ("cs_f397cb", "global", OS(OS_ANY), True),
+        ("cs_f397cb", "file", Format(FORMAT_SCRIPT), True),
+        ("cs_f397cb", "file", ScriptLanguage(LANG_CS), True),
+        ("cs_f397cb", "file", Namespace("System"), True),
+        ("cs_f397cb", "file", String(""), True),
+        ("cs_f397cb", "function=(0x38,0x16c)", String("Not Found"), True),
+        ("cs_f397cb", "function=(0x16e,0x7ce)", String("127.0.0.1"), True),
+        ("cs_f397cb", "function=(0x16e,0x7ce)", Import("System.Diagnostics.ProcessStartInfo"), True),
+        ("cs_f397cb", "function=(0x16e,0x7ce)", Import("System.Diagnostics.Process"), True),
+    ]
+)
+
+
+@parametrize("sample, scope_ts, feature, expected", FEATURE_PRESENCE_TESTS_SCRIPTS, indirect=["sample", "scope_ts"])
+def test_ts_extractor(sample, scope_ts, feature, expected):
+    fixtures.do_test_feature_presence(fixtures.get_ts_extractor, sample, scope_ts, feature, expected)

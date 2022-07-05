@@ -24,7 +24,6 @@ def extract_format() -> Iterator[Tuple[Feature, Address]]:
 
 
 def get_language_from_ext(path: str):
-    _, ext = os.path.splitext(path)
-    if ext == ".cs":
+    if path.endswith((".cs", ".cs_")):
         return LANG_CS
     raise ValueError(f"{path} has an unrecognized or an unsupported extension.")
