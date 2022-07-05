@@ -35,6 +35,8 @@ class QueryBinding:
             self.namespace = self.language.query(
                 "(using_directive [(identifier) @namespace (qualified_name) @namespace])"
             )
-            self.global_statement = self.language.query("(global_statement) @global-statement")
+            self.global_statement = self.language.query(
+                "(global_statement [(expression_statement) @global-statement (local_declaration_statement) @global-statement])"
+            )
         else:
             raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
