@@ -818,7 +818,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             try:
                 self.doc = capa.render.result_document.ResultDocument.from_capa(meta, self.ruleset_cache, capabilities)
             except Exception as e:
-                logger.error("Failed to collect results (error: %s)", e)
+                logger.error("Failed to collect results (error: %s)", e, exc_info=True)
                 return False
 
         try:
@@ -827,7 +827,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
-            logger.error("Failed to render results (error: %s)", e)
+            logger.error("Failed to render results (error: %s)", e, exc_info=True)
             return False
 
         return True

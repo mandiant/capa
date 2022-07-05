@@ -18,7 +18,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.ida.helpers
 from capa.features.file import Export, Import, Section, FunctionName
-from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, Feature, Characteristic
+from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
@@ -136,7 +136,13 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """
     for seg in capa.features.extractors.ida.helpers.get_segments():
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
-        yield from capa.features.extractors.common.extract_file_strings(seg_buff)
+
+        # differing to common string extractor factor in segment offset here
+        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
+            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
+
+        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
+            yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
 def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:

@@ -17,6 +17,7 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.common
+import capa.features.freeze as frz
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.ida.plugin.item import (
@@ -540,6 +541,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """process capa doc feature node
 
         @param parent: parent node to which child is assigned
+        @param match: match information
         @param feature: capa doc feature node
         @param locations: locations identified for feature
         @param doc: capa doc
@@ -577,6 +579,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """render capa feature read from doc
 
         @param parent: parent node to which new child is assigned
+        @param match: match information
         @param feature: feature read from doc
         @param doc: capa feature doc
         @param location: address of feature
@@ -600,13 +603,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             matched_rule_name = feature.match
             return CapaExplorerRuleMatchItem(parent, display, source=doc.rules[matched_rule_name].source)
 
-        # wb: 614: substring feature?
         elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
-            for capture, locations in sorted(match.captures.items()):
-                if location in locations:
-                    return CapaExplorerStringViewItem(
-                        parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
-                    )
+            for capture, addrs in sorted(match.captures.items()):
+                for addr in addrs:
+                    assert isinstance(addr, frz.Address)
+                    if location == addr.value:
+                        return CapaExplorerStringViewItem(
+                            parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
+                        )
 
             # programming error: the given location should always be found in the regex matches
             raise ValueError("regex match at location not found")

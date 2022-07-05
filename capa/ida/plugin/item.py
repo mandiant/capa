@@ -14,7 +14,7 @@ import idaapi
 from PyQt5 import QtCore
 
 import capa.ida.helpers
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
 def info_to_name(display):
@@ -311,7 +311,7 @@ class CapaExplorerFeatureItem(CapaExplorerDataItem):
         @param location: virtual address as seen by IDA
         """
         if location:
-            assert isinstance(location, AbsoluteVirtualAddress)
+            assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
             ea = int(location)
             super(CapaExplorerFeatureItem, self).__init__(parent, [display, ea_to_hex(ea), details])
         else:
@@ -349,7 +349,7 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        assert isinstance(location, AbsoluteVirtualAddress)
+        assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
         ea = int(location)
 
         byte_snap = idaapi.get_bytes(ea, 32)
@@ -373,7 +373,7 @@ class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        assert isinstance(location, AbsoluteVirtualAddress)
+        assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
         ea = int(location)
 
         super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location, details=value)
