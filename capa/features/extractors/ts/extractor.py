@@ -5,7 +5,7 @@ import capa.features.extractors.ts.file
 import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
 import capa.features.extractors.ts.function
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
@@ -46,9 +46,3 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         self, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
     ) -> Iterator[Tuple[Feature, Address]]:
         yield from []
-
-    def is_library_function(self, addr) -> bool:
-        return False
-
-    def get_function_name(self, addr) -> str:
-        return self.engine.tree.buf[addr.start_byte : addr.end_byte].decode()
