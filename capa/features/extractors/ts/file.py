@@ -19,9 +19,7 @@ def extract_language(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Featur
 def extract_file_strings(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for global_node, _ in engine.get_global_statements():
         for node, _ in engine.get_string_literals(global_node):
-            s = engine.get_range(node).strip('"')
-            if len(s) > 0:
-                yield String(engine.get_range(node).strip('"')), engine.get_address(node)
+            yield String(engine.get_range(node).strip('"')), engine.get_address(node)
 
 
 def extract_file_integer_literals(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -60,4 +58,5 @@ FILE_HANDLERS = (
     extract_file_integer_literals,
     extract_file_strings,
     extract_language,
+    extract_namespaces,
 )
