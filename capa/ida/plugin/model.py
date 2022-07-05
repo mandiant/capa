@@ -17,6 +17,7 @@ import capa.rules
 import capa.ida.helpers
 import capa.render.utils as rutils
 import capa.features.common
+import capa.features.freeze as frz
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.ida.plugin.item import (
@@ -602,13 +603,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             matched_rule_name = feature.match
             return CapaExplorerRuleMatchItem(parent, display, source=doc.rules[matched_rule_name].source)
 
-        # wb: 614: substring feature?
         elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
             for capture, addrs in sorted(match.captures.items()):
-                if location in [addr.value for addr in addrs]:
-                    return CapaExplorerStringViewItem(
-                        parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
-                    )
+                for addr in addrs:
+                    assert isinstance(addr, frz.Address)
+                    if location == addr.value:
+                        return CapaExplorerStringViewItem(
+                            parent, display, location, '"' + capa.features.common.escape_string(capture) + '"'
+                        )
 
             # programming error: the given location should always be found in the regex matches
             raise ValueError("regex match at location not found")
