@@ -789,7 +789,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
         self.editor = editor
 
-        self.setHeaderLabels(["Feature", "Virtual Address"])
+        self.setHeaderLabels(["Feature", "Address"])
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
         # configure view columns to auto-resize
