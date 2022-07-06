@@ -5,7 +5,7 @@ import capa.features.extractors.ts.file
 import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
 import capa.features.extractors.ts.function
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 

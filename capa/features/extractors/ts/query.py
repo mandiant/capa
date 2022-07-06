@@ -6,6 +6,19 @@ from tree_sitter.binding import Query
 import capa.features.extractors.ts.build
 from capa.features.extractors.script import LANG_CS
 
+CS_BINDING = {
+    "query": {
+        "new_object": "(object_creation_expression) @object.new",
+        "function_definition": "(local_function_statement) @function.definition",
+        "function_call": "(invocation_expression) @function.call",
+        "string_literal": "(string_literal) @string-literal",
+        "integer_literal": "(integer_literal) @integer-literal",
+        "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",
+        "global_statement": "(global_statement [(expression_statement) @global-statement (local_declaration_statement) @global-statement])",
+    },
+    "field_name": {"new_object": "type", "function_definition": "name", "function_call": "function"},
+}
+
 
 @dataclass
 class QueryBinding:
@@ -21,22 +34,31 @@ class QueryBinding:
     namespace: Query
     global_statement: Query
 
-    def __init__(self, language: str):
-        self.language = Language(capa.features.extractors.ts.build.build_dir, language)
+
+class QueryBindingFactory:
+    @staticmethod
+    def from_language(language: str) -> QueryBinding:
+        ts_language = Language(capa.features.extractors.ts.build.build_dir, language)
         if language == LANG_CS:
-            self.new_object = self.language.query("(object_creation_expression) @object.new")
-            self.new_object_field_name = "type"
-            self.function_definition = self.language.query("(local_function_statement) @function.definition")
-            self.function_definition_field_name = "name"
-            self.function_call = self.language.query("(invocation_expression) @function.call")
-            self.function_call_field_name = "function"
-            self.string_literal = self.language.query("(string_literal) @string-literal")
-            self.integer_literal = self.language.query("(integer_literal) @integer-literal")
-            self.namespace = self.language.query(
-                "(using_directive [(identifier) @namespace (qualified_name) @namespace])"
-            )
-            self.global_statement = self.language.query(
-                "(global_statement [(expression_statement) @global-statement (local_declaration_statement) @global-statement])"
-            )
-        else:
-            raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
+            return QueryBinding(language=ts_language, **QueryBindingFactory.deserialize(ts_language, CS_BINDING))
+        raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
+
+    @staticmethod
+    def deserialize(language: Language, binding: dict) -> dict:
+        deserialized_binding = {}
+        for construct, query in binding["query"].items():
+            deserialized_binding[construct] = language.query(query)
+        for construct, field_name in binding["field_name"].items():
+            deserialized_binding[f"{construct}_field_name"] = field_name
+        return deserialized_binding
+
+
+@dataclass
+class EmbeddedQueryBinding:
+    language: Language
+    code: Query
+
+    def __init__(self):
+        self.language = Language(capa.features.extractors.ts.build.build_dir, "embedded_template")
+        self.content = self.language.query("(content) @content")
+        self.code = self.language.query("(code) @code")

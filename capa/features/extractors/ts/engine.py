@@ -5,7 +5,7 @@ from tree_sitter import Node, Tree, Parser
 import capa.features.extractors.ts.sig
 import capa.features.extractors.ts.build
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.ts.query import QueryBinding
+from capa.features.extractors.ts.query import QueryBinding, QueryBindingFactory
 
 
 class TreeSitterExtractorEngine:
@@ -19,14 +19,14 @@ class TreeSitterExtractorEngine:
     def __init__(self, language: str, path: str):
         capa.features.extractors.ts.build.ts_build()
         self.language = language
-        self.query = QueryBinding(language)
+        self.query = QueryBindingFactory.from_language(language)
         self.import_signatures = capa.features.extractors.ts.sig.load_import_signatures(language)
         self.path = path
         with open(self.path, "rb") as f:
             self.buf = f.read()
         self.tree = self.parse()
 
-    def parse(self):
+    def parse(self) -> Tree:
         parser = Parser()
         parser.set_language(self.query.language)
         return parser.parse(self.buf)
