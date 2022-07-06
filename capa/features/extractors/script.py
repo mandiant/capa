@@ -4,8 +4,10 @@ from typing import Tuple, Iterator
 from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, Feature, ScriptLanguage
 from capa.features.address import NO_ADDRESS, Address, FileOffsetRangeAddress
 
-LANG_TEM = "embedded_template"
 LANG_CS = "c_sharp"
+LANG_HTML = "html"
+LANG_JS = "javascript"
+LANG_TEM = "embedded_template"
 
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
@@ -29,4 +31,6 @@ def get_language_from_ext(path: str):
         return LANG_TEM
     if path.endswith((".cs", ".cs_")):
         return LANG_CS
+    if path.endswith(("html", "html_")):
+        return LANG_HTML
     raise ValueError(f"{path} has an unrecognized or an unsupported extension.")

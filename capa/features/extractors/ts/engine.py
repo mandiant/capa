@@ -1,5 +1,6 @@
 import re
-from typing import List, Tuple, Union, Iterator
+from typing import Dict, List, Tuple, Union, Iterator
+from collections import defaultdict
 from dataclasses import dataclass
 
 from tree_sitter import Node, Tree, Parser
@@ -7,8 +8,10 @@ from tree_sitter import Node, Tree, Parser
 import capa.features.extractors.ts.sig
 import capa.features.extractors.ts.build
 from capa.features.address import FileOffsetRangeAddress
+from capa.features.extractors.script import LANG_CS, LANG_JS
 from capa.features.extractors.ts.query import (
     QueryBinding,
+    HTMLQueryBinding,
     ScriptQueryBinding,
     QueryBindingFactory,
     TemplateQueryBinding,
@@ -160,7 +163,36 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         return self.get_byte_range(node).startswith(b"@ Import namespace=")
 
     def get_aspx_namespace(self, node: Node) -> Union[ASPXPseudoNode, None]:
-        match = re.search(b'@ Import namespace="(.*?)"', self.get_byte_range(node))
+        match = re.search(r'@ Import namespace="(.*?)"'.encode(), self.get_byte_range(node))
         if match is None:
             return None
         return ASPXPseudoNode(node.start_byte + match.span()[0], node.start_byte + match.span()[1])
+
+
+class TreeSitterHTMLEngine(TreeSitterBaseEngine):
+    query: HTMLQueryBinding
+
+    def __init__(self, language: str, path: str):
+        super().__init__(language, path)
+
+    def get_scripts(self) -> List[Tuple[Node, str]]:
+        return self.query.script_element.captures(self.tree.root_node)
+
+    def get_attributes(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.attribute.captures(self.tree.root_node)
+
+    def get_code_sections_by_language(self) -> Dict[str, List[Node]]:
+        code_sections = defaultdict(list)
+        for script_node, _ in self.get_scripts():
+            for attribute_node, _ in self.get_attributes(script_node):
+                script_language = self.identify_script_language(attribute_node)
+                code_sections[script_language].append(attribute_node)
+        return code_sections
+
+    def identify_script_language(self, node: Node) -> str:
+        if self.is_server_side_c_sharp(node):
+            return LANG_CS
+        return LANG_JS
+
+    def is_server_side_c_sharp(self, node: Node) -> bool:
+        return len(re.findall(r'runat\s*=\s*"server"'.encode(), self.get_byte_range(node))) > 0

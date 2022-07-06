@@ -4,7 +4,7 @@ from tree_sitter import Language
 from tree_sitter.binding import Query
 
 import capa.features.extractors.ts.build
-from capa.features.extractors.script import LANG_CS, LANG_TEM
+from capa.features.extractors.script import LANG_CS, LANG_TEM, LANG_HTML
 
 CS_BINDING = {
     "query": {
@@ -19,9 +19,14 @@ CS_BINDING = {
     "field_name": {"new_object": "type", "function_definition": "name", "function_call": "function"},
 }
 
-TM_BINDING = {
+TEM_BINDING = {
     "code": "(code) @code",
     "content": "(content) @content",
+}
+
+HTML_BINDING = {
+    "script_element": "(script_element) @script-element",
+    "attribute": "(attribute) @attribute",
 }
 
 
@@ -50,6 +55,12 @@ class TemplateQueryBinding(QueryBinding):
     content: Query
 
 
+@dataclass
+class HTMLQueryBinding(QueryBinding):
+    script_element: Query
+    attribute: Query
+
+
 class QueryBindingFactory:
     @staticmethod
     def from_language(language: str) -> QueryBinding:
@@ -57,7 +68,9 @@ class QueryBindingFactory:
         if language == LANG_CS:
             return ScriptQueryBinding(language=ts_language, **QueryBindingFactory.deserialize(ts_language, CS_BINDING))
         if language in LANG_TEM:
-            return TemplateQueryBinding(language=ts_language, **TM_BINDING)
+            return TemplateQueryBinding(language=ts_language, **TEM_BINDING)
+        if language == LANG_HTML:
+            return HTMLQueryBinding(language=ts_language, **HTML_BINDING)
         raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
 
     @staticmethod
