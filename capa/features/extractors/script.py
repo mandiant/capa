@@ -4,7 +4,7 @@ from typing import Tuple, Iterator
 from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, Feature, ScriptLanguage
 from capa.features.address import NO_ADDRESS, Address, FileOffsetRangeAddress
 
-LANG_ASPX = "aspx"
+LANG_TEM = "embedded_template"
 LANG_CS = "c_sharp"
 
 
@@ -26,7 +26,7 @@ def extract_format() -> Iterator[Tuple[Feature, Address]]:
 
 def get_language_from_ext(path: str):
     if path.endswith((".aspx", "aspx_")):
-        return LANG_ASPX
+        return LANG_TEM
     if path.endswith((".cs", ".cs_")):
         return LANG_CS
     raise ValueError(f"{path} has an unrecognized or an unsupported extension.")

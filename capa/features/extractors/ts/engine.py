@@ -1,16 +1,22 @@
-from typing import List, Tuple, Iterator
+import re
+from typing import List, Tuple, Union, Iterator
+from dataclasses import dataclass
 
 from tree_sitter import Node, Tree, Parser
 
 import capa.features.extractors.ts.sig
 import capa.features.extractors.ts.build
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.ts.query import QueryBinding, QueryBindingFactory
+from capa.features.extractors.ts.query import (
+    QueryBinding,
+    ScriptQueryBinding,
+    QueryBindingFactory,
+    TemplateQueryBinding,
+)
 
 
-class TreeSitterExtractorEngine:
+class TreeSitterBaseEngine:
     buf: bytes
-    import_signatures: set
     language: str
     path: str
     query: QueryBinding
@@ -30,6 +36,26 @@ class TreeSitterExtractorEngine:
         parser = Parser()
         parser.set_language(self.query.language)
         return parser.parse(self.buf)
+
+    def get_byte_range(self, node: Node) -> bytes:
+        return self.buf[node.start_byte : node.end_byte]
+
+    def get_range(self, node: Node) -> str:
+        return self.get_byte_range(node).decode()
+
+    def get_address(self, node: Node):
+        return FileOffsetRangeAddress(node.start_byte, node.end_byte)
+
+    def get_default_address(self):
+        return self.get_address(self.tree.root_node)
+
+
+class TreeSitterExtractorEngine(TreeSitterBaseEngine):
+    query: ScriptQueryBinding
+    import_signatures: set
+
+    def __init__(self, language: str, path: str):
+        super().__init__(language, path)
 
     def get_new_objects(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.new_object.captures(node)
@@ -101,11 +127,40 @@ class TreeSitterExtractorEngine:
     def get_global_statements(self) -> List[Tuple[Node, str]]:
         return self.query.global_statement.captures(self.tree.root_node)
 
-    def get_range(self, node: Node) -> str:
-        return self.buf[node.start_byte : node.end_byte].decode()
 
-    def get_address(self, node: Node):
-        return FileOffsetRangeAddress(node.start_byte, node.end_byte)
+@dataclass
+class ASPXPseudoNode:
+    start_byte: int
+    end_byte: int
 
-    def get_default_address(self):
-        return self.get_address(self.tree.root_node)
+
+class TreeSitterTemplateEngine(TreeSitterBaseEngine):
+    query: TemplateQueryBinding
+
+    def __init__(self, language: str, path: str):
+        super().__init__(language, path)
+
+    def get_code_sections(self) -> List[Tuple[Node, str]]:
+        return self.query.code.captures(self.tree.root_node)
+
+    def get_content_sections(self) -> List[Tuple[Node, str]]:
+        return self.query.content.captures(self.tree.root_node)
+
+    def get_template_namespaces(self) -> Iterator[ASPXPseudoNode]:
+        for node, _ in self.get_code_sections():
+            if self.is_aspx_import_directive:
+                ns = self.get_aspx_namespace(node)
+                if ns is not None:
+                    yield ns
+
+    def is_aspx(self, node: Node) -> bool:
+        return self.get_byte_range(node).startswith(b"@")
+
+    def is_aspx_import_directive(self, node: Node) -> bool:
+        return self.get_byte_range(node).startswith(b"@ Import namespace=")
+
+    def get_aspx_namespace(self, node: Node) -> Union[ASPXPseudoNode, None]:
+        match = re.search(b'@ Import namespace="(.*?)"', self.get_byte_range(node))
+        if match is None:
+            return None
+        return ASPXPseudoNode(node.start_byte + match.span()[0], node.start_byte + match.span()[1])

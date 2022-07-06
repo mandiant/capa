@@ -4,7 +4,7 @@ from tree_sitter import Language
 from tree_sitter.binding import Query
 
 import capa.features.extractors.ts.build
-from capa.features.extractors.script import LANG_CS
+from capa.features.extractors.script import LANG_CS, LANG_TEM
 
 CS_BINDING = {
     "query": {
@@ -19,10 +19,19 @@ CS_BINDING = {
     "field_name": {"new_object": "type", "function_definition": "name", "function_call": "function"},
 }
 
+TM_BINDING = {
+    "code": "(code) @code",
+    "content": "(content) @content",
+}
+
 
 @dataclass
 class QueryBinding:
     language: Language
+
+
+@dataclass
+class ScriptQueryBinding(QueryBinding):
     new_object: Query
     new_object_field_name: str
     function_definition: Query
@@ -35,12 +44,20 @@ class QueryBinding:
     global_statement: Query
 
 
+@dataclass
+class TemplateQueryBinding(QueryBinding):
+    code: Query
+    content: Query
+
+
 class QueryBindingFactory:
     @staticmethod
     def from_language(language: str) -> QueryBinding:
         ts_language = Language(capa.features.extractors.ts.build.build_dir, language)
         if language == LANG_CS:
-            return QueryBinding(language=ts_language, **QueryBindingFactory.deserialize(ts_language, CS_BINDING))
+            return ScriptQueryBinding(language=ts_language, **QueryBindingFactory.deserialize(ts_language, CS_BINDING))
+        if language in LANG_TEM:
+            return TemplateQueryBinding(language=ts_language, **TM_BINDING)
         raise NotImplementedError(f"Tree-sitter queries for {language} are not implemented.")
 
     @staticmethod
@@ -51,12 +68,6 @@ class QueryBindingFactory:
         for construct, field_name in binding["field_name"].items():
             deserialized_binding[f"{construct}_field_name"] = field_name
         return deserialized_binding
-
-
-@dataclass
-class EmbeddedQueryBinding:
-    language: Language
-    code: Query
 
     def __init__(self):
         self.language = Language(capa.features.extractors.ts.build.build_dir, "embedded_template")
