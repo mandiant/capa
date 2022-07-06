@@ -17,8 +17,21 @@
 ### Development
 
 ### Raw diffs
-- [capa v3.2.0...master](https://github.com/mandiant/capa/compare/v3.2.0...master)
-- [capa-rules v3.2.0...master](https://github.com/mandiant/capa-rules/compare/v3.2.0...master)
+- [capa v3.2.1...master](https://github.com/mandiant/capa/compare/v3.2.1...master)
+- [capa-rules v3.2.1...master](https://github.com/mandiant/capa-rules/compare/v3.2.1...master)
+
+
+## v3.2.1 (2022-07-06)
+
+This release bumps the SMDA dependency version to enable installation on Python 3.10.
+
+### Bug Fixes
+
+- update SMDA dependency @mike-hunhoff #922
+
+### Raw diffs
+- [capa v3.2.0...v3.2.1](https://github.com/mandiant/capa/compare/v3.2.0...v3.2.1)
+- [capa-rules v3.2.0...v3.2.1](https://github.com/mandiant/capa-rules/compare/v3.2.0...v3.2.1)
 
 ## v3.2.0 (2022-03-03)
 This release adds a new characteristic `characteristic: call $+5` enabling users to create more explicit rules. The linter now also validates ATT&CK and MBC categories. Additionally, many dependencies, including the vivisect backend, have been updated.
