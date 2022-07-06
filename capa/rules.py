@@ -90,6 +90,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         # these will be added to other scopes, see below.
         capa.features.common.OS,
         capa.features.common.Arch,
+        capa.features.common.Format,
     },
     FILE_SCOPE: {
         capa.features.common.MatchedRule,
@@ -99,7 +100,6 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.file.FunctionName,
         capa.features.common.Characteristic("embedded pe"),
         capa.features.common.String,
-        capa.features.common.Format,
         capa.features.common.Class,
         capa.features.common.Namespace,
         capa.features.common.Characteristic("mixed mode"),
