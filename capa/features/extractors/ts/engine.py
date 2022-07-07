@@ -8,10 +8,10 @@ import capa.features.extractors.ts.build
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import (
+    BINDINGS,
     QueryBinding,
     HTMLQueryBinding,
     ScriptQueryBinding,
-    QueryBindingFactory,
     TemplateQueryBinding,
 )
 
@@ -25,7 +25,7 @@ class TreeSitterBaseEngine:
     def __init__(self, language: str, buf: bytes):
         capa.features.extractors.ts.build.ts_build()
         self.language = language
-        self.query = QueryBindingFactory.from_language(language)
+        self.query = BINDINGS[language]
         self.buf = buf
         self.tree = self.parse()
 
@@ -53,7 +53,13 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     buf_offset: int
     namespaces: set[str]
 
-    def __init__(self, language: str, buf: bytes, buf_offset: int = 0, additional_namespaces: set[str] = None):
+    def __init__(
+        self,
+        language: str,
+        buf: bytes,
+        buf_offset: int = 0,
+        additional_namespaces: set[str] = None,
+    ):
         super().__init__(language, buf)
         self.buf_offset = buf_offset
         self.import_signatures = capa.features.extractors.ts.sig.load_import_signatures(language)
@@ -146,7 +152,10 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         template_namespaces = set(name for _, name in self.get_template_namespaces())
         for node, _ in self.get_code_sections():
             yield TreeSitterExtractorEngine(
-                self.identify_language(), self.get_byte_range(node), node.start_byte, template_namespaces
+                self.identify_language(),
+                self.get_byte_range(node),
+                node.start_byte,
+                template_namespaces,
             )
 
     def get_content_sections(self) -> List[Tuple[Node, str]]:
@@ -159,21 +168,38 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         return LANG_JS
 
     def get_template_namespaces(self) -> Iterator[Tuple[Node, str]]:
+        # raise ValueError([self.get_range(node) for node, _ in self.get_code_sections()])
         for node, _ in self.get_code_sections():
-            if self.is_aspx_import_directive:
+            if self.is_aspx_import_directive(node):
                 namespace = self.get_aspx_namespace(node)
                 if namespace is not None:
                     yield node, namespace
 
     def is_c_sharp(self, node: Node) -> bool:
-        return len(re.findall(r'@ .*Page Language\s*=\s*"C#".*'.encode(), self.get_byte_range(node))) > 0
+        return bool(
+            re.match(
+                r'@ .*Page Language\s*=\s*"C#".*'.encode(),
+                self.get_byte_range(node),
+                re.IGNORECASE,
+            )
+        )
 
     def is_aspx_import_directive(self, node: Node) -> bool:
-        return self.get_byte_range(node).startswith(b"@ Import namespace=")
+        return bool(
+            re.match(
+                r"@ Import Namespace=".encode(),
+                self.get_byte_range(node),
+                re.IGNORECASE,
+            )
+        )
 
     def get_aspx_namespace(self, node: Node) -> Optional[str]:
-        match = re.search(r'@ Import namespace="(.*?)"'.encode(), self.get_byte_range(node))
-        return match.group().decode() if match is not None else None
+        match = re.search(
+            r'@ Import namespace="(.*?)"'.encode(),
+            self.get_byte_range(node),
+            re.IGNORECASE,
+        )
+        return match.group(1).decode() if match is not None else None
 
 
 class TreeSitterHTMLEngine(TreeSitterBaseEngine):

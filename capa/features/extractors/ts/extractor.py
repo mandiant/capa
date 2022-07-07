@@ -27,7 +27,10 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
 
         self.language = capa.features.extractors.script.get_language_from_ext(path)
         if self.language == LANG_TEM:
-            self.code_sections, self.template_namespaces = self.extract_code_from_template(buf)
+            (
+                self.code_sections,
+                self.template_namespaces,
+            ) = self.extract_code_from_template(buf)
         elif self.language == LANG_HTML:
             self.code_sections = list(self.extract_code_from_html(buf))
         else:
@@ -49,7 +52,9 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
     ) -> Iterator[TreeSitterExtractorEngine]:
         yield from TreeSitterHTMLEngine(buf, additional_namespaces).get_parsed_code_sections()
 
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
+    def get_base_address(
+        self,
+    ) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         return NO_ADDRESS
 
     def extract_template_namespaces(self) -> Iterator[Tuple[Feature, Address]]:
