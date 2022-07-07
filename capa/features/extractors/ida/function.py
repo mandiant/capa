@@ -34,7 +34,7 @@ def extract_function_loop(fh: FunctionHandle):
             edges.append((bb.start_ea, succ.start_ea))
 
     if loops.has_loop(edges):
-        yield Characteristic("loop"), f.start_ea
+        yield Characteristic("loop"), fh.address
 
 
 def extract_recursive_call(fh: FunctionHandle):

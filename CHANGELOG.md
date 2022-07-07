@@ -54,6 +54,7 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
 - remove decorators added by IDA to ELF imports #919 @mike-hunhoff
+- bug fixes for Address abstraction #1091 @mike-hunhoff
 
 ### Development
 

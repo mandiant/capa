@@ -446,8 +446,10 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         for rule in rutils.capability_rules(doc):
             for location_, _ in rule.matches:
                 location = location_.to_capa()
-                # within IDA, assume that all addresses are virtual addresses.
-                assert isinstance(location, AbsoluteVirtualAddress)
+
+                if not isinstance(location, AbsoluteVirtualAddress):
+                    # only handle matches with a VA
+                    continue
                 ea = int(location)
 
                 ea = capa.ida.helpers.get_func_start_ea(ea)
@@ -600,8 +602,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         elif isinstance(feature, frzf.MatchFeature):
             # display content of rule for all rule matches
-            matched_rule_name = feature.match
-            return CapaExplorerRuleMatchItem(parent, display, source=doc.rules[matched_rule_name].source)
+            matched_rule_source = ""
+
+            # check if match is a matched rule
+            matched_rule = doc.rules.get(feature.match, None)
+            if matched_rule is not None:
+                matched_rule_source = matched_rule.source
+
+            return CapaExplorerRuleMatchItem(parent, display, source=matched_rule_source)
 
         elif isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
             for capture, addrs in sorted(match.captures.items()):

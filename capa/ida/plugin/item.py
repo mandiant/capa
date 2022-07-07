@@ -315,7 +315,7 @@ class CapaExplorerFeatureItem(CapaExplorerDataItem):
             ea = int(location)
             super(CapaExplorerFeatureItem, self).__init__(parent, [display, ea_to_hex(ea), details])
         else:
-            super(CapaExplorerFeatureItem, self).__init__(parent, [display, "global", details])
+            super(CapaExplorerFeatureItem, self).__init__(parent, [display, "", details])
 
 
 class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):

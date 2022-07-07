@@ -18,7 +18,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import NO_ADDRESS
+from capa.features.address import Address, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750
@@ -789,7 +789,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
         self.editor = editor
 
-        self.setHeaderLabels(["Feature", "Virtual Address"])
+        self.setHeaderLabels(["Feature", "Address"])
         self.setStyleSheet("QTreeView::item {padding-right: 15 px;padding-bottom: 2 px;}")
 
         # configure view columns to auto-resize
@@ -1012,9 +1012,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
 
         def format_address(e):
-            if e == NO_ADDRESS:
-                return ""
-            return "%X" % e if e else ""
+            assert isinstance(e, Address)
+            return "%X" % e if not isinstance(e, _NoAddress) else ""
 
         def format_feature(feature):
             """ """
@@ -1056,7 +1055,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                     addr = addrs.pop()
                 else:
                     # some features may not have an address e.g. "format"
-                    addr = ""
+                    addr = _NoAddress()
                 for (i, v) in enumerate((format_feature(feature), format_address(addr))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
