@@ -142,10 +142,13 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         if key == "string":
             value = render_string_value(value)
 
+        if key == "number":
+            value = hex(value)
+
         ostream.write(key)
         ostream.write(": ")
 
-        if value or key == "number":
+        if value:
             ostream.write(rutils.bold2(value))
 
             if feature.description:
