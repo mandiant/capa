@@ -38,6 +38,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import Address
+from capa.features.extractors.script import LANG_CS, LANG_TEM
 from capa.features.extractors.ts.extractor import TreeSitterFeatureExtractor
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
@@ -45,7 +46,9 @@ from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 CD = os.path.dirname(__file__)
 DOTNET_DIR = os.path.join(CD, "data", "dotnet")
 DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
-SCRIPT_DIR = os.path.join(CD, "data", "scripts")
+SOURCE_DIR = os.path.join(CD, "data", "source")
+ASPX_DIR = os.path.join(SOURCE_DIR, "aspx")
+CS_DIR = os.path.join(SOURCE_DIR, "cs")
 
 
 @contextlib.contextmanager
@@ -179,6 +182,13 @@ def get_ts_extractor_engine(language, buf):
 
 
 @lru_cache(maxsize=1)
+def get_ts_template_engine(language, buf):
+    import capa.features.extractors.ts.engine
+
+    return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
+
+
+@lru_cache(maxsize=1)
 def get_ts_extractor(path):
     import capa.features.extractors.ts.extractor
 
@@ -295,10 +305,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
     elif name.startswith("_692f"):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
-    elif name.startswith("cs_f397cb"):
-        return os.path.join(SCRIPT_DIR, "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.cs_")
-    elif name.startswith("aspx_f397cb"):
-        return os.path.join(SCRIPT_DIR, "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.aspx_")
+    elif name.startswith("cs_138cdc"):
+        return os.path.join(CS_DIR, "138cdc4b10f3f5ece9c47bb0ec17fde5b70c1f9a90b267794c5e5dfa337fc798.cs_")
+    elif name.startswith("aspx_675375"):
+        return os.path.join(ASPX_DIR, "6753759936aaaddb29719010644edf886c0548a69aa06e469b546b5de647deeb.aspx_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -962,7 +972,14 @@ def _692f_dotnetfile_extractor():
 
 
 @pytest.fixture
-def cs_f397cb_extractor_engine():
-    with open(get_data_path_by_name("cs_f397cb"), "rb") as f:
+def cs_138cdc_extractor_engine():
+    with open(get_data_path_by_name("cs_138cdc"), "rb") as f:
         buf = f.read()
-    return get_ts_extractor_engine("c_sharp", buf)
+    return get_ts_extractor_engine(LANG_CS, buf)
+
+
+@pytest.fixture
+def aspx_675375_extractor_engine():
+    with open(get_data_path_by_name("aspx_675375"), "rb") as f:
+        buf = f.read()
+    return get_ts_template_engine(LANG_TEM, buf)
