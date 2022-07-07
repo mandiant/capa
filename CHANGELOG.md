@@ -51,6 +51,7 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 ### Bug Fixes
 - improve handling _ prefix compile/link artifact #924 @mike-hunhoff
 - better detect OS in ELF samples #988 @williballenthin
+- display number feature zero in vverbose #1097 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - improve file format extraction #918 @mike-hunhoff
