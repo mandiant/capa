@@ -83,6 +83,6 @@ class QueryBindingFactory:
         return deserialized_binding
 
     def __init__(self):
-        self.language = Language(capa.features.extractors.ts.build.build_dir, "embedded_template")
+        self.language = Language(capa.features.extractors.ts.build.build_dir, LANG_TEM)
         self.content = self.language.query("(content) @content")
         self.code = self.language.query("(code) @code")
