@@ -145,7 +145,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         ostream.write(key)
         ostream.write(": ")
 
-        if value:
+        if value or key == "number":
             ostream.write(rutils.bold2(value))
 
             if feature.description:
