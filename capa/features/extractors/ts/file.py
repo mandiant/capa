@@ -8,10 +8,6 @@ from capa.features.address import Address
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 
 
-def extract_file_format(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.script.extract_format()
-
-
 def extract_language(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     yield from capa.features.extractors.script.extract_language(engine.language, engine.get_default_address())
 
@@ -52,7 +48,6 @@ def extract_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Featur
 
 
 FILE_HANDLERS = (
-    extract_file_format,
     extract_file_function_names,
     extract_file_import_names,
     extract_file_integer_literals,

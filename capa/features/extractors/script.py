@@ -26,7 +26,7 @@ def extract_format() -> Iterator[Tuple[Feature, Address]]:
     yield Format(FORMAT_SCRIPT), NO_ADDRESS
 
 
-def get_language_from_ext(path: str):
+def get_language_from_ext(path: str) -> str:
     if path.endswith((".aspx", "aspx_")):
         return LANG_TEM
     if path.endswith((".cs", ".cs_")):

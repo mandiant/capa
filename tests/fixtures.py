@@ -172,10 +172,10 @@ def get_dnfile_extractor(path):
 
 
 @lru_cache(maxsize=1)
-def get_ts_extractor_engine(language, path):
+def get_ts_extractor_engine(language, buf):
     import capa.features.extractors.ts.engine
 
-    return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, path)
+    return capa.features.extractors.ts.engine.TreeSitterExtractorEngine(language, buf)
 
 
 @lru_cache(maxsize=1)
@@ -963,4 +963,6 @@ def _692f_dotnetfile_extractor():
 
 @pytest.fixture
 def cs_f397cb_extractor_engine():
-    return get_ts_extractor_engine("c_sharp", get_data_path_by_name("cs_f397cb"))
+    with open(get_data_path_by_name("cs_f397cb"), "rb") as f:
+        buf = f.read()
+    return get_ts_extractor_engine("c_sharp", buf)

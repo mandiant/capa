@@ -19,4 +19,8 @@ def extract_features() -> Iterator[Tuple[Feature, Address]]:
             yield feature, addr
 
 
-GLOBAL_HANDLERS = (extract_arch, extract_os)
+def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.script.extract_format()
+
+
+GLOBAL_HANDLERS = (extract_arch, extract_os, extract_file_format)

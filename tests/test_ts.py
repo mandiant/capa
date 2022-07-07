@@ -17,7 +17,6 @@ def do_test_ts_engine_init(engine: TreeSitterExtractorEngine):
     assert engine.language == LANG_CS
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.import_signatures, set) and len(engine.import_signatures) > 0
-    assert isinstance(engine.path, str) and len(engine.path) > 0
     assert isinstance(engine.buf, bytes) and len(engine.buf) > 0
     assert isinstance(engine.tree, Tree)
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)

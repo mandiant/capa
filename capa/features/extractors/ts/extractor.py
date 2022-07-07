@@ -1,37 +1,78 @@
-from typing import Tuple, Union, Iterator
+from typing import List, Tuple, Union, Iterator
+
+from tree_sitter import Node
 
 import capa.features.extractors.script
 import capa.features.extractors.ts.file
 import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
 import capa.features.extractors.ts.function
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
-from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
+from capa.features.common import Namespace
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
+from capa.features.extractors.script import LANG_TEM, LANG_HTML
+from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
 class TreeSitterFeatureExtractor(FeatureExtractor):
-    engine: TreeSitterExtractorEngine
+    code_sections: List[TreeSitterExtractorEngine]
+    template_namespaces: set[Tuple[Node, str]]
+    language: str
 
     def __init__(self, path: str):
         super().__init__()
-        self.engine = TreeSitterExtractorEngine(capa.features.extractors.script.get_language_from_ext(path), path)
+        self.path = path
+        with open(self.path, "rb") as f:
+            buf = f.read()
+
+        self.language = capa.features.extractors.script.get_language_from_ext(path)
+        if self.language == LANG_TEM:
+            self.code_sections, self.template_namespaces = self.extract_code_from_template(buf)
+        elif self.language == LANG_HTML:
+            self.code_sections = list(self.extract_code_from_html(buf))
+        else:
+            self.code_sections = [TreeSitterExtractorEngine(self.language, buf)]
+
+    def extract_code_from_template(self, buf: bytes) -> Tuple[List[TreeSitterExtractorEngine], set[Tuple[Node, str]]]:
+        template_engine = TreeSitterTemplateEngine(buf)
+        template_namespaces = set(template_engine.get_template_namespaces())
+        code_sections = list(template_engine.get_parsed_code_sections())
+
+        additional_namespaces = set(name for _, name in template_namespaces)
+        for section in template_engine.get_content_sections():
+            section_buf = template_engine.get_byte_range(section)
+            code_sections.extend(list(self.extract_code_from_html(section_buf, additional_namespaces)))
+        return code_sections, template_namespaces
+
+    def extract_code_from_html(
+        self, buf: bytes, additional_namespaces: set[str] = None
+    ) -> Iterator[TreeSitterExtractorEngine]:
+        yield from TreeSitterHTMLEngine(buf, additional_namespaces).get_parsed_code_sections()
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         return NO_ADDRESS
+
+    def extract_template_namespaces(self) -> Iterator[Tuple[Feature, Address]]:
+        for node, name in self.template_namespaces:
+            yield Namespace(name), FileOffsetRangeAddress(node.start_byte, node.end_byte)
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.ts.global_.extract_features()
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.ts.file.extract_features(self.engine)
+        if self.language == LANG_TEM:
+            yield from self.extract_template_namespaces()
+        for engine in self.code_sections:
+            yield from capa.features.extractors.ts.file.extract_features(engine)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        for node, _ in self.engine.get_function_definitions():
-            yield FunctionHandle(address=self.engine.get_address(node), inner=node)
+        for engine in self.code_sections:
+            for node, _ in engine.get_function_definitions():
+                yield FunctionHandle(address=engine.get_address(node), inner=node)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.ts.function.extract_features(f, self.engine)
+        for engine in self.code_sections:
+            yield from capa.features.extractors.ts.function.extract_features(f, engine)
 
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
         yield from []
