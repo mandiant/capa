@@ -143,6 +143,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
             value = render_string_value(value)
 
         if key == "number":
+            assert isinstance(value, int)
             value = hex(value)
 
         ostream.write(key)
