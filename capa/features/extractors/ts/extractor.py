@@ -16,8 +16,9 @@ from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandl
 
 class TreeSitterFeatureExtractor(FeatureExtractor):
     code_sections: List[TreeSitterExtractorEngine]
-    template_namespaces: set[Tuple[Node, str]]
+    template_namespaces: List[Tuple[Node, str]]
     language: str
+    path: str
 
     def __init__(self, path: str):
         super().__init__()
@@ -36,14 +37,14 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         else:
             self.code_sections = [TreeSitterExtractorEngine(self.language, buf)]
 
-    def extract_code_from_template(self, buf: bytes) -> Tuple[List[TreeSitterExtractorEngine], set[Tuple[Node, str]]]:
+    def extract_code_from_template(self, buf: bytes) -> Tuple[List[TreeSitterExtractorEngine], List[Tuple[Node, str]]]:
         template_engine = TreeSitterTemplateEngine(buf)
-        template_namespaces = set(template_engine.get_template_namespaces())
+        template_namespaces = list(template_engine.get_template_namespaces())
         code_sections = list(template_engine.get_parsed_code_sections())
 
         additional_namespaces = set(name for _, name in template_namespaces)
-        for section in template_engine.get_content_sections():
-            section_buf = template_engine.get_byte_range(section)
+        for node, _ in template_engine.get_content_sections():
+            section_buf = template_engine.get_byte_range(node)
             code_sections.extend(list(self.extract_code_from_html(section_buf, additional_namespaces)))
         return code_sections, template_namespaces
 

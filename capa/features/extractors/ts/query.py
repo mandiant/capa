@@ -35,6 +35,7 @@ class TemplateQueryBinding(QueryBinding):
 @dataclass
 class HTMLQueryBinding(QueryBinding):
     script_element: Query
+    script_content: Query
     attribute: Query
 
 
@@ -99,6 +100,7 @@ BINDINGS: dict[str, QueryBinding] = {
                 "query": {
                     "script_element": "(script_element) @script-element",
                     "attribute": "(attribute) @attribute",
+                    "script_content": "(raw_text) @script-content",
                 },
             },
         ),

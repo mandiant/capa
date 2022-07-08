@@ -151,12 +151,14 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
         template_namespaces = set(name for _, name in self.get_template_namespaces())
         for node, _ in self.get_code_sections():
-            yield TreeSitterExtractorEngine(
-                self.identify_language(),
-                self.get_byte_range(node),
-                node.start_byte,
-                template_namespaces,
-            )
+            # TODO: support JS
+            if self.identify_language() == LANG_CS:
+                yield TreeSitterExtractorEngine(
+                    self.identify_language(),
+                    self.get_byte_range(node),
+                    node.start_byte,
+                    template_namespaces,
+                )
 
     def get_content_sections(self) -> List[Tuple[Node, str]]:
         return self.query.content.captures(self.tree.root_node)
@@ -213,20 +215,26 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
         return self.query.script_element.captures(self.tree.root_node)
 
     def get_attributes(self, node: Node) -> List[Tuple[Node, str]]:
-        return self.query.attribute.captures(self.tree.root_node)
+        return self.query.attribute.captures(node)
 
-    def get_code_sections(self) -> Iterator[Node]:
-        for script_node, _ in self.get_scripts():
-            for attribute_node, _ in self.get_attributes(script_node):
-                yield attribute_node
+    def get_identified_scripts(self) -> Iterator[Tuple[Node, str]]:
+        for node, _ in self.get_scripts():
+            for content_node, _ in self.get_script_contents(node):
+                yield content_node, self.identify_language(node)
+
+    def get_script_contents(self, node: Node) -> Iterator[Tuple[Node, str]]:
+        return self.query.script_content.captures(node)
 
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
-        for node in self.get_code_sections():
-            yield TreeSitterExtractorEngine(self.identify_language(node), self.get_byte_range(node), node.start_byte)
+        for node, language in self.get_identified_scripts():
+            # TODO: support JS
+            if language == LANG_CS:
+                yield TreeSitterExtractorEngine(language, self.get_byte_range(node), node.start_byte)
 
     def identify_language(self, node: Node) -> str:
-        if self.is_server_side_c_sharp(node):
-            return LANG_CS
+        for attribute_node, _ in self.get_attributes(node):
+            if self.is_server_side_c_sharp(attribute_node):
+                return LANG_CS
         return LANG_JS
 
     def is_server_side_c_sharp(self, node: Node) -> bool:

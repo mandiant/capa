@@ -9,8 +9,13 @@ from capa.features.file import Import
 from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, String, Namespace, ScriptLanguage
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
-from capa.features.extractors.ts.query import QueryBinding, TemplateQueryBinding
-from capa.features.extractors.ts.engine import TreeSitterBaseEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
+from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
+from capa.features.extractors.ts.engine import (
+    TreeSitterBaseEngine,
+    TreeSitterHTMLEngine,
+    TreeSitterTemplateEngine,
+    TreeSitterExtractorEngine,
+)
 
 
 def do_test_ts_base_engine_init(engine: TreeSitterBaseEngine):
@@ -275,14 +280,12 @@ def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, ex
 
 def do_test_ts_template_engine_init(engine: TreeSitterTemplateEngine):
     assert engine.language == LANG_TEM
-    assert isinstance(engine.query, QueryBinding)
+    assert isinstance(engine.query, TemplateQueryBinding)
     assert isinstance(engine.buf, bytes) and len(engine.buf) > 0
     assert isinstance(engine.tree, Tree)
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
     addr = engine.get_default_address()
     assert addr.start_byte == engine.tree.root_node.start_byte and addr.end_byte == engine.tree.root_node.end_byte
-    assert isinstance(engine.query, TemplateQueryBinding)
-    pass
 
 
 def do_test_ts_template_engine_get_template_namespaces(engine: TreeSitterTemplateEngine, expected: List[str]):
@@ -907,8 +910,24 @@ def test_ts_template_engine(request: pytest.FixtureRequest, engine_str: str, exp
     assert engine.identify_language() == expected["language"]
     do_test_ts_template_engine_get_template_namespaces(engine, expected["aspx namespaces"])
     do_test_ts_template_engine_get_code_sections(engine, expected["code sections"])
-    do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
     do_test_ts_template_engine_get_parsed_code_sections(engine, expected["language"], expected["code sections"])
+    do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
+    for expected_start_byte, expected_end_byte in expected["content sections"]:
+        template_namespaces = list(engine.get_template_namespaces())
+        additional_namespaces = set(name for _, name in template_namespaces)
+        html_engine = TreeSitterHTMLEngine(engine.buf[expected_start_byte:expected_end_byte], additional_namespaces)
+        do_test_ts_html_engine_init(html_engine)
+
+
+def do_test_ts_html_engine_init(engine: TreeSitterHTMLEngine):
+    assert engine.language == LANG_HTML
+    assert isinstance(engine.query, HTMLQueryBinding)
+    assert isinstance(engine.buf, bytes) and len(engine.buf) > 0
+    assert isinstance(engine.tree, Tree)
+    assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
+    assert isinstance(engine.namespaces, set)
+    addr = engine.get_default_address()
+    assert addr.start_byte == engine.tree.root_node.start_byte and addr.end_byte == engine.tree.root_node.end_byte
 
 
 FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
@@ -923,10 +942,39 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("cs_138cdc", "function=(0x16e,0x7ce)", String("127.0.0.1"), True),
         ("cs_138cdc", "function=(0x16e,0x7ce)", Import("System.Diagnostics.ProcessStartInfo"), True),
         ("cs_138cdc", "function=(0x16e,0x7ce)", Import("System.Diagnostics.Process"), True),
+        ("aspx_4f6fa6", "global", Arch(ARCH_ANY), True),
+        ("aspx_4f6fa6", "global", OS(OS_ANY), True),
+        ("aspx_4f6fa6", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_4f6fa6", "file", ScriptLanguage(LANG_CS), True),
+        ("aspx_4f6fa6", "file", Namespace("System.Diagnostics"), True),
+        ("aspx_4f6fa6", "file", Namespace("System.IO"), True),
+        ("aspx_4f6fa6", "file", Namespace("System.IO.Compression"), True),
+        ("aspx_4f6fa6", "function=(0xad, 0x28e)", String("powershell.exe"), True),
+        ("aspx_5f959f", "global", Arch(ARCH_ANY), True),
+        ("aspx_10162f", "global", Arch(ARCH_ANY), True),
+        ("aspx_2b71dd", "global", Arch(ARCH_ANY), True),
+        ("aspx_f2bf20", "global", Arch(ARCH_ANY), True),
+        ("aspx_f39dc0", "global", Arch(ARCH_ANY), True),
+        ("aspx_ea2a01", "global", Arch(ARCH_ANY), True),
+        ("aspx_6f3261", "global", Arch(ARCH_ANY), True),
+        ("aspx_1f8f40", "global", Arch(ARCH_ANY), True),
+        ("aspx_2e8c7e", "global", Arch(ARCH_ANY), True),
+        ("aspx_03bb5c", "global", Arch(ARCH_ANY), True),
+        ("aspx_606dbf", "global", Arch(ARCH_ANY), True),
+        ("aspx_f397cb", "global", Arch(ARCH_ANY), True),
+        ("aspx_b4bb14", "global", Arch(ARCH_ANY), True),
+        ("aspx_54433d", "global", Arch(ARCH_ANY), True),
+        ("aspx_a35878", "global", Arch(ARCH_ANY), True),
+        ("aspx_a5c893", "global", Arch(ARCH_ANY), True),
+        ("aspx_15eed4", "global", Arch(ARCH_ANY), True),
+        ("aspx_b75f16", "global", Arch(ARCH_ANY), True),
+        ("aspx_d460ca", "global", Arch(ARCH_ANY), True),
     ]
 )
 
 
-@parametrize("sample, scope_ts, feature, expected", FEATURE_PRESENCE_TESTS_SCRIPTS, indirect=["sample", "scope_ts"])
-def test_ts_extractor(sample, scope_ts, feature, expected):
-    fixtures.do_test_feature_presence(fixtures.get_ts_extractor, sample, scope_ts, feature, expected)
+@parametrize(
+    "sample_ts, scope_ts, feature, expected", FEATURE_PRESENCE_TESTS_SCRIPTS, indirect=["sample_ts", "scope_ts"]
+)
+def test_ts_extractor(sample_ts, scope_ts, feature, expected):
+    fixtures.do_test_feature_presence(fixtures.get_ts_extractor, sample_ts, scope_ts, feature, expected)

@@ -401,6 +401,22 @@ def sample(request):
     return resolve_sample(request.param)
 
 
+def resolve_sample_ts(sample):
+    if sample.startswith("cs_"):
+        return get_data_path_by_name(sample)
+    if sample.startswith("aspx_"):
+        try:
+            return ASPX_DATA_PATH_BY_NAME[sample]
+        except KeyError:
+            raise ValueError(f"unexpected sample fixture: {sample}")
+    raise ValueError(f"unexpected sample fixture: {sample}")
+
+
+@pytest.fixture
+def sample_ts(request):
+    return resolve_sample_ts(request.param)
+
+
 def get_function(extractor, fva: Union[int, tuple]) -> FunctionHandle:
     if isinstance(fva, tuple) and not isinstance(extractor, TreeSitterFeatureExtractor):
         raise ValueError("invalid fva format")
