@@ -14,7 +14,7 @@ from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_UNKNOWN
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-
+EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
 
