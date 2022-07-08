@@ -39,14 +39,17 @@ def do_test_ts_base_engine_get_default_address(engine: TreeSitterBaseEngine):
     assert addr1.start_byte == addr2.start_byte and addr1.end_byte == addr2.end_byte
 
 
-def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine):
-    assert engine.language == LANG_CS
+def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine, expected_language: str):
+    assert engine.language == expected_language
     assert isinstance(engine.query, QueryBinding)
     assert isinstance(engine.import_signatures, set) and len(engine.import_signatures) > 0
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
     assert isinstance(engine.buf_offset, int) and engine.buf_offset >= 0
     addr = engine.get_default_address()
-    assert addr.start_byte == engine.tree.root_node.start_byte and addr.end_byte == engine.tree.root_node.end_byte
+    assert (
+        addr.start_byte == engine.tree.root_node.start_byte + engine.buf_offset
+        and addr.end_byte == engine.tree.root_node.end_byte + engine.buf_offset
+    )
 
 
 def do_test_ts_extractor_engine_get_address(
@@ -56,67 +59,65 @@ def do_test_ts_extractor_engine_get_address(
 
 
 def do_test_ts_extractor_engine_get_new_objects(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[Tuple[str, str]]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
-    assert len(engine.get_new_objects(root_node)) == len(expected_list)
-    for (node, name), (expected_range, expected_id_range) in zip(engine.get_new_objects(root_node), expected_list):
+    assert len(engine.get_new_objects(root_node)) == len(expected)
+    for (node, name), (expected_range, expected_id_range) in zip(engine.get_new_objects(root_node), expected):
         assert isinstance(node, Node)
         assert name == "object.new"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
         do_test_ts_base_engine_get_range(engine, engine.get_object_id(node), expected_id_range)
 
-    assert len(list(engine.get_new_object_ids(root_node))) == len(expected_list)
-    for node, (_, expected_id_range) in zip(engine.get_new_object_ids(root_node), expected_list):
+    assert len(list(engine.get_new_object_ids(root_node))) == len(expected)
+    for node, (_, expected_id_range) in zip(engine.get_new_object_ids(root_node), expected):
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_range(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_function_definitions(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[Tuple[str, str]]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert engine.get_function_definitions(engine.tree.root_node) == engine.get_function_definitions()
-    assert len(engine.get_function_definitions(root_node)) == len(expected_list)
-    for (node, name), (expected_range, expected_id_range) in zip(
-        engine.get_function_definitions(root_node), expected_list
-    ):
+    assert len(engine.get_function_definitions(root_node)) == len(expected)
+    for (node, name), (expected_range, expected_id_range) in zip(engine.get_function_definitions(root_node), expected):
         assert isinstance(node, Node)
         assert name == "function.definition"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
         do_test_ts_base_engine_get_range(engine, engine.get_function_definition_id(node), expected_id_range)
 
-    assert len(list(engine.get_function_definition_ids(root_node))) == len(expected_list)
-    for node, (_, expected_id_range) in zip(engine.get_function_definition_ids(root_node), expected_list):
+    assert len(list(engine.get_function_definition_ids(root_node))) == len(expected)
+    for node, (_, expected_id_range) in zip(engine.get_function_definition_ids(root_node), expected):
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_range(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_function_calls(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[Tuple[str, str]]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
-    assert len(engine.get_function_calls(root_node)) == len(expected_list)
-    for (node, name), (expected_range, expected_id_range) in zip(engine.get_function_calls(root_node), expected_list):
+    assert len(engine.get_function_calls(root_node)) == len(expected)
+    for (node, name), (expected_range, expected_id_range) in zip(engine.get_function_calls(root_node), expected):
         assert isinstance(node, Node)
         assert name == "function.call"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
         do_test_ts_base_engine_get_range(engine, engine.get_function_call_id(node), expected_id_range)
 
-    assert len(list(engine.get_function_call_ids(root_node))) == len(expected_list)
-    for node, (_, expected_id_range) in zip(engine.get_function_call_ids(root_node), expected_list):
+    assert len(list(engine.get_function_call_ids(root_node))) == len(expected)
+    for node, (_, expected_id_range) in zip(engine.get_function_call_ids(root_node), expected):
         assert isinstance(node, Node)
         do_test_ts_base_engine_get_range(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_string_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[str]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(engine.get_string_literals(root_node)) == len(expected_list)
-    for (node, name), expected_range in zip(engine.get_string_literals(root_node), expected_list):
+    assert len(engine.get_string_literals(root_node)) == len(expected)
+    for (node, name), expected_range in zip(engine.get_string_literals(root_node), expected):
         assert isinstance(node, Node)
         assert name == "string-literal"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
@@ -124,29 +125,29 @@ def do_test_ts_extractor_engine_get_string_literals(
 
 
 def do_test_ts_extractor_engine_get_integer_literals(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[str]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(engine.get_integer_literals(root_node)) == len(expected_list)
-    for (node, name), expected_range in zip(engine.get_integer_literals(root_node), expected_list):
+    assert len(engine.get_integer_literals(root_node)) == len(expected)
+    for (node, name), expected_range in zip(engine.get_integer_literals(root_node), expected):
         assert isinstance(node, Node)
         assert name == "integer-literal"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine, expected_list: List[str]):
+def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine, expected: List[str]):
     assert engine.get_namespaces(engine.tree.root_node) == engine.get_namespaces()
-    assert len(engine.get_namespaces()) == len(expected_list)
-    for (node, name), expected_range in zip(engine.get_namespaces(), expected_list):
+    assert len(engine.get_namespaces()) == len(expected)
+    for (node, name), expected_range in zip(engine.get_namespaces(), expected):
         assert isinstance(node, Node)
         assert name == "namespace"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
-def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtractorEngine, expected_list: List[str]):
-    assert len(engine.get_global_statements()) == len(expected_list)
-    for (node, name), expected_range in zip(engine.get_global_statements(), expected_list):
+def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtractorEngine, expected: List[str]):
+    assert len(engine.get_global_statements()) == len(expected)
+    for (node, name), expected_range in zip(engine.get_global_statements(), expected):
         assert isinstance(node, Node)
         assert name == "global-statement"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
@@ -154,31 +155,32 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
 
 
 def do_test_ts_extractor_engine_get_import_names(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[str]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(list(engine.get_import_names(root_node))) == len(expected_list)
-    for (node, import_name), expected_import_name in zip(list(engine.get_import_names(root_node)), expected_list):
+    assert len(list(engine.get_import_names(root_node))) == len(expected)
+    for (node, import_name), expected_import_name in zip(list(engine.get_import_names(root_node)), expected):
         assert isinstance(node, Node)
         assert import_name == expected_import_name
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_function_names(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected_list: List[str]
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(list(engine.get_function_names(root_node))) == len(expected_list)
-    for (node, function_name), expected_function_name in zip(list(engine.get_function_names(root_node)), expected_list):
+    assert len(list(engine.get_function_names(root_node))) == len(expected)
+    for (node, function_name), expected_function_name in zip(list(engine.get_function_names(root_node)), expected):
         assert isinstance(node, Node)
         assert function_name == expected_function_name
         do_test_ts_base_engine_get_address(engine, node)
 
 
 @parametrize(
-    "engine_str,expected_dict",
+    "engine_str,expected",
     [
         (
             "cs_138cdc_extractor_engine",
             {
+                "language": LANG_CS,
                 "all objects": [
                     (
                         'new Diagnostics.ProcessStartInfo("cmd", "/c " + Request.Form["c"])',
@@ -254,22 +256,20 @@ def do_test_ts_extractor_engine_get_function_names(
         ),
     ],
 )
-def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, expected_dict: dict):
+def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, expected: dict):
     engine: TreeSitterExtractorEngine = request.getfixturevalue(engine_str)
-    do_test_ts_extractor_engine_init(engine)
-    do_test_ts_extractor_engine_get_new_objects(engine, engine.tree.root_node, expected_dict["all objects"])
+    do_test_ts_extractor_engine_init(engine, expected["language"])
+    do_test_ts_extractor_engine_get_new_objects(engine, engine.tree.root_node, expected["all objects"])
     do_test_ts_extractor_engine_get_function_definitions(
-        engine, engine.tree.root_node, expected_dict["all function definitions"]
+        engine, engine.tree.root_node, expected["all function definitions"]
     )
-    do_test_ts_extractor_engine_get_function_calls(engine, engine.tree.root_node, expected_dict["all function calls"])
-    do_test_ts_extractor_engine_get_string_literals(engine, engine.tree.root_node, expected_dict["all string literals"])
-    do_test_ts_extractor_engine_get_integer_literals(
-        engine, engine.tree.root_node, expected_dict["all integer literals"]
-    )
-    do_test_ts_extractor_engine_get_import_names(engine, engine.tree.root_node, expected_dict["all import names"])
-    do_test_ts_extractor_engine_get_function_names(engine, engine.tree.root_node, expected_dict["all function names"])
-    do_test_ts_extractor_engine_get_global_statements(engine, expected_dict["global statements"])
-    do_test_ts_extractor_engine_get_namespaces(engine, expected_dict["namespaces"])
+    do_test_ts_extractor_engine_get_function_calls(engine, engine.tree.root_node, expected["all function calls"])
+    do_test_ts_extractor_engine_get_string_literals(engine, engine.tree.root_node, expected["all string literals"])
+    do_test_ts_extractor_engine_get_integer_literals(engine, engine.tree.root_node, expected["all integer literals"])
+    do_test_ts_extractor_engine_get_import_names(engine, engine.tree.root_node, expected["all import names"])
+    do_test_ts_extractor_engine_get_function_names(engine, engine.tree.root_node, expected["all function names"])
+    do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
+    do_test_ts_extractor_engine_get_namespaces(engine, expected["namespaces"])
     do_test_ts_base_engine_get_default_address(engine)
 
 
@@ -285,34 +285,630 @@ def do_test_ts_template_engine_init(engine: TreeSitterTemplateEngine):
     pass
 
 
-def do_test_ts_template_engine_get_template_namespaces(engine: TreeSitterTemplateEngine, expected_list: List[str]):
-    assert len(list(engine.get_template_namespaces())) == len(expected_list)
-    for (node, namespace), expected_namespace in zip(list(engine.get_template_namespaces()), expected_list):
+def do_test_ts_template_engine_get_template_namespaces(engine: TreeSitterTemplateEngine, expected: List[str]):
+    assert len(list(engine.get_template_namespaces())) == len(expected)
+    for (node, namespace), expected_namespace in zip(list(engine.get_template_namespaces()), expected):
         assert isinstance(node, Node)
         assert engine.is_aspx_import_directive(node) == True
         assert engine.get_aspx_namespace(node) == expected_namespace
         assert namespace == expected_namespace
 
 
+def do_test_ts_template_engine_get_code_sections(engine: TreeSitterTemplateEngine, expected: List[Tuple[int, int]]):
+    assert len(engine.get_code_sections()) == len(expected)
+    for (node, name), (expected_start_byte, expected_end_byte) in zip(list(engine.get_code_sections()), expected):
+        assert isinstance(node, Node)
+        assert name == "code"
+        assert node.start_byte == expected_start_byte and node.end_byte == expected_end_byte
+
+
+def do_test_ts_template_engine_get_content_sections(engine: TreeSitterTemplateEngine, expected: List[Tuple[int, int]]):
+    assert len(engine.get_content_sections()) == len(expected)
+    for (node, name), (expected_start_byte, expected_end_byte) in zip(list(engine.get_content_sections()), expected):
+        assert isinstance(node, Node)
+        assert name == "content"
+        assert node.start_byte == expected_start_byte and node.end_byte == expected_end_byte
+
+
+def do_test_ts_template_engine_get_parsed_code_sections(
+    engine: TreeSitterTemplateEngine, expected_language: str, expected: List[Tuple[int, int]]
+):
+    assert len(list(engine.get_parsed_code_sections())) == len(expected)
+    addrs = [e.get_default_address() for e in engine.get_parsed_code_sections()]
+    for extractor_engine, (expected_start_byte, _) in zip(engine.get_parsed_code_sections(), expected):
+        do_test_ts_extractor_engine_init(extractor_engine, expected_language)
+        assert extractor_engine.buf_offset == expected_start_byte
+        root = extractor_engine.tree.root_node
+        addr = extractor_engine.get_default_address()
+        assert (
+            addr.start_byte == root.start_byte + expected_start_byte
+            and addr.end_byte == root.end_byte + expected_start_byte
+        )
+        addr = extractor_engine.get_address(extractor_engine.tree.root_node)
+        assert (
+            addr.start_byte == root.start_byte + expected_start_byte
+            and addr.end_byte == root.end_byte + expected_start_byte
+        )
+
+
 @parametrize(
-    "engine_str,expected_dict",
+    "engine_str,expected",
     [
         (
-            "aspx_675375_extractor_engine",
+            "aspx_1f8f40_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Reflection"],
+                "code sections": [(2, 23), (27, 64), (68, 469)],
+                "content sections": [],
+            },
+        ),
+        (
+            "aspx_2b71dd_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO"],
+                "code sections": [(2, 50), (55, 95), (100, 131)],
+                "content sections": [(52, 53), (97, 98), (133, 1273)],
+            },
+        ),
+        (
+            "aspx_2e8c7e_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO"],
+                "code sections": [(2, 23), (28, 67), (72, 103)],
+                "content sections": [(25, 26), (69, 70), (105, 2919)],
+            },
+        ),
+        (
+            "aspx_03bb5c_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Web.UI.WebControls", "System.Diagnostics", "System.IO"],
+                "code sections": [(2, 47), (53, 100), (106, 146), (152, 183), (1659, 7702)],
+                "content sections": [(49, 51), (102, 104), (148, 150), (185, 1657), (7704, 10790)],
+            },
+        ),
+        (
+            "aspx_4f6fa6_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO", "System.IO.Compression"],
+                "code sections": [(2, 50), (55, 95), (100, 131), (136, 179), (186, 234)],
+                "content sections": [(52, 53), (97, 98), (133, 134), (181, 183), (237, 6039)],
+            },
+        ),
+        (
+            "aspx_a35878_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System.IO",
+                    "System.Diagnostics",
+                    "System.Data",
+                    "System.Management",
+                    "System.Data.OleDb",
+                    "Microsoft.Win32",
+                    "System.Net.Sockets",
+                    "System.Net",
+                    "System.Web.UI",
+                    "System.Runtime.InteropServices",
+                    "System.DirectoryServices",
+                    "System.ServiceProcess",
+                    "System.Text.RegularExpressions",
+                    "System.Threading",
+                    "System.Data.SqlClient",
+                    "Microsoft.VisualBasic",
+                ],
+                "code sections": [
+                    (2, 123),
+                    (128, 158),
+                    (163, 202),
+                    (207, 239),
+                    (244, 282),
+                    (287, 325),
+                    (330, 366),
+                    (371, 411),
+                    (416, 448),
+                    (453, 487),
+                    (492, 543),
+                    (548, 593),
+                    (598, 640),
+                    (645, 696),
+                    (701, 738),
+                    (743, 785),
+                    (790, 832),
+                    (837, 943),
+                    (948, 1047),
+                    (1052, 1155),
+                    (1160, 1266),
+                ],
+                "content sections": [
+                    (125, 126),
+                    (160, 161),
+                    (204, 205),
+                    (241, 242),
+                    (284, 285),
+                    (327, 328),
+                    (368, 369),
+                    (413, 414),
+                    (450, 451),
+                    (489, 490),
+                    (545, 546),
+                    (595, 596),
+                    (642, 643),
+                    (698, 699),
+                    (740, 741),
+                    (787, 788),
+                    (834, 835),
+                    (945, 946),
+                    (1049, 1050),
+                    (1157, 1158),
+                    (1268, 2680),
+                ],
+            },
+        ),
+        (
+            "aspx_10162f_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.IO"],
+                "code sections": [
+                    (2, 71),
+                    (76, 106),
+                    (162, 2122),
+                    (25579, 25596),
+                    (25625, 25642),
+                    (25664, 25700),
+                    (25738, 25747),
+                    (25801, 25822),
+                    (25960, 25973),
+                    (26002, 26015),
+                    (26092, 26115),
+                    (26153, 26168),
+                    (26278, 26295),
+                    (26324, 26341),
+                    (26402, 26455),
+                    (26472, 26489),
+                    (26550, 26555),
+                    (26593, 26612),
+                    (26752, 26765),
+                    (26794, 26811),
+                    (26863, 26880),
+                    (26941, 26946),
+                    (26995, 27020),
+                    (27037, 27062),
+                    (27123, 27128),
+                    (27166, 27181),
+                    (27291, 27308),
+                    (27337, 27354),
+                    (27456, 27475),
+                    (27686, 27711),
+                    (27740, 27761),
+                    (27854, 27879),
+                    (27896, 27926),
+                    (27992, 28002),
+                    (28040, 28055),
+                    (28167, 28188),
+                    (28271, 28312),
+                    (28374, 28443),
+                    (28511, 28548),
+                    (28610, 28675),
+                    (28699, 28728),
+                    (28789, 28794),
+                    (28813, 28826),
+                    (28871, 28876),
+                    (28921, 28932),
+                    (29044, 29077),
+                    (29141, 29158),
+                    (29220, 29226),
+                    (29264, 29275),
+                    (29359, 29384),
+                    (29446, 29452),
+                    (29490, 29501),
+                    (29585, 29602),
+                    (29664, 29670),
+                    (29708, 29719),
+                    (30163, 30170),
+                ],
+                "content sections": [
+                    (73, 74),
+                    (108, 160),
+                    (2124, 25576),
+                    (25598, 25622),
+                    (25644, 25661),
+                    (25702, 25735),
+                    (25749, 25798),
+                    (25824, 25957),
+                    (25975, 25999),
+                    (26017, 26089),
+                    (26117, 26150),
+                    (26170, 26275),
+                    (26297, 26321),
+                    (26343, 26399),
+                    (26457, 26469),
+                    (26491, 26547),
+                    (26557, 26590),
+                    (26614, 26749),
+                    (26767, 26791),
+                    (26813, 26860),
+                    (26882, 26938),
+                    (26948, 26992),
+                    (27022, 27034),
+                    (27064, 27120),
+                    (27130, 27163),
+                    (27183, 27288),
+                    (27310, 27334),
+                    (27356, 27453),
+                    (27477, 27683),
+                    (27713, 27737),
+                    (27763, 27851),
+                    (27881, 27893),
+                    (27928, 27989),
+                    (28004, 28037),
+                    (28057, 28164),
+                    (28190, 28268),
+                    (28314, 28371),
+                    (28445, 28508),
+                    (28550, 28607),
+                    (28677, 28696),
+                    (28730, 28786),
+                    (28796, 28810),
+                    (28828, 28868),
+                    (28878, 28918),
+                    (28934, 29041),
+                    (29079, 29138),
+                    (29160, 29217),
+                    (29228, 29261),
+                    (29277, 29356),
+                    (29386, 29443),
+                    (29454, 29487),
+                    (29503, 29582),
+                    (29604, 29661),
+                    (29672, 29705),
+                    (29721, 30160),
+                    (30172, 30635),
+                ],
+            },
+        ),
+        (
+            "aspx_606dbf_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System",
+                    "System.IO",
+                    "System.Web",
+                    "System.Web.SessionState",
+                    "System.Web.UI",
+                    "System.Web.Configuration",
+                    "System.Threading",
+                    "System.Net",
+                    "System.Net.Sockets",
+                    "System.Text",
+                ],
+                "code sections": [
+                    (2, 87),
+                    (93, 121),
+                    (127, 158),
+                    (164, 196),
+                    (202, 247),
+                    (253, 288),
+                    (294, 340),
+                    (346, 384),
+                    (390, 422),
+                    (428, 468),
+                    (474, 507),
+                ],
+                "content sections": [
+                    (89, 91),
+                    (123, 125),
+                    (160, 162),
+                    (198, 200),
+                    (249, 251),
+                    (290, 292),
+                    (342, 344),
+                    (386, 388),
+                    (424, 426),
+                    (470, 472),
+                    (509, 7078),
+                ],
+            },
+        ),
+        (
+            "aspx_ea2a01_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO", "System.Security.Cryptography", "System"],
+                "code sections": [(2, 47), (53, 93), (99, 130), (136, 186), (192, 220), (228, 5811)],
+                "content sections": [(49, 51), (95, 97), (132, 134), (188, 190), (222, 226), (5813, 5818)],
+            },
+        ),
+        (
+            "aspx_a5c893_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Reflection"],
+                "code sections": [(2, 23), (27, 64), (68, 469)],
+                "content sections": [(471, 472)],
+            },
+        ),
+        (
+            "aspx_b75f16_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.IO"],
+                "code sections": [(2, 123), (127, 157), (303, 587)],
+                "content sections": [(159, 301), (589, 596)],
+            },
+        ),
+        (
+            "aspx_d460ca_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System.Reflection",
+                    "Microsoft.CSharp",
+                    "System.CodeDom.Compiler",
+                    "System.IO",
+                    "System.Security.Cryptography",
+                ],
+                "code sections": [(2, 22), (27, 65), (70, 107), (112, 156), (161, 191), (196, 245)],
+                "content sections": [(24, 25), (67, 68), (109, 110), (158, 159), (193, 194), (247, 4866)],
+            },
+        ),
+        (
+            "aspx_b4bb14_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO"],
+                "code sections": [(2, 50), (55, 95), (100, 131)],
+                "content sections": [(52, 53), (97, 98), (133, 1398)],
+            },
+        ),
+        (
+            "aspx_f2bf20_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System.IO",
+                    "System.IO.Compression",
+                    "System.Diagnostics",
+                    "System.Data",
+                    "System.Data.OleDb",
+                    "System.Data.Common",
+                    "System.Data.SqlClient",
+                    "System.Management",
+                    "Microsoft.Win32",
+                    "System.Net",
+                    "System.Net.Sockets",
+                    "System.Reflection",
+                    "System.Runtime.InteropServices",
+                    "System.DirectoryServices",
+                    "System.ServiceProcess",
+                    "System.Text.RegularExpressions",
+                    "System.Security",
+                    "System.Security.Permissions",
+                    "System.Threading",
+                ],
+                "code sections": [
+                    (2, 125),
+                    (133, 164),
+                    (170, 213),
+                    (219, 259),
+                    (265, 298),
+                    (304, 343),
+                    (349, 389),
+                    (395, 438),
+                    (444, 483),
+                    (489, 526),
+                    (532, 564),
+                    (570, 610),
+                    (616, 655),
+                    (661, 713),
+                    (719, 765),
+                    (771, 814),
+                    (820, 872),
+                    (878, 915),
+                    (921, 970),
+                    (976, 1014),
+                    (1020, 1127),
+                    (1133, 1233),
+                    (1239, 1343),
+                    (39508, 39563),
+                    (45103, 45113),
+                    (47599, 47609),
+                    (48705, 48712),
+                ],
+                "content sections": [
+                    (127, 131),
+                    (166, 168),
+                    (215, 217),
+                    (261, 263),
+                    (300, 302),
+                    (345, 347),
+                    (391, 393),
+                    (440, 442),
+                    (485, 487),
+                    (528, 530),
+                    (566, 568),
+                    (612, 614),
+                    (657, 659),
+                    (715, 717),
+                    (767, 769),
+                    (816, 818),
+                    (874, 876),
+                    (917, 919),
+                    (972, 974),
+                    (1016, 1018),
+                    (1129, 1131),
+                    (1235, 1237),
+                    (1345, 39505),
+                    (39565, 45100),
+                    (45116, 47596),
+                    (47612, 48702),
+                    (48715, 55896),
+                ],
+            },
+        ),
+        (
+            "aspx_5f959f_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO"],
+                "code sections": [(2, 50), (55, 95), (100, 131)],
+                "content sections": [(52, 53), (97, 98), (133, 1400)],
+            },
+        ),
+        (
+            "aspx_f39dc0_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Diagnostics", "System.IO", "System.Net"],
+                "code sections": [(2, 50), (56, 96), (102, 133), (139, 171), (678, 1421)],
+                "content sections": [(52, 54), (98, 100), (135, 137), (173, 676), (1423, 1441)],
+            },
+        ),
+        (
+            "aspx_54433d_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System.Diagnostics",
+                    "System.IO",
+                    "System.IO.Compression",
+                    "Microsoft.VisualBasic",
+                ],
+                "code sections": [(2, 50), (55, 95), (100, 131), (136, 179), (184, 227), (233, 280)],
+                "content sections": [(52, 53), (97, 98), (133, 134), (181, 182), (229, 230), (283, 10444)],
+            },
+        ),
+        (
+            "aspx_f397cb_template_engine",
             {
                 "language": LANG_CS,
                 "aspx namespaces": ["System"],
-                "code sections": [(2, 22), (28, 56), (3977, 4008), (4060, 4091)],
-                "content sections": [(24, 26), (58, 3975), (4010, 4058), (4093, 4415)],
+                "code sections": [(2, 22), (28, 56), (3950, 3981), (4033, 4064)],
+                "content sections": [(24, 26), (58, 3948), (3983, 4031), (4066, 4388)],
             },
-        )
+        ),
+        (
+            "aspx_15eed4_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": [
+                    "System.IO",
+                    "System.Diagnostics",
+                    "System.Data",
+                    "System.Management",
+                    "System.Data.OleDb",
+                    "Microsoft.Win32",
+                    "System.Net.Sockets",
+                    "System.Net",
+                    "System.Runtime.InteropServices",
+                    "System.DirectoryServices",
+                    "System.ServiceProcess",
+                    "System.Text.RegularExpressions",
+                    "System.Threading",
+                    "System.Data.SqlClient",
+                    "Microsoft.VisualBasic",
+                ],
+                "code sections": [
+                    (2, 123),
+                    (128, 158),
+                    (163, 202),
+                    (207, 239),
+                    (244, 282),
+                    (287, 325),
+                    (330, 366),
+                    (371, 411),
+                    (416, 448),
+                    (453, 504),
+                    (509, 554),
+                    (559, 601),
+                    (606, 657),
+                    (662, 699),
+                    (704, 746),
+                    (751, 793),
+                    (798, 904),
+                    (909, 1008),
+                    (1013, 1116),
+                    (1121, 1227),
+                    (54081, 54091),
+                    (55610, 55620),
+                    (56304, 56315),
+                    (57500, 57508),
+                    (57995, 58004),
+                    (58531, 58541),
+                    (58984, 58994),
+                    (59512, 59521),
+                    (60014, 60024),
+                    (60284, 60291),
+                    (61559, 61564),
+                    (62217, 62227),
+                    (62711, 62721),
+                    (66897, 66906),
+                    (67954, 67962),
+                ],
+                "content sections": [
+                    (125, 126),
+                    (160, 161),
+                    (204, 205),
+                    (241, 242),
+                    (284, 285),
+                    (327, 328),
+                    (368, 369),
+                    (413, 414),
+                    (450, 451),
+                    (506, 507),
+                    (556, 557),
+                    (603, 604),
+                    (659, 660),
+                    (701, 702),
+                    (748, 749),
+                    (795, 796),
+                    (906, 907),
+                    (1010, 1011),
+                    (1118, 1119),
+                    (1229, 54078),
+                    (54094, 55607),
+                    (55623, 56301),
+                    (56318, 57497),
+                    (57511, 57992),
+                    (58007, 58528),
+                    (58544, 58981),
+                    (58997, 59509),
+                    (59524, 60011),
+                    (60027, 60281),
+                    (60294, 61556),
+                    (61567, 62214),
+                    (62230, 62708),
+                    (62724, 66894),
+                    (66909, 67951),
+                    (67965, 70053),
+                ],
+            },
+        ),
+        (
+            "aspx_6f3261_template_engine",
+            {
+                "language": LANG_CS,
+                "aspx namespaces": ["System.Data", "System.Data.SqlClient"],
+                "code sections": [(2, 23), (28, 60), (65, 107)],
+                "content sections": [(25, 26), (62, 63), (109, 3303)],
+            },
+        ),
     ],
 )
-def test_ts_engine_template(request: pytest.FixtureRequest, engine_str: str, expected_dict: dict):
+def test_ts_template_engine(request: pytest.FixtureRequest, engine_str: str, expected: dict):
     engine: TreeSitterTemplateEngine = request.getfixturevalue(engine_str)
     do_test_ts_template_engine_init(engine)
-    assert engine.identify_language() == expected_dict["language"]
-    do_test_ts_template_engine_get_template_namespaces(engine, expected_dict["aspx namespaces"])
+    assert engine.identify_language() == expected["language"]
+    do_test_ts_template_engine_get_template_namespaces(engine, expected["aspx namespaces"])
+    do_test_ts_template_engine_get_code_sections(engine, expected["code sections"])
+    do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
+    do_test_ts_template_engine_get_parsed_code_sections(engine, expected["language"], expected["code sections"])
 
 
 FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(

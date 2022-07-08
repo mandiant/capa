@@ -182,9 +182,11 @@ def get_ts_extractor_engine(language, buf):
 
 
 @lru_cache(maxsize=1)
-def get_ts_template_engine(language, buf):
+def get_ts_template_engine(language, path):
     import capa.features.extractors.ts.engine
 
+    with open(path, "rb") as f:
+        buf = f.read()
     return capa.features.extractors.ts.engine.TreeSitterTemplateEngine(buf)
 
 
@@ -307,10 +309,32 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
     elif name.startswith("cs_138cdc"):
         return os.path.join(CS_DIR, "138cdc4b10f3f5ece9c47bb0ec17fde5b70c1f9a90b267794c5e5dfa337fc798.cs_")
-    elif name.startswith("aspx_675375"):
-        return os.path.join(ASPX_DIR, "6753759936aaaddb29719010644edf886c0548a69aa06e469b546b5de647deeb.aspx_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
+
+
+ASPX_DATA_PATH_BY_NAME = {
+    "aspx_4f6fa6": os.path.join(ASPX_DIR, "4f6fa6a45017397c7e1c9cd5a17235ccb1ff0f5087dfa6b7384552bf507e7fe1.aspx_"),
+    "aspx_5f959f": os.path.join(ASPX_DIR, "5f959f480a66a33d37d9a0ef6c8f7d0059625ca2a8ae9236b49b194733622655.aspx_"),
+    "aspx_10162f": os.path.join(ASPX_DIR, "10162feb5f063ea09c6a3d275f31abf0fe8a9e4e36fded0053b1f8e054da8161.aspx_"),
+    "aspx_2b71dd": os.path.join(ASPX_DIR, "2b71dd245520d9eb5f1e4c633fee61c7d83687591d9f64f9390c26dc95057c3c.aspx_"),
+    "aspx_f2bf20": os.path.join(ASPX_DIR, "f2bf20e7bb482d27da8f19aa0f8bd4927746a65300929b99166867074a38a4b4.aspx_"),
+    "aspx_f39dc0": os.path.join(ASPX_DIR, "f39dc0dfd43477d65c1380a7cff89296ad72bfa7fc3afcfd8e294f195632030e.aspx_"),
+    "aspx_ea2a01": os.path.join(ASPX_DIR, "ea2a01cae57c00df01bff6bb8a72585fdc0abb7a26a869dc1a0131bdff50b400.aspx_"),
+    "aspx_6f3261": os.path.join(ASPX_DIR, "6f3261eaaabf369bd928d179641b73ffd768184dfd4e00124da462a3075d4239.aspx_"),
+    "aspx_1f8f40": os.path.join(ASPX_DIR, "1f8f4054932ed1d5d055e9a92aa1e2abba49af3370506674cb1b2c70146ae81a.aspx_"),
+    "aspx_2e8c7e": os.path.join(ASPX_DIR, "2e8c7eacd739ca3f3dc4112b41a024157035096b8d0c26ba79d8b893136391bc.aspx_"),
+    "aspx_03bb5c": os.path.join(ASPX_DIR, "03bb5cab46b406bb8613ca6e32991ab3e10b5cd759d5c7813191e9e62868ea73.aspx_"),
+    "aspx_606dbf": os.path.join(ASPX_DIR, "606dbfebdc7751ecb6cb9a845853ae1905afd4b8a2cb54e1e4a98c932e268712.aspx_"),
+    "aspx_f397cb": os.path.join(ASPX_DIR, "f397cb676353873cdc8fcfbf0e3a317334353cc63946099e5ea22db6d1eebfb8.aspx_"),
+    "aspx_b4bb14": os.path.join(ASPX_DIR, "b4bb14aeb692f7afc107ee89f86d096f1cd8f9761b6c50788f626a9dccc8b077.aspx_"),
+    "aspx_54433d": os.path.join(ASPX_DIR, "54433dd57414773098a6d3292d262f91a6812855dfcbf8d421695608d1fad638.aspx_"),
+    "aspx_a35878": os.path.join(ASPX_DIR, "a35878e74425cd97ad98e3ec4b2583867bb536f4275d821cd8b82bc19380ba1a.aspx_"),
+    "aspx_a5c893": os.path.join(ASPX_DIR, "a5c8934836f5b36bba3a722eab691a9f1f926c138fefe5bae07e9074e7c49ae3.aspx_"),
+    "aspx_15eed4": os.path.join(ASPX_DIR, "15eed42e4904205b2ef2ff285ff1ce6c8138296c12cf075a2562c69a5fafd1cb.aspx_"),
+    "aspx_b75f16": os.path.join(ASPX_DIR, "b75f163ca9b9240bf4b37ad92bc7556b40a17e27c2b8ed5c8991385fe07d17d0.aspx_"),
+    "aspx_d460ca": os.path.join(ASPX_DIR, "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_"),
+}
 
 
 def get_sample_md5_by_name(name):
@@ -979,7 +1003,100 @@ def cs_138cdc_extractor_engine():
 
 
 @pytest.fixture
-def aspx_675375_extractor_engine():
-    with open(get_data_path_by_name("aspx_675375"), "rb") as f:
-        buf = f.read()
-    return get_ts_template_engine(LANG_TEM, buf)
+def aspx_4f6fa6_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_4f6fa6"])
+
+
+@pytest.fixture
+def aspx_5f959f_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_5f959f"])
+
+
+@pytest.fixture
+def aspx_10162f_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_10162f"])
+
+
+@pytest.fixture
+def aspx_2b71dd_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_2b71dd"])
+
+
+@pytest.fixture
+def aspx_f2bf20_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f2bf20"])
+
+
+@pytest.fixture
+def aspx_f39dc0_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f39dc0"])
+
+
+@pytest.fixture
+def aspx_ea2a01_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_ea2a01"])
+
+
+@pytest.fixture
+def aspx_6f3261_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_6f3261"])
+
+
+@pytest.fixture
+def aspx_1f8f40_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_1f8f40"])
+
+
+@pytest.fixture
+def aspx_2e8c7e_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_2e8c7e"])
+
+
+@pytest.fixture
+def aspx_03bb5c_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_03bb5c"])
+
+
+@pytest.fixture
+def aspx_606dbf_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_606dbf"])
+
+
+@pytest.fixture
+def aspx_f397cb_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f397cb"])
+
+
+@pytest.fixture
+def aspx_b4bb14_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_b4bb14"])
+
+
+@pytest.fixture
+def aspx_54433d_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_54433d"])
+
+
+@pytest.fixture
+def aspx_a35878_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_a35878"])
+
+
+@pytest.fixture
+def aspx_a5c893_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_a5c893"])
+
+
+@pytest.fixture
+def aspx_15eed4_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_15eed4"])
+
+
+@pytest.fixture
+def aspx_b75f16_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_b75f16"])
+
+
+@pytest.fixture
+def aspx_d460ca_template_engine():
+    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])

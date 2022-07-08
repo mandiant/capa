@@ -168,7 +168,6 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         return LANG_JS
 
     def get_template_namespaces(self) -> Iterator[Tuple[Node, str]]:
-        # raise ValueError([self.get_range(node) for node, _ in self.get_code_sections()])
         for node, _ in self.get_code_sections():
             if self.is_aspx_import_directive(node):
                 namespace = self.get_aspx_namespace(node)
@@ -187,7 +186,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     def is_aspx_import_directive(self, node: Node) -> bool:
         return bool(
             re.match(
-                r"@ Import Namespace=".encode(),
+                r"@\s*Import Namespace=".encode(),
                 self.get_byte_range(node),
                 re.IGNORECASE,
             )
@@ -195,7 +194,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
 
     def get_aspx_namespace(self, node: Node) -> Optional[str]:
         match = re.search(
-            r'@ Import namespace="(.*?)"'.encode(),
+            r'@\s*Import namespace="(.*?)"'.encode(),
             self.get_byte_range(node),
             re.IGNORECASE,
         )
