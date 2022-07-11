@@ -1,5 +1,4 @@
 from typing import List, Tuple, Union, Iterator
-from dataclasses import dataclass
 
 from tree_sitter import Node
 

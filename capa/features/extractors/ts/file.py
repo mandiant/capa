@@ -1,6 +1,7 @@
 from typing import Tuple, Iterator
 
 import capa.features.extractors.script
+import capa.features.extractors.ts.integer
 from capa.features.file import Import, FunctionName
 from capa.features.insn import Number
 from capa.features.common import String, Feature, Namespace
@@ -21,7 +22,9 @@ def extract_file_strings(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Fe
 def extract_file_integer_literals(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for global_node, _ in engine.get_global_statements():
         for node, _ in engine.get_integer_literals(global_node):
-            yield Number(int(engine.get_range(node))), engine.get_address(node)
+            parsed_int = capa.features.extractors.ts.integer.parse_integer(engine.get_range(node), engine.language)
+            if parsed_int is not None:
+                yield Number(parsed_int), engine.get_address(node)
 
 
 def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:

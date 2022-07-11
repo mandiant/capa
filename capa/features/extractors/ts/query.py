@@ -70,7 +70,7 @@ BINDINGS: dict[str, QueryBinding] = {
                     "string_literal": "(string_literal) @string-literal",
                     "integer_literal": "(integer_literal) @integer-literal",
                     "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",
-                    "global_statement": "(global_statement [(expression_statement) @global-statement (local_declaration_statement) @global-statement])",
+                    "global_statement": "(global_statement [(if_statement) @global-statement (expression_statement) @global-statement (local_declaration_statement) @global-statement])",
                 },
                 "field_name": {
                     "new_object": "type",

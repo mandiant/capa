@@ -1,9 +1,11 @@
 [
+    "System.IO.File.Delete",
     "System.Convert.ToBase64String",
     "System.Convert.FromBase64String",
     "System.Diagnostics.Process",
     "System.Diagnostics.ProcessStartInfo",
     "System.Diagnostics.Process.Start",
     "System.Security.Cryptography.RijndaelManaged",
-    "System.Security.Cryptography.CryptoStream"
+    "System.Security.Cryptography.CryptoStream",
+    "System.Security.Cryptography.SHA256CryptoServiceProvider"
 ]

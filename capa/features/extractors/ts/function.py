@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from tree_sitter import Node
 
+import capa.features.extractors.ts.integer
 from capa.features.file import Import, FunctionName
 from capa.features.insn import Number
 from capa.features.common import String, Feature
@@ -26,7 +27,9 @@ def extract_integer_literals(
     fh: FunctionHandle, engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
     for node, _ in engine.get_integer_literals(fh.inner.node):
-        yield Number(int(engine.get_range(node))), engine.get_address(node)
+        parsed_int = capa.features.extractors.ts.integer.parse_integer(engine.get_range(node), engine.language)
+        if parsed_int is not None:
+            yield Number(parsed_int), engine.get_address(node)
 
 
 def extract_function_names(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:

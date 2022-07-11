@@ -423,7 +423,7 @@ def get_function(extractor, fva: Union[int, tuple, str]) -> FunctionHandle:
     for fh in extractor.get_functions():
         if isinstance(extractor, TreeSitterFeatureExtractor):
             if isinstance(fva, tuple):
-                addr = (fh.inner.node.start_byte, fh.inner.node.end_byte)
+                addr = (fh.address.start_byte, fh.address.end_byte)
             elif isinstance(fva, str):
                 addr = fh.inner.name
             else:
