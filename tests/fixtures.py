@@ -417,12 +417,17 @@ def sample_ts(request):
     return resolve_sample_ts(request.param)
 
 
-def get_function(extractor, fva: Union[int, tuple]) -> FunctionHandle:
-    if isinstance(fva, tuple) and not isinstance(extractor, TreeSitterFeatureExtractor):
+def get_function(extractor, fva: Union[int, tuple, str]) -> FunctionHandle:
+    if (isinstance(fva, tuple) or isinstance(fva, str)) and not isinstance(extractor, TreeSitterFeatureExtractor):
         raise ValueError("invalid fva format")
     for fh in extractor.get_functions():
         if isinstance(extractor, TreeSitterFeatureExtractor):
-            addr = (fh.inner.start_byte, fh.inner.end_byte)
+            if isinstance(fva, tuple):
+                addr = (fh.inner.node.start_byte, fh.inner.node.end_byte)
+            elif isinstance(fva, str):
+                addr = fh.inner.name
+            else:
+                raise ValueError("invalid fva format")
         elif isinstance(extractor, DnfileFeatureExtractor):
             addr = fh.inner.offset
         else:
@@ -549,9 +554,12 @@ def resolve_scope_ts(scope):
             return features
 
     elif scope.startswith("function"):
-        # like `function=(155, 192)`
+        # like `function=(0xbeef, 0xdead) or function=(123, 456) or function=foo_bar`
         def inner_fn(extractor):
-            fh = get_function(extractor, eval(scope.partition("=")[2]))
+            fn = scope.partition("=")[2]
+            if fn[0] == "(" and fn[-1] == ")":
+                fn = tuple(int(x, 16) if x.lstrip().startswith("0x") else int(x) for x in fn[1:-1].split(","))
+            fh = get_function(extractor, fn)
             features = extract_function_features(extractor, fh)
             for k, vs in extract_global_features(extractor).items():
                 features[k].update(vs)

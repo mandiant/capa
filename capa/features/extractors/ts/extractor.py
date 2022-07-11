@@ -1,4 +1,5 @@
 from typing import List, Tuple, Union, Iterator
+from dataclasses import dataclass
 
 from tree_sitter import Node
 
@@ -11,6 +12,7 @@ from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
+from capa.features.extractors.ts.function import TSFunctionInner
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
@@ -60,7 +62,10 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
 
     def extract_template_namespaces(self) -> Iterator[Tuple[Feature, Address]]:
         for node, name in self.template_namespaces:
-            yield Namespace(name), FileOffsetRangeAddress(node.start_byte, node.end_byte)
+            if node is None:
+                yield Namespace(name), NO_ADDRESS
+            else:
+                yield Namespace(name), FileOffsetRangeAddress(node.start_byte, node.end_byte)
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.ts.global_.extract_features()
@@ -74,7 +79,8 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         for engine in self.code_sections:
             for node, _ in engine.get_function_definitions():
-                yield FunctionHandle(address=engine.get_address(node), inner=node)
+                name = engine.get_range(engine.get_function_definition_id(node))
+                yield FunctionHandle(address=engine.get_address(node), inner=TSFunctionInner(node, name))
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         for engine in self.code_sections:

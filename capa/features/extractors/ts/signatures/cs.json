@@ -3,6 +3,7 @@
     "System.Convert.FromBase64String",
     "System.Diagnostics.Process",
     "System.Diagnostics.ProcessStartInfo",
+    "System.Diagnostics.Process.Start",
     "System.Security.Cryptography.RijndaelManaged",
     "System.Security.Cryptography.CryptoStream"
 ]

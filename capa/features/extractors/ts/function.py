@@ -1,4 +1,7 @@
 from typing import Tuple, Iterator
+from dataclasses import dataclass
+
+from tree_sitter import Node
 
 from capa.features.file import Import, FunctionName
 from capa.features.insn import Number
@@ -8,25 +11,31 @@ from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
+@dataclass
+class TSFunctionInner:
+    node: Node
+    name: str
+
+
 def extract_strings(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, _ in engine.get_string_literals(fh.inner):
+    for node, _ in engine.get_string_literals(fh.inner.node):
         yield String(engine.get_range(node).strip('"')), engine.get_address(node)
 
 
 def extract_integer_literals(
     fh: FunctionHandle, engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
-    for node, _ in engine.get_integer_literals(fh.inner):
+    for node, _ in engine.get_integer_literals(fh.inner.node):
         yield Number(int(engine.get_range(node))), engine.get_address(node)
 
 
 def extract_function_names(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, name in engine.get_function_names(fh.inner):
+    for node, name in engine.get_function_names(fh.inner.node):
         yield FunctionName(name), engine.get_address(node)
 
 
 def extract_import_names(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, name in engine.get_import_names(fh.inner):
+    for node, name in engine.get_import_names(fh.inner.node):
         yield Import(name), engine.get_address(node)
 
 

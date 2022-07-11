@@ -21,3 +21,25 @@ def get_name_joiner(language: str) -> Callable:
     if language == LANG_CS:
         return lambda qualified_name, identifier: qualified_name + "." + identifier
     raise ValueError("Language {language} does not have a name joiner")
+
+
+def get_default_namespaces(language: str, embedded: bool) -> set:
+    if embedded and language == LANG_CS:
+        return {
+            "System",
+            "System.Collections",
+            "System.Collections.Specialized",
+            "System.Configuration",
+            "System.Text",
+            "System.Text.RegularExpressions",
+            "System.Web",
+            "System.Web.Caching",
+            "System.Web.Profile",
+            "System.Web.Security",
+            "System.Web.SessionState",
+            "System.Web.UI",
+            "System.Web.UI.HtmlControls",
+            "System.Web.UI.WebControls",
+            "System.Web.UI.WebControls.WebParts",
+        }
+    return set()

@@ -5,8 +5,19 @@ import fixtures
 from fixtures import *
 from tree_sitter import Node, Tree
 
-from capa.features.file import Import
-from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, String, Namespace, ScriptLanguage
+from capa.features.file import Import, FunctionName
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    ARCH_ANY,
+    FORMAT_SCRIPT,
+    Arch,
+    Format,
+    String,
+    Namespace,
+    Substring,
+    ScriptLanguage,
+)
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
@@ -288,9 +299,14 @@ def do_test_ts_template_engine_init(engine: TreeSitterTemplateEngine):
     assert addr.start_byte == engine.tree.root_node.start_byte and addr.end_byte == engine.tree.root_node.end_byte
 
 
-def do_test_ts_template_engine_get_template_namespaces(engine: TreeSitterTemplateEngine, expected: List[str]):
-    assert len(list(engine.get_template_namespaces())) == len(expected)
-    for (node, namespace), expected_namespace in zip(list(engine.get_template_namespaces()), expected):
+def do_test_ts_template_engine_get_template_namespaces(
+    engine: TreeSitterTemplateEngine, expected_language: str, expected: List[str]
+):
+    default_namespaces = capa.features.extractors.ts.sig.get_default_namespaces(expected_language, True)
+    template_namespaces = {name for _, name in engine.get_template_namespaces()}
+    assert default_namespaces.issubset(template_namespaces)
+    assert len(list(engine.get_imported_namespaces())) == len(expected)
+    for (node, namespace), expected_namespace in zip(list(engine.get_imported_namespaces()), expected):
         assert isinstance(node, Node)
         assert engine.is_aspx_import_directive(node) == True
         assert engine.get_aspx_namespace(node) == expected_namespace
@@ -908,7 +924,7 @@ def test_ts_template_engine(request: pytest.FixtureRequest, engine_str: str, exp
     engine: TreeSitterTemplateEngine = request.getfixturevalue(engine_str)
     do_test_ts_template_engine_init(engine)
     assert engine.identify_language() == expected["language"]
-    do_test_ts_template_engine_get_template_namespaces(engine, expected["aspx namespaces"])
+    do_test_ts_template_engine_get_template_namespaces(engine, expected["language"], expected["aspx namespaces"])
     do_test_ts_template_engine_get_code_sections(engine, expected["code sections"])
     do_test_ts_template_engine_get_parsed_code_sections(engine, expected["language"], expected["code sections"])
     do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
@@ -949,7 +965,14 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_4f6fa6", "file", Namespace("System.Diagnostics"), True),
         ("aspx_4f6fa6", "file", Namespace("System.IO"), True),
         ("aspx_4f6fa6", "file", Namespace("System.IO.Compression"), True),
-        ("aspx_4f6fa6", "function=(0xad, 0x28e)", String("powershell.exe"), True),
+        ("aspx_4f6fa6", "function=do_ps", String("powershell.exe"), True),
+        ("aspx_4f6fa6", "function=do_ps", Substring("-executionpolicy bypass"), True),
+        ("aspx_4f6fa6", "function=do_ps", Import("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_4f6fa6", "function=do_ps", FunctionName("System.Diagnostics.Process.Start"), True),
+        ("aspx_4f6fa6", "function=ps", String("\\nPS> "), True),
+        ("aspx_4f6fa6", "function=ps", Substring("PS>"), True),
+        ("aspx_4f6fa6", "function=downloadbutton_Click", Substring("filename"), True),
+        ("aspx_4f6fa6", "function=base64encode", FunctionName("System.Convert.ToBase64String"), True),
         ("aspx_5f959f", "global", Arch(ARCH_ANY), True),
         ("aspx_10162f", "global", Arch(ARCH_ANY), True),
         ("aspx_2b71dd", "global", Arch(ARCH_ANY), True),
