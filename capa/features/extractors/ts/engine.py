@@ -88,9 +88,9 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
                 yield (obj_node, obj_name)
                 continue
             for namespace in self.namespaces:
-                obj_name = join_names(namespace, obj_name)
-                if obj_name in self.import_signatures:
-                    yield (obj_node, obj_name)
+                joined_obj_name = join_names(namespace, obj_name)
+                if joined_obj_name in self.import_signatures:
+                    yield (obj_node, joined_obj_name)
 
     def get_function_definitions(self, node: Node = None) -> List[Tuple[Node, str]]:
         return self.query.function_definition.captures(node if node is not None else self.tree.root_node)
@@ -122,9 +122,9 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
                 yield (fn_node, fn_name)
                 continue
             for namespace in self.namespaces:
-                fn_name = join_names(namespace, fn_name)
-                if fn_name in self.import_signatures:
-                    yield (fn_node, fn_name)
+                joined_fn_name = join_names(namespace, fn_name)
+                if joined_fn_name in self.import_signatures:
+                    yield (fn_node, joined_fn_name)
 
     def get_string_literals(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.string_literal.captures(node)
@@ -141,23 +141,25 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     query: TemplateQueryBinding
+    embedded_language: str
 
     def __init__(self, buf: bytes):
         super().__init__(LANG_TEM, buf)
+        self.embedded_language = self.identify_language()
+        self.template_namespaces = set(name for _, name in self.get_template_namespaces())
 
     def get_code_sections(self) -> List[Tuple[Node, str]]:
         return self.query.code.captures(self.tree.root_node)
 
     def get_parsed_code_sections(self) -> Iterator[TreeSitterExtractorEngine]:
-        template_namespaces = set(name for _, name in self.get_template_namespaces())
         for node, _ in self.get_code_sections():
             # TODO: support JS
-            if self.identify_language() == LANG_CS:
+            if self.embedded_language == LANG_CS:
                 yield TreeSitterExtractorEngine(
                     self.identify_language(),
                     self.get_byte_range(node),
                     node.start_byte,
-                    template_namespaces,
+                    self.template_namespaces,
                 )
 
     def get_content_sections(self) -> List[Tuple[Node, str]]:
@@ -169,12 +171,18 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                 return LANG_CS
         return LANG_JS
 
-    def get_template_namespaces(self) -> Iterator[Tuple[Node, str]]:
+    def get_imported_namespaces(self) -> Iterator[Tuple[Node, str]]:
         for node, _ in self.get_code_sections():
             if self.is_aspx_import_directive(node):
                 namespace = self.get_aspx_namespace(node)
                 if namespace is not None:
                     yield node, namespace
+
+    def get_template_namespaces(self) -> Iterator[Tuple[Optional[Node], str]]:
+        for namespace in capa.features.extractors.ts.sig.get_default_namespaces(self.embedded_language, True):
+            yield None, namespace
+        for node, namespace in self.get_imported_namespaces():
+            yield node, namespace
 
     def is_c_sharp(self, node: Node) -> bool:
         return bool(
@@ -229,7 +237,7 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
         for node, language in self.get_identified_scripts():
             # TODO: support JS
             if language == LANG_CS:
-                yield TreeSitterExtractorEngine(language, self.get_byte_range(node), node.start_byte)
+                yield TreeSitterExtractorEngine(language, self.get_byte_range(node), node.start_byte, self.namespaces)
 
     def identify_language(self, node: Node) -> str:
         for attribute_node, _ in self.get_attributes(node):
