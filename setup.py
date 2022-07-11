@@ -90,7 +90,7 @@ setuptools.setup(
             "types_requests==2.28.0",
         ],
         "build": [
-            "pyinstaller==5.1",
+            "pyinstaller==5.2",
         ],
     },
     zip_safe=False,
