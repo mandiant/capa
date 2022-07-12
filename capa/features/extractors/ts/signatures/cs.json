@@ -1,5 +1,8 @@
 [
+    "System.IO.DirectoryInfo",
     "System.IO.File.Delete",
+    "System.IO.File.Write",
+    "System.IO.File.GetAttributes",
     "System.Convert.ToBase64String",
     "System.Convert.FromBase64String",
     "System.Diagnostics.Process",
