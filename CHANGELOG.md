@@ -23,12 +23,15 @@
 ## v4.0.0 (2022-07-XX)
 Version 4 adds support for analyzing .NET executables. For this a new feature extractor and an updated rule syntax now support .NET features including `namespace`, `class`, `api`, and `string`.
 
-Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules.
+Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules. These features are not backwards compatible. We removed the previously used `/x32` and `/x64` flavors of number and operand features.
 
-We updated 49 existing rules and added 22 new rules leveraging these new features and characteristics to detect malware capabilities seen in .NET malware. 
+We updated 49 existing rules and added 22 new rules leveraging these new features and characteristics to detect malware capabilities seen in .NET malware.
+
+More breaking changes include updates to the JSON results document, freeze file format schema (now format version v2), and the internal handling of addresses.
 
 Thanks for all the support, especially to @htnhan, @jtothej, @sara-rn, @anushkavirgaonkar, and @_re_fox!
 
+*Deprecation warning: v4.0 will be the last capa version to support the SMDA backend.*
 
 ### New Features
 
