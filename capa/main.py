@@ -518,6 +518,7 @@ def get_extractor(
 
         import capa.features.extractors.smda.extractor
 
+        logger.warning("Deprecation warning: v4.0 will be the last capa version to support the SMDA backend.")
         smda_report = None
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             config = SmdaConfig()
