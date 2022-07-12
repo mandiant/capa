@@ -9,6 +9,10 @@ LANG_HTML = "html"
 LANG_JS = "javascript"
 LANG_TEM = "embedded_template"
 
+EXT_ASPX = (".aspx", "aspx_")
+EXT_CS = (".cs", ".cs_")
+EXT_HTML = ("html", "html_")
+
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
     yield Arch(ARCH_ANY), NO_ADDRESS
@@ -27,10 +31,10 @@ def extract_format() -> Iterator[Tuple[Feature, Address]]:
 
 
 def get_language_from_ext(path: str) -> str:
-    if path.endswith((".aspx", "aspx_")):
+    if path.endswith(EXT_ASPX):
         return LANG_TEM
-    if path.endswith((".cs", ".cs_")):
+    if path.endswith(EXT_CS):
         return LANG_CS
-    if path.endswith(("html", "html_")):
+    if path.endswith(EXT_HTML):
         return LANG_HTML
     raise ValueError(f"{path} has an unrecognized or an unsupported extension.")

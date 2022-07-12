@@ -11,11 +11,12 @@ from typing import NoReturn
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_SC32, FORMAT_SC64, FORMAT_SCRIPT, FORMAT_UNKNOWN
+from capa.features.extractors.script import EXT_CS, EXT_ASPX, EXT_HTML
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 EXTENSIONS_ELF = "elf_"
-EXTENSIONS_SUPPORTED_SCRIPTS = "cs"
+EXTENSIONS_SUPPORTED_SCRIPTS = EXT_ASPX + EXT_CS + EXT_HTML
 
 logger = logging.getLogger("capa")
 

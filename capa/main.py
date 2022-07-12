@@ -49,7 +49,6 @@ import capa.features.extractors.base_extractor
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
-    get_format,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -704,7 +703,7 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
+    format_ = get_auto_format(sample_path)
 
     if format_ == FORMAT_SCRIPT:
         arch = get_script_arch()
