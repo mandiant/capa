@@ -4,6 +4,34 @@
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v4.0.0...master](https://github.com/mandiant/capa/compare/<release>...master)
+- [capa-rules v4.0.0...master](https://github.com/mandiant/capa-rules/compare/<release>...master)
+
+## v4.0.0 (2022-07-XX)
+Version 4 adds support for analyzing .NET executables. For this a new feature extractor and an updated rule syntax now support .NET features including `namespace`, `class`, `api`, and `string`.
+
+Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules.
+
+We updated 49 existing rules and added 22 new rules leveraging these new features and characteristics to detect malware capabilities seen in .NET malware. 
+
+Thanks for all the support, especially to @htnhan, @jtothej, @sara-rn, @anushkavirgaonkar, and @_re_fox!
+
+
+### New Features
+
  - add new scope "instruction" for matching mnemonics and operands #767 @williballenthin
  - add new feature "operand[{0, 1, 2}].number" for matching instruction operand immediate values #767 @williballenthin
  - add new feature "operand[{0, 1, 2}].offset" for matching instruction operand offsets #767 @williballenthin
@@ -37,7 +65,7 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 - anti-analysis/packer/huan/packed-with-huan jakub.jozwiak@mandiant.com
 - internal/limitation/file/internal-dotnet-file-limitation william.ballenthin@mandiant.com
 - nursery/get-os-information-via-kuser_shared_data @mr-tz
-- load-code/pe/resolve-function-by-parsing-PE-exports sara-rn
+- load-code/pe/resolve-function-by-parsing-PE-exports @sara-rn
 - anti-analysis/packer/huan/packed-with-huan jakub.jozwiak@mandiant.com
 - nursery/execute-dotnet-assembly anushka.virgaonkar@mandiant.com
 - nursery/invoke-dotnet-assembly-method anushka.virgaonkar@mandiant.com
@@ -75,8 +103,19 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 ### Development
 
 ### Raw diffs
-- [capa v3.2.0...master](https://github.com/mandiant/capa/compare/v3.2.0...master)
-- [capa-rules v3.2.0...master](https://github.com/mandiant/capa-rules/compare/v3.2.0...master)
+- [capa v3.2.0...v4.0.0](https://github.com/mandiant/capa/compare/v3.2.0...master)
+- [capa-rules v3.2.0...v4.0.0](https://github.com/mandiant/capa-rules/compare/v3.2.0...master)
+
+## v3.2.1 (2022-06-06)
+This out-of-band release bumps the SMDA dependency version to enable installation on Python 3.10.
+
+### Bug Fixes
+
+- update SMDA dependency @mike-hunhoff #922
+
+### Raw diffs
+- [capa v3.2.0...v3.2.1](https://github.com/mandiant/capa/compare/v3.2.0...v3.2.1)
+- [capa-rules v3.2.0...v3.2.1](https://github.com/mandiant/capa-rules/compare/v3.2.0...v3.2.1)
 
 ## v3.2.0 (2022-03-03)
 This release adds a new characteristic `characteristic: call $+5` enabling users to create more explicit rules. The linter now also validates ATT&CK and MBC categories. Additionally, many dependencies, including the vivisect backend, have been updated.
