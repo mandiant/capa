@@ -25,7 +25,7 @@ Version 4 adds support for analyzing .NET executables. For this a new feature ex
 
 Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules. These features are not backwards compatible. We removed the previously used `/x32` and `/x64` flavors of number and operand features.
 
-We updated 49 existing rules and added 22 new rules leveraging these new features and characteristics to detect malware capabilities seen in .NET malware.
+We updated 49 existing rules and added 22 new rules leveraging these new features and characteristics to detect capabilities seen in .NET malware.
 
 More breaking changes include updates to the JSON results document, freeze file format schema (now format version v2), and the internal handling of addresses.
 
