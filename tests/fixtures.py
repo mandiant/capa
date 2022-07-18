@@ -10,10 +10,9 @@
 import os
 import os.path
 import binascii
-import itertools
 import contextlib
 import collections
-from typing import Set, Dict, Union
+from typing import Set, Dict, Tuple, Union, Iterator
 from functools import lru_cache
 
 import pytest
@@ -39,7 +38,6 @@ from capa.features.common import (
 )
 from capa.features.address import Address
 from capa.features.extractors.script import LANG_CS, LANG_TEM
-from capa.features.extractors.ts.extractor import TreeSitterFeatureExtractor
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
@@ -417,24 +415,28 @@ def sample_ts(request):
     return resolve_sample_ts(request.param)
 
 
-def get_function(extractor, fva: Union[int, tuple, str]) -> FunctionHandle:
-    if (isinstance(fva, tuple) or isinstance(fva, str)) and not isinstance(extractor, TreeSitterFeatureExtractor):
-        raise ValueError("invalid fva format")
+def get_function(extractor, fva: int) -> FunctionHandle:
     for fh in extractor.get_functions():
-        if isinstance(extractor, TreeSitterFeatureExtractor):
-            if isinstance(fva, tuple):
-                addr = (fh.address.start_byte, fh.address.end_byte)
-            elif isinstance(fva, str):
-                addr = fh.inner.name
-            else:
-                raise ValueError("invalid fva format")
-        elif isinstance(extractor, DnfileFeatureExtractor):
+        if isinstance(extractor, DnfileFeatureExtractor):
             addr = fh.inner.offset
         else:
             addr = fh.address
         if addr == fva:
             return fh
     raise ValueError("function not found")
+
+
+def get_function_ts(extractor, fid: Union[Tuple[int], str]) -> Iterator[FunctionHandle]:
+    for fh in extractor.get_functions():
+        if isinstance(fid, tuple):
+            addr = (fh.address.start_byte, fh.address.end_byte)
+        elif isinstance(fid, str):
+            addr = fh.inner.name
+        else:
+            raise ValueError("invalid fva format")
+
+        if addr == fid:
+            yield fh
 
 
 def get_function_by_token(extractor, token: int) -> FunctionHandle:
@@ -542,6 +544,13 @@ def scope(request):
     return resolve_scope(request.param)
 
 
+def get_function_id_ts(scope):
+    fid = scope.partition("=")[2]
+    if fid[0] == "(" and fid[-1] == ")":
+        fid = tuple(int(x, 16) if x.lstrip().startswith("0x") else int(x) for x in fid[1:-1].split(","))
+    return fid
+
+
 def resolve_scope_ts(scope):
     if scope == "global":
         inner_fn = lambda extractor: extract_global_features(extractor)
@@ -556,11 +565,16 @@ def resolve_scope_ts(scope):
     elif scope.startswith("function"):
         # like `function=(0xbeef, 0xdead) or function=(123, 456) or function=foo_bar`
         def inner_fn(extractor):
-            fn = scope.partition("=")[2]
-            if fn[0] == "(" and fn[-1] == ")":
-                fn = tuple(int(x, 16) if x.lstrip().startswith("0x") else int(x) for x in fn[1:-1].split(","))
-            fh = get_function(extractor, fn)
-            features = extract_function_features(extractor, fh)
+            fid = get_function_id_ts(scope)
+            fhs = list(get_function_ts(extractor, fid))
+            if not fhs:
+                raise ValueError("function not found")
+            features = collections.defaultdict(set)
+            for fh in fhs:
+                for k, vs in extract_function_features(extractor, fh).items():
+                    features[k].update(vs)
+            for k, vs in extract_file_features(extractor).items():
+                features[k].update(vs)
             for k, vs in extract_global_features(extractor).items():
                 features[k].update(vs)
             return features

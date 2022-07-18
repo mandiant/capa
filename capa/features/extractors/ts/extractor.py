@@ -11,7 +11,7 @@ from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
-from capa.features.extractors.ts.function import TSFunctionInner
+from capa.features.extractors.ts.function import PSEUDO_MAIN, TSFunctionInner
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
@@ -75,15 +75,20 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         for engine in self.code_sections:
             yield from capa.features.extractors.ts.file.extract_features(engine)
 
+    def get_pseudo_main_function(self, engine: TreeSitterExtractorEngine) -> FunctionHandle:
+        return FunctionHandle(
+            address=engine.get_default_address(), inner=TSFunctionInner(engine.tree.root_node, PSEUDO_MAIN, engine)
+        )
+
     def get_functions(self) -> Iterator[FunctionHandle]:
         for engine in self.code_sections:
+            yield self.get_pseudo_main_function(engine)
             for node, _ in engine.get_function_definitions():
-                name = engine.get_range(engine.get_function_definition_id(node))
-                yield FunctionHandle(address=engine.get_address(node), inner=TSFunctionInner(node, name))
+                name = engine.get_range(engine.get_function_definition_name(node))
+                yield FunctionHandle(address=engine.get_address(node), inner=TSFunctionInner(node, name, engine))
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
-        for engine in self.code_sections:
-            yield from capa.features.extractors.ts.function.extract_features(f, engine)
+        yield from capa.features.extractors.ts.function.extract_features(f, f.inner.engine)
 
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
         yield from []

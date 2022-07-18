@@ -14,16 +14,15 @@ class QueryBinding:
 
 @dataclass
 class ScriptQueryBinding(QueryBinding):
-    new_object: Query
-    new_object_field_name: str
+    new_object_name: Query
     function_definition: Query
     function_definition_field_name: str
-    function_call: Query
-    function_call_field_name: str
+    function_call_name: Query
+    assigned_property_name: Query
     string_literal: Query
     integer_literal: Query
     namespace: Query
-    global_statement: Query
+    global_statement: Query  # except function definitions
 
 
 @dataclass
@@ -64,18 +63,17 @@ BINDINGS: dict[str, QueryBinding] = {
             LANG_CS,
             {
                 "query": {
-                    "new_object": "(object_creation_expression) @object.new",
-                    "function_definition": "(local_function_statement) @function.definition",
-                    "function_call": "(invocation_expression) @function.call",
+                    "new_object_name": "(object_creation_expression type: [(qualified_name) @new-object (identifier) @new-object])",
+                    "function_definition": "(local_function_statement) @function-definition",
+                    "function_call_name": "(invocation_expression function: [(member_access_expression name: (identifier)) @function-call (identifier) @function-call])",
+                    "assigned_property_name": "(assignment_expression left: (member_access_expression name: (identifier) @member))",
                     "string_literal": "(string_literal) @string-literal",
                     "integer_literal": "(integer_literal) @integer-literal",
                     "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",
                     "global_statement": "(global_statement [(if_statement) @global-statement (expression_statement) @global-statement (local_declaration_statement) @global-statement])",
                 },
                 "field_name": {
-                    "new_object": "type",
                     "function_definition": "name",
-                    "function_call": "function",
                 },
             },
         ),

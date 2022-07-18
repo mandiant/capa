@@ -5,8 +5,7 @@ import fixtures
 from fixtures import *
 from tree_sitter import Node, Tree
 
-from capa.features.file import Import, FunctionName
-from capa.features.insn import Number
+from capa.features.insn import API, Number
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -22,6 +21,7 @@ from capa.features.common import (
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
+from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
     TreeSitterBaseEngine,
     TreeSitterHTMLEngine,
@@ -59,7 +59,6 @@ def do_test_ts_base_engine_get_default_address(engine: TreeSitterBaseEngine):
 def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine, expected_language: str):
     assert engine.language == expected_language
     assert isinstance(engine.query, QueryBinding)
-    assert isinstance(engine.import_signatures, set) and len(engine.import_signatures) > 0
     assert isinstance(engine.get_default_address(), FileOffsetRangeAddress)
     assert isinstance(engine.buf_offset, int) and engine.buf_offset >= 0
     addr = engine.get_default_address()
@@ -78,18 +77,11 @@ def do_test_ts_extractor_engine_get_address(
 def do_test_ts_extractor_engine_get_new_objects(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
-    assert len(engine.get_new_objects(root_node)) == len(expected)
-    for (node, name), (expected_range, expected_id_range) in zip(engine.get_new_objects(root_node), expected):
+    assert len(list(engine.get_new_object_names(root_node))) == len(expected)
+    for (node, name), (_, expected_name_range) in zip(engine.get_new_object_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "object.new"
-        do_test_ts_base_engine_get_range(engine, node, expected_range)
-        do_test_ts_base_engine_get_address(engine, node)
-        do_test_ts_base_engine_get_range(engine, engine.get_object_id(node), expected_id_range)
-
-    assert len(list(engine.get_new_object_ids(root_node))) == len(expected)
-    for node, (_, expected_id_range) in zip(engine.get_new_object_ids(root_node), expected):
-        assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_id_range)
+        assert name == "new-object"
+        do_test_ts_base_engine_get_range(engine, node, expected_name_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -98,34 +90,29 @@ def do_test_ts_extractor_engine_get_function_definitions(
 ):
     assert engine.get_function_definitions(engine.tree.root_node) == engine.get_function_definitions()
     assert len(engine.get_function_definitions(root_node)) == len(expected)
-    for (node, name), (expected_range, expected_id_range) in zip(engine.get_function_definitions(root_node), expected):
+    for (node, name), (expected_range, expected_name_range) in zip(
+        engine.get_function_definitions(root_node), expected
+    ):
         assert isinstance(node, Node)
-        assert name == "function.definition"
+        assert name == "function-definition"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
-        do_test_ts_base_engine_get_range(engine, engine.get_function_definition_id(node), expected_id_range)
+        do_test_ts_base_engine_get_range(engine, engine.get_function_definition_name(node), expected_name_range)
 
-    assert len(list(engine.get_function_definition_ids(root_node))) == len(expected)
-    for node, (_, expected_id_range) in zip(engine.get_function_definition_ids(root_node), expected):
+    assert len(list(engine.get_function_definition_names(root_node))) == len(expected)
+    for node, (_, expected_name_range) in zip(engine.get_function_definition_names(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_id_range)
+        do_test_ts_base_engine_get_range(engine, node, expected_name_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_function_calls(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
-    assert len(engine.get_function_calls(root_node)) == len(expected)
-    for (node, name), (expected_range, expected_id_range) in zip(engine.get_function_calls(root_node), expected):
+    assert len(list(engine.get_function_call_names(root_node))) == len(expected)
+    for (node, name), (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "function.call"
-        do_test_ts_base_engine_get_range(engine, node, expected_range)
-        do_test_ts_base_engine_get_address(engine, node)
-        do_test_ts_base_engine_get_range(engine, engine.get_function_call_id(node), expected_id_range)
-
-    assert len(list(engine.get_function_call_ids(root_node))) == len(expected)
-    for node, (_, expected_id_range) in zip(engine.get_function_call_ids(root_node), expected):
-        assert isinstance(node, Node)
+        assert name == "function-call"
         do_test_ts_base_engine_get_range(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
@@ -168,26 +155,6 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
         assert isinstance(node, Node)
         assert name == "global-statement"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
-        do_test_ts_base_engine_get_address(engine, node)
-
-
-def do_test_ts_extractor_engine_get_import_names(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
-):
-    assert len(list(engine.get_import_names(root_node))) == len(expected)
-    for (node, import_name), expected_import_name in zip(list(engine.get_import_names(root_node)), expected):
-        assert isinstance(node, Node)
-        assert import_name == expected_import_name
-        do_test_ts_base_engine_get_address(engine, node)
-
-
-def do_test_ts_extractor_engine_get_function_names(
-    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
-):
-    assert len(list(engine.get_function_names(root_node))) == len(expected)
-    for (node, function_name), expected_function_name in zip(list(engine.get_function_names(root_node)), expected):
-        assert isinstance(node, Node)
-        assert function_name == expected_function_name
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -267,8 +234,6 @@ def do_test_ts_extractor_engine_get_function_names(
                     'string stdout = "";',
                     'string stderr = "";',
                 ],
-                "all import names": ["System.Diagnostics.ProcessStartInfo", "System.Diagnostics.Process"],
-                "all function names": [],
             },
         ),
     ],
@@ -283,8 +248,6 @@ def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, ex
     do_test_ts_extractor_engine_get_function_calls(engine, engine.tree.root_node, expected["all function calls"])
     do_test_ts_extractor_engine_get_string_literals(engine, engine.tree.root_node, expected["all string literals"])
     do_test_ts_extractor_engine_get_integer_literals(engine, engine.tree.root_node, expected["all integer literals"])
-    do_test_ts_extractor_engine_get_import_names(engine, engine.tree.root_node, expected["all import names"])
-    do_test_ts_extractor_engine_get_function_names(engine, engine.tree.root_node, expected["all function names"])
     do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
     do_test_ts_extractor_engine_get_namespaces(engine, expected["namespaces"])
     do_test_ts_base_engine_get_default_address(engine)
@@ -303,7 +266,7 @@ def do_test_ts_template_engine_init(engine: TreeSitterTemplateEngine):
 def do_test_ts_template_engine_get_template_namespaces(
     engine: TreeSitterTemplateEngine, expected_language: str, expected: List[str]
 ):
-    default_namespaces = capa.features.extractors.ts.sig.get_default_namespaces(expected_language, True)
+    default_namespaces = LANGUAGE_TOOLKITS[expected_language].get_default_namespaces(True)
     template_namespaces = {name for _, name in engine.get_template_namespaces()}
     assert default_namespaces.issubset(template_namespaces)
     assert len(list(engine.get_imported_namespaces())) == len(expected)
@@ -954,11 +917,11 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("cs_138cdc", "file", Format(FORMAT_SCRIPT), True),
         ("cs_138cdc", "file", ScriptLanguage(LANG_CS), True),
         ("cs_138cdc", "file", Namespace("System"), True),
-        ("cs_138cdc", "file", String(""), True),
+        ("cs_138cdc", "function=PSEUDO MAIN", String(""), True),
         ("cs_138cdc", "function=die", String("Not Found"), True),
         ("cs_138cdc", "function=Page_Load", String("127.0.0.1"), True),
-        ("cs_138cdc", "function=Page_Load", Import("System.Diagnostics.ProcessStartInfo"), True),
-        ("cs_138cdc", "function=Page_Load", Import("System.Diagnostics.Process"), True),
+        ("cs_138cdc", "function=Page_Load", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("cs_138cdc", "function=Page_Load", API("System.Diagnostics.Process"), True),
         ("aspx_4f6fa6", "global", Arch(ARCH_ANY), True),
         ("aspx_4f6fa6", "global", OS(OS_ANY), True),
         ("aspx_4f6fa6", "file", Format(FORMAT_SCRIPT), True),
@@ -968,12 +931,12 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_4f6fa6", "file", Namespace("System.IO.Compression"), True),
         ("aspx_4f6fa6", "function=do_ps", String("powershell.exe"), True),
         ("aspx_4f6fa6", "function=do_ps", Substring("-executionpolicy bypass"), True),
-        ("aspx_4f6fa6", "function=do_ps", Import("System.Diagnostics.ProcessStartInfo"), True),
-        ("aspx_4f6fa6", "function=do_ps", FunctionName("System.Diagnostics.Process.Start"), True),
+        ("aspx_4f6fa6", "function=do_ps", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_4f6fa6", "function=do_ps", API("System.Diagnostics.Process::Start"), True),
         ("aspx_4f6fa6", "function=ps", String("\\nPS> "), True),
         ("aspx_4f6fa6", "function=ps", Substring("PS>"), True),
         ("aspx_4f6fa6", "function=downloadbutton_Click", Substring("filename"), True),
-        ("aspx_4f6fa6", "function=base64encode", FunctionName("System.Convert.ToBase64String"), True),
+        ("aspx_4f6fa6", "function=base64encode", API("System.Convert::ToBase64String"), True),
         ("aspx_5f959f", "global", Arch(ARCH_ANY), True),
         ("aspx_5f959f", "global", OS(OS_ANY), True),
         ("aspx_5f959f", "file", Format(FORMAT_SCRIPT), True),
@@ -981,7 +944,7 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_5f959f", "file", Namespace("System.Diagnostics"), True),
         ("aspx_5f959f", "file", Namespace("System.IO"), True),
         ("aspx_5f959f", "file", Namespace("System.Web.SessionState"), True),
-        ("aspx_5f959f", "function=ExcuteCmd", Import("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_5f959f", "function=ExcuteCmd", API("System.Diagnostics.ProcessStartInfo"), True),
         ("aspx_5f959f", "function=ExcuteCmd", String("cmd.exe"), True),
         ("aspx_5f959f", "function=ExcuteCmd", Substring("/c"), True),
         ("aspx_5f959f", "function=cmdExe_Click", String("<pre>"), True),
@@ -992,22 +955,22 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_10162f", "file", ScriptLanguage(LANG_CS), True),
         ("aspx_10162f", "file", Namespace("System.IO"), True),
         ("aspx_10162f", "file", Namespace("System.Web.Security"), True),
-        ("aspx_10162f", "file", String("data"), True),
-        ("aspx_10162f", "file", String("gsize"), True),
-        ("aspx_10162f", "file", String("cmd"), True),
-        ("aspx_10162f", "file", String("ttar"), True),
-        ("aspx_10162f", "file", String("sdfewq@#$51234234DF@#$!@#$ASDF"), True),
-        ("aspx_10162f", "function=rm", FunctionName("System.IO.File.Delete"), False),
-        ("aspx_10162f", "function=(0x564, 0x6af)", FunctionName("System.Convert.ToBase64String"), True),
+        ("aspx_10162f", "function=PSEUDO MAIN", String("data"), True),
+        ("aspx_10162f", "function=PSEUDO MAIN", String("gsize"), True),
+        ("aspx_10162f", "function=PSEUDO MAIN", String("cmd"), True),
+        ("aspx_10162f", "function=PSEUDO MAIN", String("ttar"), True),
+        ("aspx_10162f", "function=PSEUDO MAIN", String("sdfewq@#$51234234DF@#$!@#$ASDF"), True),
+        ("aspx_10162f", "function=rm", API("System.IO.File::Delete"), False),
+        ("aspx_10162f", "function=(0x564, 0x6af)", API("System.Convert::ToBase64String"), True),
         ("aspx_10162f", "function=(0x564, 0x6af)", String("p"), True),
-        ("aspx_10162f", "function=exec", Import("System.Diagnostics.Process"), True),
+        ("aspx_10162f", "function=exec", API("System.Diagnostics.Process"), True),
         ("aspx_10162f", "function=exec", String("cmd.exe"), True),
         ("aspx_10162f", "function=gsize", Substring("error"), True),
         ("aspx_10162f", "function=exp", Substring("root"), True),
         ("aspx_10162f", "function=exp", Substring("net use"), True),
         ("aspx_10162f", "function=exp", Number(2), True),
-        ("aspx_10162f", "function=exp", Import("System.IO.DirectoryInfo"), True),
-        ("aspx_10162f", "function=exp", FunctionName("System.IO.File.GetAttributes"), True),
+        ("aspx_10162f", "function=exp", API("System.IO.DirectoryInfo"), True),
+        ("aspx_10162f", "function=exp", API("System.IO.File::GetAttributes"), True),
         ("aspx_10162f", "function=GetDirSize", Number(0), True),
         ("aspx_10162f", "function=createJsonDirectory", String('\\"dir\\":['), True),
         ("aspx_10162f", "function=createJsonDirectory", Number(0), True),

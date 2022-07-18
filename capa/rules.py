@@ -280,6 +280,8 @@ def parse_feature(key: str):
         return capa.features.common.MatchedRule
     elif key == "function-name":
         return capa.features.file.FunctionName
+    elif key == "language":
+        return capa.features.common.ScriptLanguage
     elif key == "os":
         return capa.features.common.OS
     elif key == "format":

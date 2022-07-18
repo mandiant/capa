@@ -3,7 +3,6 @@ from typing import List, Tuple, Iterator, Optional
 
 from tree_sitter import Node, Tree, Parser
 
-import capa.features.extractors.ts.sig
 import capa.features.extractors.ts.build
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
@@ -14,6 +13,7 @@ from capa.features.extractors.ts.query import (
     ScriptQueryBinding,
     TemplateQueryBinding,
 )
+from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS, LanguageToolkit
 
 
 class TreeSitterBaseEngine:
@@ -49,7 +49,7 @@ class TreeSitterBaseEngine:
 
 class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     query: ScriptQueryBinding
-    import_signatures: set
+    language_toolkit: LanguageToolkit
     buf_offset: int
     namespaces: set[str]
 
@@ -62,69 +62,32 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     ):
         super().__init__(language, buf)
         self.buf_offset = buf_offset
-        self.import_signatures = capa.features.extractors.ts.sig.load_import_signatures(language)
-        self.namespaces = additional_namespaces if additional_namespaces is not None else set()
+        self.language_toolkit = LANGUAGE_TOOLKITS[language]
+        self.namespaces = set(self.get_range(ns_node) for ns_node, _ in self.get_namespaces())
+        if additional_namespaces:
+            self.namespaces = self.namespaces.union(additional_namespaces)
 
     def get_address(self, node: Node) -> FileOffsetRangeAddress:
         return FileOffsetRangeAddress(self.buf_offset + node.start_byte, self.buf_offset + node.end_byte)
 
-    def get_new_objects(self, node: Node) -> List[Tuple[Node, str]]:
-        return self.query.new_object.captures(node)
+    def get_new_object_names(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.new_object_name.captures(node)
 
-    def get_object_id(self, node: Node) -> Node:
-        return node.child_by_field_name(self.query.new_object_field_name)
-
-    def get_new_object_ids(self, node: Node) -> Iterator[Node]:
-        for obj_node, _ in self.get_new_objects(node):
-            yield self.get_object_id(obj_node)
-
-    # TODO: move this elsewhere, does not fit this class
-    def get_import_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
-        join_names = capa.features.extractors.ts.sig.get_name_joiner(self.language)
-        self.namespaces = self.namespaces.union(set([self.get_range(ns_node) for ns_node, _ in self.get_namespaces()]))
-        for obj_node in self.get_new_object_ids(node):
-            obj_name = self.get_range(obj_node)
-            if obj_name in self.import_signatures:
-                yield (obj_node, obj_name)
-                continue
-            for namespace in self.namespaces:
-                joined_obj_name = join_names(namespace, obj_name)
-                if joined_obj_name in self.import_signatures:
-                    yield (obj_node, joined_obj_name)
+    def get_assigned_property_names(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.assigned_property_name.captures(node)
 
     def get_function_definitions(self, node: Node = None) -> List[Tuple[Node, str]]:
         return self.query.function_definition.captures(node if node is not None else self.tree.root_node)
 
-    def get_function_definition_id(self, node: Node) -> Node:
+    def get_function_definition_name(self, node: Node) -> Node:
         return node.child_by_field_name(self.query.function_definition_field_name)
 
-    def get_function_definition_ids(self, node: Node) -> Iterator[Node]:
+    def get_function_definition_names(self, node: Node) -> Iterator[Node]:
         for fn_node, _ in self.get_function_definitions(node):
-            yield self.get_function_definition_id(fn_node)
+            yield self.get_function_definition_name(fn_node)
 
-    def get_function_calls(self, node: Node) -> List[Tuple[Node, str]]:
-        return self.query.function_call.captures(node)
-
-    def get_function_call_id(self, node: Node) -> Node:
-        return node.child_by_field_name(self.query.function_call_field_name)
-
-    def get_function_call_ids(self, node: Node) -> Iterator[Node]:
-        for fn_node, _ in self.get_function_calls(node):
-            yield self.get_function_call_id(fn_node)
-
-    # TODO: move this elsewhere, does not fit this class
-    def get_function_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
-        join_names = capa.features.extractors.ts.sig.get_name_joiner(self.language)
-        self.namespaces = self.namespaces.union(set([self.get_range(ns_node) for ns_node, _ in self.get_namespaces()]))
-        for fn_node in self.get_function_call_ids(node):
-            fn_name = self.get_range(fn_node)
-            if fn_name in self.import_signatures:
-                yield (fn_node, fn_name)
-                continue
-            for namespace in self.namespaces:
-                joined_fn_name = join_names(namespace, fn_name)
-                if joined_fn_name in self.import_signatures:
-                    yield (fn_node, joined_fn_name)
+    def get_function_call_names(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.function_call_name.captures(node)
 
     def get_string_literals(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.string_literal.captures(node)
@@ -141,11 +104,13 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     query: TemplateQueryBinding
+    language_toolkit: LanguageToolkit
     embedded_language: str
 
     def __init__(self, buf: bytes):
         super().__init__(LANG_TEM, buf)
         self.embedded_language = self.identify_language()
+        self.language_toolkit = LANGUAGE_TOOLKITS[self.embedded_language]
         self.template_namespaces = set(name for _, name in self.get_template_namespaces())
 
     def get_code_sections(self) -> List[Tuple[Node, str]]:
@@ -156,7 +121,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
             # TODO: support JS
             if self.embedded_language == LANG_CS:
                 yield TreeSitterExtractorEngine(
-                    self.identify_language(),
+                    self.embedded_language,
                     self.get_byte_range(node),
                     node.start_byte,
                     self.template_namespaces,
@@ -179,7 +144,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                     yield node, namespace
 
     def get_template_namespaces(self) -> Iterator[Tuple[Optional[Node], str]]:
-        for namespace in capa.features.extractors.ts.sig.get_default_namespaces(self.embedded_language, True):
+        for namespace in self.language_toolkit.get_default_namespaces(True):
             yield None, namespace
         for node, namespace in self.get_imported_namespaces():
             yield node, namespace
