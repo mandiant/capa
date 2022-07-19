@@ -5,7 +5,7 @@ import fixtures
 from fixtures import *
 from tree_sitter import Node, Tree
 
-from capa.features.insn import API, Number
+from capa.features.insn import API, Number, Property
 from capa.features.common import (
     OS,
     OS_ANY,
@@ -158,6 +158,17 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
         do_test_ts_base_engine_get_address(engine, node)
 
 
+def do_test_ts_extractor_engine_get_assigned_property_names(
+    engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
+):
+    assert len(list(engine.get_assigned_property_names(root_node))) == len(expected)
+    for (node, name), expected_range in zip(engine.get_assigned_property_names(root_node), expected):
+        assert isinstance(node, Node)
+        assert name == "property"
+        do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
+        do_test_ts_base_engine_get_address(engine, node)
+
+
 @parametrize(
     "engine_str,expected",
     [
@@ -234,6 +245,15 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
                     'string stdout = "";',
                     'string stderr = "";',
                 ],
+                "properties": [
+                    "HttpContext.Current.Response.StatusCode",
+                    "HttpContext.Current.Response.StatusDescription",
+                    "procStartInfo.RedirectStandardOutput",
+                    "procStartInfo.RedirectStandardError",
+                    "procStartInfo.UseShellExecute",
+                    "procStartInfo.CreateNoWindow",
+                    "p.StartInfo",
+                ],
             },
         ),
     ],
@@ -248,6 +268,7 @@ def test_ts_extractor_engine(request: pytest.FixtureRequest, engine_str: str, ex
     do_test_ts_extractor_engine_get_function_calls(engine, engine.tree.root_node, expected["all function calls"])
     do_test_ts_extractor_engine_get_string_literals(engine, engine.tree.root_node, expected["all string literals"])
     do_test_ts_extractor_engine_get_integer_literals(engine, engine.tree.root_node, expected["all integer literals"])
+    do_test_ts_extractor_engine_get_assigned_property_names(engine, engine.tree.root_node, expected["properties"])
     do_test_ts_extractor_engine_get_global_statements(engine, expected["global statements"])
     do_test_ts_extractor_engine_get_namespaces(engine, expected["namespaces"])
     do_test_ts_base_engine_get_default_address(engine)
@@ -922,6 +943,12 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("cs_138cdc", "function=Page_Load", String("127.0.0.1"), True),
         ("cs_138cdc", "function=Page_Load", API("System.Diagnostics.ProcessStartInfo"), True),
         ("cs_138cdc", "function=Page_Load", API("System.Diagnostics.Process"), True),
+        (
+            "cs_138cdc",
+            "function=Page_Load",
+            Property("System.Diagnostics.ProcessStartInfo::RedirectStandardOutput"),
+            True,
+        ),
         ("aspx_4f6fa6", "global", Arch(ARCH_ANY), True),
         ("aspx_4f6fa6", "global", OS(OS_ANY), True),
         ("aspx_4f6fa6", "file", Format(FORMAT_SCRIPT), True),
@@ -965,6 +992,16 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_10162f", "function=(0x564, 0x6af)", String("p"), True),
         ("aspx_10162f", "function=exec", API("System.Diagnostics.Process"), True),
         ("aspx_10162f", "function=exec", String("cmd.exe"), True),
+        ("aspx_10162f", "function=exec", Property("System.Diagnostics.Process.StartInfo::FileName"), True),
+        ("aspx_10162f", "function=exec", Property("System.Diagnostics.Process.StartInfo::UseShellExecute"), True),
+        ("aspx_10162f", "function=exec", Property("System.Diagnostics.Process.StartInfo::RedirectStandardInput"), True),
+        (
+            "aspx_10162f",
+            "function=exec",
+            Property("System.Diagnostics.Process.StartInfo::RedirectStandardOutput"),
+            True,
+        ),
+        ("aspx_10162f", "function=exec", Property("System.Diagnostics.Process.StartInfo::CreateNoWindow"), True),
         ("aspx_10162f", "function=gsize", Substring("error"), True),
         ("aspx_10162f", "function=exp", Substring("root"), True),
         ("aspx_10162f", "function=exp", Substring("net use"), True),

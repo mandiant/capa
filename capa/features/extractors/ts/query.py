@@ -66,7 +66,7 @@ BINDINGS: dict[str, QueryBinding] = {
                     "new_object_name": "(object_creation_expression type: [(qualified_name) @new-object (identifier) @new-object])",
                     "function_definition": "(local_function_statement) @function-definition",
                     "function_call_name": "(invocation_expression function: [(member_access_expression name: (identifier)) @function-call (identifier) @function-call])",
-                    "assigned_property_name": "(assignment_expression left: (member_access_expression name: (identifier) @member))",
+                    "assigned_property_name": "(assignment_expression left: (member_access_expression) @property)",
                     "string_literal": "(string_literal) @string-literal",
                     "integer_literal": "(integer_literal) @integer-literal",
                     "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",

@@ -1,7 +1,5 @@
-import functools
 import itertools
-from os import extsep
-from typing import Tuple, Callable, Iterator
+from typing import Tuple, Iterator
 from dataclasses import dataclass
 
 from tree_sitter import Node
@@ -43,41 +41,69 @@ def extract_integer_literals(fn_node: Node, engine: TreeSitterExtractorEngine) -
             yield Number(parsed_int), engine.get_address(node)
 
 
-def extract_imports_(name: str, engine: TreeSitterExtractorEngine) -> Iterator[str]:
-    for namespace in itertools.chain([""], engine.namespaces):
+def get_imports(name: str, namespaces: set[str], engine: TreeSitterExtractorEngine) -> Iterator[str]:
+    for namespace in itertools.chain([""], namespaces):
         joined_name = engine.language_toolkit.join_names(namespace, name)
         if engine.language_toolkit.is_import(joined_name):
             yield joined_name
 
 
-def extract_classes(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+def get_properties(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Node, str]]:
+    for node, _ in engine.get_assigned_property_names(fn_node):
+        qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
+        if len(qualified_names) > 1:
+            yield node, engine.language_toolkit.join_names(*qualified_names[1:])
+
+
+def get_classes(fn_node: Node, engine: TreeSitterExtractorEngine) -> set[str]:
+    return set(
+        name
+        for node, _ in engine.get_new_object_names(fn_node)
+        for name in get_imports(engine.get_range(node), engine.namespaces, engine)
+    )
+
+
+def extract_classes_(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for node, _ in engine.get_new_object_names(fn_node):
-        for name in extract_imports_(engine.get_range(node), engine):
+        for name in get_imports(engine.get_range(node), engine.namespaces, engine):
             yield API(engine.language_toolkit.format_imported_class(name)), engine.get_address(node)
 
 
-def extract_properties(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, _ in engine.get_assigned_property_names(fn_node):
-        for name in extract_imports_(engine.get_range(node), engine):
+def extract_properties_(
+    fn_node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+) -> Iterator[Tuple[Feature, Address]]:
+    for node, property_name in get_properties(fn_node, engine):
+        for name in get_imports(property_name, classes, engine):
             yield Property(engine.language_toolkit.format_imported_property(name)), engine.get_address(node)
 
 
 def extract_static_methods_(node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for name in extract_imports_(engine.get_range(node), engine):
+    for name in get_imports(engine.get_range(node), engine.namespaces, engine):
         yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
 
 
-def extract_regular_methods_(node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+def extract_regular_methods_(
+    node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+) -> Iterator[Tuple[Feature, Address]]:
     qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
     if len(qualified_names) > 1:
-        for name in extract_imports_(engine.language_toolkit.join_names(*qualified_names[1:]), engine):
+        for name in get_imports(engine.language_toolkit.join_names(*qualified_names[1:]), classes, engine):
             yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
 
 
-def extract_function_calls(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+def extract_api(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    classes = get_classes(fn_node, engine)
+    yield from extract_classes_(fn_node, engine)
+    yield from extract_function_calls_(fn_node, classes, engine)
+    yield from extract_properties_(fn_node, classes, engine)
+
+
+def extract_function_calls_(
+    fn_node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+) -> Iterator[Tuple[Feature, Address]]:
     for node, _ in engine.get_function_call_names(fn_node):
         yield from extract_static_methods_(node, engine)
-        yield from extract_regular_methods_(node, engine)
+        yield from extract_regular_methods_(node, classes, engine)
 
 
 def extract_pseudo_main_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -99,9 +125,7 @@ def extract_features(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> I
 
 
 FUNCTION_HANDLERS = (
-    extract_classes,
-    extract_properties,
-    extract_function_calls,
+    extract_api,
     extract_integer_literals,
     extract_strings,
 )
