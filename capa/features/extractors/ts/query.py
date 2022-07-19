@@ -17,6 +17,8 @@ class ScriptQueryBinding(QueryBinding):
     new_object_name: Query
     function_definition: Query
     function_definition_field_name: str
+    direct_method_call_field_name: str
+    object_creation_expression_field_name: str
     function_call_name: Query
     assigned_property_name: Query
     string_literal: Query
@@ -74,6 +76,8 @@ BINDINGS: dict[str, QueryBinding] = {
                 },
                 "field_name": {
                     "function_definition": "name",
+                    "direct_method_call": "name",
+                    "object_creation_expression": "expression",
                 },
             },
         ),

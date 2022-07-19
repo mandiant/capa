@@ -1,7 +1,6 @@
 from typing import Tuple, Iterator
 
 import capa.features.extractors.script
-import capa.features.extractors.ts.integer
 from capa.features.common import Feature, Namespace
 from capa.features.address import Address
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine

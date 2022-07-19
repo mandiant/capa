@@ -572,6 +572,7 @@ def resolve_scope_ts(scope):
             features = collections.defaultdict(set)
             for fh in fhs:
                 for k, vs in extract_function_features(extractor, fh).items():
+                    # print(f"{k}:{vs}")
                     features[k].update(vs)
             for k, vs in extract_file_features(extractor).items():
                 features[k].update(vs)

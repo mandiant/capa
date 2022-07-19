@@ -101,6 +101,16 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     def get_global_statements(self) -> List[Tuple[Node, str]]:
         return self.query.global_statement.captures(self.tree.root_node)
 
+    def get_direct_method_call(self, node: Node) -> Node:
+        return node.child_by_field_name(self.query.direct_method_call_field_name)
+
+    def is_object_creation_expression(self, node: Node) -> bool:
+        captures = self.get_new_object_names(node)
+        if not captures:
+            return False
+        new_object_name_node, _ = captures[0]
+        return new_object_name_node.parent.parent == node
+
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     query: TemplateQueryBinding

@@ -4,14 +4,13 @@ from dataclasses import dataclass
 
 from tree_sitter import Node
 
-import capa.features.extractors.ts.integer
 from capa.features.insn import API, Number, Property
 from capa.features.common import String, Feature
 from capa.features.address import Address
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import FunctionHandle
 
-PSEUDO_MAIN = "PSEUDO MAIN"
+PSEUDO_MAIN = "PSEUDO MAIN"  # all global statements in one function scope
 
 
 @dataclass
@@ -34,9 +33,9 @@ def extract_strings(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterato
         yield String(engine.get_range(node).strip('"')), engine.get_address(node)
 
 
-def extract_integer_literals(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+def extract_integers(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
     for node, _ in engine.get_integer_literals(fn_node):
-        parsed_int = capa.features.extractors.ts.integer.parse_integer(engine.get_range(node), engine.language)
+        parsed_int = engine.language_toolkit.parse_integer(engine.get_range(node))
         if parsed_int is not None:
             yield Number(parsed_int), engine.get_address(node)
 
@@ -85,10 +84,14 @@ def extract_static_methods_(node: Node, engine: TreeSitterExtractorEngine) -> It
 def extract_regular_methods_(
     node: Node, classes: set[str], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
+    if engine.is_object_creation_expression(node):
+        node = engine.get_direct_method_call(node)
     qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
-    if len(qualified_names) > 1:
-        for name in get_imports(engine.language_toolkit.join_names(*qualified_names[1:]), classes, engine):
-            yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
+    property_name = (
+        qualified_names[0] if len(qualified_names) == 1 else engine.language_toolkit.join_names(*qualified_names[1:])
+    )
+    for name in get_imports(property_name, classes, engine):
+        yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
 
 
 def extract_api(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -126,6 +129,6 @@ def extract_features(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> I
 
 FUNCTION_HANDLERS = (
     extract_api,
-    extract_integer_literals,
+    extract_integers,
     extract_strings,
 )
