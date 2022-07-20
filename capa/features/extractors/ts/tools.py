@@ -19,11 +19,8 @@ class LanguageToolkit:
     def is_import(self, import_: str) -> bool:
         return import_ in self.import_signatures
 
-    def join_names(self, *args: str) -> str:
-        return self.join_names_nonempty(*[arg for arg in args if arg != ""])
-
     @abc.abstractmethod
-    def join_names_nonempty(self, *args: str) -> str:
+    def join_names(self, *args: str) -> str:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -50,9 +47,13 @@ class LanguageToolkit:
     def parse_integer(self, integer: str) -> Optional[int]:
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def parse_string(self, string: str) -> Optional[str]:
+        raise NotImplementedError()
+
 
 class CSharpToolkit(LanguageToolkit):
-    def join_names_nonempty(self, *args: str) -> str:
+    def join_names(self, *args: str) -> str:
         return ".".join(args)
 
     def split_name(self, name: str) -> List[str]:
@@ -111,6 +112,9 @@ class CSharpToolkit(LanguageToolkit):
             return int(integer)
         except:
             return None
+
+    def parse_string(self, string: str) -> Optional[str]:
+        return string.strip('"')
 
 
 LANGUAGE_TOOLKITS: dict[str, LanguageToolkit] = {LANG_CS: CSharpToolkit("cs.json")}

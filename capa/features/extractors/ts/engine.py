@@ -116,12 +116,13 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
     query: TemplateQueryBinding
     language_toolkit: LanguageToolkit
     embedded_language: str
+    namespaces: set[str]
 
     def __init__(self, buf: bytes):
         super().__init__(LANG_TEM, buf)
         self.embedded_language = self.identify_language()
         self.language_toolkit = LANGUAGE_TOOLKITS[self.embedded_language]
-        self.template_namespaces = set(name for _, name in self.get_template_namespaces())
+        self.namespaces = set(name for _, name in self.get_namespaces())
 
     def get_code_sections(self) -> List[Tuple[Node, str]]:
         return self.query.code.captures(self.tree.root_node)
@@ -134,7 +135,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                     self.embedded_language,
                     self.get_byte_range(node),
                     node.start_byte,
-                    self.template_namespaces,
+                    self.namespaces,
                 )
 
     def get_content_sections(self) -> List[Tuple[Node, str]]:
@@ -153,7 +154,7 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
                 if namespace is not None:
                     yield node, namespace
 
-    def get_template_namespaces(self) -> Iterator[Tuple[Optional[Node], str]]:
+    def get_namespaces(self) -> Iterator[Tuple[Optional[Node], str]]:
         for namespace in self.language_toolkit.get_default_namespaces(True):
             yield None, namespace
         for node, namespace in self.get_imported_namespaces():
@@ -190,9 +191,9 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
     query: HTMLQueryBinding
     namespaces: set[str]
 
-    def __init__(self, buf: bytes, additional_namespaces: set[str] = None):
+    def __init__(self, buf: bytes, namespaces: set[str] = set()):
         super().__init__(LANG_HTML, buf)
-        self.namespaces = additional_namespaces if additional_namespaces is not None else set()
+        self.namespaces = namespaces
 
     def get_scripts(self) -> List[Tuple[Node, str]]:
         return self.query.script_element.captures(self.tree.root_node)
@@ -221,4 +222,4 @@ class TreeSitterHTMLEngine(TreeSitterBaseEngine):
         return LANG_JS
 
     def is_server_side_c_sharp(self, node: Node) -> bool:
-        return len(re.findall(r'runat\s*=\s*"server"'.encode(), self.get_byte_range(node))) > 0
+        return bool(re.findall(r'runat\s*=\s*"server"'.encode(), self.get_byte_range(node)))

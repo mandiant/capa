@@ -61,7 +61,7 @@ class FileOffsetRangeAddress(Address):
         self.end_byte = end_byte
 
     def __eq__(self, other):
-        return (self.start_byte, self.end_byte) == (self.start_byte, other.end_byte)
+        return (self.start_byte, self.end_byte) == (other.start_byte, other.end_byte)
 
     def __lt__(self, other):
         return (self.start_byte, self.end_byte) < (other.start_byte, other.end_byte)

@@ -288,7 +288,7 @@ def do_test_ts_template_engine_get_template_namespaces(
     engine: TreeSitterTemplateEngine, expected_language: str, expected: List[str]
 ):
     default_namespaces = LANGUAGE_TOOLKITS[expected_language].get_default_namespaces(True)
-    template_namespaces = {name for _, name in engine.get_template_namespaces()}
+    template_namespaces = {name for _, name in engine.get_namespaces()}
     assert default_namespaces.issubset(template_namespaces)
     assert len(list(engine.get_imported_namespaces())) == len(expected)
     for (node, namespace), expected_namespace in zip(list(engine.get_imported_namespaces()), expected):
@@ -914,7 +914,7 @@ def test_ts_template_engine(request: pytest.FixtureRequest, engine_str: str, exp
     do_test_ts_template_engine_get_parsed_code_sections(engine, expected["language"], expected["code sections"])
     do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
     for expected_start_byte, expected_end_byte in expected["content sections"]:
-        template_namespaces = list(engine.get_template_namespaces())
+        template_namespaces = list(engine.get_namespaces())
         additional_namespaces = set(name for _, name in template_namespaces)
         html_engine = TreeSitterHTMLEngine(engine.buf[expected_start_byte:expected_end_byte], additional_namespaces)
         do_test_ts_html_engine_init(html_engine)
