@@ -18,7 +18,7 @@ from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number
-from capa.features.common import Class, String, Feature, Namespace, Characteristic
+from capa.features.common import Class, String, Feature, Namespace, Characteristic, Property
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
@@ -30,6 +30,7 @@ from capa.features.extractors.dnfile.helpers import (
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
+    get_dotnet_field,
 )
 
 
@@ -80,6 +81,9 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if callee is None:
         return
 
+    if callee.methodname.startswith("get_") or callee.methodname.startswith("set_"):
+        return
+
     if isinstance(callee, DnUnmanagedMethod):
         # like kernel32.CreateFileA
         for name in capa.features.extractors.helpers.generate_symbols(callee.modulename, callee.methodname):
@@ -88,6 +92,31 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         # like System.IO.File::Delete
         yield API(str(callee)), ih.address
 
+def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+    """parse instruction property features"""
+    f: CilMethodBody = fh.inner
+    insn: Instruction = ih.inner
+
+    if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
+        if callee is None:
+            return
+        if not callee.methodname.startswith("get_") and not callee.methodname.startswith("set_"):
+            return
+        if not isinstance(callee, DnUnmanagedMethod):
+            yield Property(str(callee).replace("get_", "").replace("set_", "")), ih.address
+
+    elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
+        row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
+        if not isinstance(row, dnfile.mdtable.FieldRow):
+            return
+        field = get_dotnet_field(fh.ctx["pe"], row)
+        if not isinstance(field, dnfile.mdtable.TypeDefRow):
+            return
+        yield Property(DnMethod.format_name(field.TypeNamespace, field.TypeName, row.Name)), ih.address
+
+    else:
+        return
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
@@ -174,6 +203,7 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Itera
 
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
+    extract_insn_property_features,
     extract_insn_number_features,
     extract_insn_string_features,
     extract_insn_namespace_features,

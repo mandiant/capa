@@ -195,6 +195,12 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
             yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
+def get_dotnet_field(pe: dnfile.dnPE, field_row: dnfile.mdtable.FieldRow) -> Any:
+    for row in iter_dotnet_table(pe, "TypeDef"):
+        for index in row.FieldList:
+            if index.row == field_row:
+                return row
+    return
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""

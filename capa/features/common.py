@@ -172,6 +172,11 @@ class Namespace(Feature):
         super(Namespace, self).__init__(value, description=description)
 
 
+class Property(Feature):
+    def __init__(self, value: str, description=None):
+        super(Property, self).__init__(value, description=description)
+
+
 class Substring(String):
     def __init__(self, value: str, description=None):
         super(Substring, self).__init__(value, description=description)
