@@ -83,7 +83,11 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if callee is None:
         return
 
-    if callee.methodname.startswith("get_") or callee.methodname.startswith("set_") and Token(ih.inner.operand.value).table!=6:
+    if (
+        callee.methodname.startswith("get_")
+        or callee.methodname.startswith("set_")
+        and Token(ih.inner.operand.value).table != 6
+    ):
         return
 
     if isinstance(callee, DnUnmanagedMethod):
@@ -93,6 +97,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     else:
         # like System.IO.File::Delete
         yield API(str(callee)), ih.address
+
 
 def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction property features"""
@@ -116,7 +121,9 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 return
             if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
                 return
-            yield Property(DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)), ih.address
+            yield Property(
+                DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
+            ), ih.address
 
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         token: Token = Token(insn.operand.value)
@@ -130,7 +137,18 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
+    if ih.inner.opcode not in (
+        OpCodes.Call,
+        OpCodes.Callvirt,
+        OpCodes.Jmp,
+        OpCodes.Calli,
+        OpCodes.Ldfld,
+        OpCodes.Ldflda,
+        OpCodes.Ldsfld,
+        OpCodes.Ldsflda,
+        OpCodes.Stfld,
+        OpCodes.Stsfld,
+    ):
         return
 
     row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
@@ -139,19 +157,30 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
             yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-       for method in get_dotnet_managed_methods(fh.ctx["pe"]):
-           if Token(ih.inner.operand.value).value == method.token:
-               yield Class(DnClass.format_name(method.namespace, method.classname)), ih.address
+        for method in get_dotnet_managed_methods(fh.ctx["pe"]):
+            if Token(ih.inner.operand.value).value == method.token:
+                yield Class(DnClass.format_name(method.namespace, method.classname)), ih.address
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
         for field in get_dotnet_fields(fh.ctx["pe"]):
             if Token(ih.inner.operand.value).value == field.token:
-               yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
+                yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
     """parse instruction namespace features"""
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
+    if ih.inner.opcode not in (
+        OpCodes.Call,
+        OpCodes.Callvirt,
+        OpCodes.Jmp,
+        OpCodes.Calli,
+        OpCodes.Ldfld,
+        OpCodes.Ldflda,
+        OpCodes.Ldsfld,
+        OpCodes.Ldsflda,
+        OpCodes.Stfld,
+        OpCodes.Stsfld,
+    ):
         return
 
     row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
@@ -159,19 +188,19 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
     if isinstance(row, dnfile.mdtable.MemberRefRow):
         if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
             if row.Class.row.TypeNamespace:
-               yield Namespace(row.Class.row.TypeNamespace), ih.address
+                yield Namespace(row.Class.row.TypeNamespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-       for method in get_dotnet_managed_methods(fh.ctx["pe"]):
-           if Token(ih.inner.operand.value).value == method.token:
-               if method.namespace:
-                   yield Namespace(method.namespace), ih.address
+        for method in get_dotnet_managed_methods(fh.ctx["pe"]):
+            if Token(ih.inner.operand.value).value == method.token:
+                if method.namespace:
+                    yield Namespace(method.namespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
         for field in get_dotnet_fields(fh.ctx["pe"]):
             if Token(ih.inner.operand.value).value == field.token:
-               if field.namespace:
-                   yield Namespace(field.namespace), ih.address
+                if field.namespace:
+                    yield Namespace(field.namespace), ih.address
 
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

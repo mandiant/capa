@@ -85,6 +85,7 @@ class DnMethod(DnClass):
             name = f"{namespace}.{name}"
         return name
 
+
 class DnProperty(DnClass):
     def __init__(self, token: int, namespace: str, classname: str, propertyname: str):
         super(DnProperty, self).__init__(token, namespace, classname)
@@ -101,6 +102,7 @@ class DnProperty(DnClass):
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
         return name
+
 
 class DnUnmanagedMethod:
     def __init__(self, token: int, modulename: str, methodname: str):
@@ -211,6 +213,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
             yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
+
 def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
     """get fields from TypeDef table"""
     for row in iter_dotnet_table(pe, "TypeDef"):
@@ -218,7 +221,10 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
             yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
-def get_dotnet_property_map(pe: dnfile.dnPE, property_row: dnfile.mdtable.PropertyRow) -> Optional[dnfile.mdtable.TypeDefRow]:
+
+def get_dotnet_property_map(
+    pe: dnfile.dnPE, property_row: dnfile.mdtable.PropertyRow
+) -> Optional[dnfile.mdtable.TypeDefRow]:
     """get property map from PropertyMap table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -235,6 +241,7 @@ def get_dotnet_property_map(pe: dnfile.dnPE, property_row: dnfile.mdtable.Proper
             if index.row.Name == property_row.Name:
                 return row.Parent.row
     return None
+
 
 def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Iterator[DnProperty]:
     """get property from MethodSemantics table
@@ -257,6 +264,7 @@ def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Iterator[DnProperty]:
             return DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
 
     return None
+
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
