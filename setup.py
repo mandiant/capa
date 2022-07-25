@@ -27,7 +27,7 @@ requirements = [
     "pefile==2022.5.30",
     "pyelftools==0.28",
     "dnfile==0.11.0",
-    "dncil==1.0.0",
+    "dncil==1.0.1",
     "pydantic==1.9.1",
 ]
 
