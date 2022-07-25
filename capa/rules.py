@@ -122,6 +122,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
     INSTRUCTION_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.insn.API,
+        capa.features.insn.Property,
         capa.features.insn.Number,
         capa.features.common.String,
         capa.features.common.Bytes,
@@ -254,6 +255,8 @@ def parse_feature(key: str):
     # keep this in sync with supported features
     if key == "api":
         return capa.features.insn.API
+    if key == "property":
+        return capa.features.insn.Property
     elif key == "string":
         return capa.features.common.StringFactory
     elif key == "substring":

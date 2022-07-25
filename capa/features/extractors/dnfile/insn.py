@@ -17,20 +17,22 @@ from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number
-from capa.features.common import Class, String, Feature, Namespace, Characteristic, Property
+from capa.features.insn import API, Number, Property
+from capa.features.common import Class, String, Feature, Namespace, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
     DnClass,
     DnMethod,
+    DnProperty,
     DnUnmanagedMethod,
     resolve_dotnet_token,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
-    get_dotnet_field,
+    get_dotnet_fields,
+    get_dotnet_property,
 )
 
 
@@ -81,7 +83,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if callee is None:
         return
 
-    if callee.methodname.startswith("get_") or callee.methodname.startswith("set_"):
+    if callee.methodname.startswith("get_") or callee.methodname.startswith("set_") and Token(ih.inner.operand.value).table!=6:
         return
 
     if isinstance(callee, DnUnmanagedMethod):
@@ -94,60 +96,82 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
 
 def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction property features"""
-    f: CilMethodBody = fh.inner
     insn: Instruction = ih.inner
 
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
-        if callee is None:
-            return
-        if not callee.methodname.startswith("get_") and not callee.methodname.startswith("set_"):
-            return
-        if not isinstance(callee, DnUnmanagedMethod):
-            yield Property(str(callee).replace("get_", "").replace("set_", "")), ih.address
+        token: Token = Token(insn.operand.value)
+        if token.table == 6:
+            row: Union[DnProperty, None] = get_dotnet_property(fh.ctx["pe"], token)
+            if row is None:
+                return
+            yield Property(str(row)), ih.address
 
-    elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
-        row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
-        if not isinstance(row, dnfile.mdtable.FieldRow):
-            return
-        field = get_dotnet_field(fh.ctx["pe"], row)
-        if not isinstance(field, dnfile.mdtable.TypeDefRow):
-            return
-        yield Property(DnMethod.format_name(field.TypeNamespace, field.TypeName, row.Name)), ih.address
+        elif token.table == 10:
+            row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
+            if row.Name.startswith("get_"):
+                name = row.Name.replace("get_", "")
+            elif row.Name.startswith("set_"):
+                name = row.Name.replace("set_", "")
+            else:
+                return
+            if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+                return
+            yield Property(DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)), ih.address
 
-    else:
-        return
+    if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
+        token: Token = Token(insn.operand.value)
+        if token.table == 4:
+            for field in get_dotnet_fields(fh.ctx["pe"]):
+                if token.value == field.token:
+                    yield Property(str(field)), ih.address
+
+    return
+
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         return
 
     row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
+    if isinstance(row, dnfile.mdtable.MemberRefRow):
+        if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+            yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), ih.address
 
-    if not isinstance(row, dnfile.mdtable.MemberRefRow):
-        return
-    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-        return
+    elif isinstance(row, dnfile.mdtable.MethodDefRow):
+       for method in get_dotnet_managed_methods(fh.ctx["pe"]):
+           if Token(ih.inner.operand.value).value == method.token:
+               yield Class(DnClass.format_name(method.namespace, method.classname)), ih.address
 
-    yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), ih.address
+    elif isinstance(row, dnfile.mdtable.FieldRow):
+        for field in get_dotnet_fields(fh.ctx["pe"]):
+            if Token(ih.inner.operand.value).value == field.token:
+               yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
     """parse instruction namespace features"""
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         return
 
     row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
 
-    if not isinstance(row, dnfile.mdtable.MemberRefRow):
-        return
-    if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-        return
-    if not row.Class.row.TypeNamespace:
-        return
+    if isinstance(row, dnfile.mdtable.MemberRefRow):
+        if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
+            if row.Class.row.TypeNamespace:
+               yield Namespace(row.Class.row.TypeNamespace), ih.address
 
-    yield Namespace(row.Class.row.TypeNamespace), ih.address
+    elif isinstance(row, dnfile.mdtable.MethodDefRow):
+       for method in get_dotnet_managed_methods(fh.ctx["pe"]):
+           if Token(ih.inner.operand.value).value == method.token:
+               if method.namespace:
+                   yield Namespace(method.namespace), ih.address
+
+    elif isinstance(row, dnfile.mdtable.FieldRow):
+        for field in get_dotnet_fields(fh.ctx["pe"]):
+            if Token(ih.inner.operand.value).value == field.token:
+               if field.namespace:
+                   yield Namespace(field.namespace), ih.address
 
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

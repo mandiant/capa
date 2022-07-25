@@ -85,6 +85,22 @@ class DnMethod(DnClass):
             name = f"{namespace}.{name}"
         return name
 
+class DnProperty(DnClass):
+    def __init__(self, token: int, namespace: str, classname: str, propertyname: str):
+        super(DnProperty, self).__init__(token, namespace, classname)
+        self.propertyname: str = propertyname
+
+    def __str__(self):
+        return DnMethod.format_name(self.namespace, self.classname, self.propertyname)
+
+    @staticmethod
+    def format_name(namespace: str, classname: str, propertyname: str):  # type: ignore
+        # like File::OpenRead
+        name: str = f"{classname}::{propertyname}"
+        if namespace:
+            # like System.IO.File::OpenRead
+            name = f"{namespace}.{name}"
+        return name
 
 class DnUnmanagedMethod:
     def __init__(self, token: int, modulename: str, methodname: str):
@@ -195,12 +211,52 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
             yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
-def get_dotnet_field(pe: dnfile.dnPE, field_row: dnfile.mdtable.FieldRow) -> Any:
+def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
+    """get fields from TypeDef table"""
     for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.FieldList:
-            if index.row == field_row:
-                return row
-    return
+            token = calculate_dotnet_token_value(index.table.number, index.row_index)
+            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name)
+
+def get_dotnet_property_map(pe: dnfile.dnPE, property_row: dnfile.mdtable.PropertyRow) -> Optional[dnfile.mdtable.TypeDefRow]:
+    """get property map from PropertyMap table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    21 - PropertyMap Table
+        List of Properties owned by a specific class.
+            Parent (index into the TypeDef table)
+            PropertyList (index into Property table). It marks the first of a contiguous run of Properties owned by Parent. The run continues to the smaller of:
+                the last row of the Property table
+                the next run of Properties, found by inspecting the PropertyList of the next row in this PropertyMap table
+    """
+    for row in iter_dotnet_table(pe, "PropertyMap"):
+        for index in row.PropertyList:
+            if index.row.Name == property_row.Name:
+                return row.Parent.row
+    return None
+
+def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Iterator[DnProperty]:
+    """get property from MethodSemantics table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    24 - MethodSemantics Table
+        Links Events and Properties to specific methods. For example one Event can be associated to more methods. A property uses this table to associate get/set methods.
+            Semantics (a 2-byte bitmask of type MethodSemanticsAttributes)
+            Method (index into the MethodDef table)
+            Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
+    """
+    for row in iter_dotnet_table(pe, "MethodSemantics"):
+        if row.Method is None:
+            return None
+        if row.Method.row_index == token.rid:
+            typedef_row = get_dotnet_property_map(pe, row.Association.row)
+            if typedef_row == None:
+                return
+            return DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
+
+    return None
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
