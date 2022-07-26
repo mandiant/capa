@@ -1,0 +1,20 @@
+
+{
+    "namespaces": [
+        "socket",
+        "socket.error",
+        "subprocess.Popen",
+        "subprocess.PIPE",
+        "urllib2.urlopen",
+        "urllib2.Request",
+        "base64.encodestring",
+        "base64.b64encode",
+        "base64.b64decode",
+        "os.chmod",
+        "os.chdir",
+        "os.path.expanduser",
+        "os.path.dirname",
+        "platform.mac_ver",
+        "time.sleep"
+    ]
+}

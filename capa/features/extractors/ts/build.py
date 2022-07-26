@@ -6,8 +6,10 @@ languages = [
     "vendor/tree-sitter-embedded-template",
     "vendor/tree-sitter-html",
     "vendor/tree-sitter-javascript",
+    "vendor/tree-sitter-python",
 ]
 
 
-def ts_build():
-    Language.build_library(build_dir, languages)
+class TSBuilder:
+    def __init__(self):
+        Language.build_library(build_dir, languages)

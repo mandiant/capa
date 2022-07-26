@@ -19,7 +19,7 @@ from capa.features.common import (
     ScriptLanguage,
 )
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
+from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
@@ -288,14 +288,15 @@ def do_test_ts_template_engine_get_template_namespaces(
     engine: TreeSitterTemplateEngine, expected_language: str, expected: List[str]
 ):
     default_namespaces = LANGUAGE_TOOLKITS[expected_language].get_default_namespaces(True)
-    template_namespaces = {name for _, name in engine.get_namespaces()}
+    template_namespaces = set(engine.get_namespaces())
     assert default_namespaces.issubset(template_namespaces)
     assert len(list(engine.get_imported_namespaces())) == len(expected)
-    for (node, namespace), expected_namespace in zip(list(engine.get_imported_namespaces()), expected):
-        assert isinstance(node, Node)
-        assert engine.is_aspx_import_directive(node) == True
-        assert engine.get_aspx_namespace(node) == expected_namespace
-        assert namespace == expected_namespace
+    for namespace, expected_namespace in zip(list(engine.get_imported_namespaces()), expected):
+        assert isinstance(namespace.node, Node)
+        assert engine.is_aspx_import_directive(namespace.node) == True
+        aspx_namespace = engine.get_aspx_namespace(namespace.node)
+        assert aspx_namespace is not None and aspx_namespace.name == expected_namespace
+        assert namespace.name == expected_namespace
 
 
 def do_test_ts_template_engine_get_code_sections(engine: TreeSitterTemplateEngine, expected: List[Tuple[int, int]]):
@@ -914,9 +915,9 @@ def test_ts_template_engine(request: pytest.FixtureRequest, engine_str: str, exp
     do_test_ts_template_engine_get_parsed_code_sections(engine, expected["language"], expected["code sections"])
     do_test_ts_template_engine_get_content_sections(engine, expected["content sections"])
     for expected_start_byte, expected_end_byte in expected["content sections"]:
-        template_namespaces = list(engine.get_namespaces())
-        additional_namespaces = set(name for _, name in template_namespaces)
-        html_engine = TreeSitterHTMLEngine(engine.buf[expected_start_byte:expected_end_byte], additional_namespaces)
+        html_engine = TreeSitterHTMLEngine(
+            engine.buf[expected_start_byte:expected_end_byte], set(engine.get_namespaces())
+        )
         do_test_ts_html_engine_init(html_engine)
 
 
@@ -1069,6 +1070,22 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_15eed4", "global", Arch(ARCH_ANY), True),
         ("aspx_b75f16", "global", Arch(ARCH_ANY), True),
         ("aspx_d460ca", "global", Arch(ARCH_ANY), True),
+        ("py_7f9cd1", "global", Arch(ARCH_ANY), True),
+        ("py_7f9cd1", "global", OS(OS_ANY), True),
+        ("py_7f9cd1", "file", Format(FORMAT_SCRIPT), True),
+        ("py_7f9cd1", "file", ScriptLanguage(LANG_PY), True),
+        ("py_7f9cd1", "file", Namespace("socket"), True),
+        ("py_7f9cd1", "file", Namespace("threading.Timer"), True),
+        ("py_7f9cd1", "file", Namespace("threading.Timer"), True),
+        ("py_7f9cd1", "function=icloud_phish", API("subprocess.Popen"), True),
+        ("py_7f9cd1", "function=icloud_phish", API("urllib2.Request"), True),
+        ("py_7f9cd1", "function=icloud_phish", API("base64.encodestring"), True),
+        ("py_7f9cd1", "function=icloud_phish", API("urllib2.urlopen"), True),
+        ("py_7f9cd1", "function=get_itunes_backups", String("IMEI"), True),
+        ("py_7f9cd1", "function=PSEUDO MAIN", String("[I] "), True),
+        ("py_7f9cd1", "function=PSEUDO MAIN", Substring("[!]"), True),
+        ("py_7f9cd1", "function=get_itunes_backups", Number(0), True),
+        ("py_7f9cd1", "function=get_itunes_backups", Number(1), True),
     ]
 )
 

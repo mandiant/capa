@@ -1,6 +1,4 @@
-from typing import List, Tuple, Union, Iterator, Optional
-
-from tree_sitter import Node
+from typing import List, Tuple, Union, Iterator
 
 import capa.features.extractors.script
 import capa.features.extractors.ts.file
@@ -10,6 +8,7 @@ import capa.features.extractors.ts.function
 from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_TEM, LANG_HTML
+from capa.features.extractors.ts.tools import BaseNamespace
 from capa.features.extractors.ts.engine import TreeSitterHTMLEngine, TreeSitterTemplateEngine, TreeSitterExtractorEngine
 from capa.features.extractors.ts.function import PSEUDO_MAIN, TSFunctionInner
 from capa.features.extractors.base_extractor import Feature, BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -43,16 +42,18 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
             engines.extend(list(self.extract_code_from_html(section_buf, self.template_engine.namespaces)))
         return engines
 
-    def extract_code_from_html(self, buf: bytes, namespaces: set[str] = set()) -> List[TreeSitterExtractorEngine]:
+    def extract_code_from_html(
+        self, buf: bytes, namespaces: set[BaseNamespace] = set()
+    ) -> List[TreeSitterExtractorEngine]:
         return list(TreeSitterHTMLEngine(buf, namespaces).get_parsed_code_sections())
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
         return NO_ADDRESS
 
     def extract_template_namespaces(self) -> Iterator[Tuple[Feature, Address]]:
-        for node, name in self.template_engine.get_namespaces():
-            address = NO_ADDRESS if node is None else FileOffsetRangeAddress(node.start_byte, node.end_byte)
-            yield Namespace(name), address
+        for ns in self.template_engine.get_namespaces():
+            address = NO_ADDRESS if ns.node is None else FileOffsetRangeAddress(ns.node.start_byte, ns.node.end_byte)
+            yield Namespace(ns.name), address
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.ts.global_.extract_features()

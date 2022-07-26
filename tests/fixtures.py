@@ -47,6 +47,7 @@ DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
 SOURCE_DIR = os.path.join(CD, "data", "source")
 ASPX_DIR = os.path.join(SOURCE_DIR, "aspx")
 CS_DIR = os.path.join(SOURCE_DIR, "cs")
+PY_DIR = os.path.join(SOURCE_DIR, "py")
 
 
 @contextlib.contextmanager
@@ -334,6 +335,10 @@ ASPX_DATA_PATH_BY_NAME = {
     "aspx_d460ca": os.path.join(ASPX_DIR, "d460cae7d34c51059ef57c5aadb3de099469efbac5fffcf76d0528a511192a28.aspx_"),
 }
 
+PY_DATA_PATH_BY_NAME = {
+    "py_7f9cd1": os.path.join(PY_DIR, "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_")
+}
+
 
 def get_sample_md5_by_name(name):
     """used by IDA tests to ensure the correct IDB is loaded"""
@@ -402,6 +407,8 @@ def sample(request):
 def resolve_sample_ts(sample):
     if sample.startswith("cs_"):
         return get_data_path_by_name(sample)
+    if sample.startswith("py_"):
+        return PY_DATA_PATH_BY_NAME[sample]
     if sample.startswith("aspx_"):
         try:
             return ASPX_DATA_PATH_BY_NAME[sample]
@@ -1139,3 +1146,8 @@ def aspx_b75f16_template_engine():
 @pytest.fixture
 def aspx_d460ca_template_engine():
     return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])
+
+
+@pytest.fixture
+def py_7f9cd1_template_engine():
+    return get_ts_extractor_engine()

@@ -6,6 +6,7 @@ from tree_sitter import Node
 from capa.features.insn import API, Number, Property
 from capa.features.common import String, Feature
 from capa.features.address import Address
+from capa.features.extractors.ts.tools import BaseNamespace
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
 from capa.features.extractors.base_extractor import FunctionHandle
 
@@ -41,11 +42,14 @@ def extract_integers(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterat
             yield Number(parsed_int), engine.get_address(node)
 
 
-def get_imports(name: str, namespaces: set[str], engine: TreeSitterExtractorEngine) -> Iterator[str]:
+def get_imports(name: str, namespaces: set[BaseNamespace], engine: TreeSitterExtractorEngine) -> Iterator[str]:
     if engine.language_toolkit.is_import(name):
         yield name
     for namespace in namespaces:
-        joined_name = engine.language_toolkit.join_names(namespace, name)
+        namespace_join_name = namespace.get_join_name()
+        if not namespace_join_name:
+            continue
+        joined_name = engine.language_toolkit.join_names(namespace_join_name, name)
         if engine.language_toolkit.is_import(joined_name):
             yield joined_name
 
@@ -70,7 +74,7 @@ def extract_classes_(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterat
 
 
 def extract_properties_(
-    fn_node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+    fn_node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
     for node, property_name in get_properties(fn_node, engine):
         for name in get_imports(property_name, classes, engine):
@@ -83,10 +87,11 @@ def extract_static_methods_(node: Node, engine: TreeSitterExtractorEngine) -> It
 
 
 def extract_regular_methods_(
-    node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+    node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
-    if engine.is_object_creation_expression(node):
-        node = engine.get_direct_method_call(node)
+    direct_method_call_node = engine.get_direct_method_call(node)
+    if direct_method_call_node is not None:
+        node = direct_method_call_node
     qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
     property_name = (
         qualified_names[0] if len(qualified_names) == 1 else engine.language_toolkit.join_names(*qualified_names[1:])
@@ -96,14 +101,14 @@ def extract_regular_methods_(
 
 
 def extract_api(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    classes = set(get_classes(fn_node, engine))
+    classes = {engine.language_toolkit.create_namespace(cls) for cls in get_classes(fn_node, engine)}
     yield from extract_classes_(fn_node, engine)
     yield from extract_function_calls_(fn_node, classes, engine)
     yield from extract_properties_(fn_node, classes, engine)
 
 
 def extract_function_calls_(
-    fn_node: Node, classes: set[str], engine: TreeSitterExtractorEngine
+    fn_node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
     for node, _ in engine.get_function_call_names(fn_node):
         yield from extract_static_methods_(node, engine)

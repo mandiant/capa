@@ -11,8 +11,8 @@ def extract_language(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Featur
 
 
 def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node, _ in engine.get_namespaces():
-        yield Namespace(engine.get_range(node)), engine.get_address(node)
+    for namespace in engine.get_processed_namespaces():
+        yield Namespace(namespace.name), engine.get_address(namespace.node)
 
 
 def extract_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:

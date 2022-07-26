@@ -4,7 +4,7 @@ from tree_sitter import Language
 from tree_sitter.binding import Query
 
 import capa.features.extractors.ts.build
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
+from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
 
 
 @dataclass
@@ -17,8 +17,7 @@ class ScriptQueryBinding(QueryBinding):
     new_object_name: Query
     function_definition: Query
     function_definition_field_name: str
-    direct_method_call_field_name: str
-    object_creation_expression_field_name: str
+    direct_method_call: Query
     function_call_name: Query
     assigned_property_name: Query
     string_literal: Query
@@ -51,8 +50,11 @@ def deserialize(language: str, binding: dict) -> dict:
     return deserialized_binding
 
 
+capa.features.extractors.ts.build.TSBuilder()
+
 TS_LANGUAGES: dict[str, Language] = {
     LANG_CS: Language(capa.features.extractors.ts.build.build_dir, LANG_CS),
+    LANG_PY: Language(capa.features.extractors.ts.build.build_dir, LANG_PY),
     LANG_TEM: Language(capa.features.extractors.ts.build.build_dir, LANG_TEM),
     LANG_HTML: Language(capa.features.extractors.ts.build.build_dir, LANG_HTML),
     LANG_JS: Language(capa.features.extractors.ts.build.build_dir, LANG_JS),
@@ -73,11 +75,32 @@ BINDINGS: dict[str, QueryBinding] = {
                     "integer_literal": "(integer_literal) @integer-literal",
                     "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",
                     "global_statement": "(global_statement [(if_statement) @global-statement (expression_statement) @global-statement (local_declaration_statement) @global-statement])",
+                    "direct_method_call": "(member_access_expression expression: (object_creation_expression) name: (identifier) @direct-method-call)",
                 },
                 "field_name": {
                     "function_definition": "name",
-                    "direct_method_call": "name",
-                    "object_creation_expression": "expression",
+                },
+            },
+        ),
+    ),
+    LANG_PY: ScriptQueryBinding(
+        TS_LANGUAGES[LANG_PY],
+        **deserialize(
+            LANG_PY,
+            {
+                "query": {
+                    "new_object_name": "(call function: [(attribute) @new-object (identifier) @new-object])",  # Python makes no distinction between new object creation and a function call
+                    "function_definition": "(function_definition) @function-definition",
+                    "function_call_name": "(call function: [(attribute) @function-call (identifier) @function-call])",
+                    "assigned_property_name": "(attribute attribute: (identifier) @property)",
+                    "string_literal": "(string) @string-literal",
+                    "integer_literal": "(integer) @integer-literal",
+                    "namespace": "(import_from_statement) @import_from (import_statement) @import",
+                    "global_statement": "(module [(if_statement) @global-statement (expression_statement) @global-statement])",
+                    "direct_method_call": "(attribute object: (call) attribute: (identifier) @direct-method-call)",
+                },
+                "field_name": {
+                    "function_definition": "name",
                 },
             },
         ),
