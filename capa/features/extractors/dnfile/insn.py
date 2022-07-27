@@ -108,13 +108,15 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         token: Token = Token(insn.operand.value)
         if token.table == 6:
-            row: Union[DnProperty, None] = get_dotnet_property(fh.ctx["pe"], token)
-            if row is None:
+            property: Union[DnProperty, None] = get_dotnet_property(fh.ctx["pe"], token)
+            if property is None:
                 return
-            yield Property(str(row)), ih.address
+            yield Property(str(property)), ih.address
 
         elif token.table == 10:
             row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
+            if row is None:
+                return
             if row.Name.startswith("get_"):
                 name = row.Name.replace("get_", "")
             elif row.Name.startswith("set_"):
@@ -128,10 +130,10 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             ), ih.address
 
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
-        token: Token = Token(insn.operand.value)
-        if token.table == 4:
+        field_token: Token = Token(insn.operand.value)
+        if field_token.table == 4:
             for field in get_dotnet_fields(fh.ctx["pe"]):
-                if token.value == field.token:
+                if field_token.value == field.token:
                     yield Property(str(field)), ih.address
 
     return

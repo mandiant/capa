@@ -243,7 +243,7 @@ def get_dotnet_property_map(
     return None
 
 
-def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Iterator[DnProperty]:
+def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Optional[DnProperty]:
     """get property from MethodSemantics table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -260,7 +260,7 @@ def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Iterator[DnProperty]:
         if row.Method.row_index == token.rid:
             typedef_row = get_dotnet_property_map(pe, row.Association.row)
             if typedef_row is None:
-                return
+                return None
             return DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
 
     return None
