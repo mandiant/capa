@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from typing import List, Tuple, Iterator
 
-import dnfile
 from dncil.clr.token import Token
 
+import dnfile
 import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn

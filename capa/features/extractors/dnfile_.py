@@ -1,9 +1,9 @@
 import logging
 from typing import Tuple, Iterator
 
-import dnfile
 import pefile
 
+import dnfile
 from capa.features.common import OS, OS_ANY, ARCH_ANY, ARCH_I386, ARCH_AMD64, FORMAT_DOTNET, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor

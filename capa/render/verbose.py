@@ -23,10 +23,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import tabulate
-import dnfile.mdtable
 import dncil.clr.token
 
 import capa.rules
+import dnfile.mdtable
 import capa.render.utils as rutils
 import capa.features.freeze as frz
 import capa.render.result_document

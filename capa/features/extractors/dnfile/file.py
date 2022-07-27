@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import Tuple, Iterator
 
 import dnfile
-
 import capa.features.extractors.dotnetfile
 from capa.features.file import Import, FunctionName
 from capa.features.common import Class, Format, String, Feature, Namespace, Characteristic
