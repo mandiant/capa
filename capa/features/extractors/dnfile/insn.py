@@ -83,11 +83,13 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if callee is None:
         return
 
-    if (
-        callee.methodname.startswith("get_")
-        or callee.methodname.startswith("set_")
-        and Token(ih.inner.operand.value).table != 6
-    ):
+    if callee.methodname.startswith("get_") or callee.methodname.startswith("set_"):
+        if Token(ih.inner.operand.value).table == 6:
+            row: Union[DnProperty, None] = get_dotnet_property(fh.ctx["pe"], Token(ih.inner.operand.value))
+            if row is not None:
+                return
+        elif Token(ih.inner.operand.value).table == 10:
+            return
         return
 
     if isinstance(callee, DnUnmanagedMethod):
