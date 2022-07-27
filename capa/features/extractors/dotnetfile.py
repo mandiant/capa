@@ -2,10 +2,10 @@ import logging
 import itertools
 from typing import Tuple, Iterator
 
+import dnfile
 import pefile
 from dncil.clr.token import Token
 
-import dnfile
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
 from capa.features.common import (
