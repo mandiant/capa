@@ -10,12 +10,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple, Union, Iterator, Optional
 
-import dnfile
 from dncil.cil.body import CilMethodBody
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
+import dnfile
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
 from capa.features.common import Class, String, Feature, Namespace, Characteristic
@@ -26,13 +26,13 @@ from capa.features.extractors.dnfile.helpers import (
     DnMethod,
     DnProperty,
     DnUnmanagedMethod,
+    get_dotnet_fields,
+    get_dotnet_property,
     resolve_dotnet_token,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     get_dotnet_unmanaged_imports,
-    get_dotnet_fields,
-    get_dotnet_property,
 )
 
 
