@@ -92,7 +92,7 @@ class DnProperty(DnClass):
         self.propertyname: str = propertyname
 
     def __str__(self):
-        return DnMethod.format_name(self.namespace, self.classname, self.propertyname)
+        return DnProperty.format_name(self.namespace, self.classname, self.propertyname)
 
     @staticmethod
     def format_name(namespace: str, classname: str, propertyname: str):  # type: ignore
