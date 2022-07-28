@@ -117,10 +117,8 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
             if row is None:
                 return
-            if row.Name.startswith("get_"):
-                name = row.Name.replace("get_", "")
-            elif row.Name.startswith("set_"):
-                name = row.Name.replace("set_", "")
+            if row.Name.startswith(("get_", "set_")):
+                name = row.Name[4:]
             else:
                 return
             if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
