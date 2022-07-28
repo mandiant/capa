@@ -108,7 +108,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         token: Token = Token(insn.operand.value)
         if token.table == 6:
-            property: Union[DnProperty, None] = get_dotnet_property(fh.ctx["pe"], token)
+            property: Optional[DnProperty] = get_dotnet_property(fh.ctx["pe"], token)
             if property is None:
                 return
             yield Property(str(property)), ih.address
