@@ -27,8 +27,8 @@ from capa.features.extractors.dnfile.helpers import (
     DnProperty,
     DnUnmanagedMethod,
     get_dotnet_fields,
-    get_dotnet_property,
     resolve_dotnet_token,
+    get_dotnet_properties,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
@@ -72,6 +72,23 @@ def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None
     return callee
 
 
+def get_properties(ctx: Dict) -> Dict:
+    if "properties_cache" not in ctx:
+        ctx["properties_cache"] = {}
+        for property in get_dotnet_properties(ctx["pe"]):
+            if property is not None:
+                ctx["properties_cache"][property.token] = property
+    return ctx["properties_cache"]
+
+
+def get_fields(ctx: Dict) -> Dict:
+    if "fields_cache" not in ctx:
+        ctx["fields_cache"] = {}
+        for field in get_dotnet_fields(ctx["pe"]):
+            ctx["fields_cache"][field.token] = field
+    return ctx["fields_cache"]
+
+
 def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction API features"""
     insn: Instruction = ih.inner
@@ -84,11 +101,11 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         return
 
     if callee.methodname.startswith(("get_", "set_")):
-        if Token(ih.inner.operand.value).table == 6:
-            row: Optional[DnProperty] = get_dotnet_property(fh.ctx["pe"], Token(ih.inner.operand.value))
+        if Token(insn.operand.value).table == 6:
+            row: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if row is not None:
                 return
-        elif Token(ih.inner.operand.value).table == 10:
+        elif Token(insn.operand.value).table == 10:
             return
         return
 
@@ -108,7 +125,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         token: Token = Token(insn.operand.value)
         if token.table == 6:
-            property: Optional[DnProperty] = get_dotnet_property(fh.ctx["pe"], token)
+            property: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if property is None:
                 return
             yield Property(str(property)), ih.address
@@ -130,9 +147,10 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         field_token: Token = Token(insn.operand.value)
         if field_token.table == 4:
-            for field in get_dotnet_fields(fh.ctx["pe"]):
-                if field_token.value == field.token:
-                    yield Property(str(field)), ih.address
+            field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if field is None:
+                return
+            yield Property(str(field)), ih.address
 
     return
 
@@ -159,14 +177,17 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
             yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        for method in get_dotnet_managed_methods(fh.ctx["pe"]):
-            if Token(ih.inner.operand.value).value == method.token:
-                yield Class(DnClass.format_name(method.namespace, method.classname)), ih.address
+        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
+        if isinstance(callee, DnMethod):
+            yield Class(DnClass.format_name(callee.namespace, callee.classname)), ih.address
+        else:
+            return
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
-        for field in get_dotnet_fields(fh.ctx["pe"]):
-            if Token(ih.inner.operand.value).value == field.token:
-                yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
+        field: Optional[DnProperty] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if field is None:
+            return
+        yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
@@ -193,16 +214,17 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
                 yield Namespace(row.Class.row.TypeNamespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        for method in get_dotnet_managed_methods(fh.ctx["pe"]):
-            if Token(ih.inner.operand.value).value == method.token:
-                if method.namespace:
-                    yield Namespace(method.namespace), ih.address
+        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
+        if isinstance(callee, DnMethod):
+            if callee.namespace is None:
+                return
+            yield Namespace(callee.namespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
-        for field in get_dotnet_fields(fh.ctx["pe"]):
-            if Token(ih.inner.operand.value).value == field.token:
-                if field.namespace:
-                    yield Namespace(field.namespace), ih.address
+        field: Optional[DnProperty] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if field is None:
+            return
+        yield Namespace(field.namespace), ih.address
 
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

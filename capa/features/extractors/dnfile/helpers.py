@@ -243,7 +243,7 @@ def get_dotnet_property_map(
     return None
 
 
-def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Optional[DnProperty]:
+def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Optional[DnProperty]]:
     """get property from MethodSemantics table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -255,15 +255,12 @@ def get_dotnet_property(pe: dnfile.dnPE, token: Token) -> Optional[DnProperty]:
             Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
     """
     for row in iter_dotnet_table(pe, "MethodSemantics"):
-        if row.Method is None:
-            return None
-        if row.Method.row_index == token.rid:
+        if row.Method is not None:
             typedef_row = get_dotnet_property_map(pe, row.Association.row)
-            if typedef_row is None:
-                return None
-            return DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
-
-    return None
+            if typedef_row is not None:
+                token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
+                yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
+        yield None
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
