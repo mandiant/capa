@@ -37,7 +37,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import Address
-from capa.features.extractors.script import LANG_CS, LANG_TEM
+from capa.features.extractors.script import LANG_CS, LANG_PY
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
@@ -181,7 +181,7 @@ def get_ts_extractor_engine(language, buf):
 
 
 @lru_cache(maxsize=1)
-def get_ts_template_engine(language, path):
+def get_ts_template_engine(path):
     import capa.features.extractors.ts.engine
 
     with open(path, "rb") as f:
@@ -336,7 +336,8 @@ ASPX_DATA_PATH_BY_NAME = {
 }
 
 PY_DATA_PATH_BY_NAME = {
-    "py_7f9cd1": os.path.join(PY_DIR, "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_")
+    "py_7f9cd1": os.path.join(PY_DIR, "7f9cd1eedf0a9088fc3e07a275d04dceadcf0a5cd425a17e9666b63685d3a37e.py_"),
+    "py_ca0df6": os.path.join(PY_DIR, "ca0df6cccf2a15ce8f781d81959cf230aead64e6297a3283b21457dc74938c89.py_"),
 }
 
 
@@ -1050,104 +1051,109 @@ def cs_138cdc_extractor_engine():
 
 @pytest.fixture
 def aspx_4f6fa6_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_4f6fa6"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_4f6fa6"])
 
 
 @pytest.fixture
 def aspx_5f959f_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_5f959f"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_5f959f"])
 
 
 @pytest.fixture
 def aspx_10162f_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_10162f"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_10162f"])
 
 
 @pytest.fixture
 def aspx_2b71dd_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_2b71dd"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2b71dd"])
 
 
 @pytest.fixture
 def aspx_f2bf20_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f2bf20"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f2bf20"])
 
 
 @pytest.fixture
 def aspx_f39dc0_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f39dc0"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f39dc0"])
 
 
 @pytest.fixture
 def aspx_ea2a01_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_ea2a01"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_ea2a01"])
 
 
 @pytest.fixture
 def aspx_6f3261_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_6f3261"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_6f3261"])
 
 
 @pytest.fixture
 def aspx_1f8f40_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_1f8f40"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_1f8f40"])
 
 
 @pytest.fixture
 def aspx_2e8c7e_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_2e8c7e"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_2e8c7e"])
 
 
 @pytest.fixture
 def aspx_03bb5c_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_03bb5c"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_03bb5c"])
 
 
 @pytest.fixture
 def aspx_606dbf_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_606dbf"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_606dbf"])
 
 
 @pytest.fixture
 def aspx_f397cb_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_f397cb"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_f397cb"])
 
 
 @pytest.fixture
 def aspx_b4bb14_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_b4bb14"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b4bb14"])
 
 
 @pytest.fixture
 def aspx_54433d_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_54433d"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_54433d"])
 
 
 @pytest.fixture
 def aspx_a35878_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_a35878"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a35878"])
 
 
 @pytest.fixture
 def aspx_a5c893_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_a5c893"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_a5c893"])
 
 
 @pytest.fixture
 def aspx_15eed4_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_15eed4"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_15eed4"])
 
 
 @pytest.fixture
 def aspx_b75f16_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_b75f16"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_b75f16"])
 
 
 @pytest.fixture
 def aspx_d460ca_template_engine():
-    return get_ts_template_engine(LANG_TEM, ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])
+    return get_ts_template_engine(ASPX_DATA_PATH_BY_NAME["aspx_d460ca"])
 
 
 @pytest.fixture
 def py_7f9cd1_template_engine():
-    return get_ts_extractor_engine()
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_7f9cd1"])
+
+
+@pytest.fixture
+def py_ca0df6_template_engine():
+    return get_ts_extractor_engine(LANG_PY, PY_DATA_PATH_BY_NAME["py_ca0df6"])

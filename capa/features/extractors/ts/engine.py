@@ -4,7 +4,7 @@ from typing import List, Tuple, Iterator, Optional
 from tree_sitter import Node, Tree, Parser
 
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
+from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import (
     BINDINGS,
     QueryBinding,
@@ -70,8 +70,14 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     def get_new_object_names(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.new_object_name.captures(node)
 
-    def get_assigned_property_names(self, node: Node) -> List[Tuple[Node, str]]:
-        return self.query.assigned_property_name.captures(node)
+    def get_property_names(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.property_name.captures(node)
+
+    def get_processed_property_names(self, node: Node) -> Iterator[Tuple[Node, str]]:
+        for pt_node, _ in self.get_property_names(node):
+            pt_name = self.language_toolkit.process_property(pt_node, self.get_range(pt_node))
+            if pt_name:
+                yield pt_node, pt_name
 
     def get_function_definitions(self, node: Node = None) -> List[Tuple[Node, str]]:
         return self.query.function_definition.captures(node if node is not None else self.tree.root_node)
@@ -86,6 +92,15 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
     def get_function_call_names(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.function_call_name.captures(node)
 
+    def get_imported_constants(self, node: Node) -> List[Tuple[Node, str]]:
+        return self.query.imported_constant_name.captures(node)
+
+    def get_processed_imported_constants(self, node: Node) -> Iterator[Tuple[Node, str]]:
+        for const_node, _ in self.get_imported_constants(node):
+            const_name = self.language_toolkit.process_imported_constant(const_node, self.get_range(const_node))
+            if const_name:
+                yield const_node, const_name
+
     def get_string_literals(self, node: Node) -> List[Tuple[Node, str]]:
         return self.query.string_literal.captures(node)
 
@@ -96,8 +111,8 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         return self.query.namespace.captures(node if node is not None else self.tree.root_node)
 
     def get_processed_namespaces(self, node: Node = None) -> Iterator[BaseNamespace]:
-        for node, query_name in self.get_namespaces(node):
-            for namespace in self.language_toolkit.process_namespace(node, query_name, self.get_range):
+        for ns_node, query_name in self.get_namespaces(node):
+            for namespace in self.language_toolkit.process_namespace(ns_node, query_name, self.get_range):
                 yield namespace
 
     def get_global_statements(self) -> List[Tuple[Node, str]]:

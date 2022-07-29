@@ -1,5 +1,5 @@
 {
-    "namespaces":
+    "imports":
     [
         "System.IO.DirectoryInfo",
         "System.IO.Directory.CreateDirectory",
@@ -61,6 +61,7 @@
         "System.Security.Cryptography.SHA256CryptoServiceProvider",
         "System.Security.Cryptography.SHA256CryptoServiceProvider.ComputeHash"
     ],
+    "builtins": [],
     "aspx_default_namespaces":
     [
         "System",

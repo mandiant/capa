@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from multiprocessing.sharedctypes import Value
 
 import pytest
 import fixtures
@@ -161,11 +162,10 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
 def do_test_ts_extractor_engine_get_assigned_property_names(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(list(engine.get_assigned_property_names(root_node))) == len(expected)
-    for (node, name), expected_range in zip(engine.get_assigned_property_names(root_node), expected):
+    assert len(list(engine.get_processed_property_names(root_node))) == len(expected)
+    for (node, name), expected_name in zip(engine.get_processed_property_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "property"
-        do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
+        assert name == expected_name
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -246,13 +246,18 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
                     'string stderr = "";',
                 ],
                 "properties": [
-                    "HttpContext.Current.Response.StatusCode",
-                    "HttpContext.Current.Response.StatusDescription",
-                    "procStartInfo.RedirectStandardOutput",
-                    "procStartInfo.RedirectStandardError",
-                    "procStartInfo.UseShellExecute",
-                    "procStartInfo.CreateNoWindow",
-                    "p.StartInfo",
+                    "Current.Response.StatusCode",
+                    "Current.Response.StatusDescription",
+                    "Current.Request.Headers",
+                    "UserHostAddress",
+                    "Current.Request.Headers",
+                    "Form",
+                    "Form",
+                    "RedirectStandardOutput",
+                    "RedirectStandardError",
+                    "UseShellExecute",
+                    "CreateNoWindow",
+                    "StartInfo",
                 ],
             },
         ),
@@ -1086,6 +1091,28 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("py_7f9cd1", "function=PSEUDO MAIN", Substring("[!]"), True),
         ("py_7f9cd1", "function=get_itunes_backups", Number(0), True),
         ("py_7f9cd1", "function=get_itunes_backups", Number(1), True),
+        ("py_ca0df6", "file", Namespace("win32com.client"), True),
+        ("py_ca0df6", "file", Namespace("shutil"), True),
+        ("py_ca0df6", "function=PSEUDO MAIN", API("os::environ"), True),
+        ("py_ca0df6", "function=yut", API("shutil.copytree"), True),
+        ("py_ca0df6", "function=yut", API("os.getcwd"), True),
+        ("py_ca0df6", "function=takk", API("win32com.client.Dispatch"), True),
+        ("py_ca0df6", "function=takk", String("Schedule.Service"), True),
+        ("py_ca0df6", "function=takk", Substring("Updatewmplayer.exe"), True),
+        ("py_ca0df6", "function=llp", API("win32api.SetFileAttributes"), True),
+        ("py_ca0df6", "function=llp", Substring("KMPlayer"), True),
+        ("py_ca0df6", "function=fop", API("os.remove"), True),
+        ("py_ca0df6", "function=fop", Substring("Projec.exe"), True),
+        ("py_ca0df6", "function=htr", API("time.sleep"), True),
+        ("py_ca0df6", "function=htr", Number(30), True),
+        ("py_ca0df6", "function=htr", Number(25), True),
+        ("py_ca0df6", "function=htr", Number(10), True),
+        ("py_ca0df6", "function=vul", Number(5), True),
+        ("py_ca0df6", "function=vul", Number(1), True),
+        ("py_ca0df6", "function=vul", API("os.popen"), True),
+        ("py_ca0df6", "function=vul", String("Updatewmplayer"), True),
+        ("py_ca0df6", "function=vul", Substring("SCHTASKS"), True),
+        ("py_ca0df6", "function=llp", API("win32con::FILE_ATTRIBUTE_HIDDEN"), True),
     ]
 )
 

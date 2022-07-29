@@ -1,6 +1,5 @@
-
 {
-    "namespaces": [
+    "imports": [
         "socket",
         "socket.error",
         "subprocess.Popen",
@@ -10,11 +9,26 @@
         "base64.encodestring",
         "base64.b64encode",
         "base64.b64decode",
-        "os.chmod",
         "os.chdir",
+        "os.chmod",
+        "os.environ",
+        "os.getcwd",
+        "os.popen",
+        "os.remove",
         "os.path.expanduser",
         "os.path.dirname",
         "platform.mac_ver",
-        "time.sleep"
+        "shutil.copytree",
+        "time.sleep",
+        "win32com.client.Dispatch",
+        "win32con.FILE_ATTRIBUTE_HIDDEN",
+        "win32con.FILE_ATTRIBUTE_SYSTEM",
+        "win32api.SetFileAttributes"
+
+    ],
+    "builtins": [
+        "eval",
+        "exec",
+        "open"
     ]
 }

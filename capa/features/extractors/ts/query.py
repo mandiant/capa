@@ -19,7 +19,8 @@ class ScriptQueryBinding(QueryBinding):
     function_definition_field_name: str
     direct_method_call: Query
     function_call_name: Query
-    assigned_property_name: Query
+    property_name: Query
+    imported_constant_name: Query
     string_literal: Query
     integer_literal: Query
     namespace: Query
@@ -70,7 +71,8 @@ BINDINGS: dict[str, QueryBinding] = {
                     "new_object_name": "(object_creation_expression type: [(qualified_name) @new-object (identifier) @new-object])",
                     "function_definition": "(local_function_statement) @function-definition",
                     "function_call_name": "(invocation_expression function: [(member_access_expression name: (identifier)) @function-call (identifier) @function-call])",
-                    "assigned_property_name": "(assignment_expression left: (member_access_expression) @property)",
+                    "property_name": "(member_access_expression) @property",
+                    "imported_constant_name": "(member_access_expression) @constant (equals_value_clause (identifier) @constant)",
                     "string_literal": "(string_literal) @string-literal",
                     "integer_literal": "(integer_literal) @integer-literal",
                     "namespace": "(using_directive [(identifier) @namespace (qualified_name) @namespace])",
@@ -92,7 +94,8 @@ BINDINGS: dict[str, QueryBinding] = {
                     "new_object_name": "(call function: [(attribute) @new-object (identifier) @new-object])",  # Python makes no distinction between new object creation and a function call
                     "function_definition": "(function_definition) @function-definition",
                     "function_call_name": "(call function: [(attribute) @function-call (identifier) @function-call])",
-                    "assigned_property_name": "(attribute attribute: (identifier) @property)",
+                    "property_name": "(attribute) @property",
+                    "imported_constant_name": "(attribute) @constant (expression_statement (assignment right: (identifier) @constant))",
                     "string_literal": "(string) @string-literal",
                     "integer_literal": "(integer) @integer-literal",
                     "namespace": "(import_from_statement) @import_from (import_statement) @import",
