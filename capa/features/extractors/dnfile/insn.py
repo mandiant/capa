@@ -102,10 +102,12 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
 
     if callee.methodname.startswith(("get_", "set_")):
         if Token(insn.operand.value).table == 6:
+            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
             row: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if row is not None:
                 return
         elif Token(insn.operand.value).table == 10:
+            """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             return
         return
 
@@ -125,12 +127,14 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         token: Token = Token(insn.operand.value)
         if token.table == 6:
+            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
             property: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if property is None:
                 return
             yield Property(str(property)), ih.address
 
         elif token.table == 10:
+            """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
             if row is None:
                 return
@@ -147,6 +151,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         field_token: Token = Token(insn.operand.value)
         if field_token.table == 4:
+            """determine whether the operand is a field by checking if it belongs to the Field table"""
             field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
             if field is None:
                 return
