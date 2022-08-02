@@ -128,8 +128,7 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         captures = self.get_new_object_names(node)
         if not captures:
             return False
-        new_object_name_node, _ = captures[0]
-        return new_object_name_node.parent.parent == node
+        return captures[0].parent.parent == node
 
 
 class TreeSitterTemplateEngine(TreeSitterBaseEngine):

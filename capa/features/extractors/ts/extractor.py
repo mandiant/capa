@@ -27,13 +27,19 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
             buf = f.read()
 
         self.language = capa.features.extractors.script.get_language_from_ext(path)
+        self.template_engine = self.get_template_engine(buf)
+        self.engines = self.get_engines(buf)
+
+    def get_template_engine(self, buf: bytes):
         if self.language == LANG_TEM:
-            self.template_engine = TreeSitterTemplateEngine(buf)
-            self.engines = self.extract_code_from_template()
-        elif self.language == LANG_HTML:
-            self.engines = self.extract_code_from_html(buf)
-        else:
-            self.engines = [TreeSitterExtractorEngine(self.language, buf)]
+            return TreeSitterTemplateEngine(buf)
+
+    def get_engines(self, buf: bytes) -> List[TreeSitterExtractorEngine]:
+        if self.language == LANG_TEM and self.template_engine:
+            return self.extract_code_from_template()
+        if self.language == LANG_HTML:
+            return self.extract_code_from_html(buf)
+        return [TreeSitterExtractorEngine(self.language, buf)]
 
     def extract_code_from_template(self) -> List[TreeSitterExtractorEngine]:
         engines = list(self.template_engine.get_parsed_code_sections())

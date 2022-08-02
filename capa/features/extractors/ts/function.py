@@ -48,12 +48,8 @@ def get_imports(name: str, namespaces: set[BaseNamespace], engine: TreeSitterExt
     if engine.language_toolkit.is_import(name):
         yield name
     for namespace in namespaces:
-        namespace_join_name = namespace.get_join_name()
-        if not namespace_join_name:
-            continue
-        joined_name = engine.language_toolkit.join_names(namespace_join_name, name)
-        if engine.language_toolkit.is_import(joined_name):
-            yield joined_name
+        if engine.language_toolkit.is_import(name, namespace):
+            yield namespace.join(name)
 
 
 def get_properties(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Node, str]]:
@@ -85,16 +81,19 @@ def extract_static_methods_(node: Node, engine: TreeSitterExtractorEngine) -> It
         yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
 
 
+def get_property_name(node: Node, engine: TreeSitterExtractorEngine) -> str:
+    qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
+    if len(qualified_names) == 1:
+        return qualified_names[0]
+    return engine.language_toolkit.join_names(*qualified_names[1:])
+
+
 def extract_regular_methods_(
     node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
     direct_method_call_node = engine.get_direct_method_call(node)
-    if direct_method_call_node is not None:
-        node = direct_method_call_node
-    qualified_names = engine.language_toolkit.split_name(engine.get_range(node))
-    property_name = (
-        qualified_names[0] if len(qualified_names) == 1 else engine.language_toolkit.join_names(*qualified_names[1:])
-    )
+    node = node if direct_method_call_node is None else direct_method_call_node
+    property_name = get_property_name(node, engine)
     for name in get_imports(property_name, classes, engine):
         yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
 

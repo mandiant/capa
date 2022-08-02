@@ -21,26 +21,26 @@ class BaseNamespace(abc.ABC):
     def __hash__(self):
         return hash(self.name)
 
-    def get_join_name(self) -> Optional[str]:
+    def join(self, name: str) -> str:
         raise NotImplementedError()
 
 
 class CSharpNamespace(BaseNamespace):
-    def get_join_name(self) -> Optional[str]:
+    def join(self, name: str) -> str:
         """using System; Diagnostics.ProcessStartInfo => System.Diagnostics.ProcessStartInfo"""
-        return self.name
+        return LANGUAGE_TOOLKITS[LANG_CS].join_names(self.name, name)
 
 
 class PythonImport(BaseNamespace):
-    def get_join_name(self) -> Optional[str]:
+    def join(self, name: str) -> str:
         """import subprocess ; subprocess.Popen => subprocess.Popen
         from threading import Timer (threading.Timer) => Timer
         """
         toolkit = LANGUAGE_TOOLKITS[LANG_CS]
         qualified_names = toolkit.split_name(self.name)
         if len(qualified_names) < 2:
-            return None
-        return toolkit.join_names(*qualified_names[:-1])
+            return name
+        return toolkit.join_names(*(qualified_names[:-1] + [name]))
 
 
 class LanguageToolkit:
@@ -61,8 +61,8 @@ class LanguageToolkit:
         signatures = json.loads(importlib.resources.read_text(capa.features.extractors.ts.signatures, signature_file))
         return {category: set(namespaces) for category, namespaces in signatures.items()}
 
-    def is_import(self, import_: str) -> bool:
-        return import_ in self.import_signatures["imports"]
+    def is_import_(self, name: str) -> bool:
+        return name in self.import_signatures["imports"]
 
     def is_builtin(self, func: str) -> bool:
         return func in self.import_signatures["builtins"]
@@ -131,7 +131,11 @@ class LanguageToolkit:
         return node.parent.type == self.property_query_type
 
     @abc.abstractmethod
-    def create_namespace(self, name: str, node: Node = None, alias: str = "") -> BaseNamespace:
+    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def create_namespace(self, name: str) -> BaseNamespace:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -151,8 +155,13 @@ class CSharpToolkit(LanguageToolkit):
     integer_prefixes: List[Tuple[Union[str, Tuple[str, ...]], int]] = [(("0x", "0X"), 16)]
     integer_suffixes: Tuple[str, ...] = ("u", "l")
 
-    def create_namespace(self, name: str, node: Node = None, alias: str = "") -> BaseNamespace:
-        return CSharpNamespace(name, node, alias)
+    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+        if namespace:
+            return self.is_import_(namespace.join(name))
+        return self.is_import_(name)
+
+    def create_namespace(self, name: str) -> BaseNamespace:
+        return CSharpNamespace(name)
 
     def process_namespace(self, node: Node, query_name: str, get_range: Callable) -> Iterator[BaseNamespace]:
         yield CSharpNamespace(get_range(node), node, "")
@@ -175,8 +184,15 @@ class PythonToolkit(LanguageToolkit):
     ]
     integer_suffixes: Tuple[str, ...] = tuple()
 
-    def create_namespace(self, name: str, node: Node = None, alias: str = "") -> BaseNamespace:
-        return PythonImport(name, node, alias)
+    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+        if namespace:
+            if namespace.alias:
+                return self.is_import_(name.replace(namespace.alias, namespace.name))
+            return self.is_import_(namespace.join(name))
+        return self.is_import_(name)
+
+    def create_namespace(self, name: str) -> BaseNamespace:
+        return PythonImport(name)
 
     def get_import_name(self, name: str, module_name: Optional[str] = None) -> str:
         return self.join_names(module_name, name) if module_name else name
