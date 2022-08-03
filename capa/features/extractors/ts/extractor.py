@@ -5,6 +5,7 @@ import capa.features.extractors.ts.file
 import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
 import capa.features.extractors.ts.function
+import capa.features.extractors.ts.autodetect
 from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_TEM, LANG_HTML
@@ -26,7 +27,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        self.language = capa.features.extractors.script.get_language_from_ext(path)
+        self.language = capa.features.extractors.ts.autodetect.get_language(path)
         self.template_engine = self.get_template_engine(buf)
         self.engines = self.get_engines(buf)
 

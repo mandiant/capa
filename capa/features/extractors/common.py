@@ -9,9 +9,21 @@ import pefile
 import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
+from capa.features.common import (
+    OS,
+    FORMAT_PE,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    FORMAT_FREEZE,
+    FORMAT_SCRIPT,
+    Arch,
+    Format,
+    String,
+    Feature,
+)
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
+from capa.features.extractors.ts.autodetect import is_script
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +46,8 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_ELF), NO_ADDRESS
     elif is_freeze(buf):
         yield Format(FORMAT_FREEZE), NO_ADDRESS
+    elif is_script(buf):
+        yield Format(FORMAT_SCRIPT), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)

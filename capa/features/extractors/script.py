@@ -30,15 +30,3 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
 
 def extract_format() -> Iterator[Tuple[Feature, Address]]:
     yield Format(FORMAT_SCRIPT), NO_ADDRESS
-
-
-def get_language_from_ext(path: str) -> str:
-    if path.endswith(EXT_ASPX):
-        return LANG_TEM
-    if path.endswith(EXT_CS):
-        return LANG_CS
-    if path.endswith(EXT_HTML):
-        return LANG_HTML
-    if path.endswith(EXT_PY):
-        return LANG_PY
-    raise ValueError(f"{path} has an unrecognized or an unsupported extension.")
