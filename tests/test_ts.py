@@ -78,9 +78,8 @@ def do_test_ts_extractor_engine_get_new_objects(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert len(list(engine.get_new_object_names(root_node))) == len(expected)
-    for (node, name), (_, expected_name_range) in zip(engine.get_new_object_names(root_node), expected):
+    for node, (_, expected_name_range) in zip(engine.get_new_object_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "new-object"
         do_test_ts_base_engine_get_range(engine, node, expected_name_range)
         do_test_ts_base_engine_get_address(engine, node)
 
@@ -88,13 +87,10 @@ def do_test_ts_extractor_engine_get_new_objects(
 def do_test_ts_extractor_engine_get_function_definitions(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
-    assert engine.get_function_definitions(engine.tree.root_node) == engine.get_function_definitions()
-    assert len(engine.get_function_definitions(root_node)) == len(expected)
-    for (node, name), (expected_range, expected_name_range) in zip(
-        engine.get_function_definitions(root_node), expected
-    ):
+    assert list(engine.get_function_definitions(engine.tree.root_node)) == list(engine.get_function_definitions())
+    assert len(list(engine.get_function_definitions(root_node))) == len(expected)
+    for node, (expected_range, expected_name_range) in zip(engine.get_function_definitions(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "function-definition"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
         do_test_ts_base_engine_get_range(engine, engine.get_function_definition_name(node), expected_name_range)
@@ -110,9 +106,8 @@ def do_test_ts_extractor_engine_get_function_calls(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[Tuple[str, str]]
 ):
     assert len(list(engine.get_function_call_names(root_node))) == len(expected)
-    for (node, name), (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
+    for node, (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "function-call"
         do_test_ts_base_engine_get_range(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
@@ -120,10 +115,9 @@ def do_test_ts_extractor_engine_get_function_calls(
 def do_test_ts_extractor_engine_get_string_literals(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(engine.get_string_literals(root_node)) == len(expected)
-    for (node, name), expected_range in zip(engine.get_string_literals(root_node), expected):
+    assert len(list(engine.get_string_literals(root_node))) == len(expected)
+    for node, expected_range in zip(engine.get_string_literals(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "string-literal"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
@@ -131,29 +125,26 @@ def do_test_ts_extractor_engine_get_string_literals(
 def do_test_ts_extractor_engine_get_integer_literals(
     engine: TreeSitterExtractorEngine, root_node: Node, expected: List[str]
 ):
-    assert len(engine.get_integer_literals(root_node)) == len(expected)
-    for (node, name), expected_range in zip(engine.get_integer_literals(root_node), expected):
+    assert len(list(engine.get_integer_literals(root_node))) == len(expected)
+    for node, expected_range in zip(engine.get_integer_literals(root_node), expected):
         assert isinstance(node, Node)
-        assert name == "integer-literal"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine, expected: List[str]):
-    assert engine.get_namespaces(engine.tree.root_node) == engine.get_namespaces()
-    assert len(engine.get_namespaces()) == len(expected)
-    for (node, name), expected_range in zip(engine.get_namespaces(), expected):
+    assert list(engine.get_namespaces(engine.tree.root_node)) == list(engine.get_namespaces())
+    assert len(list(engine.get_namespaces())) == len(expected)
+    for (node, _), expected_range in zip(engine.get_namespaces(), expected):
         assert isinstance(node, Node)
-        assert name == "namespace"
         do_test_ts_base_engine_get_range(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
 def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtractorEngine, expected: List[str]):
-    assert len(engine.get_global_statements()) == len(expected)
-    for (node, name), expected_range in zip(engine.get_global_statements(), expected):
+    assert len(list(engine.get_global_statements())) == len(expected)
+    for node, expected_range in zip(engine.get_global_statements(), expected):
         assert isinstance(node, Node)
-        assert name == "global-statement"
         do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
 
@@ -164,7 +155,6 @@ def do_test_ts_extractor_engine_get_assigned_property_names(
     assert len(list(engine.get_processed_property_names(root_node))) == len(expected)
     for (node, name), expected_name in zip(engine.get_processed_property_names(root_node), expected):
         assert isinstance(node, Node)
-        assert name == expected_name
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -304,18 +294,16 @@ def do_test_ts_template_engine_get_template_namespaces(
 
 
 def do_test_ts_template_engine_get_code_sections(engine: TreeSitterTemplateEngine, expected: List[Tuple[int, int]]):
-    assert len(engine.get_code_sections()) == len(expected)
-    for (node, name), (expected_start_byte, expected_end_byte) in zip(list(engine.get_code_sections()), expected):
+    assert len(list(engine.get_code_sections())) == len(expected)
+    for node, (expected_start_byte, expected_end_byte) in zip(list(engine.get_code_sections()), expected):
         assert isinstance(node, Node)
-        assert name == "code"
         assert node.start_byte == expected_start_byte and node.end_byte == expected_end_byte
 
 
 def do_test_ts_template_engine_get_content_sections(engine: TreeSitterTemplateEngine, expected: List[Tuple[int, int]]):
-    assert len(engine.get_content_sections()) == len(expected)
-    for (node, name), (expected_start_byte, expected_end_byte) in zip(list(engine.get_content_sections()), expected):
+    assert len(list(engine.get_content_sections())) == len(expected)
+    for node, (expected_start_byte, expected_end_byte) in zip(list(engine.get_content_sections()), expected):
         assert isinstance(node, Node)
-        assert name == "content"
         assert node.start_byte == expected_start_byte and node.end_byte == expected_end_byte
 
 
@@ -323,7 +311,6 @@ def do_test_ts_template_engine_get_parsed_code_sections(
     engine: TreeSitterTemplateEngine, expected_language: str, expected: List[Tuple[int, int]]
 ):
     assert len(list(engine.get_parsed_code_sections())) == len(expected)
-    addrs = [e.get_default_address() for e in engine.get_parsed_code_sections()]
     for extractor_engine, (expected_start_byte, _) in zip(engine.get_parsed_code_sections(), expected):
         do_test_ts_extractor_engine_init(extractor_engine, expected_language)
         assert extractor_engine.buf_offset == expected_start_byte

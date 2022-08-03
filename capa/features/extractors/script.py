@@ -3,6 +3,7 @@ from typing import Tuple, Iterator
 from capa.features.common import OS, OS_ANY, ARCH_ANY, FORMAT_SCRIPT, Arch, Format, Feature, ScriptLanguage
 from capa.features.address import NO_ADDRESS, Address, FileOffsetRangeAddress
 
+# Can be used to instantiate tree_sitter Language objects (see ts/query.py)
 LANG_CS = "c_sharp"
 LANG_HTML = "html"
 LANG_JS = "javascript"

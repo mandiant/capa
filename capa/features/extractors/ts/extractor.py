@@ -43,9 +43,9 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
 
     def extract_code_from_template(self) -> List[TreeSitterExtractorEngine]:
         engines = list(self.template_engine.get_parsed_code_sections())
-        for node, _ in self.template_engine.get_content_sections():
+        for node in self.template_engine.get_content_sections():
             section_buf = self.template_engine.get_byte_range(node)
-            engines.extend(list(self.extract_code_from_html(section_buf, self.template_engine.namespaces)))
+            engines.extend(self.extract_code_from_html(section_buf, self.template_engine.namespaces))
         return engines
 
     def extract_code_from_html(
@@ -79,7 +79,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         for engine in self.engines:
             yield self.get_pseudo_main_function(engine)
-            for node, _ in engine.get_function_definitions():
+            for node in engine.get_function_definitions():
                 name = engine.get_range(engine.get_function_definition_name(node))
                 yield FunctionHandle(engine.get_address(node), TSFunctionInner(node, name, engine))
 

@@ -61,7 +61,7 @@ class LanguageToolkit:
         signatures = json.loads(importlib.resources.read_text(capa.features.extractors.ts.signatures, signature_file))
         return {category: set(namespaces) for category, namespaces in signatures.items()}
 
-    def is_import_(self, name: str) -> bool:
+    def _is_import(self, name: str) -> bool:
         return name in self.import_signatures["imports"]
 
     def is_builtin(self, func: str) -> bool:
@@ -109,17 +109,14 @@ class LanguageToolkit:
     def format_imported_constant(self, name: str) -> str:
         return self.format_imported_class_members(name)
 
-    def parse_integer(self, integer: str) -> Optional[int]:
+    def parse_integer(self, integer: str) -> int:
         for suffix in self.integer_suffixes:
             if integer.endswith(suffix):
                 integer = integer[:-1]
-        try:
-            for prefix, base in self.integer_prefixes:
-                if integer.startswith(prefix):
-                    return int(integer, base)
-            return int(integer)
-        except:
-            return None
+        for prefix, base in self.integer_prefixes:
+            if integer.startswith(prefix):
+                return int(integer, base)
+        return int(integer)
 
     def parse_string(self, string: str) -> str:
         return string.strip(self.string_delimiters)
@@ -157,8 +154,8 @@ class CSharpToolkit(LanguageToolkit):
 
     def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
         if namespace:
-            return self.is_import_(namespace.join(name))
-        return self.is_import_(name)
+            return self._is_import(namespace.join(name))
+        return self._is_import(name)
 
     def create_namespace(self, name: str) -> BaseNamespace:
         return CSharpNamespace(name)
@@ -187,9 +184,9 @@ class PythonToolkit(LanguageToolkit):
     def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
         if namespace:
             if namespace.alias:
-                return self.is_import_(name.replace(namespace.alias, namespace.name))
-            return self.is_import_(namespace.join(name))
-        return self.is_import_(name)
+                return self._is_import(name.replace(namespace.alias, namespace.name))
+            return self._is_import(namespace.join(name))
+        return self._is_import(name)
 
     def create_namespace(self, name: str) -> BaseNamespace:
         return PythonImport(name)
