@@ -1,5 +1,3 @@
-from multiprocessing.sharedctypes import Value
-
 from tree_sitter import Node, Tree, Parser, Language
 
 from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
