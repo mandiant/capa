@@ -182,8 +182,6 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
         if isinstance(callee, DnMethod):
             yield Class(DnClass.format_name(callee.namespace, callee.classname)), ih.address
-        else:
-            return
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
         field: Optional[DnProperty] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
