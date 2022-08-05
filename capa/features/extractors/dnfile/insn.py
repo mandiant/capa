@@ -76,8 +76,7 @@ def get_properties(ctx: Dict) -> Dict:
     if "properties_cache" not in ctx:
         ctx["properties_cache"] = {}
         for property in get_dotnet_properties(ctx["pe"]):
-            if property is not None:
-                ctx["properties_cache"][property.token] = property
+            ctx["properties_cache"][property.token] = property
     return ctx["properties_cache"]
 
 

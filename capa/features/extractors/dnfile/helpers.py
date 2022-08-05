@@ -243,7 +243,7 @@ def get_dotnet_property_map(
     return None
 
 
-def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Optional[DnProperty]]:
+def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnProperty]:
     """get property from MethodSemantics table
 
     see https://www.ntcore.com/files/dotnetformat.htm
