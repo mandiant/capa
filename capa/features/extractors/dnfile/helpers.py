@@ -260,7 +260,6 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Optional[DnProperty]]:
             if typedef_row is not None:
                 token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
                 yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
-        yield None
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
