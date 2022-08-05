@@ -35,7 +35,7 @@ class TreeSitterBaseEngine:
     def get_byte_range(self, node: Node) -> bytes:
         return self.buf[node.start_byte : node.end_byte]
 
-    def get_range(self, node: Node) -> str:
+    def get_str(self, node: Node) -> str:
         return self.get_byte_range(node).decode("utf-8")
 
     def get_address(self, node: Node) -> FileOffsetRangeAddress:
@@ -79,11 +79,11 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         """Generates captured property name nodes and their associated proper names (see process_property
         for details), e.g.: [(node0, "StartInfo"), (node1, "RedirectStandardOutput")]."""
         for pt_node in self.get_property_names(node):
-            pt_name = self.language_toolkit.process_property(pt_node, self.get_range(pt_node))
+            pt_name = self.language_toolkit.process_property(pt_node, self.get_str(pt_node))
             if pt_name:
                 yield pt_node, pt_name
 
-    def get_function_definitions(self, node: Node = None) -> Iterator[Node]:
+    def get_function_definitions(self, node: Optional[Node] = None) -> Iterator[Node]:
         node = self.tree.root_node if node is None else node
         for fd_node, _ in self.query.function_definition.captures(node):
             yield fd_node
@@ -107,7 +107,7 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         """Generates captured imported constant nodes and their associated proper names (see process_imported_constant
         for details), e.g.: [(node0, "ssl.CERT_NONE"), (node1, "win32con.FILE_ATTRIBUTE_HIDDEN")]."""
         for ic_node in self.get_imported_constants(node):
-            ic_name = self.language_toolkit.process_imported_constant(ic_node, self.get_range(ic_node))
+            ic_name = self.language_toolkit.process_imported_constant(ic_node, self.get_str(ic_node))
             if ic_name:
                 yield ic_node, ic_name
 
@@ -119,12 +119,12 @@ class TreeSitterExtractorEngine(TreeSitterBaseEngine):
         for int_node, _ in self.query.integer_literal.captures(node):
             yield int_node
 
-    def get_namespaces(self, node: Node = None) -> List[Tuple[Node, str]]:
+    def get_namespaces(self, node: Optional[Node] = None) -> List[Tuple[Node, str]]:
         return self.query.namespace.captures(self.tree.root_node if node is None else node)
 
-    def get_processed_namespaces(self, node: Node = None) -> Iterator[BaseNamespace]:
+    def get_processed_namespaces(self, node: Optional[Node] = None) -> Iterator[BaseNamespace]:
         for ns_node, query_name in self.get_namespaces(node):
-            for namespace in self.language_toolkit.process_namespace(ns_node, query_name, self.get_range):
+            for namespace in self.language_toolkit.process_namespace(ns_node, query_name, self.get_str):
                 yield namespace
 
     def get_global_statements(self) -> Iterator[Node]:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from tree_sitter import Node, Tree, Parser, Language
 
 from capa.features.extractors.script import EXT_CS, EXT_PY, LANG_CS, LANG_PY, EXT_ASPX, EXT_HTML, LANG_TEM, LANG_HTML
@@ -11,10 +13,13 @@ def is_script(buf: bytes) -> bool:
         return False
 
 
-def _parse(ts_language: Language, buf: bytes) -> Tree:
-    parser = Parser()
-    parser.set_language(ts_language)
-    return parser.parse(buf)
+def _parse(ts_language: Language, buf: bytes) -> Optional[Tree]:
+    try:
+        parser = Parser()
+        parser.set_language(ts_language)
+        return parser.parse(buf)
+    except ValueError:
+        return None
 
 
 def _contains_errors(ts_language, node: Node) -> bool:
@@ -23,11 +28,8 @@ def _contains_errors(ts_language, node: Node) -> bool:
 
 def get_language_ts(buf: bytes) -> str:
     for language, ts_language in TS_LANGUAGES.items():
-        try:
-            tree = _parse(ts_language, buf)
-        except ValueError:
-            continue
-        if not _contains_errors(ts_language, tree.root_node):
+        tree = _parse(ts_language, buf)
+        if tree and not _contains_errors(ts_language, tree.root_node):
             return language
     raise ValueError("failed to parse the language")
 

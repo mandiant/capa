@@ -73,11 +73,11 @@ class LanguageToolkit:
     def split_name(self, name: str) -> List[str]:
         return name.split(".")
 
-    def process_property(self, node: Node, name: str) -> Optional[str]:
+    def process_property(self, node: Node, name: str) -> str:
         if self.is_method_call(node):  # yield only p.StartInfo but not p.Start()
-            return None
+            return ""
         if self.is_recursive_property(node):  # yield only Current.Server.ClearError but not Current.Server and Current
-            return None
+            return ""
         return self.join_names(*self.split_name(name)[1:])
 
     def process_imported_constant(self, node: Node, name: str) -> Optional[str]:
@@ -128,7 +128,7 @@ class LanguageToolkit:
         return node.parent.type == self.property_query_type
 
     @abc.abstractmethod
-    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -136,7 +136,7 @@ class LanguageToolkit:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def process_namespace(self, node: Node, query_name: str, get_range: Callable) -> Iterator[BaseNamespace]:
+    def process_namespace(self, node: Node, query_name: str, get_str: Callable) -> Iterator[BaseNamespace]:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -152,7 +152,7 @@ class CSharpToolkit(LanguageToolkit):
     integer_prefixes: List[Tuple[Union[str, Tuple[str, ...]], int]] = [(("0x", "0X"), 16)]
     integer_suffixes: Tuple[str, ...] = ("u", "l")
 
-    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
         if namespace:
             return self._is_import(namespace.join(name))
         return self._is_import(name)
@@ -160,8 +160,8 @@ class CSharpToolkit(LanguageToolkit):
     def create_namespace(self, name: str) -> BaseNamespace:
         return CSharpNamespace(name)
 
-    def process_namespace(self, node: Node, query_name: str, get_range: Callable) -> Iterator[BaseNamespace]:
-        yield CSharpNamespace(get_range(node), node, "")
+    def process_namespace(self, node: Node, query_name: str, get_str: Callable) -> Iterator[BaseNamespace]:
+        yield CSharpNamespace(get_str(node), node, "")
 
     def get_default_namespaces(self, embedded: bool) -> set[BaseNamespace]:
         if embedded:
@@ -181,7 +181,7 @@ class PythonToolkit(LanguageToolkit):
     ]
     integer_suffixes: Tuple[str, ...] = tuple()
 
-    def is_import(self, name: str, namespace: BaseNamespace = None) -> bool:
+    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
         if namespace:
             if namespace.alias:
                 return self._is_import(name.replace(namespace.alias, namespace.name))
@@ -194,26 +194,22 @@ class PythonToolkit(LanguageToolkit):
     def get_import_name(self, name: str, module_name: Optional[str] = None) -> str:
         return self.join_names(module_name, name) if module_name else name
 
-    def process_simple_import(
-        self, node: Node, get_range: Callable, module_name: Optional[str] = None
-    ) -> BaseNamespace:
-        return PythonImport(self.get_import_name(get_range(node), module_name), node)
+    def process_simple_import(self, node: Node, get_str: Callable, module_name: Optional[str] = None) -> BaseNamespace:
+        return PythonImport(self.get_import_name(get_str(node), module_name), node)
 
-    def process_aliased_import(
-        self, node: Node, get_range: Callable, module_name: Optional[str] = None
-    ) -> BaseNamespace:
-        name = self.get_import_name(get_range(node.get_child_by_field_name("name")), module_name)
-        alias = get_range(node.get_child_by_field_name("alias"))
+    def process_aliased_import(self, node: Node, get_str: Callable, module_name: Optional[str] = None) -> BaseNamespace:
+        name = self.get_import_name(get_str(node.get_child_by_field_name("name")), module_name)
+        alias = get_str(node.get_child_by_field_name("alias"))
         return PythonImport(name, node, alias)
 
     def process_imports(
-        self, nodes: List[Node], get_range: Callable, module_name: Optional[str] = None
+        self, nodes: List[Node], get_str: Callable, module_name: Optional[str] = None
     ) -> Iterator[BaseNamespace]:
         for import_node in nodes:
             if import_node.type == "dotted_name":
-                yield self.process_simple_import(import_node, get_range, module_name)
+                yield self.process_simple_import(import_node, get_str, module_name)
             elif import_node.type == "aliased_import":
-                yield self.process_aliased_import(import_node, get_range, module_name)
+                yield self.process_aliased_import(import_node, get_str, module_name)
 
     def get_wildcard_import(self, node: Node) -> Optional[Node]:
         for child_node in node.children:
@@ -221,20 +217,20 @@ class PythonToolkit(LanguageToolkit):
                 return child_node
         return None
 
-    def process_import_from(self, node: Node, import_nodes: List[Node], get_range: Callable) -> Iterator[BaseNamespace]:
-        module_name, import_nodes = get_range(import_nodes[0]), import_nodes[1:]
+    def process_import_from(self, node: Node, import_nodes: List[Node], get_str: Callable) -> Iterator[BaseNamespace]:
+        module_name, import_nodes = get_str(import_nodes[0]), import_nodes[1:]
         wildcard_import = self.get_wildcard_import(node)
         if wildcard_import:
-            yield self.process_simple_import(wildcard_import, get_range, module_name)
+            yield self.process_simple_import(wildcard_import, get_str, module_name)
         else:
-            yield from self.process_imports(import_nodes, get_range, module_name)
+            yield from self.process_imports(import_nodes, get_str, module_name)
 
-    def process_namespace(self, node: Node, query_name: str, get_range: Callable) -> Iterator[BaseNamespace]:
+    def process_namespace(self, node: Node, query_name: str, get_str: Callable) -> Iterator[BaseNamespace]:
         import_nodes = [child_node for child_node in node.children if child_node.is_named]
         if query_name == "import_from":
-            yield from self.process_import_from(node, import_nodes, get_range)
+            yield from self.process_import_from(node, import_nodes, get_str)
         elif query_name == "import":
-            yield from self.process_imports(import_nodes, get_range)
+            yield from self.process_imports(import_nodes, get_str)
 
     def get_default_namespaces(self, embedded: bool) -> set[BaseNamespace]:
         return set()

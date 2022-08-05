@@ -1,13 +1,8 @@
 from typing import Tuple, Iterator
 
-import capa.features.extractors.script
 from capa.features.common import Feature, Namespace
 from capa.features.address import Address
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
-
-
-def extract_language(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.script.extract_language(engine.language, engine.get_default_address())
 
 
 def extract_namespaces(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -21,7 +16,4 @@ def extract_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Featur
             yield feature, addr
 
 
-FILE_HANDLERS = (
-    extract_language,
-    extract_namespaces,
-)
+FILE_HANDLERS = (extract_namespaces,)

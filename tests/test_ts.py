@@ -19,7 +19,7 @@ from capa.features.common import (
     ScriptLanguage,
 )
 from capa.features.address import FileOffsetRangeAddress
-from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML
+from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_PY, LANG_TEM, LANG_HTML, LANGUAGE_FEATURE_FORMAT
 from capa.features.extractors.ts.query import QueryBinding, HTMLQueryBinding, TemplateQueryBinding
 from capa.features.extractors.ts.tools import LANGUAGE_TOOLKITS
 from capa.features.extractors.ts.engine import (
@@ -37,10 +37,10 @@ def do_test_ts_base_engine_init(engine: TreeSitterBaseEngine):
     assert isinstance(engine.tree, Tree)
 
 
-def do_test_ts_base_engine_get_range(
+def do_test_ts_base_engine_get_str(
     engine: TreeSitterBaseEngine, node: Node, expected_range: str, startswith: bool = False
 ):
-    assert engine.get_range(node).startswith(expected_range) if startswith else engine.get_range(node) == expected_range
+    assert engine.get_str(node).startswith(expected_range) if startswith else engine.get_str(node) == expected_range
 
 
 def do_test_ts_base_engine_get_address(engine: TreeSitterBaseEngine, node: Node):
@@ -71,7 +71,7 @@ def do_test_ts_extractor_engine_init(engine: TreeSitterExtractorEngine, expected
 def do_test_ts_extractor_engine_get_address(
     engine: TreeSitterExtractorEngine, node: Node, expected_range: str, startswith: bool = False
 ):
-    assert engine.get_range(node).startswith(expected_range) if startswith else engine.get_range(node) == expected_range
+    assert engine.get_str(node).startswith(expected_range) if startswith else engine.get_str(node) == expected_range
 
 
 def do_test_ts_extractor_engine_get_new_objects(
@@ -80,7 +80,7 @@ def do_test_ts_extractor_engine_get_new_objects(
     assert len(list(engine.get_new_object_names(root_node))) == len(expected)
     for node, (_, expected_name_range) in zip(engine.get_new_object_names(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_name_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_name_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -91,14 +91,14 @@ def do_test_ts_extractor_engine_get_function_definitions(
     assert len(list(engine.get_function_definitions(root_node))) == len(expected)
     for node, (expected_range, expected_name_range) in zip(engine.get_function_definitions(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
+        do_test_ts_base_engine_get_str(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
-        do_test_ts_base_engine_get_range(engine, engine.get_function_definition_name(node), expected_name_range)
+        do_test_ts_base_engine_get_str(engine, engine.get_function_definition_name(node), expected_name_range)
 
     assert len(list(engine.get_function_definition_names(root_node))) == len(expected)
     for node, (_, expected_name_range) in zip(engine.get_function_definition_names(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_name_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_name_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -108,7 +108,7 @@ def do_test_ts_extractor_engine_get_function_calls(
     assert len(list(engine.get_function_call_names(root_node))) == len(expected)
     for node, (_, expected_id_range) in zip(engine.get_function_call_names(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_id_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_id_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -118,7 +118,7 @@ def do_test_ts_extractor_engine_get_string_literals(
     assert len(list(engine.get_string_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_string_literals(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -128,7 +128,7 @@ def do_test_ts_extractor_engine_get_integer_literals(
     assert len(list(engine.get_integer_literals(root_node))) == len(expected)
     for node, expected_range in zip(engine.get_integer_literals(root_node), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -137,7 +137,7 @@ def do_test_ts_extractor_engine_get_namespaces(engine: TreeSitterExtractorEngine
     assert len(list(engine.get_namespaces())) == len(expected)
     for (node, _), expected_range in zip(engine.get_namespaces(), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_range)
+        do_test_ts_base_engine_get_str(engine, node, expected_range)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -145,7 +145,7 @@ def do_test_ts_extractor_engine_get_global_statements(engine: TreeSitterExtracto
     assert len(list(engine.get_global_statements())) == len(expected)
     for node, expected_range in zip(engine.get_global_statements(), expected):
         assert isinstance(node, Node)
-        do_test_ts_base_engine_get_range(engine, node, expected_range, startswith=True)
+        do_test_ts_base_engine_get_str(engine, node, expected_range, startswith=True)
         do_test_ts_base_engine_get_address(engine, node)
 
 
@@ -927,8 +927,8 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
     [
         ("cs_138cdc", "global", Arch(ARCH_ANY), True),
         ("cs_138cdc", "global", OS(OS_ANY), True),
+        ("cs_138cdc", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
         ("cs_138cdc", "file", Format(FORMAT_SCRIPT), True),
-        ("cs_138cdc", "file", ScriptLanguage(LANG_CS), True),
         ("cs_138cdc", "file", Namespace("System"), True),
         ("cs_138cdc", "function=PSEUDO MAIN", String(""), True),
         ("cs_138cdc", "function=die", String("Not Found"), True),
@@ -943,8 +943,8 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ),
         ("aspx_4f6fa6", "global", Arch(ARCH_ANY), True),
         ("aspx_4f6fa6", "global", OS(OS_ANY), True),
+        ("aspx_4f6fa6", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
         ("aspx_4f6fa6", "file", Format(FORMAT_SCRIPT), True),
-        ("aspx_4f6fa6", "file", ScriptLanguage(LANG_CS), True),
         ("aspx_4f6fa6", "file", Namespace("System.Diagnostics"), True),
         ("aspx_4f6fa6", "file", Namespace("System.IO"), True),
         ("aspx_4f6fa6", "file", Namespace("System.IO.Compression"), True),
@@ -958,8 +958,8 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_4f6fa6", "function=base64encode", API("System.Convert::ToBase64String"), True),
         ("aspx_5f959f", "global", Arch(ARCH_ANY), True),
         ("aspx_5f959f", "global", OS(OS_ANY), True),
+        ("aspx_5f959f", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
         ("aspx_5f959f", "file", Format(FORMAT_SCRIPT), True),
-        ("aspx_5f959f", "file", ScriptLanguage(LANG_CS), True),
         ("aspx_5f959f", "file", Namespace("System.Diagnostics"), True),
         ("aspx_5f959f", "file", Namespace("System.IO"), True),
         ("aspx_5f959f", "file", Namespace("System.Web.SessionState"), True),
@@ -980,8 +980,8 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_5f959f", "function=cmdExe_Click", String("</pre>"), True),
         ("aspx_10162f", "global", Arch(ARCH_ANY), True),
         ("aspx_10162f", "global", OS(OS_ANY), True),
+        ("aspx_10162f", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
         ("aspx_10162f", "file", Format(FORMAT_SCRIPT), True),
-        ("aspx_10162f", "file", ScriptLanguage(LANG_CS), True),
         ("aspx_10162f", "file", Namespace("System.IO"), True),
         ("aspx_10162f", "file", Namespace("System.Web.Security"), True),
         ("aspx_10162f", "function=PSEUDO MAIN", String("data"), True),
@@ -1045,13 +1045,92 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_10162f", "function=sizeFix", Number(2), True),
         ("aspx_10162f", "function=sizeFix", Substring("GB"), True),
         ("aspx_2b71dd", "global", Arch(ARCH_ANY), True),
+        ("aspx_2b71dd", "global", OS(OS_ANY), True),
+        ("aspx_2b71dd", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
+        ("aspx_2b71dd", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_2b71dd", "file", Namespace("System.Diagnostics"), True),
+        ("aspx_2b71dd", "file", Namespace("System.IO"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", String("cmd.exe"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", Substring("/c"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", API("System.Diagnostics.Process::Start"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", Property("System.Diagnostics.ProcessStartInfo::FileName"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", Property("System.Diagnostics.ProcessStartInfo::Arguments"), True),
+        ("aspx_2b71dd", "function=ExcuteCmd", Property("System.Diagnostics.ProcessStartInfo::UseShellExecute"), True),
+        (
+            "aspx_2b71dd",
+            "function=ExcuteCmd",
+            Property("System.Diagnostics.ProcessStartInfo::RedirectStandardOutput"),
+            True,
+        ),
         ("aspx_f2bf20", "global", Arch(ARCH_ANY), True),
         ("aspx_f39dc0", "global", Arch(ARCH_ANY), True),
         ("aspx_ea2a01", "global", Arch(ARCH_ANY), True),
         ("aspx_6f3261", "global", Arch(ARCH_ANY), True),
+        ("aspx_6f3261", "global", OS(OS_ANY), True),
+        ("aspx_6f3261", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
+        ("aspx_6f3261", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_6f3261", "file", Namespace("System.Data"), True),
+        ("aspx_6f3261", "file", Namespace("System.Data.SqlClient"), True),
+        ("aspx_6f3261", "function=PSEUDO MAIN", String("woanware"), True),
+        ("aspx_6f3261", "function=btnExecute_Click", API("System.Data.SqlClient.SqlConnection"), True),
+        ("aspx_6f3261", "function=btnExecute_Click", API("System.Data.SqlClient.SqlConnection::Open"), True),
+        ("aspx_6f3261", "function=btnExecute_Click", API("System.Data.SqlClient.SqlCommand"), True),
+        ("aspx_6f3261", "function=btnExecute_Click", API("System.Data.SqlClient.SqlCommand::ExecuteReader"), True),
         ("aspx_1f8f40", "global", Arch(ARCH_ANY), True),
+        ("aspx_1f8f40", "global", OS(OS_ANY), True),
+        ("aspx_1f8f40", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
+        ("aspx_1f8f40", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_1f8f40", "file", Namespace("System.Reflection"), True),
+        ("aspx_1f8f40", "function=PSEUDO MAIN", API("System.Security.Cryptography.RijndaelManaged"), True),
+        (
+            "aspx_1f8f40",
+            "function=PSEUDO MAIN",
+            API("System.Security.Cryptography.RijndaelManaged::CreateDecryptor"),
+            True,
+        ),
         ("aspx_2e8c7e", "global", Arch(ARCH_ANY), True),
+        ("aspx_2e8c7e", "global", OS(OS_ANY), True),
+        ("aspx_2e8c7e", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
+        ("aspx_2e8c7e", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_2e8c7e", "file", Namespace("System.Diagnostics"), True),
+        ("aspx_2e8c7e", "file", Namespace("System.IO"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", String("cmd.exe"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", Substring("/c"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", API("System.Diagnostics.Process::Start"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", Property("System.Diagnostics.ProcessStartInfo::FileName"), True),
+        ("aspx_2e8c7e", "function=ExecuteCommand", Property("System.Diagnostics.ProcessStartInfo::Arguments"), True),
+        (
+            "aspx_2e8c7e",
+            "function=ExecuteCommand",
+            Property("System.Diagnostics.ProcessStartInfo::UseShellExecute"),
+            True,
+        ),
+        (
+            "aspx_2e8c7e",
+            "function=ExecuteCommand",
+            Property("System.Diagnostics.ProcessStartInfo::RedirectStandardOutput"),
+            True,
+        ),
         ("aspx_03bb5c", "global", Arch(ARCH_ANY), True),
+        ("aspx_03bb5c", "global", OS(OS_ANY), True),
+        ("aspx_03bb5c", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_CS]), True),
+        ("aspx_03bb5c", "file", Format(FORMAT_SCRIPT), True),
+        ("aspx_03bb5c", "file", Namespace("System.Diagnostics"), True),
+        ("aspx_03bb5c", "file", Namespace("System.IO"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", API("System.Diagnostics.ProcessStartInfo"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", API("System.Diagnostics.Process::Start"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", Property("System.Diagnostics.ProcessStartInfo::FileName"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", Property("System.Diagnostics.ProcessStartInfo::Arguments"), True),
+        ("aspx_03bb5c", "function=PSEUDO MAIN", Property("System.Diagnostics.ProcessStartInfo::UseShellExecute"), True),
+        (
+            "aspx_03bb5c",
+            "function=PSEUDO MAIN",
+            Property("System.Diagnostics.ProcessStartInfo::RedirectStandardOutput"),
+            True,
+        ),
         ("aspx_606dbf", "global", Arch(ARCH_ANY), True),
         ("aspx_f397cb", "global", Arch(ARCH_ANY), True),
         ("aspx_b4bb14", "global", Arch(ARCH_ANY), True),
@@ -1063,8 +1142,8 @@ FEATURE_PRESENCE_TESTS_SCRIPTS = sorted(
         ("aspx_d460ca", "global", Arch(ARCH_ANY), True),
         ("py_7f9cd1", "global", Arch(ARCH_ANY), True),
         ("py_7f9cd1", "global", OS(OS_ANY), True),
+        ("py_7f9cd1", "global", ScriptLanguage(LANGUAGE_FEATURE_FORMAT[LANG_PY]), True),
         ("py_7f9cd1", "file", Format(FORMAT_SCRIPT), True),
-        ("py_7f9cd1", "file", ScriptLanguage(LANG_PY), True),
         ("py_7f9cd1", "file", Namespace("socket"), True),
         ("py_7f9cd1", "file", Namespace("threading.Timer"), True),
         ("py_7f9cd1", "file", Namespace("threading.Timer"), True),

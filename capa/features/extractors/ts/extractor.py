@@ -6,6 +6,7 @@ import capa.features.extractors.ts.engine
 import capa.features.extractors.ts.global_
 import capa.features.extractors.ts.function
 import capa.features.extractors.ts.autodetect
+from capa.exceptions import UnsupportedFormatError
 from capa.features.common import Namespace
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_TEM, LANG_HTML
@@ -27,9 +28,12 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        self.language = capa.features.extractors.ts.autodetect.get_language(path)
-        self.template_engine = self.get_template_engine(buf)
-        self.engines = self.get_engines(buf)
+        try:
+            self.language = capa.features.extractors.ts.autodetect.get_language(path)
+            self.template_engine = self.get_template_engine(buf)
+            self.engines = self.get_engines(buf)
+        except ValueError as e:
+            raise UnsupportedFormatError(e)
 
     def get_template_engine(self, buf: bytes):
         if self.language == LANG_TEM:
@@ -63,6 +67,8 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
             yield Namespace(ns.name), address
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+        for engine in self.engines:
+            yield from capa.features.extractors.script.extract_language(engine.language, engine.get_default_address())
         yield from capa.features.extractors.ts.global_.extract_features()
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -81,7 +87,7 @@ class TreeSitterFeatureExtractor(FeatureExtractor):
         for engine in self.engines:
             yield self.get_pseudo_main_function(engine)
             for node in engine.get_function_definitions():
-                name = engine.get_range(engine.get_function_definition_name(node))
+                name = engine.get_str(engine.get_function_definition_name(node))
                 yield FunctionHandle(engine.get_address(node), TSFunctionInner(node, name, engine))
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
