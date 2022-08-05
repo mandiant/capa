@@ -280,9 +280,7 @@ def get_data_path_by_name(name):
     elif name.startswith("_692f"):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
     elif name.startswith("_0953c"):
-        return os.path.join(
-            CD, "data", "dotnet", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
-        )
+        return os.path.join(CD, "data", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
