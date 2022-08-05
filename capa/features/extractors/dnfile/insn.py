@@ -109,7 +109,6 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         elif Token(insn.operand.value).table == 10:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             return
-        return
 
     if isinstance(callee, DnUnmanagedMethod):
         # like kernel32.CreateFileA
