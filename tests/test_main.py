@@ -11,7 +11,7 @@ import textwrap
 
 import fixtures
 from fixtures import *
-from fixtures import _692f_dotnetfile_extractor, _1c444_dotnetfile_extractor
+from fixtures import _692f_dotnetfile_extractor, _1c444_dotnetfile_extractor, _0953c_dotnetfile_extractor
 
 import capa.main
 import capa.rules
@@ -462,6 +462,16 @@ def test_main_dotnet(_1c444_dotnetfile_extractor):
 def test_main_dotnet2(_692f_dotnetfile_extractor):
     # tests rules can be loaded successfully and all output modes
     path = _692f_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0
+
+
+def test_main_dotnet3(_0953c_dotnetfile_extractor):
+    # tests rules can be loaded successfully and all output modes
+    path = _0953c_dotnetfile_extractor.path
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0

@@ -279,6 +279,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
     elif name.startswith("_692f"):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
+    elif name.startswith("_0953c"):
+        return os.path.join(
+            CD, "data", "dotnet", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
+        )
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -758,6 +762,33 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             True,
         ),
         ("_1c444", "function=0x1F68, bb=0x1F68, insn=0x1FF9", capa.features.insn.API("FromHbitmap"), False),
+        ("_1c444", "token=0x600002B", capa.features.insn.Property("System.IO.FileInfo::Length"), True),
+        ("_1c444", "token=0x6000081", capa.features.insn.API("System.Diagnostics.Process::Start"), True),
+        (
+            "_1c444",
+            "token=0x6000081",
+            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::UseShellExecute"),
+            True,
+        ),
+        (
+            "_1c444",
+            "token=0x6000081",
+            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::WorkingDirectory"),
+            True,
+        ),
+        (
+            "_1c444",
+            "token=0x6000081",
+            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::FileName"),
+            True,
+        ),
+        ("_0953c", "token=0x6000004", capa.features.insn.Property("System.Diagnostics.Debugger::IsAttached"), True),
+        (
+            "_692f",
+            "token=0x6000006",
+            capa.features.insn.Property("System.Management.Automation.PowerShell::Streams"),
+            False,
+        ),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -904,3 +935,8 @@ def _1c444_dotnetfile_extractor():
 @pytest.fixture
 def _692f_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_692f"))
+
+
+@pytest.fixture
+def _0953c_dotnetfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("_0953c"))
