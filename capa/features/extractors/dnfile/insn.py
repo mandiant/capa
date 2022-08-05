@@ -156,8 +156,6 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 return
             yield Property(str(field)), ih.address
 
-    return
-
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
