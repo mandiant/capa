@@ -281,6 +281,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
     elif name.startswith("_0953c"):
         return os.path.join(CD, "data", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
+    elif name.startswith("_039a6"):
+        return os.path.join(CD, "data", "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -780,11 +782,35 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::FileName"),
             True,
         ),
+        (
+            "_1c444",
+            "token=0x6000087",
+            capa.features.insn.Property("Sockets.MySocket::reConnectionDelay"),
+            True,
+        ),
+        (
+            "_1c444",
+            "token=0x600008A",
+            capa.features.insn.Property("Sockets.MySocket::isConnected"),
+            True,
+        ),
         ("_0953c", "token=0x6000004", capa.features.insn.Property("System.Diagnostics.Debugger::IsAttached"), True),
         (
             "_692f",
             "token=0x6000006",
             capa.features.insn.Property("System.Management.Automation.PowerShell::Streams"),
+            False,
+        ),
+        (
+            "_039a6",
+            "token=0x600001C",
+            capa.features.insn.Property("StagelessHollow.Arac::Marka"),
+            True,
+        ),
+        (
+            "_039a6",
+            "token=0x6000023",
+            capa.features.insn.Property("System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task"),
             False,
         ),
     ],
@@ -938,3 +964,8 @@ def _692f_dotnetfile_extractor():
 @pytest.fixture
 def _0953c_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_0953c"))
+
+
+@pytest.fixture
+def _039a6_dotnetfile_extractor():
+    return get_dnfile_extractor(get_data_path_by_name("_039a6"))
