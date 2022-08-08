@@ -35,6 +35,10 @@ from capa.features.extractors.dnfile.helpers import (
     get_dotnet_unmanaged_imports,
 )
 
+METHODDEF_TABLE = dnfile.mdtable.MethodDef.number
+MEMBERREF_TABLE = dnfile.mdtable.MemberRef.number
+FIELD_TABLE = dnfile.mdtable.Field.number
+
 
 def get_managed_imports(ctx: Dict) -> Dict:
     if "managed_imports_cache" not in ctx:
@@ -100,12 +104,12 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         return
 
     if callee.methodname.startswith(("get_", "set_")):
-        if Token(insn.operand.value).table == 6:
+        if Token(insn.operand.value).table == METHODDEF_TABLE:
             """check if the method belongs to the MethodDef table and whether it is used to access a property"""
             row: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if row is not None:
                 return
-        elif Token(insn.operand.value).table == 10:
+        elif Token(insn.operand.value).table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             return
 
@@ -124,14 +128,14 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         token: Token = Token(insn.operand.value)
-        if token.table == 6:
+        if token.table == METHODDEF_TABLE:
             """check if the method belongs to the MethodDef table and whether it is used to access a property"""
             property: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if property is None:
                 return
             yield Property(str(property)), ih.address
 
-        elif token.table == 10:
+        elif token.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
             if row is None:
@@ -148,7 +152,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
         field_token: Token = Token(insn.operand.value)
-        if field_token.table == 4:
+        if field_token.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
             field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
             if field is None:
