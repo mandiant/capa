@@ -8,7 +8,7 @@
 
 ### New Rules (0)
 
--
+- 
 
 ### Bug Fixes
 
@@ -17,11 +17,11 @@
 ### Development
 
 ### Raw diffs
-- [capa v4.0.0...master](https://github.com/mandiant/capa/compare/<release>...master)
-- [capa-rules v4.0.0...master](https://github.com/mandiant/capa-rules/compare/<release>...master)
+- [capa v4.0.0...master](https://github.com/mandiant/capa/compare/v4.0.0...master)
+- [capa-rules v4.0.0...master](https://github.com/mandiant/capa-rules/compare/v4.0.0...master)
 
 ## v4.0.0 (2022-07-XX)
-Version 4 adds support for analyzing .NET executables. For this a new feature extractor and an updated rule syntax now support .NET features including `namespace`, `class`, `api`, and `string`.
+Version 4 adds support for analyzing .NET executables. capa will autodetect .NET modules, or you can explicitly invoke the new feature extractor via `--format dotnet`. We've also extended the rule syntax for .NET features including `namespace` and `class`.
 
 Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules. These features are not backwards compatible. We removed the previously used `/x32` and `/x64` flavors of number and operand features.
 
@@ -91,7 +91,6 @@ Deprecation notice: as described in [#937](https://github.com/mandiant/capa/issu
 - nursery/hash-data-using-rshash @_re_fox
 - persistence/authentication-process/act-as-credential-manager-dll jakub.jozwiak@mandiant.com
 - persistence/authentication-process/act-as-password-filter-dll jakub.jozwiak@mandiant.com
--
 
 ### Bug Fixes
 - improve handling _ prefix compile/link artifact #924 @mike-hunhoff
