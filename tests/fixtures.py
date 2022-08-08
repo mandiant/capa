@@ -803,8 +803,14 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ),
         (
             "_039a6",
-            "token=0x600001C",
+            "token=0x600001D",
             capa.features.insn.Property("StagelessHollow.Arac::Marka"),
+            True,
+        ),
+        (
+            "_039a6",
+            "token=0x6000007",
+            capa.features.insn.API("System.Reflection.Assembly::Load"),
             True,
         ),
         (
