@@ -26,7 +26,7 @@ requirements = [
     "smda==1.7.2",
     "pefile==2022.5.30",
     "pyelftools==0.28",
-    "dnfile==0.11.0",
+    "dnfile==0.12.0",
     "dncil==1.0.0",
     "pydantic==1.9.1",
 ]
