@@ -56,8 +56,6 @@ jobs:
           path: dist/${{ matrix.artifact_name }}
 
   test_run:
-    # test that binaries run on push to master
-    if: github.event_name == 'push'
     name: Test run on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [build]
