@@ -71,6 +71,10 @@ class DNTokenAddress(Address):
     def __repr__(self):
         return f"token(0x{self.token.value:x})"
 
+    def __index__(self):
+        # returns the object converted to an integer
+        return self.token.value
+
 
 class DNTokenOffsetAddress(Address):
     """an offset into an object specified by a .NET token"""
@@ -91,6 +95,9 @@ class DNTokenOffsetAddress(Address):
 
     def __repr__(self):
         return f"token(0x{self.token.value:x})+(0x{self.offset:x})"
+
+    def __index__(self):
+        return self.token.value + self.offset
 
 
 class _NoAddress(Address):
