@@ -777,13 +777,17 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.WriteProperty("System.Diagnostics.ProcessStartInfo::UseShellExecute"),  # MemberRef method
+            capa.features.insn.WriteProperty(
+                "System.Diagnostics.ProcessStartInfo::UseShellExecute"
+            ),  # MemberRef method
             True,
         ),
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.WriteProperty("System.Diagnostics.ProcessStartInfo::WorkingDirectory"),  # MemberRef method
+            capa.features.insn.WriteProperty(
+                "System.Diagnostics.ProcessStartInfo::WorkingDirectory"
+            ),  # MemberRef method
             True,
         ),
         (
