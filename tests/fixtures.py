@@ -765,7 +765,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length"),
+            capa.features.insn.ReadProperty("System.IO.FileInfo::Length"),
             True,
         ),  # MemberRef method
         (
@@ -777,43 +777,49 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::UseShellExecute"),  # MemberRef method
+            capa.features.insn.WriteProperty("System.Diagnostics.ProcessStartInfo::UseShellExecute"),  # MemberRef method
             True,
         ),
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::WorkingDirectory"),  # MemberRef method
+            capa.features.insn.WriteProperty("System.Diagnostics.ProcessStartInfo::WorkingDirectory"),  # MemberRef method
             True,
         ),
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::FileName"),  # MemberRef method
+            capa.features.insn.WriteProperty("System.Diagnostics.ProcessStartInfo::FileName"),  # MemberRef method
             True,
         ),
         (
             "_1c444",
             "token=0x6000087",
-            capa.features.insn.Property("Sockets.MySocket::reConnectionDelay"),  # Field
+            capa.features.insn.WriteProperty("Sockets.MySocket::reConnectionDelay"),  # Field
             True,
         ),
         (
             "_1c444",
             "token=0x600008A",
-            capa.features.insn.Property("Sockets.MySocket::isConnected"),  # Field
+            capa.features.insn.WriteProperty("Sockets.MySocket::isConnected"),  # Field
+            True,
+        ),
+        (
+            "_1c444",
+            "token=0x600008A",
+            capa.features.insn.ReadProperty("Sockets.MySocket::onConnected"),  # Field
             True,
         ),
         (
             "_0953c",
             "token=0x6000004",
-            capa.features.insn.Property("System.Diagnostics.Debugger::IsAttached"),
+            capa.features.insn.ReadProperty("System.Diagnostics.Debugger::IsAttached"),
             True,
         ),  # MemberRef method
         (
             "_692f",
             "token=0x6000006",
-            capa.features.insn.Property("System.Management.Automation.PowerShell::Streams"),  # MemberRef method
+            capa.features.insn.ReadProperty("System.Management.Automation.PowerShell::Streams"),  # MemberRef method
             False,
         ),
         (
@@ -825,13 +831,19 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_039a6",
             "token=0x600001D",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka"),  # MethodDef method
+            capa.features.insn.ReadProperty("StagelessHollow.Arac::Marka"),  # MethodDef method
             True,
         ),
         (
             "_039a6",
+            "token=0x600001C",
+            capa.features.insn.ReadProperty("StagelessHollow.Arac::Marka"),  # MethodDef method
+            False,
+        ),
+        (
+            "_039a6",
             "token=0x6000023",
-            capa.features.insn.Property(
+            capa.features.insn.ReadProperty(
                 "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task"
             ),  # MemberRef method
             False,
