@@ -3,6 +3,7 @@ from typing import List, Tuple, Iterator, Optional
 
 from tree_sitter import Node, Tree, Parser
 
+import capa.features.extractors.ts.autodetect
 from capa.features.address import FileOffsetRangeAddress
 from capa.features.extractors.script import LANG_CS, LANG_JS, LANG_TEM, LANG_HTML
 from capa.features.extractors.ts.query import (
@@ -175,7 +176,11 @@ class TreeSitterTemplateEngine(TreeSitterBaseEngine):
         for node in self.get_code_sections():
             if self.is_c_sharp(node):
                 return LANG_CS
-        return LANG_JS
+            try:
+                return capa.features.extractors.ts.autodetect.get_template_language_ts(self.get_byte_range(node))
+            except:
+                continue
+        raise ValueError(f"failed to identify the template language")
 
     def get_imported_namespaces(self) -> Iterator[BaseNamespace]:
         for node in self.get_code_sections():

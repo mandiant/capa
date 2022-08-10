@@ -34,6 +34,16 @@ def get_language_ts(buf: bytes) -> str:
     raise ValueError("failed to parse the language")
 
 
+def get_template_language_ts(buf: bytes) -> str:
+    for language, ts_language in TS_LANGUAGES.items():
+        if language in [LANG_TEM, LANG_HTML]:
+            continue
+        tree = _parse(ts_language, buf)
+        if tree and not _contains_errors(ts_language, tree.root_node):
+            return language
+    raise ValueError("failed to parse the language")
+
+
 def get_language_from_ext(path: str) -> str:
     if path.endswith(EXT_ASPX):
         return LANG_TEM

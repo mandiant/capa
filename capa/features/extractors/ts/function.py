@@ -43,7 +43,7 @@ def extract_integers(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterat
 
 def get_imports(name: str, namespaces: set[BaseNamespace], engine: TreeSitterExtractorEngine) -> Iterator[str]:
     if engine.language_toolkit.is_builtin(name):
-        yield name
+        yield engine.language_toolkit.get_builtin_name(name)
     if engine.language_toolkit.is_import(name):
         yield name
     for namespace in namespaces:

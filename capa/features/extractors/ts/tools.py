@@ -67,6 +67,9 @@ class LanguageToolkit:
     def is_builtin(self, func: str) -> bool:
         return func in self.import_signatures["builtins"]
 
+    def get_builtin_name(self, func: str) -> str:
+        return self.join_names("builtins", func)
+
     def join_names(self, *args: str) -> str:
         return ".".join(args)
 
