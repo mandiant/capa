@@ -21,6 +21,7 @@ import warnings
 import itertools
 import contextlib
 import collections
+import importlib.resources
 from typing import Any, Dict, List, Tuple
 
 import halo
@@ -32,6 +33,7 @@ from elftools.common.exceptions import ELFError
 import capa.perf
 import capa.rules
 import capa.engine
+import capa.banners
 import capa.version
 import capa.render.json
 import capa.render.default
@@ -788,6 +790,7 @@ def install_common_args(parser, wanted=None):
         default="auto",
         help="enable ANSI color codes in results, default: only during interactive session",
     )
+    parser.add_argument("--banner", action="store_true", help="display the capa banner")
 
     #
     # arguments that may be opted into:
@@ -950,6 +953,10 @@ def handle_common_args(args):
             logger.debug("using signatures path: %s", sigs_path)
 
         args.signatures = sigs_path
+
+    if args.banner:
+        print(importlib.resources.read_text(capa.banners, "flare-frog.txt"))
+        print(importlib.resources.read_text(capa.banners, "capa-my-dudes.txt"))
 
 
 def main(argv=None):
