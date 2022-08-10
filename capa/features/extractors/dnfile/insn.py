@@ -17,7 +17,7 @@ from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number, Property
+from capa.features.insn import API, Number, ReadProperty, WriteProperty
 from capa.features.common import Class, String, Feature, Namespace, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -133,31 +133,48 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             property: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
             if property is None:
                 return
-            yield Property(str(property)), ih.address
+            if property.is_setter():
+                yield WriteProperty(str(property)), ih.address
+            if property.is_getter():
+                yield ReadProperty(str(property)), ih.address
 
         elif token.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
             row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
             if row is None:
                 return
-            if row.Name.startswith(("get_", "set_")):
-                name = row.Name[4:]
-            else:
-                return
             if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
                 return
-            yield Property(
-                DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
-            ), ih.address
+            if row.Name.startswith("get_"):
+                name = row.Name[4:]
+                yield ReadProperty(
+                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
+                ), ih.address
+            elif row.Name.startswith("set_"):
+                name = row.Name[4:]
+                yield WriteProperty(
+                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
+                ), ih.address
+            else:
+                return
 
-    if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda, OpCodes.Stfld, OpCodes.Stsfld):
+    if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
         field_token: Token = Token(insn.operand.value)
         if field_token.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
             field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
             if field is None:
                 return
-            yield Property(str(field)), ih.address
+            yield ReadProperty(str(field)), ih.address
+
+    if insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
+        field_token: Token = Token(insn.operand.value)
+        if field_token.table == FIELD_TABLE:
+            """determine whether the operand is a field by checking if it belongs to the Field table"""
+            field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if field is None:
+                return
+            yield WriteProperty(str(field)), ih.address
 
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:

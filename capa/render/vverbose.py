@@ -133,6 +133,8 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         value = feature.import_
     if isinstance(feature, frzf.ClassFeature):
         value = feature.class_
+    if isinstance(feature, (frzf.ReadPropertyFeature, frzf.WritePropertyFeature)):
+        value = feature.property
     else:
         value = getattr(feature, key)
 

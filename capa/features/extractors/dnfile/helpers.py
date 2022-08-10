@@ -87,9 +87,10 @@ class DnMethod(DnClass):
 
 
 class DnProperty(DnClass):
-    def __init__(self, token: int, namespace: str, classname: str, propertyname: str):
+    def __init__(self, token: int, namespace: str, classname: str, propertyname: str, type: int):
         super(DnProperty, self).__init__(token, namespace, classname)
         self.propertyname: str = propertyname
+        self.type: int = type
 
     def __str__(self):
         return DnProperty.format_name(self.namespace, self.classname, self.propertyname)
@@ -102,6 +103,14 @@ class DnProperty(DnClass):
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
         return name
+
+    def is_setter(self):
+        if self.type == 1:
+            return True
+
+    def is_getter(self):
+        if self.type == 2:
+            return True
 
 
 class DnUnmanagedMethod:
@@ -219,7 +228,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
     for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.FieldList:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name)
+            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name, 0)
 
 
 def get_dotnet_property_map(
@@ -258,7 +267,8 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnProperty]:
         typedef_row = get_dotnet_property_map(pe, row.Association.row)
         if typedef_row is not None:
             token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
-            yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name)
+            type = 1 if row.Semantics.msSetter else 2 if row.Semantics.msGetter else 0
+            yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name, type)
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:

@@ -29,6 +29,18 @@ class Property(Feature):
         super().__init__(name, description=description)
 
 
+class ReadProperty(Property):
+    def __init__(self, name: str, description=None):
+        super().__init__(name, description=description)
+        self.name = "property/read"
+
+
+class WriteProperty(Property):
+    def __init__(self, name: str, description=None):
+        super().__init__(name, description=description)
+        self.name = "property/write"
+
+
 class Number(Feature):
     def __init__(self, value: Union[int, float], description=None):
         super(Number, self).__init__(value, description=description)
