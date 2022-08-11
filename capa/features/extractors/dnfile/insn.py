@@ -10,12 +10,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple, Union, Iterator, Optional
 
+import dnfile
 from dncil.cil.body import CilMethodBody
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
-import dnfile
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, ReadProperty, WriteProperty
 from capa.features.common import Class, String, Feature, Namespace, Characteristic
