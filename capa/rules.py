@@ -122,8 +122,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
     INSTRUCTION_SCOPE: {
         capa.features.common.MatchedRule,
         capa.features.insn.API,
-        capa.features.insn.ReadProperty,
-        capa.features.insn.WriteProperty,
+        capa.features.insn.Property,
         capa.features.insn.Number,
         capa.features.common.String,
         capa.features.common.Bytes,
@@ -256,10 +255,8 @@ def parse_feature(key: str):
     # keep this in sync with supported features
     if key == "api":
         return capa.features.insn.API
-    if key == "property/read":
-        return capa.features.insn.ReadProperty
-    if key == "property/write":
-        return capa.features.insn.WriteProperty
+    elif key == "property/read" or key == "property/write":
+        return capa.features.insn.Property
     elif key == "string":
         return capa.features.common.StringFactory
     elif key == "substring":
@@ -577,7 +574,10 @@ def build_statements(d, scope: str):
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
         try:
-            feature = Feature(value, description=description)
+            if key == "property/read" or key == "property/write":
+                feature = Feature(value, key, description=description)
+            else:
+                feature = Feature(value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)

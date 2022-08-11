@@ -25,20 +25,9 @@ class API(Feature):
 
 
 class Property(Feature):
-    def __init__(self, name: str, description=None):
-        super().__init__(name, description=description)
-
-
-class ReadProperty(Property):
-    def __init__(self, name: str, description=None):
-        super().__init__(name, description=description)
-        self.name = "property/read"
-
-
-class WriteProperty(Property):
-    def __init__(self, name: str, description=None):
-        super().__init__(name, description=description)
-        self.name = "property/write"
+    def __init__(self, name: str, access: str, description=None):
+        super(Property, self).__init__(name, description=description)
+        self.name = access
 
 
 class Number(Feature):

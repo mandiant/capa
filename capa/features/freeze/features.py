@@ -66,11 +66,8 @@ class FeatureModel(BaseModel):
         elif isinstance(self, APIFeature):
             return capa.features.insn.API(self.api, description=self.description)
 
-        elif isinstance(self, ReadPropertyFeature):
-            return capa.features.insn.ReadProperty(self.property, description=self.description)
-
-        elif isinstance(self, WritePropertyFeature):
-            return capa.features.insn.WriteProperty(self.property, description=self.description)
+        elif isinstance(self, PropertyFeature):
+            return capa.features.insn.Property(self.property, self.type, description=self.description)
 
         elif isinstance(self, NumberFeature):
             return capa.features.insn.Number(self.number, description=self.description)
@@ -153,11 +150,8 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.insn.API):
         return APIFeature(api=f.value, description=f.description)
 
-    elif isinstance(f, capa.features.insn.ReadProperty):
-        return ReadPropertyFeature(property=f.value, description=f.description)
-
-    elif isinstance(f, capa.features.insn.WriteProperty):
-        return WritePropertyFeature(property=f.value, description=f.description)
+    elif isinstance(f, capa.features.insn.Property):
+        return PropertyFeature(property=f.value, type=f.name, description=f.description)
 
     elif isinstance(f, capa.features.insn.Number):
         return NumberFeature(number=f.value, description=f.description)
@@ -279,20 +273,8 @@ class APIFeature(FeatureModel):
 
 
 class PropertyFeature(FeatureModel):
-    type: str = "property"
+    type: str
     property: str
-    description: Optional[str]
-
-
-class ReadPropertyFeature(PropertyFeature):
-    type: str = "property/read"
-    property: str = Field(alias="property/read")
-    description: Optional[str]
-
-
-class WritePropertyFeature(PropertyFeature):
-    type: str = "property/write"
-    property: str = Field(alias="property/write")
     description: Optional[str]
 
 
@@ -350,8 +332,7 @@ Feature = Union[
     ClassFeature,
     NamespaceFeature,
     APIFeature,
-    ReadPropertyFeature,
-    WritePropertyFeature,
+    PropertyFeature,
     NumberFeature,
     BytesFeature,
     OffsetFeature,

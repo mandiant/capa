@@ -17,7 +17,7 @@ from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number, ReadProperty, WriteProperty
+from capa.features.insn import API, Number, Property
 from capa.features.common import Class, String, Feature, Namespace, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -139,9 +139,9 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             if property is None:
                 return
             if property[1] == DnPropertyAccessType.SET:
-                yield WriteProperty(str(property[0])), ih.address
+                yield Property(str(property[0]), "property/write"), ih.address
             elif property[1] == DnPropertyAccessType.GET:
-                yield ReadProperty(str(property[0])), ih.address
+                yield Property(str(property[0]), "property/read"), ih.address
 
         elif token.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
@@ -152,13 +152,13 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 return
             if row.Name.startswith("get_"):
                 name = row.Name[4:]
-                yield ReadProperty(
-                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
+                yield Property(
+                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name), "property/read"
                 ), ih.address
             elif row.Name.startswith("set_"):
                 name = row.Name[4:]
-                yield WriteProperty(
-                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name)
+                yield Property(
+                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name), "property/write"
                 ), ih.address
             else:
                 return
@@ -170,7 +170,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             read_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
             if read_field is None:
                 return
-            yield ReadProperty(str(read_field)), ih.address
+            yield Property(str(read_field), "property/read"), ih.address
 
     if insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
         write_field_token: Token = Token(insn.operand.value)
@@ -179,7 +179,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             write_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
             if write_field is None:
                 return
-            yield WriteProperty(str(write_field)), ih.address
+            yield Property(str(write_field), "property/write"), ih.address
 
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
