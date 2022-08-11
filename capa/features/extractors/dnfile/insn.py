@@ -10,12 +10,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple, Union, Iterator, Optional
 
-import dnfile
 from dncil.cil.body import CilMethodBody
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
 from dncil.cil.instruction import Instruction
 
+import dnfile
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, ReadProperty, WriteProperty
 from capa.features.common import Class, String, Feature, Namespace, Characteristic
@@ -26,6 +26,7 @@ from capa.features.extractors.dnfile.helpers import (
     DnMethod,
     DnProperty,
     DnUnmanagedMethod,
+    DnPropertyAccessType,
     get_dotnet_fields,
     resolve_dotnet_token,
     get_dotnet_properties,
@@ -79,8 +80,8 @@ def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None
 def get_properties(ctx: Dict) -> Dict:
     if "properties_cache" not in ctx:
         ctx["properties_cache"] = {}
-        for property in get_dotnet_properties(ctx["pe"]):
-            ctx["properties_cache"][property.token] = property
+        for property, access_type in get_dotnet_properties(ctx["pe"]):
+            ctx["properties_cache"][property.token] = (property, access_type)
     return ctx["properties_cache"]
 
 
@@ -106,7 +107,9 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if callee.methodname.startswith(("get_", "set_")):
         if Token(insn.operand.value).table == METHODDEF_TABLE:
             """check if the method belongs to the MethodDef table and whether it is used to access a property"""
-            row: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
+            row: Optional[Tuple[DnProperty, DnPropertyAccessType]] = get_properties(fh.ctx).get(
+                insn.operand.value, None
+            )
             if row is not None:
                 return
         elif Token(insn.operand.value).table == MEMBERREF_TABLE:
@@ -130,13 +133,15 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
         token: Token = Token(insn.operand.value)
         if token.table == METHODDEF_TABLE:
             """check if the method belongs to the MethodDef table and whether it is used to access a property"""
-            property: Optional[DnProperty] = get_properties(fh.ctx).get(insn.operand.value, None)
+            property: Optional[Tuple[DnProperty, DnPropertyAccessType]] = get_properties(fh.ctx).get(
+                insn.operand.value, None
+            )
             if property is None:
                 return
-            if property.is_setter():
-                yield WriteProperty(str(property)), ih.address
-            if property.is_getter():
-                yield ReadProperty(str(property)), ih.address
+            if property[1] == DnPropertyAccessType.SET:
+                yield WriteProperty(str(property[0])), ih.address
+            elif property[1] == DnPropertyAccessType.GET:
+                yield ReadProperty(str(property[0])), ih.address
 
         elif token.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""

@@ -9,13 +9,15 @@
 from __future__ import annotations
 
 import logging
+from enum import Enum
 from typing import Any, Tuple, Iterator, Optional
 
-import dnfile
 from dncil.cil.body import CilMethodBody
 from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
+
+import dnfile
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +89,9 @@ class DnMethod(DnClass):
 
 
 class DnProperty(DnClass):
-    def __init__(self, token: int, namespace: str, classname: str, propertyname: str, type: int):
+    def __init__(self, token: int, namespace: str, classname: str, propertyname: str):
         super(DnProperty, self).__init__(token, namespace, classname)
         self.propertyname: str = propertyname
-        self.type: int = type
 
     def __str__(self):
         return DnProperty.format_name(self.namespace, self.classname, self.propertyname)
@@ -103,14 +104,6 @@ class DnProperty(DnClass):
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
         return name
-
-    def is_setter(self):
-        if self.type == 1:
-            return True
-
-    def is_getter(self):
-        if self.type == 2:
-            return True
 
 
 class DnUnmanagedMethod:
@@ -134,6 +127,12 @@ class DnUnmanagedMethod:
     @staticmethod
     def format_name(modulename, methodname):
         return f"{modulename}.{methodname}"
+
+
+class DnPropertyAccessType(Enum):
+    OTHER = 0
+    SET = 1
+    GET = 2
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
@@ -228,7 +227,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
     for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.FieldList:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name, 0)
+            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name)
 
 
 def get_dotnet_property_map(
@@ -252,7 +251,7 @@ def get_dotnet_property_map(
     return None
 
 
-def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnProperty]:
+def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Tuple[DnProperty, DnPropertyAccessType]]:
     """get property from MethodSemantics table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -267,8 +266,14 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnProperty]:
         typedef_row = get_dotnet_property_map(pe, row.Association.row)
         if typedef_row is not None:
             token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
-            type = 1 if row.Semantics.msSetter else 2 if row.Semantics.msGetter else 0
-            yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name, type)
+            type = (
+                DnPropertyAccessType.SET
+                if row.Semantics.msSetter
+                else DnPropertyAccessType.GET
+                if row.Semantics.msGetter
+                else DnPropertyAccessType.OTHER
+            )
+            yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name), type
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
