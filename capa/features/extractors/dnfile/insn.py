@@ -159,22 +159,22 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 return
 
     if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
-        field_token: Token = Token(insn.operand.value)
-        if field_token.table == FIELD_TABLE:
+        read_field_token: Token = Token(insn.operand.value)
+        if read_field_token.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
-            field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
-            if field is None:
+            read_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if read_field is None:
                 return
-            yield ReadProperty(str(field)), ih.address
+            yield ReadProperty(str(read_field)), ih.address
 
     if insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
-        field_token: Token = Token(insn.operand.value)
-        if field_token.table == FIELD_TABLE:
+        write_field_token: Token = Token(insn.operand.value)
+        if write_field_token.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
-            field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
-            if field is None:
+            write_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if write_field is None:
                 return
-            yield WriteProperty(str(field)), ih.address
+            yield WriteProperty(str(write_field)), ih.address
 
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
