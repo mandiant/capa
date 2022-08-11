@@ -20,7 +20,7 @@
 - [capa v4.0.0...master](https://github.com/mandiant/capa/compare/v4.0.0...master)
 - [capa-rules v4.0.0...master](https://github.com/mandiant/capa-rules/compare/v4.0.0...master)
 
-## v4.0.0 (2022-07-XX)
+## v4.0.0 (2022-08-10)
 Version 4 adds support for analyzing .NET executables. capa will autodetect .NET modules, or you can explicitly invoke the new feature extractor via `--format dotnet`. We've also extended the rule syntax for .NET features including `namespace` and `class`.
 
 Additionally, new `instruction` scope and `operand` features enable users to create more explicit rules. These features are not backwards compatible. We removed the previously used `/x32` and `/x64` flavors of number and operand features.
