@@ -793,7 +793,9 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x6000081",
-            capa.features.insn.Property("System.Diagnostics.ProcessStartInfo::FileName", "property/write"),  # MemberRef method
+            capa.features.insn.Property(
+                "System.Diagnostics.ProcessStartInfo::FileName", "property/write"
+            ),  # MemberRef method
             True,
         ),
         (
@@ -823,7 +825,9 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_692f",
             "token=0x6000006",
-            capa.features.insn.Property("System.Management.Automation.PowerShell::Streams", "property/read"),  # MemberRef method
+            capa.features.insn.Property(
+                "System.Management.Automation.PowerShell::Streams", "property/read"
+            ),  # MemberRef method
             False,
         ),
         (
