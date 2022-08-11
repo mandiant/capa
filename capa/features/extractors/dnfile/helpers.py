@@ -12,12 +12,11 @@ import logging
 from enum import Enum
 from typing import Any, Tuple, Iterator, Optional
 
+import dnfile
 from dncil.cil.body import CilMethodBody
 from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
-
-import dnfile
 
 logger = logging.getLogger(__name__)
 
