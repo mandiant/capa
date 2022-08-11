@@ -16,6 +16,8 @@
 
 - build binaries using PyInstaller no longer overwrites functions in version.py
 
+- build binaries using PyInstaller no longer overwrites functions in version.py
+
 ### capa explorer IDA Pro plugin
 
 ### Development
