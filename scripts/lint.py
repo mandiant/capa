@@ -34,6 +34,7 @@ from pathlib import Path
 from dataclasses import field, dataclass
 
 import tqdm
+import pydantic
 import termcolor
 import ruamel.yaml
 import tqdm.contrib.logging
@@ -45,6 +46,7 @@ import capa.helpers
 import capa.features.insn
 from capa.rules import Rule, RuleSet
 from capa.features.common import FORMAT_PE, FORMAT_DOTNET, String, Feature, Substring
+from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
 
@@ -226,19 +228,13 @@ class ExampleFileDNE(Lint):
 class IncorrectValueType(Lint):
     name = "incorrect value type"
     recommendation = "Change value type"
-    recommendation_template = 'Change type of "{:s}" from "{:s}" to "{:s}'
-    types = {
-        "references": list,
-        "authors": list,
-    }
 
     def check_rule(self, ctx: Context, rule: Rule):
-        for k, expected in self.types.items():
-            value = rule.meta.get(k)
-            found = type(value)
-            if value and found != expected:
-                self.recommendation = self.recommendation_template.format(k, str(found), str(expected))
-                return True
+        try:
+            _ = RuleMetadata.from_capa(rule)
+        except pydantic.ValidationError as e:
+            self.recommendation = str(e).strip()
+            return True
         return False
 
 
@@ -722,11 +718,11 @@ META_LINTS = (
     MissingExamples(),
     MissingExampleOffset(),
     ExampleFileDNE(),
-    IncorrectValueType(),
     UnusualMetaField(),
     LibRuleNotInLibDirectory(),
     LibRuleHasNamespace(),
     InvalidAttckOrMbcTechnique(),
+    IncorrectValueType(),
 )
 
 
@@ -1003,8 +999,9 @@ def main(argv=None):
 
     try:
         rules = capa.main.get_rules(args.rules, disable_progress=True)
+        rule_count = len(rules)
         rules = capa.rules.RuleSet(rules)
-        logger.info("successfully loaded %s rules", len(rules))
+        logger.info("successfully loaded %s rules", rule_count)
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
             logger.debug("selected %s rules", len(rules))
