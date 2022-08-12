@@ -405,10 +405,17 @@ class OS(Feature):
         self.name = "os"
 
 
+class ScriptLanguage(Feature):
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description=description)
+        self.name = "script language"
+
+
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
 FORMAT_DOTNET = "dotnet"
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
+FORMAT_SCRIPT = "script"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_SCRIPT)
 # internal only, not to be used in rules
 FORMAT_AUTO = "auto"
 FORMAT_SC32 = "sc32"

@@ -24,6 +24,11 @@ class API(Feature):
         super(API, self).__init__(name, description=description)
 
 
+class Property(Feature):
+    def __init__(self, name: str, description=None):
+        super().__init__(name, description=description)
+
+
 class Number(Feature):
     def __init__(self, value: Union[int, float], description=None):
         super(Number, self).__init__(value, description=description)

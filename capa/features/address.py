@@ -53,6 +53,26 @@ class FileOffsetAddress(int, Address):
         return f"file(0x{self:x})"
 
 
+class FileOffsetRangeAddress(Address):
+    """an address range relative to the start of a file"""
+
+    def __init__(self, start_byte, end_byte):
+        self.start_byte = start_byte
+        self.end_byte = end_byte
+
+    def __eq__(self, other):
+        return (self.start_byte, self.end_byte) == (other.start_byte, other.end_byte)
+
+    def __lt__(self, other):
+        return (self.start_byte, self.end_byte) < (other.start_byte, other.end_byte)
+
+    def __hash__(self):
+        return hash((self.start_byte, self.end_byte))
+
+    def __repr__(self):
+        return f"file(0x{self.start_byte:x}, 0x{self.end_byte:x})"
+
+
 class DNTokenAddress(Address):
     """a .NET token"""
 

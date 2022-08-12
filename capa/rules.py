@@ -91,6 +91,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.OS,
         capa.features.common.Arch,
         capa.features.common.Format,
+        capa.features.common.ScriptLanguage,
     },
     FILE_SCOPE: {
         capa.features.common.MatchedRule,
@@ -121,6 +122,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
     },
     INSTRUCTION_SCOPE: {
         capa.features.common.MatchedRule,
+        capa.features.insn.Property,
         capa.features.insn.API,
         capa.features.insn.Number,
         capa.features.common.String,
@@ -254,6 +256,8 @@ def parse_feature(key: str):
     # keep this in sync with supported features
     if key == "api":
         return capa.features.insn.API
+    if key == "property":
+        return capa.features.insn.Property
     elif key == "string":
         return capa.features.common.StringFactory
     elif key == "substring":
@@ -280,6 +284,8 @@ def parse_feature(key: str):
         return capa.features.common.MatchedRule
     elif key == "function-name":
         return capa.features.file.FunctionName
+    elif key == "language":
+        return capa.features.common.ScriptLanguage
     elif key == "os":
         return capa.features.common.OS
     elif key == "format":

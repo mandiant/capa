@@ -42,6 +42,7 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
+import capa.features.extractors.script
 import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
@@ -49,7 +50,6 @@ import capa.features.extractors.base_extractor
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
-    get_format,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -65,6 +65,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_SCRIPT,
 )
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -345,6 +346,13 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
     return False
 
 
+def is_script_format(format_: str):
+    """
+    If the script format was recognized, then it is supported.
+    """
+    return format_ == FORMAT_SCRIPT
+
+
 def is_supported_format(sample: str) -> bool:
     """
     Return if this is a supported file based on magic header values
@@ -373,6 +381,14 @@ def get_arch(sample: str) -> str:
     return "unknown"
 
 
+def get_script_arch() -> str:
+    for feature, _ in capa.features.extractors.script.extract_arch():
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return "unknown"
+
+
 def is_supported_os(sample: str) -> bool:
     with open(sample, "rb") as f:
         buf = f.read()
@@ -385,6 +401,14 @@ def get_os(sample: str) -> str:
         buf = f.read()
 
     for feature, _ in capa.features.extractors.common.extract_os(buf):
+        assert isinstance(feature.value, str)
+        return feature.value
+
+    return "unknown"
+
+
+def get_script_os() -> str:
+    for feature, _ in capa.features.extractors.script.extract_os():
         assert isinstance(feature.value, str)
         return feature.value
 
@@ -498,6 +522,11 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+    if format_ == FORMAT_SCRIPT:
+        import capa.features.extractors.ts.extractor
+
+        return capa.features.extractors.ts.extractor.TreeSitterFeatureExtractor(path)
+
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
@@ -677,9 +706,14 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
-    arch = get_arch(sample_path)
-    os_ = get_os(sample_path)
+    format_ = get_auto_format(sample_path)
+
+    if format_ == FORMAT_SCRIPT:
+        arch = get_script_arch()
+        os_ = get_script_os()
+    else:
+        arch = get_arch(sample_path)
+        os_ = get_os(sample_path)
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
