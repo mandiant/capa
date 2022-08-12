@@ -13,9 +13,6 @@
 
 ### Bug Fixes
 - linter: use pydantic to validate rule metadata #1141 @mike-hunhoff
-
-- build binaries using PyInstaller no longer overwrites functions in version.py
-
 - build binaries using PyInstaller no longer overwrites functions in version.py
 
 ### capa explorer IDA Pro plugin
