@@ -1,10 +1,11 @@
+import itertools
 from typing import Tuple, Iterator
 from dataclasses import dataclass
 
 from tree_sitter import Node
 
 from capa.features.insn import API, Number, Property
-from capa.features.common import String, Feature
+from capa.features.common import Class, String, Feature, Namespace
 from capa.features.address import Address
 from capa.features.extractors.ts.tools import BaseNamespace
 from capa.features.extractors.ts.engine import TreeSitterExtractorEngine
@@ -41,64 +42,100 @@ def extract_integers(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterat
             continue
 
 
-def get_imports(name: str, namespaces: set[BaseNamespace], engine: TreeSitterExtractorEngine) -> Iterator[str]:
-    if engine.language_toolkit.is_builtin(name):
-        yield engine.language_toolkit.get_builtin_name(name)
-    if engine.language_toolkit.is_import(name):
-        yield name
+def get_possible_full_names(name: str, namespaces: set[BaseNamespace]) -> Iterator[str]:
+    yield name
     for namespace in namespaces:
-        if engine.language_toolkit.is_import(name, namespace):
-            yield namespace.join(name)
+        yield namespace.join(name)
+
+
+def get_default_constructor(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[str]:
+    for name_node in engine.get_new_object_names(fn_node):
+        for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
+            if engine.language_toolkit.is_imported_class(full_name):
+                yield full_name
+
+
+def get_custom_constructor(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[str]:
+    for name_node in engine.get_function_call_names(fn_node):
+        for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
+            if engine.language_toolkit.is_imported_constructor(full_name):
+                yield full_name
 
 
 def get_classes(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[str]:
-    for node in engine.get_new_object_names(fn_node):
-        for name in get_imports(engine.get_str(node), engine.namespaces, engine):
-            yield name
+    yield from get_default_constructor(fn_node, engine)
+    yield from get_custom_constructor(fn_node, engine)
+
+
+def _extract_default_constructor(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    for name_node in engine.get_new_object_names(fn_node):
+        for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
+            if engine.language_toolkit.is_imported_class(full_name):
+                yield Namespace(full_name), engine.get_address(name_node)
+                yield Class(engine.language_toolkit.format_imported_class(full_name)), engine.get_address(name_node)
+                yield API(engine.language_toolkit.format_imported_default_constructor(full_name)), engine.get_address(
+                    name_node
+                )
+
+
+def _extract_custom_constructor(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    for name_node in engine.get_function_call_names(fn_node):
+        for full_name in get_possible_full_names(engine.get_str(name_node), engine.namespaces):
+            if engine.language_toolkit.is_imported_constructor(full_name):
+                yield Namespace(full_name), engine.get_address(name_node)
+                yield Class(engine.language_toolkit.format_imported_class(full_name)), engine.get_address(name_node)
+                yield API(engine.language_toolkit.format_imported_custom_constructor(full_name)), engine.get_address(
+                    name_node
+                )
 
 
 def _extract_classes(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for node in engine.get_new_object_names(fn_node):
-        for name in get_imports(engine.get_str(node), engine.namespaces, engine):
-            yield API(engine.language_toolkit.format_imported_class(name)), engine.get_address(node)
+    yield from _extract_default_constructor(fn_node, engine)
+    yield from _extract_custom_constructor(fn_node, engine)
+
+
+def _extract_constants(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    for ic_node, ic_name in engine.get_processed_imported_constants(fn_node):
+        for full_name in get_possible_full_names(ic_name, engine.namespaces):
+            if engine.language_toolkit.is_imported_constant(full_name):
+                yield API(engine.language_toolkit.format_imported_constant(full_name)), engine.get_address(ic_node)
 
 
 def _extract_properties(
     fn_node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
     for pt_node, pt_name in engine.get_processed_property_names(fn_node):
-        for name in get_imports(pt_name, classes, engine):
-            yield Property(engine.language_toolkit.format_imported_property(name)), engine.get_address(pt_node)
+        for full_name in get_possible_full_names(pt_name, classes):
+            if engine.language_toolkit.is_imported_property(full_name):
+                yield Property(engine.language_toolkit.format_imported_property(full_name)), engine.get_address(pt_node)
 
 
 def _extract_static_methods(node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for name in get_imports(engine.get_str(node), engine.namespaces, engine):
-        yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
+    if engine.language_toolkit.is_builtin(engine.get_str(node)):
+        yield API(engine.language_toolkit.get_builtin_name(engine.get_str(node))), engine.get_address(node)
+    for full_name in get_possible_full_names(engine.get_str(node), engine.namespaces):
+        if engine.language_toolkit.is_imported_function(full_name):
+            yield API(engine.language_toolkit.format_imported_function(full_name)), engine.get_address(node)
 
 
-def get_property_name(node: Node, engine: TreeSitterExtractorEngine) -> str:
-    qualified_names = engine.language_toolkit.split_name(engine.get_str(node))
-    if len(qualified_names) == 1:
-        return qualified_names[0]
-    return engine.language_toolkit.join_names(*qualified_names[1:])
+def _do_extract_instance_methods(
+    node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
+) -> Iterator[Tuple[Feature, Address]]:
+    for full_name in get_possible_full_names(
+        engine.language_toolkit.get_member_from_name(engine.get_str(node)), classes
+    ):
+        if engine.language_toolkit.is_imported_function(full_name):
+            yield API(engine.language_toolkit.format_imported_function(full_name)), engine.get_address(node)
 
 
 def _extract_instance_methods(
     node: Node, classes: set[BaseNamespace], engine: TreeSitterExtractorEngine
 ) -> Iterator[Tuple[Feature, Address]]:
-    direct_method_call_node = engine.get_direct_method_call(node)
-    node = node if direct_method_call_node is None else direct_method_call_node
-    property_name = get_property_name(node, engine)
-    for name in get_imports(property_name, classes, engine):
-        yield API(engine.language_toolkit.format_imported_function(name)), engine.get_address(node)
-
-
-def extract_api(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    classes = {engine.language_toolkit.create_namespace(cls) for cls in get_classes(fn_node, engine)}
-    yield from _extract_classes(fn_node, engine)
-    yield from _extract_imported_constants(fn_node, engine)
-    yield from _extract_function_calls(fn_node, classes, engine)
-    yield from _extract_properties(fn_node, classes, engine)
+    direct_method_call_node = engine.get_direct_method_call(node)  # eg new Foo.Bar().direct_method_call(x, y, 3)
+    if direct_method_call_node:
+        yield from _do_extract_instance_methods(direct_method_call_node, classes, engine)
+    else:
+        yield from _do_extract_instance_methods(node, classes, engine)
 
 
 def _extract_function_calls(
@@ -109,10 +146,12 @@ def _extract_function_calls(
         yield from _extract_instance_methods(node, classes, engine)
 
 
-def _extract_imported_constants(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
-    for ic_node, ic_name in engine.get_processed_imported_constants(fn_node):
-        for name in get_imports(ic_name, engine.namespaces, engine):
-            yield API(engine.language_toolkit.format_imported_constant(name)), engine.get_address(ic_node)
+def extract_imports(fn_node: Node, engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
+    classes = {engine.language_toolkit.create_namespace(cls) for cls in get_classes(fn_node, engine)}
+    yield from _extract_classes(fn_node, engine)
+    yield from _extract_constants(fn_node, engine)
+    yield from _extract_properties(fn_node, classes, engine)
+    yield from _extract_function_calls(fn_node, classes, engine)
 
 
 def _extract_pseudo_main_features(engine: TreeSitterExtractorEngine) -> Iterator[Tuple[Feature, Address]]:
@@ -134,7 +173,7 @@ def extract_features(fh: FunctionHandle, engine: TreeSitterExtractorEngine) -> I
 
 
 FUNCTION_HANDLERS = (
-    extract_api,
+    extract_imports,
     extract_integers,
     extract_strings,
 )

@@ -59,10 +59,29 @@ class LanguageToolkit:
 
     def load_import_signatures(self, signature_file: str) -> Dict[str, set[str]]:
         signatures = json.loads(importlib.resources.read_text(capa.features.extractors.ts.signatures, signature_file))
-        return {category: set(namespaces) for category, namespaces in signatures.items()}
+        return {category: set(names) for category, names in signatures.items()}
 
-    def _is_import(self, name: str) -> bool:
-        return name in self.import_signatures["imports"]
+    def get_full_name(self, name: str, namespace: Optional[BaseNamespace] = None) -> str:
+        if namespace:
+            if namespace.alias:
+                return name.replace(namespace.alias, namespace.name)
+            return namespace.join(name)
+        return name
+
+    def is_imported_function(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
+        return self.get_full_name(name, namespace) in self.import_signatures["functions"]
+
+    def is_imported_class(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
+        return self.get_full_name(name, namespace) in self.import_signatures["classes"]
+
+    def is_imported_constructor(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
+        return self.get_full_name(name, namespace) in self.import_signatures["constructors"]
+
+    def is_imported_property(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
+        return self.get_full_name(name, namespace) in self.import_signatures["properties"]
+
+    def is_imported_constant(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
+        return self.get_full_name(name, namespace) in self.import_signatures["constants"]
 
     def is_builtin(self, func: str) -> bool:
         return func in self.import_signatures["builtins"]
@@ -90,6 +109,18 @@ class LanguageToolkit:
             return None
         return name
 
+    def get_namespace_from_name(self, name: str) -> str:
+        qualified_names = self.split_name(name)
+        if len(qualified_names) < 2:
+            return ""
+        return self.join_names(*qualified_names[:-1])
+
+    def get_member_from_name(self, name: str) -> str:
+        qualified_names = self.split_name(name)
+        if len(qualified_names) < 2:
+            return qualified_names[0]
+        return self.join_names(*qualified_names[1:])
+
     def format_imported_class(self, name: str) -> str:
         return name
 
@@ -105,6 +136,12 @@ class LanguageToolkit:
 
     def format_imported_function(self, name: str) -> str:
         return self.format_imported_class_members(name)
+
+    def format_imported_custom_constructor(self, name: str) -> str:
+        return self.format_imported_class_members(name)
+
+    def format_imported_default_constructor(self, name: str) -> str:
+        return self.format_imported_function(self.join_names(name, "ctor"))
 
     def format_imported_property(self, name: str) -> str:
         return self.format_imported_class_members(name)
@@ -131,10 +168,6 @@ class LanguageToolkit:
         return node.parent.type == self.property_query_type
 
     @abc.abstractmethod
-    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def create_namespace(self, name: str) -> BaseNamespace:
         raise NotImplementedError()
 
@@ -154,11 +187,6 @@ class CSharpToolkit(LanguageToolkit):
     string_delimiters: str = '"'
     integer_prefixes: List[Tuple[Union[str, Tuple[str, ...]], int]] = [(("0x", "0X"), 16)]
     integer_suffixes: Tuple[str, ...] = ("u", "l")
-
-    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
-        if namespace:
-            return self._is_import(namespace.join(name))
-        return self._is_import(name)
 
     def create_namespace(self, name: str) -> BaseNamespace:
         return CSharpNamespace(name)
@@ -183,13 +211,6 @@ class PythonToolkit(LanguageToolkit):
         (("0x", "0X"), 16),
     ]
     integer_suffixes: Tuple[str, ...] = tuple()
-
-    def is_import(self, name: str, namespace: Optional[BaseNamespace] = None) -> bool:
-        if namespace:
-            if namespace.alias:
-                return self._is_import(name.replace(namespace.alias, namespace.name))
-            return self._is_import(namespace.join(name))
-        return self._is_import(name)
 
     def create_namespace(self, name: str) -> BaseNamespace:
         return PythonImport(name)

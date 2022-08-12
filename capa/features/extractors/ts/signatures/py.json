@@ -1,17 +1,22 @@
 {
-    "imports": [
-        "socket",
+    "classes": [
+        "socket.socket",
         "socket.error",
+        "urllib2.Request"
+    ],
+    "constructors": [
+        "ssl.wrap_socket",
+        "win32com.client.Dispatch"
+    ],
+    "functions": [
         "subprocess.Popen",
         "subprocess.PIPE",
         "urllib2.urlopen",
-        "urllib2.Request",
         "base64.encodestring",
         "base64.b64encode",
         "base64.b64decode",
         "os.chdir",
         "os.chmod",
-        "os.environ",
         "os.getcwd",
         "os.popen",
         "os.remove",
@@ -20,12 +25,20 @@
         "platform.mac_ver",
         "shutil.copytree",
         "time.sleep",
-        "win32com.client.Dispatch",
-        "win32con.FILE_ATTRIBUTE_HIDDEN",
-        "win32con.FILE_ATTRIBUTE_SYSTEM",
         "win32api.SetFileAttributes"
-
     ],
+    "constants": [
+        "os.environ",
+        "socket.AF_INET",
+        "socket.SOCK_STREAM",
+        "socket.SQL_SOCKET",
+        "socket.SO_REUSEADDR",
+        "ssl.PROTOCOL_TLSv1",
+        "ssl.CERT_NONE",
+        "win32con.FILE_ATTRIBUTE_HIDDEN",
+        "win32con.FILE_ATTRIBUTE_SYSTEM"
+    ],
+    "properties": [],
     "builtins": [
         "eval",
         "exec",
