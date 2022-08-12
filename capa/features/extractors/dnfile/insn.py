@@ -81,7 +81,8 @@ def get_properties(ctx: Dict) -> Dict:
     if "properties_cache" not in ctx:
         ctx["properties_cache"] = {}
         for property, access_type in get_dotnet_properties(ctx["pe"]):
-            ctx["properties_cache"][property.token] = (property, access_type)
+            if property is not None:
+                ctx["properties_cache"][property.token] = (property, access_type)
     return ctx["properties_cache"]
 
 
@@ -133,15 +134,13 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
         token: Token = Token(insn.operand.value)
         if token.table == METHODDEF_TABLE:
             """check if the method belongs to the MethodDef table and whether it is used to access a property"""
-            property: Optional[Tuple[DnProperty, DnPropertyAccessType]] = get_properties(fh.ctx).get(
-                insn.operand.value, None
-            )
+            property, type = get_properties(fh.ctx).get(insn.operand.value, (None, None))
             if property is None:
                 return
-            if property[1] == DnPropertyAccessType.SET:
-                yield Property(str(property[0]), "property/write"), ih.address
-            elif property[1] == DnPropertyAccessType.GET:
-                yield Property(str(property[0]), "property/read"), ih.address
+            if type == DnPropertyAccessType.SET:
+                yield Property(str(property), "property/write"), ih.address
+            elif type == DnPropertyAccessType.GET:
+                yield Property(str(property), "property/read"), ih.address
 
         elif token.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""

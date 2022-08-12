@@ -255,8 +255,6 @@ def parse_feature(key: str):
     # keep this in sync with supported features
     if key == "api":
         return capa.features.insn.API
-    elif key == "property/read" or key == "property/write":
-        return capa.features.insn.Property
     elif key == "string":
         return capa.features.common.StringFactory
     elif key == "substring":
@@ -293,6 +291,8 @@ def parse_feature(key: str):
         return capa.features.common.Class
     elif key == "namespace":
         return capa.features.common.Namespace
+    elif key == "property/read" or key == "property/write":
+        return capa.features.insn.Property
     else:
         raise InvalidRule("unexpected statement: %s" % key)
 
@@ -570,14 +570,20 @@ def build_statements(d, scope: str):
         or (key == "arch" and d[key] not in capa.features.common.VALID_ARCH)
     ):
         raise InvalidRule("unexpected %s value %s" % (key, d[key]))
+    elif key == "property/read" or key == "property/write":
+        try:
+            value, description = parse_description(d[key], key, d.get("description"))
+            feature = capa.features.insn.Property(value, key, description=description)
+        except ValueError as e:
+            raise InvalidRule(str(e))
+        ensure_feature_valid_for_scope(scope, feature)
+        return feature
+
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
         try:
-            if key == "property/read" or key == "property/write":
-                feature = Feature(value, key, description=description)
-            else:
-                feature = Feature(value, description=description)
+            feature = Feature(value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)
