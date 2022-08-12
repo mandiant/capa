@@ -11,6 +11,7 @@
 - 
 
 ### Bug Fixes
+- linter: use pydantic to validate rule metadata #1141 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 
