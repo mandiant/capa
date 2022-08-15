@@ -21,6 +21,8 @@ version = (
 # when invoking pyinstaller from the project root, this gets run from the project root.
 with open("./capa/version.py", "r", encoding="utf-8") as f:
     lines = f.read()
+# version.py contains the version string and other helper functions
+# here we manually replace the version value substring with the result of the above git output
 VERSION_DEF = "__version__ = "
 s = lines.index(VERSION_DEF)
 e = s + len(VERSION_DEF)
