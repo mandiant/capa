@@ -6,22 +6,37 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (0)
 
-- anti-analysis/obfuscation/obfuscated-with-vs-obfuscation jakub.jozwiak@mandiant.com
--
+- 
 
 ### Bug Fixes
-- linter: use pydantic to validate rule metadata #1141 @mike-hunhoff
-- build binaries using PyInstaller no longer overwrites functions in version.py
+
 
 ### capa explorer IDA Pro plugin
 
 ### Development
 
 ### Raw diffs
-- [capa v4.0.0...master](https://github.com/mandiant/capa/compare/v4.0.0...master)
-- [capa-rules v4.0.0...master](https://github.com/mandiant/capa-rules/compare/v4.0.0...master)
+- [capa v4.0.1...master](https://github.com/mandiant/capa/compare/v4.0.1...master)
+- [capa-rules v4.0.1...master](https://github.com/mandiant/capa-rules/compare/v4.0.1...master)
+
+
+## v4.0.1 (2022-08-15)
+Some rules contained invalid metadata fields that caused an error when rendering rule hits. We've updated all rules and enhanced the rule linter to catch such issues.
+
+### New Rules (1)
+
+- anti-analysis/obfuscation/obfuscated-with-vs-obfuscation jakub.jozwiak@mandiant.com
+
+
+### Bug Fixes
+- linter: use pydantic to validate rule metadata #1141 @mike-hunhoff
+- build binaries using PyInstaller no longer overwrites functions in version.py #1136 @mr-tz
+
+### Raw diffs
+- [capa v4.0.0...v4.0.1](https://github.com/mandiant/capa/compare/v4.0.0...v4.0.1)
+- [capa-rules v4.0.0...v4.0.1](https://github.com/mandiant/capa-rules/compare/v4.0.0...v4.0.1)
 
 ## v4.0.0 (2022-08-10)
 Version 4 adds support for analyzing .NET executables. capa will autodetect .NET modules, or you can explicitly invoke the new feature extractor via `--format dotnet`. We've also extended the rule syntax for .NET features including `namespace` and `class`.
