@@ -28,7 +28,7 @@ requirements = [
     "pyelftools==0.28",
     "dnfile==0.11.0",
     "dncil==1.0.1",
-    "pydantic==1.9.1",
+    "pydantic==1.9.2",
 ]
 
 # this sets __version__
