@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
-- 
+- anti-analysis/obfuscation/obfuscated-with-vs-obfuscation jakub.jozwiak@mandiant.com
+-
 
 ### Bug Fixes
 - linter: use pydantic to validate rule metadata #1141 @mike-hunhoff
