@@ -6,51 +6,59 @@ import subprocess
 import wcwidth
 
 
-# when invoking pyinstaller from the project root,
-# this gets run from the project root.
-with open('./capa/version.py', 'wb') as f:
-    # git output will look like:
-    #
-    #     tags/v1.0.0-0-g3af38dc
-    #         ------- tag
-    #                 - commits since
-    #                   g------- git hash fragment
-    version = (subprocess.check_output(["git", "describe", "--always", "--tags", "--long"])
-               .decode("utf-8")
-               .strip()
-               .replace("tags/", ""))
-    f.write(("__version__ = '%s'" % version).encode("utf-8"))
+# git output will look like:
+#
+#     tags/v1.0.0-0-g3af38dc
+#         ------- tag
+#                 - commits since
+#                   g------- git hash fragment
+version = (
+    subprocess.check_output(["git", "describe", "--always", "--tags", "--long"])
+    .decode("utf-8")
+    .strip()
+    .replace("tags/", "")
+)
+# when invoking pyinstaller from the project root, this gets run from the project root.
+with open("./capa/version.py", "r", encoding="utf-8") as f:
+    lines = f.read()
+# version.py contains the version string and other helper functions
+# here we manually replace the version value substring with the result of the above git output
+VERSION_DEF = "__version__ = "
+s = lines.index(VERSION_DEF)
+e = s + len(VERSION_DEF)
+off_rest_file = e + lines[e:].index("\n")
+lines = lines[s:e] + f'"{version}"' + lines[off_rest_file:]
+with open("./capa/version.py", "w", encoding="utf-8") as f:
+    f.write(lines)
 
 a = Analysis(
     # when invoking pyinstaller from the project root,
     # this gets invoked from the directory of the spec file,
     # i.e. ./.github/pyinstaller
-    ['../../capa/main.py'],
-    pathex=['capa'],
+    ["../../capa/main.py"],
+    pathex=["capa"],
     binaries=None,
     datas=[
         # when invoking pyinstaller from the project root,
         # this gets invoked from the directory of the spec file,
         # i.e. ./.github/pyinstaller
-        ('../../rules', 'rules'),
-        ('../../sigs', 'sigs'),
-
+        ("../../rules", "rules"),
+        ("../../sigs", "sigs"),
         # capa.render.default uses tabulate that depends on wcwidth.
         # it seems wcwidth uses a json file `version.json`
         # and this doesn't get picked up by pyinstaller automatically.
         # so we manually embed the wcwidth resources here.
         #
         # ref: https://stackoverflow.com/a/62278462/87207
-        (os.path.dirname(wcwidth.__file__), 'wcwidth')
+        (os.path.dirname(wcwidth.__file__), "wcwidth"),
     ],
     # when invoking pyinstaller from the project root,
     # this gets run from the project root.
-    hookspath=['.github/pyinstaller/hooks'],
+    hookspath=[".github/pyinstaller/hooks"],
     runtime_hooks=None,
     excludes=[
         # ignore packages that would otherwise be bundled with the .exe.
         # review: build/pyinstaller/xref-pyinstaller.html
-
         # we don't do any GUI stuff, so ignore these modules
         "tkinter",
         "_tkinter",
@@ -60,7 +68,6 @@ a = Analysis(
         # since we don't spawn a notebook, we can safely remove these.
         "IPython",
         "ipywidgets",
-
         # these are pulled in by networkx
         # but we don't need to compute the strongly connected components.
         "numpy",
@@ -68,7 +75,6 @@ a = Analysis(
         "matplotlib",
         "pandas",
         "pytest",
-
         # deps from viv that we don't use.
         # this duplicates the entries in `hook-vivisect`,
         # but works better this way.
@@ -78,32 +84,32 @@ a = Analysis(
         "PyQt5",
         "qt5",
         "pyqtwebengine",
-        "pyasn1"
-    ])
+        "pyasn1",
+    ],
+)
 
-a.binaries = a.binaries - TOC([
- ('tcl85.dll', None, None),
- ('tk85.dll', None, None),
- ('_tkinter', None, None)])
+a.binaries = a.binaries - TOC([("tcl85.dll", None, None), ("tk85.dll", None, None), ("_tkinter", None, None)])
 
 pyz = PYZ(a.pure, a.zipped_data)
 
-exe = EXE(pyz,
-          a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
-          exclude_binaries=False,
-          name='capa',
-          icon='logo.ico',
-          debug=False,
-          strip=None,
-          upx=True,
-          console=True )
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    exclude_binaries=False,
+    name="capa",
+    icon="logo.ico",
+    debug=False,
+    strip=None,
+    upx=True,
+    console=True,
+)
 
 # enable the following to debug the contents of the .exe
 #
-#coll = COLLECT(exe,
+# coll = COLLECT(exe,
 #               a.binaries,
 #               a.zipfiles,
 #               a.datas,
