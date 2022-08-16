@@ -289,7 +289,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if rule.meta.maec.malware_family:
             rows.append(("maec/malware-family", rule.meta.maec.malware_family))
 
-        if rule.meta.maec.malware_category or rule.meta.maec.malware_category:
+        if rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov:
             rows.append(
                 ("maec/malware-category", rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov)
             )
