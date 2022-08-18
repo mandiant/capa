@@ -134,7 +134,8 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     if isinstance(feature, frzf.ClassFeature):
         value = feature.class_
     else:
-        value = getattr(feature, key)
+        # convert attributes to dictionary using aliased names, if applicable
+        value = feature.dict(by_alias=True).get(key)
 
     if key not in ("regex", "substring"):
         # like:
