@@ -14,6 +14,7 @@
 -  render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
+- fix: display instruction items #1154 @mr-tz
 
 ### Development
 
