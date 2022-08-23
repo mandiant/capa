@@ -143,6 +143,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     CapaExplorerFunctionItem,
                     CapaExplorerFeatureItem,
                     CapaExplorerSubscopeItem,
+                    CapaExplorerInstructionItem,
                 ),
             )
             and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
