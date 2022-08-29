@@ -6,9 +6,14 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (5)
 
-- 
+- collection/use-dotnet-library-sharpclipboard @johnk3r
+- data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
+- data-manipulation/json/use-dotnet-library-newtonsoftjson @johnk3r
+- data-manipulation/svg/use-dotnet-library-sharpvectors @johnk3r
+- executable/resource/embed-dependencies-as-resources-using-fodycostura @johnk3r @mr-tz
+-
 
 ### Bug Fixes
 -  render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
