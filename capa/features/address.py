@@ -1,7 +1,5 @@
 import abc
 
-from dncil.clr.token import Token
-
 
 class Address(abc.ABC):
     @abc.abstractmethod
@@ -56,48 +54,48 @@ class FileOffsetAddress(int, Address):
 class DNTokenAddress(Address):
     """a .NET token"""
 
-    def __init__(self, token: Token):
+    def __init__(self, token: int):
         self.token = token
 
     def __eq__(self, other):
-        return self.token.value == other.token.value
+        return self.token == other.token
 
     def __lt__(self, other):
-        return self.token.value < other.token.value
+        return self.token < other.token
 
     def __hash__(self):
-        return hash(self.token.value)
+        return hash(self.token)
 
     def __repr__(self):
-        return f"token(0x{self.token.value:x})"
+        return f"token(0x{self.token:x})"
 
     def __index__(self):
         # returns the object converted to an integer
-        return self.token.value
+        return self.token
 
 
 class DNTokenOffsetAddress(Address):
     """an offset into an object specified by a .NET token"""
 
-    def __init__(self, token: Token, offset: int):
+    def __init__(self, token: int, offset: int):
         assert offset >= 0
         self.token = token
         self.offset = offset
 
     def __eq__(self, other):
-        return (self.token.value, self.offset) == (other.token.value, other.offset)
+        return (self.token, self.offset) == (other.token, other.offset)
 
     def __lt__(self, other):
-        return (self.token.value, self.offset) < (other.token.value, other.offset)
+        return (self.token, self.offset) < (other.token, other.offset)
 
     def __hash__(self):
-        return hash((self.token.value, self.offset))
+        return hash((self.token, self.offset))
 
     def __repr__(self):
-        return f"token(0x{self.token.value:x})+(0x{self.offset:x})"
+        return f"token(0x{self.token:x})+(0x{self.offset:x})"
 
     def __index__(self):
-        return self.token.value + self.offset
+        return self.token + self.offset
 
 
 class _NoAddress(Address):

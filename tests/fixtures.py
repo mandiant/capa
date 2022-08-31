@@ -360,7 +360,7 @@ def get_function(extractor, fva: int) -> FunctionHandle:
 
 def get_function_by_token(extractor, token: int) -> FunctionHandle:
     for fh in extractor.get_functions():
-        if fh.address.token.value == token:
+        if fh.address.token == token:
             return fh
     raise ValueError("function not found by token")
 
