@@ -51,27 +51,14 @@ class FileOffsetAddress(int, Address):
         return f"file(0x{self:x})"
 
 
-class DNTokenAddress(Address):
+class DNTokenAddress(int, Address):
     """a .NET token"""
 
-    def __init__(self, token: int):
-        self.token = token
-
-    def __eq__(self, other):
-        return self.token == other.token
-
-    def __lt__(self, other):
-        return self.token < other.token
-
-    def __hash__(self):
-        return hash(self.token)
+    def __new__(cls, token: int):
+        return int.__new__(cls, token)
 
     def __repr__(self):
-        return f"token(0x{self.token:x})"
-
-    def __index__(self):
-        # returns the object converted to an integer
-        return self.token
+        return f"token(0x{self:x})"
 
 
 class DNTokenOffsetAddress(Address):

@@ -60,7 +60,7 @@ class Address(HashableModel):
             return cls(type=AddressType.FILE, value=int(a))
 
         elif isinstance(a, capa.features.address.DNTokenAddress):
-            return cls(type=AddressType.DN_TOKEN, value=a.token)
+            return cls(type=AddressType.DN_TOKEN, value=int(a))
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))

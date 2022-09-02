@@ -62,7 +62,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
     def get_instructions(self, fh, bbh):
         for insn in bbh.inner.instructions:
             yield InsnHandle(
-                address=DNTokenOffsetAddress(bbh.address.token, insn.offset - (fh.inner.offset + fh.inner.header_size)),
+                address=DNTokenOffsetAddress(bbh.address, insn.offset - (fh.inner.offset + fh.inner.header_size)),
                 inner=insn,
             )
 
