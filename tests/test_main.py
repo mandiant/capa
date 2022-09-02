@@ -38,6 +38,8 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
             meta:
                 name: test rule
                 scope: file
+                authors:
+                  - test
             features:
               - string: test
         """

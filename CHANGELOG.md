@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- verify rule metadata format on load #1160 @mr-tz
 
 ### Breaking Changes
 
