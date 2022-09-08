@@ -31,6 +31,7 @@ from capa.ida.plugin.item import (
     CapaExplorerSubscopeItem,
     CapaExplorerRuleMatchItem,
     CapaExplorerStringViewItem,
+    CapaExplorerInstructionItem,
     CapaExplorerInstructionViewItem,
 )
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -142,6 +143,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     CapaExplorerFunctionItem,
                     CapaExplorerFeatureItem,
                     CapaExplorerSubscopeItem,
+                    CapaExplorerInstructionItem,
                 ),
             )
             and column == CapaExplorerDataModel.COLUMN_INDEX_RULE_INFORMATION
@@ -493,6 +495,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     parent2 = CapaExplorerFunctionItem(parent, location)
                 elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
                     parent2 = CapaExplorerBlockItem(parent, location)
+                elif rule.meta.scope == capa.rules.INSTRUCTION_SCOPE:
+                    parent2 = CapaExplorerInstructionItem(parent, location)
                 else:
                     raise RuntimeError("unexpected rule scope: " + str(rule.meta.scope))
 

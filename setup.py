@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.64.0",
+    "tqdm==4.64.1",
     "pyyaml==6.0",
     "tabulate==0.8.9",
     "colorama==0.4.5",
@@ -25,10 +25,14 @@ requirements = [
     "vivisect==1.0.8",
     "smda==1.8.4",
     "pefile==2022.5.30",
+<<<<<<< HEAD
     "pyelftools==0.28",
+=======
+    "pyelftools==0.29",
+>>>>>>> master
     "dnfile==0.12.0",
     "dncil==1.0.1",
-    "pydantic==1.9.1",
+    "pydantic==1.10.1",
 ]
 
 # this sets __version__
@@ -69,15 +73,15 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest==7.1.2",
+            "pytest==7.1.3",
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.4.2",
             "pytest-cov==3.0.0",
             "pycodestyle==2.9.1",
-            "black==22.6.0",
+            "black==22.8.0",
             "isort==5.10.1",
             "mypy==0.971",
-            "psutil==5.9.1",
+            "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.28.0",
             # type stubs for mypy

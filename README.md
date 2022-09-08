@@ -2,7 +2,7 @@
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
-[![Number of rules](https://img.shields.io/badge/rules-702-blue.svg)](https://github.com/mandiant/capa-rules)
+[![Number of rules](https://img.shields.io/badge/rules-708-blue.svg)](https://github.com/mandiant/capa-rules)
 [![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
 [![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
@@ -15,7 +15,7 @@ Check out:
 - the overview in our first [capa blog post](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
 - the major version 2.0 updates described in our [second blog post](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
 - the major version 3.0 (ELF support) described in the [third blog post](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3)
-- the major version 4.0 (.NET support) described in the TODO
+- the major version 4.0 (.NET support) described in the [fourth blog post](https://www.mandiant.com/resources/blog/capa-v4-casting-wider-net)
 
 ```
 $ capa.exe suspicious.exe

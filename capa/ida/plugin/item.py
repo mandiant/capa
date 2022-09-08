@@ -274,6 +274,12 @@ class CapaExplorerBlockItem(CapaExplorerDataItem):
         super(CapaExplorerBlockItem, self).__init__(parent, [self.fmt % ea, ea_to_hex(ea), ""])
 
 
+class CapaExplorerInstructionItem(CapaExplorerBlockItem):
+    """store data for instruction match"""
+
+    fmt = "instruction(loc_%08X)"
+
+
 class CapaExplorerDefaultItem(CapaExplorerDataItem):
     """store data for default match e.g. statement (and, or)"""
 

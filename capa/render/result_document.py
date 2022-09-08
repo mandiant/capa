@@ -75,7 +75,7 @@ class Analysis(FrozenModel):
 class Metadata(FrozenModel):
     timestamp: datetime.datetime
     version: str
-    argv: Tuple[str, ...]
+    argv: Optional[Tuple[str, ...]]
     sample: Sample
     analysis: Analysis
 

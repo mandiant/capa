@@ -136,7 +136,11 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     elif isinstance(feature, frzf.PropertyFeature):
         value = feature.property
     else:
-        value = getattr(feature, key)
+        # convert attributes to dictionary using aliased names, if applicable
+        value = feature.dict(by_alias=True).get(key, None)
+
+    if value is None:
+        raise ValueError("%s contains None" % key)
 
     if key not in ("regex", "substring"):
         # like:
@@ -291,7 +295,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if rule.meta.maec.malware_family:
             rows.append(("maec/malware-family", rule.meta.maec.malware_family))
 
-        if rule.meta.maec.malware_category or rule.meta.maec.malware_category:
+        if rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov:
             rows.append(
                 ("maec/malware-category", rule.meta.maec.malware_category or rule.meta.maec.malware_category_ov)
             )

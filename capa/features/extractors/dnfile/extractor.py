@@ -11,13 +11,12 @@ from __future__ import annotations
 from typing import List, Tuple, Iterator
 
 import dnfile
-from dncil.clr.token import Token
 
 import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
 
@@ -43,7 +42,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for token, f in get_dotnet_managed_method_bodies(self.pe):
-            yield FunctionHandle(address=DNTokenAddress(Token(token)), inner=f, ctx={"pe": self.pe})
+            yield FunctionHandle(address=DNTokenAddress(token), inner=f, ctx={"pe": self.pe})
 
     def extract_function_features(self, f):
         # TODO
@@ -63,7 +62,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
     def get_instructions(self, fh, bbh):
         for insn in bbh.inner.instructions:
             yield InsnHandle(
-                address=DNTokenOffsetAddress(bbh.address.token, insn.offset - (fh.inner.offset + fh.inner.header_size)),
+                address=DNTokenOffsetAddress(bbh.address, insn.offset - (fh.inner.offset + fh.inner.header_size)),
                 inner=insn,
             )
 

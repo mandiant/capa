@@ -40,10 +40,10 @@ def inform_user_ida_ui(message):
 
 def is_supported_ida_version():
     version = float(idaapi.get_kernel_version())
-    if version < 7.4 or version >= 8:
+    if version < 7.4 or version >= 9:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 8.0." % version)
+        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 9.0." % version)
         return False
     return True
 

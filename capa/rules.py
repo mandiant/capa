@@ -27,6 +27,7 @@ except ImportError:
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator
 
 import yaml
+import pydantic
 import ruamel.yaml
 
 import capa.perf
@@ -812,8 +813,16 @@ class Rule:
     def from_yaml_file(cls, path, use_ruamel=False):
         with open(path, "rb") as f:
             try:
-                return cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
+                rule = cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
+                # import here to avoid circular dependency
+                from capa.render.result_document import RuleMetadata
+
+                # validate meta data fields
+                _ = RuleMetadata.from_capa(rule)
+                return rule
             except InvalidRule as e:
+                raise InvalidRuleWithPath(path, str(e))
+            except pydantic.ValidationError as e:
                 raise InvalidRuleWithPath(path, str(e))
 
     def to_yaml(self):

@@ -19,10 +19,10 @@ jobs:
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
-          - os: windows-2022
+          - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
-          - os: macos-10.15
+          - os: macos-11
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
@@ -56,8 +56,6 @@ jobs:
           path: dist/${{ matrix.artifact_name }}
 
   test_run:
-    # test that binaries run on push to master
-    if: github.event_name == 'push'
     name: Test run on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [build]

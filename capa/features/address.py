@@ -1,7 +1,5 @@
 import abc
 
-from dncil.clr.token import Token
-
 
 class Address(abc.ABC):
     @abc.abstractmethod
@@ -53,44 +51,38 @@ class FileOffsetAddress(int, Address):
         return f"file(0x{self:x})"
 
 
-class DNTokenAddress(Address):
+class DNTokenAddress(int, Address):
     """a .NET token"""
 
-    def __init__(self, token: Token):
-        self.token = token
-
-    def __eq__(self, other):
-        return self.token.value == other.token.value
-
-    def __lt__(self, other):
-        return self.token.value < other.token.value
-
-    def __hash__(self):
-        return hash(self.token.value)
+    def __new__(cls, token: int):
+        return int.__new__(cls, token)
 
     def __repr__(self):
-        return f"token(0x{self.token.value:x})"
+        return f"token(0x{self:x})"
 
 
 class DNTokenOffsetAddress(Address):
     """an offset into an object specified by a .NET token"""
 
-    def __init__(self, token: Token, offset: int):
+    def __init__(self, token: int, offset: int):
         assert offset >= 0
         self.token = token
         self.offset = offset
 
     def __eq__(self, other):
-        return (self.token.value, self.offset) == (other.token.value, other.offset)
+        return (self.token, self.offset) == (other.token, other.offset)
 
     def __lt__(self, other):
-        return (self.token.value, self.offset) < (other.token.value, other.offset)
+        return (self.token, self.offset) < (other.token, other.offset)
 
     def __hash__(self):
-        return hash((self.token.value, self.offset))
+        return hash((self.token, self.offset))
 
     def __repr__(self):
-        return f"token(0x{self.token.value:x})+(0x{self.offset:x})"
+        return f"token(0x{self.token:x})+(0x{self.offset:x})"
+
+    def __index__(self):
+        return self.token + self.offset
 
 
 class _NoAddress(Address):
