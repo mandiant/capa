@@ -25,11 +25,7 @@ requirements = [
     "vivisect==1.0.8",
     "smda==1.8.4",
     "pefile==2022.5.30",
-<<<<<<< HEAD
-    "pyelftools==0.28",
-=======
     "pyelftools==0.29",
->>>>>>> master
     "dnfile==0.12.0",
     "dncil==1.0.1",
     "pydantic==1.10.1",
