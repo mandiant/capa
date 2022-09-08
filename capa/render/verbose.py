@@ -43,12 +43,10 @@ def format_address(address: frz.Address) -> str:
     elif address.type == frz.AddressType.FILE:
         return f"file+{rutils.hex(address.value)}"
     elif address.type == frz.AddressType.DN_TOKEN:
-        token = dncil.clr.token.Token(address.value)
-        return f"token({rutils.hex(token.value)})"
+        return f"token({rutils.hex(address.value)})"
     elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
         token, offset = address.value
-        token = dncil.clr.token.Token(token)
-        return f"token({rutils.hex(token.value)})+{rutils.hex(offset)}"
+        return f"token({rutils.hex(token)})+{rutils.hex(offset)}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:

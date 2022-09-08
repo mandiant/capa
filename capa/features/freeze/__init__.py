@@ -14,7 +14,6 @@ import logging
 from enum import Enum
 from typing import Any, List, Tuple
 
-import dncil.clr.token
 from pydantic import Field, BaseModel
 
 import capa.helpers
@@ -61,10 +60,10 @@ class Address(HashableModel):
             return cls(type=AddressType.FILE, value=int(a))
 
         elif isinstance(a, capa.features.address.DNTokenAddress):
-            return cls(type=AddressType.DN_TOKEN, value=a.token.value)
+            return cls(type=AddressType.DN_TOKEN, value=int(a))
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
-            return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token.value, a.offset))
+            return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -89,11 +88,11 @@ class Address(HashableModel):
             return capa.features.address.FileOffsetAddress(self.value)
 
         elif self.type is AddressType.DN_TOKEN:
-            return capa.features.address.DNTokenAddress(dncil.clr.token.Token(self.value))
+            return capa.features.address.DNTokenAddress(self.value)
 
         elif self.type is AddressType.DN_TOKEN_OFFSET:
             token, offset = self.value
-            return capa.features.address.DNTokenOffsetAddress(dncil.clr.token.Token(token), offset)
+            return capa.features.address.DNTokenOffsetAddress(token, offset)
 
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS

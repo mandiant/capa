@@ -17,7 +17,8 @@
 -
 
 ### Bug Fixes
--  render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
+- render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
+- decouple Token dependency / extractor and features #1139 @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
