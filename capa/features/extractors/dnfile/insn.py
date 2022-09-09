@@ -163,7 +163,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     elif insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
         if insn.operand.table == FIELD_TABLE:
-            """determine whether the operand is a field by checking if it belongs to the Field table"""
+            # determine whether the operand is a field by checking if it belongs to the Field table
             write_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
             if write_field:
                 prop_name = str(write_field)
