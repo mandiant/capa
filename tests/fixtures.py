@@ -32,12 +32,11 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
-    ACCESS_READ,
-    ACCESS_WRITE,
     FORMAT_DOTNET,
     Arch,
     Format,
     Feature,
+    FeatureAccess,
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -767,7 +766,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_1c444",
             "token=0x600002B",
-            capa.features.insn.Property("System.IO.FileInfo::Length", access=ACCESS_READ),
+            capa.features.insn.Property("System.IO.FileInfo::Length", access=FeatureAccess.READ),
             True,
         ),  # MemberRef method
         (
@@ -780,7 +779,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::UseShellExecute", access=ACCESS_WRITE
+                "System.Diagnostics.ProcessStartInfo::UseShellExecute", access=FeatureAccess.WRITE
             ),  # MemberRef method
             True,
         ),
@@ -788,7 +787,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::WorkingDirectory", access=ACCESS_WRITE
+                "System.Diagnostics.ProcessStartInfo::WorkingDirectory", access=FeatureAccess.WRITE
             ),  # MemberRef method
             True,
         ),
@@ -796,39 +795,39 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             "_1c444",
             "token=0x6000081",
             capa.features.insn.Property(
-                "System.Diagnostics.ProcessStartInfo::FileName", access=ACCESS_WRITE
+                "System.Diagnostics.ProcessStartInfo::FileName", access=FeatureAccess.WRITE
             ),  # MemberRef method
             True,
         ),
         (
             "_1c444",
             "token=0x6000087",
-            capa.features.insn.Property("Sockets.MySocket::reConnectionDelay", access=ACCESS_WRITE),  # Field
+            capa.features.insn.Property("Sockets.MySocket::reConnectionDelay", access=FeatureAccess.WRITE),  # Field
             True,
         ),
         (
             "_1c444",
             "token=0x600008A",
-            capa.features.insn.Property("Sockets.MySocket::isConnected", access=ACCESS_WRITE),  # Field
+            capa.features.insn.Property("Sockets.MySocket::isConnected", access=FeatureAccess.WRITE),  # Field
             True,
         ),
         (
             "_1c444",
             "token=0x600008A",
-            capa.features.insn.Property("Sockets.MySocket::onConnected", access=ACCESS_READ),  # Field
+            capa.features.insn.Property("Sockets.MySocket::onConnected", access=FeatureAccess.READ),  # Field
             True,
         ),
         (
             "_0953c",
             "token=0x6000004",
-            capa.features.insn.Property("System.Diagnostics.Debugger::IsAttached", access=ACCESS_READ),
+            capa.features.insn.Property("System.Diagnostics.Debugger::IsAttached", access=FeatureAccess.READ),
             True,
         ),  # MemberRef method
         (
             "_692f",
             "token=0x6000006",
             capa.features.insn.Property(
-                "System.Management.Automation.PowerShell::Streams", access=ACCESS_READ
+                "System.Management.Automation.PowerShell::Streams", access=FeatureAccess.READ
             ),  # MemberRef method
             False,
         ),
@@ -841,20 +840,20 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         (
             "_039a6",
             "token=0x600001D",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=ACCESS_READ),  # MethodDef method
+            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
             True,
         ),
         (
             "_039a6",
             "token=0x600001C",
-            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=ACCESS_READ),  # MethodDef method
+            capa.features.insn.Property("StagelessHollow.Arac::Marka", access=FeatureAccess.READ),  # MethodDef method
             False,
         ),
         (
             "_039a6",
             "token=0x6000023",
             capa.features.insn.Property(
-                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=ACCESS_READ
+                "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=FeatureAccess.READ
             ),  # MemberRef method
             False,
         ),

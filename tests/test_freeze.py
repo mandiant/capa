@@ -148,7 +148,7 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("#11"))
     roundtrip_feature(capa.features.insn.OperandOffset(0, 0x8))
     roundtrip_feature(
-        capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.ACCESS_READ)
+        capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ)
     )
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 

@@ -574,6 +574,8 @@ def build_statements(d, scope: str):
 
     elif key.startswith("property/"):
         access = key[len("property/") :]
+        if access not in capa.features.common.VALID_FEATURE_ACCESS:
+            raise InvalidRule("unexpected %s access %s" % (key, access))
 
         value, description = parse_description(d[key], key, d.get("description"))
         try:

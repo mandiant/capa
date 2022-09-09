@@ -18,7 +18,7 @@ from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
-from capa.features.common import ACCESS_READ, ACCESS_WRITE
+from capa.features.common import FeatureAccess
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,9 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
 
 
 class DnType(object):
-    def __init__(self, token: int, class_: str, access: Optional[str] = None, namespace: str = "", member: str = ""):
+    def __init__(
+        self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None
+    ):
         self.token = token
         self.access = access
         self.namespace = namespace
@@ -87,10 +89,10 @@ class DnUnmanagedMethod:
         self.method: str = method
 
     def __hash__(self):
-        return hash((self.token,))
+        return hash((self.token, self.module, self.method))
 
     def __eq__(self, other):
-        return self.token == other.token
+        return self.token == other.token and self.module == other.module and self.method == other.method
 
     def __str__(self):
         return DnUnmanagedMethod.format_name(self.module, self.method)
@@ -168,7 +170,6 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
     for (rid, row) in enumerate(iter_dotnet_table(pe, "MemberRef")):
         if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
             continue
-
         token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
         yield DnType(token, row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name)
 
@@ -236,12 +237,18 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
             continue
 
         token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
-        access_type = ACCESS_WRITE if row.Semantics.msSetter else ACCESS_READ if row.Semantics.msGetter else None
+
+        if row.Semantics.msSetter:
+            access = FeatureAccess.WRITE
+        elif row.Semantics.msGetter:
+            access = FeatureAccess.READ
+        else:
+            access = None
 
         yield DnType(
             token,
             typedef_row.TypeName,
-            access=access_type,
+            access=access,
             namespace=typedef_row.TypeNamespace,
             member=row.Association.row.Name,
         )

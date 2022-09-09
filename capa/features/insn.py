@@ -8,7 +8,7 @@
 import abc
 from typing import Union, Optional
 
-from capa.features.common import Feature
+from capa.features.common import Feature, FeatureAccess
 
 
 def hex(n: int) -> str:

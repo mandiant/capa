@@ -23,12 +23,11 @@ from capa.features.common import (
     ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
-    ACCESS_READ,
-    ACCESS_WRITE,
     Arch,
     Format,
     String,
     Substring,
+    FeatureAccess,
 )
 
 
@@ -967,10 +966,10 @@ def test_property_access():
             """
         )
     )
-    assert r.evaluate({Property("System.IO.FileInfo::Length", access=ACCESS_READ): {1}}) == True
+    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {1}}) == True
 
     assert r.evaluate({Property("System.IO.FileInfo::Length"): {1}}) == False
-    assert r.evaluate({Property("System.IO.FileInfo::Length", access=ACCESS_WRITE): {1}}) == False
+    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {1}}) == False
 
 
 def test_property_access_symbol():
@@ -986,6 +985,8 @@ def test_property_access_symbol():
         )
     )
     assert (
-        r.evaluate({Property("System.IO.FileInfo::Length", access=ACCESS_READ, description="some property"): {1}})
+        r.evaluate(
+            {Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {1}}
+        )
         == True
     )

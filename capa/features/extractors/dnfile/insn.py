@@ -18,7 +18,7 @@ from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
-from capa.features.common import ACCESS_READ, ACCESS_WRITE, Class, String, Feature, Namespace, Characteristic
+from capa.features.common import Class, String, Feature, Namespace, FeatureAccess, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
@@ -124,16 +124,16 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     """parse instruction property features"""
     insn: Instruction = ih.inner
 
-    prop_name: Optional[str] = None
-    prop_access: Optional[str] = None
+    name: Optional[str] = None
+    access: Optional[str] = None
 
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         if insn.operand.table == METHODDEF_TABLE:
             # check if the method belongs to the MethodDef table and whether it is used to access a property
             prop = get_properties(fh.ctx).get(insn.operand.value, None)
             if prop is not None:
-                prop_name = str(prop)
-                prop_access = prop.access
+                name = str(prop)
+                access = prop.access
 
         elif insn.operand.table == MEMBERREF_TABLE:
             # if the method belongs to the MemberRef table, we assume it is used to access a property
@@ -145,33 +145,34 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             if not row.Name.startswith(("get_", "set_")):
                 return
 
-            prop_name = DnType.format_name(
+            name = DnType.format_name(
                 row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name[4:]
             )
             if row.Name.startswith("get_"):
-                prop_access = ACCESS_READ
+                access = FeatureAccess.READ
             elif row.Name.startswith("set_"):
-                prop_access = ACCESS_WRITE
+                access = FeatureAccess.WRITE
 
     elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
         if insn.operand.table == FIELD_TABLE:
             # determine whether the operand is a field by checking if it belongs to the Field table
             read_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
             if read_field:
-                prop_name = str(read_field)
-                prop_access = ACCESS_READ
+                name = str(read_field)
+                access = FeatureAccess.READ
 
     elif insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
         if insn.operand.table == FIELD_TABLE:
             # determine whether the operand is a field by checking if it belongs to the Field table
             write_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
             if write_field:
-                prop_name = str(write_field)
-                prop_access = ACCESS_WRITE
+                name = str(write_field)
+                access = FeatureAccess.WRITE
 
-    if prop_name is not None and prop_access is not None:
-        yield Property(prop_name, access=prop_access), ih.address
-        yield Property(prop_name), ih.address
+    if name is not None:
+        if access is not None:
+            yield Property(name, access=access), ih.address
+        yield Property(name), ih.address
 
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:

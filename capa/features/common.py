@@ -29,9 +29,12 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 THUNK_CHAIN_DEPTH_DELTA = 5
 
 
-ACCESS_READ = "read"
-ACCESS_WRITE = "write"
-VALID_ACCESS = (ACCESS_READ, ACCESS_WRITE)
+class FeatureAccess:
+    READ = "read"
+    WRITE = "write"
+
+
+VALID_FEATURE_ACCESS = (FeatureAccess.READ, FeatureAccess.WRITE)
 
 
 def bytes_to_str(b: bytes) -> str:
@@ -98,7 +101,10 @@ class Result:
 
 class Feature(abc.ABC):
     def __init__(
-        self, value: Union[str, int, float, bytes], access: Optional[str] = None, description: Optional[str] = None
+        self,
+        value: Union[str, int, float, bytes],
+        access: Optional[str] = None,
+        description: Optional[str] = None,
     ):
         """
         Args:
@@ -108,13 +114,7 @@ class Feature(abc.ABC):
         """
         super(Feature, self).__init__()
 
-        if access is not None:
-            if access not in VALID_ACCESS:
-                raise ValueError("access '%s' must be one of %s" % (access, VALID_ACCESS))
-            self.name = self.__class__.__name__.lower() + "/" + access
-        else:
-            self.name = self.__class__.__name__.lower()
-
+        self.name = self.__class__.__name__.lower()
         self.value = value
         self.access = access
         self.description = description
@@ -134,23 +134,30 @@ class Feature(abc.ABC):
             < capa.features.freeze.features.feature_from_capa(other).json()
         )
 
+    def get_name_str(self) -> str:
+        """
+        render the name of this feature, for use by `__str__` and friends.
+        subclasses should override to customize the rendering.
+        """
+        if self.access is not None:
+            return f"{self.name}/{self.access}"
+        return self.name
+
     def get_value_str(self) -> str:
         """
         render the value of this feature, for use by `__str__` and friends.
         subclasses should override to customize the rendering.
-
-        Returns: any
         """
         return str(self.value)
 
     def __str__(self):
         if self.value is not None:
             if self.description:
-                return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
+                return "%s(%s = %s)" % (self.get_name_str(), self.get_value_str(), self.description)
             else:
-                return "%s(%s)" % (self.name, self.get_value_str())
+                return "%s(%s)" % (self.get_name_str(), self.get_value_str())
         else:
-            return "%s" % self.name
+            return "%s" % self.get_name_str()
 
     def __repr__(self):
         return str(self)

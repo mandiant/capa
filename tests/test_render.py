@@ -17,7 +17,7 @@ def test_render_offset():
 
 def test_render_property():
     assert (
-        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.ACCESS_READ))
+        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ))
         == "property/read(System.IO.FileInfo::Length)"
     )
 
