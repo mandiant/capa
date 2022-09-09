@@ -129,7 +129,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         if insn.operand.table == METHODDEF_TABLE:
-            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
+            # check if the method belongs to the MethodDef table and whether it is used to access a property
             prop = get_properties(fh.ctx).get(insn.operand.value, None)
             if prop is not None:
                 prop_name = str(prop)
