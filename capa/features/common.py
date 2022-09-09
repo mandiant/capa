@@ -103,7 +103,6 @@ class Feature(abc.ABC):
     def __init__(
         self,
         value: Union[str, int, float, bytes],
-        access: Optional[str] = None,
         description: Optional[str] = None,
     ):
         """
@@ -116,14 +115,13 @@ class Feature(abc.ABC):
 
         self.name = self.__class__.__name__.lower()
         self.value = value
-        self.access = access
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, self.value, self.access))
+        return hash((self.name, self.value))
 
     def __eq__(self, other):
-        return self.name == other.name and self.access == other.access and self.value == other.value
+        return self.name == other.name and self.value == other.value
 
     def __lt__(self, other):
         # TODO: this is a huge hack!
@@ -139,8 +137,6 @@ class Feature(abc.ABC):
         render the name of this feature, for use by `__str__` and friends.
         subclasses should override to customize the rendering.
         """
-        if self.access is not None:
-            return f"{self.name}/{self.access}"
         return self.name
 
     def get_value_str(self) -> str:
