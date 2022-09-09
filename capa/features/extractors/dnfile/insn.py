@@ -108,7 +108,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
                 if get_properties(fh.ctx).get(insn.operand.value, None) is not None:
                     return
             elif insn.operand.table == MEMBERREF_TABLE:
-                """if the method belongs to the MemberRef table, we assume it is used to access a property"""
+                # if the method belongs to the MemberRef table, we assume it is used to access a property
                 return
 
         # like System.IO.File::Delete
