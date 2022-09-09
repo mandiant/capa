@@ -585,3 +585,38 @@ def test_match_operand_offset():
     # mismatching value
     _, matches = match([r], {capa.features.insn.OperandOffset(0, 0x11): {1, 2}}, 0x0)
     assert "test rule" not in matches
+
+
+def test_match_property_access():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - and:
+                    - property/read: System.IO.FileInfo::Length
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    assert capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.ACCESS_READ) in {
+        capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.ACCESS_READ)
+    }
+
+    _, matches = match(
+        [r], {capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.ACCESS_READ): {1, 2}}, 0x0
+    )
+    assert "test rule" in matches
+
+    # mismatching access
+    _, matches = match(
+        [r], {capa.features.insn.Property("System.IO.FileInfo::Length", capa.features.common.ACCESS_WRITE): {1, 2}}, 0x0
+    )
+    assert "test rule" not in matches
+
+    # mismatching value
+    _, matches = match(
+        [r], {capa.features.insn.Property("System.IO.FileInfo::Size", capa.features.common.ACCESS_READ): {1, 2}}, 0x0
+    )
+    assert "test rule" not in matches

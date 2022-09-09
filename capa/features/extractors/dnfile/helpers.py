@@ -18,6 +18,8 @@ from dncil.cil.error import MethodBodyFormatError
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
+from capa.features.common import ACCESS_READ, ACCESS_WRITE
+
 logger = logging.getLogger(__name__)
 
 # key indexes to dotnet metadata tables
@@ -42,63 +44,36 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
         return self.offset
 
 
-class DnClass(object):
-    def __init__(self, token: int, namespace: str, classname: str):
-        self.token: int = token
-        self.namespace: str = namespace
-        self.classname: str = classname
+class DnType(object):
+    def __init__(self, token: int, class_: str, access: Optional[str] = None, namespace: str = "", member: str = ""):
+        self.token = token
+        self.access = access
+        self.namespace = namespace
+        self.class_ = class_
+        self.member = member
 
     def __hash__(self):
-        return hash((self.token,))
+        return hash((self.token, self.access, self.namespace, self.class_, self.member))
 
     def __eq__(self, other):
-        return self.token == other.token
+        return (
+            self.token == other.token
+            and self.access == other.access
+            and self.namespace == other.namespace
+            and self.class_ == other.class_
+            and self.member == other.member
+        )
 
     def __str__(self):
-        return DnClass.format_name(self.namespace, self.classname)
+        return DnType.format_name(self.class_, namespace=self.namespace, member=self.member)
 
     def __repr__(self):
         return str(self)
 
     @staticmethod
-    def format_name(namespace: str, classname: str):
-        name: str = classname
-        if namespace:
-            # like System.IO.File::OpenRead
-            name = f"{namespace}.{name}"
-        return name
-
-
-class DnMethod(DnClass):
-    def __init__(self, token: int, namespace: str, classname: str, methodname: str):
-        super(DnMethod, self).__init__(token, namespace, classname)
-        self.methodname: str = methodname
-
-    def __str__(self):
-        return DnMethod.format_name(self.namespace, self.classname, self.methodname)
-
-    @staticmethod
-    def format_name(namespace: str, classname: str, methodname: str):  # type: ignore
+    def format_name(class_: str, namespace: str = "", member: str = ""):
         # like File::OpenRead
-        name: str = f"{classname}::{methodname}"
-        if namespace:
-            # like System.IO.File::OpenRead
-            name = f"{namespace}.{name}"
-        return name
-
-
-class DnProperty(DnClass):
-    def __init__(self, token: int, namespace: str, classname: str, propertyname: str):
-        super(DnProperty, self).__init__(token, namespace, classname)
-        self.propertyname: str = propertyname
-
-    def __str__(self):
-        return DnProperty.format_name(self.namespace, self.classname, self.propertyname)
-
-    @staticmethod
-    def format_name(namespace: str, classname: str, propertyname: str):  # type: ignore
-        # like File::OpenRead
-        name: str = f"{classname}::{propertyname}"
+        name: str = f"{class_}::{member}" if member else class_
         if namespace:
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
@@ -106,10 +81,10 @@ class DnProperty(DnClass):
 
 
 class DnUnmanagedMethod:
-    def __init__(self, token: int, modulename: str, methodname: str):
+    def __init__(self, token: int, module: str, method: str):
         self.token: int = token
-        self.modulename: str = modulename
-        self.methodname: str = methodname
+        self.module: str = module
+        self.method: str = method
 
     def __hash__(self):
         return hash((self.token,))
@@ -118,20 +93,14 @@ class DnUnmanagedMethod:
         return self.token == other.token
 
     def __str__(self):
-        return DnUnmanagedMethod.format_name(self.modulename, self.methodname)
+        return DnUnmanagedMethod.format_name(self.module, self.method)
 
     def __repr__(self):
         return str(self)
 
     @staticmethod
-    def format_name(modulename, methodname):
-        return f"{modulename}.{methodname}"
-
-
-class DnPropertyAccessType(Enum):
-    OTHER = 0
-    SET = 1
-    GET = 2
+    def format_name(module, method):
+        return f"{module}.{method}"
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
@@ -164,7 +133,7 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
     try:
         return CilMethodBody(DnfileMethodBodyReader(pe, row))
     except MethodBodyFormatError as e:
-        logger.warn("failed to parse managed method body @ 0x%08x (%s)" % (row.Rva, e))
+        logger.warning("failed to parse managed method body @ 0x%08x (%s)" % (row.Rva, e))
         return None
 
 
@@ -173,7 +142,7 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     try:
         user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
     except UnicodeDecodeError as e:
-        logger.warn("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
+        logger.warning("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
         return None
 
     if user_string is None:
@@ -182,7 +151,7 @@ def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str
     return user_string.value
 
 
-def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnMethod]:
+def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get managed imports from MemberRef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -201,10 +170,10 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnMethod]:
             continue
 
         token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
-        yield DnMethod(token, row.Class.row.TypeNamespace, row.Class.row.TypeName, row.Name)
+        yield DnType(token, row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name)
 
 
-def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
+def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get managed method names from TypeDef table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -218,15 +187,15 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnMethod]:
     for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.MethodList:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnMethod(token, row.TypeNamespace, row.TypeName, index.row.Name)
+            yield DnType(token, row.TypeName, namespace=row.TypeNamespace, member=index.row.Name)
 
 
-def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnProperty]:
+def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get fields from TypeDef table"""
     for row in iter_dotnet_table(pe, "TypeDef"):
         for index in row.FieldList:
             token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnProperty(token, row.TypeNamespace, row.TypeName, index.row.Name)
+            yield DnType(token, row.TypeName, namespace=row.TypeNamespace, member=index.row.Name)
 
 
 def get_dotnet_property_map(
@@ -250,7 +219,7 @@ def get_dotnet_property_map(
     return None
 
 
-def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Tuple[DnProperty, DnPropertyAccessType]]:
+def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get property from MethodSemantics table
 
     see https://www.ntcore.com/files/dotnetformat.htm
@@ -263,16 +232,19 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[Tuple[DnProperty, DnPrope
     """
     for row in iter_dotnet_table(pe, "MethodSemantics"):
         typedef_row = get_dotnet_property_map(pe, row.Association.row)
-        if typedef_row is not None:
-            token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
-            type = (
-                DnPropertyAccessType.SET
-                if row.Semantics.msSetter
-                else DnPropertyAccessType.GET
-                if row.Semantics.msGetter
-                else DnPropertyAccessType.OTHER
-            )
-            yield DnProperty(token, typedef_row.TypeNamespace, typedef_row.TypeName, row.Association.row.Name), type
+        if typedef_row is None:
+            continue
+
+        token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
+        access_type = ACCESS_WRITE if row.Semantics.msSetter else ACCESS_READ if row.Semantics.msGetter else None
+
+        yield DnType(
+            token,
+            typedef_row.TypeName,
+            access=access_type,
+            namespace=typedef_row.TypeNamespace,
+            member=row.Association.row.Name,
+        )
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
@@ -305,8 +277,8 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
             ImportScope (index into the ModuleRef table)
     """
     for row in iter_dotnet_table(pe, "ImplMap"):
-        modulename: str = row.ImportScope.row.Name
-        methodname: str = row.ImportName
+        module: str = row.ImportScope.row.Name
+        method: str = row.ImportName
 
         # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
         # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
@@ -314,11 +286,11 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
         token: int = calculate_dotnet_token_value(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
 
         # like Kernel32.dll
-        if modulename and "." in modulename:
-            modulename = modulename.split(".")[0]
+        if module and "." in module:
+            module = module.split(".")[0]
 
         # like kernel32.CreateFileA
-        yield DnUnmanagedMethod(token, modulename, methodname)
+        yield DnUnmanagedMethod(token, module, method)
 
 
 def calculate_dotnet_token_value(table: int, rid: int) -> int:

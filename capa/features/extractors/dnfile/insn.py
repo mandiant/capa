@@ -18,15 +18,12 @@ from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
-from capa.features.common import Class, String, Feature, Namespace, Characteristic
+from capa.features.common import ACCESS_READ, ACCESS_WRITE, Class, String, Feature, Namespace, Characteristic
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
-    DnClass,
-    DnMethod,
-    DnProperty,
+    DnType,
     DnUnmanagedMethod,
-    DnPropertyAccessType,
     get_dotnet_fields,
     resolve_dotnet_token,
     get_dotnet_properties,
@@ -65,14 +62,14 @@ def get_methods(ctx: Dict) -> Dict:
     return ctx["methods_cache"]
 
 
-def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None]:
+def get_callee(ctx: Dict, token: int) -> Union[DnType, DnUnmanagedMethod, None]:
     """map dotnet token to un/managed method"""
-    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
-    if not callee:
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
+    if callee is None:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
         callee = get_unmanaged_imports(ctx).get(token, None)
-        if not callee:
+        if callee is None:
             callee = get_methods(ctx).get(token, None)
     return callee
 
@@ -80,9 +77,8 @@ def get_callee(ctx: Dict, token: int) -> Union[DnMethod, DnUnmanagedMethod, None
 def get_properties(ctx: Dict) -> Dict:
     if "properties_cache" not in ctx:
         ctx["properties_cache"] = {}
-        for property, access_type in get_dotnet_properties(ctx["pe"]):
-            if property is not None:
-                ctx["properties_cache"][property.token] = (property, access_type)
+        for prop in get_dotnet_properties(ctx["pe"]):
+            ctx["properties_cache"][prop.token] = prop
     return ctx["properties_cache"]
 
 
@@ -101,84 +97,81 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
     if callee is None:
         return
 
-    if callee.methodname.startswith(("get_", "set_")):
-        if Token(insn.operand.value).table == METHODDEF_TABLE:
-            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
-            row: Optional[Tuple[DnProperty, DnPropertyAccessType]] = get_properties(fh.ctx).get(
-                insn.operand.value, None
-            )
-            if row is not None:
+    if isinstance(callee, DnType):
+        if callee.member.startswith(("get_", "set_")):
+            if insn.operand.table == METHODDEF_TABLE:
+                """check if the method belongs to the MethodDef table and whether it is used to access a property"""
+                if get_properties(fh.ctx).get(insn.operand.value, None) is not None:
+                    return
+            elif insn.operand.table == MEMBERREF_TABLE:
+                """if the method belongs to the MemberRef table, we assume it is used to access a property"""
                 return
-        elif Token(insn.operand.value).table == MEMBERREF_TABLE:
-            """if the method belongs to the MemberRef table, we assume it is used to access a property"""
-            return
 
-    if isinstance(callee, DnUnmanagedMethod):
-        # like kernel32.CreateFileA
-        for name in capa.features.extractors.helpers.generate_symbols(callee.modulename, callee.methodname):
-            yield API(name), ih.address
-    else:
         # like System.IO.File::Delete
         yield API(str(callee)), ih.address
+
+    else:
+        # like kernel32.CreateFileA
+        for name in capa.features.extractors.helpers.generate_symbols(callee.module, callee.method):
+            yield API(name), ih.address
 
 
 def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction property features"""
     insn: Instruction = ih.inner
 
-    if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        token: Token = Token(insn.operand.value)
-        if token.table == METHODDEF_TABLE:
-            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
-            property, type = get_properties(fh.ctx).get(insn.operand.value, (None, None))
-            if property is None:
-                return
-            if type == DnPropertyAccessType.SET:
-                yield Property(str(property), "property/write"), ih.address
-            elif type == DnPropertyAccessType.GET:
-                yield Property(str(property), "property/read"), ih.address
+    prop_name: Optional[str] = None
+    prop_access: Optional[str] = None
 
-        elif token.table == MEMBERREF_TABLE:
+    if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        if insn.operand.table == METHODDEF_TABLE:
+            """check if the method belongs to the MethodDef table and whether it is used to access a property"""
+            prop = get_properties(fh.ctx).get(insn.operand.value, None)
+            if prop is not None:
+                prop_name = str(prop)
+                prop_access = prop.access
+
+        elif insn.operand.table == MEMBERREF_TABLE:
             """if the method belongs to the MemberRef table, we assume it is used to access a property"""
-            row: Any = resolve_dotnet_token(fh.ctx["pe"], token)
+            row: Any = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
             if row is None:
                 return
             if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
                 return
+            if not row.Name.startswith(("get_", "set_")):
+                return
+
+            prop_name = DnType.format_name(
+                row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name[4:]
+            )
             if row.Name.startswith("get_"):
-                name = row.Name[4:]
-                yield Property(
-                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name), "property/read"
-                ), ih.address
+                prop_access = ACCESS_READ
             elif row.Name.startswith("set_"):
-                name = row.Name[4:]
-                yield Property(
-                    DnProperty.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName, name), "property/write"
-                ), ih.address
-            else:
-                return
+                prop_access = ACCESS_WRITE
 
-    if insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
-        read_field_token: Token = Token(insn.operand.value)
-        if read_field_token.table == FIELD_TABLE:
+    elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
+        if insn.operand.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
-            read_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
-            if read_field is None:
-                return
-            yield Property(str(read_field), "property/read"), ih.address
+            read_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if read_field:
+                prop_name = str(read_field)
+                prop_access = ACCESS_READ
 
-    if insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
-        write_field_token: Token = Token(insn.operand.value)
-        if write_field_token.table == FIELD_TABLE:
+    elif insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
+        if insn.operand.table == FIELD_TABLE:
             """determine whether the operand is a field by checking if it belongs to the Field table"""
-            write_field: Optional[DnProperty] = get_fields(fh.ctx).get(insn.operand.value, None)
-            if write_field is None:
-                return
-            yield Property(str(write_field), "property/write"), ih.address
+            write_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
+            if write_field:
+                prop_name = str(write_field)
+                prop_access = ACCESS_WRITE
+
+    if prop_name is not None and prop_access is not None:
+        yield Property(prop_name, access=prop_access), ih.address
+        yield Property(prop_name), ih.address
 
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
@@ -197,21 +190,20 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
     ):
         return
 
-    row: Any = resolve_dotnet_token(fh.ctx["pe"], Token(ih.inner.operand.value))
+    row: Any = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
     if isinstance(row, dnfile.mdtable.MemberRefRow):
         if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-            yield Class(DnClass.format_name(row.Class.row.TypeNamespace, row.Class.row.TypeName)), ih.address
+            yield Class(DnType.format_name(row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace)), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
-        if isinstance(callee, DnMethod):
-            yield Class(DnClass.format_name(callee.namespace, callee.classname)), ih.address
+        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
+        if isinstance(callee, DnType):
+            yield Class(DnType.format_name(callee.class_, namespace=callee.namespace)), ih.address
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
-        field: Optional[DnProperty] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-        if field is None:
-            return
-        yield Class(DnClass.format_name(field.namespace, field.classname)), ih.address
+        field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if field is not None:
+            yield Class(DnType.format_name(field.class_, namespace=field.namespace)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
@@ -238,17 +230,14 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
                 yield Namespace(row.Class.row.TypeNamespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        callee: Union[DnMethod, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
-        if isinstance(callee, DnMethod):
-            if callee.namespace is None:
-                return
+        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
+        if isinstance(callee, DnType) and callee.namespace is not None:
             yield Namespace(callee.namespace), ih.address
 
     elif isinstance(row, dnfile.mdtable.FieldRow):
-        field: Optional[DnProperty] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-        if field is None:
-            return
-        yield Namespace(field.namespace), ih.address
+        field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if field is not None:
+            yield Namespace(field.namespace), ih.address
 
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

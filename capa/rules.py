@@ -292,7 +292,7 @@ def parse_feature(key: str):
         return capa.features.common.Class
     elif key == "namespace":
         return capa.features.common.Namespace
-    elif key == "property/read" or key == "property/write":
+    elif key == "property":
         return capa.features.insn.Property
     else:
         raise InvalidRule("unexpected statement: %s" % key)
@@ -571,10 +571,13 @@ def build_statements(d, scope: str):
         or (key == "arch" and d[key] not in capa.features.common.VALID_ARCH)
     ):
         raise InvalidRule("unexpected %s value %s" % (key, d[key]))
-    elif key == "property/read" or key == "property/write":
+
+    elif key.startswith("property/"):
+        access = key[len("property/") :]
+
+        value, description = parse_description(d[key], key, d.get("description"))
         try:
-            value, description = parse_description(d[key], key, d.get("description"))
-            feature = capa.features.insn.Property(value, key, description=description)
+            feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
             raise InvalidRule(str(e))
         ensure_feature_valid_for_scope(scope, feature)

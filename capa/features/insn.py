@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import abc
-from typing import Union
+from typing import Union, Optional
 
 from capa.features.common import Feature
 
@@ -25,9 +25,8 @@ class API(Feature):
 
 
 class Property(Feature):
-    def __init__(self, name: str, access: str, description=None):
-        super(Property, self).__init__(name, description=description)
-        self.name = access
+    def __init__(self, name: str, access: Optional[str] = None, description=None):
+        super(Property, self).__init__(name, access=access, description=description)
 
 
 class Number(Feature):

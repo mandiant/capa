@@ -29,6 +29,11 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 THUNK_CHAIN_DEPTH_DELTA = 5
 
 
+ACCESS_READ = "read"
+ACCESS_WRITE = "write"
+VALID_ACCESS = (ACCESS_READ, ACCESS_WRITE)
+
+
 def bytes_to_str(b: bytes) -> str:
     return str(codecs.encode(b, "hex").decode("utf-8"))
 
@@ -92,23 +97,32 @@ class Result:
 
 
 class Feature(abc.ABC):
-    def __init__(self, value: Union[str, int, float, bytes], description=None):
+    def __init__(
+        self, value: Union[str, int, float, bytes], access: Optional[str] = None, description: Optional[str] = None
+    ):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
           description (str): a human-readable description that explains the feature value.
         """
         super(Feature, self).__init__()
-        self.name = self.__class__.__name__.lower()
+
+        if access is not None:
+            if access not in VALID_ACCESS:
+                raise ValueError("access '%s' must be one of %s" % (access, VALID_ACCESS))
+            self.name = self.__class__.__name__.lower() + "/" + access
+        else:
+            self.name = self.__class__.__name__.lower()
 
         self.value = value
+        self.access = access
         self.description = description
 
     def __hash__(self):
-        return hash((self.name, self.value))
+        return hash((self.name, self.value, self.access))
 
     def __eq__(self, other):
-        return self.name == other.name and self.value == other.value
+        return self.name == other.name and self.access == other.access and self.value == other.value
 
     def __lt__(self, other):
         # TODO: this is a huge hack!
