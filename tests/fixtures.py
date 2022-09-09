@@ -771,6 +771,12 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ),  # MemberRef method
         (
             "_1c444",
+            "token=0x600002B",
+            capa.features.insn.Property("System.IO.FileInfo::Length"),
+            True,
+        ),  # MemberRef method
+        (
+            "_1c444",
             "token=0x6000081",
             capa.features.insn.API("System.Diagnostics.Process::Start"),
             True,
