@@ -104,7 +104,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if isinstance(callee, DnType):
         if callee.member.startswith(("get_", "set_")):
             if insn.operand.table == METHODDEF_TABLE:
-                """check if the method belongs to the MethodDef table and whether it is used to access a property"""
+                # check if the method belongs to the MethodDef table and whether it is used to access a property
                 if get_properties(fh.ctx).get(insn.operand.value, None) is not None:
                     return
             elif insn.operand.table == MEMBERREF_TABLE:
