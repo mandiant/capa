@@ -29,6 +29,14 @@ MAX_BYTES_FEATURE_SIZE = 0x100
 THUNK_CHAIN_DEPTH_DELTA = 5
 
 
+class FeatureAccess:
+    READ = "read"
+    WRITE = "write"
+
+
+VALID_FEATURE_ACCESS = (FeatureAccess.READ, FeatureAccess.WRITE)
+
+
 def bytes_to_str(b: bytes) -> str:
     return str(codecs.encode(b, "hex").decode("utf-8"))
 
@@ -92,15 +100,19 @@ class Result:
 
 
 class Feature(abc.ABC):
-    def __init__(self, value: Union[str, int, float, bytes], description=None):
+    def __init__(
+        self,
+        value: Union[str, int, float, bytes],
+        description: Optional[str] = None,
+    ):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
           description (str): a human-readable description that explains the feature value.
         """
         super(Feature, self).__init__()
-        self.name = self.__class__.__name__.lower()
 
+        self.name = self.__class__.__name__.lower()
         self.value = value
         self.description = description
 
@@ -119,23 +131,28 @@ class Feature(abc.ABC):
             < capa.features.freeze.features.feature_from_capa(other).json()
         )
 
+    def get_name_str(self) -> str:
+        """
+        render the name of this feature, for use by `__str__` and friends.
+        subclasses should override to customize the rendering.
+        """
+        return self.name
+
     def get_value_str(self) -> str:
         """
         render the value of this feature, for use by `__str__` and friends.
         subclasses should override to customize the rendering.
-
-        Returns: any
         """
         return str(self.value)
 
     def __str__(self):
         if self.value is not None:
             if self.description:
-                return "%s(%s = %s)" % (self.name, self.get_value_str(), self.description)
+                return "%s(%s = %s)" % (self.get_name_str(), self.get_value_str(), self.description)
             else:
-                return "%s(%s)" % (self.name, self.get_value_str())
+                return "%s(%s)" % (self.get_name_str(), self.get_value_str())
         else:
-            return "%s" % self.name
+            return "%s" % self.get_name_str()
 
     def __repr__(self):
         return str(self)

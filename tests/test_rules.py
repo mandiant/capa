@@ -14,7 +14,7 @@ import capa.rules
 import capa.engine
 import capa.features.common
 from capa.features.file import FunctionName
-from capa.features.insn import Number, Offset
+from capa.features.insn import Number, Offset, Property
 from capa.features.common import (
     OS,
     OS_LINUX,
@@ -27,6 +27,7 @@ from capa.features.common import (
     Format,
     String,
     Substring,
+    FeatureAccess,
 )
 
 
@@ -951,3 +952,41 @@ def test_arch_features():
     children = list(r.statement.get_children())
     assert (Arch(ARCH_AMD64) in children) == True
     assert (Arch(ARCH_I386) not in children) == True
+
+
+def test_property_access():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - property/read: System.IO.FileInfo::Length
+            """
+        )
+    )
+    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {1}}) == True
+
+    assert r.evaluate({Property("System.IO.FileInfo::Length"): {1}}) == False
+    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {1}}) == False
+
+
+def test_property_access_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - property/read: System.IO.FileInfo::Length = some property
+            """
+        )
+    )
+    assert (
+        r.evaluate(
+            {Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {1}}
+        )
+        == True
+    )

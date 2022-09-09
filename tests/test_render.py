@@ -15,6 +15,13 @@ def test_render_offset():
     assert str(capa.features.insn.Offset(1)) == "offset(0x1)"
 
 
+def test_render_property():
+    assert (
+        str(capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ))
+        == "property/read(System.IO.FileInfo::Length)"
+    )
+
+
 def test_render_meta_attack():
     # Persistence::Boot or Logon Autostart Execution::Registry Run Keys / Startup Folder [T1547.001]
     id = "T1543.003"

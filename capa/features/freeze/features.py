@@ -66,6 +66,9 @@ class FeatureModel(BaseModel):
         elif isinstance(self, APIFeature):
             return capa.features.insn.API(self.api, description=self.description)
 
+        elif isinstance(self, PropertyFeature):
+            return capa.features.insn.Property(self.property, access=self.access, description=self.description)
+
         elif isinstance(self, NumberFeature):
             return capa.features.insn.Number(self.number, description=self.description)
 
@@ -146,6 +149,9 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
 
     elif isinstance(f, capa.features.insn.API):
         return APIFeature(api=f.value, description=f.description)
+
+    elif isinstance(f, capa.features.insn.Property):
+        return PropertyFeature(property=f.value, access=f.access, description=f.description)
 
     elif isinstance(f, capa.features.insn.Number):
         return NumberFeature(number=f.value, description=f.description)
@@ -266,6 +272,13 @@ class APIFeature(FeatureModel):
     description: Optional[str]
 
 
+class PropertyFeature(FeatureModel):
+    type: str = "property"
+    access: Optional[str]
+    property: str
+    description: Optional[str]
+
+
 class NumberFeature(FeatureModel):
     type: str = "number"
     number: Union[int, float]
@@ -320,6 +333,7 @@ Feature = Union[
     ClassFeature,
     NamespaceFeature,
     APIFeature,
+    PropertyFeature,
     NumberFeature,
     BytesFeature,
     OffsetFeature,

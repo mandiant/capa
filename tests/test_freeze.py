@@ -147,6 +147,10 @@ def test_serialize_features():
     roundtrip_feature(capa.features.file.Import("kernel32.IsWow64Process"))
     roundtrip_feature(capa.features.file.Import("#11"))
     roundtrip_feature(capa.features.insn.OperandOffset(0, 0x8))
+    roundtrip_feature(
+        capa.features.insn.Property("System.IO.FileInfo::Length", access=capa.features.common.FeatureAccess.READ)
+    )
+    roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 
 
 def test_freeze_sample(tmpdir, z9324d_extractor):

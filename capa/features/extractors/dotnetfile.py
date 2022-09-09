@@ -24,7 +24,7 @@ from capa.features.common import (
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
-    DnClass,
+    DnType,
     iter_dotnet_table,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
@@ -47,7 +47,7 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
 
     for imp in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
-        for name in capa.features.extractors.helpers.generate_symbols(imp.modulename, imp.methodname):
+        for name in capa.features.extractors.helpers.generate_symbols(imp.module, imp.method):
             yield Import(name), DNTokenAddress(imp.token)
 
 
@@ -80,11 +80,11 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
     """emit class features from TypeRef and TypeDef tables"""
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
-        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), DNTokenAddress(token)
+        yield Class(DnType.format_name(row.TypeName, namespace=row.TypeNamespace)), DNTokenAddress(token)
 
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
-        yield Class(DnClass.format_name(row.TypeNamespace, row.TypeName)), DNTokenAddress(token)
+        yield Class(DnType.format_name(row.TypeName, namespace=row.TypeNamespace)), DNTokenAddress(token)
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:

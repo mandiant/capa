@@ -131,7 +131,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     if isinstance(feature, frzf.ImportFeature):
         # fixup access to Python reserved name
         value = feature.import_
-    if isinstance(feature, frzf.ClassFeature):
+    elif isinstance(feature, frzf.ClassFeature):
         value = feature.class_
     else:
         # convert attributes to dictionary using aliased names, if applicable
@@ -151,6 +151,11 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
             value = hex(value)
 
         ostream.write(key)
+
+        if isinstance(feature, frzf.PropertyFeature):
+            if feature.access is not None:
+                ostream.write("/" + feature.access)
+
         ostream.write(": ")
 
         if value:

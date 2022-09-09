@@ -6,9 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import abc
-from typing import Union
+from typing import Union, Optional
 
-from capa.features.common import Feature
+from capa.features.common import VALID_FEATURE_ACCESS, Feature
 
 
 def hex(n: int) -> str:
@@ -22,6 +22,32 @@ def hex(n: int) -> str:
 class API(Feature):
     def __init__(self, name: str, description=None):
         super(API, self).__init__(name, description=description)
+
+
+class _AccessFeature(Feature, abc.ABC):
+    # superclass: don't use directly
+    def __init__(self, value: str, access: Optional[str] = None, description: Optional[str] = None):
+        super(_AccessFeature, self).__init__(value, description=description)
+        if access is not None:
+            if access not in VALID_FEATURE_ACCESS:
+                raise ValueError("%s access type %s not valid" % (self.name, access))
+        self.access = access
+
+    def __hash__(self):
+        return hash((self.name, self.value, self.access))
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.access == other.access
+
+    def get_name_str(self) -> str:
+        if self.access is not None:
+            return f"{self.name}/{self.access}"
+        return self.name
+
+
+class Property(_AccessFeature):
+    def __init__(self, value: str, access: Optional[str] = None, description=None):
+        super(Property, self).__init__(value, access=access, description=description)
 
 
 class Number(Feature):
