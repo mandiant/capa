@@ -108,7 +108,6 @@ class Feature(abc.ABC):
         """
         Args:
           value (any): the value of the feature, such as the number or string.
-          access (str): set if feature is read or written
           description (str): a human-readable description that explains the feature value.
         """
         super(Feature, self).__init__()
