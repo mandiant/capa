@@ -45,9 +45,7 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
 
 
 class DnType(object):
-    def __init__(
-        self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None
-    ):
+    def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
         self.token = token
         self.access = access
         self.namespace = namespace
