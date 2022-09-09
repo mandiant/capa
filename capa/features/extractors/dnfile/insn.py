@@ -136,7 +136,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 prop_access = prop.access
 
         elif insn.operand.table == MEMBERREF_TABLE:
-            """if the method belongs to the MemberRef table, we assume it is used to access a property"""
+            # if the method belongs to the MemberRef table, we assume it is used to access a property
             row: Any = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
             if row is None:
                 return
