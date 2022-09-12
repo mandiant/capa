@@ -15,7 +15,7 @@ requirements = [
     "pyyaml==6.0",
     "tabulate==0.8.9",
     "colorama==0.4.5",
-    "termcolor==1.1.0",
+    "termcolor==2.0.1",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.5",
