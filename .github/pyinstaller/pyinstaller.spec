@@ -17,6 +17,7 @@ version = (
     .decode("utf-8")
     .strip()
     .replace("tags/", "")
+    .lstrip("v")
 )
 # when invoking pyinstaller from the project root, this gets run from the project root.
 with open("./capa/version.py", "r", encoding="utf-8") as f:
