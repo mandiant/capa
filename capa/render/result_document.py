@@ -165,7 +165,7 @@ class RangeStatement(StatementModel):
 class SubscopeStatement(StatementModel):
     type = "subscope"
     description: Optional[str]
-    scope = capa.rules.Scope
+    scope: capa.rules.Scope
 
 
 Statement = Union[
@@ -182,6 +182,12 @@ Statement = Union[
 class StatementNode(FrozenModel):
     type = "statement"
     statement: Statement
+
+    class Config:
+        # Note! we incur a performance penalty using smart_union because Pydantic checks
+        # all allowed types before even trying to coerce
+        # see https://pydantic-docs.helpmanual.io/usage/model_config/#smart-union
+        smart_union = True
 
 
 def statement_from_capa(node: capa.engine.Statement) -> Statement:
@@ -225,6 +231,12 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
 class FeatureNode(FrozenModel):
     type = "feature"
     feature: frz.Feature
+
+    class Config:
+        # Note! we incur a performance penalty using smart_union because Pydantic checks
+        # all allowed types before even trying to coerce
+        # see https://pydantic-docs.helpmanual.io/usage/model_config/#smart-union
+        smart_union = True
 
 
 Node = Union[StatementNode, FeatureNode]

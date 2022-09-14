@@ -87,7 +87,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
         # so, we have to inline some of the feature rendering here.
 
         child = statement.child
-        value = getattr(child, child.type)
+        value = child.dict(by_alias=True).get(child.type)
 
         if value:
             if isinstance(child, frzf.StringFeature):
