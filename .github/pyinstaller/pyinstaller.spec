@@ -6,31 +6,6 @@ import subprocess
 import wcwidth
 
 
-# git output will look like:
-#
-#     tags/v1.0.0-0-g3af38dc
-#         ------- tag
-#                 - commits since
-#                   g------- git hash fragment
-version = (
-    subprocess.check_output(["git", "describe", "--always", "--tags", "--long"])
-    .decode("utf-8")
-    .strip()
-    .replace("tags/", "")
-)
-# when invoking pyinstaller from the project root, this gets run from the project root.
-with open("./capa/version.py", "r", encoding="utf-8") as f:
-    lines = f.read()
-# version.py contains the version string and other helper functions
-# here we manually replace the version value substring with the result of the above git output
-VERSION_DEF = "__version__ = "
-s = lines.index(VERSION_DEF)
-e = s + len(VERSION_DEF)
-off_rest_file = e + lines[e:].index("\n")
-lines = lines[s:e] + f'"{version}"' + lines[off_rest_file:]
-with open("./capa/version.py", "w", encoding="utf-8") as f:
-    f.write(lines)
-
 a = Analysis(
     # when invoking pyinstaller from the project root,
     # this gets invoked from the directory of the spec file,

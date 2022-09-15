@@ -21,6 +21,7 @@
 - render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
 - decouple Token dependency / extractor and features #1139 @mr-tz
 - use pydantic smart unions to guarantee type coercion #1176 @mike-hunhoff
+- do not overwrite version in version.py during PyInstaller build #1169 @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
