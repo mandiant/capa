@@ -15,7 +15,7 @@ requirements = [
     "pyyaml==6.0",
     "tabulate==0.8.9",
     "colorama==0.4.5",
-    "termcolor==1.1.0",
+    "termcolor==2.0.1",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.5",
@@ -28,7 +28,7 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.12.0",
     "dncil==1.0.1",
-    "pydantic==1.10.1",
+    "pydantic==1.10.2",
 ]
 
 # this sets __version__
@@ -90,7 +90,7 @@ setuptools.setup(
             "types_requests==2.28.1",
         ],
         "build": [
-            "pyinstaller==5.3",
+            "pyinstaller==5.4.1",
         ],
     },
     zip_safe=False,
