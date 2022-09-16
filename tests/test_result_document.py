@@ -19,7 +19,8 @@ def test_optional_node_from_capa():
             [],
         )
     )
-    assert isinstance(node.statement, rdoc.OptionalStatement)
+    assert isinstance(node.statement, rdoc.CompoundStatement)
+    assert node.statement.type == rdoc.CompoundStatementType.OPTIONAL
 
 
 def test_some_node_from_capa():
@@ -61,7 +62,8 @@ def test_and_node_from_capa():
             ],
         )
     )
-    assert isinstance(node.statement, rdoc.AndStatement)
+    assert isinstance(node.statement, rdoc.CompoundStatement)
+    assert node.statement.type == rdoc.CompoundStatementType.AND
 
 
 def test_or_node_from_capa():
@@ -72,7 +74,8 @@ def test_or_node_from_capa():
             ],
         )
     )
-    assert isinstance(node.statement, rdoc.OrStatement)
+    assert isinstance(node.statement, rdoc.CompoundStatement)
+    assert node.statement.type == rdoc.CompoundStatementType.OR
 
 
 def test_not_node_from_capa():
@@ -83,7 +86,8 @@ def test_not_node_from_capa():
             ],
         )
     )
-    assert isinstance(node.statement, rdoc.NotStatement)
+    assert isinstance(node.statement, rdoc.CompoundStatement)
+    assert node.statement.type == rdoc.CompoundStatementType.NOT
 
 
 def test_os_node_from_capa():

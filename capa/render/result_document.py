@@ -124,22 +124,19 @@ class Metadata(FrozenModel):
         )
 
 
+class CompoundStatementType:
+    AND = "and"
+    OR = "or"
+    NOT = "not"
+    OPTIONAL = "optional"
+
+
 class StatementModel(FrozenModel):
     ...
 
 
-class AndStatement(StatementModel):
-    type = "and"
-    description: Optional[str]
-
-
-class OrStatement(StatementModel):
-    type = "or"
-    description: Optional[str]
-
-
-class NotStatement(StatementModel):
-    type = "not"
+class CompoundStatement(StatementModel):
+    type: str
     description: Optional[str]
 
 
@@ -147,11 +144,6 @@ class SomeStatement(StatementModel):
     type = "some"
     description: Optional[str]
     count: int
-
-
-class OptionalStatement(StatementModel):
-    type = "optional"
-    description: Optional[str]
 
 
 class RangeStatement(StatementModel):
@@ -169,13 +161,11 @@ class SubscopeStatement(StatementModel):
 
 
 Statement = Union[
-    OptionalStatement,
-    AndStatement,
-    OrStatement,
-    NotStatement,
-    SomeStatement,
+    # Note! order matters, see #1161
     RangeStatement,
+    SomeStatement,
     SubscopeStatement,
+    CompoundStatement,
 ]
 
 
@@ -183,26 +173,14 @@ class StatementNode(FrozenModel):
     type = "statement"
     statement: Statement
 
-    class Config:
-        # Note! we incur a performance penalty using smart_union because Pydantic checks
-        # all allowed types before even trying to coerce
-        # see https://pydantic-docs.helpmanual.io/usage/model_config/#smart-union
-        smart_union = True
-
 
 def statement_from_capa(node: capa.engine.Statement) -> Statement:
-    if isinstance(node, capa.engine.And):
-        return AndStatement(description=node.description)
-
-    elif isinstance(node, capa.engine.Or):
-        return OrStatement(description=node.description)
-
-    elif isinstance(node, capa.engine.Not):
-        return NotStatement(description=node.description)
+    if isinstance(node, (capa.engine.And, capa.engine.Or, capa.engine.Not)):
+        return CompoundStatement(type=node.__class__.__name__.lower(), description=node.description)
 
     elif isinstance(node, capa.engine.Some):
         if node.count == 0:
-            return OptionalStatement(description=node.description)
+            return CompoundStatement(type=CompoundStatementType.OPTIONAL, description=node.description)
 
         else:
             return SomeStatement(
@@ -231,12 +209,6 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
 class FeatureNode(FrozenModel):
     type = "feature"
     feature: frz.Feature
-
-    class Config:
-        # Note! we incur a performance penalty using smart_union because Pydantic checks
-        # all allowed types before even trying to coerce
-        # see https://pydantic-docs.helpmanual.io/usage/model_config/#smart-union
-        smart_union = True
 
 
 Node = Union[StatementNode, FeatureNode]

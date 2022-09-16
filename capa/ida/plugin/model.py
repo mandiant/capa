@@ -365,12 +365,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param doc: result doc
         """
 
-        if isinstance(statement, (rd.AndStatement, rd.OrStatement, rd.OptionalStatement)):
-            display = statement.type
-            if statement.description:
-                display += " (%s)" % statement.description
-            return CapaExplorerDefaultItem(parent, display)
-        elif isinstance(statement, rd.NotStatement):
+        if isinstance(statement, rd.CompoundStatement):
+            if statement.type != rd.CompoundStatementType.NOT:
+                display = statement.type
+                if statement.description:
+                    display += " (%s)" % statement.description
+                return CapaExplorerDefaultItem(parent, display)
+        elif isinstance(statement, rd.CompoundStatement) and statement.type == rd.CompoundStatementType.NOT:
             # TODO: do we display 'not'
             pass
         elif isinstance(statement, rd.SomeStatement):
@@ -424,7 +425,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return
 
         # optional statement with no successful children is empty
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.OptionalStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
             if not any(map(lambda m: m.success, match.children)):
                 return
 

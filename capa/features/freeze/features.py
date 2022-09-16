@@ -325,7 +325,6 @@ Feature = Union[
     CharacteristicFeature,
     ExportFeature,
     ImportFeature,
-    BasicBlockFeature,
     SectionFeature,
     FunctionNameFeature,
     SubstringFeature,
@@ -341,4 +340,6 @@ Feature = Union[
     MnemonicFeature,
     OperandNumberFeature,
     OperandOffsetFeature,
+    # Note! this must be last, see #1161
+    BasicBlockFeature,
 ]
