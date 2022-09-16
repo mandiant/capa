@@ -525,7 +525,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param feature: capa feature read from doc
         """
         key = feature.type
-        value = getattr(feature, feature.type)
+        value = feature.dict(by_alias=True).get(feature.type)
 
         if value:
             if isinstance(feature, frzf.StringFeature):
