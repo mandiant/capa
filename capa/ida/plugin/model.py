@@ -639,6 +639,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 frzf.MnemonicFeature,
                 frzf.NumberFeature,
                 frzf.OffsetFeature,
+                frzf.OperandNumberFeature,
+                frzf.OperandOffsetFeature,
             ),
         ):
             # display instruction preview
