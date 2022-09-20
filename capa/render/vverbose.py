@@ -64,7 +64,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
             ostream.write(" = %s" % statement.description)
         ostream.writeln("")
 
-    elif isinstance(statement, (rd.AndStatement, rd.OrStatement, rd.OptionalStatement, rd.NotStatement)):
+    elif isinstance(statement, (rd.CompoundStatement)):
         # emit `and:`  `or:`  `optional:`  `not:`
         ostream.write(statement.type)
 
@@ -87,7 +87,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
         # so, we have to inline some of the feature rendering here.
 
         child = statement.child
-        value = getattr(child, child.type)
+        value = child.dict(by_alias=True).get(child.type)
 
         if value:
             if isinstance(child, frzf.StringFeature):
@@ -211,12 +211,12 @@ def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
             return
 
         # optional statement with no successful children is empty
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.OptionalStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
             if not any(map(lambda m: m.success, match.children)):
                 return
 
         # not statement, so invert the child mode to show failed evaluations
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.NotStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
             child_mode = MODE_FAILURE
 
     elif mode == MODE_FAILURE:
@@ -225,12 +225,12 @@ def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
             return
 
         # optional statement with successful children is not relevant
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.OptionalStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
             if any(map(lambda m: m.success, match.children)):
                 return
 
         # not statement, so invert the child mode to show successful evaluations
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.NotStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.NOT:
             child_mode = MODE_SUCCESS
     else:
         raise RuntimeError("unexpected mode: " + mode)

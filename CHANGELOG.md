@@ -20,6 +20,7 @@
 ### Bug Fixes
 - render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
 - decouple Token dependency / extractor and features #1139 @mr-tz
+- update pydantic model to guarantee type coercion #1176 @mike-hunhoff
 - do not overwrite version in version.py during PyInstaller build #1169 @mr-tz
 
 ### capa explorer IDA Pro plugin

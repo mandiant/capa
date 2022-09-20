@@ -365,12 +365,13 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param doc: result doc
         """
 
-        if isinstance(statement, (rd.AndStatement, rd.OrStatement, rd.OptionalStatement)):
-            display = statement.type
-            if statement.description:
-                display += " (%s)" % statement.description
-            return CapaExplorerDefaultItem(parent, display)
-        elif isinstance(statement, rd.NotStatement):
+        if isinstance(statement, rd.CompoundStatement):
+            if statement.type != rd.CompoundStatementType.NOT:
+                display = statement.type
+                if statement.description:
+                    display += " (%s)" % statement.description
+                return CapaExplorerDefaultItem(parent, display)
+        elif isinstance(statement, rd.CompoundStatement) and statement.type == rd.CompoundStatementType.NOT:
             # TODO: do we display 'not'
             pass
         elif isinstance(statement, rd.SomeStatement):
@@ -424,7 +425,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             return
 
         # optional statement with no successful children is empty
-        if isinstance(match.node, rd.StatementNode) and isinstance(match.node.statement, rd.OptionalStatement):
+        if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
             if not any(map(lambda m: m.success, match.children)):
                 return
 
@@ -524,7 +525,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         @param feature: capa feature read from doc
         """
         key = feature.type
-        value = getattr(feature, feature.type)
+        value = feature.dict(by_alias=True).get(feature.type)
 
         if value:
             if isinstance(feature, frzf.StringFeature):
@@ -638,6 +639,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 frzf.MnemonicFeature,
                 frzf.NumberFeature,
                 frzf.OffsetFeature,
+                frzf.OperandNumberFeature,
+                frzf.OperandOffsetFeature,
             ),
         ):
             # display instruction preview

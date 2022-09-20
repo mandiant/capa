@@ -340,7 +340,6 @@ Feature = Union[
     MnemonicFeature,
     OperandNumberFeature,
     OperandOffsetFeature,
-    # this has to go last because...? pydantic fails to serialize correctly otherwise.
-    # possibly because this feature has no associated value?
+    # Note! this must be last, see #1161
     BasicBlockFeature,
 ]

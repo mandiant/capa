@@ -145,9 +145,12 @@ class BasicBlockFeature(HashableModel):
     versus right at its starting address.
     """
 
-    basic_block: Address
+    basic_block: Address = Field(alias="basic block")
     address: Address
     feature: Feature
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class InstructionFeature(HashableModel):
@@ -179,7 +182,7 @@ class BasicBlockFeatures(BaseModel):
 class FunctionFeatures(BaseModel):
     address: Address
     features: Tuple[FunctionFeature, ...]
-    basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic block")
+    basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic blocks")
 
     class Config:
         allow_population_by_field_name = True
