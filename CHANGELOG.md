@@ -8,13 +8,15 @@
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (7)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
 - data-manipulation/json/use-dotnet-library-newtonsoftjson @johnk3r
 - data-manipulation/svg/use-dotnet-library-sharpvectors @johnk3r
 - executable/resource/embed-dependencies-as-resources-using-fodycostura @johnk3r @mr-tz
+- communication/ftp/send/send-file-using-ftp michael.hunhof@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/extract-zip-archive anushka.virgaonkar@mandiant.com
 -
 
 ### Bug Fixes
