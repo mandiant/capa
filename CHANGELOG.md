@@ -8,7 +8,7 @@
 
 ### Breaking Changes
 
-### New Rules (7)
+### New Rules (20)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -17,6 +17,19 @@
 - executable/resource/embed-dependencies-as-resources-using-fodycostura @johnk3r @mr-tz
 - communication/ftp/send/send-file-using-ftp michael.hunhof@mandiant.com anushka.virgaonkar@mandiant.com
 - nursery/extract-zip-archive anushka.virgaonkar@mandiant.com
+- nursery/allocate-unmanaged-memory-in-dotnet michael.hunhoff@mandiant.com
+- nursery/check-file-extension-in-dotnet michael.hunhoff@mandiant.com
+- nursery/decode-data-using-base64-in-dotnet michael.hunhoff@mandiant.com
+- nursery/deserialize-json-in-dotnet michael.hunhoff@mandiant.com
+- nursery/find-data-using-regex-in-dotnet michael.hunhoff@mandiant.com
+- nursery/generate-random-filename-in-dotnet michael.hunhoff@mandiant.com
+- nursery/get-os-version-in-dotnet michael.hunhoff@mandiant.com
+- nursery/load-xml-in-dotnet michael.hunhoff@mandiant.com
+- nursery/manipulate-unmanaged-memory-in-dotnet michael.hunhoff@mandiant.com
+- nursery/save-image-in-dotnet michael.hunhoff@mandiant.com
+- nursery/send-email-in-dotnet michael.hunhoff@mandiant.com
+- nursery/serialize-json-in-dotnet michael.hunhoff@mandiant.com
+- nursery/set-http-user-agent-in-dotnet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
