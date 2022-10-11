@@ -725,7 +725,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("b9f5b", "file", OS(OS_ANY), True),
         ("b9f5b", "file", Format(FORMAT_DOTNET), True),
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::Main"), True),
-        ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::.ctor"), True),
+        ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::ctor"), True),
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::.cctor"), False),
         ("hello-world", "file", capa.features.common.String("Hello World!"), True),
         ("hello-world", "file", capa.features.common.Class("HelloWorld"), True),
