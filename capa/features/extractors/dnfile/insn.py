@@ -94,7 +94,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     """parse instruction API features"""
     insn: Instruction = ih.inner
 
-    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
         return
 
     callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
@@ -188,6 +188,7 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Ldsflda,
         OpCodes.Stfld,
         OpCodes.Stsfld,
+        OpCodes.Newobj,
     ):
         return
 
@@ -220,6 +221,7 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Ldsflda,
         OpCodes.Stfld,
         OpCodes.Stsfld,
+        OpCodes.Newobj,
     ):
         return
 

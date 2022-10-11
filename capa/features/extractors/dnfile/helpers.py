@@ -50,6 +50,8 @@ class DnType(object):
         self.access = access
         self.namespace = namespace
         self.class_ = class_
+        if member == ".ctor":
+            member = "ctor"
         self.member = member
 
     def __hash__(self):
