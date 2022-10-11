@@ -13,7 +13,7 @@ import setuptools
 requirements = [
     "tqdm==4.64.1",
     "pyyaml==6.0",
-    "tabulate==0.8.9",
+    "tabulate==0.9.0",
     "colorama==0.4.5",
     "termcolor==2.0.1",
     "wcwidth==0.2.5",
@@ -90,7 +90,7 @@ setuptools.setup(
             "types_requests==2.28.1",
         ],
         "build": [
-            "pyinstaller==5.4.1",
+            "pyinstaller==5.5",
         ],
     },
     zip_safe=False,
