@@ -32,12 +32,18 @@ class AbsoluteVirtualAddress(int, Address):
     def __repr__(self):
         return f"absolute(0x{self:x})"
 
+    def __hash__(self):
+        return int.__hash__(self)
+
 
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 
     def __repr__(self):
         return f"relative(0x{self:x})"
+
+    def __hash__(self):
+        return int.__hash__(self)
 
 
 class FileOffsetAddress(int, Address):
@@ -50,6 +56,9 @@ class FileOffsetAddress(int, Address):
     def __repr__(self):
         return f"file(0x{self:x})"
 
+    def __hash__(self):
+        return int.__hash__(self)
+
 
 class DNTokenAddress(int, Address):
     """a .NET token"""
@@ -59,6 +68,9 @@ class DNTokenAddress(int, Address):
 
     def __repr__(self):
         return f"token(0x{self:x})"
+
+    def __hash__(self):
+        return int.__hash__(self)
 
 
 class DNTokenOffsetAddress(Address):
