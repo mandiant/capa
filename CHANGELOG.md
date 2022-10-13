@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (20)
+### New Rules (29)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -31,6 +31,14 @@
 - nursery/send-email-in-dotnet michael.hunhoff@mandiant.com
 - nursery/serialize-json-in-dotnet michael.hunhoff@mandiant.com
 - nursery/set-http-user-agent-in-dotnet michael.hunhoff@mandiant.com
+- nursery/compile-csharp-in-dotnet michael.hunhoff@mandiant.com
+- nursery/compile-visual-basic-in-dotnet michael.hunhoff@mandiant.com
+- nursery/compress-data-using-gzip-in-dotnet michael.hunhoff@mandiant.com
+- nursery/execute-sqlite-statement-in-dotnet michael.hunhoff@mandiant.com
+- nursery/execute-via-asynchronous-task-in-dotnet michael.hunhoff@mandiant.com
+- nursery/execute-via-timer-in-dotnet michael.hunhoff@mandiant.com
+- nursery/execute-wmi-query-in-dotnet michael.hunhoff@mandiant.com
+- nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
