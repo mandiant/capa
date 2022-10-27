@@ -67,7 +67,7 @@ jobs:
       matrix:
         os: [ubuntu-20.04, windows-2019, macos-11]
         # across all operating systems
-        python-version: ["3.7", "3.10"]
+        python-version: ["3.7", "3.11"]
         include:
           # on Ubuntu run these as well
           - os: ubuntu-20.04
