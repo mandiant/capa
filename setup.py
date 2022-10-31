@@ -14,7 +14,7 @@ requirements = [
     "tqdm==4.64.1",
     "pyyaml==6.0",
     "tabulate==0.9.0",
-    "colorama==0.4.5",
+    "colorama==0.4.6",
     "termcolor==2.0.1",
     "wcwidth==0.2.5",
     "ida-settings==2.1.0",
