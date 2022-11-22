@@ -9,7 +9,7 @@
 
 ### Breaking Changes
 
-### New Rules (29)
+### New Rules (30)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -39,6 +39,7 @@
 - nursery/execute-via-timer-in-dotnet michael.hunhoff@mandiant.com
 - nursery/execute-wmi-query-in-dotnet michael.hunhoff@mandiant.com
 - nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
+- nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
 -
 
 ### Bug Fixes
