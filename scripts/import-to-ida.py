@@ -32,6 +32,7 @@ import json
 import logging
 
 import idautils
+import ida_nalt
 import ida_funcs
 import ida_kernwin
 
@@ -73,7 +74,7 @@ def main():
     #
     # see: https://github.com/idapython/bin/issues/11
     a = doc["meta"]["sample"]["md5"].lower()
-    b = idautils.GetInputFileMD5().decode("ascii").lower().rstrip("\x00")
+    b = ida_nalt.retrieve_input_file_md5().lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2
