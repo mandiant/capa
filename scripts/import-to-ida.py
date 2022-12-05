@@ -31,7 +31,6 @@ See the License for the specific language governing permissions and limitations 
 import json
 import logging
 
-import idautils
 import ida_nalt
 import ida_funcs
 import ida_kernwin
