@@ -6,6 +6,7 @@
 - verify rule metadata format on load #1160 @mr-tz
 - extract property features from .NET PE files #1168 @anushkavirgaonkar
 - emit features for .NET newobj instruction #1186 @mike-hunhoff
+- fix import-to-ida script formatting #1208 @williballenthin
 
 ### Breaking Changes
 
