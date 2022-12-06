@@ -233,23 +233,23 @@ def parse_range(s: str):
     min_spec = min_spec.strip()
     max_spec = max_spec.strip()
 
-    min = None
+    min_ = None
     if min_spec:
-        min = parse_int(min_spec)
-        if min < 0:
+        min_ = parse_int(min_spec)
+        if min_ < 0:
             raise InvalidRule("range min less than zero")
 
-    max = None
+    max_ = None
     if max_spec:
-        max = parse_int(max_spec)
-        if max < 0:
+        max_ = parse_int(max_spec)
+        if max_ < 0:
             raise InvalidRule("range max less than zero")
 
-    if min is not None and max is not None:
-        if max < min:
+    if min_ is not None and max_ is not None:
+        if max_ < min_:
             raise InvalidRule("range max less than min")
 
-    return min, max
+    return min_, max_
 
 
 def parse_feature(key: str):
@@ -828,9 +828,9 @@ class Rule:
                 _ = RuleMetadata.from_capa(rule)
                 return rule
             except InvalidRule as e:
-                raise InvalidRuleWithPath(path, str(e))
+                raise InvalidRuleWithPath(path, str(e)) from e
             except pydantic.ValidationError as e:
-                raise InvalidRuleWithPath(path, str(e))
+                raise InvalidRuleWithPath(path, str(e)) from e
 
     def to_yaml(self):
         # reformat the yaml document with a common style.
@@ -1319,13 +1319,13 @@ class RuleSet:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
-                    rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
+                    rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                     break
                 if isinstance(v, list):
                     for vv in v:
                         if tag in vv:
                             logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, vv)
-                            rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
+                            rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                             break
         return RuleSet(list(rules_filtered))
 
