@@ -461,6 +461,7 @@ def get_workspace(path, format_, sigpaths):
 
     # lazy import enables us to not require viv if user wants SMDA, for example.
     import viv_utils
+    import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
     # TODO should not be auto at this point, anymore
@@ -1143,9 +1144,7 @@ def main(argv=None):
 
 
 def ida_main():
-    import capa.rules
     import capa.ida.helpers
-    import capa.render.default
     import capa.features.extractors.ida.extractor
 
     logging.basicConfig(level=logging.INFO)
@@ -1166,7 +1165,7 @@ def ida_main():
 
     rules_path = os.path.join(get_default_root(), "rules")
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules(rules_path)
+    rules = get_rules([rules_path])
     rules = capa.rules.RuleSet(rules)
 
     meta = capa.ida.helpers.collect_metadata([rules_path])

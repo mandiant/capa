@@ -11,7 +11,7 @@ import abc
 import codecs
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional, Sequence
+from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -279,12 +279,12 @@ class Regex(String):
             flags |= re.IGNORECASE
         try:
             self.re = re.compile(pat, flags)
-        except re.error:
+        except re.error as exc:
             if value.endswith("/i"):
                 value = value[: -len("i")]
             raise ValueError(
                 "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
-            )
+            ) from exc
 
     def evaluate(self, ctx, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1

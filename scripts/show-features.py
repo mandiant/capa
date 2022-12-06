@@ -79,6 +79,7 @@ import capa.exceptions
 import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
+import capa.features.address
 import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
 
@@ -108,7 +109,7 @@ def main(argv=None):
 
     try:
         sig_paths = capa.main.get_signatures(args.signatures)
-    except (IOError) as e:
+    except IOError as e:
         logger.error("%s", str(e))
         return -1
 

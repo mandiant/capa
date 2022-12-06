@@ -72,6 +72,7 @@ class Offset(Feature):
         super(Offset, self).__init__(value, description=description)
 
     def get_value_str(self):
+        assert isinstance(self.value, int)
         return hex(self.value)
 
 
