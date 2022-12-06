@@ -158,7 +158,7 @@ SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
 
 class InvalidRule(ValueError):
     def __init__(self, msg):
-        super(InvalidRule, self).__init__()
+        super().__init__()
         self.msg = msg
 
     def __str__(self):
@@ -170,7 +170,7 @@ class InvalidRule(ValueError):
 
 class InvalidRuleWithPath(InvalidRule):
     def __init__(self, path, msg):
-        super(InvalidRuleWithPath, self).__init__(msg)
+        super().__init__(msg)
         self.path = path
         self.msg = msg
         self.__cause__ = None
@@ -181,7 +181,7 @@ class InvalidRuleWithPath(InvalidRule):
 
 class InvalidRuleSet(ValueError):
     def __init__(self, msg):
-        super(InvalidRuleSet, self).__init__()
+        super().__init__()
         self.msg = msg
 
     def __str__(self):
@@ -539,14 +539,15 @@ def build_statements(d, scope: str):
         index = key[len("operand[") : -len("].number")]
         try:
             index = int(index)
-        except ValueError:
-            raise InvalidRule("operand index must be an integer")
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
 
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, int)
         try:
             feature = capa.features.insn.OperandNumber(index, value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -554,14 +555,15 @@ def build_statements(d, scope: str):
         index = key[len("operand[") : -len("].offset")]
         try:
             index = int(index)
-        except ValueError:
-            raise InvalidRule("operand index must be an integer")
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
 
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, int)
         try:
             feature = capa.features.insn.OperandOffset(index, value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -581,7 +583,7 @@ def build_statements(d, scope: str):
         try:
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -591,7 +593,7 @@ def build_statements(d, scope: str):
         try:
             feature = Feature(value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -606,7 +608,7 @@ def second(s: List[Any]) -> Any:
 
 class Rule:
     def __init__(self, name: str, scope: str, statement: Statement, meta, definition=""):
-        super(Rule, self).__init__()
+        super().__init__()
         self.name = name
         self.scope = scope
         self.statement = statement
@@ -1067,7 +1069,7 @@ class RuleSet:
     """
 
     def __init__(self, rules: List[Rule]):
-        super(RuleSet, self).__init__()
+        super().__init__()
 
         ensure_rules_are_unique(rules)
 

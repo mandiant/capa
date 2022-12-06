@@ -81,7 +81,7 @@ class Result:
         children: List["Result"],
         locations: Optional[Set[Address]] = None,
     ):
-        super(Result, self).__init__()
+        super().__init__()
         self.success = success
         self.statement = statement
         self.children = children
@@ -110,7 +110,7 @@ class Feature(abc.ABC):
           value (any): the value of the feature, such as the number or string.
           description (str): a human-readable description that explains the feature value.
         """
-        super(Feature, self).__init__()
+        super().__init__()
 
         self.name = self.__class__.__name__.lower()
         self.value = value
@@ -165,33 +165,33 @@ class Feature(abc.ABC):
 
 class MatchedRule(Feature):
     def __init__(self, value: str, description=None):
-        super(MatchedRule, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "match"
 
 
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
-        super(Characteristic, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class String(Feature):
     def __init__(self, value: str, description=None):
-        super(String, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Class(Feature):
     def __init__(self, value: str, description=None):
-        super(Class, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Namespace(Feature):
     def __init__(self, value: str, description=None):
-        super(Namespace, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Substring(String):
     def __init__(self, value: str, description=None):
-        super(Substring, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
     def evaluate(self, ctx, short_circuit=True):
@@ -253,7 +253,7 @@ class _MatchedSubstring(Substring):
           substring: the substring feature that matches.
           match: mapping from matching string to its locations.
         """
-        super(_MatchedSubstring, self).__init__(str(substring.value), description=substring.description)
+        super().__init__(str(substring.value), description=substring.description)
         # we want this to collide with the name of `Substring` above,
         # so that it works nicely with the renderers.
         self.name = "substring"
@@ -269,7 +269,7 @@ class _MatchedSubstring(Substring):
 
 class Regex(String):
     def __init__(self, value: str, description=None):
-        super(Regex, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
         pat = self.value[len("/") : -len("/")]
@@ -350,7 +350,7 @@ class _MatchedRegex(Regex):
           regex: the regex feature that matches.
           matches: mapping from matching string to its locations.
         """
-        super(_MatchedRegex, self).__init__(str(regex.value), description=regex.description)
+        super().__init__(str(regex.value), description=regex.description)
         # we want this to collide with the name of `Regex` above,
         # so that it works nicely with the renderers.
         self.name = "regex"
@@ -373,7 +373,7 @@ class StringFactory:
 
 class Bytes(Feature):
     def __init__(self, value: bytes, description=None):
-        super(Bytes, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
     def evaluate(self, ctx, **kwargs):
@@ -403,7 +403,7 @@ VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
 
 class Arch(Feature):
     def __init__(self, value: str, description=None):
-        super(Arch, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "arch"
 
 
@@ -418,7 +418,7 @@ VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
 
 class OS(Feature):
     def __init__(self, value: str, description=None):
-        super(OS, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "os"
 
 
@@ -436,7 +436,7 @@ FORMAT_UNKNOWN = "unknown"
 
 class Format(Feature):
     def __init__(self, value: str, description=None):
-        super(Format, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "format"
 
 

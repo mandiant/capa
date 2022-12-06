@@ -38,7 +38,7 @@ class Statement:
     """
 
     def __init__(self, description=None):
-        super(Statement, self).__init__()
+        super().__init__()
         self.name = self.__class__.__name__
         self.description = description
 
@@ -90,7 +90,7 @@ class And(Statement):
     """
 
     def __init__(self, children, description=None):
-        super(And, self).__init__(description=description)
+        super().__init__(description=description)
         self.children = children
 
     def evaluate(self, ctx, short_circuit=True):
@@ -123,7 +123,7 @@ class Or(Statement):
     """
 
     def __init__(self, children, description=None):
-        super(Or, self).__init__(description=description)
+        super().__init__(description=description)
         self.children = children
 
     def evaluate(self, ctx, short_circuit=True):
@@ -150,7 +150,7 @@ class Not(Statement):
     """match only if the child evaluates to False."""
 
     def __init__(self, child, description=None):
-        super(Not, self).__init__(description=description)
+        super().__init__(description=description)
         self.child = child
 
     def evaluate(self, ctx, short_circuit=True):
@@ -172,7 +172,7 @@ class Some(Statement):
     """
 
     def __init__(self, count, children, description=None):
-        super(Some, self).__init__(description=description)
+        super().__init__(description=description)
         self.count = count
         self.children = children
 
@@ -208,7 +208,7 @@ class Range(Statement):
     """match if the child is contained in the ctx set with a count in the given range."""
 
     def __init__(self, child, min=None, max=None, description=None):
-        super(Range, self).__init__(description=description)
+        super().__init__(description=description)
         self.child = child
         self.min = min if min is not None else 0
         self.max = max if max is not None else (1 << 64 - 1)
@@ -237,7 +237,7 @@ class Subscope(Statement):
     """
 
     def __init__(self, scope, child, description=None):
-        super(Subscope, self).__init__(description=description)
+        super().__init__(description=description)
         self.scope = scope
         self.child = child
 

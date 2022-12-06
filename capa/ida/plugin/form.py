@@ -155,7 +155,7 @@ class CapaExplorerProgressIndicator(QtCore.QObject):
 
     def __init__(self):
         """initialize signal object"""
-        super(CapaExplorerProgressIndicator, self).__init__()
+        super().__init__()
 
     def update(self, text):
         """emit progress update
@@ -174,18 +174,18 @@ class CapaExplorerFeatureExtractor(capa.features.extractors.ida.extractor.IdaFea
     """
 
     def __init__(self):
-        super(CapaExplorerFeatureExtractor, self).__init__()
+        super().__init__()
         self.indicator = CapaExplorerProgressIndicator()
 
     def extract_function_features(self, fh: FunctionHandle):
         self.indicator.update("function at 0x%X" % fh.inner.start_ea)
-        return super(CapaExplorerFeatureExtractor, self).extract_function_features(fh)
+        return super().extract_function_features(fh)
 
 
 class QLineEditClicked(QtWidgets.QLineEdit):
     def __init__(self, content, parent=None):
         """ """
-        super(QLineEditClicked, self).__init__(content, parent)
+        super().__init__(content, parent)
 
     def mouseReleaseEvent(self, e):
         """ """
@@ -204,7 +204,7 @@ class QLineEditClicked(QtWidgets.QLineEdit):
 class CapaSettingsInputDialog(QtWidgets.QDialog):
     def __init__(self, title, parent=None):
         """ """
-        super(CapaSettingsInputDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle(title)
         self.setMinimumWidth(500)
@@ -241,7 +241,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def __init__(self, name, option=Options.DEFAULT):
         """initialize form elements"""
-        super(CapaExplorerForm, self).__init__()
+        super().__init__()
 
         self.form_title = name
         self.process_total = 0
@@ -305,7 +305,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def Show(self):
         """creates form if not already create, else brings plugin to front"""
-        return super(CapaExplorerForm, self).Show(
+        return super().Show(
             self.form_title,
             options=(
                 idaapi.PluginForm.WOPN_TAB

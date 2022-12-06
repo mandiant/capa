@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class VivisectFeatureExtractor(FeatureExtractor):
     def __init__(self, vw, path):
-        super(VivisectFeatureExtractor, self).__init__()
+        super().__init__()
         self.vw = vw
         self.path = path
         with open(self.path, "rb") as f:

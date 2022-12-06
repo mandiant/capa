@@ -93,7 +93,7 @@ class OnUpdatedActionsHook(ida_kernwin.UI_Hooks):
     """register a callback to be invoked each time the UI actions are updated"""
 
     def __init__(self, cb):
-        super(OnUpdatedActionsHook, self).__init__()
+        super().__init__()
         self.cb = cb
 
     def updated_actions(self):

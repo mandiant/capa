@@ -170,7 +170,7 @@ class IDAIO:
     """
 
     def __init__(self):
-        super(IDAIO, self).__init__()
+        super().__init__()
         self.offset = 0
 
     def seek(self, offset, whence=0):

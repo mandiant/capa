@@ -248,7 +248,7 @@ class InvalidAttckOrMbcTechnique(Lint):
     """
 
     def __init__(self):
-        super(InvalidAttckOrMbcTechnique, self).__init__()
+        super().__init__()
 
         try:
             with open(f"{os.path.dirname(__file__)}/linter-data.json", "rb") as fd:

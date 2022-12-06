@@ -151,7 +151,7 @@ class MbcExtractor(MitreExtractor):
 
     def _get_tactics(self) -> List[Dict]:
         """Override _get_tactics to edit the tactic name for Micro-objective"""
-        tactics = super(MbcExtractor, self)._get_tactics()
+        tactics = super()._get_tactics()
         # We don't want the Micro-objective string inside objective names
         for tactic in tactics:
             tactic["name"] = tactic["name"].replace(" Micro-objective", "")
