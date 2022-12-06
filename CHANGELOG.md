@@ -9,6 +9,7 @@
 - fix import-to-ida script formatting #1208 @williballenthin
 
 ### Breaking Changes
+- remove SMDA backend #1062 @williballenthin 
 
 ### New Rules (30)
 
