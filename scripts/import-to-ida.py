@@ -51,7 +51,11 @@ def append_func_cmt(va, cmt, repeatable=False):
     if cmt in existing:
         return
 
-    new = existing + "\n" + cmt
+    if len(existing) > 0:
+        new = existing + "\n" + cmt
+    else:
+        new = cmt
+
     ida_funcs.set_func_cmt(func, new, repeatable)
 
 
