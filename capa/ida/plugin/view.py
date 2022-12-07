@@ -179,7 +179,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
 
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerRulegenPreview, self).__init__(parent)
+        super().__init__(parent)
 
         self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
@@ -284,7 +284,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                 self.set_selection(select_start_ppos, select_end_ppos, len(self.toPlainText()))
                 self.verticalScrollBar().setSliderPosition(scroll_ppos)
         else:
-            super(CapaExplorerRulegenPreview, self).keyPressEvent(e)
+            super().keyPressEvent(e)
 
     def count_previous_lines_from_block(self, block):
         """calculate number of lines preceding block"""
@@ -310,7 +310,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def __init__(self, preview, parent=None):
         """ """
-        super(CapaExplorerRulegenEditor, self).__init__(parent)
+        super().__init__(parent)
 
         self.preview = preview
 
@@ -374,18 +374,18 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def dragMoveEvent(self, e):
         """ """
-        super(CapaExplorerRulegenEditor, self).dragMoveEvent(e)
+        super().dragMoveEvent(e)
 
     def dragEventEnter(self, e):
         """ """
-        super(CapaExplorerRulegenEditor, self).dragEventEnter(e)
+        super().dragEventEnter(e)
 
     def dropEvent(self, e):
         """ """
         if not self.indexAt(e.pos()).isValid():
             return
 
-        super(CapaExplorerRulegenEditor, self).dropEvent(e)
+        super().dropEvent(e)
 
         self.update_preview()
         expand_tree(self.invisibleRootItem())
@@ -784,7 +784,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
     def __init__(self, editor, parent=None):
         """ """
-        super(CapaExplorerRulegenFeatures, self).__init__(parent)
+        super().__init__(parent)
 
         self.parent_items = {}
         self.editor = editor
@@ -1072,7 +1072,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
     def __init__(self, model, parent=None):
         """initialize view"""
-        super(CapaExplorerQtreeView, self).__init__(parent)
+        super().__init__(parent)
 
         self.setModel(model)
 

@@ -172,7 +172,7 @@ GLOBAL_HANDLERS = (
 
 class PefileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(PefileFeatureExtractor, self).__init__()
+        super().__init__()
         self.path = path
         self.pe = pefile.PE(path)
 

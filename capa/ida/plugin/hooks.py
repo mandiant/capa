@@ -16,7 +16,7 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
         @param screen_ea_changed_hook: function hook for IDA screen ea changed
         @param action_hooks: dict of IDA action handles
         """
-        super(CapaExplorerIdaHooks, self).__init__()
+        super().__init__()
 
         self.screen_ea_changed_hook = screen_ea_changed_hook
         self.process_action_hooks = action_hooks

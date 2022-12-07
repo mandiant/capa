@@ -87,7 +87,7 @@ class FeatureExtractor:
         #  for example, the Vivisect feature extract might require the vw and/or path.
         # this base class doesn't know what to do with that info, though.
         #
-        super(FeatureExtractor, self).__init__()
+        super().__init__()
 
     @abc.abstractmethod
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:

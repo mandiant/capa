@@ -23,7 +23,7 @@ from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bo
 
 class DnfileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(DnfileFeatureExtractor, self).__init__()
+        super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
         # pre-compute these because we'll yield them at *every* scope.

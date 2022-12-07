@@ -158,7 +158,7 @@ SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
 
 class InvalidRule(ValueError):
     def __init__(self, msg):
-        super(InvalidRule, self).__init__()
+        super().__init__()
         self.msg = msg
 
     def __str__(self):
@@ -170,7 +170,7 @@ class InvalidRule(ValueError):
 
 class InvalidRuleWithPath(InvalidRule):
     def __init__(self, path, msg):
-        super(InvalidRuleWithPath, self).__init__(msg)
+        super().__init__(msg)
         self.path = path
         self.msg = msg
         self.__cause__ = None
@@ -181,7 +181,7 @@ class InvalidRuleWithPath(InvalidRule):
 
 class InvalidRuleSet(ValueError):
     def __init__(self, msg):
-        super(InvalidRuleSet, self).__init__()
+        super().__init__()
         self.msg = msg
 
     def __str__(self):
@@ -233,23 +233,23 @@ def parse_range(s: str):
     min_spec = min_spec.strip()
     max_spec = max_spec.strip()
 
-    min = None
+    min_ = None
     if min_spec:
-        min = parse_int(min_spec)
-        if min < 0:
+        min_ = parse_int(min_spec)
+        if min_ < 0:
             raise InvalidRule("range min less than zero")
 
-    max = None
+    max_ = None
     if max_spec:
-        max = parse_int(max_spec)
-        if max < 0:
+        max_ = parse_int(max_spec)
+        if max_ < 0:
             raise InvalidRule("range max less than zero")
 
-    if min is not None and max is not None:
-        if max < min:
+    if min_ is not None and max_ is not None:
+        if max_ < min_:
             raise InvalidRule("range max less than min")
 
-    return min, max
+    return min_, max_
 
 
 def parse_feature(key: str):
@@ -539,14 +539,15 @@ def build_statements(d, scope: str):
         index = key[len("operand[") : -len("].number")]
         try:
             index = int(index)
-        except ValueError:
-            raise InvalidRule("operand index must be an integer")
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
 
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, int)
         try:
             feature = capa.features.insn.OperandNumber(index, value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -554,14 +555,15 @@ def build_statements(d, scope: str):
         index = key[len("operand[") : -len("].offset")]
         try:
             index = int(index)
-        except ValueError:
-            raise InvalidRule("operand index must be an integer")
+        except ValueError as e:
+            raise InvalidRule("operand index must be an integer") from e
 
         value, description = parse_description(d[key], key, d.get("description"))
+        assert isinstance(value, int)
         try:
             feature = capa.features.insn.OperandOffset(index, value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -581,7 +583,7 @@ def build_statements(d, scope: str):
         try:
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -591,7 +593,7 @@ def build_statements(d, scope: str):
         try:
             feature = Feature(value, description=description)
         except ValueError as e:
-            raise InvalidRule(str(e))
+            raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
@@ -606,7 +608,7 @@ def second(s: List[Any]) -> Any:
 
 class Rule:
     def __init__(self, name: str, scope: str, statement: Statement, meta, definition=""):
-        super(Rule, self).__init__()
+        super().__init__()
         self.name = name
         self.scope = scope
         self.statement = statement
@@ -826,9 +828,9 @@ class Rule:
                 _ = RuleMetadata.from_capa(rule)
                 return rule
             except InvalidRule as e:
-                raise InvalidRuleWithPath(path, str(e))
+                raise InvalidRuleWithPath(path, str(e)) from e
             except pydantic.ValidationError as e:
-                raise InvalidRuleWithPath(path, str(e))
+                raise InvalidRuleWithPath(path, str(e)) from e
 
     def to_yaml(self):
         # reformat the yaml document with a common style.
@@ -1067,7 +1069,7 @@ class RuleSet:
     """
 
     def __init__(self, rules: List[Rule]):
-        super(RuleSet, self).__init__()
+        super().__init__()
 
         ensure_rules_are_unique(rules)
 
@@ -1317,13 +1319,13 @@ class RuleSet:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:
                     logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, v)
-                    rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
+                    rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                     break
                 if isinstance(v, list):
                     for vv in v:
                         if tag in vv:
                             logger.debug('using rule "%s" and dependencies, found tag in meta.%s: %s', rule.name, k, vv)
-                            rules_filtered.update(set(capa.rules.get_rules_and_dependencies(rules, rule.name)))
+                            rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                             break
         return RuleSet(list(rules_filtered))
 

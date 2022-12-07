@@ -51,7 +51,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
     def __init__(self, parent=None):
         """initialize model"""
-        super(CapaExplorerDataModel, self).__init__(parent)
+        super().__init__(parent)
         # root node does not have parent, contains header columns
         self.root_node = CapaExplorerDataItem(None, ["Rule Information", "Address", "Details"])
 

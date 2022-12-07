@@ -110,7 +110,7 @@ GLOBAL_HANDLERS = (
 
 class ElfFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(ElfFeatureExtractor, self).__init__()
+        super().__init__()
         self.path = path
         with open(self.path, "rb") as f:
             self.elf = ELFFile(io.BytesIO(f.read()))

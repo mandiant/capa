@@ -60,7 +60,7 @@ GLOBAL_HANDLERS = (
 
 class DnfileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(DnfileFeatureExtractor, self).__init__()
+        super().__init__()
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
 
