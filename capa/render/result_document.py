@@ -15,6 +15,7 @@ import capa.engine
 import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
+import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
@@ -99,27 +100,27 @@ class Metadata(FrozenModel):
                 rules=meta["analysis"]["rules"],
                 base_address=frz.Address.from_capa(meta["analysis"]["base_address"]),
                 layout=Layout(
-                    functions=[
+                    functions=tuple(
                         FunctionLayout(
                             address=frz.Address.from_capa(address),
-                            matched_basic_blocks=[
+                            matched_basic_blocks=tuple(
                                 BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in f["matched_basic_blocks"]
-                            ],
+                            ),
                         )
                         for address, f in meta["analysis"]["layout"]["functions"].items()
-                    ]
+                    )
                 ),
                 feature_counts=FeatureCounts(
                     file=meta["analysis"]["feature_counts"]["file"],
-                    functions=[
+                    functions=tuple(
                         FunctionFeatureCount(address=frz.Address.from_capa(address), count=count)
                         for address, count in meta["analysis"]["feature_counts"]["functions"].items()
-                    ],
+                    ),
                 ),
-                library_functions=[
+                library_functions=tuple(
                     LibraryFunction(address=frz.Address.from_capa(address), name=name)
                     for address, name in meta["analysis"]["library_functions"].items()
-                ],
+                ),
             ),
         )
 
@@ -137,18 +138,18 @@ class StatementModel(FrozenModel):
 
 class CompoundStatement(StatementModel):
     type: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class SomeStatement(StatementModel):
     type = "some"
-    description: Optional[str]
+    description: Optional[str] = None
     count: int
 
 
 class RangeStatement(StatementModel):
     type = "range"
-    description: Optional[str]
+    description: Optional[str] = None
     min: int
     max: int
     child: frz.Feature
@@ -156,7 +157,7 @@ class RangeStatement(StatementModel):
 
 class SubscopeStatement(StatementModel):
     type = "subscope"
-    description: Optional[str]
+    description: Optional[str] = None
     scope: capa.rules.Scope
 
 
@@ -277,7 +278,7 @@ class Match(BaseModel):
         # finally, splice that logic into this tree.
         if (
             isinstance(node, FeatureNode)
-            and isinstance(node.feature, frz.features.MatchFeature)
+            and isinstance(node.feature, frzf.MatchFeature)
             # only add subtree on success,
             # because there won't be results for the other rule on failure.
             and success
@@ -359,14 +360,14 @@ class Match(BaseModel):
 
 
 def parse_parts_id(s: str):
-    id = ""
+    id_ = ""
     parts = s.split("::")
     if len(parts) > 0:
         last = parts.pop()
-        last, _, id = last.rpartition(" ")
-        id = id.lstrip("[").rstrip("]")
+        last, _, id_ = last.rpartition(" ")
+        id_ = id_.lstrip("[").rstrip("]")
         parts.append(last)
-    return parts, id
+    return tuple(parts), id_
 
 
 class AttackSpec(FrozenModel):
@@ -392,7 +393,7 @@ class AttackSpec(FrozenModel):
         tactic = ""
         technique = ""
         subtechnique = ""
-        parts, id = parse_parts_id(s)
+        parts, id_ = parse_parts_id(s)
         if len(parts) > 0:
             tactic = parts[0]
         if len(parts) > 1:
@@ -405,7 +406,7 @@ class AttackSpec(FrozenModel):
             tactic=tactic,
             technique=technique,
             subtechnique=subtechnique,
-            id=id,
+            id=id_,
         )
 
 
@@ -432,7 +433,7 @@ class MBCSpec(FrozenModel):
         objective = ""
         behavior = ""
         method = ""
-        parts, id = parse_parts_id(s)
+        parts, id_ = parse_parts_id(s)
         if len(parts) > 0:
             objective = parts[0]
         if len(parts) > 1:
@@ -445,7 +446,7 @@ class MBCSpec(FrozenModel):
             objective=objective,
             behavior=behavior,
             method=method,
-            id=id,
+            id=id_,
         )
 
 
@@ -532,10 +533,10 @@ class ResultDocument(BaseModel):
             rule_matches[rule_name] = RuleMatches(
                 meta=RuleMetadata.from_capa(rule),
                 source=rule.definition,
-                matches=[
+                matches=tuple(
                     (frz.Address.from_capa(addr), Match.from_capa(rules, capabilities, match))
                     for addr, match in matches
-                ],
+                ),
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
