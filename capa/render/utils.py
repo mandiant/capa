@@ -24,14 +24,6 @@ def bold2(s: str) -> str:
     return termcolor.colored(s, "green")
 
 
-def hex(n: int) -> str:
-    """render the given number using upper case hex, like: 0x123ABC"""
-    if n < 0:
-        return "-0x%X" % (-n)
-    else:
-        return "0x%X" % n
-
-
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     """
     format canonical representation of ATT&CK/MBC parts and ID

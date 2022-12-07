@@ -11,6 +11,7 @@ from typing import Dict, Iterable
 import tabulate
 
 import capa.rules
+import capa.helpers
 import capa.render.utils as rutils
 import capa.render.verbose
 import capa.features.common
@@ -154,7 +155,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
             feature, (frzf.NumberFeature, frzf.OffsetFeature, frzf.OperandNumberFeature, frzf.OperandOffsetFeature)
         ):
             assert isinstance(value, int)
-            value = f"0x{value:X}"
+            value = capa.helpers.hex(value)
 
         if isinstance(feature, frzf.PropertyFeature) and feature.access is not None:
             key = f"property/{feature.access}"
