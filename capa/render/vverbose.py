@@ -128,7 +128,11 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature.type
-    if isinstance(feature, frzf.ImportFeature):
+    if isinstance(feature, frzf.BasicBlockFeature):
+        # i don't think it makes sense to have standalone basic block features.
+        # we don't parse them from rules, only things like: `count(basic block) > 1`
+        raise ValueError("cannot render basic block feature directly")
+    elif isinstance(feature, frzf.ImportFeature):
         # fixup access to Python reserved name
         value = feature.import_
     elif isinstance(feature, frzf.ClassFeature):
