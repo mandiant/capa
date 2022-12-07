@@ -169,7 +169,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
                 ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
                 ostream.write(feature.description)
 
-        if key not in ("os", "arch"):
+        if key not in ("os", "arch", "format"):
             render_locations(ostream, match.locations)
         ostream.write("\n")
     else:
