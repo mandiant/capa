@@ -150,17 +150,21 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         if key == "string":
             value = render_string_value(value)
 
-        if key in ("number", "offset"):
+        elif key in ("number", "offset", "operand number", "operand offset"):
             assert isinstance(value, int)
-            value = hex(value)
+            value = f"0x{value:X}"
 
-        ostream.write(key)
-
-        if isinstance(feature, frzf.PropertyFeature):
+        if key == "property":
             if feature.access is not None:
-                ostream.write("/" + feature.access)
+                key = f"property/{feature.access}"
 
-        ostream.write(": ")
+        elif key == "operand number":
+            key = f"operand[{feature.index}].number"
+
+        elif key == "operand offset":
+            key = f"operand[{feature.index}].offset"
+
+        ostream.write(f"{key}: ")
 
         if value:
             ostream.write(rutils.bold2(value))
