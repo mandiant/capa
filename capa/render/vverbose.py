@@ -146,7 +146,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         if key == "string":
             value = render_string_value(value)
 
-        if key == "number":
+        if key in ("number", "offset"):
             assert isinstance(value, int)
             value = hex(value)
 
