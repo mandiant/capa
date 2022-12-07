@@ -51,6 +51,8 @@
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
+- fix: accept only plaintext pasted content #1194 @williballenthin
+- fix: UnboundLocalError #1217 @williballenthin
 
 ### Development
 
