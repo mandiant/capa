@@ -184,6 +184,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
         self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setAcceptRichText(False)
 
     def reset_view(self):
         """ """

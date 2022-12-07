@@ -916,6 +916,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     logger.error("Failed to match function/basic block rule scope (error: %s)", e)
                     return False
             else:
+                fh = None
                 func_features = {}
         except UserCancelledError:
             logger.info("User cancelled analysis.")
