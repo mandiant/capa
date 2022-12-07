@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (30)
+### New Rules (31)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -41,6 +41,7 @@
 - nursery/execute-wmi-query-in-dotnet michael.hunhoff@mandiant.com
 - nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
 - nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
+- host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
 -
 
 ### Bug Fixes
