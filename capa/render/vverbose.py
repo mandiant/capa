@@ -144,24 +144,25 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     if value is None:
         raise ValueError("%s contains None" % key)
 
-    if key not in ("regex", "substring"):
+    if not isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
         # like:
         #   number: 10 = SOME_CONSTANT @ 0x401000
-        if key == "string":
+        if isinstance(feature, frzf.StringFeature):
             value = render_string_value(value)
 
-        elif key in ("number", "offset", "operand number", "operand offset"):
+        elif isinstance(
+            feature, (frzf.NumberFeature, frzf.OffsetFeature, frzf.OperandNumberFeature, frzf.OperandOffsetFeature)
+        ):
             assert isinstance(value, int)
             value = f"0x{value:X}"
 
-        if key == "property":
-            if feature.access is not None:
-                key = f"property/{feature.access}"
+        if isinstance(feature, frzf.PropertyFeature) and feature.access is not None:
+            key = f"property/{feature.access}"
 
-        elif key == "operand number":
+        elif isinstance(feature, frzf.OperandNumberFeature):
             key = f"operand[{feature.index}].number"
 
-        elif key == "operand offset":
+        elif isinstance(feature, frzf.OperandOffsetFeature):
             key = f"operand[{feature.index}].offset"
 
         ostream.write(f"{key}: ")
@@ -173,7 +174,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
                 ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
                 ostream.write(feature.description)
 
-        if key not in ("os", "arch", "format"):
+        if not isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
             render_locations(ostream, match.locations)
         ostream.write("\n")
     else:
