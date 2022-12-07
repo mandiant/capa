@@ -530,6 +530,14 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         if value:
             if isinstance(feature, frzf.StringFeature):
                 value = '"%s"' % capa.features.common.escape_string(value)
+
+            if isinstance(feature, frzf.PropertyFeature) and feature.access is not None:
+                key = f"property/{feature.access}"
+            elif isinstance(feature, frzf.OperandNumberFeature):
+                key = f"operand[{feature.index}].number"
+            elif isinstance(feature, frzf.OperandOffsetFeature):
+                key = f"operand[{feature.index}].offset"
+
             if feature.description:
                 return "%s(%s = %s)" % (key, value, feature.description)
             else:

@@ -8,6 +8,7 @@
 import abc
 from typing import Union, Optional
 
+import capa.helpers
 from capa.features.common import VALID_FEATURE_ACCESS, Feature
 
 
@@ -56,7 +57,7 @@ class Number(Feature):
 
     def get_value_str(self):
         if isinstance(self.value, int):
-            return hex(self.value)
+            return capa.helpers.hex(self.value)
         elif isinstance(self.value, float):
             return str(self.value)
         else:
