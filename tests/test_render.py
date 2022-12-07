@@ -1,10 +1,18 @@
 import textwrap
 
+import fixtures
+
 import capa.rules
 import capa.render.utils
+import capa.features.file
 import capa.features.insn
 import capa.features.common
+import capa.features.freeze
+import capa.render.vverbose
+import capa.features.address
+import capa.features.basicblock
 import capa.render.result_document
+import capa.features.freeze.features
 
 
 def test_render_number():
@@ -92,3 +100,53 @@ def test_render_meta_mbc():
     assert mbc.method == method
 
     assert capa.render.utils.format_parts_id(mbc) == canonical
+
+
+@fixtures.parametrize(
+    "feature,expected",
+    [
+        (capa.features.common.OS("windows"), "os: windows"),
+        (capa.features.common.Arch("i386"), "arch: i386"),
+        (capa.features.common.Format("pe"), "format: pe"),
+        (capa.features.common.MatchedRule("foo"), "match: foo @ 0x401000"),
+        (capa.features.common.Characteristic("foo"), "characteristic: foo @ 0x401000"),
+        (capa.features.file.Export("SvcMain"), "export: SvcMain @ 0x401000"),
+        (capa.features.file.Import("CreateFileW"), "import: CreateFileW @ 0x401000"),
+        (capa.features.file.Section(".detours"), "section: .detours @ 0x401000"),
+        (capa.features.file.FunctionName("memcmp"), "function name: memcmp @ 0x401000"),
+        (capa.features.common.Substring("foo"), "substring: foo"),
+        (capa.features.common.Regex("^foo"), "regex: ^foo"),
+        (capa.features.common.String("foo"), 'string: "foo" @ 0x401000'),
+        (capa.features.common.Class("BeanFactory"), "class: BeanFactory @ 0x401000"),
+        (capa.features.common.Namespace("std::enterprise"), "namespace: std::enterprise @ 0x401000"),
+        (capa.features.insn.API("CreateFileW"), "api: CreateFileW @ 0x401000"),
+        (capa.features.insn.Property("foo"), "property: foo @ 0x401000"),
+        (capa.features.insn.Property("foo", "read"), "property/read: foo @ 0x401000"),
+        (capa.features.insn.Property("foo", "write"), "property/write: foo @ 0x401000"),
+        (capa.features.insn.Number(12), "number: 0xC @ 0x401000"),
+        (capa.features.common.Bytes(b"AAAA"), "bytes: 41414141 @ 0x401000"),
+        (capa.features.insn.Offset(12), "offset: 0xC @ 0x401000"),
+        (capa.features.insn.Mnemonic("call"), "mnemonic: call @ 0x401000"),
+        (capa.features.insn.OperandNumber(0, 12), "operand[0].number: 0xC @ 0x401000"),
+        (capa.features.insn.OperandOffset(0, 12), "operand[0].offset: 0xC @ 0x401000"),
+        # unsupported
+        # (capa.features.basicblock.BasicBlock(), "basic block @ 0x401000"),
+    ],
+)
+def test_render_vverbose_feature(feature, expected):
+    ostream = capa.render.utils.StringIO()
+
+    addr = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x401000))
+    feature = capa.features.freeze.features.feature_from_capa(feature)
+
+    matches = capa.render.result_document.Match(
+        success=True,
+        node=capa.render.result_document.FeatureNode(feature=feature),
+        children=(),
+        locations=(addr,),
+        captures={},
+    )
+
+    capa.render.vverbose.render_feature(ostream, matches, feature, indent=0)
+
+    assert ostream.getvalue().strip() == expected
