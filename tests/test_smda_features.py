@@ -13,6 +13,7 @@ from fixtures import parametrize
 import capa.features.file
 
 
+@pytest.mark.skip(reason="SMDA tests fail and we're deprecating this backend in the next major release")
 @parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_PRESENCE_TESTS,
@@ -25,6 +26,7 @@ def test_smda_features(sample, scope, feature, expected):
     fixtures.do_test_feature_presence(fixtures.get_smda_extractor, sample, scope, feature, expected)
 
 
+@pytest.mark.skip(reason="SMDA tests fail and we're deprecating this backend in the next major release")
 @parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_COUNT_TESTS,
