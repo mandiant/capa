@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import struct
 import logging
+import collections
 from enum import Enum
 from typing import BinaryIO
 
@@ -19,6 +20,12 @@ def align(v, alignment):
         return v
     else:
         return v + (alignment - remainder)
+
+
+def read_cstr(buf, offset):
+    s = buf[offset:]
+    s, _, _ = s.partition(b"\x00")
+    return s.decode("utf-8")
 
 
 class CorruptElfFile(ValueError):
@@ -141,6 +148,112 @@ def detect_elf_os(f) -> str:
         # subsequent strategies may overwrite this value
         ret = OSABI[ei_osabi]
 
+    (e_machine,) = struct.unpack_from(endian + "H", file_header, 0x12)
+    MACHINE = {
+        0: "None",
+        1: "M32",
+        2: "SPARC",
+        3: "386",
+        4: "68K",
+        5: "88K",
+        6: "486",
+        7: "860",
+        8: "MIPS",
+        9: "S370",
+        10: "MIPS_RS3_LE",
+        11: "RS6000",
+        12: "UNKNOWN12",
+        13: "UNKNOWN13",
+        14: "UNKNOWN14",
+        15: "PA_RISC",
+        16: "nCUBE",
+        17: "VPP500",
+        18: "SPARC32PLUS",
+        19: "960",
+        20: "PPC",
+        21: "PPC64",
+        22: "S390",
+        23: "SPU",
+        24: "UNKNOWN24",
+        25: "UNKNOWN25",
+        26: "UNKNOWN26",
+        27: "UNKNOWN27",
+        28: "UNKNOWN28",
+        29: "UNKNOWN29",
+        30: "UNKNOWN30",
+        31: "UNKNOWN31",
+        32: "UNKNOWN32",
+        33: "UNKNOWN33",
+        34: "UNKNOWN34",
+        35: "UNKNOWN35",
+        36: "V800",
+        37: "FR20",
+        38: "RH32",
+        39: "RCE",
+        40: "ARM",
+        41: "ALPHA",
+        42: "SH",
+        43: "SPARCV9",
+        44: "TRICORE",
+        45: "ARC",
+        46: "H8_300",
+        47: "H8_300H",
+        48: "H8S",
+        49: "H8_500",
+        50: "IA_64",
+        51: "MIPS_X",
+        52: "COLDFIRE",
+        53: "68HC12",
+        54: "MMA",
+        55: "PCP",
+        56: "NCPU",
+        57: "NDR1",
+        58: "STARCORE",
+        59: "ME16",
+        60: "ST100",
+        61: "TINYJ",
+        62: "X86_64",
+        63: "PDSP",
+        64: "PDP10",
+        65: "PDP11",
+        66: "FX66",
+        67: "ST9PLUS",
+        68: "ST7",
+        69: "68HC16",
+        70: "68HC11",
+        71: "68HC08",
+        72: "68HC05",
+        73: "SVX",
+        74: "ST19",
+        75: "VAX",
+        76: "CRIS",
+        77: "JAVELIN",
+        78: "FIREPATH",
+        79: "ZSP",
+        80: "MMIX",
+        81: "HUANY",
+        82: "PRISM",
+        83: "AVR",
+        84: "FR30",
+        85: "D10V",
+        86: "D30V",
+        87: "V850",
+        88: "M32R",
+        89: "MN10300",
+        90: "MN10200",
+        91: "PJ",
+        92: "OPENRISC",
+        93: "ARC_A5",
+        94: "XTENSA",
+        95: "VIDEOCORE",
+        96: "TMM_GPP",
+        97: "NS32K",
+        98: "TPC",
+        99: "SNP1K",
+        100: "ST200",
+    }
+    logger.debug("emachine: 0x%02x (%s)", e_machine, MACHINE.get(e_machine, "unknown"))
+ 
     f.seek(e_phoff)
     program_header_size = e_phnum * e_phentsize
     program_headers = f.read(program_header_size)
@@ -171,18 +284,18 @@ def detect_elf_os(f) -> str:
         logger.debug("ph:p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
 
         f.seek(p_offset)
-        note = f.read(p_filesz)
-        if len(note) != p_filesz:
+        version_r = f.read(p_filesz)
+        if len(version_r) != p_filesz:
             logger.warning("failed to read note content")
             continue
 
-        namesz, descsz, type_ = struct.unpack_from(endian + "III", note, 0x0)
+        namesz, descsz, type_ = struct.unpack_from(endian + "III", version_r, 0x0)
         name_offset = 0xC
         desc_offset = name_offset + align(namesz, 0x4)
 
         logger.debug("ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
 
-        name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
+        name = version_r[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", name)
 
         if type_ != 1:
@@ -192,7 +305,7 @@ def detect_elf_os(f) -> str:
             if descsz < 16:
                 continue
 
-            desc = note[desc_offset : desc_offset + descsz]
+            desc = version_r[desc_offset : desc_offset + descsz]
             abi_tag, kmajor, kminor, kpatch = struct.unpack_from(endian + "IIII", desc, 0x0)
             logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
 
@@ -213,6 +326,7 @@ def detect_elf_os(f) -> str:
 
     # search for recognizable dynamic linkers (interpreters)
     # for example, on linux, we see file paths like: /lib64/ld-linux-x86-64.so.2
+    linker = None
     for i in range(e_phnum):
         offset = i * e_phentsize
         phent = program_headers[offset : offset + e_phentsize]
@@ -257,9 +371,9 @@ def detect_elf_os(f) -> str:
         shent = section_headers[offset : offset + e_shentsize]
 
         if bitness == 32:
-            sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIIIII", shent, 0x0)
+            sh_name, sh_type, _, sh_addr, linked_sh_offset, linked_sh_size = struct.unpack_from(endian + "IIIIII", shent, 0x0)
         elif bitness == 64:
-            sh_name, sh_type, _, sh_addr, sh_offset, sh_size = struct.unpack_from(endian + "IIQQQQ", shent, 0x0)
+            sh_name, sh_type, _, sh_addr, linked_sh_offset, linked_sh_size = struct.unpack_from(endian + "IIQQQQ", shent, 0x0)
         else:
             raise NotImplementedError()
 
@@ -267,21 +381,21 @@ def detect_elf_os(f) -> str:
         if sh_type != SHT_NOTE:
             continue
 
-        logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
+        logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", linked_sh_offset, linked_sh_size)
 
-        f.seek(sh_offset)
-        note = f.read(sh_size)
-        if len(note) != sh_size:
+        f.seek(linked_sh_offset)
+        version_r = f.read(linked_sh_size)
+        if len(version_r) != linked_sh_size:
             logger.warning("failed to read note content")
             continue
 
-        namesz, descsz, type_ = struct.unpack_from(endian + "III", note, 0x0)
+        namesz, descsz, type_ = struct.unpack_from(endian + "III", version_r, 0x0)
         name_offset = 0xC
         desc_offset = name_offset + align(namesz, 0x4)
 
         logger.debug("sh:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, descsz, type_)
 
-        name = note[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
+        name = version_r[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
         logger.debug("name: %s", name)
 
         if name == "Linux":
@@ -300,7 +414,7 @@ def detect_elf_os(f) -> str:
             if descsz < 16:
                 continue
 
-            desc = note[desc_offset : desc_offset + descsz]
+            desc = version_r[desc_offset : desc_offset + descsz]
             abi_tag, kmajor, kminor, kpatch = struct.unpack_from(endian + "IIII", desc, 0x0)
             logger.debug("GNU_ABI_TAG: 0x%02x", abi_tag)
 
@@ -309,6 +423,113 @@ def detect_elf_os(f) -> str:
                 # so we can get the debugging output of subsequent strategies
                 ret = GNU_ABI_TAG[abi_tag] if not ret else ret
                 logger.debug("abi tag: %s earliest compatible kernel: %d.%d.%d", ret, kmajor, kminor, kpatch)
+
+    if not ret:
+        # if we don't have any guesses yet,
+        # then lets look for GLIBC symbol versioning requirements.
+        # this will let us guess about linux/hurd in some cases.
+        #
+        # symbol version requirements are stored in the .gnu.version_r section,
+        # which has type SHT_GNU_verneed (0x6ffffffe).
+        #
+        # this contains a linked list of ElfXX_Verneed structs,
+        # each referencing a linked list of ElfXX_Vernaux structs.
+        # strings are stored in the section referenced by the sh_link field of the section header.
+        # each Verneed struct contains a reference to the name of the library,
+        # each Vernaux struct contains a reference to the name of a symbol.
+        for i in range(e_shnum):
+            offset = i * e_shentsize
+            shent = section_headers[offset : offset + e_shentsize]
+
+            if bitness == 32:
+                sh_name, sh_type, _, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(endian + "IIIIIII", shent, 0x0)
+            elif bitness == 64:
+                sh_name, sh_type, _, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(endian + "IIQQQQI", shent, 0x0)
+            else:
+                raise NotImplementedError()
+
+            SHT_GNU_VERNEED = 0x6ffffffe
+            if sh_type != SHT_GNU_VERNEED:
+                continue
+
+            logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
+
+            # read the section containing the verneed structures
+            f.seek(sh_offset)
+            version_r = f.read(sh_size)
+            if len(version_r) != sh_size:
+                logger.warning("failed to read .gnu.version_r content")
+                continue
+
+            # read the linked section content
+            # which contains strings referenced by the verneed structures
+            linked_shent_offset = sh_link * e_shentsize
+            linked_shent = section_headers[linked_shent_offset : linked_shent_offset + e_shentsize]
+
+            if bitness == 32:
+                _, _, _, _, linked_sh_offset, linked_sh_size = struct.unpack_from(endian + "IIIIII", linked_shent, 0x0)
+            elif bitness == 64:
+                _, _, _, _, linked_sh_offset, linked_sh_size = struct.unpack_from(endian + "IIQQQQ", linked_shent, 0x0)
+            else:
+                raise NotImplementedError()
+
+            f.seek(linked_sh_offset)
+            linked_sh = f.read(linked_sh_size)
+            if len(linked_sh) != linked_sh_size:
+                logger.warning("failed to read linked content")
+                continue
+
+            so_abis = collections.defaultdict(set)
+
+            # read verneed structures from the start of the section
+            # until the vn_next link is 0x0.
+            # each entry describes a shared object that is required by this binary.
+            vn_offset = 0x0
+            while True:
+                # ElfXX_Verneed layout is the same on 32 and 64 bit
+                vn_version, vn_cnt, vn_file, vn_aux, vn_next = struct.unpack_from(endian + "HHIII", version_r, vn_offset)
+                if vn_version != 1:
+                    # unexpected format, don't try to keep parsing
+                    break
+
+                # shared object names, like: "libdl.so.2"
+                so_name = read_cstr(linked_sh, vn_file)
+
+                # read vernaux structures linked from the verneed structure.
+                # there should be vn_cnt of these.
+                # each entry describes an ABI name required by the shared object.
+                vna_offset = vn_offset + vn_aux
+                for i in range(vn_cnt):
+                    # ElfXX_Vernaux layout is the same on 32 and 64 bit
+                    _, _, _, vna_name, vna_next = struct.unpack_from(endian + "IHHII", version_r, vna_offset)
+
+                    # ABI names, like: "GLIBC_2.2.5"
+                    abi = read_cstr(linked_sh, vna_name)
+                    so_abis[so_name].add(abi)
+
+                    vna_offset += vna_next
+
+                vn_offset += vn_next
+                if vn_next == 0:
+                    break
+
+            has_glibc_verneed = False
+            for so_name, abis in so_abis.items():
+                for abi in abis:
+                    if abi.startswith("GLIBC"):
+                        has_glibc_verneed = True
+
+            if has_glibc_verneed:
+                if MACHINE.get(e_machine) != "386":
+                    ret = OS.LINUX
+
+                # TODO: check dynamic sections for libmachuser and libhurduser
+
+                if linker and "ld-linux" in linker:
+                    ret = OS.LINUX
+
+                if linker and "/ld.so" in linker:
+                    ret = OS.HURD
 
     return ret.value if ret is not None else "unknown"
 
