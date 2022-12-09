@@ -194,7 +194,7 @@ class ELF:
         # via https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.eheader.html
         1: "M32",
         2: "SPARC",
-        3: "386",
+        3: "i386",
         4: "68K",
         5: "88K",
         6: "486",
@@ -238,7 +238,7 @@ class ELF:
         59: "ME16",
         60: "ST100",
         61: "TINYJ",
-        62: "X86_64",
+        62: "amd64",
         63: "PDSP",
         64: "PDP10",
         65: "PDP11",
