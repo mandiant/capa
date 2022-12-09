@@ -10,8 +10,8 @@ import logging
 import itertools
 import collections
 from enum import Enum
+from typing import Set, Dict, List, Tuple, BinaryIO, Iterator, Optional
 from dataclasses import dataclass
-from typing import BinaryIO, Optional, Dict, Set, Iterator, Tuple, List
 
 logger = logging.getLogger(__name__)
 
@@ -320,9 +320,13 @@ class ELF:
         shent = self.shbuf[shent_offset : shent_offset + self.e_shentsize]
 
         if self.bitness == 32:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(self.endian + "IIIIIII", shent, 0x0)
+            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(
+                self.endian + "IIIIIII", shent, 0x0
+            )
         elif self.bitness == 64:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(self.endian + "IIQQQQI", shent, 0x0)
+            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(
+                self.endian + "IIQQQQI", shent, 0x0
+            )
         else:
             raise NotImplementedError()
 
@@ -362,7 +366,7 @@ class ELF:
         # strings are stored in the section referenced by the sh_link field of the section header.
         # each Verneed struct contains a reference to the name of the library,
         # each Vernaux struct contains a reference to the name of a symbol.
-        SHT_GNU_VERNEED = 0x6ffffffe
+        SHT_GNU_VERNEED = 0x6FFFFFFE
         for shdr in self.section_headers:
             if shdr.type != SHT_GNU_VERNEED:
                 continue
@@ -378,7 +382,9 @@ class ELF:
             vn_offset = 0x0
             while True:
                 # ElfXX_Verneed layout is the same on 32 and 64 bit
-                vn_version, vn_cnt, vn_file, vn_aux, vn_next = struct.unpack_from(self.endian + "HHIII", shdr.buf, vn_offset)
+                vn_version, vn_cnt, vn_file, vn_aux, vn_next = struct.unpack_from(
+                    self.endian + "HHIII", shdr.buf, vn_offset
+                )
                 if vn_version != 1:
                     # unexpected format, don't try to keep parsing
                     break
@@ -437,7 +443,7 @@ class ELF:
     @property
     def strtab(self) -> Optional[bytes]:
         """
-        fetch the bytes of the string table 
+        fetch the bytes of the string table
         referenced by the dynamic section.
         """
         DT_STRTAB = 0x5
