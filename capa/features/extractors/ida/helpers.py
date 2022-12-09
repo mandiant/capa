@@ -113,9 +113,7 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
 def get_file_externs() -> Dict[int, Tuple[str, str, int]]:
     externs = {}
 
-    for segstart in idautils.Segments():
-        seg = ida_segment.getseg(segstart)
-
+    for seg in get_segments(skip_header_segments=True):
         if not (seg.type == ida_segment.SEG_XTRN):
             continue
 
