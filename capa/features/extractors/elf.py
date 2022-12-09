@@ -11,7 +11,7 @@ import itertools
 import collections
 from enum import Enum
 from dataclasses import dataclass
-from typing import BinaryIO, Optional, Dict, Set
+from typing import BinaryIO, Optional, Dict, Set, Iterator, Tuple, List
 
 logger = logging.getLogger(__name__)
 
@@ -406,6 +406,94 @@ class ELF:
 
         return dict(versions_needed)
 
+    @property
+    def dynamic_entries(self) -> Iterator[Tuple[int, int]]:
+        """
+        read the entries from the dynamic section,
+        yielding the tag and value for each entry.
+        """
+        DT_NULL = 0x0
+        PT_DYNAMIC = 0x2
+        for phdr in self.program_headers:
+            if phdr.type != PT_DYNAMIC:
+                continue
+
+            offset = 0x0
+            while True:
+                if self.bitness == 32:
+                    d_tag, d_val = struct.unpack_from(self.endian + "II", phdr.buf, offset)
+                    offset += 8
+                elif self.bitness == 64:
+                    d_tag, d_val = struct.unpack_from(self.endian + "QQ", phdr.buf, offset)
+                    offset += 16
+                else:
+                    raise NotImplementedError()
+
+                if d_tag == DT_NULL:
+                    break
+
+                yield d_tag, d_val
+
+    @property
+    def strtab(self) -> Optional[bytes]:
+        """
+        fetch the bytes of the string table 
+        referenced by the dynamic section.
+        """
+        DT_STRTAB = 0x5
+        DT_STRSZ = 0xA
+
+        strtab_addr = None
+        strtab_size = None
+
+        for d_tag, d_val in self.dynamic_entries:
+            if d_tag == DT_STRTAB:
+                strtab_addr = d_val
+
+        for d_tag, d_val in self.dynamic_entries:
+            if d_tag == DT_STRSZ:
+                strtab_size = d_val
+
+        if strtab_addr is None:
+            return None
+
+        if strtab_size is None:
+            return None
+
+        strtab_offset = None
+        for shdr in self.section_headers:
+            if shdr.addr <= strtab_addr < shdr.addr + shdr.size:
+                strtab_offset = shdr.offset + (strtab_addr - shdr.addr)
+
+        if strtab_offset is None:
+            return None
+
+        self.f.seek(strtab_offset)
+        strtab_buf = self.f.read(strtab_size)
+
+        if len(strtab_buf) != strtab_size:
+            return None
+
+        return strtab_buf
+
+    @property
+    def needed(self) -> Iterator[str]:
+        """
+        read the names of DT_NEEDED entries from the dynamic section,
+        which correspond to dependencies on other shared objects,
+        like: `libpthread.so.0`
+        """
+        DT_NEEDED = 0x1
+        strtab = self.strtab
+        if not strtab:
+            return
+
+        for d_tag, d_val in self.dynamic_entries:
+            if d_tag != DT_NEEDED:
+                continue
+
+            yield read_cstr(strtab, d_val)
+
 
 @dataclass
 class ABITag:
@@ -569,7 +657,7 @@ def guess_os_from_sh_notes(elf) -> Optional[OS]:
         elif note.name == "GNU":
             abi_tag = note.abi_tag
             if abi_tag:
-                ret = abi_tag.os if not ret else ret
+                return abi_tag.os
             else:
                 # cannot make a guess about the OS, but probably linux or hurd
                 pass
@@ -618,6 +706,16 @@ def guess_os_from_abi_versions_needed(elf) -> Optional[OS]:
     return None
 
 
+def guess_os_from_needed_dependencies(elf) -> Optional[OS]:
+    for needed in elf.needed:
+        if needed.startswith("libmachuser.so"):
+            return OS.HURD
+        if needed.startswith("libhurduser.so"):
+            return OS.HURD
+
+    return None
+
+
 def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO]
@@ -639,6 +737,9 @@ def detect_elf_os(f) -> str:
     abi_versions_needed_guess = guess_os_from_abi_versions_needed(elf)
     logger.info("guess: ABI versions needed: %s", abi_versions_needed_guess)
 
+    needed_dependencies_guess = guess_os_from_needed_dependencies(elf)
+    logger.info("guess: needed dependencies: %s", needed_dependencies_guess)
+
     ret = None
 
     if osabi_guess:
@@ -656,7 +757,8 @@ def detect_elf_os(f) -> str:
     elif abi_versions_needed_guess:
         ret = abi_versions_needed_guess
 
-    # TODO: guess by dynamic sections
+    elif needed_dependencies_guess:
+        ret = needed_dependencies_guess
 
     return ret.value if ret is not None else "unknown"
 
