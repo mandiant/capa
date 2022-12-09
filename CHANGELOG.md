@@ -55,6 +55,7 @@
 - fix: display instruction items #1154 @mr-tz
 - fix: accept only plaintext pasted content #1194 @williballenthin
 - fix: UnboundLocalError #1217 @williballenthin
+- extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
 
 ### Development
 
