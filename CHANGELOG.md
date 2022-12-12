@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (31)
+### New Rules (32)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -42,6 +42,7 @@
 - nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
 - nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
 - host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
+- nursery/check-for-vm-using-instruction-vpcext richard.weiss@mandiant.com
 -
 
 ### Bug Fixes
