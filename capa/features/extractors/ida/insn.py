@@ -78,11 +78,13 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
 
     # check calls to imported functions
     for api in check_for_api_call(insn, get_imports(fh.ctx)):
+        # tuple (<module>, <function>, <ordinal>)
         for name in capa.features.extractors.helpers.generate_symbols(api[0], api[1]):
             yield API(name), ih.address
 
     # check calls to extern functions
     for api in check_for_api_call(insn, get_externs(fh.ctx)):
+        # tuple (<module>, <function>, <ordinal>)
         yield API(api[1]), ih.address
 
     # extract IDA/FLIRT recognized API functions
