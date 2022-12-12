@@ -263,10 +263,7 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
-    if not hasattr(pe.net.mdtables, "MethodDef"):
-        return
-
-    for (rid, row) in enumerate(pe.net.mdtables.MethodDef):
+    for (rid, row) in enumerate(iter_dotnet_table(pe, "MethodDef")):
         if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
             # skip methods that do not have a method body
             continue
@@ -320,7 +317,6 @@ def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
 
 
 def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
-    if not is_dotnet_table_valid(pe, name):
-        return
-    for row in getattr(pe.net.mdtables, name):
-        yield row
+    if is_dotnet_table_valid(pe, name):
+        for row in getattr(pe.net.mdtables, name):
+            yield row
