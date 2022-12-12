@@ -410,7 +410,9 @@ class ELF:
                 if vn_next == 0:
                     break
 
-        return dict(versions_needed)
+            return dict(versions_needed)
+
+        return {}
 
     @property
     def dynamic_entries(self) -> Iterator[Tuple[int, int]]:
@@ -533,7 +535,9 @@ class PHNote:
     @property
     def abi_tag(self) -> Optional[ABITag]:
         if self.type_ != 1:
-            # TODO: what is this constant name?
+            # > The type field shall be 1.
+            # Linux Standard Base Specification 1.2
+            # ref: https://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html
             return None
 
         if self.name != "GNU":
@@ -612,7 +616,9 @@ def guess_os_from_ph_notes(elf) -> Optional[OS]:
         note = PHNote(elf.endian, phdr.buf)
 
         if note.type_ != 1:
-            # TODO: what is this constant name?
+            # > The type field shall be 1.
+            # Linux Standard Base Specification 1.2
+            # ref: https://refspecs.linuxfoundation.org/LSB_1.2.0/gLSB/noteabitag.html
             continue
 
         if note.name == "Linux":
@@ -689,7 +695,7 @@ def guess_os_from_abi_versions_needed(elf) -> Optional[OS]:
     if any(map(lambda abi: abi.startswith("GLIBC"), itertools.chain(*versions_needed.values()))):
         # there are any GLIBC versions needed
 
-        if elf.e_machine != "386":
+        if elf.e_machine != "i386":
             # GLIBC runs on Linux and Hurd.
             # for Hurd, its *only* on i386.
             # so if we're not on i386, then we're on Linux.
