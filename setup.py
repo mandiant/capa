@@ -74,7 +74,7 @@ setuptools.setup(
             "pytest-instafail==0.4.2",
             "pytest-cov==4.0.0",
             "pycodestyle==2.9.1",
-            "black==22.10.0",
+            "black==22.12.0",
             "isort==5.10.1",
             "mypy==0.982",
             "psutil==5.9.2",
