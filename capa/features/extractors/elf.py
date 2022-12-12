@@ -735,22 +735,22 @@ def detect_elf_os(f) -> str:
     elf = ELF(f)
 
     osabi_guess = guess_os_from_osabi(elf)
-    logger.info("guess: osabi: %s", osabi_guess)
+    logger.debug("guess: osabi: %s", osabi_guess)
 
     ph_notes_guess = guess_os_from_ph_notes(elf)
-    logger.info("guess: ph notes: %s", ph_notes_guess)
+    logger.debug("guess: ph notes: %s", ph_notes_guess)
 
     sh_notes_guess = guess_os_from_sh_notes(elf)
-    logger.info("guess: sh notes: %s", sh_notes_guess)
+    logger.debug("guess: sh notes: %s", sh_notes_guess)
 
     linker_guess = guess_os_from_linker(elf)
-    logger.info("guess: linker: %s", linker_guess)
+    logger.debug("guess: linker: %s", linker_guess)
 
     abi_versions_needed_guess = guess_os_from_abi_versions_needed(elf)
-    logger.info("guess: ABI versions needed: %s", abi_versions_needed_guess)
+    logger.debug("guess: ABI versions needed: %s", abi_versions_needed_guess)
 
     needed_dependencies_guess = guess_os_from_needed_dependencies(elf)
-    logger.info("guess: needed dependencies: %s", needed_dependencies_guess)
+    logger.debug("guess: needed dependencies: %s", needed_dependencies_guess)
 
     ret = None
 
