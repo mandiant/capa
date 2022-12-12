@@ -34,10 +34,6 @@ from capa.features.extractors.dnfile.helpers import (
     get_dotnet_unmanaged_imports,
 )
 
-METHODDEF_TABLE = dnfile.mdtable.MethodDef.number
-MEMBERREF_TABLE = dnfile.mdtable.MemberRef.number
-FIELD_TABLE = dnfile.mdtable.Field.number
-
 
 def is_mdtable(index: int, table_name: str):
     return index == getattr(dnfile.mdtable, table_name).number
@@ -148,14 +144,14 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     access: Optional[str] = None
 
     if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        if insn.operand.table == METHODDEF_TABLE:
+        if is_mdtable(insn.operand.table, "MethodDef"):
             # check if the method belongs to the MethodDef table and whether it is used to access a property
             prop = get_properties(fh.ctx).get(insn.operand.value, None)
             if prop is not None:
                 name = str(prop)
                 access = prop.access
 
-        elif insn.operand.table == MEMBERREF_TABLE:
+        elif is_mdtable(insn.operand.table, "MemberRef"):
             # if the method belongs to the MemberRef table, we assume it is used to access a property
             row: Any = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
             if row is None:
