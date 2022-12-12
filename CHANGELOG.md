@@ -50,6 +50,7 @@
 - update pydantic model to guarantee type coercion #1176 @mike-hunhoff
 - do not overwrite version in version.py during PyInstaller build #1169 @mr-tz
 - render: fix vverbose rendering of offsets #1215 @williballenthin
+- elf: better detect OS via GLIBC ABI version needed and dependencies #1221 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
