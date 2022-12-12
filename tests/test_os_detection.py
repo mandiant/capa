@@ -59,4 +59,4 @@ def test_elf_abi_version_hurd():
     # guess: needed dependencies: None
     path = get_data_path_by_name("bf7a9c")
     with open(path, "rb") as f:
-        assert capa.features.extractors.elf.detect_elf_os(f) == "unknown"
+        assert capa.features.extractors.elf.detect_elf_os(f) == "hurd"
