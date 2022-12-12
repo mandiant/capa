@@ -4,9 +4,10 @@
 
 ### New Features
 - verify rule metadata format on load #1160 @mr-tz
-- extract property features from .NET PE files #1168 @anushkavirgaonkar
-- emit features for .NET newobj instruction #1186 @mike-hunhoff
+- dotnet: emit property features #1168 @anushkavirgaonkar
+- dotnet: emit API features for objects created via the newobj instruction #1186 @mike-hunhoff
 - fix import-to-ida script formatting #1208 @williballenthin
+- dotnet: emit API features for generic methods #1231 @mike-hunhoff
 
 ### Breaking Changes
 

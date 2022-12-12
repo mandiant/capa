@@ -112,6 +112,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         row: Optional[Any] = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
         if row is None:
             return
+        # TODO Unknown1 == MethodSpec Method column; update pending https://github.com/malwarefrank/dnfile/issues/65
         api_token = calculate_dotnet_token_value(row.Unknown1.table.number, row.Unknown1.row_index)
     else:
         api_token = insn.operand.value
