@@ -30,12 +30,17 @@ from capa.features.extractors.dnfile.helpers import (
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
+    calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
 )
 
 METHODDEF_TABLE = dnfile.mdtable.MethodDef.number
 MEMBERREF_TABLE = dnfile.mdtable.MemberRef.number
 FIELD_TABLE = dnfile.mdtable.Field.number
+
+
+def is_mdtable(index: int, table_name: str):
+    return index == getattr(dnfile.mdtable, table_name).number
 
 
 def get_managed_imports(ctx: Dict) -> Dict:
@@ -97,17 +102,31 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
         return
 
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
+    api_token: int
+
+    # ECMA: MethodSpec table records the signature of an instantiated generic method
+    #   Method (an index into the MethodDef or MemberRef table, specifying to which generic method this row refers)
+    #   Instantiation(an index into the Blob heap holding the signature of this instantiation)
+    if is_mdtable(insn.operand.table, "GenericMethod"):
+        # we map the generic method to its MethodDef or MemberRef parent
+        row: Optional[Any] = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
+        if row is None:
+            return
+        api_token = calculate_dotnet_token_value(row.Unknown1.table.number, row.Unknown1.row_index)
+    else:
+        api_token = insn.operand.value
+
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, api_token)
     if callee is None:
         return
 
     if isinstance(callee, DnType):
         if callee.member.startswith(("get_", "set_")):
-            if insn.operand.table == METHODDEF_TABLE:
+            if is_mdtable(insn.operand.table, "MethodDef"):
                 # check if the method belongs to the MethodDef table and whether it is used to access a property
                 if get_properties(fh.ctx).get(insn.operand.value, None) is not None:
                     return
-            elif insn.operand.table == MEMBERREF_TABLE:
+            elif is_mdtable(insn.operand.table, "MemberRef"):
                 # if the method belongs to the MemberRef table, we assume it is used to access a property
                 return
 
@@ -154,7 +173,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 access = FeatureAccess.WRITE
 
     elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
-        if insn.operand.table == FIELD_TABLE:
+        if is_mdtable(insn.operand.table, "Field"):
             # determine whether the operand is a field by checking if it belongs to the Field table
             read_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
             if read_field:
@@ -162,7 +181,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
                 access = FeatureAccess.READ
 
     elif insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
-        if insn.operand.table == FIELD_TABLE:
+        if is_mdtable(insn.operand.table, "Field"):
             # determine whether the operand is a field by checking if it belongs to the Field table
             write_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
             if write_field:
