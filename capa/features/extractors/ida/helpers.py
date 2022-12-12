@@ -11,6 +11,7 @@ import idc
 import idaapi
 import idautils
 import ida_bytes
+import ida_segment
 
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -107,6 +108,19 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
         idaapi.enum_import_names(idx, inspect_import)
 
     return imports
+
+
+def get_file_externs() -> Dict[int, Tuple[str, str, int]]:
+    externs = {}
+
+    for seg in get_segments(skip_header_segments=True):
+        if not (seg.type == ida_segment.SEG_XTRN):
+            continue
+
+        for ea in idautils.Functions(seg.start_ea, seg.end_ea):
+            externs[ea] = ("", idaapi.get_func_name(ea), -1)
+
+    return externs
 
 
 def get_instructions_in_range(start: int, end: int) -> Iterator[idaapi.insn_t]:

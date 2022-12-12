@@ -23,13 +23,19 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
-def get_imports(ctx: Dict[str, Any]) -> Dict[str, Any]:
+def get_imports(ctx: Dict[str, Any]) -> Dict[int, Any]:
     if "imports_cache" not in ctx:
         ctx["imports_cache"] = capa.features.extractors.ida.helpers.get_file_imports()
     return ctx["imports_cache"]
 
 
-def check_for_api_call(ctx: Dict[str, Any], insn: idaapi.insn_t) -> Iterator[str]:
+def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
+    if "externs_cache" not in ctx:
+        ctx["externs_cache"] = capa.features.extractors.ida.helpers.get_file_externs()
+    return ctx["externs_cache"]
+
+
+def check_for_api_call(insn: idaapi.insn_t, funcs: Dict[int, Any]) -> Iterator[Any]:
     """check instruction for API call"""
     info = ()
     ref = insn.ea
@@ -46,7 +52,7 @@ def check_for_api_call(ctx: Dict[str, Any], insn: idaapi.insn_t) -> Iterator[str
             except IndexError:
                 break
 
-        info = get_imports(ctx).get(ref, ())
+        info = funcs.get(ref, ())
         if info:
             break
 
@@ -55,7 +61,7 @@ def check_for_api_call(ctx: Dict[str, Any], insn: idaapi.insn_t) -> Iterator[str
             break
 
     if info:
-        yield "%s.%s" % (info[0], info[1])
+        yield info
 
 
 def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -70,10 +76,16 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     if not insn.get_canon_mnem() in ("call", "jmp"):
         return
 
-    for api in check_for_api_call(fh.ctx, insn):
-        dll, _, symbol = api.rpartition(".")
-        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+    # check calls to imported functions
+    for api in check_for_api_call(insn, get_imports(fh.ctx)):
+        # tuple (<module>, <function>, <ordinal>)
+        for name in capa.features.extractors.helpers.generate_symbols(api[0], api[1]):
             yield API(name), ih.address
+
+    # check calls to extern functions
+    for api in check_for_api_call(insn, get_externs(fh.ctx)):
+        # tuple (<module>, <function>, <ordinal>)
+        yield API(api[1]), ih.address
 
     # extract IDA/FLIRT recognized API functions
     targets = tuple(idautils.CodeRefsFrom(insn.ea, False))
