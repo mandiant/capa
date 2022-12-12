@@ -143,6 +143,11 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
 
 def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
     """read user string from #US stream"""
+    if pe.net.user_strings is None:
+        # #US stream may not exist - seen in obfuscated .NET
+        logger.warning("#US stream does not exist for stream index 0x%08x" % token.rid)
+        return None
+
     try:
         user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
     except UnicodeDecodeError as e:
