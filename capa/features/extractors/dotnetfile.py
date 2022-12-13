@@ -83,13 +83,13 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
     for (rid, type_def) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         type_def = cast(dnfile.mdtable.TypeDefRow, type_def)
 
-        token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid)
+        token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield Class(DnType.format_name(type_def.TypeName, namespace=type_def.TypeNamespace)), DNTokenAddress(token)
 
     for (rid, type_ref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         type_ref = cast(dnfile.mdtable.TypeRefRow, type_ref)
 
-        token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid )
+        token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield Class(DnType.format_name(type_ref.TypeName, namespace=type_ref.TypeNamespace)), DNTokenAddress(token)
 
 
