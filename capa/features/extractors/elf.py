@@ -92,17 +92,18 @@ class Shdr:
 
 
 class ELF:
-    def __init__(self, f):
+    def __init__(self, f: BinaryIO):
         self.f = f
 
-        self.bitness: int = None
-        self.endian: str = None
-        self.e_phentsize: int = None
-        self.e_phnum: int = None
-        self.e_shentsize: int = None
-        self.e_shnum: int = None
-        self.phbuf = None
-        self.shbuf = None
+        # these will all be initialized in `_parse()`
+        self.bitness: int = 0
+        self.endian: str = ""
+        self.e_phentsize: int = 0
+        self.e_phnum: int = 0
+        self.e_shentsize: int = 0
+        self.e_shnum: int = 0
+        self.phbuf: bytes = b""
+        self.shbuf: bytes = b""
 
         self._parse()
 
@@ -512,13 +513,14 @@ class ABITag:
 
 
 class PHNote:
-    def __init__(self, endian, buf):
+    def __init__(self, endian: str, buf: bytes):
         self.endian = endian
         self.buf = buf
 
-        self.type_: int = None
-        self.descsz: int = None
-        self.name: str = None
+        # these will be initialized in `_parse()`
+        self.type_: int = 0
+        self.descsz: int = 0
+        self.name: str = ""
 
         self._parse()
 
@@ -560,13 +562,14 @@ class PHNote:
 
 
 class SHNote:
-    def __init__(self, endian, buf):
+    def __init__(self, endian: str, buf: bytes):
         self.endian = endian
         self.buf = buf
 
-        self.type_: int = None
-        self.descsz: int = None
-        self.name: str = None
+        # these will be initialized in `_parse()`
+        self.type_: int = 0
+        self.descsz: int = 0
+        self.name: str = ""
 
         self._parse()
 
