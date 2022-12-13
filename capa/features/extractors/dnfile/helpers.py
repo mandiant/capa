@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import Any, Tuple, Iterator, Optional
+from typing import Any, Tuple, Union, Iterator, Optional, cast
 
 import dnfile
 from dncil.cil.body import CilMethodBody
@@ -137,21 +137,21 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
     try:
         return CilMethodBody(DnfileMethodBodyReader(pe, row))
     except MethodBodyFormatError as e:
-        logger.warning("failed to parse managed method body @ 0x%08x (%s)" % (row.Rva, e))
+        logger.debug("failed to parse managed method body @ 0x%08x (%s)" % (row.Rva, e))
         return None
 
 
 def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
     """read user string from #US stream"""
     if pe.net.user_strings is None:
-        # #US stream may not exist - seen in obfuscated .NET
-        logger.warning("#US stream does not exist for stream index 0x%08x" % token.rid)
+        # stream may not exist (seen in obfuscated .NET)
+        logger.debug("#US stream does not exist for stream index 0x%08x" % token.rid)
         return None
 
     try:
         user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
     except UnicodeDecodeError as e:
-        logger.warning("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
+        logger.debug("failed to decode #US stream index 0x%08x (%s)" % (token.rid, e))
         return None
 
     if user_string is None:
@@ -174,11 +174,15 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    for (rid, row) in enumerate(iter_dotnet_table(pe, "MemberRef")):
-        if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
+    for (rid, member_ref) in iter_dotnet_table(pe, dnfile.mdtable.MemberRef.number):
+        member_ref = cast(dnfile.mdtable.MemberRefRow, member_ref)
+        if not isinstance(member_ref.Class.row, dnfile.mdtable.TypeRefRow):
+            # only process class imports from TypeRef table
             continue
-        token: int = calculate_dotnet_token_value(pe.net.mdtables.MemberRef.number, rid + 1)
-        yield DnType(token, row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name)
+        token: int = calculate_dotnet_token_value(dnfile.mdtable.MemberRef.number, rid)
+        yield DnType(
+            token, member_ref.Class.row.TypeName, namespace=member_ref.Class.row.TypeNamespace, member=member_ref.Name
+        )
 
 
 def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
@@ -192,22 +196,45 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
     """
-    for row in iter_dotnet_table(pe, "TypeDef"):
-        for index in row.MethodList:
-            token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnType(token, row.TypeName, namespace=row.TypeNamespace, member=index.row.Name)
+    for (rid, type_def) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        type_def = cast(dnfile.mdtable.TypeDefRow, type_def)
+        for (idx, method) in enumerate(type_def.MethodList):
+            if method.table is None:
+                logger.debug("TypeDef[0x%X] MethodList[0x%X] table is None" % (rid, idx))
+                continue
+            if method.row is None:
+                logger.debug("TypeDef[0x%X] MethodList[0x%X] row is None" % (rid, idx))
+                continue
+            token = calculate_dotnet_token_value(method.table.number, method.row_index)
+            yield DnType(token, type_def.TypeName, namespace=type_def.TypeNamespace, member=method.row.Name)
 
 
 def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
-    """get fields from TypeDef table"""
-    for row in iter_dotnet_table(pe, "TypeDef"):
-        for index in row.FieldList:
-            token = calculate_dotnet_token_value(index.table.number, index.row_index)
-            yield DnType(token, row.TypeName, namespace=row.TypeNamespace, member=index.row.Name)
+    """get fields from TypeDef table
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    02 - TypeDef Table
+        Each row represents a class in the current assembly.
+            TypeName (index into String heap)
+            TypeNamespace (index into String heap)
+            FieldList (index into Field table; it marks the first of a continguous run of Fields owned by this Type)
+    """
+    for (rid, type_def) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        type_def = cast(dnfile.mdtable.TypeDefRow, type_def)
+        for (idx, field) in enumerate(type_def.FieldList):
+            if field.table is None:
+                logger.debug("TypeDef[0x%X] FieldList[0x%X] table is None" % (rid, idx))
+                continue
+            if field.row is None:
+                logger.debug("TypeDef[0x%X] FieldList[0x%X] row is None" % (rid, idx))
+                continue
+            token: int = calculate_dotnet_token_value(field.table.number, field.row_index)
+            yield DnType(token, type_def.TypeName, namespace=type_def.TypeNamespace, member=field.row.Name)
 
 
 def get_dotnet_property_map(
-    pe: dnfile.dnPE, property_row: dnfile.mdtable.PropertyRow
+    pe: dnfile.dnPE, mapped_property: Union[dnfile.mdtable.PropertyRow, dnfile.mdtable.EventRow]
 ) -> Optional[dnfile.mdtable.TypeDefRow]:
     """get property map from PropertyMap table
 
@@ -220,10 +247,14 @@ def get_dotnet_property_map(
                 the last row of the Property table
                 the next run of Properties, found by inspecting the PropertyList of the next row in this PropertyMap table
     """
-    for row in iter_dotnet_table(pe, "PropertyMap"):
-        for index in row.PropertyList:
-            if index.row.Name == property_row.Name:
-                return row.Parent.row
+    for (rid, property_map) in iter_dotnet_table(pe, dnfile.mdtable.PropertyMap.number):
+        property_map = cast(dnfile.mdtable.PropertyMapRow, property_map)
+        for (idx, property_) in enumerate(property_map.PropertyList):
+            if property_.row is None:
+                logger.debug("PropertyMap[0x%X] PropertyList[0x%x] row is None" % (rid, idx))
+                continue
+            if property_.row.Name == mapped_property.Name:
+                return property_map.Parent.row
     return None
 
 
@@ -238,41 +269,57 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
             Method (index into the MethodDef table)
             Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
     """
-    for row in iter_dotnet_table(pe, "MethodSemantics"):
-        typedef_row = get_dotnet_property_map(pe, row.Association.row)
-        if typedef_row is None:
+    for (rid, method_semantics) in iter_dotnet_table(pe, dnfile.mdtable.MethodSemantics.number):
+        method_semantics = cast(dnfile.mdtable.MethodSemanticsRow, method_semantics)
+
+        if method_semantics.Association.row is None:
+            logger.debug("MethodSemantics[0x%X] Association row is None" % rid)
+            continue
+        if method_semantics.Method.table is None:
+            logger.debug("MethodSemantics[0x%X] Method table is None" % rid)
             continue
 
-        token = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
+        type_def: Optional[dnfile.mdtable.TypeDefRow] = get_dotnet_property_map(pe, method_semantics.Association.row)
+        if type_def is None:
+            logger.debug("MethodSemantics[0x%X] TypeDef is None" % rid)
+            continue
 
-        if row.Semantics.msSetter:
+        token: int = calculate_dotnet_token_value(
+            method_semantics.Method.table.number, method_semantics.Method.row_index
+        )
+
+        access: Optional[str]
+        if method_semantics.Semantics.msSetter:
             access = FeatureAccess.WRITE
-        elif row.Semantics.msGetter:
+        elif method_semantics.Semantics.msGetter:
             access = FeatureAccess.READ
         else:
             access = None
 
         yield DnType(
             token,
-            typedef_row.TypeName,
+            type_def.TypeName,
             access=access,
-            namespace=typedef_row.TypeNamespace,
-            member=row.Association.row.Name,
+            namespace=type_def.TypeNamespace,
+            member=method_semantics.Association.row.Name,
         )
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
-    for (rid, row) in enumerate(iter_dotnet_table(pe, "MethodDef")):
-        if not row.ImplFlags.miIL or any((row.Flags.mdAbstract, row.Flags.mdPinvokeImpl)):
+    for (rid, method_def) in iter_dotnet_table(pe, dnfile.mdtable.MethodDef.number):
+        method_def = cast(dnfile.mdtable.MethodDefRow, method_def)
+
+        if not method_def.ImplFlags.miIL or any((method_def.Flags.mdAbstract, method_def.Flags.mdPinvokeImpl)):
             # skip methods that do not have a method body
             continue
 
-        body: Optional[CilMethodBody] = read_dotnet_method_body(pe, row)
+        body: Optional[CilMethodBody] = read_dotnet_method_body(pe, method_def)
         if body is None:
+            logger.debug("MethodDef[0x%X] method body is None" % rid)
             continue
 
-        token: int = calculate_dotnet_token_value(dnfile.enums.MetadataTables.MethodDef.value, rid + 1)
+        token: int = calculate_dotnet_token_value(dnfile.mdtable.MethodDef.number, rid)
         yield token, body
 
 
@@ -287,14 +334,29 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
             ImportName (index into the String heap)
             ImportScope (index into the ModuleRef table)
     """
-    for row in iter_dotnet_table(pe, "ImplMap"):
-        module: str = row.ImportScope.row.Name
-        method: str = row.ImportName
+    for (rid, impl_map) in iter_dotnet_table(pe, dnfile.mdtable.ImplMap.number):
+        impl_map = cast(dnfile.mdtable.ImplMapRow, impl_map)
+
+        module: str
+        if impl_map.ImportScope.row is None:
+            logger.debug("ImplMap[0x%X] ImportScope row is None" % rid)
+            module = ""
+        else:
+            module = impl_map.ImportScope.row.Name
+        method: str = impl_map.ImportName
+
+        member_forward_table: int
+        if impl_map.MemberForwarded.table is None:
+            logger.debug("ImplMap[0x%X] MemberForwarded table is None" % rid)
+            continue
+        else:
+            member_forward_table = impl_map.MemberForwarded.table.number
+        member_forward_row: int = impl_map.MemberForwarded.row_index
 
         # ECMA says "Each row of the ImplMap table associates a row in the MethodDef table (MemberForwarded) with the
         # name of a routine (ImportName) in some unmanaged DLL (ImportScope)"; so we calculate and map the MemberForwarded
         # MethodDef table token to help us later record native import method calls made from CIL
-        token: int = calculate_dotnet_token_value(row.MemberForwarded.table.number, row.MemberForwarded.row_index)
+        token: int = calculate_dotnet_token_value(member_forward_table, member_forward_row)
 
         # like Kernel32.dll
         if module and "." in module:
@@ -308,15 +370,11 @@ def calculate_dotnet_token_value(table: int, rid: int) -> int:
     return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
 
 
-def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
-    return bool(getattr(pe.net.mdtables, table_name, None))
-
-
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
     return not bool(pe.net.Flags.CLR_ILONLY)
 
 
-def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
-    if is_dotnet_table_valid(pe, name):
-        for row in getattr(pe.net.mdtables, name):
-            yield row
+def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, dnfile.base.MDTableRow]]:
+    for (rid, row) in enumerate(pe.net.mdtables.tables.get(table_index, [])):
+        # .NET tables are 1-indexed
+        yield rid + 1, row
