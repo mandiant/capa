@@ -33,7 +33,7 @@ jobs:
           submodules: true
       # using Python 3.8 to support running across multiple operating systems including Windows 7
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
       - if: matrix.os == 'ubuntu-18.04'
