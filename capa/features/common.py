@@ -233,9 +233,8 @@ class Substring(String):
             return Result(False, _MatchedSubstring(self, {}), [])
 
     def __str__(self):
-        v = self.value
-        assert isinstance(v, str)
-        return "substring(%s)" % v
+        assert isinstance(self.value, str)
+        return "substring(%s)" % self.value
 
 
 class _MatchedSubstring(Substring):
