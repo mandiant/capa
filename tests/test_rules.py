@@ -40,7 +40,7 @@ ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 
 def test_rule_ctor():
-    r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Or(Number(1)), {})
+    r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Or([Number(1)]), {})
     assert r.evaluate({Number(0): {ADDR1}}) == False
     assert r.evaluate({Number(1): {ADDR2}}) == True
 
