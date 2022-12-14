@@ -96,14 +96,14 @@ class ELF:
         self.f = f
 
         # these will all be initialized in `_parse()`
-        self.bitness: int = 0
-        self.endian: str = ""
-        self.e_phentsize: int = 0
-        self.e_phnum: int = 0
-        self.e_shentsize: int = 0
-        self.e_shnum: int = 0
-        self.phbuf: bytes = b""
-        self.shbuf: bytes = b""
+        self.bitness: int
+        self.endian: str
+        self.e_phentsize: int
+        self.e_phnum: int
+        self.e_shentsize: int
+        self.e_shnum: int
+        self.phbuf: bytes
+        self.shbuf: bytes
 
         self._parse()
 
@@ -518,9 +518,9 @@ class PHNote:
         self.buf = buf
 
         # these will be initialized in `_parse()`
-        self.type_: int = 0
-        self.descsz: int = 0
-        self.name: str = ""
+        self.type_: int
+        self.descsz: int
+        self.name: str
 
         self._parse()
 
@@ -567,9 +567,9 @@ class SHNote:
         self.buf = buf
 
         # these will be initialized in `_parse()`
-        self.type_: int = 0
-        self.descsz: int = 0
-        self.name: str = ""
+        self.type_: int
+        self.descsz: int
+        self.name: str
 
         self._parse()
 
