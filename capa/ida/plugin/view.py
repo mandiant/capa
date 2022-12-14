@@ -18,7 +18,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import _NoAddress, AbsoluteVirtualAddress
+from capa.features.address import AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750

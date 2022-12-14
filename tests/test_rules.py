@@ -13,10 +13,10 @@ import pytest
 import capa.rules
 import capa.engine
 import capa.features.common
-from capa.features.address import AbsoluteVirtualAddress
+import capa.features.address
+from capa.engine import Or
 from capa.features.file import FunctionName
 from capa.features.insn import Number, Offset, Property
-from capa.engine import Or
 from capa.features.common import (
     OS,
     OS_LINUX,
@@ -31,8 +31,7 @@ from capa.features.common import (
     Substring,
     FeatureAccess,
 )
-import capa.features.address
-
+from capa.features.address import AbsoluteVirtualAddress
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)

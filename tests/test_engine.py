@@ -5,15 +5,16 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import capa.features.address
 from capa.engine import *
 from capa.features import *
 from capa.features.insn import *
-import capa.features.address
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
 ADDR3 = capa.features.address.AbsoluteVirtualAddress(0x401003)
 ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
+
 
 def test_number():
     assert Number(1).evaluate({Number(0): {ADDR1}}) == False
@@ -50,7 +51,12 @@ def test_some():
 
     assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}}) == False
     assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}}) == False
-    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}) == True
+    assert (
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+            {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}
+        )
+        == True
+    )
     assert (
         Some(2, [Number(1), Number(2), Number(3)]).evaluate(
             {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}}

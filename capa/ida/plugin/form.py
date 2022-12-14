@@ -11,7 +11,7 @@ import copy
 import logging
 import itertools
 import collections
-from typing import Set, Dict, Optional, List, Any
+from typing import Any, Set, Dict, List, Optional
 
 import idaapi
 import ida_kernwin
@@ -1108,7 +1108,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             _, file_matches = capa.engine.match(
                 capa.rules.RuleSet(list(capa.rules.get_rules_and_dependencies(rules, rule.name))).file_rules,
                 file_features,
-                NO_ADDRESS
+                NO_ADDRESS,
             )
         except Exception as e:
             self.set_rulegen_status("Failed to match rule (%s)" % e)
