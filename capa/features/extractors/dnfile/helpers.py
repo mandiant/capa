@@ -107,15 +107,8 @@ class DnUnmanagedMethod:
         return f"{module}.{method}"
 
 
-def validate_has_dotnet(pe: dnfile.dnPE):
-    assert pe.net is not None
-    assert pe.net.mdtables is not None
-    assert pe.net.Flags is not None
-
-
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
     """map generic token to string or table row"""
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.mdtables is not None
 
@@ -153,7 +146,6 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
 
 def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
     """read user string from #US stream"""
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.user_strings is not None
 
@@ -183,7 +175,6 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.mdtables is not None
     assert pe.net.mdtables.MemberRef is not None
@@ -277,7 +268,6 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.mdtables is not None
     assert pe.net.mdtables.MethodDef is not None
@@ -331,7 +321,6 @@ def calculate_dotnet_token_value(table: int, rid: int) -> int:
 
 
 def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.mdtables is not None
 
@@ -339,7 +328,6 @@ def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
 
 
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.Flags is not None
 
@@ -347,7 +335,6 @@ def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
 
 
 def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.mdtables is not None
 

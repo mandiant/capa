@@ -19,16 +19,9 @@ def extract_file_os(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     yield OS(OS_ANY), NO_ADDRESS
 
 
-def validate_has_dotnet(pe: dnfile.dnPE):
-    assert pe.net is not None
-    assert pe.net.mdtables is not None
-    assert pe.net.Flags is not None
-
-
 def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
-    validate_has_dotnet(pe)
     assert pe.net is not None
     assert pe.net.Flags is not None
 
@@ -81,7 +74,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
         #  True: native EP: Token
         #  False: managed EP: RVA
-        validate_has_dotnet(self.pe)
         assert self.pe.net is not None
         assert self.pe.net.struct is not None
 
@@ -97,7 +89,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return bool(self.pe.net)
 
     def is_mixed_mode(self) -> bool:
-        validate_has_dotnet(self.pe)
         assert self.pe is not None
         assert self.pe.net is not None
         assert self.pe.net.Flags is not None
@@ -105,7 +96,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return not bool(self.pe.net.Flags.CLR_ILONLY)
 
     def get_runtime_version(self) -> Tuple[int, int]:
-        validate_has_dotnet(self.pe)
         assert self.pe is not None
         assert self.pe.net is not None
         assert self.pe.net.struct is not None
@@ -113,7 +103,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
         return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
 
     def get_meta_version_string(self) -> str:
-        validate_has_dotnet(self.pe)
         assert self.pe.net is not None
         assert self.pe.net.metadata is not None
         assert self.pe.net.metadata.struct is not None
