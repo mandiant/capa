@@ -9,6 +9,7 @@
 import re
 import abc
 import codecs
+import typing
 import logging
 import collections
 from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional
@@ -200,7 +201,7 @@ class Substring(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches: collections.defaultdict[str, Set[Address]] = collections.defaultdict(set)
+        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
         assert isinstance(self.value, str)
         for feature, locations in ctx.items():
@@ -291,7 +292,7 @@ class Regex(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches: collections.defaultdict[str, Set[Address]] = collections.defaultdict(set)
+        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
         for feature, locations in ctx.items():
             if not isinstance(feature, (String,)):

@@ -1,8 +1,8 @@
+import typing
 import collections
-from typing import Dict
 
 # this structure is unstable and may change before the next major release.
-counters: collections.Counter[str] = collections.Counter()
+counters: typing.Counter[str] = collections.Counter()
 
 
 def reset():
