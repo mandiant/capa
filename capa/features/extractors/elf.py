@@ -531,8 +531,8 @@ class PHNote:
 
         logger.debug("ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, self.descsz, self.type_)
 
-        name = self.buf[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
-        logger.debug("name: %s", name)
+        self.name = self.buf[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
+        logger.debug("name: %s", self.name)
 
     @property
     def abi_tag(self) -> Optional[ABITag]:
