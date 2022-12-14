@@ -40,6 +40,12 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
     yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 
+def validate_has_dotnet(pe: dnfile.dnPE):
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    assert pe.net.Flags is not None
+
+
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
     for method in get_dotnet_managed_imports(pe):
         # like System.IO.File::OpenRead
@@ -78,6 +84,12 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
 
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    assert pe.net.mdtables.TypeDef is not None
+    assert pe.net.mdtables.TypeRef is not None
+
     for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
         token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
         yield Class(DnType.format_name(row.TypeName, namespace=row.TypeNamespace)), DNTokenAddress(token)
@@ -94,6 +106,10 @@ def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
 def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address]]:
     # to distinguish in more detail, see https://stackoverflow.com/a/23614024/10548020
     # .NET 4.5 added option: any CPU, 32-bit preferred
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.Flags is not None
+
     if pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE:
         yield Arch(ARCH_I386), NO_ADDRESS
     elif not pe.net.Flags.CLR_32BITREQUIRED and pe.PE_TYPE == pefile.OPTIONAL_HEADER_MAGIC_PE_PLUS:
@@ -155,6 +171,10 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
         #  True: native EP: Token
         #  False: managed EP: RVA
+        validate_has_dotnet(self.pe)
+        assert self.pe.net is not None
+        assert self.pe.net.struct is not None
+
         return self.pe.net.struct.EntryPointTokenOrRva
 
     def extract_global_features(self):
@@ -170,10 +190,25 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         return is_dotnet_mixed_mode(self.pe)
 
     def get_runtime_version(self) -> Tuple[int, int]:
+        validate_has_dotnet(self.pe)
+        assert self.pe.net is not None
+        assert self.pe.net.struct is not None
+        assert self.pe.net.struct.MajorRuntimeVersion is not None
+        assert self.pe.net.struct.MinorRuntimeVersion is not None
+
         return self.pe.net.struct.MajorRuntimeVersion, self.pe.net.struct.MinorRuntimeVersion
 
     def get_meta_version_string(self) -> str:
-        return self.pe.net.metadata.struct.Version.rstrip(b"\x00").decode("utf-8")
+        validate_has_dotnet(self.pe)
+        assert self.pe.net is not None
+        assert self.pe.net.metadata is not None
+        assert self.pe.net.metadata.struct is not None
+        assert self.pe.net.metadata.struct.Version is not None
+
+        vbuf = self.pe.net.metadata.struct.Version
+        assert isinstance(vbuf, bytes)
+
+        return vbuf.rstrip(b"\x00").decode("utf-8")
 
     def get_functions(self):
         raise NotImplementedError("DotnetFileFeatureExtractor can only be used to extract file features")

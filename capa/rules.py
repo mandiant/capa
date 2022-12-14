@@ -634,7 +634,7 @@ class Rule:
         Returns:
           List[str]: names of rules upon which this rule depends.
         """
-        deps = set([])
+        deps: Set[str] = set([])
 
         def rec(statement):
             if isinstance(statement, capa.features.common.MatchedRule):
@@ -651,6 +651,7 @@ class Rule:
                     deps.update(map(lambda r: r.name, namespaces[statement.value]))
                 else:
                     # not a namespace, assume its a rule name.
+                    assert isinstance(statement.value, str)
                     deps.add(statement.value)
 
             elif isinstance(statement, ceng.Statement):
@@ -666,7 +667,11 @@ class Rule:
     def _extract_subscope_rules_rec(self, statement):
         if isinstance(statement, ceng.Statement):
             # for each child that is a subscope,
-            for subscope in filter(lambda statement: isinstance(statement, ceng.Subscope), statement.get_children()):
+            for child in statement.get_children():
+                if not isinstance(child, ceng.Subscope):
+                    continue
+
+                subscope = child
 
                 # create a new rule from it.
                 # the name is a randomly generated, hopefully unique value.
@@ -737,7 +742,7 @@ class Rule:
         return self.statement.evaluate(features, short_circuit=short_circuit)
 
     @classmethod
-    def from_dict(cls, d, definition):
+    def from_dict(cls, d, definition) -> "Rule":
         meta = d["rule"]["meta"]
         name = meta["name"]
         # if scope is not specified, default to function scope.
@@ -771,14 +776,12 @@ class Rule:
             # prefer to use CLoader to be fast, see #306
             # on Linux, make sure you install libyaml-dev or similar
             # on Windows, get WHLs from pyyaml.org/pypi
-            loader = yaml.CLoader
             logger.debug("using libyaml CLoader.")
+            return yaml.CLoader
         except:
-            loader = yaml.Loader
             logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
-
-        return loader
+            return yaml.Loader
 
     @staticmethod
     def _get_ruamel_yaml_parser():
@@ -790,8 +793,9 @@ class Rule:
         # use block mode, not inline json-like mode
         y.default_flow_style = False
 
-        # leave quotes unchanged
-        y.preserve_quotes = True
+        # leave quotes unchanged.
+        # manually verified this property exists, even if mypy complains.
+        y.preserve_quotes = True  # type: ignore
 
         # indent lists by two spaces below their parent
         #
@@ -802,12 +806,13 @@ class Rule:
         y.indent(sequence=2, offset=2)
 
         # avoid word wrapping
-        y.width = 4096
+        # manually verified this property exists, even if mypy complains.
+        y.width = 4096  # type: ignore
 
         return y
 
     @classmethod
-    def from_yaml(cls, s, use_ruamel=False):
+    def from_yaml(cls, s, use_ruamel=False) -> "Rule":
         if use_ruamel:
             # ruamel enables nice formatting and doc roundtripping with comments
             doc = cls._get_ruamel_yaml_parser().load(s)
@@ -817,7 +822,7 @@ class Rule:
         return cls.from_dict(doc, s)
 
     @classmethod
-    def from_yaml_file(cls, path, use_ruamel=False):
+    def from_yaml_file(cls, path, use_ruamel=False) -> "Rule":
         with open(path, "rb") as f:
             try:
                 rule = cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
@@ -832,7 +837,7 @@ class Rule:
             except pydantic.ValidationError as e:
                 raise InvalidRuleWithPath(path, str(e)) from e
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
         # reformat the yaml document with a common style.
         # this includes:
         #  - ordering the meta elements
@@ -1261,7 +1266,7 @@ class RuleSet:
         return (easy_rules_by_feature, hard_rules)
 
     @staticmethod
-    def _get_rules_for_scope(rules, scope):
+    def _get_rules_for_scope(rules, scope) -> List[Rule]:
         """
         given a collection of rules, collect the rules that are needed at the given scope.
         these rules are ordered topologically.
@@ -1269,7 +1274,7 @@ class RuleSet:
         don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
-        scope_rules = set([])
+        scope_rules: Set[Rule] = set([])
 
         # we need to process all rules, not just rules with the given scope.
         # this is because rules with a higher scope, e.g. file scope, may have subscope rules
@@ -1283,7 +1288,7 @@ class RuleSet:
         return get_rules_with_scope(topologically_order_rules(list(scope_rules)), scope)
 
     @staticmethod
-    def _extract_subscope_rules(rules):
+    def _extract_subscope_rules(rules) -> List[Rule]:
         """
         process the given sequence of rules.
         for each one, extract any embedded subscope rules into their own rule.

@@ -107,8 +107,18 @@ class DnUnmanagedMethod:
         return f"{module}.{method}"
 
 
+def validate_has_dotnet(pe: dnfile.dnPE):
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    assert pe.net.Flags is not None
+
+
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
     """map generic token to string or table row"""
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+
     if isinstance(token, StringToken):
         user_string: Optional[str] = read_dotnet_user_string(pe, token)
         if user_string is None:
@@ -143,6 +153,10 @@ def read_dotnet_method_body(pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow) -
 
 def read_dotnet_user_string(pe: dnfile.dnPE, token: StringToken) -> Optional[str]:
     """read user string from #US stream"""
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.user_strings is not None
+
     try:
         user_string: Optional[dnfile.stream.UserString] = pe.net.user_strings.get_us(token.rid)
     except UnicodeDecodeError as e:
@@ -169,6 +183,11 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    assert pe.net.mdtables.MemberRef is not None
+
     for (rid, row) in enumerate(iter_dotnet_table(pe, "MemberRef")):
         if not isinstance(row.Class.row, dnfile.mdtable.TypeRefRow):
             continue
@@ -258,6 +277,11 @@ def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+    assert pe.net.mdtables.MethodDef is not None
+
     if not hasattr(pe.net.mdtables, "MethodDef"):
         return
 
@@ -307,15 +331,28 @@ def calculate_dotnet_token_value(table: int, rid: int) -> int:
 
 
 def is_dotnet_table_valid(pe: dnfile.dnPE, table_name: str) -> bool:
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+
     return bool(getattr(pe.net.mdtables, table_name, None))
 
 
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.Flags is not None
+
     return not bool(pe.net.Flags.CLR_ILONLY)
 
 
 def iter_dotnet_table(pe: dnfile.dnPE, name: str) -> Iterator[Any]:
+    validate_has_dotnet(pe)
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+
     if not is_dotnet_table_valid(pe, name):
         return
+
     for row in getattr(pe.net.mdtables, name):
         yield row

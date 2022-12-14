@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Mapping, Iterable
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Mapping, Iterable, Iterator, Union, cast
 
 import capa.perf
 import capa.features.common
@@ -60,17 +60,24 @@ class Statement:
         """
         raise NotImplementedError()
 
-    def get_children(self):
+    def get_children(self) -> Iterator[Union["Statement", Feature]]:
         if hasattr(self, "child"):
-            yield self.child
+            # this really confuses mypy because the property may not exist
+            # since its defined in the subclasses.
+            child = self.child  # type: ignore
+            assert isinstance(child, (Statement, Feature))
+            yield child
 
         if hasattr(self, "children"):
             for child in getattr(self, "children"):
+                assert isinstance(child, (Statement, Feature))
                 yield child
 
     def replace_child(self, existing, new):
         if hasattr(self, "child"):
-            if self.child is existing:
+            # this really confuses mypy because the property may not exist
+            # since its defined in the subclasses.
+            if self.child is existing:  # type: ignore
                 self.child = new
 
         if hasattr(self, "children"):

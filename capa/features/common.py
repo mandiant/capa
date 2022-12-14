@@ -200,8 +200,9 @@ class Substring(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches = collections.defaultdict(list)
+        matches: collections.defaultdict[str, Set[Address]] = collections.defaultdict(set)
 
+        assert isinstance(self.value, str)
         for feature, locations in ctx.items():
             if not isinstance(feature, (String,)):
                 continue
@@ -211,32 +212,29 @@ class Substring(String):
                 raise ValueError("unexpected feature value type")
 
             if self.value in feature.value:
-                matches[feature.value].extend(locations)
+                matches[feature.value].update(locations)
                 if short_circuit:
                     # we found one matching string, thats sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
         if matches:
-            # finalize: defaultdict -> dict
-            # which makes json serialization easier
-            matches = dict(matches)
-
             # collect all locations
             locations = set()
-            for s in matches.keys():
-                matches[s] = list(set(matches[s]))
-                locations.update(matches[s])
+            for locs in matches.values():
+                locations.update(locs)
 
             # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the substring and the matched values.
-            return Result(True, _MatchedSubstring(self, matches), [], locations=locations)
+            return Result(True, _MatchedSubstring(self, dict(matches)), [], locations=locations)
         else:
             return Result(False, _MatchedSubstring(self, {}), [])
 
     def __str__(self):
-        return "substring(%s)" % self.value
+        v = self.value
+        assert isinstance(v, str)
+        return "substring(%s)" % v
 
 
 class _MatchedSubstring(Substring):
@@ -261,6 +259,7 @@ class _MatchedSubstring(Substring):
         self.matches = matches
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return 'substring("%s", matches = %s)' % (
             self.value,
             ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
@@ -292,7 +291,7 @@ class Regex(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches = collections.defaultdict(list)
+        matches: collections.defaultdict[str, Set[Address]] = collections.defaultdict(set)
 
         for feature, locations in ctx.items():
             if not isinstance(feature, (String,)):
@@ -307,32 +306,28 @@ class Regex(String):
             # using this mode cleans is more convenient for rule authors,
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
-                matches[feature.value].extend(locations)
+                matches[feature.value].update(locations)
                 if short_circuit:
                     # we found one matching string, thats sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
         if matches:
-            # finalize: defaultdict -> dict
-            # which makes json serialization easier
-            matches = dict(matches)
-
             # collect all locations
             locations = set()
-            for s in matches.keys():
-                matches[s] = list(set(matches[s]))
-                locations.update(matches[s])
+            for locs in matches.values():
+                locations.update(locs)
 
             # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the regex and the matched values.
             # see #262.
-            return Result(True, _MatchedRegex(self, matches), [], locations=locations)
+            return Result(True, _MatchedRegex(self, dict(matches)), [], locations=locations)
         else:
             return Result(False, _MatchedRegex(self, {}), [])
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return "regex(string =~ %s)" % self.value
 
 
@@ -358,6 +353,7 @@ class _MatchedRegex(Regex):
         self.matches = matches
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return "regex(string =~ %s, matches = %s)" % (
             self.value,
             ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
@@ -380,16 +376,19 @@ class Bytes(Feature):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
 
+        assert isinstance(self.value, bytes)
         for feature, locations in ctx.items():
             if not isinstance(feature, (Bytes,)):
                 continue
 
+            assert isinstance(feature.value, bytes)
             if feature.value.startswith(self.value):
                 return Result(True, self, [], locations=locations)
 
         return Result(False, self, [])
 
     def get_value_str(self):
+        assert isinstance(self.value, bytes)
         return hex_string(bytes_to_str(self.value))
 
 

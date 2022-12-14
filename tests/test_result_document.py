@@ -19,6 +19,7 @@ def test_optional_node_from_capa():
             [],
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.CompoundStatement)
     assert node.statement.type == rdoc.CompoundStatementType.OPTIONAL
 
@@ -32,6 +33,7 @@ def test_some_node_from_capa():
             ],
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.SomeStatement)
 
 
@@ -41,6 +43,7 @@ def test_range_node_from_capa():
             capa.features.insn.Number(0),
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.RangeStatement)
 
 
@@ -51,6 +54,7 @@ def test_subscope_node_from_capa():
             capa.features.insn.Number(0),
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.SubscopeStatement)
 
 
@@ -62,6 +66,7 @@ def test_and_node_from_capa():
             ],
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.CompoundStatement)
     assert node.statement.type == rdoc.CompoundStatementType.AND
 
@@ -74,6 +79,7 @@ def test_or_node_from_capa():
             ],
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.CompoundStatement)
     assert node.statement.type == rdoc.CompoundStatementType.OR
 
@@ -86,115 +92,138 @@ def test_not_node_from_capa():
             ],
         )
     )
+    assert isinstance(node, rdoc.StatementNode)
     assert isinstance(node.statement, rdoc.CompoundStatement)
     assert node.statement.type == rdoc.CompoundStatementType.NOT
 
 
 def test_os_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.OS(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.OSFeature)
 
 
 def test_arch_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Arch(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.ArchFeature)
 
 
 def test_format_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Format(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.FormatFeature)
 
 
 def test_match_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.MatchedRule(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.MatchFeature)
 
 
 def test_characteristic_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Characteristic(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.CharacteristicFeature)
 
 
 def test_substring_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Substring(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.SubstringFeature)
 
 
 def test_regex_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Regex(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.RegexFeature)
 
 
 def test_class_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Class(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.ClassFeature)
 
 
 def test_namespace_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Namespace(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.NamespaceFeature)
 
 
 def test_bytes_node_from_capa():
     node = rdoc.node_from_capa(capa.features.common.Bytes(b""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.BytesFeature)
 
 
 def test_export_node_from_capa():
     node = rdoc.node_from_capa(capa.features.file.Export(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.ExportFeature)
 
 
 def test_import_node_from_capa():
     node = rdoc.node_from_capa(capa.features.file.Import(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.ImportFeature)
 
 
 def test_section_node_from_capa():
     node = rdoc.node_from_capa(capa.features.file.Section(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.SectionFeature)
 
 
 def test_function_name_node_from_capa():
     node = rdoc.node_from_capa(capa.features.file.FunctionName(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.FunctionNameFeature)
 
 
 def test_api_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.API(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.APIFeature)
 
 
 def test_property_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.Property(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.PropertyFeature)
 
 
 def test_number_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.Number(0))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.NumberFeature)
 
 
 def test_offset_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.Offset(0))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.OffsetFeature)
 
 
 def test_mnemonic_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.Mnemonic(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.MnemonicFeature)
 
 
 def test_operand_number_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.OperandNumber(0, 0))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.OperandNumberFeature)
 
 
 def test_operand_offset_node_from_capa():
     node = rdoc.node_from_capa(capa.features.insn.OperandOffset(0, 0))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.OperandOffsetFeature)
 
 
 def test_basic_block_node_from_capa():
     node = rdoc.node_from_capa(capa.features.basicblock.BasicBlock(""))
+    assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.BasicBlockFeature)
