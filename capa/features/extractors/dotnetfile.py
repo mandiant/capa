@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Iterator
+from typing import Tuple, Iterator, cast
 
 import dnfile
 import pefile
@@ -62,11 +62,15 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
     # namespaces may be referenced multiple times, so we need to filter
     namespaces = set()
 
-    for row in iter_dotnet_table(pe, "TypeDef"):
-        namespaces.add(row.TypeNamespace)
+    for (_, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        # emit internal .NET namespaces
+        assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
+        namespaces.add(typedef.TypeNamespace)
 
-    for row in iter_dotnet_table(pe, "TypeRef"):
-        namespaces.add(row.TypeNamespace)
+    for (_, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        # emit external .NET namespaces
+        assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
+        namespaces.add(typeref.TypeNamespace)
 
     # namespaces may be empty, discard
     namespaces.discard("")
@@ -78,18 +82,19 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
 
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
-    assert pe.net is not None
-    assert pe.net.mdtables is not None
-    assert pe.net.mdtables.TypeDef is not None
-    assert pe.net.mdtables.TypeRef is not None
+    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        # emit internal .NET classes
+        assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
-    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeDef")):
-        token = calculate_dotnet_token_value(pe.net.mdtables.TypeDef.number, rid + 1)
-        yield Class(DnType.format_name(row.TypeName, namespace=row.TypeNamespace)), DNTokenAddress(token)
+        token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
+        yield Class(DnType.format_name(typedef.TypeName, namespace=typedef.TypeNamespace)), DNTokenAddress(token)
 
-    for (rid, row) in enumerate(iter_dotnet_table(pe, "TypeRef")):
-        token = calculate_dotnet_token_value(pe.net.mdtables.TypeRef.number, rid + 1)
-        yield Class(DnType.format_name(row.TypeName, namespace=row.TypeNamespace)), DNTokenAddress(token)
+    for (rid, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        # emit external .NET classes
+        assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
+
+        token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
+        yield Class(DnType.format_name(typeref.TypeName, namespace=typeref.TypeNamespace)), DNTokenAddress(token)
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
