@@ -349,7 +349,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
         module: str
         if impl_map.ImportScope.row is None:
-            logger.debug("ImplMap[0x%X] ImportScope row is None" % rid)
+            logger.debug("ImplMap[0x%X] ImportScope row is None", rid)
             module = ""
         else:
             module = impl_map.ImportScope.row.Name
@@ -357,7 +357,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
         member_forward_table: int
         if impl_map.MemberForwarded.table is None:
-            logger.debug("ImplMap[0x%X] MemberForwarded table is None" % rid)
+            logger.debug("ImplMap[0x%X] MemberForwarded table is None", rid)
             continue
         else:
             member_forward_table = impl_map.MemberForwarded.table.number
