@@ -248,7 +248,7 @@ class InvalidAttckOrMbcTechnique(Lint):
     """
 
     def __init__(self):
-        super(InvalidAttckOrMbcTechnique, self).__init__()
+        super().__init__()
 
         try:
             with open(f"{os.path.dirname(__file__)}/linter-data.json", "rb") as fd:
@@ -902,11 +902,15 @@ def redirecting_print_to_tqdm():
             old_print(*args, **kwargs)
 
     try:
-        # Globaly replace print with new_print
-        inspect.builtins.print = new_print
+        # Globaly replace print with new_print.
+        # Verified this works manually on Python 3.11:
+        #     >>> import inspect
+        #     >>> inspect.builtins
+        #     <module 'builtins' (built-in)>
+        inspect.builtins.print = new_print  # type: ignore
         yield
     finally:
-        inspect.builtins.print = old_print
+        inspect.builtins.print = old_print  # type: ignore
 
 
 def lint(ctx: Context):
@@ -998,10 +1002,8 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.main.get_rules(args.rules, disable_progress=True)
-        rule_count = len(rules)
-        rules = capa.rules.RuleSet(rules)
-        logger.info("successfully loaded %s rules", rule_count)
+        rules = capa.rules.RuleSet(capa.main.get_rules(args.rules, disable_progress=True))
+        logger.info("successfully loaded %s rules", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
             logger.debug("selected %s rules", len(rules))

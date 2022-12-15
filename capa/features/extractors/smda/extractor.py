@@ -15,7 +15,7 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 
 class SmdaFeatureExtractor(FeatureExtractor):
     def __init__(self, smda_report: SmdaReport, path):
-        super(SmdaFeatureExtractor, self).__init__()
+        super().__init__()
         self.smda_report = smda_report
         self.path = path
         with open(self.path, "rb") as f:

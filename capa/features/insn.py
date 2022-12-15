@@ -8,6 +8,7 @@
 import abc
 from typing import Union, Optional
 
+import capa.helpers
 from capa.features.common import VALID_FEATURE_ACCESS, Feature
 
 
@@ -21,13 +22,13 @@ def hex(n: int) -> str:
 
 class API(Feature):
     def __init__(self, name: str, description=None):
-        super(API, self).__init__(name, description=description)
+        super().__init__(name, description=description)
 
 
 class _AccessFeature(Feature, abc.ABC):
     # superclass: don't use directly
     def __init__(self, value: str, access: Optional[str] = None, description: Optional[str] = None):
-        super(_AccessFeature, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         if access is not None:
             if access not in VALID_FEATURE_ACCESS:
                 raise ValueError("%s access type %s not valid" % (self.name, access))
@@ -47,16 +48,16 @@ class _AccessFeature(Feature, abc.ABC):
 
 class Property(_AccessFeature):
     def __init__(self, value: str, access: Optional[str] = None, description=None):
-        super(Property, self).__init__(value, access=access, description=description)
+        super().__init__(value, access=access, description=description)
 
 
 class Number(Feature):
     def __init__(self, value: Union[int, float], description=None):
-        super(Number, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
     def get_value_str(self):
         if isinstance(self.value, int):
-            return hex(self.value)
+            return capa.helpers.hex(self.value)
         elif isinstance(self.value, float):
             return str(self.value)
         else:
@@ -69,15 +70,16 @@ MAX_STRUCTURE_SIZE = 0x10000
 
 class Offset(Feature):
     def __init__(self, value: int, description=None):
-        super(Offset, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
     def get_value_str(self):
+        assert isinstance(self.value, int)
         return hex(self.value)
 
 
 class Mnemonic(Feature):
     def __init__(self, value: str, description=None):
-        super(Mnemonic, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 # max number of operands to consider for a given instrucion.
@@ -91,7 +93,7 @@ class _Operand(Feature, abc.ABC):
     # superclass: don't use directly
     # subclasses should set self.name and provide the value string formatter
     def __init__(self, index: int, value: int, description=None):
-        super(_Operand, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.index = index
 
     def __hash__(self):
@@ -107,7 +109,7 @@ class OperandNumber(_Operand):
 
     # operand[i].number: 0x12
     def __init__(self, index: int, value: int, description=None):
-        super(OperandNumber, self).__init__(index, value, description=description)
+        super().__init__(index, value, description=description)
         self.name = self.NAMES[index]
 
     def get_value_str(self) -> str:
@@ -121,7 +123,7 @@ class OperandOffset(_Operand):
 
     # operand[i].offset: 0x12
     def __init__(self, index: int, value: int, description=None):
-        super(OperandOffset, self).__init__(index, value, description=description)
+        super().__init__(index, value, description=description)
         self.name = self.NAMES[index]
 
     def get_value_str(self) -> str:

@@ -18,7 +18,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import Address, _NoAddress
+from capa.features.address import AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750
@@ -179,11 +179,12 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
 
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerRulegenPreview, self).__init__(parent)
+        super().__init__(parent)
 
         self.setFont(QtGui.QFont("Courier", weight=QtGui.QFont.Bold))
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setAcceptRichText(False)
 
     def reset_view(self):
         """ """
@@ -284,7 +285,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                 self.set_selection(select_start_ppos, select_end_ppos, len(self.toPlainText()))
                 self.verticalScrollBar().setSliderPosition(scroll_ppos)
         else:
-            super(CapaExplorerRulegenPreview, self).keyPressEvent(e)
+            super().keyPressEvent(e)
 
     def count_previous_lines_from_block(self, block):
         """calculate number of lines preceding block"""
@@ -310,7 +311,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def __init__(self, preview, parent=None):
         """ """
-        super(CapaExplorerRulegenEditor, self).__init__(parent)
+        super().__init__(parent)
 
         self.preview = preview
 
@@ -374,18 +375,18 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
     def dragMoveEvent(self, e):
         """ """
-        super(CapaExplorerRulegenEditor, self).dragMoveEvent(e)
+        super().dragMoveEvent(e)
 
     def dragEventEnter(self, e):
         """ """
-        super(CapaExplorerRulegenEditor, self).dragEventEnter(e)
+        super().dragEventEnter(e)
 
     def dropEvent(self, e):
         """ """
         if not self.indexAt(e.pos()).isValid():
             return
 
-        super(CapaExplorerRulegenEditor, self).dropEvent(e)
+        super().dropEvent(e)
 
         self.update_preview()
         expand_tree(self.invisibleRootItem())
@@ -784,7 +785,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
     def __init__(self, editor, parent=None):
         """ """
-        super(CapaExplorerRulegenFeatures, self).__init__(parent)
+        super().__init__(parent)
 
         self.parent_items = {}
         self.editor = editor
@@ -1012,8 +1013,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
 
         def format_address(e):
-            assert isinstance(e, Address)
-            return "%X" % e if not isinstance(e, _NoAddress) else ""
+            if isinstance(e, AbsoluteVirtualAddress):
+                return "%X" % int(e)
+            else:
+                return ""
 
         def format_feature(feature):
             """ """
@@ -1072,7 +1075,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
 
     def __init__(self, model, parent=None):
         """initialize view"""
-        super(CapaExplorerQtreeView, self).__init__(parent)
+        super().__init__(parent)
 
         self.setModel(model)
 

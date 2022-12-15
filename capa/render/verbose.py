@@ -23,13 +23,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import tabulate
-import dnfile.mdtable
-import dncil.clr.token
 
 import capa.rules
+import capa.helpers
 import capa.render.utils as rutils
 import capa.features.freeze as frz
-import capa.render.result_document
 import capa.render.result_document as rd
 from capa.rules import RuleSet
 from capa.engine import MatchResults
@@ -37,16 +35,16 @@ from capa.engine import MatchResults
 
 def format_address(address: frz.Address) -> str:
     if address.type == frz.AddressType.ABSOLUTE:
-        return rutils.hex(address.value)
+        return capa.helpers.hex(address.value)
     elif address.type == frz.AddressType.RELATIVE:
-        return f"base address+{rutils.hex(address.value)}"
+        return f"base address+{capa.helpers.hex(address.value)}"
     elif address.type == frz.AddressType.FILE:
-        return f"file+{rutils.hex(address.value)}"
+        return f"file+{capa.helpers.hex(address.value)}"
     elif address.type == frz.AddressType.DN_TOKEN:
-        return f"token({rutils.hex(address.value)})"
+        return f"token({capa.helpers.hex(address.value)})"
     elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
         token, offset = address.value
-        return f"token({rutils.hex(token)})+{rutils.hex(offset)}"
+        return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:

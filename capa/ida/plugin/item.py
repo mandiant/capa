@@ -36,7 +36,7 @@ def ea_to_hex(ea):
 class CapaExplorerDataItem:
     """store data for CapaExplorerDataModel"""
 
-    def __init__(self, parent: "CapaExplorerDataItem", data: List[str], can_check=True):
+    def __init__(self, parent: Optional["CapaExplorerDataItem"], data: List[str], can_check=True):
         """initialize item"""
         self.pred = parent
         self._data = data
@@ -110,7 +110,7 @@ class CapaExplorerDataItem:
         except IndexError:
             return None
 
-    def parent(self) -> "CapaExplorerDataItem":
+    def parent(self) -> Optional["CapaExplorerDataItem"]:
         """get parent"""
         return self.pred
 
@@ -181,7 +181,7 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
         @param source: rule source (tooltip)
         """
         display = self.fmt % (name, count) if count > 1 else name
-        super(CapaExplorerRuleItem, self).__init__(parent, [display, "", namespace], can_check)
+        super().__init__(parent, [display, "", namespace], can_check)
         self._source = source
 
     @property
@@ -200,7 +200,7 @@ class CapaExplorerRuleMatchItem(CapaExplorerDataItem):
         @param display: text to display in UI
         @param source: rule match source to display (tooltip)
         """
-        super(CapaExplorerRuleMatchItem, self).__init__(parent, [display, "", ""])
+        super().__init__(parent, [display, "", ""])
         self._source = source
 
     @property
@@ -222,14 +222,12 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
         """
         assert isinstance(location, AbsoluteVirtualAddress)
         ea = int(location)
-        super(CapaExplorerFunctionItem, self).__init__(
-            parent, [self.fmt % idaapi.get_name(ea), ea_to_hex(ea), ""], can_check
-        )
+        super().__init__(parent, [self.fmt % idaapi.get_name(ea), ea_to_hex(ea), ""], can_check)
 
     @property
     def info(self):
         """return function name"""
-        info = super(CapaExplorerFunctionItem, self).info
+        info = super().info
         display = info_to_name(info)
         return display if display else info
 
@@ -255,7 +253,7 @@ class CapaExplorerSubscopeItem(CapaExplorerDataItem):
         @param parent: parent node
         @param scope: subscope name
         """
-        super(CapaExplorerSubscopeItem, self).__init__(parent, [self.fmt % scope, "", ""])
+        super().__init__(parent, [self.fmt % scope, "", ""])
 
 
 class CapaExplorerBlockItem(CapaExplorerDataItem):
@@ -271,7 +269,7 @@ class CapaExplorerBlockItem(CapaExplorerDataItem):
         """
         assert isinstance(location, AbsoluteVirtualAddress)
         ea = int(location)
-        super(CapaExplorerBlockItem, self).__init__(parent, [self.fmt % ea, ea_to_hex(ea), ""])
+        super().__init__(parent, [self.fmt % ea, ea_to_hex(ea), ""])
 
 
 class CapaExplorerInstructionItem(CapaExplorerBlockItem):
@@ -298,9 +296,7 @@ class CapaExplorerDefaultItem(CapaExplorerDataItem):
             assert isinstance(location, AbsoluteVirtualAddress)
             ea = int(location)
 
-        super(CapaExplorerDefaultItem, self).__init__(
-            parent, [display, ea_to_hex(ea) if ea is not None else "", details]
-        )
+        super().__init__(parent, [display, ea_to_hex(ea) if ea is not None else "", details])
 
 
 class CapaExplorerFeatureItem(CapaExplorerDataItem):
@@ -319,9 +315,9 @@ class CapaExplorerFeatureItem(CapaExplorerDataItem):
         if location:
             assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
             ea = int(location)
-            super(CapaExplorerFeatureItem, self).__init__(parent, [display, ea_to_hex(ea), details])
+            super().__init__(parent, [display, ea_to_hex(ea), details])
         else:
-            super(CapaExplorerFeatureItem, self).__init__(parent, [display, "", details])
+            super().__init__(parent, [display, "", details])
 
 
 class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
@@ -339,7 +335,7 @@ class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
         assert isinstance(location, AbsoluteVirtualAddress)
         ea = int(location)
         details = capa.ida.helpers.get_disasm_line(ea)
-        super(CapaExplorerInstructionViewItem, self).__init__(parent, display, location=location, details=details)
+        super().__init__(parent, display, location=location, details=details)
         self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)
 
 
@@ -365,7 +361,7 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
             byte_snap = codecs.encode(byte_snap, "hex").upper()
             details = " ".join([byte_snap[i : i + 2].decode() for i in range(0, len(byte_snap), 2)])
 
-        super(CapaExplorerByteViewItem, self).__init__(parent, display, location=location, details=details)
+        super().__init__(parent, display, location=location, details=details)
         self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)
 
 
@@ -382,5 +378,5 @@ class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
         assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
         ea = int(location)
 
-        super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location, details=value)
+        super().__init__(parent, display, location=location, details=value)
         self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)

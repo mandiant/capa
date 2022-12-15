@@ -40,7 +40,7 @@ jobs:
     - name: Lint with pycodestyle
       run: pycodestyle --show-source capa/ scripts/ tests/
     - name: Check types with mypy
-      run: mypy --config-file .github/mypy/mypy.ini capa/ scripts/ tests/
+      run: mypy --config-file .github/mypy/mypy.ini --check-untyped-defs capa/ scripts/ tests/
 
   rule_linter:
     runs-on: ubuntu-20.04

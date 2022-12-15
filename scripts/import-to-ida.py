@@ -31,7 +31,7 @@ See the License for the specific language governing permissions and limitations 
 import json
 import logging
 
-import idautils
+import ida_nalt
 import ida_funcs
 import ida_kernwin
 
@@ -51,7 +51,11 @@ def append_func_cmt(va, cmt, repeatable=False):
     if cmt in existing:
         return
 
-    new = existing + "\n" + cmt
+    if len(existing) > 0:
+        new = existing + "\n" + cmt
+    else:
+        new = cmt
+
     ida_funcs.set_func_cmt(func, new, repeatable)
 
 
@@ -73,7 +77,7 @@ def main():
     #
     # see: https://github.com/idapython/bin/issues/11
     a = doc["meta"]["sample"]["md5"].lower()
-    b = idautils.GetInputFileMD5().decode("ascii").lower().rstrip("\x00")
+    b = ida_nalt.retrieve_input_file_md5().lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2

@@ -6,10 +6,12 @@
 - verify rule metadata format on load #1160 @mr-tz
 - extract property features from .NET PE files #1168 @anushkavirgaonkar
 - emit features for .NET newobj instruction #1186 @mike-hunhoff
+- fix import-to-ida script formatting #1208 @williballenthin
+- Python 3.11 support #1192 @williballenthin
 
 ### Breaking Changes
 
-### New Rules (29)
+### New Rules (32)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -39,6 +41,9 @@
 - nursery/execute-via-timer-in-dotnet michael.hunhoff@mandiant.com
 - nursery/execute-wmi-query-in-dotnet michael.hunhoff@mandiant.com
 - nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
+- nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
+- host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
+- nursery/check-for-vm-using-instruction-vpcext richard.weiss@mandiant.com
 -
 
 ### Bug Fixes
@@ -46,9 +51,14 @@
 - decouple Token dependency / extractor and features #1139 @mr-tz
 - update pydantic model to guarantee type coercion #1176 @mike-hunhoff
 - do not overwrite version in version.py during PyInstaller build #1169 @mr-tz
+- render: fix vverbose rendering of offsets #1215 @williballenthin
+- elf: better detect OS via GLIBC ABI version needed and dependencies #1221 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
+- fix: accept only plaintext pasted content #1194 @williballenthin
+- fix: UnboundLocalError #1217 @williballenthin
+- extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
 
 ### Development
 

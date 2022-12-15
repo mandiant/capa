@@ -9,9 +9,10 @@
 import re
 import abc
 import codecs
+import typing
 import logging
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional, Sequence
+from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -81,7 +82,7 @@ class Result:
         children: List["Result"],
         locations: Optional[Set[Address]] = None,
     ):
-        super(Result, self).__init__()
+        super().__init__()
         self.success = success
         self.statement = statement
         self.children = children
@@ -110,7 +111,7 @@ class Feature(abc.ABC):
           value (any): the value of the feature, such as the number or string.
           description (str): a human-readable description that explains the feature value.
         """
-        super(Feature, self).__init__()
+        super().__init__()
 
         self.name = self.__class__.__name__.lower()
         self.value = value
@@ -165,33 +166,33 @@ class Feature(abc.ABC):
 
 class MatchedRule(Feature):
     def __init__(self, value: str, description=None):
-        super(MatchedRule, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "match"
 
 
 class Characteristic(Feature):
     def __init__(self, value: str, description=None):
-        super(Characteristic, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class String(Feature):
     def __init__(self, value: str, description=None):
-        super(String, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Class(Feature):
     def __init__(self, value: str, description=None):
-        super(Class, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Namespace(Feature):
     def __init__(self, value: str, description=None):
-        super(Namespace, self).__init__(value, description=description)
+        super().__init__(value, description=description)
 
 
 class Substring(String):
     def __init__(self, value: str, description=None):
-        super(Substring, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
     def evaluate(self, ctx, short_circuit=True):
@@ -200,8 +201,9 @@ class Substring(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches = collections.defaultdict(list)
+        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
+        assert isinstance(self.value, str)
         for feature, locations in ctx.items():
             if not isinstance(feature, (String,)):
                 continue
@@ -211,31 +213,27 @@ class Substring(String):
                 raise ValueError("unexpected feature value type")
 
             if self.value in feature.value:
-                matches[feature.value].extend(locations)
+                matches[feature.value].update(locations)
                 if short_circuit:
                     # we found one matching string, thats sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
         if matches:
-            # finalize: defaultdict -> dict
-            # which makes json serialization easier
-            matches = dict(matches)
-
             # collect all locations
             locations = set()
-            for s in matches.keys():
-                matches[s] = list(set(matches[s]))
-                locations.update(matches[s])
+            for locs in matches.values():
+                locations.update(locs)
 
             # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the substring and the matched values.
-            return Result(True, _MatchedSubstring(self, matches), [], locations=locations)
+            return Result(True, _MatchedSubstring(self, dict(matches)), [], locations=locations)
         else:
             return Result(False, _MatchedSubstring(self, {}), [])
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return "substring(%s)" % self.value
 
 
@@ -253,7 +251,7 @@ class _MatchedSubstring(Substring):
           substring: the substring feature that matches.
           match: mapping from matching string to its locations.
         """
-        super(_MatchedSubstring, self).__init__(str(substring.value), description=substring.description)
+        super().__init__(str(substring.value), description=substring.description)
         # we want this to collide with the name of `Substring` above,
         # so that it works nicely with the renderers.
         self.name = "substring"
@@ -261,6 +259,7 @@ class _MatchedSubstring(Substring):
         self.matches = matches
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return 'substring("%s", matches = %s)' % (
             self.value,
             ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
@@ -269,7 +268,7 @@ class _MatchedSubstring(Substring):
 
 class Regex(String):
     def __init__(self, value: str, description=None):
-        super(Regex, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
         pat = self.value[len("/") : -len("/")]
@@ -279,12 +278,12 @@ class Regex(String):
             flags |= re.IGNORECASE
         try:
             self.re = re.compile(pat, flags)
-        except re.error:
+        except re.error as exc:
             if value.endswith("/i"):
                 value = value[: -len("i")]
             raise ValueError(
                 "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
-            )
+            ) from exc
 
     def evaluate(self, ctx, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
@@ -292,7 +291,7 @@ class Regex(String):
 
         # mapping from string value to list of locations.
         # will unique the locations later on.
-        matches = collections.defaultdict(list)
+        matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
         for feature, locations in ctx.items():
             if not isinstance(feature, (String,)):
@@ -307,32 +306,28 @@ class Regex(String):
             # using this mode cleans is more convenient for rule authors,
             # so that they don't have to prefix/suffix their terms like: /.*foo.*/.
             if self.re.search(feature.value):
-                matches[feature.value].extend(locations)
+                matches[feature.value].update(locations)
                 if short_circuit:
                     # we found one matching string, thats sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
         if matches:
-            # finalize: defaultdict -> dict
-            # which makes json serialization easier
-            matches = dict(matches)
-
             # collect all locations
             locations = set()
-            for s in matches.keys():
-                matches[s] = list(set(matches[s]))
-                locations.update(matches[s])
+            for locs in matches.values():
+                locations.update(locs)
 
             # unlike other features, we cannot return put a reference to `self` directly in a `Result`.
             # this is because `self` may match on many strings, so we can't stuff the matched value into it.
             # instead, return a new instance that has a reference to both the regex and the matched values.
             # see #262.
-            return Result(True, _MatchedRegex(self, matches), [], locations=locations)
+            return Result(True, _MatchedRegex(self, dict(matches)), [], locations=locations)
         else:
             return Result(False, _MatchedRegex(self, {}), [])
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return "regex(string =~ %s)" % self.value
 
 
@@ -350,7 +345,7 @@ class _MatchedRegex(Regex):
           regex: the regex feature that matches.
           matches: mapping from matching string to its locations.
         """
-        super(_MatchedRegex, self).__init__(str(regex.value), description=regex.description)
+        super().__init__(str(regex.value), description=regex.description)
         # we want this to collide with the name of `Regex` above,
         # so that it works nicely with the renderers.
         self.name = "regex"
@@ -358,6 +353,7 @@ class _MatchedRegex(Regex):
         self.matches = matches
 
     def __str__(self):
+        assert isinstance(self.value, str)
         return "regex(string =~ %s, matches = %s)" % (
             self.value,
             ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
@@ -373,23 +369,26 @@ class StringFactory:
 
 class Bytes(Feature):
     def __init__(self, value: bytes, description=None):
-        super(Bytes, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.value = value
 
     def evaluate(self, ctx, **kwargs):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
 
+        assert isinstance(self.value, bytes)
         for feature, locations in ctx.items():
             if not isinstance(feature, (Bytes,)):
                 continue
 
+            assert isinstance(feature.value, bytes)
             if feature.value.startswith(self.value):
                 return Result(True, self, [], locations=locations)
 
         return Result(False, self, [])
 
     def get_value_str(self):
+        assert isinstance(self.value, bytes)
         return hex_string(bytes_to_str(self.value))
 
 
@@ -403,7 +402,7 @@ VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
 
 class Arch(Feature):
     def __init__(self, value: str, description=None):
-        super(Arch, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "arch"
 
 
@@ -418,7 +417,7 @@ VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
 
 class OS(Feature):
     def __init__(self, value: str, description=None):
-        super(OS, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "os"
 
 
@@ -436,7 +435,7 @@ FORMAT_UNKNOWN = "unknown"
 
 class Format(Feature):
     def __init__(self, value: str, description=None):
-        super(Format, self).__init__(value, description=description)
+        super().__init__(value, description=description)
         self.name = "format"
 
 

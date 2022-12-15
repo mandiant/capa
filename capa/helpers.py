@@ -18,11 +18,13 @@ EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
 
-_hex = hex
 
-
-def hex(i):
-    return _hex(int(i))
+def hex(n: int) -> str:
+    """render the given number using upper case hex, like: 0x123ABC"""
+    if n < 0:
+        return "-0x%X" % (-n)
+    else:
+        return "0x%X" % n
 
 
 def get_file_taste(sample_path: str) -> bytes:

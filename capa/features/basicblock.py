@@ -11,7 +11,7 @@ from capa.features.common import Feature
 
 class BasicBlock(Feature):
     def __init__(self, description=None):
-        super(BasicBlock, self).__init__(None, description=description)
+        super().__init__(0, description=description)
 
     def __str__(self):
         return "basic block"
