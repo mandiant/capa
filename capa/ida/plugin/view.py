@@ -18,7 +18,7 @@ import capa.ida.helpers
 import capa.features.common
 import capa.features.basicblock
 from capa.ida.plugin.item import CapaExplorerFunctionItem
-from capa.features.address import Address, _NoAddress
+from capa.features.address import AbsoluteVirtualAddress, _NoAddress
 from capa.ida.plugin.model import CapaExplorerDataModel
 
 MAX_SECTION_SIZE = 750
@@ -1013,8 +1013,10 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         self.parent_items = {}
 
         def format_address(e):
-            assert isinstance(e, Address)
-            return "%X" % e if not isinstance(e, _NoAddress) else ""
+            if isinstance(e, AbsoluteVirtualAddress):
+                return "%X" % int(e)
+            else:
+                return ""
 
         def format_feature(feature):
             """ """

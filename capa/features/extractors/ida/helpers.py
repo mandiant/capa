@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, Tuple, Iterator
+from typing import Any, Dict, Tuple, Iterator, Optional
 
 import idc
 import idaapi
@@ -36,7 +36,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
 
 
 def get_functions(
-    start: int = None, end: int = None, skip_thunks: bool = False, skip_libs: bool = False
+    start: Optional[int] = None, end: Optional[int] = None, skip_thunks: bool = False, skip_libs: bool = False
 ) -> Iterator[FunctionHandle]:
     """get functions, range optional
 
@@ -287,7 +287,7 @@ def is_frame_register(reg: int) -> bool:
     return reg in (idautils.procregs.sp.reg, idautils.procregs.bp.reg)
 
 
-def get_insn_ops(insn: idaapi.insn_t, target_ops: Tuple[Any] = None) -> idaapi.op_t:
+def get_insn_ops(insn: idaapi.insn_t, target_ops: Optional[Tuple[Any]] = None) -> idaapi.op_t:
     """yield op_t for instruction, filter on type if specified"""
     for op in insn.ops:
         if op.type == idaapi.o_void:

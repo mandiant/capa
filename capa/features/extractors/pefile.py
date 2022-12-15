@@ -133,7 +133,8 @@ def extract_file_features(pe, buf):
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, va in file_handler(pe=pe, buf=buf):
+        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        for feature, va in file_handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 
 
@@ -160,7 +161,8 @@ def extract_global_features(pe, buf):
       Tuple[Feature, VA]: a feature and its location.
     """
     for handler in GLOBAL_HANDLERS:
-        for feature, va in handler(pe=pe, buf=buf):
+        # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
+        for feature, va in handler(pe=pe, buf=buf):  # type: ignore
             yield feature, va
 
 

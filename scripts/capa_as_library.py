@@ -172,7 +172,7 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
-    capa_output = False
+    capa_output: Any = False
     if output_format == "dictionary":
         # ...as python dictionary, simplified as textable but in dictionary
         doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
