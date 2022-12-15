@@ -136,7 +136,7 @@ def main(argv=None):
         for feature, addr in extractor.extract_file_features():
             print("file: %s: %s" % (format_address(addr), feature))
 
-    function_handles = extractor.get_functions()
+    function_handles = tuple(extractor.get_functions())
 
     if args.function:
         if args.format == "freeze":
@@ -173,7 +173,7 @@ def ida_main():
             print("file: %s: %s" % (format_address(addr), feature))
         return
 
-    function_handles = extractor.get_functions()
+    function_handles = tuple(extractor.get_functions())
 
     if function:
         function_handles = tuple(filter(lambda fh: fh.inner.start_ea == function, function_handles))

@@ -66,7 +66,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
 )
-from capa.features.address import NO_ADDRESS
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -718,8 +718,8 @@ def compute_layout(rules, extractor, capabilities):
     otherwise, we may pollute the json document with
     a large amount of un-referenced data.
     """
-    functions_by_bb = {}
-    bbs_by_function = {}
+    functions_by_bb: Dict[Address, Address] = {}
+    bbs_by_function: Dict[Address, List[Address]] = {}
     for f in extractor.get_functions():
         bbs_by_function[f.address] = []
         for bb in extractor.get_basic_blocks(f):
@@ -1016,8 +1016,7 @@ def main(argv=None):
             return E_INVALID_FILE_TYPE
 
     try:
-        rules = get_rules(args.rules, disable_progress=args.quiet)
-        rules = capa.rules.RuleSet(rules)
+        rules = capa.rules.RuleSet(get_rules(args.rules, disable_progress=args.quiet))
 
         logger.debug(
             "successfully loaded %s rules",
@@ -1167,8 +1166,7 @@ def ida_main():
 
     rules_path = os.path.join(get_default_root(), "rules")
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
-    rules = capa.rules.RuleSet(rules)
+    rules = capa.rules.RuleSet(get_rules([rules_path]))
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 

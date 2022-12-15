@@ -109,6 +109,9 @@ class DnUnmanagedMethod:
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
     """map generic token to string or table row"""
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+
     if isinstance(token, StringToken):
         user_string: Optional[str] = read_dotnet_user_string(pe, token)
         if user_string is None:
@@ -371,6 +374,9 @@ def calculate_dotnet_token_value(table: int, rid: int) -> int:
 
 
 def is_dotnet_mixed_mode(pe: dnfile.dnPE) -> bool:
+    assert pe.net is not None
+    assert pe.net.Flags is not None
+
     return not bool(pe.net.Flags.CLR_ILONLY)
 
 

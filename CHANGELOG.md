@@ -7,6 +7,7 @@
 - extract property features from .NET PE files #1168 @anushkavirgaonkar
 - emit features for .NET newobj instruction #1186 @mike-hunhoff
 - fix import-to-ida script formatting #1208 @williballenthin
+- Python 3.11 support #1192 @williballenthin
 
 ### Breaking Changes
 
@@ -58,6 +59,7 @@
 - fix: display instruction items #1154 @mr-tz
 - fix: accept only plaintext pasted content #1194 @williballenthin
 - fix: UnboundLocalError #1217 @williballenthin
+- extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
 
 ### Development
 

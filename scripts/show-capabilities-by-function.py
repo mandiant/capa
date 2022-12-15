@@ -141,8 +141,7 @@ def main(argv=None):
         return -1
 
     try:
-        rules = capa.main.get_rules(args.rules)
-        rules = capa.rules.RuleSet(rules)
+        rules = capa.rules.RuleSet(capa.main.get_rules(args.rules))
         logger.info("successfully loaded %s rules", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
