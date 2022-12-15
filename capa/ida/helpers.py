@@ -27,6 +27,7 @@ SUPPORTED_FILE_TYPES = (
     idaapi.f_PE,
     idaapi.f_ELF,
     idaapi.f_BIN,
+    idaapi.f_COFF,
     # idaapi.f_MACHO,
 )
 

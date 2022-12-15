@@ -27,7 +27,7 @@ def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature
     yields:
       (Feature, Address): the feature and the address at which its found.
     """
-    ...
+    raise NotImplementedError
 
 
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

@@ -31,7 +31,7 @@ def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterat
     yields:
       (Feature, Address): the feature and the address at which its found.
     """
-    ...
+    raise NotImplementedError
 
 
 def _bb_has_tight_loop(f, bb):

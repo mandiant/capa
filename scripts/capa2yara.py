@@ -64,7 +64,6 @@ unsupported = ["characteristic", "mnemonic", "offset", "subscope", "Range"]
 
 # collect all converted rules to be able to check if we have needed sub rules for match:
 converted_rules = []
-count_incomplete = 0
 
 default_tags = "CAPA "
 
@@ -537,7 +536,8 @@ def output_unsupported_capa_rules(yaml, capa_rulename, url, reason):
             unsupported_capa_rules_names.write(url.encode("utf-8") + b"\n")
 
 
-def convert_rules(rules, namespaces, cround):
+def convert_rules(rules, namespaces, cround, make_priv):
+    count_incomplete = 0
     for rule in rules.rules.values():
 
         rule_name = convert_rule_name(rule.name)
@@ -652,7 +652,6 @@ def convert_rules(rules, namespaces, cround):
                     if meta_name and meta_value:
                         yara_meta += "\t" + meta_name + ' = "' + meta_value + '"\n'
 
-            rule_name_bonus = ""
             if rule_comment:
                 yara_meta += '\tcomment = "' + rule_comment + '"\n'
             yara_meta += '\tdate = "' + today + '"\n'
@@ -679,11 +678,12 @@ def convert_rules(rules, namespaces, cround):
                 # TODO: now the rule is finished and could be automatically checked with the capa-testfile(s) named in meta (doing it for all of them using yara-ci upload at the moment)
                 output_yar(yara)
                 converted_rules.append(rule_name)
-                global count_incomplete
                 count_incomplete += incomplete
             else:
                 output_unsupported_capa_rules(rule.to_yaml(), rule.name, url, yara_condition)
                 pass
+
+    return count_incomplete
 
 
 def main(argv=None):
@@ -696,7 +696,6 @@ def main(argv=None):
     capa.main.install_common_args(parser, wanted={"tag"})
 
     args = parser.parse_args(args=argv)
-    global make_priv
     make_priv = args.private
 
     if args.verbose:
@@ -710,9 +709,9 @@ def main(argv=None):
     logging.getLogger("capa2yara").setLevel(level)
 
     try:
-        rules = capa.main.get_rules([args.rules], disable_progress=True)
-        namespaces = capa.rules.index_rules_by_namespace(list(rules))
-        rules = capa.rules.RuleSet(rules)
+        rules_ = capa.main.get_rules([args.rules], disable_progress=True)
+        namespaces = capa.rules.index_rules_by_namespace(rules_)
+        rules = capa.rules.RuleSet(rules_)
         logger.info("successfully loaded %s rules (including subscope rules which will be ignored)", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
@@ -745,14 +744,15 @@ def main(argv=None):
     # do several rounds of converting rules because some rules for match: might not be converted in the 1st run
     num_rules = 9999999
     cround = 0
+    count_incomplete = 0
     while num_rules != len(converted_rules) or cround < min_rounds:
         cround += 1
         logger.info("doing convert_rules(), round: " + str(cround))
         num_rules = len(converted_rules)
-        convert_rules(rules, namespaces, cround)
+        count_incomplete += convert_rules(rules, namespaces, cround, make_priv)
 
     # one last round to collect all unconverted rules
-    convert_rules(rules, namespaces, 9000)
+    count_incomplete += convert_rules(rules, namespaces, 9000, make_priv)
 
     stats = "\n// converted rules              : " + str(len(converted_rules))
     stats += "\n//   among those are incomplete : " + str(count_incomplete)

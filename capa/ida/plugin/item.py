@@ -36,7 +36,7 @@ def ea_to_hex(ea):
 class CapaExplorerDataItem:
     """store data for CapaExplorerDataModel"""
 
-    def __init__(self, parent: "CapaExplorerDataItem", data: List[str], can_check=True):
+    def __init__(self, parent: Optional["CapaExplorerDataItem"], data: List[str], can_check=True):
         """initialize item"""
         self.pred = parent
         self._data = data
@@ -110,7 +110,7 @@ class CapaExplorerDataItem:
         except IndexError:
             return None
 
-    def parent(self) -> "CapaExplorerDataItem":
+    def parent(self) -> Optional["CapaExplorerDataItem"]:
         """get parent"""
         return self.pred
 
