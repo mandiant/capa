@@ -233,7 +233,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
 
         for (idx, field) in enumerate(typedef.FieldList):
             if field.table is None:
-                logger.debug("TypeDef[0x%X] FieldList[0x%X] table is None" , rid, idx)
+                logger.debug("TypeDef[0x%X] FieldList[0x%X] table is None", rid, idx)
                 continue
             if field.row is None:
                 logger.debug("TypeDef[0x%X] FieldList[0x%X] row is None", rid, idx)
