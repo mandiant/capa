@@ -62,13 +62,13 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
     # namespaces may be referenced multiple times, so we need to filter
     namespaces = set()
 
-    for (_, type_def) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
-        type_def = cast(dnfile.mdtable.TypeDefRow, type_def)
-        namespaces.add(type_def.TypeNamespace)
+    for (_, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        typedef = cast(dnfile.mdtable.TypeDefRow, typedef)
+        namespaces.add(typedef.TypeNamespace)
 
-    for (_, type_ref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
-        type_ref = cast(dnfile.mdtable.TypeRefRow, type_ref)
-        namespaces.add(type_ref.TypeNamespace)
+    for (_, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        typeref = cast(dnfile.mdtable.TypeRefRow, typeref)
+        namespaces.add(typeref.TypeNamespace)
 
     # namespaces may be empty, discard
     namespaces.discard("")
