@@ -88,7 +88,8 @@ def extract_features(smda_report, buf):
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(smda_report=smda_report, buf=buf):
+        # file_handler: type: (smda_report, bytes) -> Iterable[Tuple[Feature, Address]]
+        for feature, addr in file_handler(smda_report=smda_report, buf=buf):  # type: ignore
             yield feature, addr
 
 

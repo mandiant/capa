@@ -92,7 +92,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         @param parent: QModelIndex of parent
         """
         # filter not set
-        if self.min_ea is None and self.max_ea is None:
+        if self.min_ea is None or self.max_ea is None:
             return True
 
         index = self.sourceModel().index(row, 0, parent)

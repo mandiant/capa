@@ -52,26 +52,21 @@ class NullFeatureExtractor(FeatureExtractor):
             yield FunctionHandle(address, None)
 
     def extract_function_features(self, f):
-        for address, feature in self.functions.get(f.address, {}).features:
+        for address, feature in self.functions[f.address].features:
             yield feature, address
 
     def get_basic_blocks(self, f):
-        for address in sorted(self.functions.get(f.address, {}).basic_blocks.keys()):
+        for address in sorted(self.functions[f.address].basic_blocks.keys()):
             yield BBHandle(address, None)
 
     def extract_basic_block_features(self, f, bb):
-        for address, feature in self.functions.get(f.address, {}).basic_blocks.get(bb.address, {}).features:
+        for address, feature in self.functions[f.address].basic_blocks[bb.address].features:
             yield feature, address
 
     def get_instructions(self, f, bb):
-        for address in sorted(self.functions.get(f.address, {}).basic_blocks.get(bb.address, {}).instructions.keys()):
+        for address in sorted(self.functions[f.address].basic_blocks[bb.address].instructions.keys()):
             yield InsnHandle(address, None)
 
     def extract_insn_features(self, f, bb, insn):
-        for address, feature in (
-            self.functions.get(f.address, {})
-            .basic_blocks.get(bb.address, {})
-            .instructions.get(insn.address, {})
-            .features
-        ):
+        for address, feature in self.functions[f.address].basic_blocks[bb.address].instructions[insn.address].features:
             yield feature, address

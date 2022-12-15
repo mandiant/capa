@@ -92,17 +92,18 @@ class Shdr:
 
 
 class ELF:
-    def __init__(self, f):
+    def __init__(self, f: BinaryIO):
         self.f = f
 
-        self.bitness: int = None
-        self.endian: str = None
-        self.e_phentsize: int = None
-        self.e_phnum: int = None
-        self.e_shentsize: int = None
-        self.e_shnum: int = None
-        self.phbuf = None
-        self.shbuf = None
+        # these will all be initialized in `_parse()`
+        self.bitness: int
+        self.endian: str
+        self.e_phentsize: int
+        self.e_phnum: int
+        self.e_shentsize: int
+        self.e_shnum: int
+        self.phbuf: bytes
+        self.shbuf: bytes
 
         self._parse()
 
@@ -512,13 +513,14 @@ class ABITag:
 
 
 class PHNote:
-    def __init__(self, endian, buf):
+    def __init__(self, endian: str, buf: bytes):
         self.endian = endian
         self.buf = buf
 
-        self.type_: int = None
-        self.descsz: int = None
-        self.name: str = None
+        # these will be initialized in `_parse()`
+        self.type_: int
+        self.descsz: int
+        self.name: str
 
         self._parse()
 
@@ -529,8 +531,8 @@ class PHNote:
 
         logger.debug("ph:namesz: 0x%02x descsz: 0x%02x type: 0x%04x", namesz, self.descsz, self.type_)
 
-        name = self.buf[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
-        logger.debug("name: %s", name)
+        self.name = self.buf[name_offset : name_offset + namesz].partition(b"\x00")[0].decode("ascii")
+        logger.debug("name: %s", self.name)
 
     @property
     def abi_tag(self) -> Optional[ABITag]:
@@ -560,13 +562,14 @@ class PHNote:
 
 
 class SHNote:
-    def __init__(self, endian, buf):
+    def __init__(self, endian: str, buf: bytes):
         self.endian = endian
         self.buf = buf
 
-        self.type_: int = None
-        self.descsz: int = None
-        self.name: str = None
+        # these will be initialized in `_parse()`
+        self.type_: int
+        self.descsz: int
+        self.name: str
 
         self._parse()
 

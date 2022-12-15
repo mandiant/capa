@@ -218,7 +218,7 @@ def test_match_matched_rules():
     # the ordering of the rules must not matter,
     # the engine should match rules in an appropriate order.
     features, _ = match(
-        capa.rules.topologically_order_rules(reversed(rules)),
+        capa.rules.topologically_order_rules(list(reversed(rules))),
         {capa.features.insn.Number(100): {1}},
         0x0,
     )

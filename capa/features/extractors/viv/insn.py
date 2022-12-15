@@ -44,7 +44,7 @@ def interface_extract_instruction_XXX(
     yields:
       (Feature, Address): the feature and the address at which its found.
     """
-    ...
+    raise NotImplementedError
 
 
 def get_imports(vw):
