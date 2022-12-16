@@ -12,31 +12,31 @@ import logging
 from typing import Tuple, Iterator
 
 from capa.features.common import Feature, Characteristic
-from capa.features.address import Address, DNTokenAddress
+from capa.features.address import Address
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
 
 
-def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, DNTokenAddress]]:
+def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, Address]]:
     """extract callers to a function"""
     for dest in fh.ctx["calls_to"]:
         yield Characteristic("calls to"), dest
 
 
-def extract_function_calls_from(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, DNTokenAddress]]:
+def extract_function_calls_from(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, Address]]:
     """extract callers from a function"""
     for src in fh.ctx["calls_from"]:
         yield Characteristic("calls from"), src
 
 
-def extract_recursive_call(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, DNTokenAddress]]:
+def extract_recursive_call(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, Address]]:
     """extract recursive function call"""
     if fh.address in fh.ctx["calls_to"]:
         yield Characteristic("recursive call"), fh.address
 
 
-def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, DNTokenAddress]]:
+def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, Address]]:
     """extract loop indicators from a function"""
     raise NotImplementedError()
 
