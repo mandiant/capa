@@ -8,6 +8,7 @@
 - emit features for .NET newobj instruction #1186 @mike-hunhoff
 - fix import-to-ida script formatting #1208 @williballenthin
 - Python 3.11 support #1192 @williballenthin
+- dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
 
 ### Breaking Changes
 
