@@ -61,15 +61,29 @@ def get_methods(ctx: Dict) -> Dict:
     return ctx["methods_cache"]
 
 
-def get_callee(ctx: Dict, token: int) -> Union[DnType, DnUnmanagedMethod, None]:
+def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None]:
     """map dotnet token to un/managed method"""
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token, None)
+    row: Union[dnfile.base.MDTableRow, str, None] = resolve_dotnet_token(ctx["pe"], token)
+    if not isinstance(row, (dnfile.mdtable.MethodDefRow, dnfile.mdtable.MemberRefRow, dnfile.mdtable.GenericMethodRow)):
+        return None
+
+    token_: Optional[int]
+    if isinstance(row, dnfile.mdtable.GenericMethodRow):
+        # map MethodSpec to MethodDef or MemberRef
+        token_ = resolve_dotnet_methodspec(ctx["pe"], token)
+    else:
+        token_ = token.value
+
+    if token_ is None:
+        return None
+
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token_, None)
     if callee is None:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        callee = get_unmanaged_imports(ctx).get(token, None)
+        callee = get_unmanaged_imports(ctx).get(token_, None)
         if callee is None:
-            callee = get_methods(ctx).get(token, None)
+            callee = get_methods(ctx).get(token_, None)
     return callee
 
 
@@ -96,17 +110,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
         return
 
-    token: Optional[int]
-    if insn.operand.table == dnfile.mdtable.GenericMethod.number:
-        # map MethodSpec to MethodDef/MemberRef
-        token = resolve_dotnet_methodspec(fh.ctx["pe"], insn.operand)
-    else:
-        token = insn.operand.value
-
-    if token is None:
-        return
-
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, token)
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand)
     if callee is None:
         return
 
@@ -188,35 +192,29 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
-    if ih.inner.opcode not in (
+    if ih.inner.opcode in (
         OpCodes.Call,
         OpCodes.Callvirt,
         OpCodes.Jmp,
         OpCodes.Calli,
+        OpCodes.Newobj,
+    ):
+        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+        if isinstance(callee, DnType):
+            yield Class(DnType.format_name(callee.class_, namespace=callee.namespace)), ih.address
+
+    elif ih.inner.opcode in (
         OpCodes.Ldfld,
         OpCodes.Ldflda,
         OpCodes.Ldsfld,
         OpCodes.Ldsflda,
         OpCodes.Stfld,
         OpCodes.Stsfld,
-        OpCodes.Newobj,
     ):
-        return
+        row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
+        if not isinstance(row, dnfile.mdtable.FieldRow):
+            return
 
-    row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
-    if not isinstance(row, dnfile.base.MDTableRow):
-        return
-
-    if isinstance(row, dnfile.mdtable.MemberRefRow):
-        if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-            yield Class(DnType.format_name(row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace)), ih.address
-
-    elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand.value)
-        if isinstance(callee, DnType):
-            yield Class(DnType.format_name(callee.class_, namespace=callee.namespace)), ih.address
-
-    elif isinstance(row, dnfile.mdtable.FieldRow):
         field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
         if field is not None:
             yield Class(DnType.format_name(field.class_, namespace=field.namespace)), ih.address
@@ -224,38 +222,31 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
     """parse instruction namespace features"""
-    if ih.inner.opcode not in (
+    """parse instruction class features"""
+    if ih.inner.opcode in (
         OpCodes.Call,
         OpCodes.Callvirt,
         OpCodes.Jmp,
         OpCodes.Calli,
+        OpCodes.Newobj,
+    ):
+        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+        if isinstance(callee, DnType) and callee.namespace is not None:
+            yield Namespace(callee.namespace), ih.address
+
+    elif ih.inner.opcode in (
         OpCodes.Ldfld,
         OpCodes.Ldflda,
         OpCodes.Ldsfld,
         OpCodes.Ldsflda,
         OpCodes.Stfld,
         OpCodes.Stsfld,
-        OpCodes.Newobj,
     ):
-        return
-    insn: Instruction = ih.inner
+        row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
+        if not isinstance(row, dnfile.mdtable.FieldRow):
+            return
 
-    row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
-    if not isinstance(row, dnfile.base.MDTableRow):
-        return
-
-    if isinstance(row, dnfile.mdtable.MemberRefRow):
-        if isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-            if row.Class.row.TypeNamespace:
-                yield Namespace(row.Class.row.TypeNamespace), ih.address
-
-    elif isinstance(row, dnfile.mdtable.MethodDefRow):
-        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand.value)
-        if isinstance(callee, DnType) and callee.namespace is not None:
-            yield Namespace(callee.namespace), ih.address
-
-    elif isinstance(row, dnfile.mdtable.FieldRow):
-        field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
+        field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
         if isinstance(field, DnType) and field.namespace is not None:
             yield Namespace(field.namespace), ih.address
 
