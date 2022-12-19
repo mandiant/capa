@@ -234,16 +234,10 @@ def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[Tuple[i
             method_semantics.Method.table.number, method_semantics.Method.row_index
         )
 
-        access: Optional[str]
         if method_semantics.Semantics.msSetter:
-            access = FeatureAccess.WRITE
+            yield token, FeatureAccess.WRITE
         elif method_semantics.Semantics.msGetter:
-            access = FeatureAccess.READ
-        else:
-            access = None
-
-        if access is not None:
-            yield token, access
+            yield token, FeatureAccess.READ
 
 
 def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
