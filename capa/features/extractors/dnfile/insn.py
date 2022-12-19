@@ -14,7 +14,6 @@ from typing import Dict, Tuple, Union, Iterator, Optional
 import dnfile
 from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.opcode import OpCodes
-from dncil.cil.instruction import Instruction
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
@@ -61,6 +60,22 @@ def get_methods(ctx: Dict) -> Dict:
     return ctx["methods_cache"]
 
 
+def get_properties(ctx: Dict) -> Dict:
+    if "properties_cache" not in ctx:
+        ctx["properties_cache"] = {}
+        for prop in get_dotnet_properties(ctx["pe"]):
+            ctx["properties_cache"][prop.token] = prop
+    return ctx["properties_cache"]
+
+
+def get_fields(ctx: Dict) -> Dict:
+    if "fields_cache" not in ctx:
+        ctx["fields_cache"] = {}
+        for field in get_dotnet_fields(ctx["pe"]):
+            ctx["fields_cache"][field.token] = field
+    return ctx["fields_cache"]
+
+
 def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None]:
     """map .NET token to un/managed (generic) method"""
     row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(ctx["pe"], token)
@@ -88,40 +103,22 @@ def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None
     return callee
 
 
-def get_properties(ctx: Dict) -> Dict:
-    if "properties_cache" not in ctx:
-        ctx["properties_cache"] = {}
-        for prop in get_dotnet_properties(ctx["pe"]):
-            ctx["properties_cache"][prop.token] = prop
-    return ctx["properties_cache"]
-
-
-def get_fields(ctx: Dict) -> Dict:
-    if "fields_cache" not in ctx:
-        ctx["fields_cache"] = {}
-        for field in get_dotnet_fields(ctx["pe"]):
-            ctx["fields_cache"][field.token] = field
-    return ctx["fields_cache"]
-
-
 def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction API features"""
-    insn: Instruction = ih.inner
-
-    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
+    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
         return
 
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, insn.operand)
+    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
     if callee is None:
         return
 
     if isinstance(callee, DnType):
         if callee.member.startswith(("get_", "set_")):
-            if insn.operand.table == dnfile.mdtable.MethodDef.number:
+            if ih.inner.operand.table == dnfile.mdtable.MethodDef.number:
                 # check if the method belongs to the MethodDef table and whether it is used to access a property
-                if get_properties(fh.ctx).get(insn.operand.value, None) is not None:
+                if get_properties(fh.ctx).get(ih.inner.operand.value, None) is not None:
                     return
-            elif insn.operand.table == dnfile.mdtable.MemberRef.number:
+            elif ih.inner.operand.table == dnfile.mdtable.MemberRef.number:
                 # if the method belongs to the MemberRef table, we assume it is used to access a property
                 return
 
@@ -136,22 +133,20 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
 
 def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction property features"""
-    insn: Instruction = ih.inner
-
     name: Optional[str] = None
     access: Optional[str] = None
 
-    if insn.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        if insn.operand.table == dnfile.mdtable.MethodDef.number:
+    if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+        if ih.inner.operand.table == dnfile.mdtable.MethodDef.number:
             # check if the method belongs to the MethodDef table and whether it is used to access a property
-            prop: Optional[DnType] = get_properties(fh.ctx).get(insn.operand.value, None)
+            prop: Optional[DnType] = get_properties(fh.ctx).get(ih.inner.operand.value, None)
             if prop is not None:
                 name = str(prop)
                 access = prop.access
 
-        elif insn.operand.table == dnfile.mdtable.MemberRef.number:
+        elif ih.inner.operand.table == dnfile.mdtable.MemberRef.number:
             # if the method belongs to the MemberRef table, we assume it is used to access a property
-            row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
+            row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
 
             if not isinstance(row, dnfile.mdtable.MemberRefRow):
                 return
@@ -169,18 +164,18 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
             elif row.Name.startswith("set_"):
                 access = FeatureAccess.WRITE
 
-    elif insn.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
-        if insn.operand.table == dnfile.mdtable.Field.number:
+    elif ih.inner.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
+        if ih.inner.operand.table == dnfile.mdtable.Field.number:
             # determine whether the operand is a field by checking if it belongs to the Field table
-            read_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
+            read_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
             if read_field is not None:
                 name = str(read_field)
                 access = FeatureAccess.READ
 
-    elif insn.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
-        if insn.operand.table == dnfile.mdtable.Field.number:
+    elif ih.inner.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
+        if ih.inner.operand.table == dnfile.mdtable.Field.number:
             # determine whether the operand is a field by checking if it belongs to the Field table
-            write_field: Optional[DnType] = get_fields(fh.ctx).get(insn.operand.value, None)
+            write_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
             if write_field is not None:
                 name = str(write_field)
                 access = FeatureAccess.WRITE
@@ -254,23 +249,19 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction number features"""
-    insn: Instruction = ih.inner
-
-    if insn.is_ldc():
-        yield Number(insn.get_ldc()), ih.address
+    if ih.inner.is_ldc():
+        yield Number(ih.inner.get_ldc()), ih.address
 
 
 def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction string features"""
-    insn: Instruction = ih.inner
-
-    if not insn.is_ldstr():
+    if not ih.inner.is_ldstr():
         return
 
-    if not isinstance(insn.operand, StringToken):
+    if not isinstance(ih.inner.operand, StringToken):
         return
 
-    user_string: Optional[str] = read_dotnet_user_string(fh.ctx["pe"], insn.operand)
+    user_string: Optional[str] = read_dotnet_user_string(fh.ctx["pe"], ih.inner.operand)
     if user_string is None:
         return
 
@@ -280,12 +271,10 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
 def extract_unmanaged_call_characteristic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Characteristic, Address]]:
-    insn: Instruction = ih.inner
-
-    if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         return
 
-    row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], insn.operand)
+    row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
     if not isinstance(row, dnfile.mdtable.MethodDefRow):
         return
 

@@ -204,7 +204,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             if method.row is None:
                 logger.debug("TypeDef[0x%X] MethodList[0x%X] row is None", rid, idx)
                 continue
-            token = calculate_dotnet_token_value(method.table.number, method.row_index)
+            token: int = calculate_dotnet_token_value(method.table.number, method.row_index)
             yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=method.row.Name)
 
 
