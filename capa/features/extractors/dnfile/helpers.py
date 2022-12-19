@@ -388,17 +388,3 @@ def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, 
     for (rid, row) in enumerate(pe.net.mdtables.tables.get(table_index, [])):
         # .NET tables are 1-indexed
         yield rid + 1, row
-
-
-def resolve_dotnet_methodspec(pe: dnfile.dnPE, token: Token) -> Optional[int]:
-    # ECMA: MethodSpec table records the signature of an instantiated generic method
-    #   Method (an index into the MethodDef or MemberRef table, specifying to which generic method this row refers)
-    #   Instantiation(an index into the Blob heap holding the signature of this instantiation)
-    row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(pe, token)
-    if isinstance(row, dnfile.mdtable.GenericMethodRow):
-        # TODO Unknown1 == MethodSpec Method column; update pending https://github.com/malwarefrank/dnfile/issues/65
-        if row.Unknown1.table is None:
-            logger.debug("MethodSpec[0x%X] Method table is None", token.rid)
-            return None
-        return calculate_dotnet_token_value(row.Unknown1.table.number, row.Unknown1.row_index)
-    return None

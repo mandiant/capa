@@ -28,9 +28,9 @@ from capa.features.extractors.dnfile.helpers import (
     resolve_dotnet_token,
     get_dotnet_properties,
     read_dotnet_user_string,
-    resolve_dotnet_methodspec,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
+    calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
 )
 
@@ -62,20 +62,21 @@ def get_methods(ctx: Dict) -> Dict:
 
 
 def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None]:
-    """map dotnet token to un/managed method"""
-    row: Union[dnfile.base.MDTableRow, str, None] = resolve_dotnet_token(ctx["pe"], token)
-    if not isinstance(row, (dnfile.mdtable.MethodDefRow, dnfile.mdtable.MemberRefRow, dnfile.mdtable.GenericMethodRow)):
+    """map .NET token to un/managed (generic) method"""
+    row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(ctx["pe"], token)
+    if not isinstance(row, (dnfile.mdtable.MethodDefRow, dnfile.mdtable.MemberRefRow, dnfile.mdtable.MethodSpecRow)):
+        # we only handle MethodDef (internal), MemberRef (external), and MethodSpec (generic)
         return None
 
-    token_: Optional[int]
-    if isinstance(row, dnfile.mdtable.GenericMethodRow):
+    token_: int
+    if isinstance(row, dnfile.mdtable.MethodSpecRow):
         # map MethodSpec to MethodDef or MemberRef
-        token_ = resolve_dotnet_methodspec(ctx["pe"], token)
+        if row.Method.table is None:
+            logger.debug("MethodSpec[0x%X] Method table is None", token.rid)
+            return None
+        token_ = calculate_dotnet_token_value(row.Method.table.number, row.Method.row_index)
     else:
         token_ = token.value
-
-    if token_ is None:
-        return None
 
     callee: Union[DnType, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token_, None)
     if callee is None:
