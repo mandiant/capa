@@ -57,17 +57,24 @@ class DnfileFeatureExtractor(FeatureExtractor):
         # calculate unique calls to/from each method
         for fh in methods.values():
             for insn in fh.inner.instructions:
-                if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
+                if insn.opcode not in (
+                    OpCodes.Call,
+                    OpCodes.Callvirt,
+                    OpCodes.Jmp,
+                    OpCodes.Newobj,
+                ):
                     continue
 
+                address: DNTokenAddress = DNTokenAddress(insn.operand.value)
+
                 # record call to destination method; note: we only consider MethodDef methods for destinations
-                dest: Optional[FunctionHandle] = methods.get(DNTokenAddress(insn.operand.value), None)
+                dest: Optional[FunctionHandle] = methods.get(address, None)
                 if dest is not None:
                     dest.ctx["calls_to"].add(fh.address)
 
                 # record call from source method; note: we record all unique calls from a MethodDef method, not just
                 # those calls to other MethodDef methods e.g. calls to imported MemberRef methods
-                fh.ctx["calls_from"].add(DNTokenAddress(insn.operand.value))
+                fh.ctx["calls_from"].add(address)
 
         yield from methods.values()
 

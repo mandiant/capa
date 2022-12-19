@@ -96,7 +96,12 @@ def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None
 
 def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction API features"""
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
+    if ih.inner.opcode not in (
+        OpCodes.Call,
+        OpCodes.Callvirt,
+        OpCodes.Jmp,
+        OpCodes.Newobj,
+    ):
         return
 
     callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
@@ -116,7 +121,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     name: Optional[str] = None
     access: Optional[str] = None
 
-    if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp):
         # property access via MethodDef or MemberRef
         callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
         if isinstance(callee, DnType):
@@ -150,7 +155,8 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Call,
         OpCodes.Callvirt,
         OpCodes.Jmp,
-        OpCodes.Calli,
+        OpCodes.Ldvirtftn,
+        OpCodes.Ldftn,
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
@@ -178,7 +184,8 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Call,
         OpCodes.Callvirt,
         OpCodes.Jmp,
-        OpCodes.Calli,
+        OpCodes.Ldvirtftn,
+        OpCodes.Ldftn,
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
