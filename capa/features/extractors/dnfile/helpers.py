@@ -9,8 +9,7 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum
-from typing import Any, Tuple, Union, Iterator, Optional
+from typing import Dict, Tuple, Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.body import CilMethodBody
@@ -21,9 +20,6 @@ from dncil.cil.body.reader import CilMethodBodyReaderBase
 from capa.features.common import FeatureAccess
 
 logger = logging.getLogger(__name__)
-
-# key indexes to dotnet metadata tables
-DOTNET_META_TABLES_BY_INDEX = {table.value: table.name for table in dnfile.enums.MetadataTables}
 
 
 class DnfileMethodBodyReader(CilMethodBodyReaderBase):
@@ -47,6 +43,7 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
 class DnType(object):
     def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
         self.token = token
+        # property access
         self.access = access
         self.namespace = namespace
         self.class_ = class_
@@ -107,7 +104,7 @@ class DnUnmanagedMethod:
         return f"{module}.{method}"
 
 
-def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
+def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Union[dnfile.base.MDTableRow, InvalidToken, str]:
     """map generic token to string or table row"""
     assert pe.net is not None
     assert pe.net.mdtables is not None
@@ -118,14 +115,9 @@ def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Any:
             return InvalidToken(token.value)
         return user_string
 
-    table_name: str = DOTNET_META_TABLES_BY_INDEX.get(token.table, "")
-    if not table_name:
-        # table_index is not valid
-        return InvalidToken(token.value)
-
-    table: Any = getattr(pe.net.mdtables, table_name, None)
+    table: Optional[dnfile.base.ClrMetaDataTable] = pe.net.mdtables.tables.get(token.table, None)
     if table is None:
-        # table index is valid but table is not present
+        # table index is not valid
         return InvalidToken(token.value)
 
     try:
@@ -187,9 +179,65 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             continue
 
         token: int = calculate_dotnet_token_value(dnfile.mdtable.MemberRef.number, rid)
+        access: Optional[str]
+
+        # assume .NET imports starting with get_/set_ are used to access a property
+        if member_ref.Name.startswith("get_"):
+            access = FeatureAccess.READ
+        elif member_ref.Name.startswith("set_"):
+            access = FeatureAccess.WRITE
+        else:
+            access = None
+
+        member_ref_name: str = member_ref.Name
+        if member_ref_name.startswith(("get_", "set_")):
+            # remove get_/set_ from MemberRef name
+            member_ref_name = member_ref_name[4:]
+
         yield DnType(
-            token, member_ref.Class.row.TypeName, namespace=member_ref.Class.row.TypeNamespace, member=member_ref.Name
+            token,
+            member_ref.Class.row.TypeName,
+            namespace=member_ref.Class.row.TypeNamespace,
+            member=member_ref_name,
+            access=access,
         )
+
+
+def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[Tuple[int, str]]:
+    """get MethodDef methods used to access properties
+
+    see https://www.ntcore.com/files/dotnetformat.htm
+
+    24 - MethodSemantics Table
+        Links Events and Properties to specific methods. For example one Event can be associated to more methods. A property uses this table to associate get/set methods.
+            Semantics (a 2-byte bitmask of type MethodSemanticsAttributes)
+            Method (index into the MethodDef table)
+            Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
+    """
+    for (rid, method_semantics) in iter_dotnet_table(pe, dnfile.mdtable.MethodSemantics.number):
+        assert isinstance(method_semantics, dnfile.mdtable.MethodSemanticsRow)
+
+        if method_semantics.Association.row is None:
+            logger.debug("MethodSemantics[0x%X] Association row is None", rid)
+            continue
+
+        if isinstance(method_semantics.Association.row, dnfile.mdtable.EventRow):
+            # ignore events
+            logger.debug("MethodSemantics[0x%X] ignoring Event", rid)
+            continue
+
+        if method_semantics.Method.table is None:
+            logger.debug("MethodSemantics[0x%X] Method table is None", rid)
+            continue
+
+        token: int = calculate_dotnet_token_value(
+            method_semantics.Method.table.number, method_semantics.Method.row_index
+        )
+
+        if method_semantics.Semantics.msSetter:
+            yield token, FeatureAccess.WRITE
+        elif method_semantics.Semantics.msGetter:
+            yield token, FeatureAccess.READ
 
 
 def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
@@ -203,6 +251,10 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
     """
+    accessor_map: Dict[int, str] = {}
+    for (methoddef, methoddef_access) in get_dotnet_methoddef_property_accessors(pe):
+        accessor_map[methoddef] = methoddef_access
+
     for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
@@ -213,8 +265,16 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             if method.row is None:
                 logger.debug("TypeDef[0x%X] MethodList[0x%X] row is None", rid, idx)
                 continue
-            token = calculate_dotnet_token_value(method.table.number, method.row_index)
-            yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=method.row.Name)
+
+            token: int = calculate_dotnet_token_value(method.table.number, method.row_index)
+            access: Optional[str] = accessor_map.get(token, None)
+
+            method_name: str = method.row.Name
+            if method_name.startswith(("get_", "set_")):
+                # remove get_/set_
+                method_name = method_name[4:]
+
+            yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=method_name, access=access)
 
 
 def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
@@ -240,79 +300,6 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
                 continue
             token: int = calculate_dotnet_token_value(field.table.number, field.row_index)
             yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=field.row.Name)
-
-
-def get_dotnet_property_map(
-    pe: dnfile.dnPE, mapped_property: Union[dnfile.mdtable.PropertyRow, dnfile.mdtable.EventRow]
-) -> Optional[dnfile.mdtable.TypeDefRow]:
-    """get property map from PropertyMap table
-
-    see https://www.ntcore.com/files/dotnetformat.htm
-
-    21 - PropertyMap Table
-        List of Properties owned by a specific class.
-            Parent (index into the TypeDef table)
-            PropertyList (index into Property table). It marks the first of a contiguous run of Properties owned by Parent. The run continues to the smaller of:
-                the last row of the Property table
-                the next run of Properties, found by inspecting the PropertyList of the next row in this PropertyMap table
-    """
-    for (rid, property_map) in iter_dotnet_table(pe, dnfile.mdtable.PropertyMap.number):
-        assert isinstance(property_map, dnfile.mdtable.PropertyMapRow)
-
-        for (idx, property_) in enumerate(property_map.PropertyList):
-            if property_.row is None:
-                logger.debug("PropertyMap[0x%X] PropertyList[0x%x] row is None", rid, idx)
-                continue
-            if property_.row.Name == mapped_property.Name:
-                return property_map.Parent.row
-    return None
-
-
-def get_dotnet_properties(pe: dnfile.dnPE) -> Iterator[DnType]:
-    """get property from MethodSemantics table
-
-    see https://www.ntcore.com/files/dotnetformat.htm
-
-    24 - MethodSemantics Table
-        Links Events and Properties to specific methods. For example one Event can be associated to more methods. A property uses this table to associate get/set methods.
-            Semantics (a 2-byte bitmask of type MethodSemanticsAttributes)
-            Method (index into the MethodDef table)
-            Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
-    """
-    for (rid, method_semantics) in iter_dotnet_table(pe, dnfile.mdtable.MethodSemantics.number):
-        assert isinstance(method_semantics, dnfile.mdtable.MethodSemanticsRow)
-
-        if method_semantics.Association.row is None:
-            logger.debug("MethodSemantics[0x%X] Association row is None", rid)
-            continue
-        if method_semantics.Method.table is None:
-            logger.debug("MethodSemantics[0x%X] Method table is None", rid)
-            continue
-
-        typedef: Optional[dnfile.mdtable.TypeDefRow] = get_dotnet_property_map(pe, method_semantics.Association.row)
-        if typedef is None:
-            logger.debug("MethodSemantics[0x%X] TypeDef is None", rid)
-            continue
-
-        token: int = calculate_dotnet_token_value(
-            method_semantics.Method.table.number, method_semantics.Method.row_index
-        )
-
-        access: Optional[str]
-        if method_semantics.Semantics.msSetter:
-            access = FeatureAccess.WRITE
-        elif method_semantics.Semantics.msGetter:
-            access = FeatureAccess.READ
-        else:
-            access = None
-
-        yield DnType(
-            token,
-            typedef.TypeName,
-            access=access,
-            namespace=typedef.TypeNamespace,
-            member=method_semantics.Association.row.Name,
-        )
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
