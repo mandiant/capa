@@ -28,12 +28,12 @@ jobs:
             asset_name: macos
     steps:
       - name: Checkout capa
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       # using Python 3.8 to support running across multiple operating systems including Windows 7
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
       - if: matrix.os == 'ubuntu-18.04'
@@ -50,7 +50,7 @@ jobs:
         run: dist/capa "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
       - name: Does it run (ELF)?
         run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.artifact_name }}
@@ -74,7 +74,7 @@ jobs:
             asset_name: windows
     steps:
       - name: Download ${{ matrix.asset_name }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.asset_name }}
       - name: Set executable flag
@@ -100,7 +100,7 @@ jobs:
             artifact_name: capa
     steps:
       - name: Download ${{ matrix.asset_name }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.asset_name }}
       - name: Set executable flag
