@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout capa
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     # The sync GH action in capa-rules relies on a single '- *$' in the CHANGELOG file
     - name: Ensure CHANGELOG has '- *$'
       run: |
@@ -26,9 +26,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout capa
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: "3.8"
     - name: Install dependencies
@@ -46,11 +46,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout capa with submodules
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: "3.8"
     - name: Install capa
@@ -76,7 +76,7 @@ jobs:
             python-version: "3.9"
     steps:
     - name: Checkout capa with submodules
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
