@@ -753,6 +753,10 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
         ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), True),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
+        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), True),
+        ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
+        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), True),
+        ("_1c444", "token=0x600000F", capa.features.common.Characteristic("calls from"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
         ("_692f", "token=0x6000004", capa.features.insn.API("System.Linq.Enumerable::First"), True),  # generic method
@@ -950,7 +954,10 @@ FEATURE_COUNT_TESTS = [
 ]
 
 
-FEATURE_COUNT_TESTS_DOTNET = []  # type: ignore
+FEATURE_COUNT_TESTS_DOTNET = [
+    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
+    ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
+]
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):

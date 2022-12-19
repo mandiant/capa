@@ -8,13 +8,15 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator, Optional
 
 import dnfile
+from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
+import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -41,12 +43,36 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        for token, f in get_dotnet_managed_method_bodies(self.pe):
-            yield FunctionHandle(address=DNTokenAddress(token), inner=f, ctx={"pe": self.pe})
+        # create a method lookup table
+        methods: Dict[Address, FunctionHandle] = {}
+        for (token, method) in get_dotnet_managed_method_bodies(self.pe):
+            fh: FunctionHandle = FunctionHandle(
+                address=DNTokenAddress(token), inner=method, ctx={"pe": self.pe, "calls_from": set(), "calls_to": set()}
+            )
 
-    def extract_function_features(self, f):
-        # TODO
-        yield from []
+            # method tokens should be unique
+            assert fh.address not in methods.keys()
+            methods[fh.address] = fh
+
+        # calculate unique calls to/from each method
+        for fh in methods.values():
+            for insn in fh.inner.instructions:
+                if insn.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
+                    continue
+
+                # record call to destination method; note: we only consider MethodDef methods for destinations
+                dest: Optional[FunctionHandle] = methods.get(DNTokenAddress(insn.operand.value), None)
+                if dest is not None:
+                    dest.ctx["calls_to"].add(fh.address)
+
+                # record call from source method; note: we record all unique calls from a MethodDef method, not just
+                # those calls to other MethodDef methods e.g. calls to imported MemberRef methods
+                fh.ctx["calls_from"].add(DNTokenAddress(insn.operand.value))
+
+        yield from methods.values()
+
+    def extract_function_features(self, fh) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.dnfile.function.extract_features(fh)
 
     def get_basic_blocks(self, f) -> Iterator[BBHandle]:
         # each dotnet method is considered 1 basic block
