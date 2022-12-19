@@ -21,9 +21,6 @@ from capa.features.common import FeatureAccess
 
 logger = logging.getLogger(__name__)
 
-# key indexes to dotnet metadata tables
-DOTNET_META_TABLES_BY_INDEX = {table.value: table.name for table in dnfile.enums.MetadataTables}
-
 
 class DnfileMethodBodyReader(CilMethodBodyReaderBase):
     def __init__(self, pe: dnfile.dnPE, row: dnfile.mdtable.MethodDefRow):
