@@ -32,52 +32,6 @@ For more information on the FLARE team's open-source framework, capa, check out 
 
 ## Getting Started
 
-### Requirements
-
-capa explorer supports Python versions >= 3.7.x and the following IDA Pro versions:
-
-* IDA 7.4
-* IDA 7.5
-* IDA 7.6 (caveat below)
-* IDA 7.7
-
-capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.7.x). Based on our testing the following matrix shows the Python versions supported
-by each supported IDA version:
-
-| | IDA 7.4 | IDA 7.5 | IDA 7.6 |
-| --- | --- | --- | --- |
-| Python 3.7.x | Yes | Yes | Yes |
-| Python 3.8.x | Partial (see below) | Yes | Yes |
-| Python 3.9.x | No | Partial (see below) | Yes |
-
-To use capa explorer with IDA 7.4 and Python 3.8.x you must follow the instructions provided by hex-rays [here](https://hex-rays.com/blog/ida-7-4-and-python-3-8/).
-
-To use capa explorer with IDA 7.5 and Python 3.9.x you must follow the instructions provided by hex-rays [here](https://hex-rays.com/blog/python-3-9-support-for-ida-7-5/).
-
-If you encounter issues with your specific setup, please open a new [Issue](https://github.com/mandiant/capa/issues).
-
-#### IDA 7.6 caveat: IDA 7.6sp1 or patch required
-
-As described [here](https://www.hex-rays.com/blog/ida-7-6-empty-qtreeview-qtreewidget/):
-
-> A rather nasty issue evaded our testing and found its way into IDA 7.6: using the PyQt5 modules that are shipped with IDA, QTreeView (or QTreeWidget) instances will always fail to display contents.
-
-Therefore, in order to use capa under IDA 7.6 you need the [Service Pack 1 for IDA 7.6](https://www.hex-rays.com/products/ida/news/7_6sp1). Alternatively, you can download and install the fix corresponding to your IDA installation, replacing the original QtWidgets DLL with the one contained in the .zip file (links to Hex-Rays):
-
-
-  - Windows: [pyqt5_qtwidgets_win](https://www.hex-rays.com/wp-content/uploads/2021/04/pyqt5_qtwidgets_win.zip)
-  - Linux: [pyqt5_qtwidgets_linux](https://www.hex-rays.com/wp-content/uploads/2021/04/pyqt5_qtwidgets_linux.zip)
-  - MacOS (Intel): [pyqt5_qtwidgets_mac_x64](https://www.hex-rays.com/wp-content/uploads/2021/04/pyqt5_qtwidgets_mac_x64.zip)
-  - MacOS (AppleSilicon): [pyqt5_qtwidgets_mac_arm](https://www.hex-rays.com/wp-content/uploads/2021/04/pyqt5_qtwidgets_mac_arm.zip)
-
-
-### Supported File Types
-
-capa explorer is limited to the file types supported by capa, which include:
-
-* Windows x86 (32- and 64-bit) PE and ELF files
-* Windows x86 (32- and 64-bit) shellcode
-
 ### Installation
 
 You can install capa explorer using the following steps:
@@ -86,8 +40,16 @@ You can install capa explorer using the following steps:
     ```
     $ pip install flare-capa
     ```
-3. Download the [standard collection of capa rules](https://github.com/mandiant/capa-rules) (capa explorer needs capa rules to analyze a database)
-4. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
+2. Download the [standard collection of capa rules](https://github.com/mandiant/capa-rules) (capa explorer needs capa rules to analyze a database)
+3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
+
+### Supported File Types
+
+capa explorer is limited to the file types supported by capa, which include:
+
+* Windows x86 (32- and 64-bit) PE files
+* Windows x86 (32- and 64-bit) shellcode
+* ELF files on various operating systems
 
 ### Usage
 
@@ -121,6 +83,22 @@ downloading and using the [standard collection of capa rules](https://github.com
 * Add descriptions or comments to a feature by editing the corresponding column in the `Editor` pane
 * Directly edit rule text and metadata fields using the `Preview` pane
 * Change the default rule author and default rule scope displayed in the `Preview` pane by clicking `Settings`
+
+### Requirements
+
+capa explorer supports Python versions >= 3.7.x and IDA Pro versions >= 7.4. The following IDA Pro versions have been tested:
+
+* IDA 7.4
+* IDA 7.5
+* IDA 7.6 Service Pack 1
+* IDA 7.7
+* IDA 8.0
+* IDA 8.1
+* IDA 8.2
+
+capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.7.x).
+
+If you encounter issues with your specific setup, please open a new [Issue](https://github.com/mandiant/capa/issues).
 
 ## Development
 
