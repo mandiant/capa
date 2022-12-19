@@ -25,7 +25,6 @@ from capa.features.extractors.dnfile.helpers import (
     DnUnmanagedMethod,
     get_dotnet_fields,
     resolve_dotnet_token,
-    get_dotnet_properties,
     read_dotnet_user_string,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
@@ -58,14 +57,6 @@ def get_methods(ctx: Dict) -> Dict:
         for method in get_dotnet_managed_methods(ctx["pe"]):
             ctx["methods_cache"][method.token] = method
     return ctx["methods_cache"]
-
-
-def get_properties(ctx: Dict) -> Dict:
-    if "properties_cache" not in ctx:
-        ctx["properties_cache"] = {}
-        for prop in get_dotnet_properties(ctx["pe"]):
-            ctx["properties_cache"][prop.token] = prop
-    return ctx["properties_cache"]
 
 
 def get_fields(ctx: Dict) -> Dict:
@@ -109,23 +100,12 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
         return
 
     callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
-    if callee is None:
-        return
-
     if isinstance(callee, DnType):
-        if callee.member.startswith(("get_", "set_")):
-            if ih.inner.operand.table == dnfile.mdtable.MethodDef.number:
-                # check if the method belongs to the MethodDef table and whether it is used to access a property
-                if get_properties(fh.ctx).get(ih.inner.operand.value, None) is not None:
-                    return
-            elif ih.inner.operand.table == dnfile.mdtable.MemberRef.number:
-                # if the method belongs to the MemberRef table, we assume it is used to access a property
-                return
-
-        # like System.IO.File::Delete
-        yield API(str(callee)), ih.address
-
-    else:
+        # ignore methods used to access properties
+        if callee.access is None:
+            # like System.IO.File::Delete
+            yield API(str(callee)), ih.address
+    elif isinstance(callee, DnUnmanagedMethod):
         # like kernel32.CreateFileA
         for name in capa.features.extractors.helpers.generate_symbols(callee.module, callee.method):
             yield API(name), ih.address
@@ -137,48 +117,26 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
     access: Optional[str] = None
 
     if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
-        if ih.inner.operand.table == dnfile.mdtable.MethodDef.number:
-            # check if the method belongs to the MethodDef table and whether it is used to access a property
-            prop: Optional[DnType] = get_properties(fh.ctx).get(ih.inner.operand.value, None)
-            if prop is not None:
-                name = str(prop)
-                access = prop.access
-
-        elif ih.inner.operand.table == dnfile.mdtable.MemberRef.number:
-            # if the method belongs to the MemberRef table, we assume it is used to access a property
-            row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
-
-            if not isinstance(row, dnfile.mdtable.MemberRefRow):
-                return
-            if not isinstance(row.Class.row, (dnfile.mdtable.TypeRefRow, dnfile.mdtable.TypeDefRow)):
-                return
-            if not row.Name.startswith(("get_", "set_")):
-                return
-
-            name = DnType.format_name(
-                row.Class.row.TypeName, namespace=row.Class.row.TypeNamespace, member=row.Name[4:]
-            )
-
-            if row.Name.startswith("get_"):
-                access = FeatureAccess.READ
-            elif row.Name.startswith("set_"):
-                access = FeatureAccess.WRITE
+        # property access via MethodDef or MemberRef
+        callee: Optional[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+        if isinstance(callee, DnType):
+            if callee.access is not None:
+                name = str(callee)
+                access = callee.access
 
     elif ih.inner.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
-        if ih.inner.operand.table == dnfile.mdtable.Field.number:
-            # determine whether the operand is a field by checking if it belongs to the Field table
-            read_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-            if read_field is not None:
-                name = str(read_field)
-                access = FeatureAccess.READ
+        # property read via Field
+        read_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if read_field is not None:
+            name = str(read_field)
+            access = FeatureAccess.READ
 
     elif ih.inner.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
-        if ih.inner.operand.table == dnfile.mdtable.Field.number:
-            # determine whether the operand is a field by checking if it belongs to the Field table
-            write_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-            if write_field is not None:
-                name = str(write_field)
-                access = FeatureAccess.WRITE
+        # property write via Field
+        write_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        if write_field is not None:
+            name = str(write_field)
+            access = FeatureAccess.WRITE
 
     if name is not None:
         if access is not None:
@@ -195,6 +153,7 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Calli,
         OpCodes.Newobj,
     ):
+        # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
         callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
         if isinstance(callee, DnType):
             yield Class(DnType.format_name(callee.class_, namespace=callee.namespace)), ih.address
@@ -207,18 +166,14 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Stfld,
         OpCodes.Stsfld,
     ):
-        row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
-        if not isinstance(row, dnfile.mdtable.FieldRow):
-            return
-
+        # field access
         field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-        if field is not None:
+        if isinstance(field, DnType):
             yield Class(DnType.format_name(field.class_, namespace=field.namespace)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
     """parse instruction namespace features"""
-    """parse instruction class features"""
     if ih.inner.opcode in (
         OpCodes.Call,
         OpCodes.Callvirt,
@@ -226,6 +181,7 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Calli,
         OpCodes.Newobj,
     ):
+        # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
         callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
         if isinstance(callee, DnType) and callee.namespace is not None:
             yield Namespace(callee.namespace), ih.address
@@ -238,10 +194,6 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Stfld,
         OpCodes.Stsfld,
     ):
-        row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)
-        if not isinstance(row, dnfile.mdtable.FieldRow):
-            return
-
         field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
         if isinstance(field, DnType) and field.namespace is not None:
             yield Namespace(field.namespace), ih.address
