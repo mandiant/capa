@@ -4,9 +4,9 @@
 
 ### New Features
 - verify rule metadata format on load #1160 @mr-tz
-- extract property features from .NET PE files #1168 @anushkavirgaonkar
-- emit features for .NET newobj instruction #1186 @mike-hunhoff
-- fix import-to-ida script formatting #1208 @williballenthin
+- dotnet: emit property features #1168 @anushkavirgaonkar
+- dotnet: emit API features for objects created via the newobj instruction #1186 @mike-hunhoff
+- dotnet: emit API features for generic methods #1231 @mike-hunhoff
 - Python 3.11 support #1192 @williballenthin
 - dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
 
@@ -55,6 +55,7 @@
 - render: fix vverbose rendering of offsets #1215 @williballenthin
 - elf: better detect OS via GLIBC ABI version needed and dependencies #1221 @williballenthin
 - dotnet: address unhandled exceptions with improved type checking #1230 @mike-hunhoff
+- fix import-to-ida script formatting #1208 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
