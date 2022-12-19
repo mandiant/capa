@@ -258,8 +258,8 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
     """
     accessor_map: Dict[int, str] = {}
-    for (methoddef, access) in get_dotnet_methoddef_property_accessors(pe):
-        accessor_map[methoddef] = access
+    for (methoddef, methoddef_access) in get_dotnet_methoddef_property_accessors(pe):
+        accessor_map[methoddef] = methoddef_access
 
     for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)

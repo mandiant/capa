@@ -118,7 +118,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         # property access via MethodDef or MemberRef
-        callee: Optional[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
         if isinstance(callee, DnType):
             if callee.access is not None:
                 name = str(callee)
