@@ -18,6 +18,12 @@ from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
 from capa.features.common import FeatureAccess
+from capa.features.extractors.dnfile.types import (
+    DnType,
+    DnUnmanagedMethod,
+    DnfileFeatureCache,
+    DnfileFeatureExtractorType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,71 +44,6 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
     def seek(self, offset: int) -> int:
         self.offset = offset
         return self.offset
-
-
-class DnType(object):
-    def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
-        self.token: int = token
-        self.access: Optional[str] = access
-        self.namespace: str = namespace
-        self.class_: str = class_
-
-        if member == ".ctor":
-            member = "ctor"
-        if member == ".cctor":
-            member = "cctor"
-
-        self.member: str = member
-
-    def __hash__(self):
-        return hash((self.token, self.access, self.namespace, self.class_, self.member))
-
-    def __eq__(self, other):
-        return (
-            self.token == other.token
-            and self.access == other.access
-            and self.namespace == other.namespace
-            and self.class_ == other.class_
-            and self.member == other.member
-        )
-
-    def __str__(self):
-        return DnType.format_name(self.class_, namespace=self.namespace, member=self.member)
-
-    def __repr__(self):
-        return str(self)
-
-    @staticmethod
-    def format_name(class_: str, namespace: str = "", member: str = ""):
-        # like File::OpenRead
-        name: str = f"{class_}::{member}" if member else class_
-        if namespace:
-            # like System.IO.File::OpenRead
-            name = f"{namespace}.{name}"
-        return name
-
-
-class DnUnmanagedMethod:
-    def __init__(self, token: int, module: str, method: str):
-        self.token: int = token
-        self.module: str = module
-        self.method: str = method
-
-    def __hash__(self):
-        return hash((self.token, self.module, self.method))
-
-    def __eq__(self, other):
-        return self.token == other.token and self.module == other.module and self.method == other.method
-
-    def __str__(self):
-        return DnUnmanagedMethod.format_name(self.module, self.method)
-
-    def __repr__(self):
-        return str(self)
-
-    @staticmethod
-    def format_name(module, method):
-        return f"{module}.{method}"
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Union[dnfile.base.MDTableRow, InvalidToken, str]:
@@ -405,3 +346,10 @@ def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, 
     for (rid, row) in enumerate(pe.net.mdtables.tables.get(table_index, [])):
         # .NET tables are 1-indexed
         yield rid + 1, row
+
+
+def get_cached_token(
+    caches: Dict[DnfileFeatureCache, Dict[int, DnfileFeatureExtractorType]], token: int, cache: DnfileFeatureCache
+) -> Optional[DnfileFeatureExtractorType]:
+    assert cache in DnfileFeatureCache
+    return caches[cache].get(token, None)

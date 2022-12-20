@@ -8,7 +8,8 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Iterator, Optional
+from enum import Enum
+from typing import Dict, List, Tuple, Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.opcode import OpCodes
@@ -19,14 +20,43 @@ import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
+from capa.features.extractors.dnfile.types import DnfileFeatureCache, DnfileFeatureExtractorType
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
-from capa.features.extractors.dnfile.helpers import get_dotnet_managed_method_bodies
+from capa.features.extractors.dnfile.helpers import (
+    get_dotnet_types,
+    get_dotnet_fields,
+    get_dotnet_managed_imports,
+    get_dotnet_managed_methods,
+    get_dotnet_unmanaged_imports,
+    get_dotnet_managed_method_bodies,
+)
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
         super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
+
+        # cached .NET token lookup tables
+        self.tokens: Dict[DnfileFeatureCache, Dict[int, DnfileFeatureExtractorType]] = {}
+        for value in DnfileFeatureCache:
+            self.tokens[value] = {}
+
+        # pre-compute .NET token lookup tables
+        for import_ in get_dotnet_managed_imports(self.pe):
+            self.tokens[DnfileFeatureCache.Imports][import_.token] = import_
+
+        for native_import in get_dotnet_unmanaged_imports(self.pe):
+            self.tokens[DnfileFeatureCache.NativeImports][native_import.token] = native_import
+
+        for method in get_dotnet_managed_methods(self.pe):
+            self.tokens[DnfileFeatureCache.Methods][method.token] = method
+
+        for field in get_dotnet_fields(self.pe):
+            self.tokens[DnfileFeatureCache.Fields][field.token] = field
+
+        for type_ in get_dotnet_types(self.pe):
+            self.tokens[DnfileFeatureCache.Types][type_.token] = type_
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
@@ -47,7 +77,9 @@ class DnfileFeatureExtractor(FeatureExtractor):
         methods: Dict[Address, FunctionHandle] = {}
         for (token, method) in get_dotnet_managed_method_bodies(self.pe):
             fh: FunctionHandle = FunctionHandle(
-                address=DNTokenAddress(token), inner=method, ctx={"pe": self.pe, "calls_from": set(), "calls_to": set()}
+                address=DNTokenAddress(token),
+                inner=method,
+                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "tokens": self.tokens},
             )
 
             # method tokens should be unique
