@@ -126,7 +126,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 def extract_insn_namespace_class_features(
     fh: FunctionHandle, bh, ih: InsnHandle
 ) -> Iterator[Tuple[Union[Namespace, Class], Address]]:
-    """parse instruction class features"""
+    """parse instruction namespace and class features"""
     type_: Optional[DnfileFeatureExtractorType] = None
 
     if ih.inner.opcode in (
@@ -204,7 +204,7 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
 def extract_unmanaged_call_characteristic_features(
     fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Characteristic, Address]]:
-    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
+    if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp):
         return
 
     row: Union[str, InvalidToken, dnfile.base.MDTableRow] = resolve_dotnet_token(fh.ctx["pe"], ih.inner.operand)

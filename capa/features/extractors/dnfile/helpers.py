@@ -306,20 +306,12 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
 
 def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
-    """ """
+    """get .NET types from TypeDef and TypeRef tables"""
     for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
-
-        if isinstance(typedef.Extends, dnfile.mdtable.TypeSpecRow):
-            if typedef.Extends.table is None:
-                logger.debug("TypeDef[0x%X] Extends table is None", rid)
-                continue
-
-            typespec_token: int = calculate_dotnet_token_value(typedef.Extends.table.number, typedef.Extends.row_index)
-            yield DnType(typespec_token, typedef.TypeName, namespace=typedef.TypeNamespace)
 
     for (rid, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
