@@ -22,6 +22,7 @@ from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
     DnType,
+    get_dotnet_types,
     DnUnmanagedMethod,
     get_dotnet_fields,
     resolve_dotnet_token,
@@ -35,41 +36,37 @@ from capa.features.extractors.dnfile.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def get_managed_imports(ctx: Dict) -> Dict:
-    if "managed_imports_cache" not in ctx:
-        ctx["managed_imports_cache"] = {}
-        for method in get_dotnet_managed_imports(ctx["pe"]):
-            ctx["managed_imports_cache"][method.token] = method
-    return ctx["managed_imports_cache"]
+CACHED_TYPE = Union[DnType, DnUnmanagedMethod]
+
+IMPORTS_CACHE = "imports_cache"
+METHODS_CACHE = "methods_cache"
+FIELDS_CACHE = "fields_cache"
+TYPES_CACHE = "types_cache"
+NATIVE_IMPORTS_CACHE = "native_imports_cache"
+
+CACHE_FUNCS = {
+    IMPORTS_CACHE: get_dotnet_managed_imports,
+    METHODS_CACHE: get_dotnet_managed_methods,
+    FIELDS_CACHE: get_dotnet_fields,
+    TYPES_CACHE: get_dotnet_types,
+    NATIVE_IMPORTS_CACHE: get_dotnet_unmanaged_imports,
+}
 
 
-def get_unmanaged_imports(ctx: Dict) -> Dict:
-    if "unmanaged_imports_cache" not in ctx:
-        ctx["unmanaged_imports_cache"] = {}
-        for imp in get_dotnet_unmanaged_imports(ctx["pe"]):
-            ctx["unmanaged_imports_cache"][imp.token] = imp
-    return ctx["unmanaged_imports_cache"]
+def get_cache(pe: dnfile.dnPE, cache_name: str) -> Dict[int, Union[DnType, DnUnmanagedMethod]]:
+    # we generate lookup tables for various .NET tokens; cache these in the dnfile.dnPE to save cycles
+    assert cache_name in CACHE_FUNCS.keys()
+    if getattr(pe, cache_name, None) is None:
+        setattr(pe, cache_name, {})
+        for to_cache in CACHE_FUNCS[cache_name](pe):
+            assert isinstance(to_cache, (DnType, DnUnmanagedMethod))
+            getattr(pe, cache_name)[to_cache.token] = to_cache
+    return getattr(pe, cache_name)
 
 
-def get_methods(ctx: Dict) -> Dict:
-    if "methods_cache" not in ctx:
-        ctx["methods_cache"] = {}
-        for method in get_dotnet_managed_methods(ctx["pe"]):
-            ctx["methods_cache"][method.token] = method
-    return ctx["methods_cache"]
-
-
-def get_fields(ctx: Dict) -> Dict:
-    if "fields_cache" not in ctx:
-        ctx["fields_cache"] = {}
-        for field in get_dotnet_fields(ctx["pe"]):
-            ctx["fields_cache"][field.token] = field
-    return ctx["fields_cache"]
-
-
-def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None]:
+def get_callee(pe: dnfile.dnPE, token: Token) -> Union[DnType, DnUnmanagedMethod, None]:
     """map .NET token to un/managed (generic) method"""
-    row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(ctx["pe"], token)
+    row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(pe, token)
     if not isinstance(row, (dnfile.mdtable.MethodDefRow, dnfile.mdtable.MemberRefRow, dnfile.mdtable.MethodSpecRow)):
         # we only handle MethodDef (internal), MemberRef (external), and MethodSpec (generic)
         return None
@@ -84,13 +81,13 @@ def get_callee(ctx: Dict, token: Token) -> Union[DnType, DnUnmanagedMethod, None
     else:
         token_ = token.value
 
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_managed_imports(ctx).get(token_, None)
+    callee: Optional[CACHED_TYPE] = get_cache(pe, IMPORTS_CACHE).get(token_, None)
     if callee is None:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        callee = get_unmanaged_imports(ctx).get(token_, None)
+        callee = get_cache(pe, NATIVE_IMPORTS_CACHE).get(token_, None)
         if callee is None:
-            callee = get_methods(ctx).get(token_, None)
+            callee = get_cache(pe, METHODS_CACHE).get(token_, None)
     return callee
 
 
@@ -99,7 +96,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     if ih.inner.opcode not in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli, OpCodes.Newobj):
         return
 
-    callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+    callee: Optional[CACHED_TYPE] = get_callee(fh.ctx["pe"], ih.inner.operand)
     if isinstance(callee, DnType):
         # ignore methods used to access properties
         if callee.access is None:
@@ -118,7 +115,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp, OpCodes.Calli):
         # property access via MethodDef or MemberRef
-        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
+        callee: Optional[CACHED_TYPE] = get_callee(fh.ctx["pe"], ih.inner.operand)
         if isinstance(callee, DnType):
             if callee.access is not None:
                 name = str(callee)
@@ -126,14 +123,14 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     elif ih.inner.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
         # property read via Field
-        read_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        read_field: Optional[CACHED_TYPE] = get_cache(fh.ctx["pe"], FIELDS_CACHE).get(ih.inner.operand.value, None)
         if read_field is not None:
             name = str(read_field)
             access = FeatureAccess.READ
 
     elif ih.inner.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
         # property write via Field
-        write_field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
+        write_field: Optional[CACHED_TYPE] = get_cache(fh.ctx["pe"], FIELDS_CACHE).get(ih.inner.operand.value, None)
         if write_field is not None:
             name = str(write_field)
             access = FeatureAccess.WRITE
@@ -146,6 +143,8 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
 def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Class, Address]]:
     """parse instruction class features"""
+    type_: Optional[CACHED_TYPE] = None
+
     if ih.inner.opcode in (
         OpCodes.Call,
         OpCodes.Callvirt,
@@ -154,9 +153,7 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
-        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
-        if isinstance(callee, DnType):
-            yield Class(DnType.format_name(callee.class_, namespace=callee.namespace)), ih.address
+        type_ = get_callee(fh.ctx["pe"], ih.inner.operand)
 
     elif ih.inner.opcode in (
         OpCodes.Ldfld,
@@ -167,13 +164,38 @@ def extract_insn_class_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Itera
         OpCodes.Stsfld,
     ):
         # field access
-        field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-        if isinstance(field, DnType):
-            yield Class(DnType.format_name(field.class_, namespace=field.namespace)), ih.address
+        type_ = get_cache(fh.ctx["pe"], FIELDS_CACHE).get(ih.inner.operand.value, None)
+
+    # ECMA 335 VI.C.4.10
+    elif ih.inner.opcode in (
+        OpCodes.Initobj,
+        OpCodes.Box,
+        OpCodes.Castclass,
+        OpCodes.Cpobj,
+        OpCodes.Isinst,
+        OpCodes.Ldelem,
+        OpCodes.Ldelema,
+        OpCodes.Ldobj,
+        OpCodes.Mkrefany,
+        OpCodes.Newarr,
+        OpCodes.Refanyval,
+        OpCodes.Sizeof,
+        OpCodes.Stobj,
+        OpCodes.Unbox,
+        OpCodes.Constrained,
+        OpCodes.Stelem,
+        OpCodes.Unbox_Any,
+    ):
+        type_ = get_cache(fh.ctx["pe"], TYPES_CACHE).get(ih.inner.operand.value, None)
+
+    if isinstance(type_, DnType):
+        yield Class(DnType.format_name(type_.class_, namespace=type_.namespace)), ih.address
 
 
 def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterator[Tuple[Namespace, Address]]:
     """parse instruction namespace features"""
+    type_: Optional[CACHED_TYPE] = None
+
     if ih.inner.opcode in (
         OpCodes.Call,
         OpCodes.Callvirt,
@@ -182,9 +204,7 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
-        callee: Union[DnType, DnUnmanagedMethod, None] = get_callee(fh.ctx, ih.inner.operand)
-        if isinstance(callee, DnType) and callee.namespace is not None:
-            yield Namespace(callee.namespace), ih.address
+        type_ = get_callee(fh.ctx["pe"], ih.inner.operand)
 
     elif ih.inner.opcode in (
         OpCodes.Ldfld,
@@ -194,9 +214,32 @@ def extract_insn_namespace_features(fh: FunctionHandle, bh, ih: InsnHandle) -> I
         OpCodes.Stfld,
         OpCodes.Stsfld,
     ):
-        field: Optional[DnType] = get_fields(fh.ctx).get(ih.inner.operand.value, None)
-        if isinstance(field, DnType) and field.namespace is not None:
-            yield Namespace(field.namespace), ih.address
+        type_ = get_cache(fh.ctx["pe"], FIELDS_CACHE).get(ih.inner.operand.value, None)
+
+    # ECMA 335 VI.C.4.10
+    elif ih.inner.opcode in (
+        OpCodes.Initobj,
+        OpCodes.Box,
+        OpCodes.Castclass,
+        OpCodes.Cpobj,
+        OpCodes.Isinst,
+        OpCodes.Ldelem,
+        OpCodes.Ldelema,
+        OpCodes.Ldobj,
+        OpCodes.Mkrefany,
+        OpCodes.Newarr,
+        OpCodes.Refanyval,
+        OpCodes.Sizeof,
+        OpCodes.Stobj,
+        OpCodes.Unbox,
+        OpCodes.Constrained,
+        OpCodes.Stelem,
+        OpCodes.Unbox_Any,
+    ):
+        type_ = get_cache(fh.ctx["pe"], TYPES_CACHE).get(ih.inner.operand.value, None)
+
+    if isinstance(type_, DnType):
+        yield Namespace(type_.namespace), ih.address
 
 
 def extract_insn_number_features(fh, bh, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

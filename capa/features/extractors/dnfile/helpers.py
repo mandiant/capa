@@ -42,16 +42,17 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
 
 class DnType(object):
     def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
-        self.token = token
-        # property access
-        self.access = access
-        self.namespace = namespace
-        self.class_ = class_
+        self.token: int = token
+        self.access: Optional[str] = access
+        self.namespace: str = namespace
+        self.class_: str = class_
+
         if member == ".ctor":
             member = "ctor"
         if member == ".cctor":
             member = "cctor"
-        self.member = member
+
+        self.member: str = member
 
     def __hash__(self):
         return hash((self.token, self.access, self.namespace, self.class_, self.member))
@@ -361,6 +362,29 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
         # like kernel32.CreateFileA
         yield DnUnmanagedMethod(token, module, method)
+
+
+def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
+    """ """
+    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
+
+        typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
+        yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
+
+        if isinstance(typedef.Extends, dnfile.mdtable.TypeSpecRow):
+            if typedef.Extends.table is None:
+                logger.debug("TypeDef[0x%X] Extends table is None", rid)
+                continue
+
+            typespec_token: int = calculate_dotnet_token_value(typedef.Extends.table.number, typedef.Extends.row_index)
+            yield DnType(typespec_token, typedef.TypeName, namespace=typedef.TypeNamespace)
+
+    for (rid, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
+
+        typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
+        yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
 
 
 def calculate_dotnet_token_value(table: int, rid: int) -> int:
