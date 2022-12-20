@@ -10,6 +10,7 @@
 - Python 3.11 support #1192 @williballenthin
 - dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
 - dotnet: emit namespace/class features for ldvirtftn/ldftn instructions #1241 @mike-hunhoff
+- dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 
 ### Breaking Changes
 
