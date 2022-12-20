@@ -762,6 +762,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_692f", "token=0x6000004", capa.features.insn.API("System.Linq.Enumerable::First"), True),  # generic method
         ("_692f", "token=0x6000004", capa.features.common.Namespace("System.Linq"), True),  # generic method
         ("_692f", "token=0x6000004", capa.features.common.Class("System.Linq.Enumerable"), True),  # generic method
+        ("_1c444", "token=0x6000020", capa.features.common.Namespace("Reqss"), True),  # ldftn
+        ("_1c444", "token=0x6000020", capa.features.common.Class("Reqss.Reqss"), True),  # ldftn
         (
             "_1c444",
             "function=0x1F59, bb=0x1F59, insn=0x1F5B",
