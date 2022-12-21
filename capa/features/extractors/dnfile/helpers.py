@@ -18,6 +18,7 @@ from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
 from capa.features.common import FeatureAccess
+from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 
 logger = logging.getLogger(__name__)
 
@@ -38,70 +39,6 @@ class DnfileMethodBodyReader(CilMethodBodyReaderBase):
     def seek(self, offset: int) -> int:
         self.offset = offset
         return self.offset
-
-
-class DnType(object):
-    def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
-        self.token = token
-        # property access
-        self.access = access
-        self.namespace = namespace
-        self.class_ = class_
-        if member == ".ctor":
-            member = "ctor"
-        if member == ".cctor":
-            member = "cctor"
-        self.member = member
-
-    def __hash__(self):
-        return hash((self.token, self.access, self.namespace, self.class_, self.member))
-
-    def __eq__(self, other):
-        return (
-            self.token == other.token
-            and self.access == other.access
-            and self.namespace == other.namespace
-            and self.class_ == other.class_
-            and self.member == other.member
-        )
-
-    def __str__(self):
-        return DnType.format_name(self.class_, namespace=self.namespace, member=self.member)
-
-    def __repr__(self):
-        return str(self)
-
-    @staticmethod
-    def format_name(class_: str, namespace: str = "", member: str = ""):
-        # like File::OpenRead
-        name: str = f"{class_}::{member}" if member else class_
-        if namespace:
-            # like System.IO.File::OpenRead
-            name = f"{namespace}.{name}"
-        return name
-
-
-class DnUnmanagedMethod:
-    def __init__(self, token: int, module: str, method: str):
-        self.token: int = token
-        self.module: str = module
-        self.method: str = method
-
-    def __hash__(self):
-        return hash((self.token, self.module, self.method))
-
-    def __eq__(self, other):
-        return self.token == other.token and self.module == other.module and self.method == other.method
-
-    def __str__(self):
-        return DnUnmanagedMethod.format_name(self.module, self.method)
-
-    def __repr__(self):
-        return str(self)
-
-    @staticmethod
-    def format_name(module, method):
-        return f"{module}.{method}"
 
 
 def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Union[dnfile.base.MDTableRow, InvalidToken, str]:
@@ -361,6 +298,21 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
         # like kernel32.CreateFileA
         yield DnUnmanagedMethod(token, module, method)
+
+
+def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
+    """get .NET types from TypeDef and TypeRef tables"""
+    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+        assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
+
+        typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
+        yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
+
+    for (rid, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
+
+        typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
+        yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
 
 
 def calculate_dotnet_token_value(table: int, rid: int) -> int:
