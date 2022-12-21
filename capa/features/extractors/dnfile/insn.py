@@ -33,12 +33,14 @@ from capa.features.extractors.dnfile.helpers import (
 logger = logging.getLogger(__name__)
 
 
-def get_callee(ctx: Dict[str, Any], token: Token) -> Optional[Union[DnType, DnUnmanagedMethod]]:
+def get_callee(
+    pe: dnfile.dnPE, cache: DnFileFeatureExtractorCache, token: Token
+) -> Optional[Union[DnType, DnUnmanagedMethod]]:
     """map .NET token to un/managed (generic) method"""
     token_: int
     if token.table == dnfile.mdtable.MethodSpec.number:
         # map MethodSpec to MethodDef or MemberRef
-        row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(ctx["pe"], token)
+        row: Union[dnfile.base.MDTableRow, InvalidToken, str] = resolve_dotnet_token(pe, token)
         assert isinstance(row, dnfile.mdtable.MethodSpecRow)
 
         if row.Method.table is None:
@@ -49,13 +51,13 @@ def get_callee(ctx: Dict[str, Any], token: Token) -> Optional[Union[DnType, DnUn
     else:
         token_ = token.value
 
-    callee: Optional[Union[DnType, DnUnmanagedMethod]] = ctx["cache"].get_import(token_)
+    callee: Optional[Union[DnType, DnUnmanagedMethod]] = cache.get_import(token_)
     if callee is None:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        callee = ctx["cache"].get_native_import(token_)
+        callee = cache.get_native_import(token_)
         if callee is None:
-            callee = ctx["cache"].get_method(token_)
+            callee = cache.get_method(token_)
     return callee
 
 
@@ -69,7 +71,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     ):
         return
 
-    callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx, ih.inner.operand)
+    callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
     if isinstance(callee, DnType):
         # ignore methods used to access properties
         if callee.access is None:
@@ -88,7 +90,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp):
         # property access via MethodDef or MemberRef
-        callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx, ih.inner.operand)
+        callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
         if isinstance(callee, DnType):
             if callee.access is not None:
                 name = str(callee)
@@ -129,7 +131,7 @@ def extract_insn_namespace_class_features(
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
-        type_ = get_callee(fh.ctx, ih.inner.operand)
+        type_ = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
 
     elif ih.inner.opcode in (
         OpCodes.Ldfld,
