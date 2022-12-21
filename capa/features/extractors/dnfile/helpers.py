@@ -18,12 +18,7 @@ from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
 
 from capa.features.common import FeatureAccess
-from capa.features.extractors.dnfile.types import (
-    DnType,
-    DnUnmanagedMethod,
-    DnfileFeatureCache,
-    DnfileFeatureExtractorType,
-)
+from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 
 logger = logging.getLogger(__name__)
 
@@ -338,10 +333,3 @@ def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, 
     for (rid, row) in enumerate(pe.net.mdtables.tables.get(table_index, [])):
         # .NET tables are 1-indexed
         yield rid + 1, row
-
-
-def get_cached_token(
-    caches: Dict[DnfileFeatureCache, Dict[int, DnfileFeatureExtractorType]], token: int, cache: DnfileFeatureCache
-) -> Optional[DnfileFeatureExtractorType]:
-    assert cache in DnfileFeatureCache
-    return caches[cache].get(token, None)

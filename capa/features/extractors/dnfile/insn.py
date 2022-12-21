@@ -9,7 +9,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Tuple, Union, Iterator, Optional
+from typing import TYPE_CHECKING, Tuple, Union, Iterator, Optional
+
+if TYPE_CHECKING:
+    from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache
 
 import dnfile
 from dncil.clr.token import Token, StringToken, InvalidToken
@@ -19,15 +22,9 @@ import capa.features.extractors.helpers
 from capa.features.insn import API, Number, Property
 from capa.features.common import Class, String, Feature, Namespace, FeatureAccess, Characteristic
 from capa.features.address import Address
-from capa.features.extractors.dnfile.types import (
-    DnType,
-    DnUnmanagedMethod,
-    DnfileFeatureCache,
-    DnfileFeatureExtractorType,
-)
+from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.helpers import (
-    get_cached_token,
     resolve_dotnet_token,
     read_dotnet_user_string,
     calculate_dotnet_token_value,
@@ -37,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_callee(
-    pe: dnfile.dnPE, tokens: Dict[DnfileFeatureCache, Dict[int, DnfileFeatureExtractorType]], token: Token
-) -> Optional[DnfileFeatureExtractorType]:
+    pe: dnfile.dnPE, cache: DnFileFeatureExtractorCache, token: Token
+) -> Optional[Union[DnType, DnUnmanagedMethod]]:
     """map .NET token to un/managed (generic) method"""
     token_: int
     if token.table == dnfile.mdtable.MethodSpec.number:
@@ -54,13 +51,13 @@ def get_callee(
     else:
         token_ = token.value
 
-    callee: Optional[DnfileFeatureExtractorType] = get_cached_token(tokens, token_, DnfileFeatureCache.Imports)
+    callee: Optional[Union[DnType, DnUnmanagedMethod]] = cache.get_import(token_)
     if callee is None:
         # we must check unmanaged imports before managed methods because we map forwarded managed methods
         # to their unmanaged imports; we prefer a forwarded managed method be mapped to its unmanaged import for analysis
-        callee = get_cached_token(tokens, token_, DnfileFeatureCache.NativeImports)
+        callee = cache.get_native_import(token_)
         if callee is None:
-            callee = get_cached_token(tokens, token_, DnfileFeatureCache.Methods)
+            callee = cache.get_method(token_)
     return callee
 
 
@@ -74,7 +71,7 @@ def extract_insn_api_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iterato
     ):
         return
 
-    callee: Optional[DnfileFeatureExtractorType] = get_callee(fh.ctx["pe"], fh.ctx["tokens"], ih.inner.operand)
+    callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
     if isinstance(callee, DnType):
         # ignore methods used to access properties
         if callee.access is None:
@@ -93,7 +90,7 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     if ih.inner.opcode in (OpCodes.Call, OpCodes.Callvirt, OpCodes.Jmp):
         # property access via MethodDef or MemberRef
-        callee: Optional[DnfileFeatureExtractorType] = get_callee(fh.ctx["pe"], fh.ctx["tokens"], ih.inner.operand)
+        callee: Optional[Union[DnType, DnUnmanagedMethod]] = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
         if isinstance(callee, DnType):
             if callee.access is not None:
                 name = str(callee)
@@ -101,18 +98,14 @@ def extract_insn_property_features(fh: FunctionHandle, bh, ih: InsnHandle) -> It
 
     elif ih.inner.opcode in (OpCodes.Ldfld, OpCodes.Ldflda, OpCodes.Ldsfld, OpCodes.Ldsflda):
         # property read via Field
-        read_field: Optional[DnfileFeatureExtractorType] = get_cached_token(
-            fh.ctx["tokens"], ih.inner.operand.value, DnfileFeatureCache.Fields
-        )
+        read_field: Optional[Union[DnType, DnUnmanagedMethod]] = fh.ctx["cache"].get_field(ih.inner.operand.value)
         if read_field is not None:
             name = str(read_field)
             access = FeatureAccess.READ
 
     elif ih.inner.opcode in (OpCodes.Stfld, OpCodes.Stsfld):
         # property write via Field
-        write_field: Optional[DnfileFeatureExtractorType] = get_cached_token(
-            fh.ctx["tokens"], ih.inner.operand.value, DnfileFeatureCache.Fields
-        )
+        write_field: Optional[Union[DnType, DnUnmanagedMethod]] = fh.ctx["cache"].get_field(ih.inner.operand.value)
         if write_field is not None:
             name = str(write_field)
             access = FeatureAccess.WRITE
@@ -127,7 +120,7 @@ def extract_insn_namespace_class_features(
     fh: FunctionHandle, bh, ih: InsnHandle
 ) -> Iterator[Tuple[Union[Namespace, Class], Address]]:
     """parse instruction namespace and class features"""
-    type_: Optional[DnfileFeatureExtractorType] = None
+    type_: Optional[Union[DnType, DnUnmanagedMethod]] = None
 
     if ih.inner.opcode in (
         OpCodes.Call,
@@ -138,7 +131,7 @@ def extract_insn_namespace_class_features(
         OpCodes.Newobj,
     ):
         # method call - includes managed methods (MethodDef, TypeRef) and properties (MethodSemantics, TypeRef)
-        type_ = get_callee(fh.ctx["pe"], fh.ctx["tokens"], ih.inner.operand)
+        type_ = get_callee(fh.ctx["pe"], fh.ctx["cache"], ih.inner.operand)
 
     elif ih.inner.opcode in (
         OpCodes.Ldfld,
@@ -149,7 +142,7 @@ def extract_insn_namespace_class_features(
         OpCodes.Stsfld,
     ):
         # field access
-        type_ = get_cached_token(fh.ctx["tokens"], ih.inner.operand.value, DnfileFeatureCache.Fields)
+        type_ = fh.ctx["cache"].get_field(ih.inner.operand.value)
 
     # ECMA 335 VI.C.4.10
     elif ih.inner.opcode in (
@@ -172,7 +165,7 @@ def extract_insn_namespace_class_features(
         OpCodes.Unbox_Any,
     ):
         # type access
-        type_ = get_cached_token(fh.ctx["tokens"], ih.inner.operand.value, DnfileFeatureCache.Types)
+        type_ = fh.ctx["cache"].get_type(ih.inner.operand.value)
 
     if isinstance(type_, DnType):
         yield Class(DnType.format_name(type_.class_, namespace=type_.namespace)), ih.address
