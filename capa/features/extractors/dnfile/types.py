@@ -73,14 +73,3 @@ class DnUnmanagedMethod:
     @staticmethod
     def format_name(module, method):
         return f"{module}.{method}"
-
-
-class DnfileFeatureCache(Enum):
-    Imports = 1
-    Methods = 2
-    Fields = 3
-    Types = 4
-    NativeImports = 5
-
-
-DnfileFeatureExtractorType = Union[DnType, DnUnmanagedMethod]
