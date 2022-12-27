@@ -64,6 +64,7 @@
 - fix: accept only plaintext pasted content #1194 @williballenthin
 - fix: UnboundLocalError #1217 @williballenthin
 - extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
+- doc: improve error messaging and documentation related to capa ruleset #1249 @mike-hunhoff
 
 ### Development
 
