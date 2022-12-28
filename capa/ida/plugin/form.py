@@ -648,8 +648,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rules_message.setText("You must specify a capa ruleset before running analysis.")
                 rules_message.setInformativeText(
                     "Click 'Ok' to specify a local ruleset or you can download and extract the official "
-                    f"ruleset from {CAPA_OFFICIAL_RULESET_URL}."
+                    f"ruleset from the URL listed in the details."
                 )
+                rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
                 rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
                 # display ruleset selection messagebox, check user button selection
@@ -733,12 +734,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                 "Failed to load capa ruleset from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
             )
 
+            logger.error("Failed to load capa ruleset from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Failed to load capa ruleset from %s (error: %s). Make sure your file directory contains properly "
+                "Make sure your file directory contains properly "
                 "formatted capa rules. You can download and extract the official ruleset from %s. "
                 "Or, for more details, see the ruleset documentation here: %s",
-                settings.user[CAPA_SETTINGS_RULE_PATH],
-                e,
                 CAPA_OFFICIAL_RULESET_URL,
                 CAPA_RULESET_DOC_URL,
             )
