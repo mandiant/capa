@@ -221,7 +221,8 @@ def get_op_phrase_info(op: idaapi.op_t) -> Dict:
         return {}
 
     scale = 1 << ((op.specflag2 & 0xC0) >> 6)
-    offset = op.addr
+    # IDA ea_t may be 32- or 64-bit; we assume displacement can only be 32-bit
+    offset = op.addr & 0xFFFFFFFF
 
     if op.specflag1 == 0:
         index = None
