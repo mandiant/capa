@@ -28,9 +28,6 @@ import capa.render.result_document
 import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
-from capa.ida.plugin.cache import CapaExplorerRuleSetCache, CapaRuleGenFeatureCache
-from capa.ida.plugin.error import UserCancelledError
-from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -38,9 +35,12 @@ from capa.ida.plugin.view import (
     CapaExplorerRulegenPreview,
     CapaExplorerRulegenFeatures,
 )
+from capa.ida.plugin.cache import CapaRuleGenFeatureCache, CapaExplorerRuleSetCache
+from capa.ida.plugin.error import UserCancelledError
 from capa.ida.plugin.hooks import CapaExplorerIdaHooks
 from capa.ida.plugin.model import CapaExplorerDataModel
 from capa.ida.plugin.proxy import CapaExplorerRangeProxyModel, CapaExplorerSearchProxyModel
+from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)

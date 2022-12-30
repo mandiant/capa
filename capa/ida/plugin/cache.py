@@ -11,20 +11,19 @@ from __future__ import annotations
 import copy
 import itertools
 import collections
-from typing import List, Dict, Optional, Set, Tuple, Union
+from typing import Set, Dict, List, Tuple, Union, Optional
 
 import capa.engine
-from capa.rules import Rule, RuleSet, Scope
+from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS, Address
 from capa.ida.plugin.extractor import CapaExplorerFeatureExtractor
-from capa.features.extractors.base_extractor import FunctionHandle, BBHandle, InsnHandle
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 
 class CapaExplorerRuleSetCache:
     def __init__(self, rules: List[Rule]):
-        # capa.rules.Ruleset modifies rules, so we use deepcopy to preserve the original list of rules and our
-        # cached list of rules
+        # capa.rules.Ruleset modifies rules, so we use deepcopy to preserve the original list of rules and our cached list of rules
         self.rules: List[Rule] = copy.deepcopy(rules)
         self.ruleset: RuleSet = RuleSet(copy.deepcopy(self.rules))
 
