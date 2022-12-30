@@ -45,12 +45,14 @@ class CapaRuleGenFeatureCacheNode:
         self.children: Set[CapaRuleGenFeatureCacheNode] = set()
 
     def __hash__(self):
+        # TODO: unique enough?
         return hash((self.address,))
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented
-        return self.address == other.address and self.features == other.features and self.children == other.children
+        # TODO: unique enough?
+        return self.address == other.address
 
 
 class CapaRuleGenFeatureCache:
