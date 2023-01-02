@@ -1034,12 +1034,12 @@ def main(argv=None):
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
-            "Please ensure you're using the rules that correspond to your major version of capa (%s)",
-            capa.version.get_major_version(),
+            "Make sure your file directory contains properly formatted capa rules. You can download the standard "
+            "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
         )
         logger.error(
-            "You can check out these rules with the following command:\n    %s",
-            capa.version.get_rules_checkout_command(),
+            "Please ensure you're using the rules that correspond to your major version of capa (%s)",
+            capa.version.get_major_version(),
         )
         logger.error(
             "Or, for more details, see the rule set documentation here: %s",

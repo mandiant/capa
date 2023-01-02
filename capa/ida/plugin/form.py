@@ -21,6 +21,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 import capa.main
 import capa.rules
 import capa.engine
+import capa.version
 import capa.ida.helpers
 import capa.render.json
 import capa.features.common
@@ -701,15 +702,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             )
             logger.error("Failed to load rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/mandiant/capa-rules."
+                "Make sure your file directory contains properly formatted capa rules. You can download the standard "
+                "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
             )
             logger.error(
                 "Please ensure you're using the rules that correspond to your major version of capa (%s)",
                 capa.version.get_major_version(),
-            )
-            logger.error(
-                "You can check out these rules with the following command:\n    %s",
-                capa.version.get_rules_checkout_command(),
             )
             logger.error(
                 "Or, for more details, see the rule set documentation here: %s",
