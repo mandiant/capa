@@ -14,7 +14,7 @@
 
 ### Breaking Changes
 
-### New Rules (33)
+### New Rules (36)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -48,6 +48,9 @@
 - host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
 - nursery/check-for-vm-using-instruction-vpcext richard.weiss@mandiant.com
 - nursery/get-windows-directory-from-kuser_shared_data david.cannings@pwc.com
+- nursery/encrypt-data-using-openssl-dsa Ana06
+- nursery/encrypt-data-using-openssl-ecdsa Ana06
+- nursery/encrypt-data-using-openssl-rsa Ana06
 -
 
 ### Bug Fixes
