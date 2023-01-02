@@ -1300,7 +1300,7 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
   - setup: pin vivisect version @williballenthin
   - setup: bump vivisect dependency version @williballenthin
   - setup: set Python project name to `flare-capa` @williballenthin
-  - ci: run tests and linter via Github Actions @Ana06
+  - ci: run tests and linter via GitHub Actions @Ana06
   - hooks: run style checkers and hide stashed output @Ana06
   - linter: ignore period in rule filename @williballenthin
   - linter: warn on nursery rule with no changes needed @williballenthin
