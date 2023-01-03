@@ -40,7 +40,7 @@ You can install capa explorer using the following steps:
     ```
     $ pip install flare-capa
     ```
-2. Download and extract the [official capa rule set](https://github.com/mandiant/capa-rules/releases) that matches the version of capa you have installed
+2. Download and extract the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match the version of capa you have installed
    1. Use the following command to view the version of capa you have installed:
    ```commandline
     $ pip show flare-capa
@@ -63,7 +63,7 @@ capa explorer is limited to the file types supported by capa, which include:
 3. Select the `Program Analysis` tab
 4. Click the `Analyze` button
 
-The first time you run capa explorer you will be asked to specify a local capa rule set to use for analysis. We recommend downloading and extracting the [official capa rule set](https://github.com/mandiant/capa-rules/releases) that matches 
+The first time you run capa explorer you will be asked to specify a local directory containing capa rules to use for analysis. We recommend downloading and extracting the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match 
 the version of capa you have installed (see installation instructions above for more details). capa explorer remembers you selection for future analysis which you
 can update using the `Settings` button.
 
@@ -71,7 +71,7 @@ can update using the `Settings` button.
 
 * Start analysis by clicking the `Analyze` button
 * Reset the plugin user interface and remove highlighting from your Disassembly view by clicking the `Reset` button
-* Change your capa rule set and other default settings by clicking the `Settings` button
+* Change your local capa rules directory and other default settings by clicking the `Settings` button
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate your Disassembly view to the address of the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
