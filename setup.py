@@ -75,7 +75,7 @@ setuptools.setup(
             "pytest-cov==4.0.0",
             "pycodestyle==2.10.0",
             "black==22.12.0",
-            "isort==5.11.3",
+            "isort==5.11.4",
             "mypy==0.991",
             "psutil==5.9.2",
             "stix2==3.0.1",
