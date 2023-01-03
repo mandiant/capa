@@ -64,7 +64,7 @@ capa explorer is limited to the file types supported by capa, which include:
 4. Click the `Analyze` button
 
 The first time you run capa explorer you will be asked to specify a local directory containing capa rules to use for analysis. We recommend downloading and extracting the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match 
-the version of capa you have installed (see installation instructions above for more details). capa explorer remembers you selection for future analysis which you
+the version of capa you have installed (see installation instructions above for more details). capa explorer remembers your selection for future analysis which you
 can update using the `Settings` button.
 
 #### Tips for Program Analysis
