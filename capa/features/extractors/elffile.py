@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import io
 import logging
-import contextlib
 from typing import Tuple, Iterator
 
 from elftools.elf.elffile import ELFFile, SymbolTableSection
@@ -16,7 +15,6 @@ import capa.features.extractors.common
 from capa.features.file import Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.elf import Arch as ElfArch
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
@@ -26,17 +24,17 @@ def extract_file_import_names(elf, **kwargs):
     # see https://github.com/eliben/pyelftools/blob/0664de05ed2db3d39041e2d51d19622a8ef4fb0f/scripts/readelf.py#L372
     symbol_tables = [(idx, s) for idx, s in enumerate(elf.iter_sections()) if isinstance(s, SymbolTableSection)]
 
-    for section_index, section in symbol_tables:
+    for _, section in symbol_tables:
         if not isinstance(section, SymbolTableSection):
             continue
 
         if section["sh_entsize"] == 0:
-            logger.debug("Symbol table '%s' has a sh_entsize of zero!" % (section.name))
+            logger.debug("Symbol table '%s' has a sh_entsize of zero!", section.name)
             continue
 
-        logger.debug("Symbol table '%s' contains %s entries:" % (section.name, section.num_symbols()))
+        logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
 
-        for nsym, symbol in enumerate(section.iter_symbols()):
+        for _, symbol in enumerate(section.iter_symbols()):
             if symbol.name and symbol.entry.st_info.type == "STT_FUNC":
                 # TODO symbol address
                 # TODO symbol version info?
@@ -73,9 +71,9 @@ def extract_file_arch(elf, **kwargs):
     # TODO merge with capa.features.extractors.elf.detect_elf_arch()
     arch = elf.get_machine_arch()
     if arch == "x86":
-        yield Arch(ElfArch.I386), NO_ADDRESS
+        yield Arch("i386"), NO_ADDRESS
     elif arch == "x64":
-        yield Arch(ElfArch.AMD64), NO_ADDRESS
+        yield Arch("amd64"), NO_ADDRESS
     else:
         logger.warning("unsupported architecture: %s", arch)
 
@@ -110,7 +108,7 @@ GLOBAL_HANDLERS = (
 
 class ElfFeatureExtractor(FeatureExtractor):
     def __init__(self, path: str):
-        super(ElfFeatureExtractor, self).__init__()
+        super().__init__()
         self.path = path
         with open(self.path, "rb") as f:
             self.elf = ELFFile(io.BytesIO(f.read()))
@@ -153,8 +151,8 @@ class ElfFeatureExtractor(FeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def is_library_function(self, va):
+    def is_library_function(self, addr):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")
 
-    def get_function_name(self, va):
+    def get_function_name(self, addr):
         raise NotImplementedError("ElfFeatureExtractor can only be used to extract file features")

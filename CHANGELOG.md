@@ -4,14 +4,18 @@
 
 ### New Features
 - verify rule metadata format on load #1160 @mr-tz
-- extract property features from .NET PE files #1168 @anushkavirgaonkar
-- emit features for .NET newobj instruction #1186 @mike-hunhoff
-- fix import-to-ida script formatting #1208 @williballenthin
+- dotnet: emit property features #1168 @anushkavirgaonkar
+- dotnet: emit API features for objects created via the newobj instruction #1186 @mike-hunhoff
+- dotnet: emit API features for generic methods #1231 @mike-hunhoff
+- Python 3.11 support #1192 @williballenthin
+- dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
+- dotnet: emit namespace/class features for ldvirtftn/ldftn instructions #1241 @mike-hunhoff
+- dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
 
-### New Rules (30)
+### New Rules (43)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -42,6 +46,19 @@
 - nursery/execute-wmi-query-in-dotnet michael.hunhoff@mandiant.com
 - nursery/manipulate-network-credentials-in-dotnet michael.hunhoff@mandiant.com
 - nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
+- host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
+- nursery/check-for-vm-using-instruction-vpcext richard.weiss@mandiant.com
+- nursery/get-windows-directory-from-kuser_shared_data david.cannings@pwc.com
+- nursery/encrypt-data-using-openssl-dsa Ana06
+- nursery/encrypt-data-using-openssl-ecdsa Ana06
+- nursery/encrypt-data-using-openssl-rsa Ana06
+- runtime/dotnet/execute-via-dotnet-startup-hook william.ballenthin@mandiant.com
+- host-interaction/console/manipulate-console-buffer william.ballenthin@mandiant.com michael.hunhoff@mandiant.com
+- nursery/access-wmi-data-in-dotnet michael.hunhoff@mandiant.com
+- nursery/allocate-unmanaged-memory-via-dotnet michael.hunhoff@mandiant.com
+- nursery/generate-random-bytes-in-dotnet michael.hunhoff@mandiant.com
+- nursery/manipulate-console-window michael.hunhoff@mandiant.com
+- nursery/obfuscated-with-koivm michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
@@ -49,9 +66,18 @@
 - decouple Token dependency / extractor and features #1139 @mr-tz
 - update pydantic model to guarantee type coercion #1176 @mike-hunhoff
 - do not overwrite version in version.py during PyInstaller build #1169 @mr-tz
+- render: fix vverbose rendering of offsets #1215 @williballenthin
+- elf: better detect OS via GLIBC ABI version needed and dependencies #1221 @williballenthin
+- dotnet: address unhandled exceptions with improved type checking #1230 @mike-hunhoff
+- fix import-to-ida script formatting #1208 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
+- fix: accept only plaintext pasted content #1194 @williballenthin
+- fix: UnboundLocalError #1217 @williballenthin
+- extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
+- doc: improve error messaging and documentation related to capa rule set #1249 @mike-hunhoff
+- fix: assume 32-bit displacement for offsets #1250 @mike-hunhoff
 
 ### Development
 

@@ -11,7 +11,7 @@ import copy
 import logging
 import itertools
 import collections
-from typing import Set, Dict, Optional
+from typing import Any, Set, Dict, List, Optional
 
 import idaapi
 import ida_kernwin
@@ -21,6 +21,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 import capa.main
 import capa.rules
 import capa.engine
+import capa.version
 import capa.ida.helpers
 import capa.render.json
 import capa.features.common
@@ -48,6 +49,11 @@ CAPA_SETTINGS_RULE_PATH = "rule_path"
 CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
 CAPA_SETTINGS_RULEGEN_SCOPE = "rulegen_scope"
 
+
+CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
+CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
+
+
 from enum import IntFlag
 
 
@@ -72,14 +78,14 @@ def trim_function_name(f, max_length=25):
 
 def find_func_features(fh: FunctionHandle, extractor):
     """ """
-    func_features: Dict[Feature, Set] = collections.defaultdict(set)
-    bb_features: Dict[Address, Dict] = collections.defaultdict(dict)
+    func_features: Dict[Feature, Set[Address]] = collections.defaultdict(set)
+    bb_features: Dict[Address, Dict[Feature, Set[Address]]] = collections.defaultdict(dict)
 
     for (feature, addr) in extractor.extract_function_features(fh):
         func_features[feature].add(addr)
 
     for bbh in extractor.get_basic_blocks(fh):
-        _bb_features = collections.defaultdict(set)
+        _bb_features: Dict[Feature, Set[Address]] = collections.defaultdict(set)
 
         for (feature, addr) in extractor.extract_basic_block_features(fh, bbh):
             _bb_features[feature].add(addr)
@@ -155,7 +161,7 @@ class CapaExplorerProgressIndicator(QtCore.QObject):
 
     def __init__(self):
         """initialize signal object"""
-        super(CapaExplorerProgressIndicator, self).__init__()
+        super().__init__()
 
     def update(self, text):
         """emit progress update
@@ -174,18 +180,18 @@ class CapaExplorerFeatureExtractor(capa.features.extractors.ida.extractor.IdaFea
     """
 
     def __init__(self):
-        super(CapaExplorerFeatureExtractor, self).__init__()
+        super().__init__()
         self.indicator = CapaExplorerProgressIndicator()
 
     def extract_function_features(self, fh: FunctionHandle):
         self.indicator.update("function at 0x%X" % fh.inner.start_ea)
-        return super(CapaExplorerFeatureExtractor, self).extract_function_features(fh)
+        return super().extract_function_features(fh)
 
 
 class QLineEditClicked(QtWidgets.QLineEdit):
     def __init__(self, content, parent=None):
         """ """
-        super(QLineEditClicked, self).__init__(content, parent)
+        super().__init__(content, parent)
 
     def mouseReleaseEvent(self, e):
         """ """
@@ -204,7 +210,7 @@ class QLineEditClicked(QtWidgets.QLineEdit):
 class CapaSettingsInputDialog(QtWidgets.QDialog):
     def __init__(self, title, parent=None):
         """ """
-        super(CapaSettingsInputDialog, self).__init__(parent)
+        super().__init__(parent)
 
         self.setWindowTitle(title)
         self.setMinimumWidth(500)
@@ -213,6 +219,12 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rule_path = QLineEditClicked(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
         self.edit_rule_author = QtWidgets.QLineEdit(settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, ""))
         self.edit_rule_scope = QtWidgets.QComboBox()
+        self.edit_rules_link = QtWidgets.QLabel()
+
+        self.edit_rules_link.setText(
+            f'<a href="{CAPA_OFFICIAL_RULESET_URL}">Download and extract official capa rules</a>'
+        )
+        self.edit_rules_link.setOpenExternalLinks(True)
 
         scopes = ("file", "function", "basic block")
 
@@ -222,7 +234,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
         layout = QtWidgets.QFormLayout(self)
-        layout.addRow("capa rules path", self.edit_rule_path)
+        layout.addRow("capa rules", self.edit_rule_path)
+        layout.addRow("", self.edit_rules_link)
         layout.addRow("Default rule author", self.edit_rule_author)
         layout.addRow("Default rule scope", self.edit_rule_scope)
 
@@ -239,53 +252,52 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
 class CapaExplorerForm(idaapi.PluginForm):
     """form element for plugin interface"""
 
-    def __init__(self, name, option=Options.DEFAULT):
+    def __init__(self, name: str, option=Options.DEFAULT):
         """initialize form elements"""
-        super(CapaExplorerForm, self).__init__()
+        super().__init__()
 
-        self.form_title = name
-        self.process_total = 0
-        self.process_count = 0
+        self.form_title: str = name
+        self.process_total: int = 0
+        self.process_count: int = 0
 
-        self.parent = None
-        self.ida_hooks = None
+        self.parent: Any  # QtWidget
+        self.ida_hooks: CapaExplorerIdaHooks
         self.doc: Optional[capa.render.result_document.ResultDocument] = None
 
-        self.rule_paths = None
-        self.rules_cache = None
-        self.ruleset_cache = None
+        self.rule_paths: Optional[List[str]]
+        self.rules_cache: Optional[List[capa.rules.Rule]]
+        self.ruleset_cache: Optional[capa.rules.RuleSet]
 
         # models
-        self.model_data = None
-        self.range_model_proxy = None
-        self.search_model_proxy = None
+        self.model_data: CapaExplorerDataModel
+        self.range_model_proxy: CapaExplorerRangeProxyModel
+        self.search_model_proxy: CapaExplorerSearchProxyModel
 
         # UI controls
-        self.view_limit_results_by_function = None
-        self.view_show_results_by_function = None
-        self.view_search_bar = None
-        self.view_tree = None
-        self.view_rulegen = None
-        self.view_tabs = None
+        self.view_limit_results_by_function: QtWidgets.QCheckBox
+        self.view_show_results_by_function: QtWidgets.QCheckBox
+        self.view_search_bar: QtWidgets.QLineEdit
+        self.view_tree: CapaExplorerQtreeView
+        self.view_tabs: QtWidgets.QTabWidget
         self.view_tab_rulegen = None
-        self.view_status_label = None
-        self.view_buttons = None
-        self.view_analyze_button = None
-        self.view_reset_button = None
-        self.view_settings_button = None
-        self.view_save_button = None
+        self.view_status_label: QtWidgets.QLabel
+        self.view_buttons: QtWidgets.QHBoxLayout
+        self.view_analyze_button: QtWidgets.QPushButton
+        self.view_reset_button: QtWidgets.QPushButton
+        self.view_settings_button: QtWidgets.QPushButton
+        self.view_save_button: QtWidgets.QPushButton
 
-        self.view_rulegen_preview = None
-        self.view_rulegen_features = None
-        self.view_rulegen_editor = None
-        self.view_rulegen_header_label = None
-        self.view_rulegen_search = None
-        self.view_rulegen_limit_features_by_ea = None
-        self.rulegen_current_function = None
-        self.rulegen_bb_features_cache = {}
-        self.rulegen_func_features_cache = {}
-        self.rulegen_file_features_cache = {}
-        self.view_rulegen_status_label = None
+        self.view_rulegen_preview: CapaExplorerRulegenPreview
+        self.view_rulegen_features: CapaExplorerRulegenFeatures
+        self.view_rulegen_editor: CapaExplorerRulegenEditor
+        self.view_rulegen_header_label: QtWidgets.QLabel
+        self.view_rulegen_search: QtWidgets.QLineEdit
+        self.view_rulegen_limit_features_by_ea: QtWidgets.QCheckBox
+        self.rulegen_current_function: Optional[FunctionHandle]
+        self.rulegen_bb_features_cache: Dict[Address, Dict[Feature, Set[Address]]] = {}
+        self.rulegen_func_features_cache: Dict[Feature, Set[Address]] = {}
+        self.rulegen_file_features_cache: Dict[Feature, Set[Address]] = {}
+        self.view_rulegen_status_label: QtWidgets.QLabel
 
         self.Show()
 
@@ -305,7 +317,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def Show(self):
         """creates form if not already create, else brings plugin to front"""
-        return super(CapaExplorerForm, self).Show(
+        return super().Show(
             self.form_title,
             options=(
                 idaapi.PluginForm.WOPN_TAB
@@ -614,7 +626,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         if post:
             if idaapi.get_imagebase() != meta.get("prev_base", -1):
-                capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after program rebase")
+                capa.ida.helpers.inform_user_ida_ui("Running capa analysis using new program base")
                 self.slot_analyze()
         else:
             meta["prev_base"] = idaapi.get_imagebase()
@@ -629,15 +641,36 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             # resolve rules directory - check self and settings first, then ask user
             if not os.path.exists(settings.user.get(CAPA_SETTINGS_RULE_PATH, "")):
-                idaapi.info("Please select a file directory containing capa rules.")
+                # configure rules selection messagebox
+                rules_message = QtWidgets.QMessageBox()
+                rules_message.setIcon(QtWidgets.QMessageBox.Information)
+                rules_message.setWindowTitle("capa explorer")
+                rules_message.setText("You must specify a directory containing capa rules before running analysis.")
+                rules_message.setInformativeText(
+                    "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
+                    f"rules from the URL listed in the details."
+                )
+                rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
+                rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+
+                # display rules selection messagebox, check user button selection
+                pressed = rules_message.exec_()
+                if pressed == QtWidgets.QMessageBox.Cancel:
+                    raise UserCancelledError()
+
                 path = self.ask_user_directory()
                 if not path:
-                    logger.warning(
-                        "You must select a file directory containing capa rules before analysis can be run. The standard collection of capa rules can be downloaded from https://github.com/mandiant/capa-rules."
-                    )
-                    return False
+                    raise UserCancelledError()
+
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
+        except UserCancelledError as e:
+            capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
+            logger.warning(
+                f"You must specify a directory containing capa rules before running analysis. Download and extract the official rules from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
+            )
+            return False
         except Exception as e:
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules")
             logger.error("Failed to load capa rules (error: %s).", e)
             return False
 
@@ -700,22 +733,16 @@ class CapaExplorerForm(idaapi.PluginForm):
             capa.ida.helpers.inform_user_ida_ui(
                 "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
             )
-            logger.error("Failed to load rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+
+            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Make sure your file directory contains properly formatted capa rules. You can download the standard collection of capa rules from https://github.com/mandiant/capa-rules."
+                "Make sure your file directory contains properly "
+                "formatted capa rules. You can download and extract the official rules from %s. "
+                "Or, for more details, see the rules documentation here: %s",
+                CAPA_OFFICIAL_RULESET_URL,
+                CAPA_RULESET_DOC_URL,
             )
-            logger.error(
-                "Please ensure you're using the rules that correspond to your major version of capa (%s)",
-                capa.version.get_major_version(),
-            )
-            logger.error(
-                "You can check out these rules with the following command:\n    %s",
-                capa.version.get_rules_checkout_command(),
-            )
-            logger.error(
-                "Or, for more details, see the rule set documentation here: %s",
-                "https://github.com/mandiant/capa/blob/master/doc/rules.md",
-            )
+
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return False
 
@@ -761,6 +788,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             if not self.load_capa_rules():
                 return False
+
+            assert self.rules_cache is not None
+            assert self.ruleset_cache is not None
 
             if ida_kernwin.user_cancelled():
                 logger.info("User cancelled analysis.")
@@ -822,9 +852,16 @@ class CapaExplorerForm(idaapi.PluginForm):
                 return False
 
         try:
+            # either the results are cached and the doc already exists,
+            # or the doc was just created above
+            assert self.doc is not None
+            # same with rules cache, either it's cached or it was just loaded
+            assert self.rules_cache is not None
+            assert self.ruleset_cache is not None
+
             self.model_data.render_capa_doc(self.doc, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
+                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
@@ -869,7 +906,10 @@ class CapaExplorerForm(idaapi.PluginForm):
             if not self.load_capa_rules():
                 return False
         else:
-            logger.info('Using cached ruleset, click "Reset" to reload rules from disk.')
+            logger.info('Using cached capa rules, click "Reset" to load rules from disk.')
+
+        assert self.rules_cache is not None
+        assert self.ruleset_cache is not None
 
         if ida_kernwin.user_cancelled():
             logger.info("User cancelled analysis.")
@@ -891,7 +931,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f:
-                fh: FunctionHandle = extractor.get_function(f.start_ea)
+                fh: Optional[FunctionHandle] = extractor.get_function(f.start_ea)
+                assert fh is not None
                 self.rulegen_current_function = fh
 
                 func_features, bb_features = find_func_features(fh, extractor)
@@ -916,6 +957,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     logger.error("Failed to match function/basic block rule scope (error: %s)", e)
                     return False
             else:
+                fh = None
                 func_features = {}
         except UserCancelledError:
             logger.info("User cancelled analysis.")
@@ -1022,7 +1064,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_status_label.clear()
 
         if not is_analyze:
-            # clear rules and ruleset cache only if user clicked "Reset"
+            # clear rules and rule set cache only if user clicked "Reset"
             self.rules_cache = None
             self.ruleset_cache = None
 
@@ -1052,6 +1094,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def update_rule_status(self, rule_text):
         """ """
+        assert self.rules_cache is not None
+
         if not self.view_rulegen_editor.invisibleRootItem().childCount():
             self.set_rulegen_preview_border_neutral()
             self.view_rulegen_status_label.clear()
@@ -1076,7 +1120,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         rules.append(rule)
 
         try:
-            file_features = copy.copy(self.rulegen_file_features_cache)
+            file_features = copy.copy(dict(self.rulegen_file_features_cache))
             if self.rulegen_current_function:
                 func_matches, bb_matches = find_func_matches(
                     self.rulegen_current_function,
@@ -1092,7 +1136,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             _, file_matches = capa.engine.match(
                 capa.rules.RuleSet(list(capa.rules.get_rules_and_dependencies(rules, rule.name))).file_rules,
                 file_features,
-                0x0,
+                NO_ADDRESS,
             )
         except Exception as e:
             self.set_rulegen_status("Failed to match rule (%s)" % e)

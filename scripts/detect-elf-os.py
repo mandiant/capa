@@ -28,7 +28,7 @@ def main(argv=None):
     if capa.helpers.is_runtime_ida():
         from capa.ida.helpers import IDAIO
 
-        f: BinaryIO = IDAIO()
+        f: BinaryIO = IDAIO()  # type: ignore
 
     else:
         if argv is None:

@@ -98,7 +98,7 @@ def test_rule_reformat_order():
 def test_rule_reformat_meta_update():
     # test updating the rule content after parsing
 
-    rule = textwrap.dedent(
+    src = textwrap.dedent(
         """
         rule:
           meta:
@@ -116,7 +116,7 @@ def test_rule_reformat_meta_update():
         """
     )
 
-    rule = capa.rules.Rule.from_yaml(rule)
+    rule = capa.rules.Rule.from_yaml(src)
     rule.name = "test rule"
     assert rule.to_yaml() == EXPECTED
 

@@ -65,7 +65,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
 )
-from capa.features.address import NO_ADDRESS
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -330,7 +330,7 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
 
         logger.warning("-" * 80)
         for line in file_limitation_rule.meta.get("description", "").split("\n"):
-            logger.warning(" " + line)
+            logger.warning(" %s", line)
         logger.warning(" Identified via rule: %s", file_limitation_rule.name)
         if is_standalone:
             logger.warning(" ")
@@ -431,7 +431,7 @@ def get_default_signatures() -> List[str]:
     logger.debug("signatures path: %s", sigs_path)
 
     ret = []
-    for root, dirs, files in os.walk(sigs_path):
+    for root, _, files in os.walk(sigs_path):
         for file in files:
             if not (file.endswith(".pat") or file.endswith(".pat.gz") or file.endswith(".sig")):
                 continue
@@ -459,6 +459,7 @@ def get_workspace(path, format_, sigpaths):
 
     # lazy import enables us to not require viv if user wants SMDA, for example.
     import viv_utils
+    import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
     # TODO should not be auto at this point, anymore
@@ -571,7 +572,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
             rule_file_paths.append(rule_path)
         elif os.path.isdir(rule_path):
             logger.debug("reading rules from directory %s", rule_path)
-            for root, dirs, files in os.walk(rule_path):
+            for root, _, files in os.walk(rule_path):
                 if ".git" in root:
                     # the .github directory contains CI config in capa-rules
                     # this includes some .yml files
@@ -622,7 +623,7 @@ def get_signatures(sigs_path):
         paths.append(sigs_path)
     elif os.path.isdir(sigs_path):
         logger.debug("reading signatures from directory %s", os.path.abspath(os.path.normpath(sigs_path)))
-        for root, dirs, files in os.walk(sigs_path):
+        for root, _, files in os.walk(sigs_path):
             for file in files:
                 if file.endswith((".pat", ".pat.gz", ".sig")):
                     sig_path = os.path.join(root, file)
@@ -701,8 +702,8 @@ def compute_layout(rules, extractor, capabilities):
     otherwise, we may pollute the json document with
     a large amount of un-referenced data.
     """
-    functions_by_bb = {}
-    bbs_by_function = {}
+    functions_by_bb: Dict[Address, Address] = {}
+    bbs_by_function: Dict[Address, List[Address]] = {}
     for f in extractor.get_functions():
         bbs_by_function[f.address] = []
         for bb in extractor.get_basic_blocks(f):
@@ -713,7 +714,7 @@ def compute_layout(rules, extractor, capabilities):
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
         if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
-            for (addr, match) in matches:
+            for (addr, _) in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
 
@@ -999,15 +1000,14 @@ def main(argv=None):
             return E_INVALID_FILE_TYPE
 
     try:
-        rules = get_rules(args.rules, disable_progress=args.quiet)
-        rules = capa.rules.RuleSet(rules)
+        rules = capa.rules.RuleSet(get_rules(args.rules, disable_progress=args.quiet))
 
         logger.debug(
             "successfully loaded %s rules",
             # during the load of the RuleSet, we extract subscope statements into their own rules
             # that are subsequently `match`ed upon. this inflates the total rule count.
             # so, filter out the subscope rules when reporting total number of loaded rules.
-            len([i for i in filter(lambda r: not r.is_subscope_rule(), rules.rules.values())]),
+            len(list(filter(lambda r: not r.is_subscope_rule(), rules.rules.values()))),
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
@@ -1018,12 +1018,12 @@ def main(argv=None):
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
-            "Please ensure you're using the rules that correspond to your major version of capa (%s)",
-            capa.version.get_major_version(),
+            "Make sure your file directory contains properly formatted capa rules. You can download the standard "
+            "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
         )
         logger.error(
-            "You can check out these rules with the following command:\n    %s",
-            capa.version.get_rules_checkout_command(),
+            "Please ensure you're using the rules that correspond to your major version of capa (%s)",
+            capa.version.get_major_version(),
         )
         logger.error(
             "Or, for more details, see the rule set documentation here: %s",
@@ -1150,8 +1150,7 @@ def ida_main():
 
     rules_path = os.path.join(get_default_root(), "rules")
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules(rules_path)
-    rules = capa.rules.RuleSet(rules)
+    rules = capa.rules.RuleSet(get_rules([rules_path]))
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 

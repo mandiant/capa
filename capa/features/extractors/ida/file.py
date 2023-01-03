@@ -115,6 +115,9 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
         for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
             yield Import(name), addr
 
+    for (ea, info) in capa.features.extractors.ida.helpers.get_file_externs().items():
+        yield Import(info[1]), AbsoluteVirtualAddress(ea)
+
 
 def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
     """extract section names
@@ -165,7 +168,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
     file_info = idaapi.get_inf_structure()
 
-    if file_info.filetype == idaapi.f_PE:
+    if file_info.filetype in (idaapi.f_PE, idaapi.f_COFF):
         yield Format(FORMAT_PE), NO_ADDRESS
     elif file_info.filetype == idaapi.f_ELF:
         yield Format(FORMAT_ELF), NO_ADDRESS
@@ -173,7 +176,7 @@ def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
-        raise NotImplementedError("file format: %d" % file_info.filetype)
+        raise NotImplementedError("unexpected file format: %d" % file_info.filetype)
 
 
 def extract_features() -> Iterator[Tuple[Feature, Address]]:

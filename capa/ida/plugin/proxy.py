@@ -22,7 +22,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         """initialize proxy filter"""
-        super(CapaExplorerRangeProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self.min_ea = None
         self.max_ea = None
 
@@ -92,7 +92,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         @param parent: QModelIndex of parent
         """
         # filter not set
-        if self.min_ea is None and self.max_ea is None:
+        if self.min_ea is None or self.max_ea is None:
             return True
 
         index = self.sourceModel().index(row, 0, parent)
@@ -145,7 +145,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerSearchProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self.query = ""
         self.setFilterKeyColumn(-1)  # all columns
 
