@@ -918,8 +918,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
             self.set_view_status_label(
-                "capa rules: %s (%d rules)"
-                % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.ruleset_cache.rules))
+                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.ruleset_cache.rules))
             )
         except Exception as e:
             logger.error("Failed to render views (error: %s)", e, exc_info=True)
