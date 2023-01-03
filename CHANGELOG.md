@@ -14,7 +14,7 @@
 
 ### Breaking Changes
 
-### New Rules (36)
+### New Rules (37)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -51,6 +51,7 @@
 - nursery/encrypt-data-using-openssl-dsa Ana06
 - nursery/encrypt-data-using-openssl-ecdsa Ana06
 - nursery/encrypt-data-using-openssl-rsa Ana06
+- runtime/dotnet/execute-via-dotnet-startup-hook william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
