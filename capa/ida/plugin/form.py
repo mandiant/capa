@@ -121,7 +121,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         )
         self.edit_rules_link.setOpenExternalLinks(True)
 
-        scopes = ("file", "function", "basic block")
+        scopes = ("file", "function", "basic block", "instruction")
 
         self.edit_rule_scope.addItems(scopes)
         self.edit_rule_scope.setCurrentIndex(scopes.index(settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function")))
@@ -753,8 +753,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rules: %s (%d rules)"
-                % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.ruleset_cache.rules))
+                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.ruleset_cache.rules))
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
@@ -919,7 +918,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
             self.set_view_status_label(
-                "capa rules directory: %s (%d rules)"
+                "capa rules: %s (%d rules)"
                 % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.ruleset_cache.rules))
             )
         except Exception as e:

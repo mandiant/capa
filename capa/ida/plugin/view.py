@@ -74,7 +74,7 @@ def parse_node_for_feature(feature, description, comment, depth):
     if feature.startswith("#"):
         display += "%s%s\n" % (" " * depth, feature)
     elif description:
-        if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not")):
+        if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not", "- instruction:")):
             display += "%s%s" % (" " * depth, feature)
             if comment:
                 display += " # %s" % comment
@@ -428,6 +428,10 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             # add default child expression when nesting under basic block
             new_parent.setExpanded(True)
             new_parent = self.new_expression_node(new_parent, ("- or:", ""))
+        elif "instruction" in action.data()[0]:
+            # add default child expression when nesting under instruction
+            new_parent.setExpanded(True)
+            new_parent = self.new_expression_node(new_parent, ("- or:", ""))
 
         for o in self.get_features(selected=True):
             # take child from its parent by index, add to new parent
@@ -448,6 +452,16 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             for child in children:
                 new_parent.addChild(child)
             new_parent.setExpanded(True)
+        elif "instruction" in expression and "instruction" not in o.text(
+            CapaExplorerRulegenEditor.get_column_feature_index()
+        ):
+            # current expression is "instruction", and not changing to "instruction" expression
+            children = o.takeChildren()
+            new_parent = self.new_expression_node(o, ("- or:", ""))
+            for child in children:
+                new_parent.addChild(child)
+            new_parent.setExpanded(True)
+
         o.setText(CapaExplorerRulegenEditor.get_column_feature_index(), expression)
 
     def slot_clear_all(self, action):
@@ -521,6 +535,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             ("not", ("- not:",), self.slot_nest_features),
             ("optional", ("- optional:",), self.slot_nest_features),
             ("basic block", ("- basic block:",), self.slot_nest_features),
+            ("instruction", ("- instruction:",), self.slot_nest_features),
         )
 
         # build submenu with modify actions
@@ -542,6 +557,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             ("not", ("- not:", self.itemAt(pos)), self.slot_edit_expression),
             ("optional", ("- optional:", self.itemAt(pos)), self.slot_edit_expression),
             ("basic block", ("- basic block:", self.itemAt(pos)), self.slot_edit_expression),
+            ("instruction", ("- instruction:", self.itemAt(pos)), self.slot_edit_expression),
         )
 
         # build submenu with modify actions
@@ -694,7 +710,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             node.setText(idx, text)
 
         # we need to set our own type so we can control the GUI accordingly
-        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- optional:")):
+        if feature.startswith(("- and:", "- or:", "- not:", "- basic block:", "- instruction:", "- optional:")):
             setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_expression())
         elif feature.startswith("#"):
             setattr(node, "capa_type", CapaExplorerRulegenEditor.get_node_type_comment())

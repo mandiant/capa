@@ -77,6 +77,7 @@
 - extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
 - doc: improve error messaging and documentation related to capa rule set #1249 @mike-hunhoff
 - fix: assume 32-bit displacement for offsets #1250 @mike-hunhoff
+- generator: updates and bug fixes #1251 @mike-hunhoff
 
 ### Development
 
