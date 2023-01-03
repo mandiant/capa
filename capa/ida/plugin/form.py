@@ -222,7 +222,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rules_link = QtWidgets.QLabel()
 
         self.edit_rules_link.setText(
-            f'<a href="{CAPA_OFFICIAL_RULESET_URL}">Download and extract official capa rule set</a>'
+            f'<a href="{CAPA_OFFICIAL_RULESET_URL}">Download and extract official capa rules</a>'
         )
         self.edit_rules_link.setOpenExternalLinks(True)
 
@@ -234,7 +234,7 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
         layout = QtWidgets.QFormLayout(self)
-        layout.addRow("capa rule set", self.edit_rule_path)
+        layout.addRow("capa rules", self.edit_rule_path)
         layout.addRow("", self.edit_rules_link)
         layout.addRow("Default rule author", self.edit_rule_author)
         layout.addRow("Default rule scope", self.edit_rule_scope)
@@ -641,19 +641,19 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             # resolve rules directory - check self and settings first, then ask user
             if not os.path.exists(settings.user.get(CAPA_SETTINGS_RULE_PATH, "")):
-                # configure rule set selection messagebox
+                # configure rules selection messagebox
                 rules_message = QtWidgets.QMessageBox()
                 rules_message.setIcon(QtWidgets.QMessageBox.Information)
                 rules_message.setWindowTitle("capa explorer")
-                rules_message.setText("You must specify a capa rule set before running analysis.")
+                rules_message.setText("You must specify a directory containing capa rules before running analysis.")
                 rules_message.setInformativeText(
-                    "Click 'Ok' to specify a local rule set or you can download and extract the official "
-                    f"rule set from the URL listed in the details."
+                    "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
+                    f"rules from the URL listed in the details."
                 )
                 rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
                 rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
 
-                # display rule set selection messagebox, check user button selection
+                # display rules selection messagebox, check user button selection
                 pressed = rules_message.exec_()
                 if pressed == QtWidgets.QMessageBox.Cancel:
                     raise UserCancelledError()
@@ -664,14 +664,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
         except UserCancelledError as e:
-            capa.ida.helpers.inform_user_ida_ui("Analysis requires a capa rule set")
+            capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
-                f"You must specify a capa rule set before running analysis. Download and extract the official rule set from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
+                f"You must specify a directory containing capa rules before running analysis. Download and extract the official rules from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
             )
             return False
         except Exception as e:
-            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rule set")
-            logger.error("Failed to load capa rule set (error: %s).", e)
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules")
+            logger.error("Failed to load capa rules (error: %s).", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -731,14 +731,14 @@ class CapaExplorerForm(idaapi.PluginForm):
             return False
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui(
-                "Failed to load capa rule set from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
+                "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
             )
 
-            logger.error("Failed to load capa rule set from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
                 "Make sure your file directory contains properly "
-                "formatted capa rules. You can download and extract the official rule set from %s. "
-                "Or, for more details, see the rule set documentation here: %s",
+                "formatted capa rules. You can download and extract the official rules from %s. "
+                "Or, for more details, see the rules documentation here: %s",
                 CAPA_OFFICIAL_RULESET_URL,
                 CAPA_RULESET_DOC_URL,
             )
@@ -861,7 +861,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.model_data.render_capa_doc(self.doc, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rule set: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
+                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
@@ -906,7 +906,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             if not self.load_capa_rules():
                 return False
         else:
-            logger.info('Using cached capa rule set, click "Reset" to load rule set from disk.')
+            logger.info('Using cached capa rules, click "Reset" to load rules from disk.')
 
         assert self.rules_cache is not None
         assert self.ruleset_cache is not None
