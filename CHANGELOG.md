@@ -14,7 +14,7 @@
 
 ### Breaking Changes
 
-### New Rules (37)
+### New Rules (43)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -52,6 +52,12 @@
 - nursery/encrypt-data-using-openssl-ecdsa Ana06
 - nursery/encrypt-data-using-openssl-rsa Ana06
 - runtime/dotnet/execute-via-dotnet-startup-hook william.ballenthin@mandiant.com
+- host-interaction/console/manipulate-console-buffer william.ballenthin@mandiant.com michael.hunhoff@mandiant.com
+- nursery/access-wmi-data-in-dotnet michael.hunhoff@mandiant.com
+- nursery/allocate-unmanaged-memory-via-dotnet michael.hunhoff@mandiant.com
+- nursery/generate-random-bytes-in-dotnet michael.hunhoff@mandiant.com
+- nursery/manipulate-console-window michael.hunhoff@mandiant.com
+- nursery/obfuscated-with-koivm michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
