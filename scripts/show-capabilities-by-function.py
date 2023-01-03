@@ -157,11 +157,11 @@ def main(argv=None):
         return -1
 
     if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
-        format = "freeze"
+        format_ = "freeze"
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
-        format = args.format
+        format_ = args.format
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
@@ -175,7 +175,7 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor, format_=format_)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)

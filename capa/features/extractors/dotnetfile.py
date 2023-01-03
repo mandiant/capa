@@ -11,6 +11,7 @@ from capa.features.common import (
     OS_ANY,
     ARCH_ANY,
     ARCH_I386,
+    FORMAT_PE,
     ARCH_AMD64,
     FORMAT_DOTNET,
     Arch,
@@ -37,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
+    yield Format(FORMAT_PE), NO_ADDRESS
     yield Format(FORMAT_DOTNET), NO_ADDRESS
 
 

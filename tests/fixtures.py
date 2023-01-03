@@ -731,6 +731,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("mixed-mode-64", "file", capa.features.common.Characteristic("mixed mode"), True),
         ("hello-world", "file", capa.features.common.Characteristic("mixed mode"), False),
         ("b9f5b", "file", OS(OS_ANY), True),
+        ("b9f5b", "file", Format(FORMAT_PE), True),
         ("b9f5b", "file", Format(FORMAT_DOTNET), True),
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::Main"), True),
         ("hello-world", "file", capa.features.file.FunctionName("HelloWorld::ctor"), True),
