@@ -49,6 +49,11 @@ CAPA_SETTINGS_RULE_PATH = "rule_path"
 CAPA_SETTINGS_RULEGEN_AUTHOR = "rulegen_author"
 CAPA_SETTINGS_RULEGEN_SCOPE = "rulegen_scope"
 
+
+CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
+CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
+
+
 from enum import IntFlag
 
 
@@ -214,6 +219,12 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rule_path = QLineEditClicked(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
         self.edit_rule_author = QtWidgets.QLineEdit(settings.user.get(CAPA_SETTINGS_RULEGEN_AUTHOR, ""))
         self.edit_rule_scope = QtWidgets.QComboBox()
+        self.edit_rules_link = QtWidgets.QLabel()
+
+        self.edit_rules_link.setText(
+            f'<a href="{CAPA_OFFICIAL_RULESET_URL}">Download and extract official capa rules</a>'
+        )
+        self.edit_rules_link.setOpenExternalLinks(True)
 
         scopes = ("file", "function", "basic block")
 
@@ -223,7 +234,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
         layout = QtWidgets.QFormLayout(self)
-        layout.addRow("capa rules path", self.edit_rule_path)
+        layout.addRow("capa rules", self.edit_rule_path)
+        layout.addRow("", self.edit_rules_link)
         layout.addRow("Default rule author", self.edit_rule_author)
         layout.addRow("Default rule scope", self.edit_rule_scope)
 
@@ -614,7 +626,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """
         if post:
             if idaapi.get_imagebase() != meta.get("prev_base", -1):
-                capa.ida.helpers.inform_user_ida_ui("Running capa analysis again after program rebase")
+                capa.ida.helpers.inform_user_ida_ui("Running capa analysis using new program base")
                 self.slot_analyze()
         else:
             meta["prev_base"] = idaapi.get_imagebase()
@@ -629,15 +641,36 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             # resolve rules directory - check self and settings first, then ask user
             if not os.path.exists(settings.user.get(CAPA_SETTINGS_RULE_PATH, "")):
-                idaapi.info("Please select a file directory containing capa rules.")
+                # configure rules selection messagebox
+                rules_message = QtWidgets.QMessageBox()
+                rules_message.setIcon(QtWidgets.QMessageBox.Information)
+                rules_message.setWindowTitle("capa explorer")
+                rules_message.setText("You must specify a directory containing capa rules before running analysis.")
+                rules_message.setInformativeText(
+                    "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
+                    f"rules from the URL listed in the details."
+                )
+                rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
+                rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+
+                # display rules selection messagebox, check user button selection
+                pressed = rules_message.exec_()
+                if pressed == QtWidgets.QMessageBox.Cancel:
+                    raise UserCancelledError()
+
                 path = self.ask_user_directory()
                 if not path:
-                    logger.warning(
-                        "You must select a file directory containing capa rules before analysis can be run. The standard collection of capa rules can be downloaded from https://github.com/mandiant/capa-rules."
-                    )
-                    return False
+                    raise UserCancelledError()
+
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
+        except UserCancelledError as e:
+            capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
+            logger.warning(
+                f"You must specify a directory containing capa rules before running analysis. Download and extract the official rules from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
+            )
+            return False
         except Exception as e:
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules")
             logger.error("Failed to load capa rules (error: %s).", e)
             return False
 
@@ -700,19 +733,16 @@ class CapaExplorerForm(idaapi.PluginForm):
             capa.ida.helpers.inform_user_ida_ui(
                 "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
             )
-            logger.error("Failed to load rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
+
+            logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Make sure your file directory contains properly formatted capa rules. You can download the standard "
-                "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
+                "Make sure your file directory contains properly "
+                "formatted capa rules. You can download and extract the official rules from %s. "
+                "Or, for more details, see the rules documentation here: %s",
+                CAPA_OFFICIAL_RULESET_URL,
+                CAPA_RULESET_DOC_URL,
             )
-            logger.error(
-                "Please ensure you're using the rules that correspond to your major version of capa (%s)",
-                capa.version.get_major_version(),
-            )
-            logger.error(
-                "Or, for more details, see the rule set documentation here: %s",
-                "https://github.com/mandiant/capa/blob/master/doc/rules.md",
-            )
+
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return False
 
@@ -831,7 +861,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.model_data.render_capa_doc(self.doc, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rules directory: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
+                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], len(self.rules_cache))
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
@@ -876,7 +906,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             if not self.load_capa_rules():
                 return False
         else:
-            logger.info('Using cached ruleset, click "Reset" to reload rules from disk.')
+            logger.info('Using cached capa rules, click "Reset" to load rules from disk.')
 
         assert self.rules_cache is not None
         assert self.ruleset_cache is not None
@@ -1034,7 +1064,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_rulegen_status_label.clear()
 
         if not is_analyze:
-            # clear rules and ruleset cache only if user clicked "Reset"
+            # clear rules and rule set cache only if user clicked "Reset"
             self.rules_cache = None
             self.ruleset_cache = None
 

@@ -1,8 +1,8 @@
 ![capa explorer](../../../.github/capa-explorer-logo.png)
 
 capa explorer is an IDAPython plugin that integrates the FLARE team's open-source framework, capa, with IDA Pro. capa is a framework that uses a well-defined collection of rules to 
-identify capabilities in a program. You can run capa against a PE file or shellcode and it tells you what it thinks the program can do. For example, it might suggest that 
-the program is a backdoor, can install services, or relies on HTTP to communicate. capa explorer runs capa directly against your IDA Pro database (IDB) without requiring access
+identify capabilities in a program. You can run capa against a PE file, ELF file, or shellcode and it tells you what it thinks the program can do. For example, it might suggest that 
+the program is a backdoor, can install services, or relies on HTTP to communicate. capa explorer runs capa analysis on your IDA Pro database (IDB) without needing access
 to the original binary file. Once a database has been analyzed, capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted from your IDB.
 
 We love using capa explorer during malware analysis because it teaches us what parts of a program suggest a behavior. As we click on rows, capa explorer jumps directly 
@@ -21,10 +21,10 @@ We can use capa explorer to navigate our Disassembly view directly to the suspec
 Using the `Rule Information` and `Details` columns capa explorer shows us that the suspect function matched `self delete via COMSPEC environment variable` because it contains capa rule matches for `create process`, `get COMSPEC environment variable`,
 and `query environment variable`, references to the strings `COMSPEC`, ` > nul`, and `/c del `, and calls to the Windows API functions `GetEnvironmentVariableA` and `ShellExecuteEx`.
 
-capa explorer also helps you build new capa rules. To start select the `Rule Generator` tab, navigate to a function in your Disassembly view,
+capa explorer also helps you build and test new capa rules. To start, select the `Rule Generator` tab, navigate to a function in your Disassembly view,
 and click `Analyze`. capa explorer will extract features from the function and display them in the `Features` pane. You can add features listed in this pane to the `Editor` pane
 by either double-clicking a feature or using multi-select + right-click to add multiple features at once. The `Preview` and `Editor` panes help edit your rule. Use the `Preview` pane
-to modify the rule text directly and the `Editor` pane to construct and rearrange your hierarchy of statements and features. When you finish a rule you can save it directly to a file by clicking `Save`.
+to modify rule text directly and the `Editor` pane to construct and rearrange your hierarchy of statements and features. When you finish a rule you can save it directly to a file by clicking `Save`.
 
 ![](../../../doc/img/rulegen_expanded.png)
 
@@ -36,11 +36,15 @@ For more information on the FLARE team's open-source framework, capa, check out 
 
 You can install capa explorer using the following steps:
 
-1. Install capa and its dependencies from PyPI for the Python interpreter used by your IDA installation:
+1. Install capa and its dependencies from PyPI using the Python interpreter configured for your IDA installation:
     ```
     $ pip install flare-capa
     ```
-2. Download the [standard collection of capa rules](https://github.com/mandiant/capa-rules) (capa explorer needs capa rules to analyze a database)
+2. Download and extract the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match the version of capa you have installed
+   1. Use the following command to view the version of capa you have installed:
+   ```commandline
+    $ pip show flare-capa
+    ```
 3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
 
 ### Supported File Types
@@ -59,15 +63,15 @@ capa explorer is limited to the file types supported by capa, which include:
 3. Select the `Program Analysis` tab
 4. Click the `Analyze` button
 
-When running capa explorer for the first time you are prompted to select a file directory containing capa rules. The plugin conveniently
-remembers your selection for future runs; you can change this selection and other default settings by clicking `Settings`. We recommend 
-downloading and using the [standard collection of capa rules](https://github.com/mandiant/capa-rules) when getting started with the plugin.
+The first time you run capa explorer you will be asked to specify a local directory containing capa rules to use for analysis. We recommend downloading and extracting the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match 
+the version of capa you have installed (see installation instructions above for more details). capa explorer remembers your selection for future analysis which you
+can update using the `Settings` button.
 
 #### Tips for Program Analysis
 
 * Start analysis by clicking the `Analyze` button
 * Reset the plugin user interface and remove highlighting from your Disassembly view by clicking the `Reset` button
-* Change your capa rules directory and other default settings by clicking `Settings`
+* Change your local capa rules directory and other default settings by clicking the `Settings` button
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate your Disassembly view to the address of the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
