@@ -201,7 +201,8 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "    authors:",
             "      - %s" % author,
             "    scope: %s" % scope,
-            "    references: <insert_references>",
+            "    references:",
+            "      - <insert_references>",
             "    examples:",
             "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea)
             if ea

@@ -64,6 +64,7 @@
 - fix: accept only plaintext pasted content #1194 @williballenthin
 - fix: UnboundLocalError #1217 @williballenthin
 - extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
+- verify rule metadata using Pydantic #1167 @mr-tz
 
 ### Development
 
