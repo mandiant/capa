@@ -288,7 +288,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             # all .* in the regexes of capa look like they should be maximum 100 chars so take 1000 to speed up rules and prevent yara warnings on poor performance
             regex = regex.replace(".*", ".{,1000}")
-            # strange: capa accepts regexes with unsescaped / like - string: /com/exe4j/runtime/exe4jcontroller/i in capa-rules/compiler/exe4j/compiled-with-exe4j.yml, needs a fix for yara:
+            # strange: capa accepts regexes with unescaped / like - string: /com/exe4j/runtime/exe4jcontroller/i in capa-rules/compiler/exe4j/compiled-with-exe4j.yml, needs a fix for yara:
             # would assume that get_value_str() gives the raw string
             regex = re.sub(r"(?<!\\)/", r"\/", regex)
 
