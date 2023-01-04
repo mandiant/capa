@@ -75,7 +75,7 @@ can update using the `Settings` button.
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate your Disassembly view to the address of the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
-* Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in your Dissasembly view
+* Select a checkbox in the `Rule Information` column to highlight the address of the associated feature in your Disassembly view
 
 #### Tips for Rule Generator
 

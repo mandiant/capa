@@ -42,7 +42,7 @@ def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
     ret = []
 
     # find the immediate prior instruction.
-    # ensure that it fallsthrough to this one.
+    # ensure that it falls through to this one.
     loc = vw.getPrevLocation(va, adjacent=True)
     if loc is not None:
         ploc = vw.getPrevLocation(va, adjacent=True)

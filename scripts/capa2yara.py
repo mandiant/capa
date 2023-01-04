@@ -129,7 +129,7 @@ def convert_capa_number_to_yara_bytes(number):
 
 def convert_rule_name(rule_name):
 
-    # yara rule names: "Identifiers must follow the same lexical conventions of the C programming language, they can contain any alphanumeric character and the underscore character, but the first character cannot be a digit. Rule identifiers are case sensitive and cannot exceed 128 characters." so we replace any non-alpanum with _
+    # yara rule names: "Identifiers must follow the same lexical conventions of the C programming language, they can contain any alphanumeric character and the underscore character, but the first character cannot be a digit. Rule identifiers are case sensitive and cannot exceed 128 characters." so we replace any non-alphanum with _
     rule_name = re.sub(r"\W", "_", rule_name)
     rule_name = "capa_" + rule_name
 
@@ -283,12 +283,12 @@ def convert_rule(rule, rulename, cround, depth):
             # change capas /xxx/i to yaras /xxx/ nocase, count will be used later to decide appending 'nocase'
             regex, count = re.subn(r"/i$", "/", regex)
 
-            # remove / in the begining and end
+            # remove / in the beginning and end
             regex = regex[1:-1]
 
             # all .* in the regexes of capa look like they should be maximum 100 chars so take 1000 to speed up rules and prevent yara warnings on poor performance
             regex = regex.replace(".*", ".{,1000}")
-            # strange: capa accepts regexes with unsescaped / like - string: /com/exe4j/runtime/exe4jcontroller/i in capa-rules/compiler/exe4j/compiled-with-exe4j.yml, needs a fix for yara:
+            # strange: capa accepts regexes with unescaped / like - string: /com/exe4j/runtime/exe4jcontroller/i in capa-rules/compiler/exe4j/compiled-with-exe4j.yml, needs a fix for yara:
             # would assume that get_value_str() gives the raw string
             regex = re.sub(r"(?<!\\)/", r"\/", regex)
 
@@ -296,7 +296,7 @@ def convert_rule(rule, rulename, cround, depth):
             # /reg(|.exe)/ => /reg(.exe)?/
             regex = re.sub(r"\(\|([^\)]+)\)", r"(\1)?", regex)
 
-            # change begining of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the begining of a word in a text but usually a function name if there's ^ in a capa rule)
+            # change beginning of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the beginning of a word in a text but usually a function name if there's ^ in a capa rule)
             regex = re.sub(r"^\^", r"\\x00", regex)
 
             # regex = re.sub(r"^\^", r"\\b", regex)
@@ -377,7 +377,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             if s_type == "Some":
                 cmin = kid.count
-                logger.info("Some type with mininum: " + str(cmin))
+                logger.info("Some type with minimum: " + str(cmin))
 
                 if not cmin:
                     logger.info("this is optional: which means, we can just ignore it")
@@ -482,7 +482,7 @@ def convert_rule(rule, rulename, cround, depth):
 
     elif statement == "Some":
         cmin = rule.count
-        logger.info("Some type with mininum at2: " + str(cmin))
+        logger.info("Some type with minimum at2: " + str(cmin))
 
         if not cmin:
             logger.info("this is optional: which means, we can just ignore it")
@@ -623,7 +623,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
                             value = re.sub(r"^([0-9a-f]{20,64}):0x[0-9a-f]{1,10}$", r"\1", value, flags=re.IGNORECASE)
 
                             # examples in capa can contain the same hash several times with different offset, so check if it's already there:
-                            # (keeping the offset might be interessting for some but breaks yara-ci for checking of the final rules
+                            # (keeping the offset might be interesting for some but breaks yara-ci for checking of the final rules
                             if value not in seen_hashes:
                                 yara_meta += "\t" + meta_name + ' = "' + value + '"\n'
                                 seen_hashes.append(value)
