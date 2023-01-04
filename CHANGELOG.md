@@ -82,6 +82,7 @@
 - doc: improve error messaging and documentation related to capa rule set #1249 @mike-hunhoff
 - fix: assume 32-bit displacement for offsets #1250 @mike-hunhoff
 - generator: refactor caching and matching #1251 @mike-hunhoff
+- fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
 
 ### Development
