@@ -623,7 +623,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
                             value = re.sub(r"^([0-9a-f]{20,64}):0x[0-9a-f]{1,10}$", r"\1", value, flags=re.IGNORECASE)
 
                             # examples in capa can contain the same hash several times with different offset, so check if it's already there:
-                            # (keeping the offset might be interessting for some but breaks yara-ci for checking of the final rules
+                            # (keeping the offset might be interesting for some but breaks yara-ci for checking of the final rules
                             if value not in seen_hashes:
                                 yara_meta += "\t" + meta_name + ' = "' + value + '"\n'
                                 seen_hashes.append(value)
