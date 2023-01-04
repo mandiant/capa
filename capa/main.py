@@ -17,7 +17,6 @@ import os.path
 import argparse
 import datetime
 import textwrap
-import warnings
 import itertools
 import contextlib
 import collections
@@ -72,7 +71,6 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 BACKEND_VIV = "vivisect"
-BACKEND_SMDA = "smda"
 BACKEND_DOTNET = "dotnet"
 
 E_MISSING_RULES = -10
@@ -514,23 +512,7 @@ def get_extractor(
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
-    if backend == "smda":
-        from smda.SmdaConfig import SmdaConfig
-        from smda.Disassembler import Disassembler
-
-        import capa.features.extractors.smda.extractor
-
-        logger.warning("Deprecation warning: v4.0 will be the last capa version to support the SMDA backend.")
-        warnings.warn("v4.0 will be the last capa version to support the SMDA backend.", DeprecationWarning)
-        smda_report = None
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            config = SmdaConfig()
-            config.STORE_BUFFER = True
-            smda_disasm = Disassembler(config)
-            smda_report = smda_disasm.disassembleFile(path)
-
-        return capa.features.extractors.smda.extractor.SmdaFeatureExtractor(smda_report, path)
-    else:
+    if backend == BACKEND_VIV:
         import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -547,6 +529,8 @@ def get_extractor(
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+
+    raise ValueError("unexpected extractor specification: format=%s backend=%s", format_, backend)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
@@ -831,7 +815,7 @@ def install_common_args(parser, wanted=None):
                 "--backend",
                 type=str,
                 help="select the backend to use",
-                choices=(BACKEND_VIV, BACKEND_SMDA),
+                choices=(BACKEND_VIV,),
                 default=BACKEND_VIV,
             )
 

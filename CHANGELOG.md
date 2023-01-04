@@ -13,6 +13,7 @@
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 
 ### Breaking Changes
+- remove SMDA backend #1062 @williballenthin 
 
 ### New Rules (43)
 

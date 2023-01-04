@@ -120,21 +120,6 @@ def fixup_viv(path, extractor):
         extractor.vw.makeFunction(0x10006860)
 
 
-@lru_cache()
-def get_smda_extractor(path):
-    from smda.SmdaConfig import SmdaConfig
-    from smda.Disassembler import Disassembler
-
-    import capa.features.extractors.smda.extractor
-
-    config = SmdaConfig()
-    config.STORE_BUFFER = True
-    disasm = Disassembler(config)
-    report = disasm.disassembleFile(path)
-
-    return capa.features.extractors.smda.extractor.SmdaFeatureExtractor(report, path)
-
-
 @lru_cache(maxsize=1)
 def get_pefile_extractor(path):
     import capa.features.extractors.pefile
