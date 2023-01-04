@@ -31,7 +31,7 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
         #  2. handling a new file format (e.g. macho)
         #
         # for (1) we can't do much - its shellcode and all bets are off.
-        # we could maybe accept a futher CLI argument to specify the OS,
+        # we could maybe accept a further CLI argument to specify the OS,
         # but i think this would be rarely used.
         # rules that rely on OS conditions will fail to match on shellcode.
         #
