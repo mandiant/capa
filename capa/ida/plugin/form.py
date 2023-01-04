@@ -662,7 +662,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 extractor = CapaExplorerFeatureExtractor()
                 extractor.indicator.progress.connect(slot_progress_feature_extraction)
             except Exception as e:
-                logger.error("Failed to init feature extractor (error: %s).", e, exc_info=True)
+                logger.error("Failed to initialize feature extractor (error: %s).", e, exc_info=True)
                 return False
 
             if ida_kernwin.user_cancelled():
