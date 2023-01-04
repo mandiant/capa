@@ -827,7 +827,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             # must use extractor to get function, as capa analysis requires casted object
             extractor = CapaExplorerFeatureExtractor()
         except Exception as e:
-            logger.error("Failed to init feature extractor (error: %s)", e, exc_info=True)
+            logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
