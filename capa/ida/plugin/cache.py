@@ -94,7 +94,7 @@ class CapaRuleGenFeatureCache:
         for fh in fh_list:
             f_node: CapaRuleGenFeatureCacheNode = CapaRuleGenFeatureCacheNode(fh, self.file_node)
 
-            # extract basic block features
+            # extract basic block and below features
             for bbh in extractor.get_basic_blocks(fh):
                 bb_node: CapaRuleGenFeatureCacheNode = CapaRuleGenFeatureCacheNode(bbh, f_node)
 

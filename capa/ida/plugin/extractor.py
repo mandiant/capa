@@ -19,10 +19,6 @@ class CapaExplorerProgressIndicator(QtCore.QObject):
 
     progress = QtCore.pyqtSignal(str)
 
-    def __init__(self):
-        """initialize signal object"""
-        super().__init__()
-
     def update(self, text):
         """emit progress update
 
