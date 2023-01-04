@@ -79,7 +79,7 @@ You'll find that the `capa.exe` (Windows) or `capa` (Linux/MacOS) executables in
 
 For development, we recommend to use [venv](https://docs.python.org/3/tutorial/venv.html). It allows you to create a virtual environment: a self-contained directory tree that contains a Python installation for a particular version of Python, plus a number of additional packages. This approach avoids conflicts between the requirements of different applications on your computer. It also ensures that you don't overlook to add a new requirement to `setup.up` using a library already installed on your system.
 
-To create an environment (in the parent directory, to avoid commiting it by accident or messing with the linters), run: `$ python3 -m venv ../capa-env`
+To create an environment (in the parent directory, to avoid committing it by accident or messing with the linters), run: `$ python3 -m venv ../capa-env`
 
 To activate `capa-env` in Linux or MacOS, run:
 `$ source ../capa-env/bin/activate`
