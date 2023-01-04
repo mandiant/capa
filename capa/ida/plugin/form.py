@@ -560,7 +560,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return False
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules")
-            logger.error("Failed to load capa rules (error: %s).", e)
+            logger.error("Failed to load capa rules (error: %s).", e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -656,15 +656,25 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("%s (%d of %d)" % (text, self.process_count, self.process_total))
                 self.process_count += 1
 
-            extractor = CapaExplorerFeatureExtractor()
-            extractor.indicator.progress.connect(slot_progress_feature_extraction)
+            update_wait_box("initializing feature extractor")
+
+            try:
+                extractor = CapaExplorerFeatureExtractor()
+                extractor.indicator.progress.connect(slot_progress_feature_extraction)
+            except Exception as e:
+                logger.error("Failed to init feature extractor (error: %s).", e, exc_info=True)
+                return False
+
+            if ida_kernwin.user_cancelled():
+                logger.info("User cancelled analysis.")
+                return False
 
             update_wait_box("calculating analysis")
 
             try:
                 self.process_total += len(tuple(extractor.get_functions()))
             except Exception as e:
-                logger.error("Failed to calculate analysis (error: %s).", e)
+                logger.error("Failed to calculate analysis (error: %s).", e, exc_info=True)
                 return False
 
             if ida_kernwin.user_cancelled():
@@ -673,11 +683,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             update_wait_box("loading rules")
 
+            # function should handle exceptions and return False
             if not self.load_capa_rules():
                 return False
-
-            # just generated above
-            assert self.ruleset_cache is not None
 
             if ida_kernwin.user_cancelled():
                 logger.info("User cancelled analysis.")
@@ -686,6 +694,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             update_wait_box("extracting features")
 
             try:
+                # just generated above
+                assert self.ruleset_cache is not None
+
                 meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
                 capabilities, counts = capa.main.find_capabilities(
                     self.ruleset_cache.ruleset, extractor, disable_progress=True
@@ -698,7 +709,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 logger.info("User cancelled analysis.")
                 return False
             except Exception as e:
-                logger.error("Failed to extract capabilities from database (error: %s)", e)
+                logger.error("Failed to extract capabilities from database (error: %s)", e, exc_info=True)
                 return False
 
             update_wait_box("checking for file limitations")
@@ -727,7 +738,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if capa.main.has_file_limitation(self.ruleset_cache.ruleset, capabilities, is_standalone=False):
                     capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
             except Exception as e:
-                logger.error("Failed to check for file limitations (error: %s)", e)
+                logger.error("Failed to check for file limitations (error: %s)", e, exc_info=True)
                 return False
 
             if ida_kernwin.user_cancelled():
@@ -787,9 +798,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if not success:
             self.set_view_status_label("Click Analyze to get started...")
-            logger.info("Analysis failed.")
-        else:
-            logger.info("Analysis completed.")
+            capa.ida.helpers.inform_user_ida_ui("Failed to load capabilities")
 
     def load_capa_function_results(self):
         """ """
@@ -799,9 +808,6 @@ class CapaExplorerForm(idaapi.PluginForm):
                 return False
         else:
             logger.info('Using cached capa rules, click "Reset" to load rules from disk.')
-
-        # cache is set or generated directly above
-        assert self.ruleset_cache is not None
 
         # clear feature cache
         if self.rulegen_feature_cache is not None:
@@ -815,13 +821,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
 
-        update_wait_box("loading IDA extractor")
+        update_wait_box("initializing feature extractor")
 
         try:
             # must use extractor to get function, as capa analysis requires casted object
             extractor = CapaExplorerFeatureExtractor()
         except Exception as e:
-            logger.error("Failed to load IDA feature extractor (error: %s)", e)
+            logger.error("Failed to init feature extractor (error: %s)", e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -836,7 +842,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             if f is not None:
                 self.rulegen_current_function = extractor.get_function(f.start_ea)
         except Exception as e:
-            logger.error("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
+            logger.error("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -862,6 +868,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         all_function_features: FeatureSet = collections.defaultdict(set)
         try:
+            assert self.ruleset_cache is not None
+
             if self.rulegen_current_function is not None:
                 _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
                     self.ruleset_cache.ruleset, self.rulegen_current_function
@@ -888,6 +896,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         all_file_features: FeatureSet = collections.defaultdict(set)
         try:
+            assert self.ruleset_cache is not None
+
             _, file_matches = self.rulegen_feature_cache.find_file_capabilities(self.ruleset_cache.ruleset)
             all_file_features.update(self.rulegen_feature_cache.get_all_file_features())
 
@@ -937,9 +947,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if not success:
             self.set_view_status_label("Click Analyze to get started...")
-            logger.info("Analysis failed.")
-        else:
-            logger.info("Analysis completed.")
+            capa.ida.helpers.inform_user_ida_ui("Failed to load features")
 
     def reset_program_analysis_views(self):
         """ """
@@ -1006,14 +1014,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.view_rulegen_status_label.clear()
             return
 
-        # we don't expect either of these caches to be None at this point
-        if self.rulegen_feature_cache is None:
-            logger.error("feature cache is None (unexpected)")
-            self.set_rulegen_status("error: see console output for more details")
-            return
-        if self.ruleset_cache is None:
-            logger.error("ruleset cache is None (unexpected)")
-            self.set_rulegen_status("error: see console output for more details")
+        try:
+            # we don't expect either cache to be empty at this point
+            assert self.ruleset_cache is not None
+            assert self.rulegen_feature_cache is not None
+        except Exception as e:
+            logger.error("Failed to access cache (error: %s)", e, exc_info=True)
+            self.set_rulegen_status("Error: see console output for more details")
             return
 
         self.set_rulegen_preview_border_error()
@@ -1022,10 +1029,6 @@ class CapaExplorerForm(idaapi.PluginForm):
             rule = capa.rules.Rule.from_yaml(rule_text)
         except Exception as e:
             self.set_rulegen_status(f"Failed to compile rule ({e})")
-            return
-
-        if self.ruleset_cache is None:
-            logger.error("RuleSet cache is None (unexpected)")
             return
 
         # we must create a deep copy of rules because any rule matching operations modify the original rule
