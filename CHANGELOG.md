@@ -11,11 +11,12 @@
 - dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
 - dotnet: emit namespace/class features for ldvirtftn/ldftn instructions #1241 @mike-hunhoff
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
+- dotnet: extract dotnet and pe format #1187 @mr-tz
 
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
 
-### New Rules (43)
+### New Rules (45)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -59,6 +60,8 @@
 - nursery/generate-random-bytes-in-dotnet michael.hunhoff@mandiant.com
 - nursery/manipulate-console-window michael.hunhoff@mandiant.com
 - nursery/obfuscated-with-koivm michael.hunhoff@mandiant.com
+- nursery/implement-com-dll moritz.raabe@mandiant.com
+- nursery/linked-against-libsodium @mr-tz
 -
 
 ### Bug Fixes
@@ -80,6 +83,7 @@
 - fix: assume 32-bit displacement for offsets #1250 @mike-hunhoff
 - generator: refactor caching and matching #1251 @mike-hunhoff
 - fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
+- verify rule metadata using Pydantic #1167 @mr-tz
 
 ### Development
 

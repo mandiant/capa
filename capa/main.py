@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import halo
 import tqdm
@@ -647,6 +647,7 @@ def collect_metadata(
     sample_path: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
+    format_: Optional[str] = None,
 ):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
@@ -662,7 +663,8 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
+    if format_ is None:
+        format_ = get_format(sample_path)
     arch = get_arch(sample_path)
     os_ = get_os(sample_path)
 
@@ -1099,7 +1101,7 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
-    meta = collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = collect_metadata(argv, args.sample, args.rules, extractor, format_=format_)
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
