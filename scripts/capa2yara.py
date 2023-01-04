@@ -283,7 +283,7 @@ def convert_rule(rule, rulename, cround, depth):
             # change capas /xxx/i to yaras /xxx/ nocase, count will be used later to decide appending 'nocase'
             regex, count = re.subn(r"/i$", "/", regex)
 
-            # remove / in the begining and end
+            # remove / in the beginning and end
             regex = regex[1:-1]
 
             # all .* in the regexes of capa look like they should be maximum 100 chars so take 1000 to speed up rules and prevent yara warnings on poor performance
@@ -296,7 +296,7 @@ def convert_rule(rule, rulename, cround, depth):
             # /reg(|.exe)/ => /reg(.exe)?/
             regex = re.sub(r"\(\|([^\)]+)\)", r"(\1)?", regex)
 
-            # change begining of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the begining of a word in a text but usually a function name if there's ^ in a capa rule)
+            # change beginning of line to null byte, e.g. /^open => /\x00open (not word boundary because we're not looking for the beginning of a word in a text but usually a function name if there's ^ in a capa rule)
             regex = re.sub(r"^\^", r"\\x00", regex)
 
             # regex = re.sub(r"^\^", r"\\b", regex)
