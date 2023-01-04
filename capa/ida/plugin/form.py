@@ -656,7 +656,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("%s (%d of %d)" % (text, self.process_count, self.process_total))
                 self.process_count += 1
 
-            update_wait_box("initializing feature extractor")
+            update_wait_box("Initializing feature extractor")
 
             try:
                 extractor = CapaExplorerFeatureExtractor()
