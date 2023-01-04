@@ -129,7 +129,7 @@ def convert_capa_number_to_yara_bytes(number):
 
 def convert_rule_name(rule_name):
 
-    # yara rule names: "Identifiers must follow the same lexical conventions of the C programming language, they can contain any alphanumeric character and the underscore character, but the first character cannot be a digit. Rule identifiers are case sensitive and cannot exceed 128 characters." so we replace any non-alpanum with _
+    # yara rule names: "Identifiers must follow the same lexical conventions of the C programming language, they can contain any alphanumeric character and the underscore character, but the first character cannot be a digit. Rule identifiers are case sensitive and cannot exceed 128 characters." so we replace any non-alphanum with _
     rule_name = re.sub(r"\W", "_", rule_name)
     rule_name = "capa_" + rule_name
 
