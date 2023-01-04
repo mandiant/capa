@@ -13,8 +13,9 @@
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 
 ### Breaking Changes
+- remove SMDA backend #1062 @williballenthin 
 
-### New Rules (32)
+### New Rules (43)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -47,6 +48,17 @@
 - nursery/encrypt-data-using-aes william.ballenthin@mandiant.com Ivan Kwiatkowski (@JusticeRage)
 - host-interaction/uac/bypass/bypass-uac-via-rpc david.cannings@pwc.com david@edeca.net
 - nursery/check-for-vm-using-instruction-vpcext richard.weiss@mandiant.com
+- nursery/get-windows-directory-from-kuser_shared_data david.cannings@pwc.com
+- nursery/encrypt-data-using-openssl-dsa Ana06
+- nursery/encrypt-data-using-openssl-ecdsa Ana06
+- nursery/encrypt-data-using-openssl-rsa Ana06
+- runtime/dotnet/execute-via-dotnet-startup-hook william.ballenthin@mandiant.com
+- host-interaction/console/manipulate-console-buffer william.ballenthin@mandiant.com michael.hunhoff@mandiant.com
+- nursery/access-wmi-data-in-dotnet michael.hunhoff@mandiant.com
+- nursery/allocate-unmanaged-memory-via-dotnet michael.hunhoff@mandiant.com
+- nursery/generate-random-bytes-in-dotnet michael.hunhoff@mandiant.com
+- nursery/manipulate-console-window michael.hunhoff@mandiant.com
+- nursery/obfuscated-with-koivm michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
@@ -64,6 +76,9 @@
 - fix: accept only plaintext pasted content #1194 @williballenthin
 - fix: UnboundLocalError #1217 @williballenthin
 - extractor: add support for COFF files and extern functions #1223 @mike-hunhoff
+- doc: improve error messaging and documentation related to capa rule set #1249 @mike-hunhoff
+- fix: assume 32-bit displacement for offsets #1250 @mike-hunhoff
+- generator: refactor caching and matching #1251 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
 
 ### Development
@@ -1296,7 +1311,7 @@ Download a standalone binary below and checkout the readme [here on GitHub](http
   - setup: pin vivisect version @williballenthin
   - setup: bump vivisect dependency version @williballenthin
   - setup: set Python project name to `flare-capa` @williballenthin
-  - ci: run tests and linter via Github Actions @Ana06
+  - ci: run tests and linter via GitHub Actions @Ana06
   - hooks: run style checkers and hide stashed output @Ana06
   - linter: ignore period in rule filename @williballenthin
   - linter: warn on nursery rule with no changes needed @williballenthin

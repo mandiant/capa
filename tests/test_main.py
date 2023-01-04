@@ -434,12 +434,6 @@ def test_backend_option(capsys):
     assert std_json["meta"]["analysis"]["extractor"] == "VivisectFeatureExtractor"
     assert len(std_json["rules"]) > 0
 
-    assert capa.main.main([path, "-j", "-b", capa.main.BACKEND_SMDA]) == 0
-    std = capsys.readouterr()
-    std_json = json.loads(std.out)
-    assert std_json["meta"]["analysis"]["extractor"] == "SmdaFeatureExtractor"
-    assert len(std_json["rules"]) > 0
-
 
 def test_json_meta(capsys):
     path = fixtures.get_data_path_by_name("pma01-01")

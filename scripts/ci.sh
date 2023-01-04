@@ -11,12 +11,12 @@
 # Use a console with emojis support for a better experience
 # Use venv to ensure that `python` calls the correct python version
 
-# Stash uncommited changes
+# Stash uncommitted changes
 MSG="pre-push-$(date +%s)";
 git stash push -kum "$MSG" &>/dev/null ;
 STASH_LIST=$(git stash list);
 if [[ "$STASH_LIST" == *"$MSG"* ]]; then
-  echo "Uncommited changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
+  echo "Uncommitted changes stashed with message '$MSG', if you abort before they are restored run \`git stash pop\`";
 fi
 
 restore_stashed() {

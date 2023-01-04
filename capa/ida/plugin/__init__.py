@@ -85,7 +85,7 @@ class CapaExplorerPlugin(idaapi.plugin_t):
 # so we need to register a callback that's invoked from the main thread after the plugin is registered.
 #
 # after a lot of guess-and-check, we can use `UI_Hooks.updated_actions` to
-#  receive notications after IDA has created an action for each plugin.
+#  receive notifications after IDA has created an action for each plugin.
 # so, create this hook, wait for capa plugin to load, set the icon, and unhook.
 
 

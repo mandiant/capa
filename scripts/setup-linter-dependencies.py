@@ -70,7 +70,7 @@ class MitreExtractor:
         self._memory_store = MemoryStore(stix_data=stix_json["objects"])
 
     @staticmethod
-    def _remove_deprecated_objetcs(stix_objects) -> List[AttackPattern]:
+    def _remove_deprecated_objects(stix_objects) -> List[AttackPattern]:
         """Remove any revoked or deprecated objects from queries made to the data source."""
         return list(
             filter(
@@ -82,7 +82,7 @@ class MitreExtractor:
     def _get_tactics(self) -> List[Dict]:
         """Get tactics IDs from Mitre matrix."""
         # Only one matrix for enterprise att&ck framework
-        matrix = self._remove_deprecated_objetcs(
+        matrix = self._remove_deprecated_objects(
             self._memory_store.query(
                 [
                     Filter("type", "=", "x-mitre-matrix"),
@@ -93,7 +93,7 @@ class MitreExtractor:
 
     def _get_techniques_from_tactic(self, tactic: str) -> List[AttackPattern]:
         """Get techniques and sub techniques from a Mitre tactic (kill_chain_phases->phase_name)"""
-        techniques = self._remove_deprecated_objetcs(
+        techniques = self._remove_deprecated_objects(
             self._memory_store.query(
                 [
                     Filter("type", "=", "attack-pattern"),
@@ -107,7 +107,7 @@ class MitreExtractor:
     def _get_parent_technique_from_subtechnique(self, technique: AttackPattern) -> AttackPattern:
         """Get parent technique of a sub technique using the technique ID TXXXX.YYY"""
         sub_id = technique["external_references"][0]["external_id"].split(".")[0]
-        parent_technique = self._remove_deprecated_objetcs(
+        parent_technique = self._remove_deprecated_objects(
             self._memory_store.query(
                 [
                     Filter("type", "=", "attack-pattern"),

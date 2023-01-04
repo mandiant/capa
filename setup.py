@@ -23,12 +23,11 @@ requirements = [
     "networkx==2.5.1",
     "ruamel.yaml==0.17.21",
     "vivisect==1.0.8",
-    "smda==1.8.4",
     "pefile==2022.5.30",
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.2",
+    "pydantic==1.10.4",
 ]
 
 # this sets __version__
@@ -75,7 +74,7 @@ setuptools.setup(
             "pytest-cov==4.0.0",
             "pycodestyle==2.10.0",
             "black==22.12.0",
-            "isort==5.11.3",
+            "isort==5.11.4",
             "mypy==0.991",
             "psutil==5.9.2",
             "stix2==3.0.1",

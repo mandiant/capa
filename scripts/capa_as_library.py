@@ -16,7 +16,7 @@ import capa.features.freeze.features as frzf
 from capa.engine import *
 
 
-# == Render ddictionary helpers
+# == Render dictionary helpers
 def render_meta(doc: rd.ResultDocument, result):
     result["md5"] = doc.meta.sample.md5
     result["sha1"] = doc.meta.sample.sha1

@@ -31,7 +31,7 @@ This project and everyone participating in it is governed by the [Capa Code of C
 
 ### Capa and its repositories
 
-We host the capa project as three Github repositories:
+We host the capa project as three GitHub repositories:
   - [capa](https://github.com/mandiant/capa)
   - [capa-rules](https://github.com/mandiant/capa-rules)
   - [capa-testfiles](https://github.com/mandiant/capa-testfiles)
