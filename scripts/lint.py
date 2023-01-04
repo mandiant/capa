@@ -902,7 +902,7 @@ def redirecting_print_to_tqdm():
             old_print(*args, **kwargs)
 
     try:
-        # Globaly replace print with new_print.
+        # Globally replace print with new_print.
         # Verified this works manually on Python 3.11:
         #     >>> import inspect
         #     >>> inspect.builtins
