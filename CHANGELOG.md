@@ -11,6 +11,7 @@
 - dotnet: emit calls to/from MethodDef methods #1236 @mike-hunhoff
 - dotnet: emit namespace/class features for ldvirtftn/ldftn instructions #1241 @mike-hunhoff
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
+- dotnet: extract dotnet and pe format #1187 @mr-tz
 
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
