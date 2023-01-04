@@ -471,7 +471,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         label2.setText("Editor")
         label2.setFont(font)
 
-        self.view_rulegen_limit_features_by_ea = QtWidgets.QCheckBox("Limit features to current dissasembly address")
+        self.view_rulegen_limit_features_by_ea = QtWidgets.QCheckBox("Limit features to current disassembly address")
         self.view_rulegen_limit_features_by_ea.setChecked(False)
         self.view_rulegen_limit_features_by_ea.stateChanged.connect(self.slot_checkbox_limit_features_by_ea)
 
