@@ -1020,6 +1020,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         try:
             rule = capa.rules.Rule.from_yaml(rule_text)
+            # import here to avoid circular dependency
+            from capa.render.result_document import RuleMetadata
+
+            # validate meta data fields
+            _ = RuleMetadata.from_capa(rule)
         except Exception as e:
             self.set_rulegen_status(f"Failed to compile rule ({e})")
             return
