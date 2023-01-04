@@ -821,7 +821,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
 
-        update_wait_box("initializing feature extractor")
+        update_wait_box("Initializing feature extractor")
 
         try:
             # must use extractor to get function, as capa analysis requires casted object
