@@ -377,7 +377,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             if s_type == "Some":
                 cmin = kid.count
-                logger.info("Some type with mininum: " + str(cmin))
+                logger.info("Some type with minimum: " + str(cmin))
 
                 if not cmin:
                     logger.info("this is optional: which means, we can just ignore it")
@@ -482,7 +482,7 @@ def convert_rule(rule, rulename, cround, depth):
 
     elif statement == "Some":
         cmin = rule.count
-        logger.info("Some type with mininum at2: " + str(cmin))
+        logger.info("Some type with minimum at2: " + str(cmin))
 
         if not cmin:
             logger.info("this is optional: which means, we can just ignore it")
