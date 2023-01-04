@@ -186,7 +186,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
         Each row represents a class in the current assembly.
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
-            MethodList (index into MethodDef table; it marks the first of a continguous run of Methods owned by this Type)
+            MethodList (index into MethodDef table; it marks the first of a contiguous run of Methods owned by this Type)
     """
     accessor_map: Dict[int, str] = {}
     for (methoddef, methoddef_access) in get_dotnet_methoddef_property_accessors(pe):
@@ -223,7 +223,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
         Each row represents a class in the current assembly.
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
-            FieldList (index into Field table; it marks the first of a continguous run of Fields owned by this Type)
+            FieldList (index into Field table; it marks the first of a contiguous run of Fields owned by this Type)
     """
     for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
