@@ -315,6 +315,10 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
+        # indicate this is a library rule
+        if rule.meta.lib:
+            rows.append(("lib", rutils.warn("true, only showing first match")))
+
         rows.append(("scope", rule.meta.scope.value))
 
         if rule.meta.attack:
@@ -355,6 +359,10 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
                 ostream.write("\n")
                 render_match(ostream, match, indent=1)
+                if rule.meta.lib:
+                    # only show first match
+                    break
+
         ostream.write("\n")
 
     if not had_match:
