@@ -512,7 +512,8 @@ def get_extractor(
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
-    if backend == BACKEND_VIV:
+    # default to use vivisect backend
+    else:
         import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -529,8 +530,6 @@ def get_extractor(
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
-
-    raise ValueError("unexpected extractor specification: format=%s backend=%s", format_, backend)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
