@@ -22,6 +22,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import enum
+
 import tabulate
 
 import capa.rules
@@ -125,6 +127,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]
+
+            if isinstance(v, enum.Enum):
+                v = v.value
 
             rows.append((key, v))
 

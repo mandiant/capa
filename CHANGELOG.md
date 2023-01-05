@@ -74,6 +74,7 @@
 - elf: better detect OS via GLIBC ABI version needed and dependencies #1221 @williballenthin
 - dotnet: address unhandled exceptions with improved type checking #1230 @mike-hunhoff
 - fix import-to-ida script formatting #1208 @williballenthin
+- render: fix verbose rendering of scopes #1263 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
