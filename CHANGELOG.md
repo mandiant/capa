@@ -16,7 +16,7 @@
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
 
-### New Rules (45)
+### New Rules (46)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -62,6 +62,7 @@
 - nursery/obfuscated-with-koivm michael.hunhoff@mandiant.com
 - nursery/implement-com-dll moritz.raabe@mandiant.com
 - nursery/linked-against-libsodium @mr-tz
+- compiler/nuitka/compiled-with-nuitka @williballenthin
 -
 
 ### Bug Fixes
