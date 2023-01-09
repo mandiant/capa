@@ -285,17 +285,24 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if rule.meta.is_subscope_rule:
             continue
 
+        lib_info = ""
         count = len(rule.matches)
         if count == 1:
-            capability = rutils.bold(rule.meta.name)
+            if rule.meta.lib:
+                lib_info = " (library rule)"
+            capability = "%s%s" % (rutils.bold(rule.meta.name), lib_info)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule.meta.name), count)
+            if rule.meta.lib:
+                lib_info = ", only showing first match of library rule"
+            capability = "%s (%d matches%s)" % (rutils.bold(rule.meta.name), count, lib_info)
 
         ostream.writeln(capability)
         had_match = True
 
         rows = []
-        rows.append(("namespace", rule.meta.namespace))
+        if not rule.meta.lib:
+            # library rules should not have a namespace
+            rows.append(("namespace", rule.meta.namespace))
 
         if rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov:
             rows.append(
@@ -355,6 +362,10 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
                 ostream.write("\n")
                 render_match(ostream, match, indent=1)
+                if rule.meta.lib:
+                    # only show first match
+                    break
+
         ostream.write("\n")
 
     if not had_match:
