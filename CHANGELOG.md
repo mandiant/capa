@@ -16,7 +16,7 @@
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
 
-### New Rules (48)
+### New Rules (49)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
