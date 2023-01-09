@@ -17,7 +17,7 @@
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin 
 
-### New Rules (49)
+### New Rules (52)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -66,6 +66,9 @@
 - compiler/nuitka/compiled-with-nuitka @williballenthin
 - nursery/authenticate-data-with-md5-mac william.ballenthin@mandiant.com
 - nursery/resolve-function-by-djb2-hash still@teamt5.org
+- host-interaction/mutex/create-semaphore-on-linux @ramen0x3f
+- host-interaction/mutex/lock-semaphore-on-linux @ramen0x3f
+- host-interaction/mutex/unlock-semaphore-on-linux @ramen0x3f
 -
 
 ### Bug Fixes
