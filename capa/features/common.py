@@ -180,6 +180,7 @@ class String(Feature):
         super().__init__(value, description=description)
 
     def get_value_str(self) -> str:
+        assert isinstance(self.value, str)
         return escape_string(self.value)
 
 
@@ -236,6 +237,7 @@ class Substring(String):
             return Result(False, _MatchedSubstring(self, {}), [])
 
     def get_value_str(self) -> str:
+        assert isinstance(self.value, str)
         return escape_string(self.value)
 
     def __str__(self):
