@@ -281,7 +281,12 @@ def read_string(vw, offset: int) -> str:
         pass
     else:
         if alen > 0:
-            return read_memory(vw, offset, alen).decode("utf-8")
+            buf = read_memory(vw, offset, alen)
+            if b"\x00" in buf:
+                # account for bug #1271.
+                # remove when vivisect is fixed.
+                buf = buf.partition(b"\x00")[0]
+            return buf.decode("utf-8")
 
     try:
         ulen = vw.detectUnicode(offset)
@@ -300,7 +305,9 @@ def read_string(vw, offset: int) -> str:
                 # vivisect seems to mis-detect the end unicode strings
                 # off by two, too short
                 ulen += 2
-            return read_memory(vw, offset, ulen).decode("utf-16")
+            # partition to account for bug #1271.
+            # remove when vivisect is fixed.
+            return read_memory(vw, offset, ulen).decode("utf-16").partition("\x00")[0]
 
     raise ValueError("not a string", offset)
 
