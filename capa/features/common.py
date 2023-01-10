@@ -179,6 +179,10 @@ class String(Feature):
     def __init__(self, value: str, description=None):
         super().__init__(value, description=description)
 
+    def get_value_str(self) -> str:
+        assert isinstance(self.value, str)
+        return escape_string(self.value)
+
 
 class Class(Feature):
     def __init__(self, value: str, description=None):
@@ -232,9 +236,13 @@ class Substring(String):
         else:
             return Result(False, _MatchedSubstring(self, {}), [])
 
+    def get_value_str(self) -> str:
+        assert isinstance(self.value, str)
+        return escape_string(self.value)
+
     def __str__(self):
         assert isinstance(self.value, str)
-        return "substring(%s)" % self.value
+        return "substring(%s)" % escape_string(self.value)
 
 
 class _MatchedSubstring(Substring):
