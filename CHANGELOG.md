@@ -15,7 +15,8 @@
 - don't render all library rule matches in vverbose output #1174 @mr-tz
 
 ### Breaking Changes
-- remove SMDA backend #1062 @williballenthin 
+- remove SMDA backend #1062 @williballenthin
+- error return codes are now positive numbers #1269 @mr-tz
 
 ### New Rules (52)
 
