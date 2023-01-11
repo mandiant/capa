@@ -670,11 +670,12 @@ def extract_op_string_features(
 
     for v in derefs(f.vw, v):
         try:
-            s = read_string(f.vw, v)
+            s = read_string(f.vw, v).rstrip("\x00")
         except ValueError:
             continue
         else:
-            yield String(s.rstrip("\x00")), ih.address
+            if len(s) > 4:
+                yield String(s), ih.address
 
 
 def extract_operand_features(f: FunctionHandle, bb, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
