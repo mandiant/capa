@@ -83,6 +83,7 @@
 - fix import-to-ida script formatting #1208 @williballenthin
 - render: fix verbose rendering of scopes #1263 @williballenthin
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
+- handle vivisect bug around strings at instruction level, use min length 4 #1271 @williballenthin @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
