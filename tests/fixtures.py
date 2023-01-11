@@ -118,6 +118,9 @@ def fixup_viv(path, extractor):
     if "3b13b" in path:
         # vivisect only recognizes calling thunk function at 0x10001573
         extractor.vw.makeFunction(0x10006860)
+    if "294b8d" in path:
+        # see vivisect/#561
+        extractor.vw.makeFunction(0x404970)
 
 
 @lru_cache(maxsize=1)
