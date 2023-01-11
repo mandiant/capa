@@ -94,6 +94,7 @@
 - generator: refactor caching and matching #1251 @mike-hunhoff
 - fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
+- extractor: make read consistent with file object behavior #1254 @mr-tz
 
 ### Development
 

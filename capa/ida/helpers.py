@@ -181,11 +181,13 @@ class IDAIO:
     def read(self, size):
         ea = ida_loader.get_fileregion_ea(self.offset)
         if ea == idc.BADADDR:
-            # best guess, such as if file is mapped at address 0x0.
-            ea = self.offset
+            logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
+            return b""
 
         logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, ea)
-        return ida_bytes.get_bytes(ea, size)
+
+        # get_bytes returns None on error, for consistency with read always return bytes
+        return ida_bytes.get_bytes(ea, size) or b""
 
     def close(self):
         return
