@@ -12,11 +12,13 @@
 - dotnet: emit namespace/class features for ldvirtftn/ldftn instructions #1241 @mike-hunhoff
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 - dotnet: extract dotnet and pe format #1187 @mr-tz
+- don't render all library rule matches in vverbose output #1174 @mr-tz
 
 ### Breaking Changes
-- remove SMDA backend #1062 @williballenthin 
+- remove SMDA backend #1062 @williballenthin
+- error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (48)
+### New Rules (52)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -65,6 +67,9 @@
 - compiler/nuitka/compiled-with-nuitka @williballenthin
 - nursery/authenticate-data-with-md5-mac william.ballenthin@mandiant.com
 - nursery/resolve-function-by-djb2-hash still@teamt5.org
+- host-interaction/mutex/create-semaphore-on-linux @ramen0x3f
+- host-interaction/mutex/lock-semaphore-on-linux @ramen0x3f
+- host-interaction/mutex/unlock-semaphore-on-linux @ramen0x3f
 -
 
 ### Bug Fixes
@@ -78,6 +83,7 @@
 - fix import-to-ida script formatting #1208 @williballenthin
 - render: fix verbose rendering of scopes #1263 @williballenthin
 - rules: better detect invalid rules #1282 @williballenthin
+- show-features: better render strings with embedded whitespace #1267 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
@@ -89,6 +95,7 @@
 - generator: refactor caching and matching #1251 @mike-hunhoff
 - fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
+- extractor: make read consistent with file object behavior #1254 @mr-tz
 
 ### Development
 
