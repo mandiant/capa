@@ -86,6 +86,7 @@
 - render: fix verbose rendering of scopes #1263 @williballenthin
 - rules: better detect invalid rules #1282 @williballenthin
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
+- extractor: add format to global features #1258 @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
