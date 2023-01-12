@@ -8,13 +8,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import Dict, List, Tuple, Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.opcode import OpCodes
 
 import capa.features.extractors
+import capa.features.extractors.dotnetfile
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
@@ -78,6 +78,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
+        self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_format())
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_os(pe=self.pe))
         self.global_features.extend(capa.features.extractors.dotnetfile.extract_file_arch(pe=self.pe))
 
