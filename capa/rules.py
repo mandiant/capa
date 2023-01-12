@@ -27,6 +27,7 @@ except ImportError:
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator
 
 import yaml
+import yaml.parser
 import pydantic
 import ruamel.yaml
 
@@ -835,6 +836,8 @@ class Rule:
             except InvalidRule as e:
                 raise InvalidRuleWithPath(path, str(e)) from e
             except pydantic.ValidationError as e:
+                raise InvalidRuleWithPath(path, str(e)) from e
+            except yaml.parser.ParserError as e:
                 raise InvalidRuleWithPath(path, str(e)) from e
 
     def to_yaml(self) -> str:
