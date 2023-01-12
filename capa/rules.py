@@ -27,9 +27,9 @@ except ImportError:
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator
 
 import yaml
-import yaml.parser
 import pydantic
 import ruamel.yaml
+import yaml.parser
 
 import capa.perf
 import capa.engine as ceng
