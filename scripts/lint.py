@@ -307,11 +307,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     elif nice_path.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
         format_ = "sc64"
     else:
-        format_ = "auto"
-        if not nice_path.endswith(capa.helpers.EXTENSIONS_ELF):
-            dnfile_extractor = capa.features.extractors.dnfile_.DnfileFeatureExtractor(nice_path)
-            if dnfile_extractor.is_dotnet_file():
-                format_ = FORMAT_DOTNET
+        format_ = capa.main.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
     extractor = capa.main.get_extractor(nice_path, format_, "", DEFAULT_SIGNATURES, False, disable_progress=True)
