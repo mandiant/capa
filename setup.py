@@ -20,7 +20,7 @@ requirements = [
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.7",
     "halo==0.0.31",
-    "networkx==2.5.1",  # newer versions no longer support py3.7.
+    "networkx==3.0",  # newer versions no longer support py3.7.
     "ruamel.yaml==0.17.21",
     "vivisect==1.0.8",
     "pefile==2022.5.30",
