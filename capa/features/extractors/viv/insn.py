@@ -500,7 +500,8 @@ def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
     if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper):
         oper = insn.opers[0]
         target = oper.getOperAddr(insn)
-        yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
+        if target >= 0:
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
 
     # call via thunk on x86,
     # see 9324d1a8ae37a36ae560c37448c9705a at 0x407985
@@ -516,7 +517,8 @@ def extract_function_calls_from(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
     elif isinstance(insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper):
         op = insn.opers[0]
         target = op.getOperAddr(insn)
-        yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
+        if target >= 0:
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(target)
 
     if target and target == f.va:
         # if we found a jump target and it's the function address

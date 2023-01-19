@@ -18,7 +18,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (52)
+### New Rules (56)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -70,6 +70,10 @@
 - host-interaction/mutex/create-semaphore-on-linux @ramen0x3f
 - host-interaction/mutex/lock-semaphore-on-linux @ramen0x3f
 - host-interaction/mutex/unlock-semaphore-on-linux @ramen0x3f
+- data-manipulation/hashing/sha384/hash-data-using-sha384 william.ballenthin@mandiant.com
+- data-manipulation/hashing/sha512/hash-data-using-sha512 william.ballenthin@mandiant.com
+- nursery/decode-data-using-url-encoding michael.hunhoff@mandiant.com
+- nursery/manipulate-user-privileges michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
@@ -82,8 +86,10 @@
 - dotnet: address unhandled exceptions with improved type checking #1230 @mike-hunhoff
 - fix import-to-ida script formatting #1208 @williballenthin
 - render: fix verbose rendering of scopes #1263 @williballenthin
+- rules: better detect invalid rules #1282 @williballenthin
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
 - handle vivisect bug around strings at instruction level, use min length 4 #1271 @williballenthin @mr-tz
+- extractor: guard against invalid "calls from" features #1177 @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
@@ -95,6 +101,7 @@
 - generator: refactor caching and matching #1251 @mike-hunhoff
 - fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
+- extractor: make read consistent with file object behavior #1254 @mr-tz
 
 ### Development
 
