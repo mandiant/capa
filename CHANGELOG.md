@@ -18,7 +18,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (54)
+### New Rules (56)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -72,6 +72,8 @@
 - host-interaction/mutex/unlock-semaphore-on-linux @ramen0x3f
 - data-manipulation/hashing/sha384/hash-data-using-sha384 william.ballenthin@mandiant.com
 - data-manipulation/hashing/sha512/hash-data-using-sha512 william.ballenthin@mandiant.com
+- nursery/decode-data-using-url-encoding michael.hunhoff@mandiant.com
+- nursery/manipulate-user-privileges michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
@@ -86,6 +88,8 @@
 - render: fix verbose rendering of scopes #1263 @williballenthin
 - rules: better detect invalid rules #1282 @williballenthin
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
+- handle vivisect bug around strings at instruction level, use min length 4 #1271 @williballenthin @mr-tz
+- extractor: guard against invalid "calls from" features #1177 @mr-tz
 - extractor: add format to global features #1258 @mr-tz
 
 ### capa explorer IDA Pro plugin
