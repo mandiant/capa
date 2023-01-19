@@ -88,6 +88,7 @@
 - render: fix verbose rendering of scopes #1263 @williballenthin
 - rules: better detect invalid rules #1282 @williballenthin
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
+- handle vivisect bug around strings at instruction level, use min length 4 #1271 @williballenthin @mr-tz
 - extractor: guard against invalid "calls from" features #1177 @mr-tz
 
 ### capa explorer IDA Pro plugin
