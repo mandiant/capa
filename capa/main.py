@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple
 
 import halo
 import tqdm
@@ -535,12 +535,12 @@ def get_extractor(
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
-    if format_ == capa.features.extractors.common.FORMAT_PE:
+    if format_ == FORMAT_PE:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
 
-        dnfile_extractor = capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample)
-        if dnfile_extractor.is_dotnet_file():
-            file_extractors.append(dnfile_extractor)
+    elif format_ == FORMAT_DOTNET:
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
@@ -646,7 +646,6 @@ def collect_metadata(
     sample_path: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
-    format_: Optional[str] = None,
 ):
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
@@ -662,8 +661,7 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    if format_ is None:
-        format_ = get_format(sample_path)
+    format_ = get_format(sample_path)
     arch = get_arch(sample_path)
     os_ = get_os(sample_path)
 
@@ -996,6 +994,9 @@ def main(argv=None):
     if format_ == FORMAT_AUTO:
         try:
             format_ = get_auto_format(args.sample)
+        except PEFormatError as e:
+            logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
+            return E_CORRUPT_FILE
         except UnsupportedFormatError:
             log_unsupported_format_error()
             return E_INVALID_FILE_TYPE
@@ -1058,9 +1059,6 @@ def main(argv=None):
             logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
 
-        if isinstance(file_extractor, capa.features.extractors.dnfile_.DnfileFeatureExtractor):
-            format_ = FORMAT_DOTNET
-
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
         if has_file_limitation(rules, pure_file_capabilities):
@@ -1100,7 +1098,7 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
-    meta = collect_metadata(argv, args.sample, args.rules, extractor, format_=format_)
+    meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)

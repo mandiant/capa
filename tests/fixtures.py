@@ -689,14 +689,22 @@ FEATURE_PRESENCE_TESTS = sorted(
         # os & format & arch
         ("pma16-01", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "file", OS(OS_LINUX), False),
+        ("mimikatz", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("mimikatz", "function=0x40105D", OS(OS_WINDOWS), True),
         ("pma16-01", "file", Arch(ARCH_I386), True),
         ("pma16-01", "file", Arch(ARCH_AMD64), False),
+        ("mimikatz", "file", Arch(ARCH_I386), True),
         ("pma16-01", "function=0x404356", Arch(ARCH_I386), True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
+        ("mimikatz", "function=0x40105D", Arch(ARCH_I386), True),
         ("pma16-01", "file", Format(FORMAT_PE), True),
         ("pma16-01", "file", Format(FORMAT_ELF), False),
+        ("mimikatz", "file", Format(FORMAT_PE), True),
+        # format is also a global feature
+        ("pma16-01", "function=0x404356", Format(FORMAT_PE), True),
+        ("mimikatz", "function=0x456BB9", Format(FORMAT_PE), True),
         # elf support
         ("7351f.elf", "file", OS(OS_LINUX), True),
         ("7351f.elf", "file", OS(OS_WINDOWS), False),

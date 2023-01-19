@@ -91,6 +91,7 @@
 - show-features: better render strings with embedded whitespace #1267 @williballenthin
 - handle vivisect bug around strings at instruction level, use min length 4 #1271 @williballenthin @mr-tz
 - extractor: guard against invalid "calls from" features #1177 @mr-tz
+- extractor: add format to global features #1258 @mr-tz
 
 ### capa explorer IDA Pro plugin
 - fix: display instruction items #1154 @mr-tz
