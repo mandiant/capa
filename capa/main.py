@@ -415,7 +415,7 @@ def get_default_root() -> str:
     under PyInstaller, this comes from _MEIPASS.
     under source, this is the root directory of the project.
     """
-    if capa.helpers.is_running_standalone():
+    if is_running_standalone():
         # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
