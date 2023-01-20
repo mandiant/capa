@@ -1,4 +1,5 @@
 import sys
+import zlib
 import pickle
 import hashlib
 import logging
@@ -7,6 +8,7 @@ from typing import List, Optional
 from dataclasses import dataclass
 
 import capa.rules
+import capa.version
 
 logger = logging.getLogger(__name__)
 
@@ -70,14 +72,14 @@ class RuleCache:
     ruleset: capa.rules.RuleSet
 
     def dump(self):
-        return MAGIC + VERSION + self.id.encode("ascii") + pickle.dumps(self)
+        return MAGIC + VERSION + self.id.encode("ascii") + zlib.compress(pickle.dumps(self))
 
     @staticmethod
     def load(data):
         assert data.startswith(MAGIC + VERSION)
 
         id = data[0x8:0x48].decode("ascii")
-        cache = pickle.loads(data[0x48:])
+        cache = pickle.loads(zlib.decompress(data[0x48:]))
 
         assert isinstance(cache, RuleCache)
         assert cache.id == id
