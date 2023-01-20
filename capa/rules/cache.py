@@ -85,15 +85,22 @@ class RuleCache:
         return cache
 
 
-def cache_ruleset(ruleset: capa.rules.RuleSet):
+def get_ruleset_content(ruleset: capa.rules.RuleSet) -> List[bytes]:
     rule_contents = []
     for rule in ruleset.rules.values():
         if rule.is_subscope_rule():
             continue
-        with open(rule.meta["capa/path"], "rb") as f:
-            rule_contents.append(f.read())
+        rule_contents.append(rule.definition.encode("utf-8"))
+    return rule_contents
 
-    id = compute_cache_identifier(rule_contents)
+
+def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdentifier:
+    rule_contents = get_ruleset_content(ruleset)
+    return compute_cache_identifier(rule_contents)
+
+
+def cache_ruleset(ruleset: capa.rules.RuleSet):
+    id = compute_ruleset_cache_identifier(ruleset)
     path = get_default_cache_path(id)
     if os.path.exists(path):
         logger.debug("rule set already cached to %s", path)
