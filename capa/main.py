@@ -620,7 +620,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
 
     for path, content in pbar(zip(rule_file_paths, rule_contents), desc="parsing ", unit=" rules"):
         try:
-            rule = capa.rules.Rule.from_yaml(content)
+            rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
         except capa.rules.InvalidRule:
             raise
         else:
