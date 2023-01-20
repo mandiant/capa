@@ -597,6 +597,13 @@ def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
 
 
 def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
+    """
+    args:
+      rule_paths: list of paths to rules files or directories containing rules files
+    """
+
+    # rule_paths may contain directory paths,
+    # so search for file paths recursively.
     rule_file_paths = collect_rule_file_paths(rule_paths)
 
     # this list is parallel to `rule_file_paths`:
