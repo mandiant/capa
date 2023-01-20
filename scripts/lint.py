@@ -1002,7 +1002,7 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.rules.RuleSet(capa.main.get_rules(args.rules, disable_progress=True))
+        rules = capa.main.get_rules(args.rules, disable_progress=True)
         logger.info("successfully loaded %s rules", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)

@@ -33,6 +33,7 @@ import capa.rules
 import capa.engine
 import capa.version
 import capa.render.json
+import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
 import capa.features.common
@@ -561,7 +562,10 @@ def is_nursery_rule_path(path: str) -> bool:
     return "nursery" in path
 
 
-def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
+def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
+    """
+    collect all rule file paths, including those in subdirectories.
+    """
     rule_file_paths = []
     for rule_path in rule_paths:
         if not os.path.exists(rule_path):
@@ -589,6 +593,23 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
                     rule_path = os.path.join(root, file)
                     rule_file_paths.append(rule_path)
 
+    return rule_file_paths
+
+
+def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
+    rule_file_paths = collect_rule_file_paths(rule_paths)
+
+    # this list is parallel to `rule_file_paths`:
+    # rule_file_paths[i] corresponds to rule_contents[i].
+    rule_contents = []
+    for file_path in rule_file_paths:
+        with open(file_path, "rb") as f:
+            rule_contents.append(f.read())
+
+    ruleset = capa.rules.cache.load_cached_ruleset(rule_contents)
+    if ruleset is not None:
+        return ruleset
+
     rules = []  # type: List[Rule]
 
     pbar = tqdm.tqdm
@@ -597,20 +618,24 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> List[Rule]:
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for rule_file_path in pbar(list(rule_file_paths), desc="loading ", unit=" rules"):
+    for path, content in pbar(zip(rule_file_paths, rule_contents), desc="parsing ", unit=" rules"):
         try:
-            rule = capa.rules.Rule.from_yaml_file(rule_file_path)
+            rule = capa.rules.Rule.from_yaml(content)
         except capa.rules.InvalidRule:
             raise
         else:
-            rule.meta["capa/path"] = rule_file_path
-            if is_nursery_rule_path(rule_file_path):
+            rule.meta["capa/path"] = path
+            if is_nursery_rule_path(path):
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
+            logger.debug("parsed rule: '%s' with scope: %s", rule.name, rule.scope)
 
-    return rules
+    ruleset = capa.rules.RuleSet(rules)
+
+    capa.rules.cache.cache_ruleset(ruleset)
+
+    return ruleset
 
 
 def get_signatures(sigs_path):
@@ -1001,7 +1026,7 @@ def main(argv=None):
             return E_INVALID_FILE_TYPE
 
     try:
-        rules = capa.rules.RuleSet(get_rules(args.rules, disable_progress=args.quiet))
+        rules = get_rules(args.rules, disable_progress=args.quiet)
 
         logger.debug(
             "successfully loaded %s rules",
@@ -1151,7 +1176,7 @@ def ida_main():
 
     rules_path = os.path.join(get_default_root(), "rules")
     logger.debug("rule path: %s", rules_path)
-    rules = capa.rules.RuleSet(get_rules([rules_path]))
+    rules = get_rules([rules_path])
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 

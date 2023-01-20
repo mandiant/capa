@@ -161,7 +161,7 @@ def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
 # ==== render dictionary helpers
 def capa_details(rules_path, file_path, output_format="dictionary"):
     # load rules from disk
-    rules = capa.rules.RuleSet(capa.main.get_rules([rules_path], disable_progress=True))
+    rules = capa.main.get_rules([rules_path], disable_progress=True)
 
     # extract features and find capabilities
     extractor = capa.main.get_extractor(file_path, "auto", capa.main.BACKEND_VIV, [], False, disable_progress=True)
