@@ -5,20 +5,23 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
+import json
+import base64
+import pickle
 import logging
 import datetime
 import contextlib
 
 import idc
+import capa
 import idaapi
 import idautils
 import ida_bytes
 import ida_loader
-
-import capa
 import capa.version
 import capa.features.common
+from netnode import netnode
+from capa.ida.plugin.cache import CapaExplorerRuleSetCache
 
 logger = logging.getLogger("capa")
 
@@ -33,6 +36,10 @@ SUPPORTED_FILE_TYPES = (
 
 # arch type as returned by idainfo.procname
 SUPPORTED_ARCH_TYPES = ("metapc",)
+
+CAPA_NETNODE = "$ com.mandiant.capa"
+NETNODE_RESULTS = "results"
+NETNODE_RULESET = "ruleset"
 
 
 def inform_user_ida_ui(message):
@@ -191,3 +198,33 @@ class IDAIO:
 
     def close(self):
         return
+
+
+def save_results(resdoc, ruleset):
+    n = netnode.Netnode(CAPA_NETNODE)
+    n[NETNODE_RESULTS] = resdoc.json()
+    n[NETNODE_RULESET] = base64.b64encode(pickle.dumps(ruleset)).decode("ascii")
+
+
+def idb_contains_capa_results() -> bool:
+    n = netnode.Netnode(CAPA_NETNODE)
+    return bool(n.get(NETNODE_RESULTS) and n.get(NETNODE_RULESET))
+
+
+def load_results() -> capa.render.result_document.ResultDocument:
+    logger.debug("loading capa results from netnode")
+    n = netnode.Netnode(CAPA_NETNODE)
+    return capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
+
+
+def load_ruleset() -> CapaExplorerRuleSetCache:
+    logger.debug("loading capa ruleset from netnode")
+    n = netnode.Netnode(CAPA_NETNODE)
+    return pickle.loads(base64.b64decode(n[NETNODE_RULESET]))
+
+
+def delete_results():
+    logger.debug("deleting saved capa data")
+    n = netnode.Netnode(CAPA_NETNODE)
+    del n[NETNODE_RESULTS]
+    del n[NETNODE_RULESET]

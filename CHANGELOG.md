@@ -121,6 +121,7 @@
 - verify rule metadata using Pydantic #1167 @mr-tz
 - extractor: make read consistent with file object behavior #1254 @mr-tz
 - fix: UnboundLocalError x2 #1302 @mike-hunhoff
+- store capa results across runs #1279 @mr-tz
 
 ### Development
 
