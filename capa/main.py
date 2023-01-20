@@ -415,7 +415,7 @@ def get_default_root() -> str:
     under PyInstaller, this comes from _MEIPASS.
     under source, this is the root directory of the project.
     """
-    if is_running_standalone():
+    if capa.helpers.is_running_standalone():
         # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
@@ -596,11 +596,13 @@ def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
     return rule_file_paths
 
 
-def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
+def get_rules(rule_paths: List[str], disable_progress=False, cache_dir=None) -> RuleSet:
     """
     args:
       rule_paths: list of paths to rules files or directories containing rules files
     """
+    if cache_dir is None:
+        cache_dir = capa.rules.cache.get_default_cache_directory()
 
     # rule_paths may contain directory paths,
     # so search for file paths recursively.
@@ -613,7 +615,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
         with open(file_path, "rb") as f:
             rule_contents.append(f.read())
 
-    ruleset = capa.rules.cache.load_cached_ruleset(rule_contents)
+    ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
     if ruleset is not None:
         return ruleset
 
@@ -640,7 +642,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
 
     ruleset = capa.rules.RuleSet(rules)
 
-    capa.rules.cache.cache_ruleset(ruleset)
+    capa.rules.cache.cache_ruleset(cache_dir, ruleset)
 
     return ruleset
 
@@ -881,6 +883,9 @@ def handle_common_args(args):
       - rules: file system path to rule files.
       - signatures: file system path to signature files.
 
+    the following field may be added:
+      - is_default_rules: if the default rules were used.
+
     args:
       args (argparse.Namespace): parsed arguments that included at least `install_common_args` args.
     """
@@ -940,6 +945,7 @@ def handle_common_args(args):
                 return E_MISSING_RULES
 
             rules_paths.append(default_rule_path)
+            args.is_default_rules = True
         else:
             rules_paths = args.rules
 
@@ -948,6 +954,8 @@ def handle_common_args(args):
 
             for rule_path in rules_paths:
                 logger.debug("using rules path: %s", rule_path)
+
+            args.is_default_rules = False
 
         args.rules = rules_paths
 
@@ -1034,7 +1042,12 @@ def main(argv=None):
             return E_INVALID_FILE_TYPE
 
     try:
-        rules = get_rules(args.rules, disable_progress=args.quiet)
+        if is_running_standalone() and args.is_default_rules:
+            cache_dir = os.path.join(get_default_root(), "cache")
+        else:
+            cache_dir = capa.rules.cache.get_default_cache_directory()
+
+        rules = get_rules(args.rules, disable_progress=args.quiet, cache_dir=cache_dir)
 
         logger.debug(
             "successfully loaded %s rules",

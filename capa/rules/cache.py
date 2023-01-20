@@ -8,6 +8,7 @@ from typing import List, Optional
 from dataclasses import dataclass
 
 import capa.rules
+import capa.helpers
 import capa.version
 
 logger = logging.getLogger(__name__)
@@ -57,9 +58,9 @@ def get_default_cache_directory() -> str:
     return directory
 
 
-def get_default_cache_path(id: CacheIdentifier) -> str:
+def get_cache_path(cache_dir: str, id: CacheIdentifier) -> str:
     filename = "capa-" + id[:8] + ".cache"
-    return os.path.join(get_default_cache_directory(), filename)
+    return os.path.join(cache_dir, filename)
 
 
 MAGIC = b"capa"
@@ -101,9 +102,9 @@ def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdenti
     return compute_cache_identifier(rule_contents)
 
 
-def cache_ruleset(ruleset: capa.rules.RuleSet):
+def cache_ruleset(cache_dir: str, ruleset: capa.rules.RuleSet):
     id = compute_ruleset_cache_identifier(ruleset)
-    path = get_default_cache_path(id)
+    path = get_cache_path(cache_dir, id)
     if os.path.exists(path):
         logger.debug("rule set already cached to %s", path)
         return
@@ -116,9 +117,9 @@ def cache_ruleset(ruleset: capa.rules.RuleSet):
     return
 
 
-def load_cached_ruleset(rule_contents: List[bytes]) -> Optional[capa.rules.RuleSet]:
+def load_cached_ruleset(cache_dir: str, rule_contents: List[bytes]) -> Optional[capa.rules.RuleSet]:
     id = compute_cache_identifier(rule_contents)
-    path = get_default_cache_path(id)
+    path = get_cache_path(cache_dir, id)
     if not os.path.exists(path):
         logger.debug("rule set cache does not exist: %s", path)
         return None

@@ -47,10 +47,9 @@ def main(argv=None):
         logging.getLogger("capa").setLevel(logging.ERROR)
         logging.getLogger("viv_utils").setLevel(logging.ERROR)
 
-    time0 = time.time()
-
     try:
-        rules = capa.main.get_rules(args.rules, disable_progress=True)
+        os.makedirs(args.cache, exist_ok=True)
+        rules = capa.main.get_rules(args.rules, disable_progress=True, cache_dir=args.cache)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
@@ -58,20 +57,10 @@ def main(argv=None):
 
     content = capa.rules.cache.get_ruleset_content(rules)
     id = capa.rules.cache.compute_cache_identifier(content)
-    path = capa.rules.cache.get_default_cache_path(id)
+    path = capa.rules.cache.get_cache_path(args.cache, id)
 
     assert os.path.exists(path)
-    with open(path, "rb") as f:
-        buf = f.read()
-
-    cache_filename = os.path.basename(path)
-    cache_filepath = os.path.join(args.cache, cache_filename)
-    if os.path.exists(cache_filepath):
-        logger.info("cache file already exists: %s", cache_filepath)
-        return 0
-
-    with open(os.path.join(args.cache, cache_filename), "wb") as f:
-        f.write(buf)
+    logger.info("cached to: %s", path)
 
 
 if __name__ == "__main__":
