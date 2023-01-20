@@ -118,6 +118,9 @@ def fixup_viv(path, extractor):
     if "3b13b" in path:
         # vivisect only recognizes calling thunk function at 0x10001573
         extractor.vw.makeFunction(0x10006860)
+    if "294b8d" in path:
+        # see vivisect/#561
+        extractor.vw.makeFunction(0x404970)
 
 
 @lru_cache(maxsize=1)
@@ -277,6 +280,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_")
     elif name.startswith("bf7a9c"):
         return os.path.join(CD, "data", "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_")
+    elif name.startswith("294b8d"):
+        return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     else:
         raise ValueError("unexpected sample fixture: %s" % name)
 
@@ -627,6 +632,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40105D", capa.features.common.String("ACR  > "), True),
         ("mimikatz", "function=0x40105D", capa.features.common.String("nope"), False),
         ("773290...", "function=0x140001140", capa.features.common.String(r"%s:\\OfficePackagesForWDAG"), True),
+        # overlapping string, see #1271
+        ("294b8d...", "function=0x404970,bb=0x404970,insn=0x40499F", capa.features.common.String("\r\n\x00:ht"), False),
         # insn/regex
         ("pma16-01", "function=0x4021B0", capa.features.common.Regex("HTTP/1.0"), True),
         ("pma16-01", "function=0x402F40", capa.features.common.Regex("www.practicalmalwareanalysis.com"), True),
@@ -682,14 +689,22 @@ FEATURE_PRESENCE_TESTS = sorted(
         # os & format & arch
         ("pma16-01", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "file", OS(OS_LINUX), False),
+        ("mimikatz", "file", OS(OS_WINDOWS), True),
         ("pma16-01", "function=0x404356", OS(OS_WINDOWS), True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", OS(OS_WINDOWS), True),
+        ("mimikatz", "function=0x40105D", OS(OS_WINDOWS), True),
         ("pma16-01", "file", Arch(ARCH_I386), True),
         ("pma16-01", "file", Arch(ARCH_AMD64), False),
+        ("mimikatz", "file", Arch(ARCH_I386), True),
         ("pma16-01", "function=0x404356", Arch(ARCH_I386), True),
         ("pma16-01", "function=0x404356,bb=0x4043B9", Arch(ARCH_I386), True),
+        ("mimikatz", "function=0x40105D", Arch(ARCH_I386), True),
         ("pma16-01", "file", Format(FORMAT_PE), True),
         ("pma16-01", "file", Format(FORMAT_ELF), False),
+        ("mimikatz", "file", Format(FORMAT_PE), True),
+        # format is also a global feature
+        ("pma16-01", "function=0x404356", Format(FORMAT_PE), True),
+        ("mimikatz", "function=0x456BB9", Format(FORMAT_PE), True),
         # elf support
         ("7351f.elf", "file", OS(OS_LINUX), True),
         ("7351f.elf", "file", OS(OS_WINDOWS), False),

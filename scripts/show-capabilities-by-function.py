@@ -175,7 +175,7 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor, format_=format_)
+    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)

@@ -24,6 +24,10 @@ def bold2(s: str) -> str:
     return termcolor.colored(s, "green")
 
 
+def warn(s: str) -> str:
+    return termcolor.colored(s, "yellow")
+
+
 def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     """
     format canonical representation of ATT&CK/MBC parts and ID
