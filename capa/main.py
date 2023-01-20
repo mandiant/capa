@@ -625,7 +625,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for path, content in pbar(zip(rule_file_paths, rule_contents), desc="parsing ", unit=" rules"):
+    for path, content in pbar(zip(rule_file_paths, rule_contents), desc="loading ", unit=" rules"):
         try:
             rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
         except capa.rules.InvalidRule:
@@ -636,7 +636,7 @@ def get_rules(rule_paths: List[str], disable_progress=False) -> RuleSet:
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
-            logger.debug("parsed rule: '%s' with scope: %s", rule.name, rule.scope)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
 
     ruleset = capa.rules.RuleSet(rules)
 
