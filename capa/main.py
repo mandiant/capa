@@ -608,7 +608,7 @@ def get_rules(
     rule_paths: List[RulePath],
     disable_progress=False,
     cache_dir=None,
-    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default
+    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
 ) -> RuleSet:
     """
     args:
