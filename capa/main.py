@@ -627,7 +627,7 @@ def get_rules(rule_paths: List[str], disable_progress=False, cache_dir=None) -> 
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for path, content in pbar(zip(rule_file_paths, rule_contents), desc="loading ", unit=" rules"):
+    for path, content in pbar(list(zip(rule_file_paths, rule_contents)), desc="loading ", unit=" rules"):
         try:
             rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
         except capa.rules.InvalidRule:
