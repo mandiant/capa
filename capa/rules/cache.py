@@ -127,5 +127,13 @@ def load_cached_ruleset(cache_dir: str, rule_contents: List[bytes]) -> Optional[
     logger.debug("loading rule set from cache: %s", path)
     with open(path, "rb") as f:
         buf = f.read()
+
+    try:
         cache = RuleCache.load(buf)
+    except AssertionError:
+        logger.debug("rule set cache is invalid: %s", path)
+        # delete the cache that seems to be invalid.
+        os.remove(path)
+        return None
+    else:
         return cache.ruleset

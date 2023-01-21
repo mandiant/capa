@@ -84,3 +84,32 @@ def test_ruleset_cache_save_load():
     assert os.path.exists(path)
 
     assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is not None
+
+
+def test_ruleset_cache_invalid():
+    rs = capa.rules.RuleSet([R1])
+    content = capa.rules.cache.get_ruleset_content(rs)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    cache_dir = capa.rules.cache.get_default_cache_directory()
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+    capa.rules.cache.cache_ruleset(cache_dir, rs)
+    assert os.path.exists(path)
+
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    # corrupt the magic header
+    buf = b"x" + buf[1:]
+
+    with open(path, "wb") as f:
+        f.write(buf)
+
+    assert os.path.exists(path)
+    assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is None
+    # the invalid cache should be deleted
+    assert not os.path.exists(path)
