@@ -49,7 +49,7 @@ def main(argv=None):
 
     try:
         os.makedirs(args.cache, exist_ok=True)
-        rules = capa.main.get_rules(args.rules, disable_progress=True, cache_dir=args.cache)
+        rules = capa.main.get_rules(args.rules, cache_dir=args.cache)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))

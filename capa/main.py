@@ -606,14 +606,12 @@ def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
 
 def get_rules(
     rule_paths: List[RulePath],
-    disable_progress=False,
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
 ) -> RuleSet:
     """
     args:
       rule_paths: list of paths to rules files or directories containing rules files
-      disable_progress: disable progress bar
       cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
       on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
     """
@@ -637,14 +635,8 @@ def get_rules(
 
     rules = []  # type: List[Rule]
 
-    pbar = tqdm.tqdm
-    if disable_progress:
-        # do not use tqdm to avoid unnecessary side effects when caller intends
-        # to disable progress completely
-        pbar = lambda s, *args, **kwargs: s
-
     total_rule_count = len(rule_file_paths)
-    for i, (path, content) in pbar(list(enumerate(zip(rule_file_paths, rule_contents))), desc="loading ", unit=" rules"):
+    for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
         on_load_rule(path, i, total_rule_count)
 
         try:
@@ -1066,7 +1058,7 @@ def main(argv=None):
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = get_rules(args.rules, disable_progress=args.quiet, cache_dir=cache_dir)
+        rules = get_rules(args.rules, cache_dir=cache_dir)
 
         logger.debug(
             "successfully loaded %s rules",
