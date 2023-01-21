@@ -644,7 +644,7 @@ def get_rules(
         pbar = lambda s, *args, **kwargs: s
 
     total_rule_count = len(rule_file_paths)
-    for i, path, content in pbar(list(enumerate(zip(rule_file_paths, rule_contents))), desc="loading ", unit=" rules"):
+    for i, (path, content) in pbar(list(enumerate(zip(rule_file_paths, rule_contents))), desc="loading ", unit=" rules"):
         on_load_rule(path, i, total_rule_count)
 
         try:
