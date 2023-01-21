@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable
 
 import halo
 import tqdm
@@ -596,7 +596,20 @@ def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
     return rule_file_paths
 
 
-def get_rules(rule_paths: List[str], disable_progress=False, cache_dir=None) -> RuleSet:
+# TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
+RulePath = str
+
+
+def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
+    return
+
+
+def get_rules(
+    rule_paths: List[RulePath],
+    disable_progress=False,
+    cache_dir=None,
+    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default
+) -> RuleSet:
     """
     args:
       rule_paths: list of paths to rules files or directories containing rules files
@@ -627,7 +640,10 @@ def get_rules(rule_paths: List[str], disable_progress=False, cache_dir=None) -> 
         # to disable progress completely
         pbar = lambda s, *args, **kwargs: s
 
-    for path, content in pbar(list(zip(rule_file_paths, rule_contents)), desc="loading ", unit=" rules"):
+    total_rule_count = len(rule_file_paths)
+    for i, path, content in pbar(list(enumerate(zip(rule_file_paths, rule_contents))), desc="loading ", unit=" rules"):
+        on_load_rule(path, i, total_rule_count)
+
         try:
             rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
         except capa.rules.InvalidRule:
