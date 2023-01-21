@@ -1,5 +1,7 @@
 """
 Create a cache of the given rules.
+This is only really intended to be used by CI to pre-cache rulesets 
+that will be distributed within PyInstaller binaries.
 
 Usage:
 
