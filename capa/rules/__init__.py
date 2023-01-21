@@ -1081,6 +1081,14 @@ class RuleSet:
 
         ensure_rules_are_unique(rules)
 
+        # in the next step we extract subscope rules,
+        # which may inflate the number of rules tracked in this ruleset.
+        # so record number of rules initially provided to this ruleset.
+        #
+        # this number is really only meaningful to the user,
+        # who may compare it against the number of files on their file system.
+        self.source_rule_count = len(rules)
+
         rules = self._extract_subscope_rules(rules)
 
         ensure_rule_dependencies_are_met(rules)
