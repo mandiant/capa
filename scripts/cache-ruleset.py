@@ -44,7 +44,6 @@ def main(argv=None):
         logging.getLogger("capa").setLevel(logging.DEBUG)
     else:
         logging.getLogger("capa").setLevel(logging.ERROR)
-        logging.getLogger("viv_utils").setLevel(logging.ERROR)
 
     try:
         os.makedirs(args.cache, exist_ok=True)
