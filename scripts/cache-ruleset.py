@@ -42,7 +42,6 @@ def main(argv=None):
 
     if args.debug:
         logging.getLogger("capa").setLevel(logging.DEBUG)
-        logging.getLogger("viv_utils").setLevel(logging.DEBUG)
     else:
         logging.getLogger("capa").setLevel(logging.ERROR)
         logging.getLogger("viv_utils").setLevel(logging.ERROR)
