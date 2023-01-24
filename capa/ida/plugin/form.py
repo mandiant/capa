@@ -151,8 +151,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         layout.addRow("Default rule scope", self.edit_rule_scope)
         layout.addRow("Plugin start option", self.edit_analyze)
 
-        if capa.ida.helpers.idb_contains_capa_results():
-            self.edit_delete_results.clicked.connect(capa.ida.helpers.delete_results)
+        if capa.ida.helpers.idb_contains_cached_results():
+            self.edit_delete_results.clicked.connect(capa.ida.helpers.delete_cached_results)
             self.edit_delete_results.clicked.connect(lambda state: self.edit_delete_results.setEnabled(False))
         else:
             self.edit_delete_results.setEnabled(False)
@@ -659,12 +659,12 @@ class CapaExplorerForm(idaapi.PluginForm):
         wait box
         """
         if analyze != OPTION_UNDEFINED and analyze != Options.DEFAULT:
-            if capa.ida.helpers.idb_contains_capa_results():
+            if capa.ida.helpers.idb_contains_cached_results():
                 if analyze == Options.ANALYZE_AUTO:
                     load_existing = True
                 elif analyze == Options.ANALYZE_ASK:
                     self.set_view_result_store_label("")
-                    results: capa.render.result_document.ResultDocument = capa.ida.helpers.load_results()
+                    results: capa.render.result_document.ResultDocument = capa.ida.helpers.load_cached_results()
                     btn_id = ida_kernwin.ask_buttons(
                         "Load existing results",
                         "Reanalyze program",
@@ -683,8 +683,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 if load_existing:
                     # TODO try/catch
-                    self.resdoc_cache = capa.ida.helpers.load_results()
-                    self.ruleset_cache = capa.ida.helpers.load_ruleset()
+                    self.resdoc_cache = capa.ida.helpers.load_cached_results()
+                    self.ruleset_cache = capa.ida.helpers.load_cached_ruleset()
                     self.set_view_result_store_label("loaded existing capa results from database")
 
                     self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
@@ -801,7 +801,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             # persist data across IDA runs
             try:
-                capa.ida.helpers.save_results(self.resdoc_cache, self.ruleset_cache)
+                capa.ida.helpers.save_cached_results(self.resdoc_cache, self.ruleset_cache)
                 self.set_view_result_store_label("saved capa results to database")
             except Exception as e:
                 self.set_view_result_store_label(
@@ -1311,7 +1311,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_status_label.setText(text)
 
     def update_result_store_label(self):
-        if capa.ida.helpers.idb_contains_capa_results():
+        if capa.ida.helpers.idb_contains_cached_results():
             text = "Database contains capa results"
         else:
             text = "Database does not contain capa results"

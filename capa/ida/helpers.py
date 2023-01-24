@@ -37,7 +37,7 @@ SUPPORTED_FILE_TYPES = (
 # arch type as returned by idainfo.procname
 SUPPORTED_ARCH_TYPES = ("metapc",)
 
-CAPA_NETNODE = "$ com.mandiant.capa"
+CAPA_NETNODE = f"$ com.mandiant.capa.{capa.version.__version__}"
 NETNODE_RESULTS = "results"
 NETNODE_RULESET = "ruleset"
 
@@ -200,31 +200,31 @@ class IDAIO:
         return
 
 
-def save_results(resdoc, ruleset):
+def save_cached_results(resdoc, ruleset):
     n = netnode.Netnode(CAPA_NETNODE)
     n[NETNODE_RESULTS] = resdoc.json()
     n[NETNODE_RULESET] = base64.b64encode(pickle.dumps(ruleset)).decode("ascii")
 
 
-def idb_contains_capa_results() -> bool:
+def idb_contains_cached_results() -> bool:
     n = netnode.Netnode(CAPA_NETNODE)
     return bool(n.get(NETNODE_RESULTS) and n.get(NETNODE_RULESET))
 
 
-def load_results() -> capa.render.result_document.ResultDocument:
-    logger.debug("loading capa results from netnode")
+def load_cached_results() -> capa.render.result_document.ResultDocument:
+    logger.debug("loading cached capa results from netnode")
     n = netnode.Netnode(CAPA_NETNODE)
     return capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
 
 
-def load_ruleset() -> CapaExplorerRuleSetCache:
-    logger.debug("loading capa ruleset from netnode")
+def load_cached_ruleset() -> CapaExplorerRuleSetCache:
+    logger.debug("loading cached capa ruleset from netnode")
     n = netnode.Netnode(CAPA_NETNODE)
     return pickle.loads(base64.b64decode(n[NETNODE_RULESET]))
 
 
-def delete_results():
-    logger.debug("deleting saved capa data")
+def delete_cached_results():
+    logger.debug("deleting cached capa data")
     n = netnode.Netnode(CAPA_NETNODE)
     del n[NETNODE_RESULTS]
     del n[NETNODE_RULESET]
