@@ -31,7 +31,6 @@ from capa.features.common import (
     Substring,
     FeatureAccess,
 )
-from capa.features.address import AbsoluteVirtualAddress
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
 ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)

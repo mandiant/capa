@@ -709,9 +709,8 @@ def main(argv=None):
     logging.getLogger("capa2yara").setLevel(level)
 
     try:
-        rules_ = capa.main.get_rules([args.rules], disable_progress=True)
-        namespaces = capa.rules.index_rules_by_namespace(rules_)
-        rules = capa.rules.RuleSet(rules_)
+        rules = capa.main.get_rules([args.rules])
+        namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
         logger.info("successfully loaded %s rules (including subscope rules which will be ignored)", len(rules))
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)

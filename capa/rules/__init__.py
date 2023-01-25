@@ -743,7 +743,7 @@ class Rule:
         return self.statement.evaluate(features, short_circuit=short_circuit)
 
     @classmethod
-    def from_dict(cls, d, definition) -> "Rule":
+    def from_dict(cls, d: Dict[str, Any], definition: str) -> "Rule":
         meta = d["rule"]["meta"]
         name = meta["name"]
         # if scope is not specified, default to function scope.
@@ -813,7 +813,7 @@ class Rule:
         return y
 
     @classmethod
-    def from_yaml(cls, s, use_ruamel=False) -> "Rule":
+    def from_yaml(cls, s: str, use_ruamel=False) -> "Rule":
         if use_ruamel:
             # ruamel enables nice formatting and doc roundtripping with comments
             doc = cls._get_ruamel_yaml_parser().load(s)
@@ -1080,6 +1080,14 @@ class RuleSet:
         super().__init__()
 
         ensure_rules_are_unique(rules)
+
+        # in the next step we extract subscope rules,
+        # which may inflate the number of rules tracked in this ruleset.
+        # so record number of rules initially provided to this ruleset.
+        #
+        # this number is really only meaningful to the user,
+        # who may compare it against the number of files on their file system.
+        self.source_rule_count = len(rules)
 
         rules = self._extract_subscope_rules(rules)
 

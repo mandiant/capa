@@ -13,6 +13,7 @@
 - dotnet: emit namespace/class features for type references #1242 @mike-hunhoff
 - dotnet: extract dotnet and pe format #1187 @mr-tz
 - don't render all library rule matches in vverbose output #1174 @mr-tz
+- cache the rule set across invocations for better performance #1212 @williballenthin
 
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin

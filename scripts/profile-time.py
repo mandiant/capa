@@ -88,7 +88,7 @@ def main(argv=None):
 
     try:
         with capa.main.timing("load rules"):
-            rules = capa.rules.RuleSet(capa.main.get_rules(args.rules, disable_progress=True))
+            rules = capa.main.get_rules(args.rules)
     except (IOError) as e:
         logger.error("%s", str(e))
         return -1

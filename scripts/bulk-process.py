@@ -152,7 +152,7 @@ def main(argv=None):
         capa.main.handle_common_args(args)
 
         try:
-            rules = capa.rules.RuleSet(capa.main.get_rules(args.rules))
+            rules = capa.main.get_rules(args.rules)
             logger.info("successfully loaded %s rules", len(rules))
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             logger.error("%s", str(e))

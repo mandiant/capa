@@ -917,12 +917,11 @@ def lint(ctx: Context):
     """
     ret = {}
 
-    with tqdm.contrib.logging.tqdm_logging_redirect(ctx.rules.rules.items(), unit="rule") as pbar:
+    source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
+    with tqdm.contrib.logging.tqdm_logging_redirect(source_rules, unit="rule") as pbar:
         with redirecting_print_to_tqdm():
-            for name, rule in pbar:
-                if rule.is_subscope_rule():
-                    continue
-
+            for rule in pbar:
+                name = rule.name
                 pbar.set_description(width("linting rule: %s" % (name), 48))
                 ret[name] = lint_rule(ctx, rule)
 
@@ -998,8 +997,8 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.rules.RuleSet(capa.main.get_rules(args.rules, disable_progress=True))
-        logger.info("successfully loaded %s rules", len(rules))
+        rules = capa.main.get_rules(args.rules)
+        logger.info("successfully loaded %s rules", rules.source_rule_count)
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
             logger.debug("selected %s rules", len(rules))
