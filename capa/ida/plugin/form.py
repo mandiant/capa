@@ -1000,6 +1000,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         # we must create a deep copy of rules because any rule matching operations modify the original rule
+        # the ruleset may derive subscope rules from the source rules loaded from disk.
+        # by ignoring them, we reconstruct the collection of rules provided by the user.
         rules = copy.deepcopy([r for r in self.ruleset_cache.rules.values() if not r.is_subscope_rule()])
         rules.append(rule)
 
