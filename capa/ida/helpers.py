@@ -13,14 +13,15 @@ import datetime
 import contextlib
 
 import idc
-import capa
 import idaapi
 import idautils
 import ida_bytes
 import ida_loader
+from netnode import netnode
+
+import capa
 import capa.version
 import capa.features.common
-from netnode import netnode
 from capa.ida.plugin.cache import CapaExplorerRuleSetCache
 
 logger = logging.getLogger("capa")
@@ -37,7 +38,7 @@ SUPPORTED_FILE_TYPES = (
 # arch type as returned by idainfo.procname
 SUPPORTED_ARCH_TYPES = ("metapc",)
 
-CAPA_NETNODE = f"$ com.mandiant.capa.{capa.version.__version__}"
+CAPA_NETNODE = f"$ com.mandiant.capa.v{capa.version.__version__}"
 NETNODE_RESULTS = "results"
 NETNODE_RULESET = "ruleset"
 
@@ -201,6 +202,7 @@ class IDAIO:
 
 
 def save_cached_results(resdoc, ruleset):
+    logger.debug("saving cached capa results to netnode '%s'", CAPA_NETNODE)
     n = netnode.Netnode(CAPA_NETNODE)
     n[NETNODE_RESULTS] = resdoc.json()
     n[NETNODE_RULESET] = base64.b64encode(pickle.dumps(ruleset)).decode("ascii")
@@ -208,11 +210,15 @@ def save_cached_results(resdoc, ruleset):
 
 def idb_contains_cached_results() -> bool:
     n = netnode.Netnode(CAPA_NETNODE)
-    return bool(n.get(NETNODE_RESULTS) and n.get(NETNODE_RULESET))
+    try:
+        return bool(n.get(NETNODE_RESULTS) and n.get(NETNODE_RULESET))
+    except netnode.NetnodeCorruptError as e:
+        logger.error("%s", e, exc_info=True)
+        return False
 
 
 def load_cached_results() -> capa.render.result_document.ResultDocument:
-    logger.debug("loading cached capa results from netnode")
+    logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
     n = netnode.Netnode(CAPA_NETNODE)
     return capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
 
