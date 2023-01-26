@@ -44,8 +44,12 @@ You can install capa explorer using the following steps:
    1. Use the following command to view the version of capa you have installed:
    ```commandline
     $ pip show flare-capa
+    OR
+    $ capa --version
     ```
 3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
+   - find your plugin directories via `idaapi.get_ida_subdirs("plugins")` or see this [Hex-Rays blog](https://hex-rays.com/blog/igors-tip-of-the-week-103-sharing-plugins-between-ida-installs/)
+   - common paths are `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `$HOME/.idapro/plugins on Linux/Mac`
 
 ### Supported File Types
 
@@ -70,8 +74,9 @@ can update using the `Settings` button.
 #### Tips for Program Analysis
 
 * Start analysis by clicking the `Analyze` button
+  * capa explorer caches results to the database and reuses them across IDA sessions 
 * Reset the plugin user interface and remove highlighting from your Disassembly view by clicking the `Reset` button
-* Change your local capa rules directory and other default settings by clicking the `Settings` button
+* Change your local capa rules directory, auto analysis settings, and other default settings by clicking the `Settings` button
 * Hover your cursor over a rule match to view the source content of the rule
 * Double-click the `Address` column to navigate your Disassembly view to the address of the associated feature
 * Double-click a result in the `Rule Information` column to expand its children
