@@ -125,7 +125,10 @@ class MitreExtractor:
         data: Dict[str, Dict[str, str]] = {}
         for tactic in self._get_tactics():
             data[tactic["name"]] = {}
-            for technique in self._get_techniques_from_tactic(tactic["x_mitre_shortname"]):
+            for technique in sorted(
+                self._get_techniques_from_tactic(tactic["x_mitre_shortname"]),
+                key=lambda x: x["external_references"][0]["external_id"],
+            ):
                 tid = technique["external_references"][0]["external_id"]
                 technique_name = technique["name"].split("::")[0]
                 if technique["x_mitre_is_subtechnique"]:

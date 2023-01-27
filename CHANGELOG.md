@@ -14,6 +14,7 @@
 - dotnet: extract dotnet and pe format #1187 @mr-tz
 - don't render all library rule matches in vverbose output #1174 @mr-tz
 - cache the rule set across invocations for better performance #1212 @williballenthin
+- update ATT&CK/MBC data for linting #1297 @mr-tz
 
 ### Breaking Changes
 - remove SMDA backend #1062 @williballenthin
