@@ -19,7 +19,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (63)
+### New Rules (65)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -81,6 +81,8 @@
 - nursery/hash-data-using-whirlpool william.ballenthin@mandiant.com
 - nursery/reference-base58-string william.ballenthin@mandiant.com
 - communication/mailslot/create-mailslot william.ballenthin@mandiant.com
+- executable/resource/access-dotnet-resource @mr-tz
+- linking/static/linked-against-cpp-standard-library @mr-tz
 -
 
 ### Bug Fixes
