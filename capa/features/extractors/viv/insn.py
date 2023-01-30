@@ -676,7 +676,7 @@ def extract_op_string_features(
         except ValueError:
             continue
         else:
-            if len(s) > 4:
+            if len(s) >= 4:
                 yield String(s), ih.address
 
 
