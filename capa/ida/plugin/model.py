@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Set, Dict, List, Tuple
+from typing import Set, Dict, List, Tuple, Optional
 from collections import deque
 
 import idc
@@ -444,8 +444,8 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             self.render_capa_doc_match(parent2, child, doc)
 
     def render_capa_doc_by_function(self, doc: rd.ResultDocument):
-        """ """
-        matches_by_function: Dict[int, Tuple[CapaExplorerFunctionItem, Set[str]]] = {}
+        """render rule matches by function meaning each rule match is nested under function where it was found"""
+        matches_by_function: Dict[AbsoluteVirtualAddress, Tuple[CapaExplorerFunctionItem, Set[str]]] = {}
         for rule in rutils.capability_rules(doc):
             for location_, _ in rule.matches:
                 location = location_.to_capa()
@@ -453,25 +453,31 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 if not isinstance(location, AbsoluteVirtualAddress):
                     # only handle matches with a VA
                     continue
-                ea = int(location)
 
-                ea = capa.ida.helpers.get_func_start_ea(ea)
-                if ea is None:
-                    # file scope, skip rendering in this mode
+                func_ea: Optional[int] = capa.ida.helpers.get_func_start_ea(int(location))
+                if func_ea is None:
+                    # rule match address is not located in a defined function
                     continue
-                if not matches_by_function.get(ea, ()):
-                    # new function root
-                    matches_by_function[ea] = (
-                        CapaExplorerFunctionItem(self.root_node, location, can_check=False),
+
+                func_address: AbsoluteVirtualAddress = AbsoluteVirtualAddress(func_ea)
+                if not matches_by_function.get(func_address, ()):
+                    # create a new function root to nest its rule matches; Note: we must use the address of the
+                    # function here so everything is displayed properly
+                    matches_by_function[func_address] = (
+                        CapaExplorerFunctionItem(self.root_node, func_address, can_check=False),
                         set(),
                     )
-                function_root, match_cache = matches_by_function[ea]
-                if rule.meta.name in match_cache:
-                    # rule match already rendered for this function root, skip it
+
+                func_root, func_match_cache = matches_by_function[func_address]
+                if rule.meta.name in func_match_cache:
+                    # only nest each rule once, so if found, skip
                     continue
-                match_cache.add(rule.meta.name)
+
+                # add matched rule to its function cache; create a new rule node whose parent is the matched
+                # function node
+                func_match_cache.add(rule.meta.name)
                 CapaExplorerRuleItem(
-                    function_root,
+                    func_root,
                     rule.meta.name,
                     rule.meta.namespace or "",
                     len(rule.matches),

@@ -526,9 +526,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.model_data.reset()
 
     def ensure_capa_settings_rule_path(self):
+        path: str
+
         try:
+            path = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+
             # resolve rules directory - check self and settings first, then ask user
-            if not os.path.exists(settings.user.get(CAPA_SETTINGS_RULE_PATH, "")):
+            if not os.path.exists(path):
                 # configure rules selection messagebox
                 rules_message = QtWidgets.QMessageBox()
                 rules_message.setIcon(QtWidgets.QMessageBox.Information)
@@ -566,6 +570,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
 
+        path = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
         if not os.path.exists(path):
             logger.error("rule path %s does not exist or cannot be accessed" % path)
             return False
@@ -580,7 +585,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         rule_path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
         try:
 
-            def on_load_rule(rule_path, i, total):
+            def on_load_rule(_, i, total):
                 update_wait_box("loading capa rules from %s (%d of %d)" % (rule_path, i, total))
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
@@ -723,10 +728,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             # either the results are cached and the doc already exists,
             # or the doc was just created above
             assert self.resdoc_cache is not None
+            assert self.ruleset_cache is not None
 
             self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
-                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], ruleset.source_rule_count)
+                "capa rules: %s (%d rules)"
+                % (settings.user[CAPA_SETTINGS_RULE_PATH], self.ruleset_cache.source_rule_count)
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
