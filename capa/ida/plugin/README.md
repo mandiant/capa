@@ -49,7 +49,7 @@ You can install capa explorer using the following steps:
     ```
 3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory
    - find your plugin directories via `idaapi.get_ida_subdirs("plugins")` or see this [Hex-Rays blog](https://hex-rays.com/blog/igors-tip-of-the-week-103-sharing-plugins-between-ida-installs/)
-   - common paths are `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `$HOME/.idapro/plugins on Linux/Mac`
+   - common paths are `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `$HOME/.idapro/plugins` on Linux/Mac
 
 ### Supported File Types
 

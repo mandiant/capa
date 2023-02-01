@@ -21,6 +21,7 @@ import capa
 import capa.version
 import capa.render.utils as rutils
 import capa.features.common
+import capa.render.result_document
 from capa.features.address import AbsoluteVirtualAddress
 
 logger = logging.getLogger("capa")
@@ -39,6 +40,7 @@ SUPPORTED_ARCH_TYPES = ("metapc",)
 
 CAPA_NETNODE = f"$ com.mandiant.capa.v{capa.version.__version__}"
 NETNODE_RESULTS = "results"
+NETNODE_RULES_CACHE_ID = "rules-cache-id"
 
 
 def inform_user_ida_ui(message):
@@ -199,25 +201,27 @@ class IDAIO:
         return
 
 
-def save_cached_results(resdoc, ruleset):
+def save_cached_results(resdoc):
     logger.debug("saving cached capa results to netnode '%s'", CAPA_NETNODE)
     n = netnode.Netnode(CAPA_NETNODE)
     n[NETNODE_RESULTS] = resdoc.json()
 
 
 def idb_contains_cached_results() -> bool:
-    """also verifies that cached results are valid addresses"""
-    n = netnode.Netnode(CAPA_NETNODE)
     try:
-        results = n.get(NETNODE_RESULTS)
+        n = netnode.Netnode(CAPA_NETNODE)
+        return bool(n.get(NETNODE_RESULTS))
     except netnode.NetnodeCorruptError as e:
         logger.error("%s", e, exc_info=True)
         return False
 
-    if not results:
-        return False
 
-    doc = load_cached_results()
+def load_cached_results() -> capa.render.result_document.ResultDocument:
+    """verifies that cached results have valid addresses for the current database"""
+    logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
+    n = netnode.Netnode(CAPA_NETNODE)
+    doc = capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
+
     for rule in rutils.capability_rules(doc):
         for location_, _ in rule.matches:
             location = location_.to_capa()
@@ -225,16 +229,20 @@ def idb_contains_cached_results() -> bool:
                 ea = int(location)
                 if not idaapi.is_mapped(ea):
                     inform_user_ida_ui("Cached results appear to be invalid, please reanalyze program")
-                    logger.error("0x%x is not a valid location in this database", ea)
-                    return False
+                    raise ValueError(f"0x{ea:x} is not a valid location in this database")
 
-    return True
+    return doc
 
 
-def load_cached_results() -> capa.render.result_document.ResultDocument:
-    logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
+def save_rules_cache_id(ruleset_id):
+    logger.debug("saving ruleset ID to netnode '%s'", CAPA_NETNODE)
     n = netnode.Netnode(CAPA_NETNODE)
-    return capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
+    n[NETNODE_RULES_CACHE_ID] = ruleset_id
+
+
+def load_rules_cache_id():
+    n = netnode.Netnode(CAPA_NETNODE)
+    return n[NETNODE_RULES_CACHE_ID]
 
 
 def delete_cached_results():

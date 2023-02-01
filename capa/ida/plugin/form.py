@@ -28,6 +28,7 @@ import capa.render.result_document
 import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
+from capa.rules.cache import compute_ruleset_cache_identifier
 from capa.ida.plugin.icon import QICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
@@ -138,7 +139,8 @@ class CapaSettingsInputDialog(QtWidgets.QDialog):
         self.edit_rule_scope.setCurrentIndex(scopes.index(settings.user.get(CAPA_SETTINGS_RULEGEN_SCOPE, "function")))
 
         self.edit_analyze.addItems(AnalyzeOptionsText.values())
-        self.edit_analyze.setCurrentIndex(settings.user.get(CAPA_SETTINGS_ANALYZE, Options.ANALYZE_AUTO))
+        # set the default analysis option here
+        self.edit_analyze.setCurrentIndex(settings.user.get(CAPA_SETTINGS_ANALYZE, Options.NO_ANALYSIS))
 
         buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, self)
 
@@ -285,6 +287,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.load_result_cache_label()
         self.load_view_buttons()
 
+        # reset on tab change program analysis/rule generator
+        self.view_tabs.currentChanged.connect(lambda s: self.set_view_result_cache_label(""))
+
         # load parent view
         self.load_view_parent()
 
@@ -325,7 +330,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_view_buttons(self):
         """load the button controls"""
-        analyze_button = QtWidgets.QPushButton("Analyze/Load")
+        analyze_button = QtWidgets.QPushButton("Analyze")
         reset_button = QtWidgets.QPushButton("Reset selections/highlights")
         save_button = QtWidgets.QPushButton("Save")
         settings_button = QtWidgets.QPushButton("Settings")
@@ -649,18 +654,30 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         return None
 
-    def load_capa_results(self, use_cache, load_existing):
+    def load_capa_results(self, use_volatile_cache, use_persistent_cache):
         """run capa analysis and render results in UI
 
         note: this function must always return, exception or not, in order for plugin to safely close the IDA
         wait box
         """
-        if load_existing:
+        if use_persistent_cache:
             try:
+                update_wait_box("loading rules")
+                if not self.load_capa_rules():
+                    return False
+                assert self.ruleset_cache is not None
+
+                if compute_ruleset_cache_identifier(self.ruleset_cache) != capa.ida.helpers.load_rules_cache_id():
+                    logger.error(
+                        "The ruleset cache and the local rule definitions differ. Please reanalyze the program."
+                    )
+                    return False
+
+                update_wait_box("rendering cached results")
                 self.resdoc_cache = capa.ida.helpers.load_cached_results()
                 self.set_view_status_label("")
                 self.set_view_result_cache_label(
-                    f"loaded existing capa results from database (generated on {self.resdoc_cache.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')})"
+                    f"Loaded existing capa results from database (generated on {self.resdoc_cache.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')})"
                 )
                 self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
                 return True
@@ -668,7 +685,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 logger.error("Failed to load cached capa results (error: %s).", e, exc_info=True)
                 return False
 
-        if not use_cache:
+        elif not use_volatile_cache:
             # new analysis, new doc
             self.set_view_status_label("Loading...")
             self.resdoc_cache = None
@@ -776,7 +793,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             # cache results across IDA sessions
             try:
-                capa.ida.helpers.save_cached_results(self.resdoc_cache, self.ruleset_cache)
+                capa.ida.helpers.save_cached_results(self.resdoc_cache)
+                ruleset_id = compute_ruleset_cache_identifier(ruleset)
+                capa.ida.helpers.save_rules_cache_id(ruleset_id)
                 self.set_view_result_cache_label("Saved cached results to database")
             except Exception as e:
                 self.set_view_result_cache_label(
@@ -812,32 +831,16 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.view_search_bar.setText("")
         self.view_tree.reset_ui()
 
-    def analyze_program(self, use_cache=False, analyze=Options.ANALYZE_ASK):
+    def analyze_program(self, use_volatile_cache=False, analyze=Options.ANALYZE_ASK):
         """ """
-        load_existing = False
-        if analyze and analyze != Options.NO_ANALYSIS:
-            if capa.ida.helpers.idb_contains_cached_results():
-                if analyze == Options.ANALYZE_AUTO:
-                    load_existing = True
-                elif analyze == Options.ANALYZE_ASK:
-                    self.set_view_status_label("")
-                    self.set_view_result_cache_label("")
-                    results: capa.render.result_document.ResultDocument = capa.ida.helpers.load_cached_results()
-                    btn_id = ida_kernwin.ask_buttons(
-                        "Load existing results",
-                        "Reanalyze program",
-                        "",
-                        ida_kernwin.ASKBTN_YES,
-                        f"This database contains capa results generated on "
-                        f"{results.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')}.\n"
-                        f"Load existing data or analyze program again?",
-                    )
-                    if btn_id == ida_kernwin.ASKBTN_CANCEL:
-                        return
-                    load_existing = btn_id == ida_kernwin.ASKBTN_YES
-                else:
-                    logger.error("Unknown analysis option", exc_info=True)
-                    capa.ida.helpers.inform_user_ida_ui("Failed to analyze")
+        # determine cache handling before model/view is reset in case user cancels
+        if use_volatile_cache:
+            use_persistent_cache = False
+        else:
+            try:
+                use_persistent_cache = self.get_ask_use_persistent_cache(analyze)
+            except UserCancelledError:
+                return
 
         self.range_model_proxy.invalidate()
         self.search_model_proxy.invalidate()
@@ -845,7 +848,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.clear()
 
         ida_kernwin.show_wait_box("capa explorer")
-        success = self.load_capa_results(use_cache, load_existing)
+        success = self.load_capa_results(use_volatile_cache, use_persistent_cache)
         ida_kernwin.hide_wait_box()
 
         self.reset_view_tree()
@@ -853,6 +856,38 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not success:
             self.set_view_status_label("Click Analyze to get started...")
             capa.ida.helpers.inform_user_ida_ui("Failed to load capabilities")
+
+    def get_ask_use_persistent_cache(self, analyze):
+        if analyze and analyze != Options.NO_ANALYSIS:
+            if capa.ida.helpers.idb_contains_cached_results():
+                if analyze == Options.ANALYZE_AUTO:
+                    return True
+                elif analyze == Options.ANALYZE_ASK:
+                    update_wait_box("Verifying results cache")
+                    self.set_view_status_label("")
+                    self.set_view_result_cache_label("")
+                    try:
+                        results: capa.render.result_document.ResultDocument = capa.ida.helpers.load_cached_results()
+                    except ValueError as e:
+                        logger.error("Failed to load cached results: %s", e)
+                        return False
+                    else:
+                        btn_id = ida_kernwin.ask_buttons(
+                            "Load existing results",
+                            "Reanalyze program",
+                            "",
+                            ida_kernwin.ASKBTN_YES,
+                            f"This database contains capa results generated on "
+                            f"{results.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')}.\n"
+                            f"Load existing data or analyze program again?",
+                        )
+                        if btn_id == ida_kernwin.ASKBTN_CANCEL:
+                            raise UserCancelledError
+                        return btn_id == ida_kernwin.ASKBTN_YES
+                else:
+                    logger.error("Unknown analysis option", exc_info=True)
+                    capa.ida.helpers.inform_user_ida_ui("Failed to analyze")
+        return False
 
     def load_capa_function_results(self):
         """ """
@@ -1251,7 +1286,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param state: checked state
         """
         if self.resdoc_cache is not None:
-            self.analyze_program(use_cache=True)
+            self.analyze_program(use_volatile_cache=True)
 
     def limit_results_to_function(self, f):
         """add filter to limit results to current function
