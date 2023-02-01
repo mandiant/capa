@@ -645,7 +645,6 @@ def get_rules(
             raise
         else:
             rule.meta["capa/path"] = path
-
             if is_nursery_rule_path(path):
                 rule.meta["capa/nursery"] = True
 
