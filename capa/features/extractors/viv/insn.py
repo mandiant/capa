@@ -271,6 +271,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
 
+            if f.vw.isProbablyString(v):
+                # don't extract byte features for obvious strings
+                continue
+
             yield Bytes(buf), ih.address
 
 
@@ -676,7 +680,7 @@ def extract_op_string_features(
         except ValueError:
             continue
         else:
-            if len(s) > 4:
+            if len(s) >= 4:
                 yield String(s), ih.address
 
 

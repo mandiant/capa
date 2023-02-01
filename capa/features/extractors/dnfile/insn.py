@@ -191,7 +191,8 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
     if user_string is None:
         return
 
-    yield String(user_string), ih.address
+    if len(user_string) >= 4:
+        yield String(user_string), ih.address
 
 
 def extract_unmanaged_call_characteristic_features(
