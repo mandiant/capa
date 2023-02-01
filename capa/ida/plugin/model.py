@@ -447,14 +447,16 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """render rule matches by function meaning each rule match is nested under function where it was found"""
         matches_by_function: Dict[AbsoluteVirtualAddress, Tuple[CapaExplorerFunctionItem, Set[str]]] = {}
         for rule in rutils.capability_rules(doc):
-            for location_, _ in rule.matches:
-                location = location_.to_capa()
+            match_eas: List[int] = []
 
-                if not isinstance(location, AbsoluteVirtualAddress):
-                    # only handle matches with a VA
-                    continue
+            # initial pass of rule matches
+            for (addr_, _) in rule.matches:
+                addr: Address = addr_.to_capa()
+                if isinstance(addr, AbsoluteVirtualAddress):
+                    match_eas.append(int(addr))
 
-                func_ea: Optional[int] = capa.ida.helpers.get_func_start_ea(int(location))
+            for ea in match_eas:
+                func_ea: Optional[int] = capa.ida.helpers.get_func_start_ea(ea)
                 if func_ea is None:
                     # rule match address is not located in a defined function
                     continue
@@ -480,7 +482,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                     func_root,
                     rule.meta.name,
                     rule.meta.namespace or "",
-                    len(rule.matches),
+                    len([ea for ea in match_eas if capa.ida.helpers.get_func_start_ea(ea) == func_ea]),
                     rule.source,
                     can_check=False,
                 )

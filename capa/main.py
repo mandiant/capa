@@ -637,7 +637,7 @@ def get_rules(
 
     total_rule_count = len(rule_file_paths)
     for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
-        on_load_rule(path, i + 1, total_rule_count)
+        on_load_rule(path, i, total_rule_count)
 
         try:
             rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
@@ -645,6 +645,7 @@ def get_rules(
             raise
         else:
             rule.meta["capa/path"] = path
+
             if is_nursery_rule_path(path):
                 rule.meta["capa/nursery"] = True
 

@@ -160,7 +160,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         # caches used to speed up capa explorer analysis - these must be init to None
         self.resdoc_cache: Optional[capa.render.result_document.ResultDocument] = None
-        self.ruleset_cache: Optional[capa.rules.RuleSet] = None
+        self.program_analysis_ruleset_cache: Optional[capa.rules.RuleSet] = None
+        self.rulegen_ruleset_cache: Optional[capa.rules.RuleSet] = None
         self.rulegen_feature_cache: Optional[CapaRuleGenFeatureCache] = None
         self.rulegen_current_function: Optional[FunctionHandle] = None
 
@@ -526,10 +527,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.model_data.reset()
 
     def ensure_capa_settings_rule_path(self):
-        path: str
-
         try:
-            path = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+            path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
 
             # resolve rules directory - check self and settings first, then ask user
             if not os.path.exists(path):
@@ -554,6 +553,10 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if not path:
                     raise UserCancelledError()
 
+                if not os.path.exists(path):
+                    logger.error("rule path %s does not exist or cannot be accessed" % path)
+                    return False
+
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
         except UserCancelledError as e:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
@@ -570,11 +573,6 @@ class CapaExplorerForm(idaapi.PluginForm):
             logger.info("User cancelled analysis.")
             return False
 
-        path = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
-        if not os.path.exists(path):
-            logger.error("rule path %s does not exist or cannot be accessed" % path)
-            return False
-
         return True
 
     def load_capa_rules(self):
@@ -586,14 +584,14 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
 
             def on_load_rule(_, i, total):
-                update_wait_box("loading capa rules from %s (%d of %d)" % (rule_path, i, total))
+                update_wait_box("loading capa rules from %s (%d of %d)" % (rule_path, i + 1, total))
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
-            self.ruleset_cache = capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
+            return capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
-            return False
+            return None
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui(
                 "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
@@ -609,9 +607,9 @@ class CapaExplorerForm(idaapi.PluginForm):
             )
 
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
-            return False
+            return None
 
-        return True
+        return None
 
     def load_capa_results(self, use_cache=False):
         """run capa analysis and render results in UI
@@ -657,13 +655,14 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             update_wait_box("loading rules")
 
-            # function should handle exceptions and return False
-            if not self.load_capa_rules():
+            # load_capa_rules should always return
+            self.program_analysis_ruleset_cache = self.load_capa_rules()
+            if self.program_analysis_ruleset_cache is None:
                 return False
-            assert self.ruleset_cache is not None
+
             # matching operations may update rule instances,
             # so we'll work with a local copy of the ruleset.
-            ruleset = copy.deepcopy(self.ruleset_cache)
+            ruleset = copy.deepcopy(self.program_analysis_ruleset_cache)
 
             if ida_kernwin.user_cancelled():
                 logger.info("User cancelled analysis.")
@@ -728,12 +727,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             # either the results are cached and the doc already exists,
             # or the doc was just created above
             assert self.resdoc_cache is not None
-            assert self.ruleset_cache is not None
+            assert self.program_analysis_ruleset_cache is not None
 
             self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
             self.set_view_status_label(
                 "capa rules: %s (%d rules)"
-                % (settings.user[CAPA_SETTINGS_RULE_PATH], self.ruleset_cache.source_rule_count)
+                % (settings.user[CAPA_SETTINGS_RULE_PATH], self.program_analysis_ruleset_cache.source_rule_count)
             )
         except Exception as e:
             logger.error("Failed to render results (error: %s)", e, exc_info=True)
@@ -771,17 +770,18 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_capa_function_results(self):
         """ """
-        if self.ruleset_cache is None:
+        if self.rulegen_ruleset_cache is None:
             # only reload rules if cache is empty
-            if not self.load_capa_rules():
-                return False
+            self.rulegen_ruleset_cache = self.load_capa_rules()
         else:
             logger.info('Using cached capa rules, click "Reset" to load rules from disk.')
 
-        assert self.ruleset_cache is not None
+        if self.rulegen_ruleset_cache is None:
+            return False
+
         # matching operations may update rule instances,
         # so we'll work with a local copy of the ruleset.
-        ruleset = copy.deepcopy(self.ruleset_cache)
+        ruleset = copy.deepcopy(self.rulegen_ruleset_cache)
 
         # clear feature cache
         if self.rulegen_feature_cache is not None:
@@ -926,9 +926,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.model_data.reset()
         self.reset_view_tree()
 
-        self.rules_cache = None
-        self.ruleset_cache = None
-
         logger.info("Reset completed.")
 
     def reset_function_analysis_views(self, is_analyze=False):
@@ -947,7 +944,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         if not is_analyze:
             # clear rules and ruleset cache only if user clicked "Reset"
-            self.ruleset_cache = None
+            self.rulegen_ruleset_cache = None
             self.set_view_status_label("Click Analyze to get started...")
 
         logger.info("Reset completed.")
@@ -986,7 +983,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         try:
             # we don't expect either cache to be empty at this point
-            assert self.ruleset_cache is not None
+            assert self.rulegen_ruleset_cache is not None
             assert self.rulegen_feature_cache is not None
         except Exception as e:
             logger.error("Failed to access cache (error: %s)", e, exc_info=True)
@@ -1009,7 +1006,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         # we must create a deep copy of rules because any rule matching operations modify the original rule
         # the ruleset may derive subscope rules from the source rules loaded from disk.
         # by ignoring them, we reconstruct the collection of rules provided by the user.
-        rules = copy.deepcopy([r for r in self.ruleset_cache.rules.values() if not r.is_subscope_rule()])
+        rules = copy.deepcopy([r for r in self.rulegen_ruleset_cache.rules.values() if not r.is_subscope_rule()])
         rules.append(rule)
 
         try:
