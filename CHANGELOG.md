@@ -20,7 +20,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (67)
+### New Rules (68)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -86,6 +86,7 @@
 - linking/static/linked-against-cpp-standard-library @mr-tz
 - data-manipulation/compression/compress-data-using-lzo david@edeca.net david.cannings@pwc.com
 - data-manipulation/compression/decompress-data-using-lzo david@edeca.net david.cannings@pwc.com
+- communication/socket/tcp/create-tcp-socket-via-raw-afd-driver william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
