@@ -20,7 +20,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (65)
+### New Rules (67)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -84,6 +84,8 @@
 - communication/mailslot/create-mailslot william.ballenthin@mandiant.com
 - executable/resource/access-dotnet-resource @mr-tz
 - linking/static/linked-against-cpp-standard-library @mr-tz
+- data-manipulation/compression/compress-data-using-lzo david@edeca.net david.cannings@pwc.com
+- data-manipulation/compression/decompress-data-using-lzo david@edeca.net david.cannings@pwc.com
 -
 
 ### Bug Fixes
