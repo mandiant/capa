@@ -120,6 +120,7 @@
 - fix: improve exception handling to prevent IDA from locking up when errors occur #1262 @mike-hunhoff
 - verify rule metadata using Pydantic #1167 @mr-tz
 - extractor: make read consistent with file object behavior #1254 @mr-tz
+- fix: UnboundLocalError x2 #1302 @mike-hunhoff
 
 ### Development
 
