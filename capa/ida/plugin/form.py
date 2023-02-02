@@ -655,7 +655,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             update_wait_box("loading rules")
 
-            # load_capa_rules should always return
             self.program_analysis_ruleset_cache = self.load_capa_rules()
             if self.program_analysis_ruleset_cache is None:
                 return False
