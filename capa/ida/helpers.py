@@ -216,8 +216,8 @@ def idb_contains_cached_results() -> bool:
         return False
 
 
-def load_cached_results() -> capa.render.result_document.ResultDocument:
-    """verifies that cached results have valid addresses for the current database"""
+def load_and_verify_cached_results() -> capa.render.result_document.ResultDocument:
+    """verifies that cached results have valid (mapped) addresses for the current database"""
     logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
     n = netnode.Netnode(CAPA_NETNODE)
     doc = capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))

@@ -652,8 +652,6 @@ class CapaExplorerForm(idaapi.PluginForm):
             settings.user[CAPA_SETTINGS_RULE_PATH] = ""
             return None
 
-        return None
-
     def load_capa_results(self, use_volatile_cache, use_persistent_cache):
         """run capa analysis and render results in UI
 
@@ -663,23 +661,35 @@ class CapaExplorerForm(idaapi.PluginForm):
         if use_persistent_cache:
             try:
                 update_wait_box("loading rules")
-                if not self.load_capa_rules():
+                self.program_analysis_ruleset_cache = self.load_capa_rules()
+                if self.program_analysis_ruleset_cache is None:
                     return False
-                assert self.ruleset_cache is not None
-
-                if compute_ruleset_cache_identifier(self.ruleset_cache) != capa.ida.helpers.load_rules_cache_id():
-                    logger.error(
-                        "The ruleset cache and the local rule definitions differ. Please reanalyze the program."
-                    )
-                    return False
+                self.set_view_status_label(
+                    "capa rules: %s (%d rules)"
+                    % (settings.user[CAPA_SETTINGS_RULE_PATH], self.program_analysis_ruleset_cache.source_rule_count)
+                )
 
                 update_wait_box("rendering cached results")
-                self.resdoc_cache = capa.ida.helpers.load_cached_results()
-                self.set_view_status_label("")
+                self.resdoc_cache = capa.ida.helpers.load_and_verify_cached_results()
                 self.set_view_result_cache_label(
                     f"Loaded existing capa results from database (generated on {self.resdoc_cache.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')})"
                 )
                 self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
+
+                # warn user about potentially outdated rules, depending on the use-case this may be expected
+                if (
+                    compute_ruleset_cache_identifier(self.program_analysis_ruleset_cache)
+                    != capa.ida.helpers.load_rules_cache_id()
+                ):
+                    logger.warning(
+                        "capa is showing you cached results from a previous analysis run. Your rules have changed since and you should reanalyze the program to see new results."
+                    )
+                    # expand items and resize columns, otherwise view looks incomplete until user closes the popup
+                    self.view_tree.reset_ui()
+                    capa.ida.helpers.inform_user_ida_ui(
+                        "The displayed results were generated based on a different rule set.\nReanalyze the program to see results for your current rules"
+                    )
+
                 return True
             except Exception as e:
                 logger.error("Failed to load cached capa results (error: %s).", e, exc_info=True)
@@ -864,10 +874,10 @@ class CapaExplorerForm(idaapi.PluginForm):
                     return True
                 elif analyze == Options.ANALYZE_ASK:
                     update_wait_box("Verifying results cache")
-                    self.set_view_status_label("")
-                    self.set_view_result_cache_label("")
                     try:
-                        results: capa.render.result_document.ResultDocument = capa.ida.helpers.load_cached_results()
+                        results: capa.render.result_document.ResultDocument = (
+                            capa.ida.helpers.load_and_verify_cached_results()
+                        )
                     except ValueError as e:
                         logger.error("Failed to load cached results: %s", e)
                         return False
