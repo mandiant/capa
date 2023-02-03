@@ -923,7 +923,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             try:
                 has_cache: bool = capa.ida.helpers.idb_contains_cached_results()
             except Exception as e:
-                capa.ida.helpers.inform_user_ida_ui("Failed to check for cached results")
+                capa.ida.helpers.inform_user_ida_ui("Failed to check for cached results, reanalyzing program")
                 logger.error("Failed to check for cached results (error: %s)", e, exc_info=True)
                 return False
 
@@ -945,13 +945,13 @@ class CapaExplorerForm(idaapi.PluginForm):
                             capa.render.result_document.ResultDocument
                         ] = capa.ida.helpers.load_and_verify_cached_results()
                     except Exception as e:
-                        capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results")
+                        capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results, reanalyzing program")
                         logger.error("Failed to verify cached results (error: %s)", e, exc_info=True)
                         return False
 
                     if results is None:
                         capa.ida.helpers.inform_user_ida_ui("Cached results are not valid, reanalyzing program")
-                        logger.error("Cached results are not valid. Running new analysis.")
+                        logger.error("Cached results are not valid.")
                         return False
 
                     btn_id = ida_kernwin.ask_buttons(
