@@ -9,6 +9,7 @@ import json
 import logging
 import datetime
 import contextlib
+from typing import Optional
 
 import idc
 import idaapi
@@ -216,9 +217,10 @@ def idb_contains_cached_results() -> bool:
         return False
 
 
-def load_and_verify_cached_results() -> capa.render.result_document.ResultDocument:
+def load_and_verify_cached_results() -> Optional[capa.render.result_document.ResultDocument]:
     """verifies that cached results have valid (mapped) addresses for the current database"""
     logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
+
     n = netnode.Netnode(CAPA_NETNODE)
     doc = capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
 
@@ -228,9 +230,8 @@ def load_and_verify_cached_results() -> capa.render.result_document.ResultDocume
             if isinstance(location, AbsoluteVirtualAddress):
                 ea = int(location)
                 if not idaapi.is_mapped(ea):
-                    inform_user_ida_ui("Cached results appear to be invalid, please reanalyze program")
-                    raise ValueError(f"0x{ea:x} is not a valid location in this database")
-
+                    logger.error("cached address %s is not a valid location in this database", hex(ea))
+                    return None
     return doc
 
 

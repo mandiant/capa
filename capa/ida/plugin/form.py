@@ -677,6 +677,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box("loading cached results")
 
                     self.resdoc_cache = capa.ida.helpers.load_and_verify_cached_results()
+                    if self.resdoc_cache is None:
+                        logger.error("Cached results are not valid. Please reanalyze your program.")
+                        return False
 
                     if ida_kernwin.user_cancelled():
                         logger.info("User cancelled analysis.")
@@ -935,15 +938,20 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 elif analyze == Options.ANALYZE_ASK:
 
-                    update_wait_box("checking cached results timestamp")
+                    update_wait_box("verifying cached results")
 
                     try:
-                        results: capa.render.result_document.ResultDocument = (
-                            capa.ida.helpers.load_and_verify_cached_results()
-                        )
-                    except ValueError as e:
-                        capa.ida.helpers.inform_user_ida_ui("Failed to check cached results timestamp")
-                        logger.error("Failed to check cached results timestamp (error: %s)", e, exc_info=True)
+                        results: Optional[
+                            capa.render.result_document.ResultDocument
+                        ] = capa.ida.helpers.load_and_verify_cached_results()
+                    except Exception as e:
+                        capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results")
+                        logger.error("Failed to verify cached results (error: %s)", e, exc_info=True)
+                        return False
+
+                    if results is None:
+                        capa.ida.helpers.inform_user_ida_ui("Cached results are not valid, reanalyzing program")
+                        logger.error("Cached results are not valid. Running new analysis.")
                         return False
 
                     btn_id = ida_kernwin.ask_buttons(
