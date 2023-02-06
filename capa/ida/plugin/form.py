@@ -881,16 +881,6 @@ class CapaExplorerForm(idaapi.PluginForm):
     def analyze_program(self, new_analysis=True, from_cache=False, analyze=Options.ANALYZE_ASK):
         """ """
         # determine cache handling before model/view is reset in case user cancels
-        """
-        if use_volatile_cache:
-            use_persistent_cache = False
-        else:
-            try:
-                use_persistent_cache = self.get_ask_use_persistent_cache(analyze)
-            except UserCancelledError:
-                return
-        """
-
         if new_analysis:
             try:
                 ida_kernwin.show_wait_box("capa explorer")
