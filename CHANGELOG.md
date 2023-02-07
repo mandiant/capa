@@ -20,7 +20,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (71)
+### New Rules (72)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -90,6 +90,7 @@
 - host-interaction/process/map-section-object william.ballenthin@mandiant.com
 - lib/create-or-open-section-object william.ballenthin@mandiant.com
 - load-code/dotnet/execute-dotnet-assembly-via-clr-host blas.kojusner@mandiant.com
+- load-code/execute-vbscript-javascript-or-jscript-in-memory blas.kojusner@mandiant.com
 -
 
 ### Bug Fixes
