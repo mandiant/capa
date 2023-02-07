@@ -108,7 +108,6 @@ class ELF:
         self._parse()
 
     def _parse(self):
-
         self.f.seek(0x0)
         self.file_header = self.f.read(0x40)
 

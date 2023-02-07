@@ -212,7 +212,7 @@ def extract_unmanaged_call_characteristic_features(
 def extract_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for (feature, addr) in inst_handler(fh, bbh, ih):
+        for feature, addr in inst_handler(fh, bbh, ih):
             assert isinstance(addr, Address)
             yield feature, addr
 

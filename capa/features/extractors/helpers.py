@@ -112,7 +112,6 @@ def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[Tuple[int, int]]:
     todo = [(off, mzx, pex, key) for (off, mzx, pex, key) in todo if off != -1]
 
     while len(todo):
-
         off, mzx, pex, key = todo.pop()
 
         # The MZ header has one field we will check

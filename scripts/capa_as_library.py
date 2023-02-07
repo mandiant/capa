@@ -106,7 +106,7 @@ def render_attack(doc, result):
 
     for tactic, techniques in sorted(tactics.items()):
         inner_rows = []
-        for (technique, subtechnique, id) in sorted(techniques):
+        for technique, subtechnique, id in sorted(techniques):
             if subtechnique is None:
                 inner_rows.append("%s %s" % (technique, id))
             else:
@@ -140,7 +140,7 @@ def render_mbc(doc, result):
 
     for objective, behaviors in sorted(objectives.items()):
         inner_rows = []
-        for (behavior, method, id) in sorted(behaviors):
+        for behavior, method, id in sorted(behaviors):
             if method is None:
                 inner_rows.append("%s [%s]" % (behavior, id))
             else:

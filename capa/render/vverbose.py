@@ -277,7 +277,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
     had_match = False
 
-    for (_, _, rule) in sorted(map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())):
+    for _, _, rule in sorted(map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())):
         # default scope hides things like lib rules, malware-category rules, etc.
         # but in vverbose mode, we really want to show everything.
         #

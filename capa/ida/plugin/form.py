@@ -907,7 +907,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def get_ask_use_persistent_cache(self, analyze):
         if analyze and analyze != Options.NO_ANALYSIS:
-
             update_wait_box("checking for cached results")
 
             try:
@@ -922,12 +921,10 @@ class CapaExplorerForm(idaapi.PluginForm):
                 raise UserCancelledError
 
             if has_cache:
-
                 if analyze == Options.ANALYZE_AUTO:
                     return True
 
                 elif analyze == Options.ANALYZE_ASK:
-
                     update_wait_box("verifying cached results")
 
                     try:
@@ -1045,11 +1042,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                     self.rulegen_feature_cache.get_all_function_features(self.rulegen_current_function)
                 )
 
-                for (name, result) in itertools.chain(func_matches.items(), bb_matches.items(), insn_matches.items()):
+                for name, result in itertools.chain(func_matches.items(), bb_matches.items(), insn_matches.items()):
                     rule = ruleset[name]
                     if rule.is_subscope_rule():
                         continue
-                    for (addr, _) in result:
+                    for addr, _ in result:
                         all_function_features[capa.features.common.MatchedRule(name)].add(addr)
         except Exception as e:
             logger.error("Failed to generate rule matches (error: %s)", e, exc_info=True)
@@ -1066,11 +1063,11 @@ class CapaExplorerForm(idaapi.PluginForm):
             _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
             all_file_features.update(self.rulegen_feature_cache.get_all_file_features())
 
-            for (name, result) in file_matches.items():
+            for name, result in file_matches.items():
                 rule = ruleset[name]
                 if rule.is_subscope_rule():
                     continue
-                for (addr, _) in result:
+                for addr, _ in result:
                     all_file_features[capa.features.common.MatchedRule(name)].add(addr)
         except Exception as e:
             logger.error("Failed to generate file rule matches (error: %s)", e, exc_info=True)

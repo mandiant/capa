@@ -152,7 +152,7 @@ def main(argv=None):
 
     try:
         sig_paths = capa.main.get_signatures(args.signatures)
-    except (IOError) as e:
+    except IOError as e:
         logger.error("%s", str(e))
         return -1
 

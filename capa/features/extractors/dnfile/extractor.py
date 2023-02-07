@@ -94,7 +94,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         # create a method lookup table
         methods: Dict[Address, FunctionHandle] = {}
-        for (token, method) in get_dotnet_managed_method_bodies(self.pe):
+        for token, method in get_dotnet_managed_method_bodies(self.pe):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
                 inner=method,

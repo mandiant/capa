@@ -128,7 +128,6 @@ def convert_capa_number_to_yara_bytes(number):
 
 
 def convert_rule_name(rule_name):
-
     # yara rule names: "Identifiers must follow the same lexical conventions of the C programming language, they can contain any alphanumeric character and the underscore character, but the first character cannot be a digit. Rule identifiers are case sensitive and cannot exceed 128 characters." so we replace any non-alphanum with _
     rule_name = re.sub(r"\W", "_", rule_name)
     rule_name = "capa_" + rule_name
@@ -151,7 +150,6 @@ def convert_description(statement):
 
 
 def convert_rule(rule, rulename, cround, depth):
-
     depth += 1
     logger.info("recursion depth: " + str(depth))
 
@@ -515,7 +513,6 @@ def output_yar(yara):
 
 
 def output_unsupported_capa_rules(yaml, capa_rulename, url, reason):
-
     if reason != "NOLOG":
         if capa_rulename not in unsupported_capa_rules_list:
             logger.info("unsupported: " + capa_rulename + " - reason: " + reason + " - url: " + url)
@@ -539,7 +536,6 @@ def output_unsupported_capa_rules(yaml, capa_rulename, url, reason):
 def convert_rules(rules, namespaces, cround, make_priv):
     count_incomplete = 0
     for rule in rules.rules.values():
-
         rule_name = convert_rule_name(rule.name)
 
         if rule.is_subscope_rule():
@@ -579,7 +575,6 @@ def convert_rules(rules, namespaces, cround, make_priv):
                 output_unsupported_capa_rules(rule.to_yaml(), rule.name, url, yara_condition)
             logger.info("Unknown feature at5: " + rule.name)
         else:
-
             yara_meta = ""
             metas = rule.meta
             rule_tags = ""
@@ -661,7 +656,6 @@ def convert_rules(rules, namespaces, cround, make_priv):
             # check if there's some beef in condition:
             tmp_yc = re.sub(r"(and|or|not)", "", yara_condition)
             if re.search(r"\w", tmp_yc):
-
                 yara = ""
                 if make_priv:
                     yara = "private "

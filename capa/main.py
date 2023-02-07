@@ -758,7 +758,7 @@ def compute_layout(rules, extractor, capabilities):
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
         if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
-            for (addr, _) in matches:
+            for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
 

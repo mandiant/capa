@@ -59,7 +59,7 @@ def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
     #
     # from vivisect.const:
     # xref: (XR_FROM, XR_TO, XR_RTYPE, XR_RFLAG)
-    for (xfrom, _, _, xflag) in vw.getXrefsTo(va, REF_CODE):
+    for xfrom, _, _, xflag in vw.getXrefsTo(va, REF_CODE):
         if (xflag & FAR_BRANCH_MASK) != 0:
             continue
         ret.append(xfrom)

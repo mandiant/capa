@@ -89,13 +89,13 @@ def main(argv=None):
     try:
         with capa.main.timing("load rules"):
             rules = capa.main.get_rules(args.rules)
-    except (IOError) as e:
+    except IOError as e:
         logger.error("%s", str(e))
         return -1
 
     try:
         sig_paths = capa.main.get_signatures(args.signatures)
-    except (IOError) as e:
+    except IOError as e:
         logger.error("%s", str(e))
         return -1
 
@@ -120,7 +120,7 @@ def main(argv=None):
     logger.debug("perf: find capabilities: avg: %0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)))
     logger.debug("perf: find capabilities: max: %0.2fs" % (max(samples) / float(args.number)))
 
-    for (counter, count) in capa.perf.counters.most_common():
+    for counter, count in capa.perf.counters.most_common():
         logger.debug("perf: counter: {:}: {:,}".format(counter, count))
 
     print(

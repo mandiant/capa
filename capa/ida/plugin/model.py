@@ -450,7 +450,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             match_eas: List[int] = []
 
             # initial pass of rule matches
-            for (addr_, _) in rule.matches:
+            for addr_, _ in rule.matches:
                 addr: Address = addr_.to_capa()
                 if isinstance(addr, AbsoluteVirtualAddress):
                     match_eas.append(int(addr))
@@ -494,7 +494,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             rule_namespace = rule.meta.namespace or ""
             parent = CapaExplorerRuleItem(self.root_node, rule_name, rule_namespace, len(rule.matches), rule.source)
 
-            for (location_, match) in rule.matches:
+            for location_, match in rule.matches:
                 location = location_.to_capa()
 
                 parent2: CapaExplorerDataItem

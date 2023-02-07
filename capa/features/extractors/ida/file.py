@@ -39,7 +39,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[Tuple[int, int]]:
     ]
 
     todo = []
-    for (mzx, pex, i) in mz_xor:
+    for mzx, pex, i in mz_xor:
         for off in capa.features.extractors.ida.helpers.find_byte_sequence(seg.start_ea, seg.end_ea, mzx):
             todo.append((off, mzx, pex, i))
 
@@ -73,13 +73,13 @@ def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
         - Check 'Load resource sections' when opening binary in IDA manually
     """
     for seg in capa.features.extractors.ida.helpers.get_segments(skip_header_segments=True):
-        for (ea, _) in check_segment_for_pe(seg):
+        for ea, _ in check_segment_for_pe(seg):
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
-    for (_, _, ea, name) in idautils.Entries():
+    for _, _, ea, name in idautils.Entries():
         yield Export(name), AbsoluteVirtualAddress(ea)
 
 
@@ -94,7 +94,7 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
      - modulename.importname
      - importname
     """
-    for (ea, info) in capa.features.extractors.ida.helpers.get_file_imports().items():
+    for ea, info in capa.features.extractors.ida.helpers.get_file_imports().items():
         addr = AbsoluteVirtualAddress(ea)
         if info[1] and info[2]:
             # e.g. in mimikatz: ('cabinet', 'FCIAddFile', 11L)
@@ -115,7 +115,7 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
         for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
             yield Import(name), addr
 
-    for (ea, info) in capa.features.extractors.ida.helpers.get_file_externs().items():
+    for ea, info in capa.features.extractors.ida.helpers.get_file_externs().items():
         yield Import(info[1]), AbsoluteVirtualAddress(ea)
 
 

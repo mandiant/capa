@@ -45,7 +45,7 @@ def get_ida_extractor(_path):
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_features():
-    for (sample, scope, feature, expected) in fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA:
+    for sample, scope, feature, expected in fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_PRESENCE_TESTS_IDA:
         id = fixtures.make_test_id((sample, scope, feature, expected))
 
         try:
@@ -68,7 +68,7 @@ def test_ida_features():
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_feature_counts():
-    for (sample, scope, feature, expected) in fixtures.FEATURE_COUNT_TESTS:
+    for sample, scope, feature, expected in fixtures.FEATURE_COUNT_TESTS:
         id = fixtures.make_test_id((sample, scope, feature, expected))
 
         try:
