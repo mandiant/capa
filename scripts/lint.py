@@ -890,7 +890,6 @@ def redirecting_print_to_tqdm():
     old_print = print
 
     def new_print(*args, **kwargs):
-
         # If tqdm.tqdm.write raises error, use builtin print
         try:
             tqdm.tqdm.write(*args, **kwargs)

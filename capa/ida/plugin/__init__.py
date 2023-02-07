@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class CapaExplorerPlugin(idaapi.plugin_t):
-
     # Mandatory definitions
     PLUGIN_NAME = "FLARE capa explorer"
     PLUGIN_VERSION = "1.0.0"

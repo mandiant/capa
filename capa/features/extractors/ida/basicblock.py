@@ -95,7 +95,7 @@ def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[F
 def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract basic block features"""
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for (feature, addr) in bb_handler(fh, bbh):
+        for feature, addr in bb_handler(fh, bbh):
             yield feature, addr
     yield BasicBlock(), bbh.address
 

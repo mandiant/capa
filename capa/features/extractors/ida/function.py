@@ -45,7 +45,7 @@ def extract_recursive_call(fh: FunctionHandle):
 
 def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
-        for (feature, addr) in func_handler(fh):
+        for feature, addr in func_handler(fh):
             yield feature, addr
 
 

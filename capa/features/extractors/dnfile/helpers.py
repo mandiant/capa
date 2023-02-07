@@ -108,7 +108,7 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
-    for (rid, member_ref) in iter_dotnet_table(pe, dnfile.mdtable.MemberRef.number):
+    for rid, member_ref in iter_dotnet_table(pe, dnfile.mdtable.MemberRef.number):
         assert isinstance(member_ref, dnfile.mdtable.MemberRefRow)
 
         if not isinstance(member_ref.Class.row, dnfile.mdtable.TypeRefRow):
@@ -151,7 +151,7 @@ def get_dotnet_methoddef_property_accessors(pe: dnfile.dnPE) -> Iterator[Tuple[i
             Method (index into the MethodDef table)
             Association (index into the Event or Property table; more precisely, a HasSemantics coded index)
     """
-    for (rid, method_semantics) in iter_dotnet_table(pe, dnfile.mdtable.MethodSemantics.number):
+    for rid, method_semantics in iter_dotnet_table(pe, dnfile.mdtable.MethodSemantics.number):
         assert isinstance(method_semantics, dnfile.mdtable.MethodSemanticsRow)
 
         if method_semantics.Association.row is None:
@@ -189,13 +189,13 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             MethodList (index into MethodDef table; it marks the first of a contiguous run of Methods owned by this Type)
     """
     accessor_map: Dict[int, str] = {}
-    for (methoddef, methoddef_access) in get_dotnet_methoddef_property_accessors(pe):
+    for methoddef, methoddef_access in get_dotnet_methoddef_property_accessors(pe):
         accessor_map[methoddef] = methoddef_access
 
-    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+    for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
-        for (idx, method) in enumerate(typedef.MethodList):
+        for idx, method in enumerate(typedef.MethodList):
             if method.table is None:
                 logger.debug("TypeDef[0x%X] MethodList[0x%X] table is None", rid, idx)
                 continue
@@ -225,10 +225,10 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             FieldList (index into Field table; it marks the first of a contiguous run of Fields owned by this Type)
     """
-    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+    for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
-        for (idx, field) in enumerate(typedef.FieldList):
+        for idx, field in enumerate(typedef.FieldList):
             if field.table is None:
                 logger.debug("TypeDef[0x%X] FieldList[0x%X] table is None", rid, idx)
                 continue
@@ -241,7 +241,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
     """get managed methods from MethodDef table"""
-    for (rid, method_def) in iter_dotnet_table(pe, dnfile.mdtable.MethodDef.number):
+    for rid, method_def in iter_dotnet_table(pe, dnfile.mdtable.MethodDef.number):
         assert isinstance(method_def, dnfile.mdtable.MethodDefRow)
 
         if not method_def.ImplFlags.miIL or any((method_def.Flags.mdAbstract, method_def.Flags.mdPinvokeImpl)):
@@ -268,7 +268,7 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
             ImportName (index into the String heap)
             ImportScope (index into the ModuleRef table)
     """
-    for (rid, impl_map) in iter_dotnet_table(pe, dnfile.mdtable.ImplMap.number):
+    for rid, impl_map in iter_dotnet_table(pe, dnfile.mdtable.ImplMap.number):
         assert isinstance(impl_map, dnfile.mdtable.ImplMapRow)
 
         module: str
@@ -302,13 +302,13 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
 
 def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get .NET types from TypeDef and TypeRef tables"""
-    for (rid, typedef) in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
+    for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
 
-    for (rid, typeref) in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+    for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
@@ -330,6 +330,6 @@ def iter_dotnet_table(pe: dnfile.dnPE, table_index: int) -> Iterator[Tuple[int, 
     assert pe.net is not None
     assert pe.net.mdtables is not None
 
-    for (rid, row) in enumerate(pe.net.mdtables.tables.get(table_index, [])):
+    for rid, row in enumerate(pe.net.mdtables.tables.get(table_index, [])):
         # .NET tables are 1-indexed
         yield rid + 1, row

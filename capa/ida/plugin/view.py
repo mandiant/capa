@@ -174,7 +174,6 @@ def resize_columns_to_content(header):
 
 
 class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
-
     INDENT = " " * 2
 
     def __init__(self, parent=None):
@@ -255,7 +254,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
                     lines_modified = 0
                     first_modified = False
                     change = []
-                    for (lineno, line) in enumerate(plain[start_lineno : end_lineno + 1]):
+                    for lineno, line in enumerate(plain[start_lineno : end_lineno + 1]):
                         if line.startswith(self.INDENT):
                             if lineno == 0:
                                 # keep track if first line is modified, so we can properly display
@@ -307,7 +306,6 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
 
 
 class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
-
     updated = QtCore.pyqtSignal()
 
     def __init__(self, preview, parent=None):
@@ -619,7 +617,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         """ """
         o = QtWidgets.QTreeWidgetItem(parent)
         self.set_expression_node(o)
-        for (i, v) in enumerate(values):
+        for i, v in enumerate(values):
             o.setText(i, v)
         return o
 
@@ -627,7 +625,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         """ """
         o = QtWidgets.QTreeWidgetItem(parent)
         self.set_feature_node(o)
-        for (i, v) in enumerate(values):
+        for i, v in enumerate(values):
             o.setText(i, v)
         return o
 
@@ -635,7 +633,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         """ """
         o = QtWidgets.QTreeWidgetItem(parent)
         self.set_comment_node(o)
-        for (i, v) in enumerate(values):
+        for i, v in enumerate(values):
             o.setText(i, v)
         return o
 
@@ -654,7 +652,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         counted = list(zip(Counter(features).keys(), Counter(features).values()))
 
         # single features
-        for (k, v) in filter(lambda t: t[1] == 1, counted):
+        for k, v in filter(lambda t: t[1] == 1, counted):
             if isinstance(k, (capa.features.common.String,)):
                 value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
             else:
@@ -662,7 +660,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             self.new_feature_node(top_node, ("- %s: %s" % (k.name.lower(), value), ""))
 
         # n > 1 features
-        for (k, v) in filter(lambda t: t[1] > 1, counted):
+        for k, v in filter(lambda t: t[1] > 1, counted):
             if k.value:
                 if isinstance(k, (capa.features.common.String,)):
                     value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
@@ -707,7 +705,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         node = QtWidgets.QTreeWidgetItem(parent)
 
         # set node text to data parsed from feature
-        for (idx, text) in enumerate((feature, comment, description)):
+        for idx, text in enumerate((feature, comment, description)):
             node.setText(idx, text)
 
         # we need to set our own type so we can control the GUI accordingly
@@ -999,7 +997,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         o = QtWidgets.QTreeWidgetItem(parent)
 
         self.set_parent_node(o)
-        for (i, v) in enumerate(data):
+        for i, v in enumerate(data):
             o.setText(i, v)
         if feature:
             o.setData(0, 0x100, feature)
@@ -1011,7 +1009,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
         o = QtWidgets.QTreeWidgetItem(parent)
 
         self.set_leaf_node(o)
-        for (i, v) in enumerate(data):
+        for i, v in enumerate(data):
             o.setText(i, v)
         if feature:
             o.setData(0, 0x100, feature)
@@ -1043,7 +1041,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 value = '"%s"' % capa.features.common.escape_string(value)
             return "%s(%s)" % (name, value)
 
-        for (feature, addrs) in sorted(features.items(), key=lambda k: sorted(k[1])):
+        for feature, addrs in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
                 # filter basic blocks for now, we may want to add these back in some time
                 # in the future
@@ -1076,7 +1074,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
                 else:
                     # some features may not have an address e.g. "format"
                     addr = _NoAddress()
-                for (i, v) in enumerate((format_feature(feature), format_address(addr))):
+                for i, v in enumerate((format_feature(feature), format_address(addr))):
                     self.parent_items[feature].setText(i, v)
                 self.parent_items[feature].setData(0, 0x100, feature)
 

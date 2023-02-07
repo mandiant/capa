@@ -48,7 +48,7 @@ def extract_file_class_features(pe: dnfile.dnPE) -> Iterator[Tuple[Class, Addres
 
 def extract_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for (feature, address) in file_handler(pe):
+        for feature, address in file_handler(pe):
             yield feature, address
 
 

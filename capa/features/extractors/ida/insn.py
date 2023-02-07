@@ -482,7 +482,7 @@ def extract_function_indirect_call_characteristic_features(
 def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract instruction features"""
     for inst_handler in INSTRUCTION_HANDLERS:
-        for (feature, ea) in inst_handler(f, bbh, insn):
+        for feature, ea in inst_handler(f, bbh, insn):
             yield feature, ea
 
 

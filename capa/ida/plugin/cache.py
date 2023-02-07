@@ -61,7 +61,7 @@ class CapaRuleGenFeatureCache:
         self._find_function_and_below_features(fh_list, extractor)
 
     def _find_global_features(self, extractor: CapaExplorerFeatureExtractor):
-        for (feature, addr) in extractor.extract_global_features():
+        for feature, addr in extractor.extract_global_features():
             # not all global features may have virtual addresses.
             # if not, then at least ensure the feature shows up in the index.
             # the set of addresses will still be empty.
@@ -75,7 +75,7 @@ class CapaRuleGenFeatureCache:
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
-        for (feature, addr) in extractor.extract_file_features():
+        for feature, addr in extractor.extract_file_features():
             if addr is not None:
                 self.file_node.features[feature].add(addr)
             else:
@@ -94,20 +94,20 @@ class CapaRuleGenFeatureCache:
                 for ih in extractor.get_instructions(fh, bbh):
                     inode: CapaRuleGenFeatureCacheNode = CapaRuleGenFeatureCacheNode(ih, bb_node)
 
-                    for (feature, addr) in extractor.extract_insn_features(fh, bbh, ih):
+                    for feature, addr in extractor.extract_insn_features(fh, bbh, ih):
                         inode.features[feature].add(addr)
 
                     self.insn_nodes[inode.address] = inode
 
                 # extract basic block features
-                for (feature, addr) in extractor.extract_basic_block_features(fh, bbh):
+                for feature, addr in extractor.extract_basic_block_features(fh, bbh):
                     bb_node.features[feature].add(addr)
 
                 # store basic block features in cache and function parent
                 self.bb_nodes[bb_node.address] = bb_node
 
             # extract function features
-            for (feature, addr) in extractor.extract_function_features(fh):
+            for feature, addr in extractor.extract_function_features(fh):
                 f_node.features[feature].add(addr)
 
             self.func_nodes[f_node.address] = f_node
@@ -117,13 +117,13 @@ class CapaRuleGenFeatureCache:
     ) -> Tuple[FeatureSet, MatchResults]:
         features: FeatureSet = collections.defaultdict(set)
 
-        for (feature, locs) in itertools.chain(insn.features.items(), self.global_features.items()):
+        for feature, locs in itertools.chain(insn.features.items(), self.global_features.items()):
             features[feature].update(locs)
 
         _, matches = ruleset.match(Scope.INSTRUCTION, features, insn.address)
-        for (name, result) in matches.items():
+        for name, result in matches.items():
             rule = ruleset[name]
-            for (addr, _) in result:
+            for addr, _ in result:
                 capa.engine.index_rule_matches(features, rule, [addr])
 
         return features, matches
@@ -136,18 +136,18 @@ class CapaRuleGenFeatureCache:
 
         for insn in bb.children:
             ifeatures, imatches = self._find_instruction_capabilities(ruleset, insn)
-            for (feature, locs) in ifeatures.items():
+            for feature, locs in ifeatures.items():
                 features[feature].update(locs)
-            for (name, result) in imatches.items():
+            for name, result in imatches.items():
                 insn_matches[name].extend(result)
 
-        for (feature, locs) in itertools.chain(bb.features.items(), self.global_features.items()):
+        for feature, locs in itertools.chain(bb.features.items(), self.global_features.items()):
             features[feature].update(locs)
 
         _, matches = ruleset.match(Scope.BASIC_BLOCK, features, bb.address)
-        for (name, result) in matches.items():
+        for name, result in matches.items():
             rule = ruleset[name]
-            for (loc, _) in result:
+            for loc, _ in result:
                 capa.engine.index_rule_matches(features, rule, [loc])
 
         return features, matches, insn_matches
@@ -165,14 +165,14 @@ class CapaRuleGenFeatureCache:
 
         for bb in f_node.children:
             features, bmatches, imatches = self._find_basic_block_capabilities(ruleset, bb)
-            for (feature, locs) in features.items():
+            for feature, locs in features.items():
                 function_features[feature].update(locs)
-            for (name, result) in bmatches.items():
+            for name, result in bmatches.items():
                 bb_matches[name].extend(result)
-            for (name, result) in imatches.items():
+            for name, result in imatches.items():
                 insn_matches[name].extend(result)
 
-        for (feature, locs) in itertools.chain(f_node.features.items(), self.global_features.items()):
+        for feature, locs in itertools.chain(f_node.features.items(), self.global_features.items()):
             function_features[feature].update(locs)
 
         _, function_matches = ruleset.match(Scope.FUNCTION, function_features, f_node.address)
@@ -186,10 +186,10 @@ class CapaRuleGenFeatureCache:
             assert isinstance(func_node.inner, FunctionHandle)
 
             func_features, _, _, _ = self.find_code_capabilities(ruleset, func_node.inner)
-            for (feature, locs) in func_features.items():
+            for feature, locs in func_features.items():
                 features[feature].update(locs)
 
-        for (feature, locs) in itertools.chain(self.file_node.features.items(), self.global_features.items()):
+        for feature, locs in itertools.chain(self.file_node.features.items(), self.global_features.items()):
             features[feature].update(locs)
 
         _, matches = ruleset.match(Scope.FILE, features, NO_ADDRESS)
@@ -205,13 +205,13 @@ class CapaRuleGenFeatureCache:
 
         for bb_node in f_node.children:
             for i_node in bb_node.children:
-                for (feature, locs) in i_node.features.items():
+                for feature, locs in i_node.features.items():
                     all_function_features[feature].update(locs)
-            for (feature, locs) in bb_node.features.items():
+            for feature, locs in bb_node.features.items():
                 all_function_features[feature].update(locs)
 
         # include global features just once
-        for (feature, locs) in self.global_features.items():
+        for feature, locs in self.global_features.items():
             all_function_features[feature].update(locs)
 
         return all_function_features
