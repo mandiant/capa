@@ -20,7 +20,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (75)
+### New Rules (77)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
@@ -92,6 +92,8 @@
 - load-code/dotnet/execute-dotnet-assembly-via-clr-host blas.kojusner@mandiant.com
 - load-code/execute-vbscript-javascript-or-jscript-in-memory blas.kojusner@mandiant.com
 - host-interaction/file-system/reference-absolute-stream-path-on-windows blas.kojusner@mandiant.com
+- nursery/generate-method-via-reflection-in-dotnet michael.hunhoff@mandiant.com
+- nursery/unmanaged-call-via-dynamic-pinvoke-in-dotnet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
