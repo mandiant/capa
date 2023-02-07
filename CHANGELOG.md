@@ -20,7 +20,7 @@
 - remove SMDA backend #1062 @williballenthin
 - error return codes are now positive numbers #1269 @mr-tz
 
-### New Rules (73)
+### New Rules (75)
 
 - collection/use-dotnet-library-sharpclipboard @johnk3r
 - data-manipulation/encryption/aes/use-dotnet-library-encryptdecryptutils @johnk3r
