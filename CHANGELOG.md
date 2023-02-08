@@ -3,6 +3,36 @@
 ## master (unreleased)
 
 ### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v5.0.0...master](https://github.com/mandiant/capa/compare/v5.0.0...master)
+- [capa-rules v5.0.0...master](https://github.com/mandiant/capa-rules/compare/v5.0.0...master)
+
+
+## v5.0.0 (2023-02-08)
+This capa version comes with major improvements and additions to better handle .NET binaries. To showcase this we've updated and added over 30 .NET rules.  
+
+Additionally, capa now caches its rule set for better performance. The capa explorer also caches its analysis results, so that multiple IDA Pro or plugin invocations don't need to repeat the same analysis.
+
+We have removed the SMDA backend and changed the program return codes to be positive numbers.
+
+Other improvements to highlight include better ELF OS detection, various rendering bug fixes, and enhancements to the feature extraction. We've also added support for Python 3.11.
+
+Thanks for all the support, especially to @jsoref, @bkojusner, @edeca, @richardweiss80, @joren485, @ryantxu1, @mwilliams31, @anushkavirgaonkar, @MalwareMechanic, @Still34, @dzbeck, @johnk3r, and everyone else who submitted bugs and provided feedback!
+
+### New Features
 - verify rule metadata format on load #1160 @mr-tz
 - dotnet: emit property features #1168 @anushkavirgaonkar
 - dotnet: emit API features for objects created via the newobj instruction #1186 @mike-hunhoff
@@ -94,7 +124,6 @@
 - host-interaction/file-system/reference-absolute-stream-path-on-windows blas.kojusner@mandiant.com
 - nursery/generate-method-via-reflection-in-dotnet michael.hunhoff@mandiant.com
 - nursery/unmanaged-call-via-dynamic-pinvoke-in-dotnet michael.hunhoff@mandiant.com
--
 
 ### Bug Fixes
 - render: convert feature attributes to aliased dictionary for vverbose #1152 @mike-hunhoff
@@ -128,11 +157,9 @@
 - fix: UnboundLocalError x2 #1302 @mike-hunhoff
 - cache capa results across IDA sessions #1279 @mr-tz
 
-### Development
-
 ### Raw diffs
-- [capa v4.0.1...master](https://github.com/mandiant/capa/compare/v4.0.1...master)
-- [capa-rules v4.0.1...master](https://github.com/mandiant/capa-rules/compare/v4.0.1...master)
+- [capa v4.0.1...v5.0.0](https://github.com/mandiant/capa/compare/v4.0.1...v5.0.0)
+- [capa-rules v4.0.1...v5.0.0](https://github.com/mandiant/capa-rules/compare/v4.0.1...v5.0.0)
 
 
 ## v4.0.1 (2022-08-15)
