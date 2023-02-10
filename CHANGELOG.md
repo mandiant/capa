@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- persistence/scheduled-tasks/schedule-task-via-at joren485
 -
 
 ### Bug Fixes
