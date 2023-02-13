@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
+- data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
