@@ -23,7 +23,7 @@ requirements = [
     "networkx==2.5.1",  # newer versions no longer support py3.7.
     "ruamel.yaml==0.17.21",
     "vivisect==1.0.8",
-    "pefile==2022.5.30",
+    "pefile==2023.2.7",
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
