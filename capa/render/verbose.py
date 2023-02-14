@@ -37,15 +37,22 @@ from capa.engine import MatchResults
 
 def format_address(address: frz.Address) -> str:
     if address.type == frz.AddressType.ABSOLUTE:
+        assert isinstance(address.value, int)
         return capa.helpers.hex(address.value)
     elif address.type == frz.AddressType.RELATIVE:
+        assert isinstance(address.value, int)
         return f"base address+{capa.helpers.hex(address.value)}"
     elif address.type == frz.AddressType.FILE:
+        assert isinstance(address.value, int)
         return f"file+{capa.helpers.hex(address.value)}"
     elif address.type == frz.AddressType.DN_TOKEN:
+        assert isinstance(address.value, int)
         return f"token({capa.helpers.hex(address.value)})"
     elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
+        assert isinstance(address.value, tuple)
         token, offset = address.value
+        assert isinstance(token, int)
+        assert isinstance(offset, int)
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
