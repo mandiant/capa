@@ -34,9 +34,9 @@ jobs:
     - name: Install dependencies
       run: pip install -e .[dev]
     - name: Lint with isort
-      run: isort --profile black --length-sort --line-width 120 -c .
+      run: isort --profile black --length-sort --line-width 120 --skip-glob "*_pb2.py" -c .
     - name: Lint with black
-      run: black -l 120 --check .
+      run: black -l 120 --extend-exclude ".*_pb2.py" --check .
     - name: Lint with pycodestyle
       run: pycodestyle --show-source capa/ scripts/ tests/
     - name: Check types with mypy
