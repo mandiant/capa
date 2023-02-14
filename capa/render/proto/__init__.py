@@ -1,4 +1,4 @@
-# Copyright (C) 2023 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -247,7 +247,7 @@ def _find_capa_class(name):
 
 
 def _enum_properties(message):
-    """enumerate the properties of the message definitioned, ordered by class declaration"""
+    """enumerate the properties of the message defined, ordered by class declaration"""
     # this is just for convenience.
 
     # the order of properties provided by the class. guaranteed.
