@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and limitations 
 import zlib
 import logging
 from enum import Enum
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 from pydantic import Field, BaseModel
 
@@ -46,7 +46,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Any
+    value: Union[int, Tuple[int, int], None]
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -79,19 +79,26 @@ class Address(HashableModel):
 
     def to_capa(self) -> capa.features.address.Address:
         if self.type is AddressType.ABSOLUTE:
+            assert isinstance(self.value, int)
             return capa.features.address.AbsoluteVirtualAddress(self.value)
 
         elif self.type is AddressType.RELATIVE:
+            assert isinstance(self.value, int)
             return capa.features.address.RelativeVirtualAddress(self.value)
 
         elif self.type is AddressType.FILE:
+            assert isinstance(self.value, int)
             return capa.features.address.FileOffsetAddress(self.value)
 
         elif self.type is AddressType.DN_TOKEN:
+            assert isinstance(self.value, int)
             return capa.features.address.DNTokenAddress(self.value)
 
         elif self.type is AddressType.DN_TOKEN_OFFSET:
+            assert isinstance(self.value, tuple)
             token, offset = self.value
+            assert isinstance(token, int)
+            assert isinstance(offset, int)
             return capa.features.address.DNTokenOffsetAddress(token, offset)
 
         elif self.type is AddressType.NO_ADDRESS:
@@ -108,7 +115,11 @@ class Address(HashableModel):
             return True
 
         else:
-            return self.value < other.value
+            assert self.type == other.type
+            # mypy doesn't realize we've proven that either
+            # both are ints, or both are tuples of ints.
+            # and both of these are comparable.
+            return self.value < other.value  # type: ignore
 
 
 class GlobalFeature(HashableModel):
