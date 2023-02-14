@@ -5,8 +5,11 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import json
 import pathlib
 import subprocess
+
+import pydantic
 
 from fixtures import *
 
@@ -23,6 +26,10 @@ from capa.render.result_document import ResultDocument
 def test_generate_proto(tmp_path: pathlib.Path):
     tmp_path.mkdir(exist_ok=True, parents=True)
     proto_path = tmp_path / "capa.proto"
+    json_path = tmp_path / "capa.json"
+
+    schema = pydantic.schema_of(capa.render.result_document.ResultDocument)
+    json_path.write_text(json.dumps(schema, indent=4))
 
     proto = capa.render.proto.generate_proto()
 
