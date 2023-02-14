@@ -8,12 +8,16 @@
 import pathlib
 import subprocess
 
+from fixtures import *
+
 import capa.render
 import capa.render.proto
 import capa.render.utils
 import capa.features.freeze
+import capa.render.proto.capa_pb2
 import capa.render.result_document
 import capa.features.freeze.features
+from capa.render.result_document import ResultDocument
 
 
 def test_generate_proto(tmp_path: pathlib.Path):
@@ -30,8 +34,25 @@ def test_generate_proto(tmp_path: pathlib.Path):
     print("=====================================")
     proto_path.write_text(proto)
 
-    subprocess.run(["protoc", "-I=" + str(tmp_path), "--python_out=" + str(tmp_path), str(proto_path)], check=True)
+    subprocess.run(
+        [
+            "protoc",
+            "-I=" + str(tmp_path),
+            "--python_out=" + str(tmp_path),
+            "--mypy_out=" + str(tmp_path),
+            str(proto_path),
+        ],
+        check=True,
+    )
 
     pb = tmp_path / "capa_pb2.py"
     print(pb.read_text())
     print("=====================================")
+
+
+def test_translate_to_proto(pma0101_rd: ResultDocument):
+    src = pma0101_rd
+
+    dst = capa.render.proto.capa_pb2.ResultDocument()
+
+    assert True

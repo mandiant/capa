@@ -1101,3 +1101,13 @@ def _0953c_dotnetfile_extractor():
 @pytest.fixture
 def _039a6_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_039a6"))
+
+
+@pytest.fixture
+def pma0101_rd():
+    path = os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)

@@ -318,7 +318,6 @@ def emit_proto_message(out: StringIO, deferred_types: Dict, message):
             out.writeln(f"  oneof {name} {{")
 
             for j, of in enumerate(prop["anyOf"]):
-
                 if is_ref(of):
                     ptype = get_ref_type_name(of)
                     out.writeln(f"    {ptype} v{j} = {i};")

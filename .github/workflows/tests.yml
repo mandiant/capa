@@ -38,7 +38,7 @@ jobs:
     - name: Lint with black
       run: black -l 120 --extend-exclude ".*_pb2.py" --check .
     - name: Lint with pycodestyle
-      run: pycodestyle --show-source capa/ scripts/ tests/
+      run: pycodestyle --exclude="*_pb2.py" --show-source capa/ scripts/ tests/
     - name: Check types with mypy
       run: mypy --config-file .github/mypy/mypy.ini --check-untyped-defs capa/ scripts/ tests/
 
