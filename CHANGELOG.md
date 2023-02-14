@@ -8,9 +8,11 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (3)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
+- data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
+- communication/ip/convert-ip-address-from-string @mr-tz
 -
 
 ### Bug Fixes
