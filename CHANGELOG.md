@@ -4,6 +4,8 @@
 
 ### New Features
 
+  - add protobuf format for result documents #1219 @williballenthin
+
 ### Breaking Changes
 
 ### New Rules (1)
