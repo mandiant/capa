@@ -247,7 +247,7 @@ def _find_capa_class(name):
 
 
 def _enum_properties(message):
-    """enumerate the properties of the message definitioned, ordered by class declaration"""
+    """enumerate the properties of the message defined, ordered by class declaration"""
     # this is just for convenience.
 
     # the order of properties provided by the class. guaranteed.
