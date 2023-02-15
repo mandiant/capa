@@ -47,6 +47,10 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
     for bb in f.basic_blocks:
         if len(bb.instructions) > 0:
             for bva, bflags in bb.instructions[-1].getBranches():
+                if bva is None:
+                    # vivisect may be unable to recover the call target, e.g. on dynamic calls like `call esi`
+                    # for this bva is None, and we don't want to add it for loop detection, ref: vivisect#574
+                    continue
                 # vivisect does not set branch flags for non-conditional jmp so add explicit check
                 if (
                     bflags & envi.BR_COND
