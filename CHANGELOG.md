@@ -14,6 +14,7 @@
 -
 
 ### Bug Fixes
+- extractor: fix vivisect loop detection corner case #1310 @mr-tz
 
 ### capa explorer IDA Pro plugin
 
