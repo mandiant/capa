@@ -6,11 +6,12 @@
 
 ### Breaking Changes
 
-### New Rules (3)
+### New Rules (4)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
 - communication/ip/convert-ip-address-from-string @mr-tz
+- data-manipulation/compression/compress-data-via-zlib-inflate-or-deflate blas.kojusner@mandiant.com
 -
 
 ### Bug Fixes
