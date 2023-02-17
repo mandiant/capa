@@ -57,9 +57,17 @@ def test_generate_proto(tmp_path: pathlib.Path):
     print("=====================================")
 
 
-def test_translate_to_proto(pma0101_rd: ResultDocument):
+def test_translate_to_pb2(pma0101_rd: ResultDocument):
+    schema = pydantic.schema_of(capa.render.result_document.ResultDocument)
     src = pma0101_rd
-
     dst = capa.render.proto.capa_pb2.ResultDocument()
+    typ = schema["definitions"]["ResultDocument"]
 
-    assert True
+    capa.render.proto.translate_to_pb2(schema, typ, src, dst)
+    
+    print()
+    print("=====================================")
+    print(dst)
+    print("=====================================")
+
+    assert False
