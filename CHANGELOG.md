@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (7)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -14,6 +14,7 @@
 - data-manipulation/compression/compress-data-via-zlib-inflate-or-deflate blas.kojusner@mandiant.com
 - executable/installer/dotnet/packaged-as-single-file-dotnet-application michael.hunhoff@mandiant.com
 - communication/socket/create-raw-socket blas.kojusner@mandiant.com
+- communication/http/reference-http-user-agent-string @mr-tz
 -
 
 ### Bug Fixes
