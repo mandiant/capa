@@ -13,7 +13,6 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features import *
 from capa.features.insn import *
 from capa.features.common import *
 
@@ -626,3 +625,53 @@ def test_match_property_access():
         0x0,
     )
     assert "test rule" not in matches
+
+
+def test_match_os_any():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - and:
+                        - or:
+                            - os: windows
+                            - os: linux
+                            - os: macos
+                        - string: "Hello world"
+                    - and:
+                        - os: any
+                        - string: "Goodbye world"
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    _, matches = match(
+        [r],
+        {OS(OS_ANY): {1}, String("Hello world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_WINDOWS): {1}, String("Hello world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_ANY): {1}, String("Goodbye world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_WINDOWS): {1}, String("Goodbye world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
