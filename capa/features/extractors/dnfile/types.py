@@ -6,8 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from enum import Enum
-from typing import Union, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from dncil.cil.instruction import Instruction
 
 
 class DnType(object):
@@ -73,3 +75,10 @@ class DnUnmanagedMethod:
     @staticmethod
     def format_name(module, method):
         return f"{module}.{method}"
+
+
+class DnBasicBlock:
+    def __init__(self, preds=None, succs=None, instructions=None):
+        self.succs: List[DnBasicBlock] = succs or []
+        self.preds: List[DnBasicBlock] = preds or []
+        self.instructions: List[Instruction] = instructions or []

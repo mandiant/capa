@@ -371,7 +371,7 @@ def get_function_by_token(extractor, token: int) -> FunctionHandle:
 def get_basic_block(extractor, fh: FunctionHandle, va: int) -> BBHandle:
     for bbh in extractor.get_basic_blocks(fh):
         if isinstance(extractor, DnfileFeatureExtractor):
-            addr = bbh.inner.offset
+            addr = bbh.inner.instructions[0].offset
         else:
             addr = bbh.address
         if addr == va:
@@ -741,9 +741,9 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("hello-world", "file", capa.features.common.Class("System.Console"), True),
         ("hello-world", "file", capa.features.common.Namespace("System.Diagnostics"), True),
         ("hello-world", "function=0x250", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x252", capa.features.common.String("Hello World!"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Class("System.Console"), True),
-        ("hello-world", "function=0x250, bb=0x250, insn=0x257", capa.features.common.Namespace("System"), True),
+        ("hello-world", "function=0x250, bb=0x251, insn=0x252", capa.features.common.String("Hello World!"), True),
+        ("hello-world", "function=0x250, bb=0x251, insn=0x257", capa.features.common.Class("System.Console"), True),
+        ("hello-world", "function=0x250, bb=0x251, insn=0x257", capa.features.common.Namespace("System"), True),
         ("hello-world", "function=0x250", capa.features.insn.API("System.Console::WriteLine"), True),
         ("hello-world", "file", capa.features.file.Import("System.Console::WriteLine"), True),
         ("_1c444", "file", capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"), True),
@@ -758,6 +758,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
         ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), True),
         ("_1c444", "token=0x600000F", capa.features.common.Characteristic("calls from"), False),
+        ("_1c444", "token=0x600001D", capa.features.common.Characteristic("loop"), True),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x0), True),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0x1), False),
         ("_692f", "token=0x6000004", capa.features.insn.API("System.Linq.Enumerable::First"), True),  # generic method
@@ -773,7 +774,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "token=0x6000020", capa.features.common.Class("Reqss.Reqss"), True),  # ldftn
         (
             "_1c444",
-            "function=0x1F59, bb=0x1F59, insn=0x1F5B",
+            "function=0x1F59, bb=0x1F5A, insn=0x1F5B",
             capa.features.common.Characteristic("unmanaged call"),
             True,
         ),
@@ -782,11 +783,11 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "token=0x6000088", capa.features.common.Characteristic("unmanaged call"), False),
         (
             "_1c444",
-            "function=0x1F68, bb=0x1F68, insn=0x1FF9",
+            "function=0x1F68, bb=0x1F74, insn=0x1FF9",
             capa.features.insn.API("System.Drawing.Image::FromHbitmap"),
             True,
         ),
-        ("_1c444", "function=0x1F68, bb=0x1F68, insn=0x1FF9", capa.features.insn.API("FromHbitmap"), False),
+        ("_1c444", "function=0x1F68, bb=0x1F74, insn=0x1FF9", capa.features.insn.API("FromHbitmap"), False),
         (
             "_1c444",
             "token=0x600002B",
@@ -954,6 +955,7 @@ FEATURE_PRESENCE_TESTS_IDA = [
     ("mimikatz", "file", capa.features.file.Import("cabinet.FCIAddFile"), True),
 ]
 
+
 FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x40E5C2", capa.features.basicblock.BasicBlock(), 7),
     ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
@@ -962,8 +964,9 @@ FEATURE_COUNT_TESTS = [
     ("mimikatz", "function=0x40B1F1", capa.features.common.Characteristic("calls to"), 3),
 ]
 
-
 FEATURE_COUNT_TESTS_DOTNET = [
+    ("_1c444", "token=0x06000072", capa.features.basicblock.BasicBlock(), 1),
+    ("_1c444", "token=0x0600008C", capa.features.basicblock.BasicBlock(), 10),
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
 ]

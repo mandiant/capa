@@ -13,6 +13,7 @@ from typing import Tuple, Iterator
 
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address
+from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,13 @@ def extract_recursive_call(fh: FunctionHandle) -> Iterator[Tuple[Characteristic,
 
 def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Characteristic, Address]]:
     """extract loop indicators from a function"""
-    raise NotImplementedError()
+    edges = []
+    for bb in fh.ctx["blocks"]:
+        for succ in bb.succs:
+            edges.append((bb.instructions[0].offset, succ.instructions[0].offset))
+
+    if loops.has_loop(edges):
+        yield Characteristic("loop"), fh.address
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -47,4 +54,9 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_calls_from, extract_recursive_call)
+FUNCTION_HANDLERS = (
+    extract_function_calls_to,
+    extract_function_calls_from,
+    extract_recursive_call,
+    extract_function_loop,
+)

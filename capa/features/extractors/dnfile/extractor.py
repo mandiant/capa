@@ -8,19 +8,21 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Union, Iterator, Optional
+from typing import Set, Dict, List, Tuple, Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.opcode import OpCodes
+from dncil.cil.instruction import Instruction
 
 import capa.features.extractors
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.dnfile.file
 import capa.features.extractors.dnfile.insn
 import capa.features.extractors.dnfile.function
+import capa.features.extractors.dnfile.basicblock
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
-from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
+from capa.features.extractors.dnfile.types import DnType, DnBasicBlock, DnUnmanagedMethod
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     get_dotnet_types,
@@ -98,7 +100,13 @@ class DnfileFeatureExtractor(FeatureExtractor):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
                 inner=method,
-                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "cache": self.token_cache},
+                ctx={
+                    "pe": self.pe,
+                    "calls_from": set(),
+                    "calls_to": set(),
+                    "blocks": list(),
+                    "cache": self.token_cache,
+                },
             )
 
             # method tokens should be unique
@@ -127,21 +135,96 @@ class DnfileFeatureExtractor(FeatureExtractor):
                 # those calls to other MethodDef methods e.g. calls to imported MemberRef methods
                 fh.ctx["calls_from"].add(address)
 
+        # calculate basic blocks
+        for fh in methods.values():
+
+            # calculate basic block leaders where,
+            #   1. The first instruction of the intermediate code is a leader
+            #   2. Instructions that are targets of unconditional or conditional jump/goto statements are leaders
+            #   3. Instructions that immediately follow unconditional or conditional jump/goto statements are considered leaders
+            #   https://www.geeksforgeeks.org/basic-blocks-in-compiler-design/
+
+            leaders: Set[int] = set()
+            for (idx, insn) in enumerate(fh.inner.instructions):
+                if idx == 0:
+                    # add #1
+                    leaders.add(insn.offset)
+
+                if any((insn.is_br(), insn.is_cond_br(), insn.is_leave())):
+                    # add #2
+                    leaders.add(insn.operand)
+                    # add #3
+                    try:
+                        leaders.add(fh.inner.instructions[idx + 1].offset)
+                    except IndexError:
+                        # may encounter branch at end of method
+                        continue
+
+            # build basic blocks using leaders
+            bb_curr: Optional[DnBasicBlock] = None
+            for (idx, insn) in enumerate(fh.inner.instructions):
+                if insn.offset in leaders:
+                    # new leader, new basic block
+                    bb_curr = DnBasicBlock(instructions=[insn])
+                    fh.ctx["blocks"].append(bb_curr)
+                    continue
+                assert bb_curr is not None
+
+                bb_curr.instructions.append(insn)
+
+            # create mapping of first instruction to basic block
+            bb_map: Dict[int, DnBasicBlock] = {}
+            for bb in fh.ctx["blocks"]:
+                if len(bb.instructions) == 0:
+                    # TODO: consider error?
+                    continue
+                bb_map[bb.instructions[0].offset] = bb
+
+            # connect basic blocks
+            for (idx, bb) in enumerate(fh.ctx["blocks"]):
+                if len(bb.instructions) == 0:
+                    # TODO: consider error?
+                    continue
+
+                last = bb.instructions[-1]
+
+                # connect branches to other basic blocks
+                if any((last.is_br(), last.is_cond_br(), last.is_leave())):
+                    bb_branch: Optional[DnBasicBlock] = bb_map.get(last.operand, None)
+                    if bb_branch is not None:
+                        # TODO: consider None error?
+                        bb.succs.append(bb_branch)
+                        bb_branch.preds.append(bb)
+
+                if any((last.is_br(), last.is_leave())):
+                    # no fallthrough
+                    continue
+
+                # connect fallthrough
+                try:
+                    bb_next: DnBasicBlock = fh.ctx["blocks"][idx + 1]
+                    bb.succs.append(bb_next)
+                    bb_next.preds.append(bb)
+                except IndexError:
+                    continue
+
         yield from methods.values()
 
     def extract_function_features(self, fh) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.dnfile.function.extract_features(fh)
 
-    def get_basic_blocks(self, f) -> Iterator[BBHandle]:
-        # each dotnet method is considered 1 basic block
-        yield BBHandle(
-            address=f.address,
-            inner=f.inner,
-        )
+    def get_basic_blocks(self, fh) -> Iterator[BBHandle]:
+        for bb in fh.ctx["blocks"]:
+            yield BBHandle(
+                address=DNTokenOffsetAddress(
+                    fh.address, bb.instructions[0].offset - (fh.inner.offset + fh.inner.header_size)
+                ),
+                inner=bb,
+            )
 
     def extract_basic_block_features(self, fh, bbh):
         # we don't support basic block features
-        yield from []
+        yield from capa.features.extractors.dnfile.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh, bbh):
         for insn in bbh.inner.instructions:
