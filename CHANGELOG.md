@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- dotnet: add support for basic blocks #1326 @mike-hunhoff
 
 ### Breaking Changes
 
