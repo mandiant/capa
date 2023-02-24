@@ -158,6 +158,29 @@ def get_dnfile_extractor(path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_binja_extractor(path):
+    from binaryninja import Settings, BinaryViewType
+
+    import capa.features.extractors.binja.extractor
+
+    # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
+    settings = Settings()
+    if path.endswith("kernel32-64.dll_"):
+        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
+        settings.set_bool("pdb.loadGlobalSymbols", False)
+    bv = BinaryViewType.get_view_of_file(path)
+    if path.endswith("kernel32-64.dll_"):
+        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+
+    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():

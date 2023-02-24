@@ -73,6 +73,7 @@ RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 BACKEND_VIV = "vivisect"
 BACKEND_DOTNET = "dotnet"
+BACKEND_BINJA = "binja"
 
 E_MISSING_RULES = 10
 E_MISSING_FILE = 11
@@ -513,6 +514,33 @@ def get_extractor(
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
+    elif backend == BACKEND_BINJA:
+        from capa.features.extractors.binja.find_binja_api import find_binja_path
+
+        # When we are running as a standalone executable, we cannot directly import binaryninja
+        # We need to fist find the binja API installation path and add it into sys.path
+        if is_running_standalone():
+            bn_api = find_binja_path()
+            if os.path.exists(bn_api):
+                sys.path.append(bn_api)
+
+        try:
+            from binaryninja import BinaryView, BinaryViewType
+        except ImportError:
+            raise RuntimeError(
+                "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
+                "https://docs.binary.ninja/dev/batch.html#install-the-api)."
+            )
+
+        import capa.features.extractors.binja.extractor
+
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            bv: BinaryView = BinaryViewType.get_view_of_file(path)
+            if bv is None:
+                raise RuntimeError("Binary Ninja cannot open file %s" % (path))
+
+        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+
     # default to use vivisect backend
     else:
         import capa.features.extractors.viv.extractor
@@ -859,7 +887,7 @@ def install_common_args(parser, wanted=None):
                 "--backend",
                 type=str,
                 help="select the backend to use",
-                choices=(BACKEND_VIV,),
+                choices=(BACKEND_VIV, BACKEND_BINJA),
                 default=BACKEND_VIV,
             )
 
