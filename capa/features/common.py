@@ -428,6 +428,20 @@ class OS(Feature):
         super().__init__(value, description=description)
         self.name = "os"
 
+    def evaluate(self, ctx, **kwargs):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature." + self.name] += 1
+
+        for feature, locations in ctx.items():
+            if not isinstance(feature, (OS,)):
+                continue
+
+            assert isinstance(feature.value, str)
+            if OS_ANY in (self.value, feature.value) or self.value == feature.value:
+                return Result(True, self, [], locations=locations)
+
+        return Result(False, self, [])
+
 
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
