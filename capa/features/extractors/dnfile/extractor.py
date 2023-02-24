@@ -137,7 +137,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
         # calculate basic blocks
         for fh in methods.values():
-
             # calculate basic block leaders where,
             #   1. The first instruction of the intermediate code is a leader
             #   2. Instructions that are targets of unconditional or conditional jump/goto statements are leaders
@@ -145,7 +144,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
             #   https://www.geeksforgeeks.org/basic-blocks-in-compiler-design/
 
             leaders: Set[int] = set()
-            for (idx, insn) in enumerate(fh.inner.instructions):
+            for idx, insn in enumerate(fh.inner.instructions):
                 if idx == 0:
                     # add #1
                     leaders.add(insn.offset)
@@ -162,14 +161,14 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
             # build basic blocks using leaders
             bb_curr: Optional[DnBasicBlock] = None
-            for (idx, insn) in enumerate(fh.inner.instructions):
+            for idx, insn in enumerate(fh.inner.instructions):
                 if insn.offset in leaders:
                     # new leader, new basic block
                     bb_curr = DnBasicBlock(instructions=[insn])
                     fh.ctx["blocks"].append(bb_curr)
                     continue
-                assert bb_curr is not None
 
+                assert bb_curr is not None
                 bb_curr.instructions.append(insn)
 
             # create mapping of first instruction to basic block
@@ -181,7 +180,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
                 bb_map[bb.instructions[0].offset] = bb
 
             # connect basic blocks
-            for (idx, bb) in enumerate(fh.ctx["blocks"]):
+            for idx, bb in enumerate(fh.ctx["blocks"]):
                 if len(bb.instructions) == 0:
                     # TODO: consider error?
                     continue
