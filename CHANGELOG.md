@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (9)
+### New Rules (10)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -17,6 +17,7 @@
 - communication/http/reference-http-user-agent-string @mr-tz
 - communication/http/get-http-content-length william.ballenthin@mandiant.com
 - nursery/move-directory michael.hunhoff@mandiant.com
+- nursery/get-http-request-uri william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
