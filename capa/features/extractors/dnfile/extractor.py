@@ -222,7 +222,6 @@ class DnfileFeatureExtractor(FeatureExtractor):
             )
 
     def extract_basic_block_features(self, fh, bbh):
-        # we don't support basic block features
         yield from capa.features.extractors.dnfile.basicblock.extract_features(fh, bbh)
 
     def get_instructions(self, fh, bbh):
