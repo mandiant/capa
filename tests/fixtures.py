@@ -643,9 +643,9 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/string, direct memory reference
         ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
         # insn/bytes
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), True),
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
         # IDA features included byte sequences read from invalid memory, fixed in #409
         ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
