@@ -271,7 +271,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
 
-            if f.vw.isProbablyString(v):
+            if f.vw.isProbablyString(v) or f.vw.detectUnicode(v):
                 # don't extract byte features for obvious strings
                 continue
 
