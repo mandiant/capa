@@ -648,16 +648,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/bytes
         # don't extract byte features for obvious strings
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
-        ("mimikatz", "function=0x40105D", capa.features.common.String("SCardControl"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
-        ("mimikatz", "function=0x40105D", capa.features.common.String("ACR  > "), True),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
+        ("mimikatz", "function=0x401517", capa.features.common.Bytes(binascii.unhexlify("CA3B0E000000F8AF47")), True),
+        ("mimikatz", "function=0x404414", capa.features.common.Bytes(binascii.unhexlify("0180000040EA4700")), True),
         # IDA features included byte sequences read from invalid memory, fixed in #409
         ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
-        # insn/bytes, pointer to bytes
+        # insn/bytes, pointer to string bytes
         ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
-        ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
         # insn/characteristic(nzxor)
         ("mimikatz", "function=0x410DFC", capa.features.common.Characteristic("nzxor"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("nzxor"), False),
