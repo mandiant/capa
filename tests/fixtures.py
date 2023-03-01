@@ -646,13 +646,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/string, direct memory reference
         ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
         # insn/bytes
+        ("mimikatz", "function=0x401517", capa.features.common.Bytes(binascii.unhexlify("CA3B0E000000F8AF47")), True),
+        ("mimikatz", "function=0x404414", capa.features.common.Bytes(binascii.unhexlify("0180000040EA4700")), True),
         # don't extract byte features for obvious strings
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
-        ("mimikatz", "function=0x401517", capa.features.common.Bytes(binascii.unhexlify("CA3B0E000000F8AF47")), True),
-        ("mimikatz", "function=0x404414", capa.features.common.Bytes(binascii.unhexlify("0180000040EA4700")), True),
+        # push    offset aAcsAcr1220 ; "ACS..." -> where ACS == 41 00 43 00 == valid pointer to middle of instruction
+        ("mimikatz", "function=0x401000", capa.features.common.Bytes(binascii.unhexlify("FDFF59F647")), False),
         # IDA features included byte sequences read from invalid memory, fixed in #409
         ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
         # insn/bytes, pointer to string bytes

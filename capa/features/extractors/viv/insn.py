@@ -176,11 +176,11 @@ def derefs(vw, p):
         if not vw.isValidPointer(p):
             return
 
+        yield p
+
         if vw.isProbablyString(p) or vw.isProbablyUnicode(p):
             # don't deref strings that coincidentally are pointers
             return
-
-        yield p
 
         try:
             next = vw.readMemoryPtr(p)
