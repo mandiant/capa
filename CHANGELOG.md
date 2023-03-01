@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (10)
+### New Rules (12)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -18,6 +18,8 @@
 - communication/http/get-http-content-length william.ballenthin@mandiant.com
 - nursery/move-directory michael.hunhoff@mandiant.com
 - nursery/get-http-request-uri william.ballenthin@mandiant.com
+- nursery/create-zip-archive-in-dotnet michael.hunhoff@mandiant.com
+- nursery/extract-zip-archive-in-dotnet anushka.virgaonkar@mandiant.com michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
