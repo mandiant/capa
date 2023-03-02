@@ -55,6 +55,7 @@ hiddenimports = [
     "vivisect.analysis.generic.entrypoints",
     "vivisect.analysis.generic.funcentries",
     "vivisect.analysis.generic.impapi",
+    "vivisect.analysis.generic.linker",
     "vivisect.analysis.generic.mkpointers",
     "vivisect.analysis.generic.pointers",
     "vivisect.analysis.generic.pointertables",
