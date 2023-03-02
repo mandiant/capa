@@ -38,6 +38,12 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """called when IDA is loading the plugin"""
         logging.basicConfig(level=logging.INFO)
 
+        # do not load plugin unless hosted in idaq (IDA Qt)
+        if not idaapi.is_idaq():
+            # note: it does not appear that IDA calls "init" by default when hosted in idat; we keep this
+            # check here for good measure
+            return idaapi.PLUGIN_SKIP
+
         import capa.ida.helpers
 
         # do not load plugin if IDA version/file type not supported

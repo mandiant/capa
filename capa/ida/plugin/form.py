@@ -29,7 +29,7 @@ import capa.features.extractors.ida.extractor
 from capa.rules import Rule
 from capa.engine import FeatureSet
 from capa.rules.cache import compute_ruleset_cache_identifier
-from capa.ida.plugin.icon import QICON
+from capa.ida.plugin.icon import ICON
 from capa.ida.plugin.view import (
     CapaExplorerQtreeView,
     CapaExplorerRulegenEditor,
@@ -238,7 +238,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         load interface and install hooks but do not analyze database
         """
         self.parent = self.FormToPyQtWidget(form)
-        self.parent.setWindowIcon(QICON)
+
+        pixmap = QtGui.QPixmap()
+        pixmap.loadFromData(ICON)
+
+        self.parent.setWindowIcon(QtGui.QIcon(pixmap))
 
         self.load_interface()
         self.load_ida_hooks()
