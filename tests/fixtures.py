@@ -689,7 +689,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): xorps
         # viv needs fixup to recognize function, see above
-        ("3b13b...", "function=0x10006860", capa.features.common.Characteristic("nzxor"), True),
+        ("mimikatz", "function=0x410dfc", capa.features.common.Characteristic("nzxor"), True),
         # insn/characteristic(peb access)
         ("kernel32-64", "function=0x1800017D0", capa.features.common.Characteristic("peb access"), True),
         ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("peb access"), False),
