@@ -27,7 +27,7 @@
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - explorer: fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
-- explorer: improve embedded PE detection #1344 @mike-hunhoff
+- explorer: improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 
