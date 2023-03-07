@@ -4,6 +4,8 @@
 
 ### New Features
 
+- new cli flag `-o`/`--os` to override auto-detected operating system for a sample @captainGeech42
+
 ### Breaking Changes
 
 ### New Rules (12)
