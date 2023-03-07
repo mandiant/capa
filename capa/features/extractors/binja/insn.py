@@ -22,11 +22,10 @@ from binaryninja import (
 )
 
 import capa.features.extractors.helpers
-import capa.features.extractors.binja.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binja.helpers import DisassemblyInstruction
+from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
@@ -129,8 +128,6 @@ def extract_insn_number_features(
     example:
         push    3136B0h         ; dwControlCode
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
@@ -174,8 +171,6 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     example:
         push    offset iid_004118d4_IShellLinkA ; riid
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
@@ -225,8 +220,6 @@ def extract_insn_string_features(
     example:
         push offset aAcr     ; "ACR  > "
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
@@ -285,8 +278,6 @@ def extract_insn_offset_features(
     example:
         .text:0040112F cmp [esi+4], ebx
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
@@ -373,8 +364,6 @@ def extract_insn_nzxor_characteristic_features(
     parse instruction non-zeroing XOR instruction
     ignore expected non-zeroing XORs, e.g. security cookies
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
@@ -425,8 +414,6 @@ def extract_insn_peb_access_characteristic_features(
 
     fs:[0x30] on x86, gs:[0x60] on x64
     """
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
@@ -469,8 +456,6 @@ def extract_insn_segment_access_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
-    from capa.features.extractors.binja.helpers import visit_llil_exprs
-
     insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 

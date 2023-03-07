@@ -18,6 +18,7 @@ import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.extractors.binja.helpers import unmangle_c_name
 
 
 def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[int, int]]:
@@ -74,8 +75,6 @@ def extract_file_embedded_pe(bv: BinaryView) -> Iterator[Tuple[Feature, Address]
 
 def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
-    from capa.features.extractors.binja.helpers import unmangle_c_name
-
     for sym in bv.get_symbols_of_type(SymbolType.FunctionSymbol):
         if sym.binding in [SymbolBinding.GlobalBinding, SymbolBinding.WeakBinding]:
             name = sym.short_name
