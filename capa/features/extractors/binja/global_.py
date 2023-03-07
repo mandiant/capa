@@ -22,7 +22,7 @@ def extract_os(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
     elif name == "macos":
         yield OS(OS_MACOS), NO_ADDRESS
 
-    elif name in ["linux", "freebsd", "decreee"]:
+    elif name in ["linux", "freebsd", "decree"]:
         yield OS(name), NO_ADDRESS
 
     else:
