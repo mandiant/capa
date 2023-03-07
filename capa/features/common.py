@@ -421,6 +421,8 @@ OS_MACOS = "macos"
 OS_ANY = "any"
 VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
 VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
+# internal only, not to be used in rules
+OS_AUTO = "auto"
 
 
 class OS(Feature):

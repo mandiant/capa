@@ -65,6 +65,10 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    OS_AUTO,
+    OS_LINUX,
+    OS_MACOS,
+    OS_WINDOWS
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -490,7 +494,7 @@ def get_workspace(path, format_, sigpaths):
 
 # TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
-    path: str, format_: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
+    path: str, format_: str, os: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
 ) -> FeatureExtractor:
     """
     raises:
@@ -505,7 +509,7 @@ def get_extractor(
         if not is_supported_arch(path):
             raise UnsupportedArchError()
 
-        if not is_supported_os(path):
+        if os == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
@@ -530,7 +534,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
@@ -790,6 +794,7 @@ def install_common_args(parser, wanted=None):
       wanted (Set[str]): collection of arguments to opt-into, including:
         - "sample": required positional argument to input file.
         - "format": flag to override file format.
+        - "os": flag to override file operating system.
         - "backend": flag to override analysis backend.
         - "rules": flag to override path to capa rules.
         - "tag": flag to override/specify which rules to match.
@@ -823,6 +828,7 @@ def install_common_args(parser, wanted=None):
     #
     #   - sample
     #   - format
+    #   - os 
     #   - rules
     #   - tag
     #
@@ -862,6 +868,22 @@ def install_common_args(parser, wanted=None):
                 choices=(BACKEND_VIV,),
                 default=BACKEND_VIV,
             )
+    
+    if "os" in wanted:
+        oses = [
+            (OS_AUTO, "detect OS automatically - default"),
+            (OS_LINUX,),
+            (OS_MACOS,),
+            (OS_WINDOWS,),
+        ]
+        os_help = ", ".join(["%s (%s)" % (o[0], o[1]) if len(o) == 2 else o[0] for o in oses])
+        parser.add_argument(
+            "-o",
+            "--os",
+            choices=[o[0] for o in oses],
+            default=OS_AUTO,
+            help="select sample OS: %s" % os_help,
+        )
 
     if "rules" in wanted:
         parser.add_argument(
@@ -1026,7 +1048,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"sample", "format", "backend", "signatures", "rules", "tag"})
+    install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
     ret = handle_common_args(args)
@@ -1142,7 +1164,7 @@ def main(argv=None):
 
         try:
             extractor = get_extractor(
-                args.sample, format_, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
+                args.sample, format_, args.os, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()

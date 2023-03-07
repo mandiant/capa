@@ -10,7 +10,7 @@ import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_AUTO, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
@@ -73,7 +73,10 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_os(buf) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(buf, os = OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
+    if os != OS_AUTO:
+        yield OS(os), NO_ADDRESS
+
     if buf.startswith(b"MZ"):
         yield OS(OS_WINDOWS), NO_ADDRESS
     elif buf.startswith(b"\x7fELF"):
@@ -92,8 +95,6 @@ def extract_os(buf) -> Iterator[Tuple[Feature, Address]]:
         #  2. handling a new file format (e.g. macho)
         #
         # for (1) we can't do much - its shellcode and all bets are off.
-        # we could maybe accept a further CLI argument to specify the OS,
-        # but i think this would be rarely used.
         # rules that rely on OS conditions will fail to match on shellcode.
         #
         # for (2), this logic will need to be updated as the format is implemented.
