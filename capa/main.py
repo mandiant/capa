@@ -693,6 +693,8 @@ def get_signatures(sigs_path):
 def collect_metadata(
     argv: List[str],
     sample_path: str,
+    format_: str,
+    os_: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
 ):
@@ -710,9 +712,9 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
+    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else f"{format_} (manual)"
     arch = get_arch(sample_path)
-    os_ = get_os(sample_path)
+    os_ = get_os(sample_path) if os_ == OS_AUTO else f"{os_} (manual)"
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -1176,7 +1178,7 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
-    meta = collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
