@@ -90,7 +90,7 @@ message ExportFeature {
 }
 
 message FeatureCounts {
-  Integer file = 1;
+  uint64 file = 1;  // TODO just int here and general int vs uint?!
   repeated FunctionFeatureCount functions = 2;
 }
 
@@ -131,7 +131,7 @@ message FormatFeature {
 
 message FunctionFeatureCount {
   Address address = 1;
-  Integer count = 2;
+  uint64 count = 2;
 }
 
 message FunctionLayout {
@@ -194,7 +194,7 @@ message MatchFeature {
 }
 
 message Metadata {
-  string timestamp = 1;
+  string timestamp = 1;  // TODO Timestamp?
   string version = 2;
   repeated string argv = 3;
   Sample sample = 4;
