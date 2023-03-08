@@ -648,11 +648,11 @@ class FormatStringQuotesIncorrect(Lint):
                     continue
                 if value.style is None:
                     # no quotes
-                    self.recommendation = 'add double quotes to "%s"' % value.value
+                    self.recommendation = f'add double quotes to "{value.value}"'
                     return True
                 if value.style == "'":
                     # single quote
-                    self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                    self.recommendation = f'change single quotes to double quotes for "{value.value}"'
                     return True
 
             elif isinstance(key, ruamel.yaml.ScalarEvent) and key.value == "substring":
@@ -662,11 +662,11 @@ class FormatStringQuotesIncorrect(Lint):
                     continue
                 if value.style is None:
                     # no quotes
-                    self.recommendation = 'add double quotes to "%s"' % value.value
+                    self.recommendation = f'add double quotes to "{value.value}"' 
                     return True
                 if value.style == "'":
                     # single quote
-                    self.recommendation = 'change single quotes to double quotes for "%s"' % value.value
+                    self.recommendation = f'change single quotes to double quotes for "{value.value}"'
                     return True
 
             else:
@@ -817,24 +817,12 @@ def lint_rule(ctx: Context, rule: Rule):
         if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
             print("")
             print(
-                "%s%s"
-                % (
-                    "    (nursery) " if is_nursery_rule(rule) else "",
-                    rule.name,
-                )
+                f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}'
             )
 
             for violation in violations:
                 print(
-                    "%s  %s: %s: %s"
-                    % (
-                        "    " if is_nursery_rule(rule) else "",
-                        Lint.WARN if is_nursery_rule(rule) else violation.level,
-                        violation.name,
-                        violation.recommendation,
-                    )
-                )
-
+                    f"{'    ' if is_nursery_rule(rule) else ''}  {Lint.WARN if is_nursery_rule(rule) else violation.level}: {violation.name}: {violation.recommendation}")
             print("")
 
     if is_nursery_rule(rule):
@@ -860,8 +848,8 @@ def lint_rule(ctx: Context, rule: Rule):
 
         if (not lints_failed) and (not lints_warned) and has_examples:
             print("")
-            print("%s%s" % ("    (nursery) ", rule.name))
-            print("%s  %s: %s: %s" % ("    ", Lint.WARN, green("no lint failures"), "Graduate the rule"))
+            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
+            print(f"      {Lint.WARN}: {green('no lint failures')}: Graduate the rule")
             print("")
     else:
         lints_failed = len(tuple(filter(lambda v: v.level == Lint.FAIL, violations)))
@@ -921,7 +909,7 @@ def lint(ctx: Context):
         with redirecting_print_to_tqdm():
             for rule in pbar:
                 name = rule.name
-                pbar.set_description(width("linting rule: %s" % (name), 48))
+                pbar.set_description(width(f"linting rule: {name}", 48))
                 ret[name] = lint_rule(ctx, rule)
 
     return ret
