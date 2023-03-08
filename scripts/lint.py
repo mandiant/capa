@@ -662,7 +662,7 @@ class FormatStringQuotesIncorrect(Lint):
                     continue
                 if value.style is None:
                     # no quotes
-                    self.recommendation = f'add double quotes to "{value.value}"' 
+                    self.recommendation = f'add double quotes to "{value.value}"'
                     return True
                 if value.style == "'":
                     # single quote
@@ -816,13 +816,12 @@ def lint_rule(ctx: Context, rule: Rule):
         # and ends up just producing a lot of noise.
         if not (is_nursery_rule(rule) and len(violations) == 1 and violations[0].name == "missing examples"):
             print("")
-            print(
-                f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}'
-            )
+            print(f'{"    (nursery) " if is_nursery_rule(rule) else ""} {rule.name}')
 
             for violation in violations:
                 print(
-                    f"{'    ' if is_nursery_rule(rule) else ''}  {Lint.WARN if is_nursery_rule(rule) else violation.level}: {violation.name}: {violation.recommendation}")
+                    f"{'    ' if is_nursery_rule(rule) else ''}  {Lint.WARN if is_nursery_rule(rule) else violation.level}: {violation.name}: {violation.recommendation}"
+                )
             print("")
 
     if is_nursery_rule(rule):
