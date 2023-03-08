@@ -82,29 +82,29 @@ def addr_from_freeze(a: capa.features.freeze.Address) -> capa.render.proto.capa_
     address = capa.render.proto.capa_pb2.Address()
     if a.type is AddressType.ABSOLUTE:
         address.type = capa.render.proto.capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE
-        address.v0.CopyFrom(capa.render.proto.capa_pb2.Integer(u=a.value))
+        address.v.CopyFrom(int_to_pb2(a.value))
         return address
 
     elif a.type is AddressType.RELATIVE:
         address.type = capa.render.proto.capa_pb2.AddressType.ADDRESSTYPE_RELATIVE
-        address.v0.CopyFrom(capa.render.proto.capa_pb2.Integer(u=a.value))
+        address.v.CopyFrom(int_to_pb2(a.value))
         return address
 
     elif a.type is AddressType.FILE:
         address.type = capa.render.proto.capa_pb2.AddressType.ADDRESSTYPE_FILE
-        address.v0.CopyFrom(capa.render.proto.capa_pb2.Integer(u=a.value))
+        address.v.CopyFrom(int_to_pb2(a.value))
         return address
 
     elif a.type is AddressType.DN_TOKEN:
         address.type = capa.render.proto.capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN
-        address.v0.u = a.value  # TODO or v0.CopyFrom(Integer(a.value))?
+        address.v.CopyFrom(int_to_pb2(a.value))
         return address
 
     elif a.type is AddressType.DN_TOKEN_OFFSET:
         token, offset = a.value
         address.type = capa.render.proto.capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN_OFFSET
-        address.v1.v0.CopyFrom(capa.render.proto.capa_pb2.Integer(u=token))
-        address.v1.v1.CopyFrom(capa.render.proto.capa_pb2.Integer(u=offset))
+        address.token_offset.token.CopyFrom(int_to_pb2(token))
+        address.token_offset.offset = offset
         return address
 
     elif a.type is AddressType.NO_ADDRESS:
@@ -113,7 +113,20 @@ def addr_from_freeze(a: capa.features.freeze.Address) -> capa.render.proto.capa_
         return address
 
     else:
-        raise NotImplementedError(f"type {a.type} not implemented")
+        raise NotImplementedError(f"unhandled address type {a.type} ({type(a.type).__name__})")
+
+
+def int_to_pb2(v):
+    assert isinstance(v, int)
+    if v < -2_147_483_648:
+        raise ValueError("underflow")
+    if v > 0xFFFFFFFFFFFFFFFF:
+        raise ValueError("overflow")
+
+    if v < 0:
+        return capa.render.proto.capa_pb2.Integer(i=v)
+    else:
+        return capa.render.proto.capa_pb2.Integer(u=v)
 
 
 if __name__ == "__main__":

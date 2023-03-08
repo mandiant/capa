@@ -109,32 +109,32 @@ def test_addr_from_freeze():
     a = capa.features.freeze.Address.from_capa(a)
     a = capa.render.proto.proto.addr_from_freeze(a)
     assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_ABSOLUTE
-    assert a.v0.u == 0x400000
+    assert a.v.u == 0x400000
 
     a = capa.features.address.RelativeVirtualAddress(0x100)
     a = capa.features.freeze.Address.from_capa(a)
     a = capa.render.proto.proto.addr_from_freeze(a)
     assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_RELATIVE
-    assert a.v0.u == 0x100
+    assert a.v.u == 0x100
 
     a = capa.features.address.FileOffsetAddress(0x200)
     a = capa.features.freeze.Address.from_capa(a)
     a = capa.render.proto.proto.addr_from_freeze(a)
     assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_FILE
-    assert a.v0.u == 0x200
+    assert a.v.u == 0x200
 
     a = capa.features.address.DNTokenAddress(0x123456)
     a = capa.features.freeze.Address.from_capa(a)
     a = capa.render.proto.proto.addr_from_freeze(a)
     assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_DN_TOKEN
-    assert a.v0.u == 0x123456
+    assert a.v.u == 0x123456
 
     a = capa.features.address.DNTokenOffsetAddress(0x123456, 0x10)
     a = capa.features.freeze.Address.from_capa(a)
     a = capa.render.proto.proto.addr_from_freeze(a)
     assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_DN_TOKEN_OFFSET
-    assert a.v1.v0.u == 0x123456
-    assert a.v1.v1.u == 0x10
+    assert a.token_offset.token.u == 0x123456
+    assert a.token_offset.offset == 0x10
 
     a = capa.features.address._NoAddress()
     a = capa.features.freeze.Address.from_capa(a)
