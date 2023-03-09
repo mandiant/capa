@@ -102,13 +102,13 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
             for name in capa.features.extractors.helpers.generate_symbols(info[0], info[1]):
                 yield Import(name), addr
             dll = info[0]
-            symbol = "#%d" % (info[2])
+            symbol = f"#{info[2]}"
         elif info[1]:
             dll = info[0]
             symbol = info[1]
         elif info[2]:
             dll = info[0]
-            symbol = "#%d" % (info[2])
+            symbol = f"#{info[2]}"
         else:
             continue
 
@@ -176,7 +176,7 @@ def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
-        raise NotImplementedError("unexpected file format: %d" % file_info.filetype)
+        raise NotImplementedError(f"unexpected file format: {file_info.filetype}")
 
 
 def extract_features() -> Iterator[Tuple[Feature, Address]]:

@@ -121,7 +121,7 @@ def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     elif oper.tsize == 8:
         chars = struct.pack("<Q", oper.imm)
     else:
-        raise ValueError("unexpected oper.tsize: %d" % (oper.tsize))
+        raise ValueError(f"unexpected oper.tsize: {oper.tsize}")
 
     if is_printable_ascii(chars):
         return oper.tsize

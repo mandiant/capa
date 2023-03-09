@@ -329,7 +329,7 @@ def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
 
     freeze = Freeze.parse_raw(s)
     if freeze.version != 2:
-        raise ValueError("unsupported freeze format version: %d", freeze.version)
+        raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     return null.NullFeatureExtractor(
         base_address=freeze.base_address.to_capa(),

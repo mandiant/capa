@@ -149,11 +149,11 @@ class Feature(abc.ABC):
     def __str__(self):
         if self.value is not None:
             if self.description:
-                return "%s(%s = %s)" % (self.get_name_str(), self.get_value_str(), self.description)
+                return f"{self.get_name_str()}({self.get_value_str()} = {self.description})"
             else:
-                return "%s(%s)" % (self.get_name_str(), self.get_value_str())
+                return f"{self.get_name_str()}({self.get_value_str()})"
         else:
-            return "%s" % self.get_name_str()
+            return f"{self.get_name_str()}"
 
     def __repr__(self):
         return str(self)
@@ -242,7 +242,7 @@ class Substring(String):
 
     def __str__(self):
         assert isinstance(self.value, str)
-        return "substring(%s)" % escape_string(self.value)
+        return f"substring({escape_string(self.value)})"
 
 
 class _MatchedSubstring(Substring):
@@ -268,10 +268,7 @@ class _MatchedSubstring(Substring):
 
     def __str__(self):
         assert isinstance(self.value, str)
-        return 'substring("%s", matches = %s)' % (
-            self.value,
-            ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
-        )
+        return f"""substring("{self.value}", matches = {", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))})"""
 
 
 class Regex(String):
@@ -290,7 +287,7 @@ class Regex(String):
             if value.endswith("/i"):
                 value = value[: -len("i")]
             raise ValueError(
-                "invalid regular expression: %s it should use Python syntax, try it at https://pythex.org" % value
+                f"invalid regular expression: {value} it should use Python syntax, try it at https://pythex.org"
             ) from exc
 
     def evaluate(self, ctx, short_circuit=True):
@@ -336,7 +333,7 @@ class Regex(String):
 
     def __str__(self):
         assert isinstance(self.value, str)
-        return "regex(string =~ %s)" % self.value
+        return f"regex(string =~ {self.value})"
 
 
 class _MatchedRegex(Regex):
@@ -362,10 +359,7 @@ class _MatchedRegex(Regex):
 
     def __str__(self):
         assert isinstance(self.value, str)
-        return "regex(string =~ %s, matches = %s)" % (
-            self.value,
-            ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys())),
-        )
+        return f"""regex(string =~ {self.value}, matches = {", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))})"""
 
 
 class StringFactory:
