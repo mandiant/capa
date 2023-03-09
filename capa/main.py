@@ -880,7 +880,6 @@ def install_common_args(parser, wanted=None):
         ]
         os_help = ", ".join(["%s (%s)" % (o[0], o[1]) if len(o) == 2 else o[0] for o in oses])
         parser.add_argument(
-            "-o",
             "--os",
             choices=[o[0] for o in oses],
             default=OS_AUTO,
