@@ -25,10 +25,11 @@
 ### Bug Fixes
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
-- explorer: fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
 
 ### capa explorer IDA Pro plugin
+- fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
+- improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
 ### Development
 
