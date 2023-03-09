@@ -43,10 +43,12 @@ class Statement:
         self.description = description
 
     def __str__(self):
+        name = self.name.lower()
+        children = ','.join(map(str, self.get_children()))
         if self.description:
-            return f"{self.name.lower()}({','.join(map(str, self.get_children()))} = {self.description})"
+            return f"{name}({children} = {self.description})"
         else:
-            return f"{self.name.lower()}({','.join(map(str, self.get_children()))})"
+            return f"{name}({children})"
 
     def __repr__(self):
         return str(self)
