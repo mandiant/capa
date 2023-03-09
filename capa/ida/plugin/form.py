@@ -708,8 +708,8 @@ class CapaExplorerForm(idaapi.PluginForm):
                             "capa is showing you cached results from a previous analysis run. Your rules have changed since and you should reanalyze the program to see new results."
                         )
                         view_status_rules = "no rules matched for cache"
-                    
-                    cached_results_time = self.resdoc_cache.meta.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+                    cached_results_time = self.resdoc_cache.meta.timestamp.strftime("%Y-%m-%d %H:%M:%S")
                     new_view_status = f"capa rules: {view_status_rules}, cached results (created {cached_results_time})"
                 except Exception as e:
                     logger.error("Failed to load cached capa results (error: %s).", e, exc_info=True)

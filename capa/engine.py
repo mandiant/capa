@@ -44,7 +44,7 @@ class Statement:
 
     def __str__(self):
         name = self.name.lower()
-        children = ','.join(map(str, self.get_children()))
+        children = ",".join(map(str, self.get_children()))
         if self.description:
             return f"{name}({children} = {self.description})"
         else:

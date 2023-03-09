@@ -44,7 +44,7 @@ def extract_file_import_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]
         modname, impname = tinfo.split(".", 1)
         if is_viv_ord_impname(impname):
             # replace ord prefix with #
-            impname = "#"+ impname[len('ord'):]
+            impname = "#" + impname[len("ord") :]
 
         addr = AbsoluteVirtualAddress(va)
         for name in capa.features.extractors.helpers.generate_symbols(modname, impname):
