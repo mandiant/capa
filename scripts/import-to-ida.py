@@ -103,7 +103,7 @@ def main():
         if ns:
             cmt = f"{name} ({ns})"
         else:
-            cmt = f"{name}"
+            cmt = name
 
         logger.info("0x%x: %s", va, cmt)
         try:
