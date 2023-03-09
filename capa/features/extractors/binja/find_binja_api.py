@@ -20,12 +20,14 @@ spec = importlib.util.find_spec('binaryninja')
 if spec is not None:
     if len(spec.submodule_search_locations) > 0:
             path = Path(spec.submodule_search_locations[0])
-            print(str(path.parent))
+            # encode the path with utf8 then convert to hex, make sure it can be read and restored properly
+            print(str(path.parent).encode('utf8').hex())
 """
 
 
 def find_binja_path() -> str:
-    return subprocess.check_output(["python", "-c", "%s" % code]).decode("ascii").strip()
+    raw_output = subprocess.check_output(["python", "-c", "%s" % code]).decode("ascii").strip()
+    return bytes.fromhex(raw_output).decode("utf8")
 
 
 if __name__ == "__main__":
