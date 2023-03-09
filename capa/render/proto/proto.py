@@ -50,24 +50,27 @@ def metadata_from_capa(meta: capa.render.result_document.Metadata) -> capa.rende
         capa.render.proto.capa_pb2.Layout(
             functions=[
                 capa.render.proto.capa_pb2.FunctionLayout(
-                    address=addr_from_freeze(func.address),
+                    address=addr_from_freeze(f.address),
                     matched_basic_blocks=[
                         capa.render.proto.capa_pb2.BasicBlockLayout(address=addr_from_freeze(bb.address))
-                        for bb in func.matched_basic_blocks
+                        for bb in f.matched_basic_blocks
                     ],
                 )
-                for func in meta.analysis.layout.functions
+                for f in meta.analysis.layout.functions
             ]
         )
     )
 
-    m.analysis.feature_counts.file = meta.analysis.feature_counts.file
-    m.analysis.feature_counts.functions.extend(
-        [
-            capa.render.proto.capa_pb2.FunctionFeatureCount(address=addr_from_freeze(ffc.address), count=ffc.count)
-            for ffc in meta.analysis.feature_counts.functions
-        ]
+    m.analysis.feature_counts.CopyFrom(
+        capa.render.proto.capa_pb2.FeatureCounts(
+            file=meta.analysis.feature_counts.file,
+            functions=[
+                capa.render.proto.capa_pb2.FunctionFeatureCount(address=addr_from_freeze(f.address), count=f.count)
+                for f in meta.analysis.feature_counts.functions
+            ]
+        )
     )
+
     m.analysis.library_functions.extend(
         [
             capa.render.proto.capa_pb2.LibraryFunction(address=addr_from_freeze(lf.address), name=lf.name)
