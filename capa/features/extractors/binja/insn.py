@@ -374,7 +374,7 @@ def extract_insn_nzxor_characteristic_features(
         # e.g., <llil: eax = 0>, (LLIL_SET_REG). So we do not need to check whether the two operands are the same.
         if il.operation == LowLevelILOperation.LLIL_XOR:
             # Exclude cases related to the stack cookie
-            if is_nzxor_stack_cookie(fh.inner, bbh.inner, il):
+            if is_nzxor_stack_cookie(fh.inner, bbh.inner[0], il):
                 return False
             results.append((Characteristic("nzxor"), ih.address))
             return False

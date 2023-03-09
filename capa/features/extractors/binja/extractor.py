@@ -47,8 +47,17 @@ class BinjaFeatureExtractor(FeatureExtractor):
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         f: binja.Function = fh.inner
+        # Set up a MLIL basic block dict look up to associate the disassembly basic block with its MLIL basic block
+        mlil_lookup = {}
+        for mlil_bb in f.mlil.basic_blocks:
+            mlil_lookup[mlil_bb.source_block.start] = mlil_bb
+
         for bb in f.basic_blocks:
-            yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=bb)
+            mlil_bb = None
+            if bb.start in mlil_lookup:
+                mlil_bb = mlil_lookup[bb.start]
+
+            yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=(bb, mlil_bb))
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.binja.basicblock.extract_features(fh, bbh)
@@ -56,10 +65,10 @@ class BinjaFeatureExtractor(FeatureExtractor):
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         import capa.features.extractors.binja.helpers as binja_helpers
 
-        bb: binja.BasicBlock = bbh.inner
-        addr = bb.start
+        bb: Tuple[binja.BasicBlock, binja.MediumLevelILBasicBlock] = bbh.inner
+        addr = bb[0].start
 
-        for text, length in bb:
+        for text, length in bb[0]:
             insn = binja_helpers.DisassemblyInstruction(addr, length, text)
             yield InsnHandle(address=AbsoluteVirtualAddress(addr), inner=insn)
             addr += length

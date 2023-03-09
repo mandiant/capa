@@ -11,13 +11,14 @@ import string
 import struct
 from typing import Tuple, Iterator
 
-from binaryninja import Function, Variable
+from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
 from binaryninja import (
     BinaryView,
     VariableSourceType,
     MediumLevelILSetVar,
     MediumLevelILOperation,
+    MediumLevelILBasicBlock,
     MediumLevelILInstruction,
 )
 
@@ -74,34 +75,33 @@ def is_mov_imm_to_stack(il: MediumLevelILInstruction) -> bool:
     return True
 
 
-def bb_contains_stackstring(f: Function, bb: BinjaBasicBlock) -> bool:
+def bb_contains_stackstring(f: Function, bb: MediumLevelILBasicBlock) -> bool:
     """check basic block for stackstring indicators
 
     true if basic block contains enough moves of constant bytes to the stack
     """
     count = 0
-    mlil_bbs = [mlil_bb for mlil_bb in bb.function.mlil_basic_blocks if mlil_bb.source_block.start == bb.start]
-    for mlil_bb in mlil_bbs:
-        for il in mlil_bb:
-            if is_mov_imm_to_stack(il):
-                count += get_printable_len(il)
-        if count > MIN_STACKSTRING_LEN:
-            return True
+    for il in bb:
+        if is_mov_imm_to_stack(il):
+            count += get_printable_len(il)
+
+    if count > MIN_STACKSTRING_LEN:
+        return True
     return False
 
 
 def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
-    bb: BinjaBasicBlock = bbh.inner
-    if bb_contains_stackstring(fh.inner, bbh.inner):
+    bb: Tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
+    if bb[1] is not None and bb_contains_stackstring(fh.inner, bb[1]):
         yield Characteristic("stack string"), bbh.address
 
 
 def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract tight loop indicators from a basic block"""
-    bb: BinjaBasicBlock = bbh.inner
-    for edge in bb.outgoing_edges:
-        if edge.target.start == bb.start:
+    bb: Tuple[BinjaBasicBlock, MediumLevelILBasicBlock] = bbh.inner
+    for edge in bb[0].outgoing_edges:
+        if edge.target.start == bb[0].start:
             yield Characteristic("tight loop"), bbh.address
 
 
