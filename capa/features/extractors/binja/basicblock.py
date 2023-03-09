@@ -123,19 +123,18 @@ def main():
     if len(sys.argv) < 2:
         return
 
-    import pprint
-
     from binaryninja import BinaryViewType
+
+    from capa.features.extractors.binja.extractor import BinjaFeatureExtractor
 
     bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
     if bv is None:
         return
 
     features = []
-    for f in bv.functions:
-        fh = FunctionHandle(address=AbsoluteVirtualAddress(f.start), inner=f)
-        for bb in f.basic_blocks:
-            bbh = BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=bb)
+    extractor = BinjaFeatureExtractor(bv)
+    for fh in extractor.get_functions():
+        for bbh in extractor.get_basic_blocks(fh):
             features.extend(list(extract_features(fh, bbh)))
 
     import pprint

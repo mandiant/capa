@@ -606,27 +606,20 @@ def main():
     if len(sys.argv) < 2:
         return
 
-    import pprint
-
     from binaryninja import BinaryViewType
 
-    import capa.features.extractors.binja.helpers as binja_helpers
+    from capa.features.extractors.binja.extractor import BinjaFeatureExtractor
 
     bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
     if bv is None:
         return
 
     features = []
-    for f in bv.functions:
-        fh = FunctionHandle(address=AbsoluteVirtualAddress(f.start), inner=f)
-        for bb in f.basic_blocks:
-            bbh = BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=bb)
-            addr = bb.start
-            for text, length in bb:
-                insn = binja_helpers.DisassemblyInstruction(addr, length, text)
-                insn_handle = InsnHandle(address=AbsoluteVirtualAddress(addr), inner=insn)
-                addr += length
-                features.extend(list(extract_features(fh, bbh, insn_handle)))
+    extractor = BinjaFeatureExtractor(bv)
+    for fh in extractor.get_functions():
+        for bbh in extractor.get_basic_blocks(fh):
+            for insn in extractor.get_instructions(fh, bbh):
+                features.extend(list(extract_features(fh, bbh, insn)))
 
     import pprint
 
