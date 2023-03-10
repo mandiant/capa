@@ -99,7 +99,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
             if child.description:
                 ostream.write(f"count({child.type}({value} = {child.description})): ")
             else:
-                ostream.write(f"count({child.type}({value})): " % (child.type, value))
+                ostream.write(f"count({child.type}({value})): ")
         else:
             ostream.write(f"count({child.type}): ")
 
