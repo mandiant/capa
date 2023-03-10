@@ -202,7 +202,7 @@ def main(argv=None):
             elif result["status"] == "ok":
                 results[result["path"]] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
             else:
-                raise ValueError(f"unexpected status: {(result["status"])}")
+                raise ValueError(f"unexpected status: {result['status']}")
 
         print(json.dumps(results))
 
