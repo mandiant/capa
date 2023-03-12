@@ -44,9 +44,9 @@ class Statement:
 
     def __str__(self):
         if self.description:
-            return "%s(%s = %s)" % (self.name.lower(), ",".join(map(str, self.get_children())), self.description)
+            return f"{self.name.lower()}({','.join(map(str, self.get_children()))} = {self.description})"
         else:
-            return "%s(%s)" % (self.name.lower(), ",".join(map(str, self.get_children())))
+            return f"{self.name.lower()}({','.join(map(str, self.get_children()))})"
 
     def __repr__(self):
         return str(self)
@@ -232,9 +232,9 @@ class Range(Statement):
 
     def __str__(self):
         if self.max == (1 << 64 - 1):
-            return "range(%s, min=%d, max=infinity)" % (str(self.child), self.min)
+            return f"range({str(self.child)}, min={self.min}, max=infinity)"
         else:
-            return "range(%s, min=%d, max=%d)" % (str(self.child), self.min, self.max)
+            return f"range({str(self.child)}, min={self.min}, max={self.max})"
 
 
 class Subscope(Statement):
