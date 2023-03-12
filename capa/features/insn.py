@@ -31,7 +31,7 @@ class _AccessFeature(Feature, abc.ABC):
         super().__init__(value, description=description)
         if access is not None:
             if access not in VALID_FEATURE_ACCESS:
-                raise ValueError("%s access type %s not valid" % (self.name, access))
+                raise ValueError(f"{self.name} access type {access} not valid")
         self.access = access
 
     def __hash__(self):
