@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (12)
+### New Rules (19)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -20,6 +20,13 @@
 - nursery/get-http-request-uri william.ballenthin@mandiant.com
 - nursery/create-zip-archive-in-dotnet michael.hunhoff@mandiant.com
 - nursery/extract-zip-archive-in-dotnet anushka.virgaonkar@mandiant.com michael.hunhoff@mandiant.com
+- data-manipulation/encryption/tea/decrypt-data-using-tea william.ballenthin@mandiant.com raymond.leong@mandiant.com
+- data-manipulation/encryption/tea/encrypt-data-using-tea william.ballenthin@mandiant.com raymond.leong@mandiant.com
+- data-manipulation/encryption/xtea/encrypt-data-using-xtea raymond.leong@mandiant.com
+- data-manipulation/encryption/xxtea/encrypt-data-using-xxtea raymond.leong@mandiant.com
+- nursery/hash-data-using-ripemd128 raymond.leong@mandiant.com
+- nursery/hash-data-using-ripemd256 raymond.leong@mandiant.com
+- nursery/hash-data-using-ripemd320 raymond.leong@mandiant.com
 -
 
 ### Bug Fixes
