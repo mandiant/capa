@@ -1,4 +1,4 @@
-# Copyright (C) 2023 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -10,17 +10,20 @@ import pathlib
 import subprocess
 
 import pydantic
+from fixtures import *
+
+import capa.rules
 import capa.render
 import capa.render.proto
 import capa.render.utils
 import capa.features.freeze
 import capa.features.address
 import capa.render.proto.proto
-import capa.render.proto.capa_pb2
-import capa.render.result_document
+import capa.render.proto.capa_pb2 as capa_pb2
+import capa.render.result_document as rd
 import capa.features.freeze.features
-from fixtures import *
-from capa.render.result_document import ResultDocument
+
+# TODO test_proto_to_rd?
 
 
 # TODO enable/remove
@@ -29,7 +32,7 @@ def _test_generate_proto(tmp_path: pathlib.Path):
     proto_path = tmp_path / "capa.proto"
     json_path = tmp_path / "capa.json"
 
-    schema = pydantic.schema_of(capa.render.result_document.ResultDocument)
+    schema = pydantic.schema_of(rd.ResultDocument)
     json_path.write_text(json.dumps(schema, indent=4))
 
     proto = capa.render.proto.generate_proto()
@@ -58,13 +61,114 @@ def _test_generate_proto(tmp_path: pathlib.Path):
     print("=====================================")
 
 
-def test_translate_to_proto(pma0101_rd: ResultDocument):
-    src = pma0101_rd
+@pytest.mark.parametrize(
+    "rd_file",
+    [
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
+        pytest.param("pma0101_rd"),
+        pytest.param("dotnet_1c444e_rd"),
+    ],
+)
+def test_doc_to_pb2(request, rd_file):
+    src: rd.ResultDocument = request.getfixturevalue(rd_file)
+    dst = capa.render.proto.proto.doc_to_pb2(src)
 
-    meta = src.meta
-    dst = capa.render.proto.proto.metadata_from_capa(meta)
+    assert_meta(src.meta, dst.meta)
 
-    assert str(meta.timestamp) == dst.timestamp  # TODO type?
+    for rule_name, matches in src.rules.items():
+        assert rule_name in dst.rules
+
+        m: capa_pb2.RuleMetadata = dst.rules[rule_name].meta
+        assert matches.meta.name == m.name
+        assert cmp_optional(matches.meta.namespace, m.namespace)
+        assert list(matches.meta.authors) == m.authors
+        assert capa.render.proto.proto.scope_to_pb2(matches.meta.scope) == m.scope
+
+        assert len(matches.meta.attack) == len(m.attack)
+        for rd_attack, proto_attack in zip(matches.meta.attack, m.attack):
+            assert list(rd_attack.parts) == proto_attack.parts
+            assert rd_attack.tactic == proto_attack.tactic
+            assert rd_attack.technique == proto_attack.technique
+            assert rd_attack.subtechnique == proto_attack.subtechnique
+
+        assert len(matches.meta.mbc) == len(m.mbc)
+        for rd_mbc, proto_mbc in zip(matches.meta.mbc, m.mbc):
+            assert list(rd_mbc.parts) == proto_mbc.parts
+            assert rd_mbc.objective == proto_mbc.objective
+            assert rd_mbc.behavior == proto_mbc.behavior
+            assert rd_mbc.method == proto_mbc.method
+            assert rd_mbc.id == proto_mbc.id
+
+        assert list(matches.meta.references) == m.references
+        assert list(matches.meta.examples) == m.examples
+        assert matches.meta.description == m.description
+        assert matches.meta.lib == m.lib
+        assert matches.meta.is_subscope_rule == m.is_subscope_rule
+
+        assert cmp_optional(matches.meta.maec.analysis_conclusion, m.maec.analysis_conclusion)
+        assert cmp_optional(matches.meta.maec.analysis_conclusion_ov, m.maec.analysis_conclusion_ov)
+        assert cmp_optional(matches.meta.maec.malware_family, m.maec.malware_family)
+        assert cmp_optional(matches.meta.maec.malware_category, m.maec.malware_category)
+        assert cmp_optional(matches.meta.maec.malware_category_ov, m.maec.malware_category_ov)
+
+        assert matches.source == dst.rules[rule_name].source
+
+        assert len(matches.matches) == len(dst.rules[rule_name].matches)
+        for (addr, match), proto_match in zip(matches.matches, dst.rules[rule_name].matches):
+            assert capa.render.proto.proto.addr_to_pb2(addr) == proto_match.address
+            assert_match(match, proto_match.match)
+
+
+def test_addr_to_pb2():
+    a1 = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x400000))
+    a = capa.render.proto.proto.addr_to_pb2(a1)
+    assert a.type == capa_pb2.ADDRESSTYPE_ABSOLUTE
+    assert a.v.u == 0x400000
+
+    a2 = capa.features.freeze.Address.from_capa(capa.features.address.RelativeVirtualAddress(0x100))
+    a = capa.render.proto.proto.addr_to_pb2(a2)
+    assert a.type == capa_pb2.ADDRESSTYPE_RELATIVE
+    assert a.v.u == 0x100
+
+    a3 = capa.features.freeze.Address.from_capa(capa.features.address.FileOffsetAddress(0x200))
+    a = capa.render.proto.proto.addr_to_pb2(a3)
+    assert a.type == capa_pb2.ADDRESSTYPE_FILE
+    assert a.v.u == 0x200
+
+    a4 = capa.features.freeze.Address.from_capa(capa.features.address.DNTokenAddress(0x123456))
+    a = capa.render.proto.proto.addr_to_pb2(a4)
+    assert a.type == capa_pb2.ADDRESSTYPE_DN_TOKEN
+    assert a.v.u == 0x123456
+
+    a5 = capa.features.freeze.Address.from_capa(capa.features.address.DNTokenOffsetAddress(0x123456, 0x10))
+    a = capa.render.proto.proto.addr_to_pb2(a5)
+    assert a.type == capa_pb2.ADDRESSTYPE_DN_TOKEN_OFFSET
+    assert a.token_offset.token.u == 0x123456
+    assert a.token_offset.offset == 0x10
+
+    a6 = capa.features.freeze.Address.from_capa(capa.features.address._NoAddress())
+    a = capa.render.proto.proto.addr_to_pb2(a6)
+    assert a.type == capa_pb2.ADDRESSTYPE_NO_ADDRESS
+
+
+def test_scope_to_pb2():
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.FILE_SCOPE) == capa_pb2.SCOPE_FILE
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.FUNCTION_SCOPE) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.BASIC_BLOCK_SCOPE) == capa_pb2.SCOPE_BASIC_BLOCK
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.INSTRUCTION_SCOPE) == capa_pb2.SCOPE_INSTRUCTION
+
+
+def cmp_optional(a, b):
+    # proto optional value gets deserialized to "" instead of None (used by pydantic)
+    a = a if a is not None else ""
+    return a == b
+
+
+def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
+    assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     assert list(meta.argv) == dst.argv
 
@@ -78,68 +182,164 @@ def test_translate_to_proto(pma0101_rd: ResultDocument):
     assert meta.analysis.os == dst.analysis.os
     assert meta.analysis.extractor == dst.analysis.extractor
     assert list(meta.analysis.rules) == dst.analysis.rules
-    assert capa.render.proto.proto.addr_from_freeze(meta.analysis.base_address) == dst.analysis.base_address
+    assert capa.render.proto.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
 
     assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)
-    # TODO use zip()
-    for i, f in enumerate(meta.analysis.layout.functions):
-        assert capa.render.proto.proto.addr_from_freeze(f.address) == dst.analysis.layout.functions[i].address
+    for rd_f, proto_f in zip(meta.analysis.layout.functions, dst.analysis.layout.functions):
+        assert capa.render.proto.proto.addr_to_pb2(rd_f.address) == proto_f.address
 
-        assert len(f.matched_basic_blocks) == len(dst.analysis.layout.functions[i].matched_basic_blocks)
-        for j, bb in enumerate(f.matched_basic_blocks):
-            assert (
-                capa.render.proto.proto.addr_from_freeze(bb.address)
-                == dst.analysis.layout.functions[i].matched_basic_blocks[j].address
-            )
+        assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
+        for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
+            assert capa.render.proto.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
 
     assert meta.analysis.feature_counts.file == dst.analysis.feature_counts.file
     assert len(meta.analysis.feature_counts.functions) == len(dst.analysis.feature_counts.functions)
     for rd_f, proto_f in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
-        assert capa.render.proto.proto.addr_from_freeze(rd_f.address) == proto_f.address
+        assert capa.render.proto.proto.addr_to_pb2(rd_f.address) == proto_f.address
         assert rd_f.count == proto_f.count
 
     assert len(meta.analysis.library_functions) == len(dst.analysis.library_functions)
     for rd_lf, proto_lf in zip(meta.analysis.library_functions, dst.analysis.library_functions):
-        assert capa.render.proto.proto.addr_from_freeze(rd_lf.address) == proto_lf.address
+        assert capa.render.proto.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
         assert rd_lf.name == proto_lf.name
 
 
-def test_addr_from_freeze():
-    a = capa.features.address.AbsoluteVirtualAddress(0x400000)
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_ABSOLUTE
-    assert a.v.u == 0x400000
+def assert_match(ma: rd.Match, mb: capa_pb2.Match):
+    assert ma.success == mb.success
 
-    a = capa.features.address.RelativeVirtualAddress(0x100)
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_RELATIVE
-    assert a.v.u == 0x100
+    # node
+    if isinstance(ma.node, rd.StatementNode):
+        assert_statement(ma.node, mb.statement)
 
-    a = capa.features.address.FileOffsetAddress(0x200)
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_FILE
-    assert a.v.u == 0x200
+    elif isinstance(ma.node, rd.FeatureNode):
+        assert ma.node.type == mb.feature.type
+        assert_feature(ma.node.feature, mb.feature)
 
-    a = capa.features.address.DNTokenAddress(0x123456)
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_DN_TOKEN
-    assert a.v.u == 0x123456
+    # children
+    assert len(ma.children) == len(mb.children)
+    for ca, cb in zip(ma.children, mb.children):
+        assert_match(ca, cb)
 
-    a = capa.features.address.DNTokenOffsetAddress(0x123456, 0x10)
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_DN_TOKEN_OFFSET
-    assert a.token_offset.token.u == 0x123456
-    assert a.token_offset.offset == 0x10
+    # locations
+    assert list(map(capa.render.proto.proto.addr_to_pb2, ma.locations)) == mb.locations
 
-    a = capa.features.address._NoAddress()
-    a = capa.features.freeze.Address.from_capa(a)
-    a = capa.render.proto.proto.addr_from_freeze(a)
-    assert a.type == capa.render.proto.capa_pb2.ADDRESSTYPE_NO_ADDRESS
+    # captures
+    assert len(ma.captures) == len(mb.captures)
+    for capture, locs in ma.captures.items():
+        assert capture in mb.captures
+        assert list(map(capa.render.proto.proto.addr_to_pb2, locs)) == mb.captures[capture].address
 
 
-# TODO proto to RD?
+def assert_feature(fa, fb):
+    # get field that has been set, e.g., os or api, to access inner fields
+    fb = getattr(fb, fb.WhichOneof("feature"))
+
+    assert fa.type == fb.type
+    assert cmp_optional(fa.description, fb.description)
+
+    if isinstance(fa, capa.features.freeze.features.OSFeature):
+        assert fa.os == fb.os
+
+    elif isinstance(fa, capa.features.freeze.features.ArchFeature):
+        assert fa.arch == fb.arch
+
+    elif isinstance(fa, capa.features.freeze.features.FormatFeature):
+        assert fa.format == fb.format
+
+    elif isinstance(fa, capa.features.freeze.features.MatchFeature):
+        assert fa.match == fb.match
+
+    elif isinstance(fa, capa.features.freeze.features.CharacteristicFeature):
+        assert fa.characteristic == fb.characteristic
+
+    elif isinstance(fa, capa.features.freeze.features.ExportFeature):
+        assert fa.export == fb.export
+
+    elif isinstance(fa, capa.features.freeze.features.ImportFeature):
+        assert fa.import_ == fb.import_  # or could use getattr
+
+    elif isinstance(fa, capa.features.freeze.features.SectionFeature):
+        assert fa.section == fb.section
+
+    elif isinstance(fa, capa.features.freeze.features.FunctionNameFeature):
+        assert fa.function_name == fb.function_name
+
+    elif isinstance(fa, capa.features.freeze.features.SubstringFeature):
+        assert fa.substring == fb.substring
+
+    elif isinstance(fa, capa.features.freeze.features.RegexFeature):
+        assert fa.regex == fb.regex
+
+    elif isinstance(fa, capa.features.freeze.features.StringFeature):
+        assert fa.string == fb.string
+
+    elif isinstance(fa, capa.features.freeze.features.ClassFeature):
+        assert fa.class_ == fb.class_
+
+    elif isinstance(fa, capa.features.freeze.features.NamespaceFeature):
+        assert fa.namespace == fb.namespace
+
+    elif isinstance(fa, capa.features.freeze.features.BasicBlockFeature):
+        pass
+
+    elif isinstance(fa, capa.features.freeze.features.APIFeature):
+        assert fa.api == fb.api
+
+    elif isinstance(fa, capa.features.freeze.features.PropertyFeature):
+        assert fa.property == fb.property
+        assert fa.access == fb.access
+
+    elif isinstance(fa, capa.features.freeze.features.NumberFeature):
+        # get number value of set field
+        n = getattr(fb.number, fb.number.WhichOneof("value"))
+        assert fa.number == n
+
+    elif isinstance(fa, capa.features.freeze.features.BytesFeature):
+        assert fa.bytes == fb.bytes
+
+    elif isinstance(fa, capa.features.freeze.features.OffsetFeature):
+        assert fa.offset == getattr(fb.offset, fb.offset.WhichOneof("value"))
+
+    elif isinstance(fa, capa.features.freeze.features.MnemonicFeature):
+        assert fa.mnemonic == fb.mnemonic
+
+    elif isinstance(fa, capa.features.freeze.features.OperandNumberFeature):
+        assert fa.index == fb.index
+        assert fa.operand_number == getattr(fb.operand_number, fb.operand_number.WhichOneof("value"))
+
+    elif isinstance(fa, capa.features.freeze.features.OperandOffsetFeature):
+        assert fa.index == fb.index
+        assert fa.operand_offset == getattr(fb.operand_offset, fb.operand_offset.WhichOneof("value"))
+
+    else:
+        raise NotImplementedError(f"unhandled feature: {type(fa)}: {fa}")
+
+
+def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
+    assert a.type == b.type
+
+    sa = a.statement
+    sb = getattr(b, str(b.WhichOneof("statement")))
+
+    assert sa.type == sb.type
+    assert cmp_optional(sa.description, sb.description)
+
+    if isinstance(sa, rd.RangeStatement):
+        assert isinstance(sb, capa_pb2.RangeStatement)
+        assert sa.min == sb.min
+        assert sa.max == sa.max
+        assert_feature(sa.child, sb.child)
+
+    elif isinstance(sa, rd.SomeStatement):
+        assert sa.count == sb.count
+
+    elif isinstance(sa, rd.SubscopeStatement):
+        assert capa.render.proto.proto.scope_to_pb2(sa.scope) == sb.scope
+
+    elif isinstance(sa, rd.CompoundStatement):
+        # only has type and description tested above
+        pass
+
+    else:
+        # unhandled statement
+        assert False

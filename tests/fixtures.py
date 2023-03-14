@@ -1105,7 +1105,57 @@ def _039a6_dotnetfile_extractor():
 
 @pytest.fixture
 def pma0101_rd():
-    path = os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll.json")
+    path = os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll_.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)
+
+
+@pytest.fixture
+def dotnet_1c444e_rd():
+    path = os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)
+
+
+@pytest.fixture
+def a3f3bbc_rd():
+    path = os.path.join(CD, "data", "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)
+
+
+@pytest.fixture
+def al_khaserx86_rd():
+    path = os.path.join(CD, "data", "al-khaser_x86.exe_.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)
+
+
+@pytest.fixture
+def al_khaserx64_rd():
+    path = os.path.join(CD, "data", "al-khaser_x64.exe_.json")
+    with open(path, "rb") as f:
+        buf = f.read()
+
+    src = buf.decode("utf-8")
+    return capa.render.result_document.ResultDocument.parse_raw(src)
+
+
+@pytest.fixture
+def a076114_rd():
+    path = os.path.join(CD, "data", "0761142efbda6c4b1e801223de723578.dll_.json")
     with open(path, "rb") as f:
         buf = f.read()
 
