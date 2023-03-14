@@ -30,7 +30,7 @@ def info_to_name(display):
 
 def ea_to_hex(ea):
     """convert effective address (ea) to hex for display"""
-    return f"%08{hex(ea)}"
+    return f"{hex(ea)}"
 
 
 class CapaExplorerDataItem:

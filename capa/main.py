@@ -261,7 +261,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
             meta["library_functions"][f.address] = function_name
             n_libs = len(meta["library_functions"])
-            percentage = 100 * (n_libs / n_funcs)
+            percentage = round(100 * (n_libs / n_funcs))
             if isinstance(pb, tqdm.tqdm):
                 pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
             continue
