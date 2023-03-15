@@ -59,9 +59,9 @@ def main():
                 gc.collect()
 
         process = psutil.Process(os.getpid())
-        print(f"  duration: {(t1-t0):.2f}")
-        print(f"  rss: {(process.memory_info().rss / 1024 / 1024):.1f} MiB")
-        print(f"  vms: {(process.memory_info().vms / 1024 / 1024):.1f} MiB")
+        print(f"  duration: {t1 - t0:.02f}s")
+        print(f"  rss: {process.memory_info().rss / 1024 / 1024:.1f} MiB")
+        print(f"  vms: {process.memory_info().vms / 1024 / 1024:.1f} MiB")
 
     print("done.")
     gc.collect()

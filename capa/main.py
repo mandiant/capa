@@ -853,15 +853,15 @@ def install_common_args(parser, wanted=None):
             help=f"select sample format, {format_help}",
         )
 
-        if "backend" in wanted:
-            parser.add_argument(
-                "-b",
-                "--backend",
-                type=str,
-                help="select the backend to use",
-                choices=(BACKEND_VIV,),
-                default=BACKEND_VIV,
-            )
+    if "backend" in wanted:
+        parser.add_argument(
+            "-b",
+            "--backend",
+            type=str,
+            help="select the backend to use",
+            choices=(BACKEND_VIV,),
+            default=BACKEND_VIV,
+        )
 
     if "rules" in wanted:
         parser.add_argument(
