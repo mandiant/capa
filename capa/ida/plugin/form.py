@@ -840,8 +840,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                 except Exception as e:
                     logger.error("Failed to save results to database (error: %s)", e, exc_info=True)
                     return False
-
-                new_view_status = f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]} ({self.program_analysis_ruleset_cache.source_rule_count} rules)"
+                user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
+                count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
+                new_view_status = f"capa rules: {user_settings} ({count_source_rules} rules)"
         # regardless of new analysis, render results - e.g. we may only want to render results after checking
         # show results by function
 
