@@ -15,9 +15,9 @@ from capa.features.common import VALID_FEATURE_ACCESS, Feature
 def hex(n: int) -> str:
     """render the given number using upper case hex, like: 0x123ABC"""
     if n < 0:
-        return "-0x%X" % (-n)
+        return f"-0x{(-n):X}"
     else:
-        return "0x%X" % n
+        return f"0x{(n):X}"
 
 
 class API(Feature):
@@ -105,7 +105,7 @@ class _Operand(Feature, abc.ABC):
 
 class OperandNumber(_Operand):
     # cached names so we don't do extra string formatting every ctor
-    NAMES = ["operand[%d].number" % i for i in range(MAX_OPERAND_COUNT)]
+    NAMES = [f"operand[{i}].number" for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].number: 0x12
     def __init__(self, index: int, value: int, description=None):
@@ -119,7 +119,7 @@ class OperandNumber(_Operand):
 
 class OperandOffset(_Operand):
     # cached names so we don't do extra string formatting every ctor
-    NAMES = ["operand[%d].offset" % i for i in range(MAX_OPERAND_COUNT)]
+    NAMES = [f"operand[{i}].offset" for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].offset: 0x12
     def __init__(self, index: int, value: int, description=None):

@@ -62,5 +62,5 @@ def test_bulk_process(tmpdir):
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
-    print("running: '%s'" % args)
+    print(f"running: '{args}'")
     return subprocess.run(args)

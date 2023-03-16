@@ -261,9 +261,9 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
             meta["library_functions"][f.address] = function_name
             n_libs = len(meta["library_functions"])
-            percentage = 100 * (n_libs / n_funcs)
+            percentage = round(100 * (n_libs / n_funcs))
             if isinstance(pb, tqdm.tqdm):
-                pb.set_postfix_str("skipped %d library functions (%d%%)" % (n_libs, percentage))
+                pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
             continue
 
         function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
@@ -397,8 +397,8 @@ def get_meta_str(vw):
     meta = []
     for k in ["Format", "Platform", "Architecture"]:
         if k in vw.metadata:
-            meta.append("%s: %s" % (k.lower(), vw.metadata[k]))
-    return "%s, number of functions: %d" % (", ".join(meta), len(vw.getFunctions()))
+            meta.append(f"{k.lower()}: {vw.metadata[k]}")
+    return f"{', '.join(meta)}, number of functions: {len(vw.getFunctions())}"
 
 
 def is_running_standalone() -> bool:
@@ -569,7 +569,7 @@ def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
     rule_file_paths = []
     for rule_path in rule_paths:
         if not os.path.exists(rule_path):
-            raise IOError("rule path %s does not exist or cannot be accessed" % rule_path)
+            raise IOError(f"rule path {rule_path} does not exist or cannot be accessed")
 
         if os.path.isfile(rule_path):
             rule_file_paths.append(rule_path)
@@ -660,7 +660,7 @@ def get_rules(
 
 def get_signatures(sigs_path):
     if not os.path.exists(sigs_path):
-        raise IOError("signatures path %s does not exist or cannot be accessed" % sigs_path)
+        raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
 
     paths = []
     if os.path.isfile(sigs_path):
@@ -844,13 +844,13 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
-        format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
+        format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
         parser.add_argument(
             "-f",
             "--format",
             choices=[f[0] for f in formats],
             default=FORMAT_AUTO,
-            help="select sample format, %s" % format_help,
+            help=f"select sample format, {format_help}",
         )
 
     if "backend" in wanted:

@@ -283,7 +283,7 @@ def get_data_path_by_name(name):
     elif name.startswith("294b8d"):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def get_sample_md5_by_name(name):
@@ -341,7 +341,7 @@ def get_sample_md5_by_name(name):
         # file name is SHA256 hash
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def resolve_sample(sample):
@@ -981,21 +981,16 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
-        msg = "%s should be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should be found in {scope.__name__}"
     else:
-        msg = "%s should not be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should not be found in {scope.__name__}"
     assert feature.evaluate(features) == expected, msg
 
 
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
-    msg = "%s should be found %d times in %s, found: %d" % (
-        str(feature),
-        expected,
-        scope.__name__,
-        len(features[feature]),
-    )
+    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
     assert len(features[feature]) == expected, msg
 
 

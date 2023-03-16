@@ -121,7 +121,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if count == 1:
             capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule.meta.name), count)
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
 
         ostream.writeln(capability)
         had_match = True

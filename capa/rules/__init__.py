@@ -163,7 +163,7 @@ class InvalidRule(ValueError):
         self.msg = msg
 
     def __str__(self):
-        return "invalid rule: %s" % (self.msg)
+        return f"invalid rule: {self.msg}"
 
     def __repr__(self):
         return str(self)
@@ -177,7 +177,7 @@ class InvalidRuleWithPath(InvalidRule):
         self.__cause__ = None
 
     def __str__(self):
-        return "invalid rule: %s: %s" % (self.path, self.msg)
+        return f"invalid rule: {self.path}: {self.msg}"
 
 
 class InvalidRuleSet(ValueError):
@@ -186,7 +186,7 @@ class InvalidRuleSet(ValueError):
         self.msg = msg
 
     def __str__(self):
-        return "invalid rule set: %s" % (self.msg)
+        return f"invalid rule set: {self.msg}"
 
     def __repr__(self):
         return str(self)
@@ -200,14 +200,14 @@ def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement
         and isinstance(feature.value, str)
         and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
+        raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            raise InvalidRule("feature %s not supported for scope %s" % (feature, scope))
+            raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
 
 def parse_int(s: str) -> int:
@@ -224,10 +224,10 @@ def parse_range(s: str):
     """
     # we want to use `{` characters, but this is a dict in yaml.
     if not s.startswith("("):
-        raise InvalidRule("invalid range: %s" % (s))
+        raise InvalidRule(f"invalid range: {s}")
 
     if not s.endswith(")"):
-        raise InvalidRule("invalid range: %s" % (s))
+        raise InvalidRule(f"invalid range: {s}")
 
     s = s[len("(") : -len(")")]
     min_spec, _, max_spec = s.partition(",")
@@ -296,7 +296,7 @@ def parse_feature(key: str):
     elif key == "property":
         return capa.features.insn.Property
     else:
-        raise InvalidRule("unexpected statement: %s" % key)
+        raise InvalidRule(f"unexpected statement: {key}")
 
 
 # this is the separator between a feature value and its description
@@ -310,11 +310,11 @@ def parse_bytes(s: str) -> bytes:
     try:
         b = codecs.decode(s.replace(" ", "").encode("ascii"), "hex")
     except binascii.Error:
-        raise InvalidRule('unexpected bytes value: must be a valid hex sequence: "%s"' % s)
+        raise InvalidRule(f'unexpected bytes value: must be a valid hex sequence: "{s}"')
 
     if len(b) > MAX_BYTES_FEATURE_SIZE:
         raise InvalidRule(
-            "unexpected bytes value: byte sequences must be no larger than %s bytes" % MAX_BYTES_FEATURE_SIZE
+            f"unexpected bytes value: byte sequences must be no larger than {MAX_BYTES_FEATURE_SIZE} bytes"
         )
 
     return b
@@ -337,15 +337,14 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
                     #     - number: 10 = CONST_FOO
                     #       description: CONST_FOO
                     raise InvalidRule(
-                        'unexpected value: "%s", only one description allowed (inline description with `%s`)'
-                        % (s, DESCRIPTION_SEPARATOR)
+                        f'unexpected value: "{s}", only one description allowed (inline description with `{DESCRIPTION_SEPARATOR}`)'
                     )
 
                 value, _, description = s.partition(DESCRIPTION_SEPARATOR)
                 if description == "":
                     # sanity check:
                     # there is an empty description, like `number: 10 =`
-                    raise InvalidRule('unexpected value: "%s", description cannot be empty' % s)
+                    raise InvalidRule(f'unexpected value: "{s}", description cannot be empty')
             else:
                 # this is a string, but there is no description,
                 # like: `api: CreateFileA`
@@ -372,7 +371,7 @@ def parse_description(s: Union[str, int, bytes], value_type: str, description=No
                 try:
                     value = parse_int(value)
                 except ValueError:
-                    raise InvalidRule('unexpected value: "%s", must begin with numerical value' % value)
+                    raise InvalidRule(f'unexpected value: "{value}", must begin with numerical value')
 
         else:
             # the value might be a number, like: `number: 10`
@@ -532,9 +531,9 @@ def build_statements(d, scope: str):
             min, max = parse_range(count)
             return ceng.Range(feature, min=min, max=max, description=description)
         else:
-            raise InvalidRule("unexpected range: %s" % (count))
+            raise InvalidRule(f"unexpected range: {count}")
     elif key == "string" and not isinstance(d[key], str):
-        raise InvalidRule("ambiguous string value %s, must be defined as explicit string" % d[key])
+        raise InvalidRule(f"ambiguous string value {d[key]}, must be defined as explicit string")
 
     elif key.startswith("operand[") and key.endswith("].number"):
         index = key[len("operand[") : -len("].number")]
@@ -573,12 +572,12 @@ def build_statements(d, scope: str):
         or (key == "format" and d[key] not in capa.features.common.VALID_FORMAT)
         or (key == "arch" and d[key] not in capa.features.common.VALID_ARCH)
     ):
-        raise InvalidRule("unexpected %s value %s" % (key, d[key]))
+        raise InvalidRule(f"unexpected {key} value {d[key]}")
 
     elif key.startswith("property/"):
         access = key[len("property/") :]
         if access not in capa.features.common.VALID_FEATURE_ACCESS:
-            raise InvalidRule("unexpected %s access %s" % (key, access))
+            raise InvalidRule(f"unexpected {key} access {access}")
 
         value, description = parse_description(d[key], key, d.get("description"))
         try:
@@ -617,10 +616,10 @@ class Rule:
         self.definition = definition
 
     def __str__(self):
-        return "Rule(name=%s)" % (self.name)
+        return f"Rule(name={self.name})"
 
     def __repr__(self):
-        return "Rule(scope=%s, name=%s)" % (self.scope, self.name)
+        return f"Rule(scope={self.scope}, name={self.name})"
 
     def get_dependencies(self, namespaces):
         """
@@ -998,7 +997,7 @@ def ensure_rule_dependencies_are_met(rules: List[Rule]) -> None:
     for rule in rules_by_name.values():
         for dep in rule.get_dependencies(namespaces):
             if dep not in rules_by_name:
-                raise InvalidRule('rule "%s" depends on missing rule "%s"' % (rule.name, dep))
+                raise InvalidRule(f'rule "{rule.name}" depends on missing rule "{dep}"')
 
 
 def index_rules_by_namespace(rules: List[Rule]) -> Dict[str, List[Rule]]:

@@ -43,7 +43,7 @@ def render_locations(ostream, locations: Iterable[frz.Address]):
         # don't display too many locations, because it becomes very noisy.
         # probably only the first handful of locations will be useful for inspection.
         ostream.write(", ".join(map(v.format_address, locations[0:4])))
-        ostream.write(", and %d more..." % (len(locations) - 4))
+        ostream.write(f", and {(len(locations) - 4)} more...")
 
     elif len(locations) > 1:
         ostream.write(", ".join(map(v.format_address, locations)))
@@ -62,7 +62,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
 
         ostream.write(":")
         if statement.description:
-            ostream.write(" = %s" % statement.description)
+            ostream.write(f" = {statement.description}")
         ostream.writeln("")
 
     elif isinstance(statement, (rd.CompoundStatement)):
@@ -71,14 +71,14 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
 
         ostream.write(":")
         if statement.description:
-            ostream.write(" = %s" % statement.description)
+            ostream.write(f" = {statement.description}")
         ostream.writeln("")
 
     elif isinstance(statement, rd.SomeStatement):
-        ostream.write("%d or more:" % (statement.count))
+        ostream.write(f"{statement.count} or more:")
 
         if statement.description:
-            ostream.write(" = %s" % statement.description)
+            ostream.write(f" = {statement.description}")
         ostream.writeln("")
 
     elif isinstance(statement, rd.RangeStatement):
@@ -92,28 +92,28 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
 
         if value:
             if isinstance(child, frzf.StringFeature):
-                value = '"%s"' % capa.features.common.escape_string(value)
+                value = f'"{capa.features.common.escape_string(value)}"'
 
             value = rutils.bold2(value)
 
             if child.description:
-                ostream.write("count(%s(%s = %s)): " % (child.type, value, child.description))
+                ostream.write(f"count({child.type}({value} = {child.description})): ")
             else:
-                ostream.write("count(%s(%s)): " % (child.type, value))
+                ostream.write(f"count({child.type}({value})): ")
         else:
-            ostream.write("count(%s): " % child.type)
+            ostream.write(f"count({child.type}): ")
 
         if statement.max == statement.min:
-            ostream.write("%d" % (statement.min))
+            ostream.write(f"{statement.min}")
         elif statement.min == 0:
-            ostream.write("%d or fewer" % (statement.max))
+            ostream.write(f"{statement.max} or fewer")
         elif statement.max == (1 << 64 - 1):
-            ostream.write("%d or more" % (statement.min))
+            ostream.write(f"{statement.min} or more")
         else:
-            ostream.write("between %d and %d" % (statement.min, statement.max))
+            ostream.write(f"between {statement.min} and {statement.max}")
 
         if statement.description:
-            ostream.write(" = %s" % statement.description)
+            ostream.write(f" = {statement.description}")
         render_locations(ostream, match.locations)
         ostream.writeln("")
 
@@ -122,7 +122,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
 
 
 def render_string_value(s: str) -> str:
-    return '"%s"' % capa.features.common.escape_string(s)
+    return f'"{capa.features.common.escape_string(s)}"'
 
 
 def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
@@ -143,7 +143,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         value = feature.dict(by_alias=True).get(key, None)
 
     if value is None:
-        raise ValueError("%s contains None" % key)
+        raise ValueError(f"{key} contains None")
 
     if not isinstance(feature, (frzf.RegexFeature, frzf.SubstringFeature)):
         # like:
@@ -290,11 +290,11 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if count == 1:
             if rule.meta.lib:
                 lib_info = " (library rule)"
-            capability = "%s%s" % (rutils.bold(rule.meta.name), lib_info)
+            capability = f"{rutils.bold(rule.meta.name)}{lib_info}"
         else:
             if rule.meta.lib:
                 lib_info = ", only showing first match of library rule"
-            capability = "%s (%d matches%s)" % (rutils.bold(rule.meta.name), count, lib_info)
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches{lib_info})"
 
         ostream.writeln(capability)
         had_match = True
@@ -345,7 +345,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 # because we do the file-scope evaluation a single time.
                 # but i'm not 100% sure if this is/will always be true.
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
-                raise RuntimeError("unexpected file scope match count: %d" % (len(matches)))
+                raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
             first_address, first_match = matches[0]
             render_match(ostream, first_match, indent=0)
         else:

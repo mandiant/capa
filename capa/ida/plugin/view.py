@@ -58,7 +58,7 @@ def parse_yaml_line(feature):
         if m:
             # reconstruct count without description
             feature, value, description, count = m.groups()
-            feature = "- count(%s(%s)): %s" % (feature, value, count)
+            feature = f"- count({feature}({value})): {count}"
     elif not feature.startswith("#"):
         feature, _, comment = feature.partition("#")
         feature, _, description = feature.partition("=")
@@ -72,18 +72,18 @@ def parse_node_for_feature(feature, description, comment, depth):
     display = ""
 
     if feature.startswith("#"):
-        display += "%s%s\n" % (" " * depth, feature)
+        display += f"{' '*depth}{feature}\n"
     elif description:
         if feature.startswith(("- and", "- or", "- optional", "- basic block", "- not", "- instruction:")):
-            display += "%s%s" % (" " * depth, feature)
+            display += f"{' '*depth}{feature}\n"
             if comment:
-                display += " # %s" % comment
-            display += "\n%s- description: %s\n" % (" " * (depth + 2), description)
+                display += f" # {comment}"
+            display += f"\n{' '*(depth+2)}- description: {description}\n"
         elif feature.startswith("- string"):
-            display += "%s%s" % (" " * depth, feature)
+            display += f"{' '*depth}{feature}\n"
             if comment:
-                display += " # %s" % comment
-            display += "\n%sdescription: %s\n" % (" " * (depth + 2), description)
+                display += f" # {comment}"
+            display += f"\n{' '*(depth+2)}description: {description}\n"
         elif feature.startswith("- count"):
             # count is weird, we need to format description based on feature type, so we parse with regex
             # assume format - count(<feature_name>(<feature_value>)): <count>
@@ -91,28 +91,22 @@ def parse_node_for_feature(feature, description, comment, depth):
             if m:
                 name, value, count = m.groups()
                 if name in ("string",):
-                    display += "%s%s" % (" " * depth, feature)
+                    display += f"{' '*depth}{feature}"
                     if comment:
                         display += " # %s" % comment
-                    display += "\n%sdescription: %s\n" % (" " * (depth + 2), description)
+                    display += f"\n{' '*(depth+2)}description: {description}\n"
                 else:
-                    display += "%s- count(%s(%s = %s)): %s" % (
-                        " " * depth,
-                        name,
-                        value,
-                        description,
-                        count,
-                    )
+                    display += f"{' '*depth}- count({name}({value} = {description})): {count}"
                     if comment:
-                        display += " # %s\n" % comment
+                        display += f" # {comment}\n"
         else:
-            display += "%s%s = %s" % (" " * depth, feature, description)
+            display += f"{' '*depth}{feature} = {description}"
             if comment:
-                display += " # %s\n" % comment
+                display += f" # {comment}\n"
     else:
-        display += "%s%s" % (" " * depth, feature)
+        display += f"{' '*depth}{feature}"
         if comment:
-            display += " # %s\n" % comment
+            display += f" # {comment}\n"
 
     return display if display.endswith("\n") else display + "\n"
 
@@ -198,14 +192,14 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "    name: <insert_name>",
             "    namespace: <insert_namespace>",
             "    authors:",
-            "      - %s" % author,
-            "    scope: %s" % scope,
+            f"      - {author}",
+            f"    scope: {scope}",
             "    references:",
             "      - <insert_references>",
             "    examples:",
-            "      - %s:0x%X" % (capa.ida.helpers.get_file_md5().upper(), ea)
+            f"      - {capa.ida.helpers.get_file_md5().upper()}:{hex(ea)}"
             if ea
-            else "      - %s" % (capa.ida.helpers.get_file_md5().upper()),
+            else f"      - {capa.ida.helpers.get_file_md5().upper()}",
             "  features:",
         ]
         self.setText("\n".join(metadata_default))
@@ -539,7 +533,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
         # build submenu with modify actions
         sub_menu = build_context_menu(self.parent(), sub_actions)
-        sub_menu.setTitle("Nest feature%s" % ("" if len(tuple(self.get_features(selected=True))) == 1 else "s"))
+        sub_menu.setTitle(f"Nest feature{'' if len(tuple(self.get_features(selected=True))) == 1 else 's'}")
 
         # build main menu with submenu + main actions
         menu = build_context_menu(self.parent(), (sub_menu,) + actions)
@@ -654,21 +648,21 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         # single features
         for k, v in filter(lambda t: t[1] == 1, counted):
             if isinstance(k, (capa.features.common.String,)):
-                value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
+                value = f'"{capa.features.common.escape_string(k.get_value_str())}"'
             else:
                 value = k.get_value_str()
-            self.new_feature_node(top_node, ("- %s: %s" % (k.name.lower(), value), ""))
+            self.new_feature_node(top_node, (f"- {k.name.lower()}: {value}", ""))
 
         # n > 1 features
         for k, v in filter(lambda t: t[1] > 1, counted):
             if k.value:
                 if isinstance(k, (capa.features.common.String,)):
-                    value = '"%s"' % capa.features.common.escape_string(k.get_value_str())
+                    value = f'"{capa.features.common.escape_string(k.get_value_str())}"'
                 else:
                     value = k.get_value_str()
-                display = "- count(%s(%s)): %d" % (k.name.lower(), value, v)
+                display = f"- count({k.name.lower()}({value})): {v}"
             else:
-                display = "- count(%s): %d" % (k.name.lower(), v)
+                display = f"- count({k.name.lower()}): {v}"
             self.new_feature_node(top_node, (display, ""))
 
         self.update_preview()
@@ -880,7 +874,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             if isinstance(self.selectedItems()[0].data(0, 0x100), capa.features.common.Bytes):
                 actions.append(("Add n bytes...", (), self.slot_add_n_bytes_feature))
         else:
-            action_add_features_fmt = "Add %d features" % selected_items_count
+            action_add_features_fmt = f"Add {selected_items_count} features"
 
         actions.append((action_add_features_fmt, (), self.slot_add_selected_features))
 
@@ -1029,7 +1023,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         def format_address(e):
             if isinstance(e, AbsoluteVirtualAddress):
-                return "%X" % int(e)
+                return f"{hex(int(e))}"
             else:
                 return ""
 
@@ -1038,8 +1032,8 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
             name = feature.name.lower()
             value = feature.get_value_str()
             if isinstance(feature, (capa.features.common.String,)):
-                value = '"%s"' % capa.features.common.escape_string(value)
-            return "%s(%s)" % (name, value)
+                value = f'"{capa.features.common.escape_string(value)}"'
+            return f"{name}({value})"
 
         for feature, addrs in sorted(features.items(), key=lambda k: sorted(k[1])):
             if isinstance(feature, capa.features.basicblock.BasicBlock):
