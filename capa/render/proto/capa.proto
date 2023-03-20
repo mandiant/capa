@@ -225,7 +225,7 @@ message NamespaceFeature {
 
 message NumberFeature {
   string type = 1;
-  Number number = 2;
+  Number number = 2;  // TODO can/should this be negative?
   optional string description = 5;
 }
 
@@ -237,7 +237,7 @@ message OSFeature {
 
 message OffsetFeature {
   string type = 1;
-  Integer offset = 2;  // TODO can/should this be negative? -- seen it in dotnet sample (bug?)
+  Integer offset = 2;  // offset can be negative
   optional string description = 3;
 }
 
@@ -251,7 +251,7 @@ message OperandNumberFeature {
 message OperandOffsetFeature {
   string type = 1;
   uint32 index = 2;
-  Integer operand_offset = 3;  // TODO can/should this be negative?
+  Integer operand_offset = 3;
   optional string description = 4;
 }
 
