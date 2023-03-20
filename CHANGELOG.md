@@ -3,8 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-
-  - add protobuf format for result documents #1219 @williballenthin
+- add protobuf format for result documents #1219 @williballenthin
 
 ### Breaking Changes
 
