@@ -8,6 +8,7 @@
 import json
 import pathlib
 import subprocess
+from typing import Any
 
 import pydantic
 from fixtures import *
@@ -120,13 +121,13 @@ def test_addr_to_pb2():
 
 
 def test_scope_to_pb2():
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.FILE_SCOPE) == capa_pb2.SCOPE_FILE
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.FUNCTION_SCOPE) == capa_pb2.SCOPE_FUNCTION
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.BASIC_BLOCK_SCOPE) == capa_pb2.SCOPE_BASIC_BLOCK
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.INSTRUCTION_SCOPE) == capa_pb2.SCOPE_INSTRUCTION
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FILE_SCOPE)) == capa_pb2.SCOPE_FILE
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FUNCTION_SCOPE)) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE)) == capa_pb2.SCOPE_BASIC_BLOCK
+    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE)) == capa_pb2.SCOPE_INSTRUCTION
 
 
-def cmp_optional(a, b):
+def cmp_optional(a: Any, b: Any) -> bool:
     # proto optional value gets deserialized to "" instead of None (used by pydantic)
     a = a if a is not None else ""
     return a == b
@@ -135,7 +136,10 @@ def cmp_optional(a, b):
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
-    assert list(meta.argv) == dst.argv
+    if meta.argv is None:
+        assert [] == dst.argv
+    else:
+        assert list(meta.argv) == dst.argv
 
     assert meta.sample.md5 == dst.sample.md5
     assert meta.sample.sha1 == dst.sample.sha1
@@ -159,9 +163,9 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
 
     assert meta.analysis.feature_counts.file == dst.analysis.feature_counts.file
     assert len(meta.analysis.feature_counts.functions) == len(dst.analysis.feature_counts.functions)
-    for rd_f, proto_f in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
-        assert capa.render.proto.proto.addr_to_pb2(rd_f.address) == proto_f.address
-        assert rd_f.count == proto_f.count
+    for rd_cf, proto_cf in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
+        assert capa.render.proto.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
+        assert rd_cf.count == proto_cf.count
 
     assert len(meta.analysis.library_functions) == len(dst.analysis.library_functions)
     for rd_lf, proto_lf in zip(meta.analysis.library_functions, dst.analysis.library_functions):
