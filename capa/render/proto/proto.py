@@ -165,17 +165,13 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
 
 def statement_to_pb2(statement: rd.Statement) -> capa_pb2.StatementNode:
     if isinstance(statement, rd.RangeStatement):
-        child = feature_to_pb2(statement.child)
-        # field `type` is not present in the pydantic definition, so set it to "" (empty) here
-        # TODO is this (too) hacky? deviates a bit from the original proto design/usage
-        child.type = ""
         return capa_pb2.StatementNode(
             range=capa_pb2.RangeStatement(
                 type="range",
                 description=statement.description,
                 min=statement.min,
                 max=statement.max,
-                child=child,
+                child=feature_to_pb2(statement.child),
             ),
             type="statement",
         )
