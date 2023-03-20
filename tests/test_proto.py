@@ -26,41 +26,6 @@ import capa.features.freeze.features
 # TODO test_proto_to_rd?
 
 
-# TODO enable/remove
-def _test_generate_proto(tmp_path: pathlib.Path):
-    tmp_path.mkdir(exist_ok=True, parents=True)
-    proto_path = tmp_path / "capa.proto"
-    json_path = tmp_path / "capa.json"
-
-    schema = pydantic.schema_of(rd.ResultDocument)
-    json_path.write_text(json.dumps(schema, indent=4))
-
-    proto = capa.render.proto.generate_proto()
-
-    print("=====================================")
-    print(proto_path)
-    print("-------------------------------------")
-    for i, line in enumerate(proto.split("\n")):
-        print(f" {i} | {line}")
-    print("=====================================")
-    proto_path.write_text(proto)
-
-    subprocess.run(
-        [
-            "protoc",
-            "-I=" + str(tmp_path),
-            "--python_out=" + str(tmp_path),
-            "--mypy_out=" + str(tmp_path),
-            str(proto_path),
-        ],
-        check=True,
-    )
-
-    pb = tmp_path / "capa_pb2.py"
-    print(pb.read_text())
-    print("=====================================")
-
-
 @pytest.mark.parametrize(
     "rd_file",
     [
