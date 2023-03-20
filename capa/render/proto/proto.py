@@ -72,6 +72,8 @@ def number_to_pb2(v: Union[int, float]) -> capa_pb2.Number:
             return capa_pb2.Number(i=i.i)
         else:
             return capa_pb2.Number(u=i.u)
+    else:
+        assert_never(v)
 
 
 def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
