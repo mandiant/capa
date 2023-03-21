@@ -93,7 +93,7 @@ def parse_node_for_feature(feature, description, comment, depth):
                 if name in ("string",):
                     display += f"{' '*depth}{feature}"
                     if comment:
-                        display += " # %s" % comment
+                        display += f" # {comment}"
                     display += f"\n{' '*(depth+2)}description: {description}\n"
                 else:
                     display += f"{' '*depth}- count({name}({value} = {description})): {count}"
