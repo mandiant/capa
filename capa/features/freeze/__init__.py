@@ -268,7 +268,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                     basic_block=bbaddr,
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
-                )
+                ) # type: ignore
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
 
@@ -287,38 +287,38 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                 instructions.append(
                     InstructionFeatures(
                         address=iaddr,
-                        features=ifeatures,
+                        features=tuple(ifeatures),
                     )
                 )
 
             basic_blocks.append(
                 BasicBlockFeatures(
                     address=bbaddr,
-                    features=bbfeatures,
-                    instructions=instructions,
+                    features=tuple(bbfeatures),
+                    instructions=tuple(instructions),
                 )
             )
 
         function_features.append(
             FunctionFeatures(
                 address=faddr,
-                features=ffeatures,
+                features=tuple(ffeatures),
                 basic_blocks=basic_blocks,
-            )
+            ) # type: ignore
         )
 
     features = Features(
         global_=global_features,
-        file=file_features,
-        functions=function_features,
-    )
+        file=tuple(file_features),
+        functions=tuple(function_features),
+    ) # type: ignore
 
     freeze = Freeze(
         version=2,
         base_address=Address.from_capa(extractor.get_base_address()),
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
-    )
+    ) # type: ignore
 
     return freeze.json()
 

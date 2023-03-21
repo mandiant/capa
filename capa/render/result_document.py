@@ -353,9 +353,9 @@ class Match(BaseModel):
         return cls(
             success=success,
             node=node,
-            children=children,
-            locations=locations,
-            captures=captures,
+            children=tuple(children),
+            locations=tuple(locations),
+            captures = {capture : tuple(captures[capture]) for capture in captures}
         )
 
 
@@ -484,8 +484,8 @@ class RuleMetadata(FrozenModel):
             namespace=rule.meta.get("namespace"),
             authors=rule.meta.get("authors"),
             scope=capa.rules.Scope(rule.meta.get("scope")),
-            attack=list(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
-            mbc=list(map(MBCSpec.from_str, rule.meta.get("mbc", []))),
+            attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
+            mbc=tuple(map(MBCSpec.from_str, rule.meta.get("mbc", []))),
             references=rule.meta.get("references", []),
             examples=rule.meta.get("examples", []),
             description=rule.meta.get("description", ""),
@@ -497,8 +497,8 @@ class RuleMetadata(FrozenModel):
                 malware_family=rule.meta.get("maec/malware-family"),
                 malware_category=rule.meta.get("maec/malware-category"),
                 malware_category_ov=rule.meta.get("maec/malware-category-ov"),
-            ),
-        )
+            ), # type: ignore
+        ) # type: ignore
 
     class Config:
         frozen = True
