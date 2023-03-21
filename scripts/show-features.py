@@ -113,7 +113,9 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+    if (args.format == "freeze") or (
+        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
+    ):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:

@@ -68,6 +68,7 @@ import capa.render.verbose
 import capa.features.freeze
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
+from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
@@ -156,7 +157,7 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+    if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
