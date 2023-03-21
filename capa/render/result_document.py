@@ -355,7 +355,7 @@ class Match(BaseModel):
             node=node,
             children=tuple(children),
             locations=tuple(locations),
-            captures = {capture : tuple(captures[capture]) for capture in captures}
+            captures={capture: tuple(captures[capture]) for capture in captures},
         )
 
 
@@ -497,8 +497,8 @@ class RuleMetadata(FrozenModel):
                 malware_family=rule.meta.get("maec/malware-family"),
                 malware_category=rule.meta.get("maec/malware-category"),
                 malware_category_ov=rule.meta.get("maec/malware-category-ov"),
-            ), # type: ignore
-        ) # type: ignore
+            ),  # type: ignore
+        )  # type: ignore
 
     class Config:
         frozen = True
