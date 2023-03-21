@@ -718,9 +718,9 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else f"{format_} (manual)"
+    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
-    os_ = get_os(sample_path) if os_ == OS_AUTO else f"{os_} (manual)"
+    os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
