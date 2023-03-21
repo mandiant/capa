@@ -25,7 +25,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
         end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
-    seqstr = " ".join(["%02x" % b for b in seq])
+    seqstr = " ".join([f"{b:02x}" for b in seq])
     while True:
         # TODO find_binary: Deprecated. Please use ida_bytes.bin_search() instead.
         ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)

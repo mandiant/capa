@@ -369,34 +369,34 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             if statement.type != rd.CompoundStatementType.NOT:
                 display = statement.type
                 if statement.description:
-                    display += " (%s)" % statement.description
+                    display += f" ({statement.description})"
                 return CapaExplorerDefaultItem(parent, display)
         elif isinstance(statement, rd.CompoundStatement) and statement.type == rd.CompoundStatementType.NOT:
             # TODO: do we display 'not'
             pass
         elif isinstance(statement, rd.SomeStatement):
-            display = "%d or more" % statement.count
+            display = f"{statement.count} or more"
             if statement.description:
-                display += " (%s)" % statement.description
+                display += f" ({statement.description})"
             return CapaExplorerDefaultItem(parent, display)
         elif isinstance(statement, rd.RangeStatement):
             # `range` is a weird node, its almost a hybrid of statement + feature.
             # it is a specific feature repeated multiple times.
             # there's no additional logic in the feature part, just the existence of a feature.
             # so, we have to inline some of the feature rendering here.
-            display = "count(%s): " % self.capa_doc_feature_to_display(statement.child)
+            display = f"count({self.capa_doc_feature_to_display(statement.child)}): "
 
             if statement.max == statement.min:
-                display += "%d" % (statement.min)
+                display += f"{statement.min}"
             elif statement.min == 0:
-                display += "%d or fewer" % (statement.max)
+                display += f"{statement.max} or fewer"
             elif statement.max == (1 << 64 - 1):
-                display += "%d or more" % (statement.min)
+                display += f"{statement.min} or more"
             else:
-                display += "between %d and %d" % (statement.min, statement.max)
+                display += f"between {statement.min} and {statement.max}"
 
             if statement.description:
-                display += " (%s)" % statement.description
+                display += f" ({statement.description})"
 
             parent2 = CapaExplorerFeatureItem(parent, display=display)
 
@@ -408,7 +408,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         elif isinstance(statement, rd.SubscopeStatement):
             display = str(statement.scope)
             if statement.description:
-                display += " (%s)" % statement.description
+                display += f" ({statement.description})"
             return CapaExplorerSubscopeItem(parent, display)
         else:
             raise RuntimeError("unexpected match statement type: " + str(statement))
@@ -537,7 +537,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         if value:
             if isinstance(feature, frzf.StringFeature):
-                value = '"%s"' % capa.features.common.escape_string(value)
+                value = f'"{capa.features.common.escape_string(value)}"'
 
             if isinstance(feature, frzf.PropertyFeature) and feature.access is not None:
                 key = f"property/{feature.access}"
@@ -547,11 +547,11 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 key = f"operand[{feature.index}].offset"
 
             if feature.description:
-                return "%s(%s = %s)" % (key, value, feature.description)
+                return f"{key}({value} = {feature.description})"
             else:
-                return "%s(%s)" % (key, value)
+                return f"{key}({value})"
         else:
-            return "%s" % key
+            return f"{key}"
 
     def render_capa_doc_feature_node(
         self,
@@ -669,7 +669,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         elif isinstance(feature, frzf.StringFeature):
             # display string preview
             return CapaExplorerStringViewItem(
-                parent, display, location, '"%s"' % capa.features.common.escape_string(feature.string)
+                parent, display, location, f'"{capa.features.common.escape_string(feature.string)}"'
             )
 
         elif isinstance(

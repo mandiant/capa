@@ -101,9 +101,9 @@ def main():
     rows = sorted(rows)
     for ns, name, va in rows:
         if ns:
-            cmt = "%s (%s)" % (name, ns)
+            cmt = name + f"({ns})"
         else:
-            cmt = "%s" % (name,)
+            cmt = name
 
         logger.info("0x%x: %s", va, cmt)
         try:

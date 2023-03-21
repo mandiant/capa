@@ -32,7 +32,7 @@ def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     """
     format canonical representation of ATT&CK/MBC parts and ID
     """
-    return "%s [%s]" % ("::".join(data.parts), data.id)
+    return f"{'::'.join(data.parts)} [{data.id}]"
 
 
 def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:

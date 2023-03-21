@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.64.1",
+    "tqdm==4.65.0",
     "pyyaml==6.0",
     "tabulate==0.9.0",
     "colorama==0.4.5",
@@ -27,7 +27,7 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.5",
+    "pydantic==1.10.6",
 ]
 
 # this sets __version__
@@ -89,7 +89,7 @@ setuptools.setup(
             "types_requests==2.28.1",
         ],
         "build": [
-            "pyinstaller==5.8.0",
+            "pyinstaller==5.9.0",
         ],
     },
     zip_safe=False,
