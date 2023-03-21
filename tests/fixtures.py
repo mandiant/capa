@@ -26,6 +26,7 @@ import capa.features.basicblock
 from capa.features.common import (
     OS,
     OS_ANY,
+    OS_AUTO,
     OS_LINUX,
     ARCH_I386,
     FORMAT_PE,
@@ -106,7 +107,7 @@ def get_viv_extractor(path):
     else:
         vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
     vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
     fixup_viv(path, extractor)
     return extractor
 

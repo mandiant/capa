@@ -130,7 +130,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(parser, wanted={"format", "backend", "sample", "signatures", "rules", "tag"})
+    capa.main.install_common_args(parser, wanted={"format", "os", "backend", "sample", "signatures", "rules", "tag"})
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
@@ -166,7 +166,7 @@ def main(argv=None):
 
         try:
             extractor = capa.main.get_extractor(
-                args.sample, args.format, args.backend, sig_paths, should_save_workspace
+                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
@@ -175,7 +175,7 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)

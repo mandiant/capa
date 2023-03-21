@@ -14,6 +14,7 @@ import capa.render.default
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.engine import *
+from capa.features.common import OS_AUTO
 
 
 # == Render dictionary helpers
@@ -164,11 +165,13 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
     rules = capa.main.get_rules([rules_path])
 
     # extract features and find capabilities
-    extractor = capa.main.get_extractor(file_path, "auto", capa.main.BACKEND_VIV, [], False, disable_progress=True)
+    extractor = capa.main.get_extractor(
+        file_path, "auto", OS_AUTO, capa.main.BACKEND_VIV, [], False, disable_progress=True
+    )
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, rules_path, extractor)
+    meta = capa.main.collect_metadata([], file_path, "auto", OS_AUTO, rules_path, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
