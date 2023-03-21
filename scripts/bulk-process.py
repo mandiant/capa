@@ -65,11 +65,11 @@ import multiprocessing
 import multiprocessing.pool
 
 import capa
-from capa.features.common import OS_AUTO
 import capa.main
 import capa.rules
 import capa.render.json
 import capa.render.result_document as rd
+from capa.features.common import OS_AUTO
 
 logger = logging.getLogger("capa")
 
@@ -197,7 +197,9 @@ def main(argv=None):
 
         results = {}
         for result in mapper(
-            get_capa_results, [(rules, sig_paths, "pe", OS_AUTO, sample) for sample in samples], parallelism=args.parallelism
+            get_capa_results,
+            [(rules, sig_paths, "pe", OS_AUTO, sample) for sample in samples],
+            parallelism=args.parallelism,
         ):
             if result["status"] == "error":
                 logger.warning(result["error"])
