@@ -10,7 +10,18 @@ import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_AUTO, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
+from capa.features.common import (
+    OS,
+    OS_AUTO,
+    FORMAT_PE,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    FORMAT_FREEZE,
+    Arch,
+    Format,
+    String,
+    Feature,
+)
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
@@ -73,7 +84,7 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
         return
 
 
-def extract_os(buf, os = OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(buf, os=OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
     if os != OS_AUTO:
         yield OS(os), NO_ADDRESS
 

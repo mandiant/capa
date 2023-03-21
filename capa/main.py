@@ -58,17 +58,17 @@ from capa.helpers import (
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
+    OS_AUTO,
+    OS_LINUX,
+    OS_MACOS,
     FORMAT_PE,
     FORMAT_ELF,
+    OS_WINDOWS,
     FORMAT_AUTO,
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
-    OS_AUTO,
-    OS_LINUX,
-    OS_MACOS,
-    OS_WINDOWS
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -494,7 +494,13 @@ def get_workspace(path, format_, sigpaths):
 
 # TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
-    path: str, format_: str, os: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
+    path: str,
+    format_: str,
+    os: str,
+    backend: str,
+    sigpaths: List[str],
+    should_save_workspace=False,
+    disable_progress=False,
 ) -> FeatureExtractor:
     """
     raises:
@@ -830,7 +836,7 @@ def install_common_args(parser, wanted=None):
     #
     #   - sample
     #   - format
-    #   - os 
+    #   - os
     #   - rules
     #   - tag
     #
@@ -870,7 +876,7 @@ def install_common_args(parser, wanted=None):
                 choices=(BACKEND_VIV,),
                 default=BACKEND_VIV,
             )
-    
+
     if "os" in wanted:
         oses = [
             (OS_AUTO, "detect OS automatically - default"),
@@ -1165,7 +1171,13 @@ def main(argv=None):
 
         try:
             extractor = get_extractor(
-                args.sample, format_, args.os, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
+                args.sample,
+                format_,
+                args.os,
+                args.backend,
+                sig_paths,
+                should_save_workspace,
+                disable_progress=args.quiet,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()
