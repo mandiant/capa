@@ -79,19 +79,19 @@ def number_to_pb2(v: Union[int, float]) -> capa_pb2.Number:
 def addr_to_pb2(addr: frz.Address) -> capa_pb2.Address:
     if addr.type is AddressType.ABSOLUTE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE, value=int_to_pb2(addr.value))
+        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_ABSOLUTE, v=int_to_pb2(addr.value))
 
     elif addr.type is AddressType.RELATIVE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_RELATIVE, value=int_to_pb2(addr.value))
+        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_RELATIVE, v=int_to_pb2(addr.value))
 
     elif addr.type is AddressType.FILE:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_FILE, value=int_to_pb2(addr.value))
+        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_FILE, v=int_to_pb2(addr.value))
 
     elif addr.type is AddressType.DN_TOKEN:
         assert isinstance(addr.value, int)
-        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN, value=int_to_pb2(addr.value))
+        return capa_pb2.Address(type=capa_pb2.AddressType.ADDRESSTYPE_DN_TOKEN, v=int_to_pb2(addr.value))
 
     elif addr.type is AddressType.DN_TOKEN_OFFSET:
         assert isinstance(addr.value, tuple)
