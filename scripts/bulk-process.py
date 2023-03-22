@@ -98,7 +98,7 @@ def get_capa_results(args):
       meta (dict): the meta analysis results
       capabilities (dict): the matched capabilities and their result objects
     """
-    rules, sigpaths, format, os, path = args
+    rules, sigpaths, format, os_, path = args
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
     logger.info("computing capa results for: %s", path)
     try:
