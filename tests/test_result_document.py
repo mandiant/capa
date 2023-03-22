@@ -6,14 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import copy
+
 import pytest
+from fixtures import *
 
 import capa
 import capa.engine as ceng
 import capa.render.result_document as rdoc
 import capa.features.freeze.features as frzf
-
-from fixtures import *
 
 
 def test_optional_node_from_capa():
