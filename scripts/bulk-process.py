@@ -103,7 +103,7 @@ def get_capa_results(args):
     logger.info("computing capa results for: %s", path)
     try:
         extractor = capa.main.get_extractor(
-            path, format, os, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
+            path, format, os_, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
         )
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
@@ -129,7 +129,7 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata([], path, format, os, [], extractor)
+    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
