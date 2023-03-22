@@ -320,13 +320,13 @@ def assert_round_trip(doc: rd.ResultDocument):
     one = doc
 
     pb = capa.render.proto.doc_to_pb2(one)
-    two = capa.render.proto.pb2_to_doc(pb)
+    two = capa.render.proto.doc_from_pb2(pb)
 
     # show the round trip works
     # first by comparing the objects directly,
     # which works thanks to pydantic model equality.
     assert one == two
-    # second by showing their json representations are the same.
+    # second by showing their protobuf representations are the same.
     assert capa.render.proto.doc_to_pb2(one) == capa.render.proto.doc_to_pb2(two)
 
     # now show that two different versions are not equal.
@@ -334,7 +334,7 @@ def assert_round_trip(doc: rd.ResultDocument):
     three.meta.__dict__.update({"version": "0.0.0"})
     assert one.meta.version != three.meta.version
     assert one != three
-    assert capa.render.proto.doc_to_pb2(one) == capa.render.proto.doc_to_pb2(three)
+    assert capa.render.proto.doc_to_pb2(one) != capa.render.proto.doc_to_pb2(three)
 
 
 @pytest.mark.parametrize(
