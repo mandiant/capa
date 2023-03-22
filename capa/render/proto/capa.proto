@@ -95,17 +95,6 @@ message FeatureCounts {
 
 message FeatureNode {
   string type = 1;
-  /*
-  TODO results in
-    "feature": {
-      "type": "feature",
-      "api": {  <---- ugh, but again this is how proto works and we can translate back using custom code?!
-        "type": "api",
-        "api": "ws2_32.recv",
-        "description": ""
-      }
-    },
-   */
   oneof feature {
     OSFeature os = 2;
     ArchFeature arch = 3;
@@ -204,7 +193,7 @@ message MatchFeature {
 }
 
 message Metadata {
-  string timestamp = 1;  // google.protobuf.timestamp_pb2.Timestamp also would work, but seems more of a headache
+  string timestamp = 1;  // iso8601 format, like: 2019-01-01T00:00:00Z 
   string version = 2;
   repeated string argv = 3;
   Sample sample = 4;
@@ -225,7 +214,7 @@ message NamespaceFeature {
 
 message NumberFeature {
   string type = 1;
-  Number number = 2;  // TODO can/should this be negative?
+  Number number = 2;  // this can be positive (range: u64), negative (range: i64), or a double.
   optional string description = 5;
 }
 
@@ -244,7 +233,7 @@ message OffsetFeature {
 message OperandNumberFeature {
   string type = 1;
   uint32 index = 2;
-  Integer operand_number = 3;  // TODO can/should this be negative?
+  Integer operand_number = 3;  // this can be positive (range: u64), negative (range: i64), or a double.
   optional string description = 4;
 }
 
@@ -257,20 +246,18 @@ message OperandOffsetFeature {
 
 message PropertyFeature {
   string type = 1;
-  optional string access = 2;
-  string property = 3;
+  string property = 2;
+  optional string access = 3;
   optional string description = 4;
 }
 
 message RangeStatement {
   string type = 1;
-  optional string description = 2;
-  uint64 min = 3;
-  uint64 max = 4;
-  // reusing FeatureNode here to avoid duplication and list all features OSFeature, ArchFeature, ... again
-  // FeatureNode has an extra field `type` which is not present in the pydantic definition, we can
-  // set it to "" to get rid of it
-  FeatureNode child = 5;
+  uint64 min = 2;
+  uint64 max = 3;
+  // reusing FeatureNode here to avoid duplication and list all features OSFeature, ArchFeature, ... again.
+  FeatureNode child = 4;
+  optional string description = 5;
 }
 
 message RegexFeature {
@@ -294,7 +281,7 @@ message RuleMetadata {
   string name = 1;
   string namespace = 2;
   repeated string authors = 3;
-  Scope scope = 4;  // TODO string scope -> easier translation to proto and from proto to json?!
+  Scope scope = 4;
   repeated AttackSpec attack = 5;
   repeated MBCSpec mbc = 6;
   repeated string references = 7;
@@ -313,8 +300,7 @@ message Sample {
 }
 
 enum Scope {
-  SCOPE_UNSPECIFIED = 0;  // TODO do differently so json conversion works, currently gives `"scope": "SCOPE_FUNCTION"` which pydantic cannot parse
-                          // could just make string?! and assert in code that it's one of supported values?!
+  SCOPE_UNSPECIFIED = 0;
   SCOPE_FILE = 1;
   SCOPE_FUNCTION = 2;
   SCOPE_BASIC_BLOCK = 3;
@@ -329,14 +315,13 @@ message SectionFeature {
 
 message SomeStatement {
   string type = 1;
-  optional string description = 2;
-  uint32 count = 3;
+  uint32 count = 2;
+  optional string description = 3;
 }
 
 message StatementNode {
   string type = 1;
-  oneof statement {  // TODO don't specify these and just set type?! well I guess this is how proto is supposed to work...
-                     // so for json conversion we'll also need a translation function (at least for testing)
+  oneof statement {
     RangeStatement range = 2;
     SomeStatement some = 3;
     SubscopeStatement subscope = 4;
@@ -352,8 +337,8 @@ message StringFeature {
 
 message SubscopeStatement {
   string type = 1;
-  optional string description = 2;
-  Scope scope = 3;
+  Scope scope = 2;
+  optional string description = 3;
 }
 
 message SubstringFeature {
