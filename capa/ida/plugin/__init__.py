@@ -67,7 +67,16 @@ class CapaExplorerPlugin(idaapi.plugin_t):
           arg (int): bitflag. Setting LSB enables automatic analysis upon
           loading. The other bits are currently undefined. See `form.Options`.
         """
-        self.form = CapaExplorerForm(self.PLUGIN_NAME, arg)
+        if not self.form:
+            self.form = CapaExplorerForm(self.PLUGIN_NAME, arg)
+        else:
+            widget = idaapi.find_widget(self.form.form_title)
+            if widget:
+                idaapi.activate_widget(widget, True)
+            else:
+                self.form.Show()
+                self.form.load_capa_results(False, True)
+
         return True
 
 
