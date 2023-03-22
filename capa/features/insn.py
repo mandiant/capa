@@ -53,6 +53,15 @@ class Property(_AccessFeature):
 
 class Number(Feature):
     def __init__(self, value: Union[int, float], description=None):
+        """
+        args:
+          value (int or float): positive or negative integer, or floating point number.
+
+        the range of the value is:
+          - if positive, the range of u64
+          - if negative, the range of i64
+          - if floating, the range and precision of double
+        """
         super().__init__(value, description=description)
 
     def get_value_str(self):
@@ -70,6 +79,14 @@ MAX_STRUCTURE_SIZE = 0x10000
 
 class Offset(Feature):
     def __init__(self, value: int, description=None):
+        """
+        args:
+          value (int): the offset, which can be positive or negative.
+
+        the range of the value is:
+          - if positive, the range of u64
+          - if negative, the range of i64
+        """
         super().__init__(value, description=description)
 
     def get_value_str(self):
@@ -108,13 +125,26 @@ class OperandNumber(_Operand):
     NAMES = [f"operand[{i}].number" for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].number: 0x12
-    def __init__(self, index: int, value: int, description=None):
+    def __init__(self, index: Union[int, float], value: int, description=None):
+        """
+        args:
+          value (int or float): positive or negative integer, or floating point number.
+
+        the range of the value is:
+          - if positive, the range of u64
+          - if negative, the range of i64
+          - if floating, the range and precision of double
+        """
         super().__init__(index, value, description=description)
         self.name = self.NAMES[index]
 
     def get_value_str(self) -> str:
-        assert isinstance(self.value, int)
-        return hex(self.value)
+        if isinstance(self.value, int):
+            return capa.helpers.hex(self.value)
+        elif isinstance(self.value, float):
+            return str(self.value)
+        else:
+            raise ValueError("invalid value type")
 
 
 class OperandOffset(_Operand):
@@ -123,6 +153,14 @@ class OperandOffset(_Operand):
 
     # operand[i].offset: 0x12
     def __init__(self, index: int, value: int, description=None):
+        """
+        args:
+          value (int): the offset, which can be positive or negative.
+
+        the range of the value is:
+          - if positive, the range of u64
+          - if negative, the range of i64
+        """
         super().__init__(index, value, description=description)
         self.name = self.NAMES[index]
 
