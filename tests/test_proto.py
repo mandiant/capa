@@ -119,14 +119,8 @@ def test_addr_to_pb2():
 def test_scope_to_pb2():
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FILE_SCOPE)) == capa_pb2.SCOPE_FILE
     assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FUNCTION_SCOPE)) == capa_pb2.SCOPE_FUNCTION
-    assert (
-        capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE))
-        == capa_pb2.SCOPE_BASIC_BLOCK
-    )
-    assert (
-        capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE))
-        == capa_pb2.SCOPE_INSTRUCTION
-    )
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE)) == capa_pb2.SCOPE_BASIC_BLOCK
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE)) == capa_pb2.SCOPE_INSTRUCTION
 
 
 def cmp_optional(a: Any, b: Any) -> bool:

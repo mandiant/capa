@@ -26,9 +26,9 @@ Alternatively, --pyi_out=. can be used to generate a Python Interface file that 
 """
 import sys
 import json
-import datetime
 import argparse
-from typing import Dict, Union
+import datetime
+from typing import Any, Dict, Union
 
 import google.protobuf.json_format
 from google.protobuf.json_format import MessageToJson
@@ -559,6 +559,12 @@ def statement_from_pb2(statement: capa_pb2.StatementNode) -> rd.Statement:
 def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
     type_ = f.WhichOneof("feature")
 
+    # mypy gets angry below because ff may have a different type in each branch,
+    # even though we don't use ff outside each branch.
+    # so we just let mypy know that ff might be any type to silence that warning.
+    # upstream issue: https://github.com/python/mypy/issues/6233
+    ff: Any
+
     if type_ == "os":
         ff = f.os
         return frzf.OSFeature(os=ff.os, description=ff.description or None)
@@ -621,10 +627,14 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         return frzf.MnemonicFeature(mnemonic=ff.mnemonic, description=ff.description or None)
     elif type_ == "operand_number":
         ff = f.operand_number
-        return frzf.OperandNumberFeature(index=ff.index, operand_number=number_from_pb2(ff.operand_number), description=ff.description or None)
+        return frzf.OperandNumberFeature(
+            index=ff.index, operand_number=number_from_pb2(ff.operand_number), description=ff.description or None
+        )
     elif type_ == "operand_offset":
         ff = f.operand_offset
-        return frzf.OperandOffsetFeature(index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None)
+        return frzf.OperandOffsetFeature(
+            index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None
+        )
     elif type_ == "basic_block":
         ff = f.basic_block
         return frzf.BasicBlockFeature(description=ff.description or None)
@@ -651,10 +661,7 @@ def match_from_pb2(match: capa_pb2.Match) -> rd.Match:
             node=rd.FeatureNode(feature=feature_from_pb2(match.feature)),
             children=children,
             locations=locations,
-            captures={
-                capture: tuple(map(addr_from_pb2, locs.address))
-                for capture, locs in match.captures.items()
-            },
+            captures={capture: tuple(map(addr_from_pb2, locs.address)) for capture, locs in match.captures.items()},
         )
     else:
         assert_never(node_type)
@@ -713,10 +720,7 @@ def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:
         m = rd.RuleMatches(
             meta=rule_metadata_from_pb2(matches.meta),
             source=matches.source,
-            matches=tuple([
-                (addr_from_pb2(pair.address), match_from_pb2(pair.match))
-                for pair in matches.matches
-            ]),
+            matches=tuple([(addr_from_pb2(pair.address), match_from_pb2(pair.match)) for pair in matches.matches]),
         )
         rule_matches[rule_name] = m
 
