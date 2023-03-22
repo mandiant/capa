@@ -109,7 +109,7 @@ MAX_OPERAND_INDEX = MAX_OPERAND_COUNT - 1
 class _Operand(Feature, abc.ABC):
     # superclass: don't use directly
     # subclasses should set self.name and provide the value string formatter
-    def __init__(self, index: int, value: int, description=None):
+    def __init__(self, index: int, value: Union[int, float], description=None):
         super().__init__(value, description=description)
         self.index = index
 
