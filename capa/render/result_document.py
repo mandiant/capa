@@ -501,7 +501,6 @@ class RuleMetadata(FrozenModel):
             # Mypy is unable to recognise arguments due to alias
         )  # type: ignore
         # Mypy is unable to recognise arguments due to alias
-        
 
     class Config:
         frozen = True
