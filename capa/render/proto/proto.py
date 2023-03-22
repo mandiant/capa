@@ -299,8 +299,8 @@ def feature_to_pb2(f: frzf.Feature) -> capa_pb2.FeatureNode:
     elif isinstance(f, frzf.PropertyFeature):
         return capa_pb2.FeatureNode(
             type="feature",
-            property=capa_pb2.PropertyFeature(
-                type=f.type, access=f.access, property=f.property, description=f.description
+            property_=capa_pb2.PropertyFeature(
+                type=f.type, access=f.access, property_=f.property, description=f.description
             ),
         )
 

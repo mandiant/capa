@@ -397,7 +397,7 @@ class FeatureNode(google.protobuf.message.Message):
     CLASS__FIELD_NUMBER: builtins.int
     NAMESPACE_FIELD_NUMBER: builtins.int
     API_FIELD_NUMBER: builtins.int
-    PROPERTY_FIELD_NUMBER: builtins.int
+    PROPERTY__FIELD_NUMBER: builtins.int
     NUMBER_FIELD_NUMBER: builtins.int
     BYTES_FIELD_NUMBER: builtins.int
     OFFSET_FIELD_NUMBER: builtins.int
@@ -438,7 +438,8 @@ class FeatureNode(google.protobuf.message.Message):
     @property
     def api(self) -> global___APIFeature: ...
     @property
-    def property(self) -> global___PropertyFeature: ...
+    def property_(self) -> global___PropertyFeature:
+        """property is a Python top-level decorator name"""
     @property
     def number(self) -> global___NumberFeature: ...
     @property
@@ -472,7 +473,7 @@ class FeatureNode(google.protobuf.message.Message):
         class_: global___ClassFeature | None = ...,
         namespace: global___NamespaceFeature | None = ...,
         api: global___APIFeature | None = ...,
-        property: global___PropertyFeature | None = ...,
+        property_: global___PropertyFeature | None = ...,
         number: global___NumberFeature | None = ...,
         bytes: global___BytesFeature | None = ...,
         offset: global___OffsetFeature | None = ...,
@@ -481,9 +482,9 @@ class FeatureNode(google.protobuf.message.Message):
         operand_offset: global___OperandOffsetFeature | None = ...,
         basic_block: global___BasicBlockFeature | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property", b"property", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property", b"property", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring", "type", b"type"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["feature", b"feature"]) -> typing_extensions.Literal["os", "arch", "format", "match", "characteristic", "export", "import_", "section", "function_name", "substring", "regex", "string", "class_", "namespace", "api", "property", "number", "bytes", "offset", "mnemonic", "operand_number", "operand_offset", "basic_block"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["feature", b"feature"]) -> typing_extensions.Literal["os", "arch", "format", "match", "characteristic", "export", "import_", "section", "function_name", "substring", "regex", "string", "class_", "namespace", "api", "property_", "number", "bytes", "offset", "mnemonic", "operand_number", "operand_offset", "basic_block"] | None: ...
 
 global___FeatureNode = FeatureNode
 
@@ -977,23 +978,24 @@ class PropertyFeature(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     TYPE_FIELD_NUMBER: builtins.int
-    PROPERTY_FIELD_NUMBER: builtins.int
+    PROPERTY__FIELD_NUMBER: builtins.int
     ACCESS_FIELD_NUMBER: builtins.int
     DESCRIPTION_FIELD_NUMBER: builtins.int
     type: builtins.str
-    property: builtins.str
+    property_: builtins.str
+    """property is a Python top-level decorator name"""
     access: builtins.str
     description: builtins.str
     def __init__(
         self,
         *,
         type: builtins.str = ...,
-        property: builtins.str = ...,
+        property_: builtins.str = ...,
         access: builtins.str | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description", "property", b"property", "type", b"type"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description", "property_", b"property_", "type", b"type"]) -> None: ...
     @typing.overload
     def WhichOneof(self, oneof_group: typing_extensions.Literal["_access", b"_access"]) -> typing_extensions.Literal["access"] | None: ...
     @typing.overload

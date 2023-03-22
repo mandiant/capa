@@ -111,7 +111,7 @@ message FeatureNode {
     ClassFeature class_ = 14;
     NamespaceFeature namespace = 15;
     APIFeature api = 16;
-    PropertyFeature property = 17;
+    PropertyFeature property_ = 17;  // property is a Python top-level decorator name
     NumberFeature number = 18;
     BytesFeature bytes = 19;
     OffsetFeature offset = 20;
@@ -246,7 +246,7 @@ message OperandOffsetFeature {
 
 message PropertyFeature {
   string type = 1;
-  string property = 2;
+  string property_ = 2;  // property is a Python top-level decorator name
   optional string access = 3;
   optional string description = 4;
 }
