@@ -5,12 +5,9 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import json
-import pathlib
-import subprocess
+import copy
 from typing import Any
 
-import pydantic
 from fixtures import *
 
 import capa.rules
@@ -318,3 +315,40 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
     else:
         # unhandled statement
         assert False
+
+
+def assert_round_trip(doc: rd.ResultDocument):
+    one = doc
+
+    pb = capa.render.proto.proto.doc_to_pb2(one)
+    two = capa.render.proto.proto.pb2_to_doc(pb)
+
+    # show the round trip works
+    # first by comparing the objects directly,
+    # which works thanks to pydantic model equality.
+    assert one == two
+    # second by showing their json representations are the same.
+    assert capa.render.proto.proto.doc_to_pb2(one) == capa.render.proto.proto.doc_to_pb2(two)
+
+    # now show that two different versions are not equal.
+    three = copy.deepcopy(two)
+    three.meta.__dict__.update({"version": "0.0.0"})
+    assert one.meta.version != three.meta.version
+    assert one != three
+    assert capa.render.proto.proto.doc_to_pb2(one) == capa.render.proto.proto.doc_to_pb2(three)
+
+
+@pytest.mark.parametrize(
+    "rd_file",
+    [
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
+        pytest.param("pma0101_rd"),
+        pytest.param("dotnet_1c444e_rd"),
+    ],
+)
+def test_round_trip(request, rd_file):
+    doc: rd.ResultDocument = request.getfixturevalue(rd_file)
+    assert_round_trip(doc)
