@@ -9,7 +9,7 @@ message APIFeature {
 message Address {
   AddressType type = 1;
   oneof value {
-    Integer v = 2;  // TODO rename value?
+    Integer value = 2;
     Token_Offset token_offset = 3;
   };
 }
