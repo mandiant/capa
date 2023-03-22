@@ -125,7 +125,7 @@ class OperandNumber(_Operand):
     NAMES = [f"operand[{i}].number" for i in range(MAX_OPERAND_COUNT)]
 
     # operand[i].number: 0x12
-    def __init__(self, index: Union[int, float], value: int, description=None):
+    def __init__(self, index: int, value: Union[int, float], description=None):
         """
         args:
           value (int or float): positive or negative integer, or floating point number.
