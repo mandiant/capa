@@ -498,7 +498,10 @@ class RuleMetadata(FrozenModel):
                 malware_category=rule.meta.get("maec/malware-category"),
                 malware_category_ov=rule.meta.get("maec/malware-category-ov"),
             ),  # type: ignore
+            # Mypy is unable to recognise arguments due to alias
         )  # type: ignore
+        # Mypy is unable to recognise arguments due to alias
+        
 
     class Config:
         frozen = True

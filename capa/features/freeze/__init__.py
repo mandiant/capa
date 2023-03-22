@@ -269,6 +269,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
                 )  # type: ignore
+                # Mypy is unable to recognise `basic_block` as a argument due to alias
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
 
@@ -305,6 +306,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                 features=tuple(ffeatures),
                 basic_blocks=basic_blocks,
             )  # type: ignore
+            # Mypy is unable to recognise `basic_blocks` as a argument due to alias
         )
 
     features = Features(
@@ -312,6 +314,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
         file=tuple(file_features),
         functions=tuple(function_features),
     )  # type: ignore
+    # Mypy is unable to recognise `global_` as a argument due to alias
 
     freeze = Freeze(
         version=2,
@@ -319,6 +322,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
+    # Mypy is unable to recognise `base_address` as a argument due to alias
 
     return freeze.json()
 
