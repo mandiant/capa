@@ -16,7 +16,6 @@ import capa.render.proto
 import capa.render.utils
 import capa.features.freeze
 import capa.features.address
-import capa.render.proto.proto
 import capa.render.proto.capa_pb2 as capa_pb2
 import capa.render.result_document as rd
 import capa.features.freeze.features
@@ -37,7 +36,7 @@ import capa.features.freeze.features
 )
 def test_doc_to_pb2(request, rd_file):
     src: rd.ResultDocument = request.getfixturevalue(rd_file)
-    dst = capa.render.proto.proto.doc_to_pb2(src)
+    dst = capa.render.proto.doc_to_pb2(src)
 
     assert_meta(src.meta, dst.meta)
 
@@ -48,7 +47,7 @@ def test_doc_to_pb2(request, rd_file):
         assert matches.meta.name == m.name
         assert cmp_optional(matches.meta.namespace, m.namespace)
         assert list(matches.meta.authors) == m.authors
-        assert capa.render.proto.proto.scope_to_pb2(matches.meta.scope) == m.scope
+        assert capa.render.proto.scope_to_pb2(matches.meta.scope) == m.scope
 
         assert len(matches.meta.attack) == len(m.attack)
         for rd_attack, proto_attack in zip(matches.meta.attack, m.attack):
@@ -81,51 +80,51 @@ def test_doc_to_pb2(request, rd_file):
 
         assert len(matches.matches) == len(dst.rules[rule_name].matches)
         for (addr, match), proto_match in zip(matches.matches, dst.rules[rule_name].matches):
-            assert capa.render.proto.proto.addr_to_pb2(addr) == proto_match.address
+            assert capa.render.proto.addr_to_pb2(addr) == proto_match.address
             assert_match(match, proto_match.match)
 
 
 def test_addr_to_pb2():
     a1 = capa.features.freeze.Address.from_capa(capa.features.address.AbsoluteVirtualAddress(0x400000))
-    a = capa.render.proto.proto.addr_to_pb2(a1)
+    a = capa.render.proto.addr_to_pb2(a1)
     assert a.type == capa_pb2.ADDRESSTYPE_ABSOLUTE
     assert a.v.u == 0x400000
 
     a2 = capa.features.freeze.Address.from_capa(capa.features.address.RelativeVirtualAddress(0x100))
-    a = capa.render.proto.proto.addr_to_pb2(a2)
+    a = capa.render.proto.addr_to_pb2(a2)
     assert a.type == capa_pb2.ADDRESSTYPE_RELATIVE
     assert a.v.u == 0x100
 
     a3 = capa.features.freeze.Address.from_capa(capa.features.address.FileOffsetAddress(0x200))
-    a = capa.render.proto.proto.addr_to_pb2(a3)
+    a = capa.render.proto.addr_to_pb2(a3)
     assert a.type == capa_pb2.ADDRESSTYPE_FILE
     assert a.v.u == 0x200
 
     a4 = capa.features.freeze.Address.from_capa(capa.features.address.DNTokenAddress(0x123456))
-    a = capa.render.proto.proto.addr_to_pb2(a4)
+    a = capa.render.proto.addr_to_pb2(a4)
     assert a.type == capa_pb2.ADDRESSTYPE_DN_TOKEN
     assert a.v.u == 0x123456
 
     a5 = capa.features.freeze.Address.from_capa(capa.features.address.DNTokenOffsetAddress(0x123456, 0x10))
-    a = capa.render.proto.proto.addr_to_pb2(a5)
+    a = capa.render.proto.addr_to_pb2(a5)
     assert a.type == capa_pb2.ADDRESSTYPE_DN_TOKEN_OFFSET
     assert a.token_offset.token.u == 0x123456
     assert a.token_offset.offset == 0x10
 
     a6 = capa.features.freeze.Address.from_capa(capa.features.address._NoAddress())
-    a = capa.render.proto.proto.addr_to_pb2(a6)
+    a = capa.render.proto.addr_to_pb2(a6)
     assert a.type == capa_pb2.ADDRESSTYPE_NO_ADDRESS
 
 
 def test_scope_to_pb2():
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FILE_SCOPE)) == capa_pb2.SCOPE_FILE
-    assert capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FUNCTION_SCOPE)) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FILE_SCOPE)) == capa_pb2.SCOPE_FILE
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FUNCTION_SCOPE)) == capa_pb2.SCOPE_FUNCTION
     assert (
-        capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE))
+        capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE))
         == capa_pb2.SCOPE_BASIC_BLOCK
     )
     assert (
-        capa.render.proto.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE))
+        capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE))
         == capa_pb2.SCOPE_INSTRUCTION
     )
 
@@ -154,25 +153,25 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert meta.analysis.os == dst.analysis.os
     assert meta.analysis.extractor == dst.analysis.extractor
     assert list(meta.analysis.rules) == dst.analysis.rules
-    assert capa.render.proto.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
+    assert capa.render.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
 
     assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)
     for rd_f, proto_f in zip(meta.analysis.layout.functions, dst.analysis.layout.functions):
-        assert capa.render.proto.proto.addr_to_pb2(rd_f.address) == proto_f.address
+        assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
 
         assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
         for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
-            assert capa.render.proto.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
+            assert capa.render.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
 
     assert meta.analysis.feature_counts.file == dst.analysis.feature_counts.file
     assert len(meta.analysis.feature_counts.functions) == len(dst.analysis.feature_counts.functions)
     for rd_cf, proto_cf in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
-        assert capa.render.proto.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
+        assert capa.render.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
         assert rd_cf.count == proto_cf.count
 
     assert len(meta.analysis.library_functions) == len(dst.analysis.library_functions)
     for rd_lf, proto_lf in zip(meta.analysis.library_functions, dst.analysis.library_functions):
-        assert capa.render.proto.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
+        assert capa.render.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
         assert rd_lf.name == proto_lf.name
 
 
@@ -193,13 +192,13 @@ def assert_match(ma: rd.Match, mb: capa_pb2.Match):
         assert_match(ca, cb)
 
     # locations
-    assert list(map(capa.render.proto.proto.addr_to_pb2, ma.locations)) == mb.locations
+    assert list(map(capa.render.proto.addr_to_pb2, ma.locations)) == mb.locations
 
     # captures
     assert len(ma.captures) == len(mb.captures)
     for capture, locs in ma.captures.items():
         assert capture in mb.captures
-        assert list(map(capa.render.proto.proto.addr_to_pb2, locs)) == mb.captures[capture].address
+        assert list(map(capa.render.proto.addr_to_pb2, locs)) == mb.captures[capture].address
 
 
 def assert_feature(fa, fb):
@@ -306,7 +305,7 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
         assert sa.count == sb.count
 
     elif isinstance(sa, rd.SubscopeStatement):
-        assert capa.render.proto.proto.scope_to_pb2(sa.scope) == sb.scope
+        assert capa.render.proto.scope_to_pb2(sa.scope) == sb.scope
 
     elif isinstance(sa, rd.CompoundStatement):
         # only has type and description tested above
@@ -320,22 +319,22 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
 def assert_round_trip(doc: rd.ResultDocument):
     one = doc
 
-    pb = capa.render.proto.proto.doc_to_pb2(one)
-    two = capa.render.proto.proto.pb2_to_doc(pb)
+    pb = capa.render.proto.doc_to_pb2(one)
+    two = capa.render.proto.pb2_to_doc(pb)
 
     # show the round trip works
     # first by comparing the objects directly,
     # which works thanks to pydantic model equality.
     assert one == two
     # second by showing their json representations are the same.
-    assert capa.render.proto.proto.doc_to_pb2(one) == capa.render.proto.proto.doc_to_pb2(two)
+    assert capa.render.proto.doc_to_pb2(one) == capa.render.proto.doc_to_pb2(two)
 
     # now show that two different versions are not equal.
     three = copy.deepcopy(two)
     three.meta.__dict__.update({"version": "0.0.0"})
     assert one.meta.version != three.meta.version
     assert one != three
-    assert capa.render.proto.proto.doc_to_pb2(one) == capa.render.proto.proto.doc_to_pb2(three)
+    assert capa.render.proto.doc_to_pb2(one) == capa.render.proto.doc_to_pb2(three)
 
 
 @pytest.mark.parametrize(
