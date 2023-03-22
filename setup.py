@@ -11,7 +11,7 @@ import os
 import setuptools
 
 requirements = [
-    "tqdm==4.64.1",
+    "tqdm==4.65.0",
     "pyyaml==6.0",
     "tabulate==0.9.0",
     "colorama==0.4.5",
@@ -27,7 +27,7 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.4",
+    "pydantic==1.10.6",
     "protobuf==4.21.12",
 ]
 
@@ -76,7 +76,7 @@ setuptools.setup(
             "pycodestyle==2.10.0",
             "black==23.1.0",
             "isort==5.11.4",
-            "mypy==0.991",
+            "mypy==1.0.1",
             "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.28.0",
@@ -85,14 +85,14 @@ setuptools.setup(
             "types-backports==0.1.3",
             "types-colorama==0.4.15",
             "types-PyYAML==6.0.8",
-            "types-tabulate==0.9.0.0",
+            "types-tabulate==0.9.0.1",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
             "types-protobuf==4.21.0.5",
         ],
         "build": [
-            "pyinstaller==5.7.0",
+            "pyinstaller==5.9.0",
         ],
     },
     zip_safe=False,

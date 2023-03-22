@@ -175,7 +175,12 @@ def derefs(vw, p):
     while True:
         if not vw.isValidPointer(p):
             return
+
         yield p
+
+        if vw.isProbablyString(p) or vw.isProbablyUnicode(p):
+            # don't deref strings that coincidentally are pointers
+            return
 
         try:
             next = vw.readMemoryPtr(p)
@@ -271,7 +276,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
 
-            if f.vw.isProbablyString(v):
+            if f.vw.isProbablyString(v) or f.vw.isProbablyUnicode(v):
                 # don't extract byte features for obvious strings
                 continue
 

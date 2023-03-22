@@ -125,7 +125,7 @@ def main(argv=None):
         for analyzer in analyzers:
             name = viv_utils.flirt.match_function_flirt_signatures(analyzer.matcher, vw, function)
             if name:
-                print("0x%04x: %s" % (function, name))
+                print(f"0x{function:04x}: {name}")
 
     return 0
 

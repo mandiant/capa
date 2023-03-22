@@ -55,7 +55,7 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
     dll = dll.lower()
 
     # kernel32.CreateFileA
-    yield "%s.%s" % (dll, symbol)
+    yield f"{dll}.{symbol}"
 
     if not is_ordinal(symbol):
         # CreateFileA
@@ -63,7 +63,7 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
 
     if is_aw_function(symbol):
         # kernel32.CreateFile
-        yield "%s.%s" % (dll, symbol[:-1])
+        yield f"{dll}.{symbol[:-1]}"
 
         if not is_ordinal(symbol):
             # CreateFile

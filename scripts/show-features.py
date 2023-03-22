@@ -130,11 +130,11 @@ def main(argv=None):
             return -1
 
     for feature, addr in extractor.extract_global_features():
-        print("global: %s: %s" % (format_address(addr), feature))
+        print(f"global: {format_address(addr)}: {feature}")
 
     if not args.function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (format_address(addr), feature))
+            print(f"file: {format_address(addr)}: {feature}")
 
     function_handles = tuple(extractor.get_functions())
 
@@ -146,11 +146,11 @@ def main(argv=None):
             function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
 
             if args.function not in [format_address(fh.address) for fh in function_handles]:
-                print("%s not a function" % args.function)
+                print(f"{args.function} not a function")
                 return -1
 
         if len(function_handles) == 0:
-            print("%s not a function", args.function)
+            print(f"{args.function} not a function")
             return -1
 
     print_features(function_handles, extractor)
@@ -164,13 +164,13 @@ def ida_main():
     import capa.features.extractors.ida.extractor
 
     function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
-    print("getting features for current function 0x%X" % function)
+    print(f"getting features for current function {hex(function)}")
 
     extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     if not function:
         for feature, addr in extractor.extract_file_features():
-            print("file: %s: %s" % (format_address(addr), feature))
+            print(f"file: {format_address(addr)}: {feature}")
         return
 
     function_handles = tuple(extractor.get_functions())
@@ -179,7 +179,7 @@ def ida_main():
         function_handles = tuple(filter(lambda fh: fh.inner.start_ea == function, function_handles))
 
         if len(function_handles) == 0:
-            print("0x%X not a function" % function)
+            print(f"{hex(function)} not a function")
             return -1
 
     print_features(function_handles, extractor)
@@ -194,16 +194,16 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
             logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
             continue
 
-        print("func: %s" % (format_address(f.address)))
+        print(f"func: {format_address(f.address)}")
 
         for feature, addr in extractor.extract_function_features(f):
             if capa.features.common.is_global_feature(feature):
                 continue
 
             if f.address != addr:
-                print(" func: %s: %s -> %s" % (format_address(f.address), feature, format_address(addr)))
+                print(f" func: {format_address(f.address)}: {feature} -> {format_address(addr)}")
             else:
-                print(" func: %s: %s" % (format_address(f.address), feature))
+                print(f" func: {format_address(f.address)}: {feature}")
 
         for bb in extractor.get_basic_blocks(f):
             for feature, addr in extractor.extract_basic_block_features(f, bb):
@@ -211,9 +211,9 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
                     continue
 
                 if bb.address != addr:
-                    print(" bb: %s: %s -> %s" % (format_address(bb.address), feature, format_address(addr)))
+                    print(f" bb: {format_address(bb.address)}: {feature} -> {format_address(addr)}")
                 else:
-                    print(" bb: %s: %s" % (format_address(bb.address), feature))
+                    print(f" bb: {format_address(bb.address)}: {feature}")
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, addr in extractor.extract_insn_features(f, bb, insn):
@@ -223,16 +223,10 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
                     try:
                         if insn.address != addr:
                             print(
-                                "  insn: %s: %s: %s -> %s"
-                                % (
-                                    format_address(f.address),
-                                    format_address(insn.address),
-                                    feature,
-                                    format_address(addr),
-                                )
+                                f"  insn: {format_address(f.address)}: {format_address(insn.address)}: {feature} -> {format_address(addr)}"
                             )
                         else:
-                            print("  insn: %s: %s" % (format_address(insn.address), feature))
+                            print(f"  insn: {format_address(insn.address)}: {feature}")
 
                     except UnicodeEncodeError:
                         # may be an issue while piping to less and encountering non-ascii characters

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -62,5 +62,5 @@ def test_bulk_process(tmpdir):
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
-    print("running: '%s'" % args)
+    print(f"running: '{args}'")
     return subprocess.run(args)

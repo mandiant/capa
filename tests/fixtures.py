@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -283,7 +283,7 @@ def get_data_path_by_name(name):
     elif name.startswith("294b8d"):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def get_sample_md5_by_name(name):
@@ -337,8 +337,11 @@ def get_sample_md5_by_name(name):
         return "946a99f36a46d335dec080d9a4371940"
     elif name.startswith("b9f5b"):
         return "b9f5bd514485fb06da39beff051b9fdc"
+    elif name.startswith("294b8d"):
+        # file name is SHA256 hash
+        return "3db3e55b16a7b1b1afb970d5e77c5d98"
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def resolve_sample(sample):
@@ -643,14 +646,19 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/string, direct memory reference
         ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
         # insn/bytes
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), True),
-        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), True),
+        ("mimikatz", "function=0x401517", capa.features.common.Bytes(binascii.unhexlify("CA3B0E000000F8AF47")), True),
+        ("mimikatz", "function=0x404414", capa.features.common.Bytes(binascii.unhexlify("0180000040EA4700")), True),
+        # don't extract byte features for obvious strings
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
+        ("mimikatz", "function=0x40105D", capa.features.common.Bytes("ACR  > ".encode("utf-16le")), False),
         ("mimikatz", "function=0x40105D", capa.features.common.Bytes("nope".encode("ascii")), False),
+        # push    offset aAcsAcr1220 ; "ACS..." -> where ACS == 41 00 43 00 == valid pointer to middle of instruction
+        ("mimikatz", "function=0x401000", capa.features.common.Bytes(binascii.unhexlify("FDFF59F647")), False),
         # IDA features included byte sequences read from invalid memory, fixed in #409
         ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
-        # insn/bytes, pointer to bytes
-        ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), True),
+        # insn/bytes, pointer to string bytes
+        ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
         # insn/characteristic(nzxor)
         ("mimikatz", "function=0x410DFC", capa.features.common.Characteristic("nzxor"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("nzxor"), False),
@@ -973,21 +981,16 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
-        msg = "%s should be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should be found in {scope.__name__}"
     else:
-        msg = "%s should not be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should not be found in {scope.__name__}"
     assert feature.evaluate(features) == expected, msg
 
 
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
-    msg = "%s should be found %d times in %s, found: %d" % (
-        str(feature),
-        expected,
-        scope.__name__,
-        len(features[feature]),
-    )
+    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
     assert len(features[feature]) == expected, msg
 
 

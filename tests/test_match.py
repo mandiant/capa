@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -13,7 +13,6 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features import *
 from capa.features.insn import *
 from capa.features.common import *
 
@@ -626,3 +625,53 @@ def test_match_property_access():
         0x0,
     )
     assert "test rule" not in matches
+
+
+def test_match_os_any():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - and:
+                        - or:
+                            - os: windows
+                            - os: linux
+                            - os: macos
+                        - string: "Hello world"
+                    - and:
+                        - os: any
+                        - string: "Goodbye world"
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    _, matches = match(
+        [r],
+        {OS(OS_ANY): {1}, String("Hello world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_WINDOWS): {1}, String("Hello world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_ANY): {1}, String("Goodbye world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
+
+    _, matches = match(
+        [r],
+        {OS(OS_WINDOWS): {1}, String("Goodbye world"): {1}},
+        0x0,
+    )
+    assert "test rule" in matches
