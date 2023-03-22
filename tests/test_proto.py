@@ -257,7 +257,7 @@ def assert_feature(fa, fb):
         assert fa.api == fb.api
 
     elif isinstance(fa, capa.features.freeze.features.PropertyFeature):
-        assert fa.property == fb.property
+        assert fa.property == fb.property_
         assert fa.access == fb.access
 
     elif isinstance(fa, capa.features.freeze.features.NumberFeature):
