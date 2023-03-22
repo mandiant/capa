@@ -20,8 +20,6 @@ import capa.render.proto.capa_pb2 as capa_pb2
 import capa.render.result_document as rd
 import capa.features.freeze.features
 
-# TODO test_proto_to_rd?
-
 
 @pytest.mark.parametrize(
     "rd_file",
