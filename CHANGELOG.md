@@ -5,6 +5,8 @@
 ### New Features
 - add protobuf format for result documents #1219 @williballenthin
 
+- new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
+
 ### Breaking Changes
 
 ### New Rules (22)

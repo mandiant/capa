@@ -95,7 +95,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures", "backend"})
+    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "backend"})
 
     parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
     args = parser.parse_args(args=argv)
@@ -113,14 +113,16 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+    if (args.format == "freeze") or (
+        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
+    ):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
             extractor = capa.main.get_extractor(
-                args.sample, args.format, args.backend, sig_paths, should_save_workspace
+                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
