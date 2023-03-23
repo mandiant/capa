@@ -10,7 +10,7 @@ import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_WINDOWS, FORMAT_FREEZE, Arch, Format, String, Feature
+from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_ANY, OS_WINDOWS, FORMAT_FREEZE, FORMAT_RESULT, ARCH_ANY, Arch, Format, String, Feature
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
@@ -35,6 +35,8 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_ELF), NO_ADDRESS
     elif is_freeze(buf):
         yield Format(FORMAT_FREEZE), NO_ADDRESS
+    elif buf.startswith(b"{\"meta\":"):
+        yield Format(FORMAT_RESULT), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
@@ -51,6 +53,9 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
+    
+    elif buf.startswith(b"{\"meta\":"):
+        arch = ARCH_ANY
 
         if arch not in capa.features.common.VALID_ARCH:
             logger.debug("unsupported arch: %s", arch)
@@ -79,6 +84,8 @@ def extract_os(buf) -> Iterator[Tuple[Feature, Address]]:
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
+    elif buf.startswith(b"{\"meta\":"):
+        os = OS_ANY
 
         if os not in capa.features.common.VALID_OS:
             logger.debug("unsupported os: %s", os)

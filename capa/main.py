@@ -65,6 +65,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_RESULT
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -1123,8 +1124,11 @@ def main(argv=None):
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
-
-    if format_ == FORMAT_FREEZE:
+    if format_ == FORMAT_RESULT:
+        with open(args.sample, "rb") as f:
+            buf = f.read()
+        print(buf)    
+    elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
@@ -1153,12 +1157,13 @@ def main(argv=None):
         except UnsupportedOSError:
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
+    
+    if not FORMAT_RESULT:
+        meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
-    meta = collect_metadata(argv, args.sample, args.rules, extractor)
-
-    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-    meta["analysis"].update(counts)
-    meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        meta["analysis"].update(counts)
+        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
     if has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
