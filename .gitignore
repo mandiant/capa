@@ -122,3 +122,6 @@ scripts/perf/*.zip
 .envrc
 .DS_Store
 */.DS_Store
+Pipfile
+Pipfile.lock
+/cache/

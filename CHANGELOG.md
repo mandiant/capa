@@ -4,6 +4,8 @@
 
 ### New Features
 
+- extractor: add Binary Ninja feature extractor @xusheng6
+
 ### Breaking Changes
 
 ### New Rules (20)

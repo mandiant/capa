@@ -61,7 +61,7 @@ class Number(Feature):
         elif isinstance(self.value, float):
             return str(self.value)
         else:
-            raise ValueError("invalid value type")
+            raise ValueError("invalid value type %s" % (type(self.value)))
 
 
 # max recognized structure size (and therefore, offset size)
