@@ -41,4 +41,4 @@ jobs:
     - name: Run tests
       env:
         BN_LICENSE: ${{ secrets.BN_LICENSE }}
-      run: pytest -v tests/test_binja_features.py
+      run: pytest --capture=no --log-cli-level=WARN -v tests/test_binja_features.py
