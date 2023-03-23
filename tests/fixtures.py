@@ -1109,10 +1109,7 @@ def _039a6_dotnetfile_extractor():
 
 
 def get_result_doc(path):
-    with open(path, "rb") as f:
-        buf = f.read()
-    src = buf.decode("utf-8")
-    return capa.render.result_document.ResultDocument.parse_raw(src)
+    return capa.render.result_document.ResultDocument.parse_file(path)
 
 
 @pytest.fixture
