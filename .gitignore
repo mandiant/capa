@@ -125,3 +125,4 @@ scripts/perf/*.zip
 Pipfile
 Pipfile.lock
 /cache/
+.github/binja/binaryninja
