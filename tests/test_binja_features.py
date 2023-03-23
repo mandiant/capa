@@ -13,7 +13,12 @@ binja_present: bool = False
 try:
     import binaryninja
 
-    binja_present = True
+    try:
+        binaryninja.load(source=b"\x90")
+    except RuntimeError as e:
+        raise RuntimeError("Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat") from e
+    else:
+        binja_present = True
 except ImportError:
     pass
 
