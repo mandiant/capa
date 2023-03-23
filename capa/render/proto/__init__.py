@@ -725,25 +725,3 @@ def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:
         rule_matches[rule_name] = m
 
     return rd.ResultDocument(meta=metadata_from_pb2(doc.meta), rules=rule_matches)
-
-
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-
-    parser = argparse.ArgumentParser(description="convert JSON result document to protobuf")
-    parser.add_argument("json_input", help="path to JSON result document to convert")
-    args = parser.parse_args(args=argv)
-
-    with open(args.json_input, "r", encoding="utf-8") as f:
-        fdata = f.read()
-
-    doc = rd.ResultDocument.parse_obj(json.loads(fdata))
-
-    proto_doc = doc_to_pb2(doc)
-
-    print(proto_doc)
-
-
-if __name__ == "__main__":
-    main()
