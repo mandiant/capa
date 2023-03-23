@@ -733,7 +733,6 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="convert JSON result document to protobuf")
     parser.add_argument("json_input", help="path to JSON result document to convert")
-    parser.add_argument("-j", "--json", action="store_true", help="emit JSON conversion of protobuf instead of text")
     args = parser.parse_args(args=argv)
 
     with open(args.json_input, "r", encoding="utf-8") as f:
@@ -743,22 +742,7 @@ def main(argv=None):
 
     proto_doc = doc_to_pb2(doc)
 
-    if args.json:
-        # TODO use ensure_ascii?
-        # including_default_value_fields -> so we get empty/unset fields
-        # see https://googleapis.dev/python/protobuf/latest/google/protobuf/json_format.html
-        json_obj = MessageToJson(
-            proto_doc, sort_keys=True, preserving_proto_field_name=True, including_default_value_fields=True
-        )
-        print(json_obj)
-    else:
-        print(proto_doc)
-
-    # TODO test?
-    # doc2 = rd.ResultDocument.parse_obj(json.loads(json_obj))
-    # doc2 = rd.ResultDocument.construct(json.loads(json_obj))
-    # assert doc == doc2
-
+    print(proto_doc)
 
 if __name__ == "__main__":
     main()
