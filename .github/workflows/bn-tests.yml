@@ -32,7 +32,7 @@ jobs:
     - name: install Binary Ninja
       run: |
         mkdir ./.github/binja
-        curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -O ./.github/binja/download_headless.py
+        curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
         python ./.github/binja/download_headless.py --serial $BN_SERIAL --output .github/binja/BinaryNinja-headless.zip
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py
