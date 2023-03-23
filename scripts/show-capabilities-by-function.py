@@ -68,6 +68,7 @@ import capa.render.verbose
 import capa.features.freeze
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
+from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
@@ -130,7 +131,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(parser, wanted={"format", "backend", "sample", "signatures", "rules", "tag"})
+    capa.main.install_common_args(parser, wanted={"format", "os", "backend", "sample", "signatures", "rules", "tag"})
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
@@ -156,7 +157,7 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+    if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
@@ -166,7 +167,7 @@ def main(argv=None):
 
         try:
             extractor = capa.main.get_extractor(
-                args.sample, args.format, args.backend, sig_paths, should_save_workspace
+                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
@@ -175,7 +176,7 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)

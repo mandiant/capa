@@ -45,7 +45,7 @@ import capa.engine
 import capa.helpers
 import capa.features.insn
 from capa.rules import Rule, RuleSet
-from capa.features.common import FORMAT_PE, FORMAT_DOTNET, String, Feature, Substring
+from capa.features.common import OS_AUTO, FORMAT_PE, FORMAT_DOTNET, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
@@ -310,7 +310,9 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         format_ = capa.main.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
-    extractor = capa.main.get_extractor(nice_path, format_, "", DEFAULT_SIGNATURES, False, disable_progress=True)
+    extractor = capa.main.get_extractor(
+        nice_path, format_, OS_AUTO, "", DEFAULT_SIGNATURES, False, disable_progress=True
+    )
 
     capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
     # mypy doesn't seem to be happy with the MatchResults type alias & set(...keys())?

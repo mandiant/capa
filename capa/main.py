@@ -58,8 +58,12 @@ from capa.helpers import (
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
+    OS_AUTO,
+    OS_LINUX,
+    OS_MACOS,
     FORMAT_PE,
     FORMAT_ELF,
+    OS_WINDOWS,
     FORMAT_AUTO,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -491,7 +495,13 @@ def get_workspace(path, format_, sigpaths):
 
 # TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
-    path: str, format_: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
+    path: str,
+    format_: str,
+    os: str,
+    backend: str,
+    sigpaths: List[str],
+    should_save_workspace=False,
+    disable_progress=False,
 ) -> FeatureExtractor:
     """
     raises:
@@ -506,7 +516,7 @@ def get_extractor(
         if not is_supported_arch(path):
             raise UnsupportedArchError()
 
-        if not is_supported_os(path):
+        if os == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
@@ -558,7 +568,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
@@ -717,6 +727,8 @@ def get_signatures(sigs_path):
 def collect_metadata(
     argv: List[str],
     sample_path: str,
+    format_: str,
+    os_: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
 ):
@@ -734,9 +746,9 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
+    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
-    os_ = get_os(sample_path)
+    os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -818,6 +830,7 @@ def install_common_args(parser, wanted=None):
       wanted (Set[str]): collection of arguments to opt-into, including:
         - "sample": required positional argument to input file.
         - "format": flag to override file format.
+        - "os": flag to override file operating system.
         - "backend": flag to override analysis backend.
         - "rules": flag to override path to capa rules.
         - "tag": flag to override/specify which rules to match.
@@ -851,6 +864,7 @@ def install_common_args(parser, wanted=None):
     #
     #   - sample
     #   - format
+    #   - os
     #   - rules
     #   - tag
     #
@@ -889,6 +903,21 @@ def install_common_args(parser, wanted=None):
             help="select the backend to use",
             choices=(BACKEND_VIV, BACKEND_BINJA),
             default=BACKEND_VIV,
+        )
+
+    if "os" in wanted:
+        oses = [
+            (OS_AUTO, "detect OS automatically - default"),
+            (OS_LINUX,),
+            (OS_MACOS,),
+            (OS_WINDOWS,),
+        ]
+        os_help = ", ".join(["%s (%s)" % (o[0], o[1]) if len(o) == 2 else o[0] for o in oses])
+        parser.add_argument(
+            "--os",
+            choices=[o[0] for o in oses],
+            default=OS_AUTO,
+            help="select sample OS: %s" % os_help,
         )
 
     if "rules" in wanted:
@@ -1054,7 +1083,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"sample", "format", "backend", "signatures", "rules", "tag"})
+    install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
     ret = handle_common_args(args)
@@ -1170,7 +1199,13 @@ def main(argv=None):
 
         try:
             extractor = get_extractor(
-                args.sample, format_, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
+                args.sample,
+                format_,
+                args.os,
+                args.backend,
+                sig_paths,
+                should_save_workspace,
+                disable_progress=args.quiet,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()
@@ -1182,7 +1217,7 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
-    meta = collect_metadata(argv, args.sample, args.rules, extractor)
+    meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
     capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
     meta["analysis"].update(counts)
