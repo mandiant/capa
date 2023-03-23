@@ -162,7 +162,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         return NamespaceFeature(namespace=f.value, description=f.description)
 
     elif isinstance(f, capa.features.basicblock.BasicBlock):
-        return BasicBlockFeature(description=str(f.description))
+        return BasicBlockFeature(description=f.description)
 
     elif isinstance(f, capa.features.insn.API):
         assert isinstance(f.value, str)
