@@ -122,3 +122,4 @@ scripts/perf/*.zip
 .envrc
 .DS_Store
 */.DS_Store
+.github/binja/binaryninja
