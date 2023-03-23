@@ -1126,8 +1126,7 @@ def main(argv=None):
                 return E_FILE_LIMITATION
     if format_ == FORMAT_RESULT:
         with open(args.sample, "rb") as f:
-            buf = f.read()
-        print(buf)    
+            buf = f.read()      
     elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
@@ -1165,11 +1164,11 @@ def main(argv=None):
         meta["analysis"].update(counts)
         meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
-    if has_file_limitation(rules, capabilities):
-        # bail if capa encountered file limitation e.g. a packed binary
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+        if has_file_limitation(rules, capabilities):
+            # bail if capa encountered file limitation e.g. a packed binary
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
