@@ -21,9 +21,12 @@ try:
         binaryninja.load(source=b"\x90")
     except RuntimeError as e:
         logger.warning("Binary Ninja license is not valid, provide via $BN_LICENSE or license.dat")
+        print("invalid binja license")
     else:
+        print("got binja")
         binja_present = True
 except ImportError:
+    print("no binja")
     pass
 
 
