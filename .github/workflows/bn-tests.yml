@@ -30,6 +30,8 @@ jobs:
       run: pip install -e .[dev]
 
     - name: install Binary Ninja
+      env:
+        BN_SERIAL: ${{ secrets.BN_SERIAL }}
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
@@ -37,4 +39,6 @@ jobs:
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py
     - name: Run tests
+      env:
+        BN_LICENSE: ${{ secrets.BN_LICENSE }}
       run: pytest -v tests/test_binja_features.py
