@@ -61,6 +61,7 @@ a = Analysis(
         "qt5",
         "pyqtwebengine",
         "pyasn1",
+        "binaryninja",
     ],
 )
 

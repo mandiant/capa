@@ -118,8 +118,12 @@ rule-linter-output.log
 scripts/perf/*.txt
 scripts/perf/*.svg
 scripts/perf/*.zip
+
 .direnv
 .envrc
 .DS_Store
 */.DS_Store
+Pipfile
+Pipfile.lock
+/cache/
 .github/binja/binaryninja

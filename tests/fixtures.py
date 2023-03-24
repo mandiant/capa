@@ -160,6 +160,29 @@ def get_dnfile_extractor(path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_binja_extractor(path):
+    from binaryninja import Settings, BinaryViewType
+
+    import capa.features.extractors.binja.extractor
+
+    # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
+    settings = Settings()
+    if path.endswith("kernel32-64.dll_"):
+        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
+        settings.set_bool("pdb.loadGlobalSymbols", False)
+    bv = BinaryViewType.get_view_of_file(path)
+    if path.endswith("kernel32-64.dll_"):
+        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+
+    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -668,7 +691,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): xorps
         # viv needs fixup to recognize function, see above
-        ("3b13b...", "function=0x10006860", capa.features.common.Characteristic("nzxor"), True),
+        ("mimikatz", "function=0x410dfc", capa.features.common.Characteristic("nzxor"), True),
         # insn/characteristic(peb access)
         ("kernel32-64", "function=0x1800017D0", capa.features.common.Characteristic("peb access"), True),
         ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("peb access"), False),
