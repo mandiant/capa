@@ -1129,3 +1129,37 @@ def _0953c_dotnetfile_extractor():
 @pytest.fixture
 def _039a6_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_039a6"))
+
+
+def get_result_doc(path):
+    return capa.render.result_document.ResultDocument.parse_file(path)
+
+
+@pytest.fixture
+def pma0101_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json"))
+
+
+@pytest.fixture
+def dotnet_1c444e_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json"))
+
+
+@pytest.fixture
+def a3f3bbc_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json"))
+
+
+@pytest.fixture
+def al_khaserx86_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x86.exe_.json"))
+
+
+@pytest.fixture
+def al_khaserx64_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x64.exe_.json"))
+
+
+@pytest.fixture
+def a076114_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "0761142efbda6c4b1e801223de723578.dll_.json"))

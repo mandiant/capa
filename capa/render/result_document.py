@@ -24,6 +24,7 @@ from capa.helpers import assert_never
 class FrozenModel(BaseModel):
     class Config:
         frozen = True
+        extra = "forbid"
 
 
 class Sample(FrozenModel):
@@ -226,7 +227,7 @@ def node_from_capa(node: Union[capa.engine.Statement, capa.engine.Feature]) -> N
         assert_never(node)
 
 
-class Match(BaseModel):
+class Match(FrozenModel):
     """
     args:
       success: did the node match?
@@ -490,7 +491,7 @@ class RuleMetadata(FrozenModel):
             examples=rule.meta.get("examples", []),
             description=rule.meta.get("description", ""),
             lib=rule.meta.get("lib", False),
-            capa_subscope=rule.meta.get("capa/subscope", False),
+            is_subscope_rule=rule.meta.get("capa/subscope", False),
             maec=MaecMetadata(
                 analysis_conclusion=rule.meta.get("maec/analysis-conclusion"),
                 analysis_conclusion_ov=rule.meta.get("maec/analysis-conclusion-ov"),
@@ -507,7 +508,7 @@ class RuleMetadata(FrozenModel):
         allow_population_by_field_name = True
 
 
-class RuleMatches(BaseModel):
+class RuleMatches(FrozenModel):
     """
     args:
         meta: the metadata from the rule
@@ -519,7 +520,7 @@ class RuleMatches(BaseModel):
     matches: Tuple[Tuple[frz.Address, Match], ...]
 
 
-class ResultDocument(BaseModel):
+class ResultDocument(FrozenModel):
     meta: Metadata
     rules: Dict[str, RuleMatches]
 
