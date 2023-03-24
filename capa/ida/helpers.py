@@ -45,7 +45,7 @@ NETNODE_RULES_CACHE_ID = "rules-cache-id"
 
 
 def inform_user_ida_ui(message):
-    idaapi.info("%s. Please refer to IDA Output window for more information." % message)
+    idaapi.info(f"{message}. Please refer to IDA Output window for more information.")
 
 
 def is_supported_ida_version():

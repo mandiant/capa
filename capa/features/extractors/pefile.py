@@ -64,7 +64,7 @@ def extract_file_import_names(pe, **kwargs):
 
             for imp in dll.imports:
                 if imp.import_by_ordinal:
-                    impname = "#%s" % imp.ordinal
+                    impname = f"#{imp.ordinal}"
                 else:
                     try:
                         impname = imp.name.partition(b"\x00")[0].decode("ascii")

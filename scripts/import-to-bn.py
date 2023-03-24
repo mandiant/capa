@@ -57,7 +57,7 @@ def load_analysis(bv):
     if not path or not os.access(path, os.R_OK):
         binaryninja.log_error("Invalid filename.")
         return 0
-    binaryninja.log_info("Using capa file %s" % path)
+    binaryninja.log_info(f"Using capa file {path}")
 
     with open(path, "rb") as f:
         doc = json.loads(f.read().decode("utf-8"))
@@ -93,11 +93,11 @@ def load_analysis(bv):
     rows = sorted(rows)
     for ns, name, va in rows:
         if ns:
-            cmt = "%s (%s)" % (name, ns)
+            cmt = f"{name} ({ns})"
         else:
-            cmt = "%s" % (name,)
+            cmt = f"{name}"
 
-        binaryninja.log_info("0x%x: %s" % (va, cmt))
+        binaryninja.log_info(f"{hex(va)}: {cmt}")
         try:
             # message will look something like:
             #

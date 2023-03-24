@@ -133,9 +133,9 @@ def main(argv=None):
                     # so lets put that first.
                     #
                     # https://docs.python.org/3/library/timeit.html#timeit.Timer.repeat
-                    "%0.2fs" % (min(samples) / float(args.number)),
-                    "%0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)),
-                    "%0.2fs" % (max(samples) / float(args.number)),
+                    f"{(min(samples) / float(args.number)):.2f}s",
+                    f"{(sum(samples) / float(args.repeat) / float(args.number)):.2f}s",
+                    f"{(max(samples) / float(args.number)):.2f}s",
                 )
             ],
             headers=["label", "count(evaluations)", "min(time)", "avg(time)", "max(time)"],

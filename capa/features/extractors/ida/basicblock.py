@@ -34,7 +34,7 @@ def get_printable_len(op: idaapi.op_t) -> int:
     elif op.dtype == idaapi.dt_qword:
         chars = struct.pack("<Q", op_val)
     else:
-        raise ValueError("Unhandled operand data type 0x%x." % op.dtype)
+        raise ValueError(f"Unhandled operand data type 0x{op.dtype:x}.")
 
     def is_printable_ascii(chars_: bytes):
         return all(c < 127 and chr(c) in string.printable for c in chars_)

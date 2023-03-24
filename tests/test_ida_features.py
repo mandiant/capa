@@ -31,7 +31,7 @@ def check_input_file(wanted):
         found = binascii.hexlify(idautils.GetInputFileMD5()[:15]).decode("ascii").lower()
 
     if not wanted.startswith(found):
-        raise RuntimeError("please run the tests against sample with MD5: `%s`" % (wanted))
+        raise RuntimeError(f"please run the tests against sample with MD5: `{wanted}`")
 
 
 def get_ida_extractor(_path):
@@ -51,7 +51,7 @@ def test_ida_features():
         try:
             check_input_file(fixtures.get_sample_md5_by_name(sample))
         except RuntimeError:
-            print("SKIP %s" % (id))
+            print(f"SKIP {id}")
             continue
 
         scope = fixtures.resolve_scope(scope)
@@ -60,10 +60,10 @@ def test_ida_features():
         try:
             fixtures.do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
         except Exception as e:
-            print("FAIL %s" % (id))
+            print(f"FAIL {id}")
             traceback.print_exc()
         else:
-            print("OK   %s" % (id))
+            print(f"OK   {id}")
 
 
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
@@ -74,7 +74,7 @@ def test_ida_feature_counts():
         try:
             check_input_file(fixtures.get_sample_md5_by_name(sample))
         except RuntimeError:
-            print("SKIP %s" % (id))
+            print(f"SKIP {id}")
             continue
 
         scope = fixtures.resolve_scope(scope)
@@ -83,10 +83,10 @@ def test_ida_feature_counts():
         try:
             fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
         except Exception as e:
-            print("FAIL %s" % (id))
+            print(f"FAIL {id}")
             traceback.print_exc()
         else:
-            print("OK   %s" % (id))
+            print(f"OK   {id}")
 
 
 if __name__ == "__main__":
