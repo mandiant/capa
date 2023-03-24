@@ -16,7 +16,7 @@ import capa.render.result_document as rd
 
 def bold(s: str) -> str:
     """draw attention to the given string"""
-    return termcolor.colored(s, "blue")
+    return termcolor.colored(s, "cyan")
 
 
 def bold2(s: str) -> str:
