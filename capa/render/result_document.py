@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
+import json
 from typing import Any, Dict, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
@@ -16,7 +17,7 @@ import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
 import capa.features.freeze.features as frzf
-from capa.rules import RuleSet
+from capa.rules import Rule, RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
 
@@ -540,3 +541,29 @@ class ResultDocument(BaseModel):
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
+
+    @classmethod
+    def parse_raw(cls, raw: str):
+        data = json.loads(raw)
+        result_doc = ResultDocument(**data)
+        meta = result_doc.meta
+
+        rules = {}
+        capabilities = {}
+        for rule_name, rule_match in result_doc.rules.items():
+            # Extract the rule definition and metadata
+            rule_definition = rule_match.source
+            rule_metadata = rule_match.meta
+        
+            # Add the rule to the rules dictionary
+            rules[rule_name] = (rule_metadata, rule_definition)
+
+            # Extract the capabilities from the RuleMatches object
+        for address, match in rule_match.matches:
+            if address not in capabilities:
+                capabilities[address] = []
+
+            capabilities[address].append((rule_name, match))
+        return meta , rules, capabilities
+
+        

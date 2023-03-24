@@ -1126,7 +1126,9 @@ def main(argv=None):
                 return E_FILE_LIMITATION
     if format_ == FORMAT_RESULT:
         with open(args.sample, "rb") as f:
-            buf = f.read()      
+            buf = f.read()
+        buf.decode("utf-8")    
+        meta, rules, capabilities = capa.render.result_document.ResultDocument.parse_raw(buf)
     elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
@@ -1156,8 +1158,7 @@ def main(argv=None):
         except UnsupportedOSError:
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
-    
-    if not FORMAT_RESULT:
+
         meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
