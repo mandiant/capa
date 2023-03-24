@@ -497,7 +497,7 @@ def get_workspace(path, format_, sigpaths):
 def get_extractor(
     path: str,
     format_: str,
-    os: str,
+    os_: str,
     backend: str,
     sigpaths: List[str],
     should_save_workspace=False,
@@ -516,7 +516,7 @@ def get_extractor(
         if not is_supported_arch(path):
             raise UnsupportedArchError()
 
-        if os == OS_AUTO and not is_supported_os(path):
+        if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
@@ -568,7 +568,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
