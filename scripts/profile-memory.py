@@ -19,17 +19,17 @@ def display_top(snapshot, key_type="lineno", limit=10):
     print(f"Top {limit} lines")
     for index, stat in enumerate(top_stats[:limit], 1):
         frame = stat.traceback[0]
-        print(f"#{index}: {frame.filename}:{frame.lineno}: {stat.size / 1024:.1f} KiB")
+        print(f"#{index}: {frame.filename}:{frame.lineno}: {(stat.size/1024):.1f} KiB")
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
-            print("    %s" % line)
+            print(f"    {line}")
 
     other = top_stats[limit:]
     if other:
         size = sum(stat.size for stat in other)
-        print(f"{len(other)} other: {size / 1024:.1f} KiB")
+        print(f"{len(other)} other: {(size/1024):.1f} KiB")
     total = sum(stat.size for stat in top_stats)
-    print(f"Total allocated size: {total / 1024:.1f} KiB")
+    print(f"Total allocated size: {(total/1024):.1f} KiB")
 
 
 def main():
@@ -49,7 +49,7 @@ def main():
     print()
 
     for i in range(count):
-        print(f"iteration {i + 1}/{count}...")
+        print(f"iteration {i+1}/{count}...")
         with contextlib.redirect_stdout(io.StringIO()):
             with contextlib.redirect_stderr(io.StringIO()):
                 t0 = time.time()
@@ -59,9 +59,9 @@ def main():
                 gc.collect()
 
         process = psutil.Process(os.getpid())
-        print(f"  duration: {t1 - t0:.02f}s")
-        print(f"  rss: {process.memory_info().rss / 1024 / 1024:.1f} MiB")
-        print(f"  vms: {process.memory_info().vms / 1024 / 1024:.1f} MiB")
+        print(f"  duration: {(t1-t0):.2f}")
+        print(f"  rss: {(process.memory_info().rss / 1024 / 1024):.1f} MiB")
+        print(f"  vms: {(process.memory_info().vms / 1024 / 1024):.1f} MiB")
 
     print("done.")
     gc.collect()

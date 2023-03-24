@@ -97,7 +97,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         if count == 1:
             capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule.meta.name), count)
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
         rows.append((capability, rule.meta.namespace))
 
     if rows:
@@ -135,9 +135,9 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
         inner_rows = []
         for technique, subtechnique, id in sorted(techniques):
             if not subtechnique:
-                inner_rows.append("%s %s" % (rutils.bold(technique), id))
+                inner_rows.append(f"{rutils.bold(technique)} {id}")
             else:
-                inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
+                inner_rows.append(f"{rutils.bold(technique)}::{subtechnique} {id}")
         rows.append(
             (
                 rutils.bold(tactic.upper()),
@@ -178,9 +178,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
         inner_rows = []
         for behavior, method, id in sorted(behaviors):
             if not method:
-                inner_rows.append("%s [%s]" % (rutils.bold(behavior), id))
+                inner_rows.append(f"{rutils.bold(behavior)} [{id}]")
             else:
-                inner_rows.append("%s::%s [%s]" % (rutils.bold(behavior), method, id))
+                inner_rows.append(f"{rutils.bold(behavior)}::{method} [{id}]")
         rows.append(
             (
                 rutils.bold(objective.upper()),

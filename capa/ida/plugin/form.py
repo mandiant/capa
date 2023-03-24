@@ -83,13 +83,13 @@ def trim_function_name(f, max_length=25):
     """ """
     n = idaapi.get_name(f.start_ea)
     if len(n) > max_length:
-        n = "%s..." % n[:max_length]
+        n = f"{n[:max_length]}..."
     return n
 
 
 def update_wait_box(text):
     """update the IDA wait box"""
-    ida_kernwin.replace_wait_box("capa explorer...%s" % text)
+    ida_kernwin.replace_wait_box(f"capa explorer...{text}")
 
 
 class QLineEditClicked(QtWidgets.QLineEdit):
@@ -630,7 +630,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
 
             def on_load_rule(_, i, total):
-                update_wait_box("loading capa rules from %s (%d of %d)" % (rule_path, i + 1, total))
+                update_wait_box(f"loading capa rules from {rule_path} ({i+1} of {total})")
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
@@ -640,7 +640,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return None
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui(
-                "Failed to load capa rules from %s" % settings.user[CAPA_SETTINGS_RULE_PATH]
+                f"Failed to load capa rules from {settings.user[CAPA_SETTINGS_RULE_PATH]}"
             )
 
             logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
@@ -691,10 +691,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                     update_wait_box("verifying cached results")
 
-                    view_status_rules: str = "%s (%d rules)" % (
-                        settings.user[CAPA_SETTINGS_RULE_PATH],
-                        self.program_analysis_ruleset_cache.source_rule_count,
-                    )
+                    count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
+                    user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
+                    view_status_rules: str = f"{user_settings} ({count_source_rules} rules)"
 
                     # warn user about potentially outdated rules, depending on the use-case this may be expected
                     if (
@@ -710,10 +709,8 @@ class CapaExplorerForm(idaapi.PluginForm):
                         )
                         view_status_rules = "no rules matched for cache"
 
-                    new_view_status = "capa rules: %s, cached results (created %s)" % (
-                        view_status_rules,
-                        self.resdoc_cache.meta.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                    )
+                    cached_results_time = self.resdoc_cache.meta.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                    new_view_status = f"capa rules: {view_status_rules}, cached results (created {cached_results_time})"
                 except Exception as e:
                     logger.error("Failed to load cached capa results (error: %s).", e, exc_info=True)
                     return False
@@ -725,7 +722,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 def slot_progress_feature_extraction(text):
                     """slot function to handle feature extraction progress updates"""
-                    update_wait_box("%s (%d of %d)" % (text, self.process_count, self.process_total))
+                    update_wait_box(f"{text} ({self.process_count} of {self.process_total})")
                     self.process_count += 1
 
                 update_wait_box("initializing feature extractor")
@@ -843,12 +840,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                 except Exception as e:
                     logger.error("Failed to save results to database (error: %s)", e, exc_info=True)
                     return False
-
-                new_view_status = "capa rules: %s (%d rules)" % (
-                    settings.user[CAPA_SETTINGS_RULE_PATH],
-                    self.program_analysis_ruleset_cache.source_rule_count,
-                )
-
+                user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
+                count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
+                new_view_status = f"capa rules: {user_settings} ({count_source_rules} rules)"
         # regardless of new analysis, render results - e.g. we may only want to render results after checking
         # show results by function
 
@@ -1094,7 +1088,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
             self.set_view_status_label(
-                "capa rules: %s (%d rules)" % (settings.user[CAPA_SETTINGS_RULE_PATH], ruleset.source_rule_count)
+                f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]} ({settings.user[CAPA_SETTINGS_RULE_PATH]} rules)"
             )
         except Exception as e:
             logger.error("Failed to render views (error: %s)", e, exc_info=True)

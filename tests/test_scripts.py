@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -62,5 +62,23 @@ def test_bulk_process(tmpdir):
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
-    print("running: '%s'" % args)
-    return subprocess.run(args)
+    print(f"running: '{args}'")
+    return subprocess.run(args, stdout=subprocess.PIPE)
+
+
+def test_proto_conversion(tmpdir):
+    t = tmpdir.mkdir("proto-test")
+
+    json = os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json")
+
+    p = run_program(get_script_path("proto-from-results.py"), [json])
+    assert p.returncode == 0
+
+    pb = os.path.join(t, "pma.pb")
+    with open(pb, "wb") as f:
+        f.write(p.stdout)
+
+    p = run_program(get_script_path("proto-to-results.py"), [pb])
+    assert p.returncode == 0
+
+    assert p.stdout.startswith(b'{\n  "meta": ')

@@ -27,7 +27,8 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.5",
+    "pydantic==1.10.6",
+    "protobuf==4.21.12",
 ]
 
 # this sets __version__
@@ -75,10 +76,11 @@ setuptools.setup(
             "pycodestyle==2.10.0",
             "black==23.1.0",
             "isort==5.11.4",
-            "mypy==1.0.1",
+            "mypy==1.1.1",
             "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.28.0",
+            "mypy-protobuf==3.4.0",
             # type stubs for mypy
             "types-backports==0.1.3",
             "types-colorama==0.4.15",
@@ -87,9 +89,10 @@ setuptools.setup(
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
+            "types-protobuf==4.21.0.5",
         ],
         "build": [
-            "pyinstaller==5.8.0",
+            "pyinstaller==5.9.0",
         ],
     },
     zip_safe=False,

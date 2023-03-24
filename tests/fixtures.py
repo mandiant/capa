@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -26,12 +26,14 @@ import capa.features.basicblock
 from capa.features.common import (
     OS,
     OS_ANY,
+    OS_AUTO,
     OS_LINUX,
     ARCH_I386,
     FORMAT_PE,
     ARCH_AMD64,
     FORMAT_ELF,
     OS_WINDOWS,
+    FORMAT_AUTO,
     FORMAT_DOTNET,
     Arch,
     Format,
@@ -104,9 +106,9 @@ def get_viv_extractor(path):
     elif "raw64" in path:
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        vw = capa.main.get_workspace(path, "auto", sigpaths=sigpaths)
+        vw = capa.main.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
     fixup_viv(path, extractor)
     return extractor
 
@@ -151,6 +153,29 @@ def get_dnfile_extractor(path):
     import capa.features.extractors.dnfile.extractor
 
     extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+
+    # overload the extractor so that the fixture exposes `extractor.path`
+    setattr(extractor, "path", path)
+
+    return extractor
+
+
+@lru_cache(maxsize=1)
+def get_binja_extractor(path):
+    from binaryninja import Settings, BinaryViewType
+
+    import capa.features.extractors.binja.extractor
+
+    # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
+    settings = Settings()
+    if path.endswith("kernel32-64.dll_"):
+        old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
+        settings.set_bool("pdb.loadGlobalSymbols", False)
+    bv = BinaryViewType.get_view_of_file(path)
+    if path.endswith("kernel32-64.dll_"):
+        settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
+
+    extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path)
@@ -283,7 +308,7 @@ def get_data_path_by_name(name):
     elif name.startswith("294b8d"):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def get_sample_md5_by_name(name):
@@ -341,7 +366,7 @@ def get_sample_md5_by_name(name):
         # file name is SHA256 hash
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     else:
-        raise ValueError("unexpected sample fixture: %s" % name)
+        raise ValueError(f"unexpected sample fixture: {name}")
 
 
 def resolve_sample(sample):
@@ -666,7 +691,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
         # insn/characteristic(nzxor): xorps
         # viv needs fixup to recognize function, see above
-        ("3b13b...", "function=0x10006860", capa.features.common.Characteristic("nzxor"), True),
+        ("mimikatz", "function=0x410dfc", capa.features.common.Characteristic("nzxor"), True),
         # insn/characteristic(peb access)
         ("kernel32-64", "function=0x1800017D0", capa.features.common.Characteristic("peb access"), True),
         ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("peb access"), False),
@@ -981,21 +1006,16 @@ def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
-        msg = "%s should be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should be found in {scope.__name__}"
     else:
-        msg = "%s should not be found in %s" % (str(feature), scope.__name__)
+        msg = f"{str(feature)} should not be found in {scope.__name__}"
     assert feature.evaluate(features) == expected, msg
 
 
 def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
-    msg = "%s should be found %d times in %s, found: %d" % (
-        str(feature),
-        expected,
-        scope.__name__,
-        len(features[feature]),
-    )
+    msg = f"{str(feature)} should be found {expected} times in {scope.__name__}, found: {len(features[feature])}"
     assert len(features[feature]) == expected, msg
 
 
@@ -1109,3 +1129,37 @@ def _0953c_dotnetfile_extractor():
 @pytest.fixture
 def _039a6_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_039a6"))
+
+
+def get_result_doc(path):
+    return capa.render.result_document.ResultDocument.parse_file(path)
+
+
+@pytest.fixture
+def pma0101_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json"))
+
+
+@pytest.fixture
+def dotnet_1c444e_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json"))
+
+
+@pytest.fixture
+def a3f3bbc_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json"))
+
+
+@pytest.fixture
+def al_khaserx86_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x86.exe_.json"))
+
+
+@pytest.fixture
+def al_khaserx64_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x64.exe_.json"))
+
+
+@pytest.fixture
+def a076114_rd():
+    return get_result_doc(os.path.join(CD, "data", "rd", "0761142efbda6c4b1e801223de723578.dll_.json"))

@@ -121,14 +121,14 @@ class ELF:
         elif ei_class == 2:
             self.bitness = 64
         else:
-            raise CorruptElfFile("invalid ei_class: 0x%02x" % ei_class)
+            raise CorruptElfFile(f"invalid ei_class: 0x{ei_class:02x}")
 
         if ei_data == 1:
             self.endian = "<"
         elif ei_data == 2:
             self.endian = ">"
         else:
-            raise CorruptElfFile("not an ELF file: invalid ei_data: 0x%02x" % ei_data)
+            raise CorruptElfFile(f"not an ELF file: invalid ei_data: 0x{ei_data:02x}")
 
         if self.bitness == 32:
             e_phoff, e_shoff = struct.unpack_from(self.endian + "II", self.file_header, 0x1C)

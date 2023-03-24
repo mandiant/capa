@@ -26,7 +26,7 @@ class CapaExplorerProgressIndicator(QtCore.QObject):
         """
         if ida_kernwin.user_cancelled():
             raise UserCancelledError("user cancelled")
-        self.progress.emit("extracting features from %s" % text)
+        self.progress.emit(f"extracting features from {text}")
 
 
 class CapaExplorerFeatureExtractor(IdaFeatureExtractor):
@@ -40,5 +40,5 @@ class CapaExplorerFeatureExtractor(IdaFeatureExtractor):
         self.indicator = CapaExplorerProgressIndicator()
 
     def extract_function_features(self, fh: FunctionHandle):
-        self.indicator.update("function at 0x%X" % fh.inner.start_ea)
+        self.indicator.update(f"function at {hex(fh.inner.start_ea)}")
         return super().extract_function_features(fh)

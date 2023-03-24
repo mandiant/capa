@@ -22,14 +22,14 @@ logger = logging.getLogger("capa")
 def hex(n: int) -> str:
     """render the given number using upper case hex, like: 0x123ABC"""
     if n < 0:
-        return "-0x%X" % (-n)
+        return f"-0x{(-n):X}"
     else:
-        return "0x%X" % n
+        return f"0x{(n):X}"
 
 
 def get_file_taste(sample_path: str) -> bytes:
     if not os.path.exists(sample_path):
-        raise IOError("sample path %s does not exist or cannot be accessed" % sample_path)
+        raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
     with open(sample_path, "rb") as f:
         taste = f.read(8)
     return taste
@@ -44,7 +44,7 @@ def is_runtime_ida():
         return True
 
 
-def assert_never(value: NoReturn) -> NoReturn:
+def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 

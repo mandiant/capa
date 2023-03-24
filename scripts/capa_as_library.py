@@ -14,6 +14,7 @@ import capa.render.default
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.engine import *
+from capa.features.common import OS_AUTO, FORMAT_AUTO
 
 
 # == Render dictionary helpers
@@ -77,7 +78,7 @@ def render_capabilities(doc: rd.ResultDocument, result):
         if count == 1:
             capability = rule.meta.name
         else:
-            capability = "%s (%d matches)" % (rule.meta.name, count)
+            capability = f"{rule.meta.name} ({count} matches)"
 
         result["CAPABILITY"].setdefault(rule.meta.namespace, list())
         result["CAPABILITY"][rule.meta.namespace].append(capability)
@@ -108,9 +109,9 @@ def render_attack(doc, result):
         inner_rows = []
         for technique, subtechnique, id in sorted(techniques):
             if subtechnique is None:
-                inner_rows.append("%s %s" % (technique, id))
+                inner_rows.append(f"{technique} {id}")
             else:
-                inner_rows.append("%s::%s %s" % (technique, subtechnique, id))
+                inner_rows.append(f"{technique}::{subtechnique} {id}")
         result["ATTCK"].setdefault(tactic.upper(), inner_rows)
 
 
@@ -142,9 +143,9 @@ def render_mbc(doc, result):
         inner_rows = []
         for behavior, method, id in sorted(behaviors):
             if method is None:
-                inner_rows.append("%s [%s]" % (behavior, id))
+                inner_rows.append(f"{behavior} [{id}]")
             else:
-                inner_rows.append("%s::%s [%s]" % (behavior, method, id))
+                inner_rows.append(f"{behavior}::{method} [{id}]")
         result["MBC"].setdefault(objective.upper(), inner_rows)
 
 
@@ -164,11 +165,13 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
     rules = capa.main.get_rules([rules_path])
 
     # extract features and find capabilities
-    extractor = capa.main.get_extractor(file_path, "auto", capa.main.BACKEND_VIV, [], False, disable_progress=True)
+    extractor = capa.main.get_extractor(
+        file_path, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], False, disable_progress=True
+    )
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, rules_path, extractor)
+    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, rules_path, extractor)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 
