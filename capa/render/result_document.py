@@ -125,6 +125,45 @@ class Metadata(FrozenModel):
             ),
         )
 
+    def to_capa(self) -> Dict[str, Any]:
+        capa_meta = {
+            "timestamp": self.timestamp.isoformat(),
+            "version": self.version,
+            "sample": {
+                "md5": self.sample.md5,
+                "sha1": self.sample.sha1,
+                "sha256": self.sample.sha256,
+                "path": self.sample.path,
+            },
+            "analysis": {
+                "format": self.analysis.format,
+                "arch": self.analysis.arch,
+                "os": self.analysis.os,
+                "extractor": self.analysis.extractor,
+                "rules": self.analysis.rules,
+                "base_address": self.analysis.base_address.to_capa(),
+                "layout": {
+                    "functions": {
+                        f.address.to_capa(): {
+                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
+                        }
+                        for f in self.analysis.layout.functions
+                    }
+                },
+                "feature_counts": {
+                    "file": self.analysis.feature_counts.file,
+                    "functions": {
+                        fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions
+                    },
+                },
+                "library_functions": {
+                    lf.address.to_capa(): lf.name for lf in self.analysis.library_functions
+                },
+            },
+        }
+
+        return capa_meta
+    
 
 class CompoundStatementType:
     AND = "and"
@@ -526,6 +565,8 @@ class ResultDocument(BaseModel):
     def from_capa(cls, meta, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
         rule_matches: Dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
+            if rule_name not in rules:
+                continue
             rule = rules[rule_name]
 
             if rule.meta.get("capa/subscope-rule"):
@@ -546,7 +587,7 @@ class ResultDocument(BaseModel):
     def parse_raw(cls, raw: str):
         data = json.loads(raw)
         result_doc = ResultDocument(**data)
-        meta = result_doc.meta
+        #meta = Metadata(**result_doc.meta)
 
         rules = {}
         capabilities = {}
@@ -564,6 +605,4 @@ class ResultDocument(BaseModel):
                 capabilities[address] = []
 
             capabilities[address].append((rule_name, match))
-        return meta , rules, capabilities
-
-        
+        return result_doc.meta.to_capa(), rules, capabilities
