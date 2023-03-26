@@ -1128,7 +1128,7 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             buf = f.read()
         buf.decode("utf-8")    
-        meta, rules, capabilities = capa.render.result_document.ResultDocument.parse_raw(buf)
+        meta, capabilities = capa.render.result_document.ResultDocument.parse_raw(buf,rules)
     elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())

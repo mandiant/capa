@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
 import json
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 
@@ -17,7 +17,7 @@ import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
 import capa.features.freeze.features as frzf
-from capa.rules import Rule, RuleSet
+from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
 
@@ -584,25 +584,37 @@ class ResultDocument(BaseModel):
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
 
     @classmethod
-    def parse_raw(cls, raw: str):
+    def parse_raw(cls, raw: str, rules: RuleSet):
         data = json.loads(raw)
         result_doc = ResultDocument(**data)
-        #meta = Metadata(**result_doc.meta)
-
-        rules = {}
-        capabilities = {}
-        for rule_name, rule_match in result_doc.rules.items():
-            # Extract the rule definition and metadata
-            rule_definition = rule_match.source
-            rule_metadata = rule_match.meta
         
-            # Add the rule to the rules dictionary
-            rules[rule_name] = (rule_metadata, rule_definition)
+        capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] ={}
 
+        for rule_name, rule_match in result_doc.rules.items():
+            
             # Extract the capabilities from the RuleMatches object
-        for address, match in rule_match.matches:
-            if address not in capabilities:
-                capabilities[address] = []
+            for addr, match in rule_match.matches:
 
-            capabilities[address].append((rule_name, match))
-        return result_doc.meta.to_capa(), rules, capabilities
+                if isinstance(match.node, StatementNode):
+                    if isinstance(match.node.statement, CompoundStatement):
+                        statement = rules[rule_name].statement
+                    else:
+                        statement = statement_from_capa(match.node.statement)
+                elif isinstance(match.node, FeatureNode):
+                    statement = match.node.feature.to_capa()
+                    if isinstance(statement, (capa.features.common.String, capa.features.common.Regex)):
+                        statement.matches = match.captures
+                else:
+                    raise ValueError("Invalid node type")
+        
+                result = capa.features.common.Result(
+                statement=statement,
+                success=match.success,
+                locations=[frz.Address.to_capa(loc) for loc in match.locations],
+                children=[])
+
+                if rule_name not in capabilities:
+                    capabilities[rule_name]=[]
+                capabilities[rule_name].append((frz.Address.from_capa(addr),result))
+                
+        return result_doc.meta.to_capa(), capabilities
