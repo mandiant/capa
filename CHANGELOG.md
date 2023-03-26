@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- add new format to parse output json back to capa #1396 @ooprathamm
 
 ### Breaking Changes
 
