@@ -565,8 +565,6 @@ class ResultDocument(BaseModel):
     def from_capa(cls, meta, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
         rule_matches: Dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
-            if rule_name not in rules:
-                continue
             rule = rules[rule_name]
 
             if rule.meta.get("capa/subscope-rule"):

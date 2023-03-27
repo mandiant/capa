@@ -81,11 +81,11 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
 def extract_os(buf) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(b"MZ"):
         yield OS(OS_WINDOWS), NO_ADDRESS
+    elif buf.startswith(b"{\"meta\":"):
+        yield OS(OS_ANY), NO_ADDRESS
     elif buf.startswith(b"\x7fELF"):
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
-    elif buf.startswith(b"{\"meta\":"):
-        os = OS_ANY
 
         if os not in capa.features.common.VALID_OS:
             logger.debug("unsupported os: %s", os)
