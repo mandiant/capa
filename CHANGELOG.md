@@ -7,6 +7,7 @@
 
 - extractor: add Binary Ninja feature extractor @xusheng6
 - new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
+- Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
 
 ### Breaking Changes
 
