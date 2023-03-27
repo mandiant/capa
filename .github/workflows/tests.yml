@@ -94,6 +94,7 @@ jobs:
   binja-tests:
     name: Binary Ninja tests for ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ubuntu-20.04
+    needs: [code_style, rule_linter]
     strategy:
       fail-fast: false
       matrix:
