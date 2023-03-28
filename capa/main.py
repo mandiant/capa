@@ -547,7 +547,7 @@ def get_extractor(
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             bv: BinaryView = BinaryViewType.get_view_of_file(path)
             if bv is None:
-                raise RuntimeError("Binary Ninja cannot open file %s" % (path))
+                raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
         return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
@@ -912,12 +912,12 @@ def install_common_args(parser, wanted=None):
             (OS_MACOS,),
             (OS_WINDOWS,),
         ]
-        os_help = ", ".join(["%s (%s)" % (o[0], o[1]) if len(o) == 2 else o[0] for o in oses])
+        os_help = ", ".join([f"{o[0]} ({o[1]})" if len(o) == 2 else o[0] for o in oses])
         parser.add_argument(
             "--os",
             choices=[o[0] for o in oses],
             default=OS_AUTO,
-            help="select sample OS: %s" % os_help,
+            help=f"select sample OS: {os_help}",
         )
 
     if "rules" in wanted:

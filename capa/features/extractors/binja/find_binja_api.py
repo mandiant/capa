@@ -26,7 +26,7 @@ if spec is not None:
 
 
 def find_binja_path() -> str:
-    raw_output = subprocess.check_output(["python", "-c", "%s" % code]).decode("ascii").strip()
+    raw_output = subprocess.check_output(["python", "-c", code]).decode("ascii").strip()
     return bytes.fromhex(raw_output).decode("utf8")
 
 
