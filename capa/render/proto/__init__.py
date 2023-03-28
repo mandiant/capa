@@ -595,6 +595,7 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
     elif type_ == "import_":
         ff = f.import_
         return frzf.ImportFeature(import_=ff.import_, description=ff.description or None)  # type: ignore
+        # Mypy is unable to recognize `import_` as an argument
     elif type_ == "section":
         ff = f.section
         return frzf.SectionFeature(section=ff.section, description=ff.description or None)

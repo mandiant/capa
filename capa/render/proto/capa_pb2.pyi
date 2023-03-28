@@ -22,9 +22,7 @@ class _AddressType:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _AddressTypeEnumTypeWrapper(
-    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AddressType.ValueType], builtins.type
-):
+class _AddressTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AddressType.ValueType], builtins.type):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     ADDRESSTYPE_UNSPECIFIED: _AddressType.ValueType  # 0
     ADDRESSTYPE_ABSOLUTE: _AddressType.ValueType  # 1
@@ -49,9 +47,7 @@ class _Scope:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ScopeEnumTypeWrapper(
-    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Scope.ValueType], builtins.type
-):
+class _ScopeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Scope.ValueType], builtins.type):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     SCOPE_UNSPECIFIED: _Scope.ValueType  # 0
     SCOPE_FILE: _Scope.ValueType  # 1
@@ -85,18 +81,9 @@ class APIFeature(google.protobuf.message.Message):
         api: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "api", b"api", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "api", b"api", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___APIFeature = APIFeature
 
@@ -119,18 +106,9 @@ class Address(google.protobuf.message.Message):
         v: global___Integer | None = ...,
         token_offset: global___Token_Offset | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["token_offset", b"token_offset", "v", b"v", "value", b"value"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["value", b"value"]
-    ) -> typing_extensions.Literal["v", "token_offset"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["token_offset", b"token_offset", "v", b"v", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["v", "token_offset"] | None: ...
 
 global___Address = Address
 
@@ -160,9 +138,7 @@ class Analysis(google.protobuf.message.Message):
     @property
     def feature_counts(self) -> global___FeatureCounts: ...
     @property
-    def library_functions(
-        self,
-    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
     def __init__(
         self,
         *,
@@ -176,35 +152,8 @@ class Analysis(google.protobuf.message.Message):
         feature_counts: global___FeatureCounts | None = ...,
         library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "arch",
-            b"arch",
-            "base_address",
-            b"base_address",
-            "extractor",
-            b"extractor",
-            "feature_counts",
-            b"feature_counts",
-            "format",
-            b"format",
-            "layout",
-            b"layout",
-            "library_functions",
-            b"library_functions",
-            "os",
-            b"os",
-            "rules",
-            b"rules",
-        ],
-    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
 
 global___Analysis = Analysis
 
@@ -225,18 +174,9 @@ class ArchFeature(google.protobuf.message.Message):
         arch: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "arch", b"arch", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "arch", b"arch", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___ArchFeature = ArchFeature
 
@@ -264,21 +204,7 @@ class AttackSpec(google.protobuf.message.Message):
         subtechnique: builtins.str = ...,
         id: builtins.str = ...,
     ) -> None: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "id",
-            b"id",
-            "parts",
-            b"parts",
-            "subtechnique",
-            b"subtechnique",
-            "tactic",
-            b"tactic",
-            "technique",
-            b"technique",
-        ],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["id", b"id", "parts", b"parts", "subtechnique", b"subtechnique", "tactic", b"tactic", "technique", b"technique"]) -> None: ...
 
 global___AttackSpec = AttackSpec
 
@@ -296,18 +222,9 @@ class BasicBlockFeature(google.protobuf.message.Message):
         type: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___BasicBlockFeature = BasicBlockFeature
 
@@ -345,18 +262,9 @@ class BytesFeature(google.protobuf.message.Message):
         bytes: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "bytes", b"bytes", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "bytes", b"bytes", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___BytesFeature = BytesFeature
 
@@ -377,25 +285,9 @@ class CharacteristicFeature(google.protobuf.message.Message):
         characteristic: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description",
-            b"_description",
-            "characteristic",
-            b"characteristic",
-            "description",
-            b"description",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "characteristic", b"characteristic", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___CharacteristicFeature = CharacteristicFeature
 
@@ -417,18 +309,9 @@ class ClassFeature(google.protobuf.message.Message):
         class_: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "class_", b"class_", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "class_", b"class_", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___ClassFeature = ClassFeature
 
@@ -446,18 +329,9 @@ class CompoundStatement(google.protobuf.message.Message):
         type: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___CompoundStatement = CompoundStatement
 
@@ -478,18 +352,9 @@ class ExportFeature(google.protobuf.message.Message):
         export: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "export", b"export", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "export", b"export", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___ExportFeature = ExportFeature
 
@@ -501,9 +366,7 @@ class FeatureCounts(google.protobuf.message.Message):
     FUNCTIONS_FIELD_NUMBER: builtins.int
     file: builtins.int
     @property
-    def functions(
-        self,
-    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
     def __init__(
         self,
         *,
@@ -619,144 +482,9 @@ class FeatureNode(google.protobuf.message.Message):
         operand_offset: global___OperandOffsetFeature | None = ...,
         basic_block: global___BasicBlockFeature | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "api",
-            b"api",
-            "arch",
-            b"arch",
-            "basic_block",
-            b"basic_block",
-            "bytes",
-            b"bytes",
-            "characteristic",
-            b"characteristic",
-            "class_",
-            b"class_",
-            "export",
-            b"export",
-            "feature",
-            b"feature",
-            "format",
-            b"format",
-            "function_name",
-            b"function_name",
-            "import_",
-            b"import_",
-            "match",
-            b"match",
-            "mnemonic",
-            b"mnemonic",
-            "namespace",
-            b"namespace",
-            "number",
-            b"number",
-            "offset",
-            b"offset",
-            "operand_number",
-            b"operand_number",
-            "operand_offset",
-            b"operand_offset",
-            "os",
-            b"os",
-            "property_",
-            b"property_",
-            "regex",
-            b"regex",
-            "section",
-            b"section",
-            "string",
-            b"string",
-            "substring",
-            b"substring",
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "api",
-            b"api",
-            "arch",
-            b"arch",
-            "basic_block",
-            b"basic_block",
-            "bytes",
-            b"bytes",
-            "characteristic",
-            b"characteristic",
-            "class_",
-            b"class_",
-            "export",
-            b"export",
-            "feature",
-            b"feature",
-            "format",
-            b"format",
-            "function_name",
-            b"function_name",
-            "import_",
-            b"import_",
-            "match",
-            b"match",
-            "mnemonic",
-            b"mnemonic",
-            "namespace",
-            b"namespace",
-            "number",
-            b"number",
-            "offset",
-            b"offset",
-            "operand_number",
-            b"operand_number",
-            "operand_offset",
-            b"operand_offset",
-            "os",
-            b"os",
-            "property_",
-            b"property_",
-            "regex",
-            b"regex",
-            "section",
-            b"section",
-            "string",
-            b"string",
-            "substring",
-            b"substring",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["feature", b"feature"]
-    ) -> (
-        typing_extensions.Literal[
-            "os",
-            "arch",
-            "format",
-            "match",
-            "characteristic",
-            "export",
-            "import_",
-            "section",
-            "function_name",
-            "substring",
-            "regex",
-            "string",
-            "class_",
-            "namespace",
-            "api",
-            "property_",
-            "number",
-            "bytes",
-            "offset",
-            "mnemonic",
-            "operand_number",
-            "operand_offset",
-            "basic_block",
-        ]
-        | None
-    ): ...
+    def HasField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["feature", b"feature"]) -> typing_extensions.Literal["os", "arch", "format", "match", "characteristic", "export", "import_", "section", "function_name", "substring", "regex", "string", "class_", "namespace", "api", "property_", "number", "bytes", "offset", "mnemonic", "operand_number", "operand_offset", "basic_block"] | None: ...
 
 global___FeatureNode = FeatureNode
 
@@ -777,18 +505,9 @@ class FormatFeature(google.protobuf.message.Message):
         format: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "format", b"format", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "format", b"format", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___FormatFeature = FormatFeature
 
@@ -821,9 +540,7 @@ class FunctionLayout(google.protobuf.message.Message):
     @property
     def address(self) -> global___Address: ...
     @property
-    def matched_basic_blocks(
-        self,
-    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BasicBlockLayout]: ...
+    def matched_basic_blocks(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BasicBlockLayout]: ...
     def __init__(
         self,
         *,
@@ -831,10 +548,7 @@ class FunctionLayout(google.protobuf.message.Message):
         matched_basic_blocks: collections.abc.Iterable[global___BasicBlockLayout] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal["address", b"address", "matched_basic_blocks", b"matched_basic_blocks"],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_basic_blocks", b"matched_basic_blocks"]) -> None: ...
 
 global___FunctionLayout = FunctionLayout
 
@@ -855,25 +569,9 @@ class FunctionNameFeature(google.protobuf.message.Message):
         function_name: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description",
-            b"_description",
-            "description",
-            b"description",
-            "function_name",
-            b"function_name",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "function_name", b"function_name", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___FunctionNameFeature = FunctionNameFeature
 
@@ -894,18 +592,9 @@ class ImportFeature(google.protobuf.message.Message):
         import_: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "import_", b"import_", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "import_", b"import_", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___ImportFeature = ImportFeature
 
@@ -915,9 +604,7 @@ class Layout(google.protobuf.message.Message):
 
     FUNCTIONS_FIELD_NUMBER: builtins.int
     @property
-    def functions(
-        self,
-    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
     def __init__(
         self,
         *,
@@ -971,12 +658,7 @@ class MBCSpec(google.protobuf.message.Message):
         method: builtins.str = ...,
         id: builtins.str = ...,
     ) -> None: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "behavior", b"behavior", "id", b"id", "method", b"method", "objective", b"objective", "parts", b"parts"
-        ],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["behavior", b"behavior", "id", b"id", "method", b"method", "objective", b"objective", "parts", b"parts"]) -> None: ...
 
 global___MBCSpec = MBCSpec
 
@@ -1003,21 +685,7 @@ class MaecMetadata(google.protobuf.message.Message):
         malware_category: builtins.str = ...,
         malware_category_ov: builtins.str = ...,
     ) -> None: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "analysis_conclusion",
-            b"analysis_conclusion",
-            "analysis_conclusion_ov",
-            b"analysis_conclusion_ov",
-            "malware_category",
-            b"malware_category",
-            "malware_category_ov",
-            b"malware_category_ov",
-            "malware_family",
-            b"malware_family",
-        ],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis_conclusion", b"analysis_conclusion", "analysis_conclusion_ov", b"analysis_conclusion_ov", "malware_category", b"malware_category", "malware_category_ov", b"malware_category_ov", "malware_family", b"malware_family"]) -> None: ...
 
 global___MaecMetadata = MaecMetadata
 
@@ -1070,31 +738,9 @@ class Match(google.protobuf.message.Message):
         locations: collections.abc.Iterable[global___Address] | None = ...,
         captures: collections.abc.Mapping[builtins.str, global___Addresses] | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["feature", b"feature", "node", b"node", "statement", b"statement"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "captures",
-            b"captures",
-            "children",
-            b"children",
-            "feature",
-            b"feature",
-            "locations",
-            b"locations",
-            "node",
-            b"node",
-            "statement",
-            b"statement",
-            "success",
-            b"success",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["node", b"node"]
-    ) -> typing_extensions.Literal["statement", "feature"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["feature", b"feature", "node", b"node", "statement", b"statement"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["captures", b"captures", "children", b"children", "feature", b"feature", "locations", b"locations", "node", b"node", "statement", b"statement", "success", b"success"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["node", b"node"]) -> typing_extensions.Literal["statement", "feature"] | None: ...
 
 global___Match = Match
 
@@ -1115,18 +761,9 @@ class MatchFeature(google.protobuf.message.Message):
         match: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "match", b"match", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "match", b"match", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___MatchFeature = MatchFeature
 
@@ -1157,24 +794,8 @@ class Metadata(google.protobuf.message.Message):
         sample: global___Sample | None = ...,
         analysis: global___Analysis | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["analysis", b"analysis", "sample", b"sample"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "analysis",
-            b"analysis",
-            "argv",
-            b"argv",
-            "sample",
-            b"sample",
-            "timestamp",
-            b"timestamp",
-            "version",
-            b"version",
-        ],
-    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "sample", b"sample"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "argv", b"argv", "sample", b"sample", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
 
 global___Metadata = Metadata
 
@@ -1195,18 +816,9 @@ class MnemonicFeature(google.protobuf.message.Message):
         mnemonic: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "mnemonic", b"mnemonic", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "mnemonic", b"mnemonic", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___MnemonicFeature = MnemonicFeature
 
@@ -1227,18 +839,9 @@ class NamespaceFeature(google.protobuf.message.Message):
         namespace: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "namespace", b"namespace", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "namespace", b"namespace", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___NamespaceFeature = NamespaceFeature
 
@@ -1261,21 +864,9 @@ class NumberFeature(google.protobuf.message.Message):
         number: global___Number | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "number", b"number"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "number", b"number", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "number", b"number"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "number", b"number", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___NumberFeature = NumberFeature
 
@@ -1296,18 +887,9 @@ class OSFeature(google.protobuf.message.Message):
         os: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "os", b"os", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "os", b"os", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___OSFeature = OSFeature
 
@@ -1330,21 +912,9 @@ class OffsetFeature(google.protobuf.message.Message):
         offset: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "offset", b"offset"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "offset", b"offset", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "offset", b"offset"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "offset", b"offset", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___OffsetFeature = OffsetFeature
 
@@ -1370,30 +940,9 @@ class OperandNumberFeature(google.protobuf.message.Message):
         operand_number: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "operand_number", b"operand_number"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description",
-            b"_description",
-            "description",
-            b"description",
-            "index",
-            b"index",
-            "operand_number",
-            b"operand_number",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "operand_number", b"operand_number"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_number", b"operand_number", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___OperandNumberFeature = OperandNumberFeature
 
@@ -1418,30 +967,9 @@ class OperandOffsetFeature(google.protobuf.message.Message):
         operand_offset: global___Integer | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "operand_offset", b"operand_offset"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description",
-            b"_description",
-            "description",
-            b"description",
-            "index",
-            b"index",
-            "operand_offset",
-            b"operand_offset",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "operand_offset", b"operand_offset"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_offset", b"operand_offset", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___OperandOffsetFeature = OperandOffsetFeature
 
@@ -1466,37 +994,12 @@ class PropertyFeature(google.protobuf.message.Message):
         access: builtins.str | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_access",
-            b"_access",
-            "_description",
-            b"_description",
-            "access",
-            b"access",
-            "description",
-            b"description",
-            "property_",
-            b"property_",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description", "property_", b"property_", "type", b"type"]) -> None: ...
     @typing.overload
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_access", b"_access"]
-    ) -> typing_extensions.Literal["access"] | None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_access", b"_access"]) -> typing_extensions.Literal["access"] | None: ...
     @typing.overload
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___PropertyFeature = PropertyFeature
 
@@ -1525,32 +1028,9 @@ class RangeStatement(google.protobuf.message.Message):
         child: global___FeatureNode | None = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "child", b"child", "description", b"description"
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description",
-            b"_description",
-            "child",
-            b"child",
-            "description",
-            b"description",
-            "max",
-            b"max",
-            "min",
-            b"min",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "child", b"child", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "child", b"child", "description", b"description", "max", b"max", "min", b"min", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___RangeStatement = RangeStatement
 
@@ -1571,18 +1051,9 @@ class RegexFeature(google.protobuf.message.Message):
         regex: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "regex", b"regex", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "regex", b"regex", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___RegexFeature = RegexFeature
 
@@ -1636,9 +1107,7 @@ class RuleMatches(google.protobuf.message.Message):
     def meta(self) -> global___RuleMetadata: ...
     source: builtins.str
     @property
-    def matches(
-        self,
-    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Pair_Address_Match]: ...
+    def matches(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Pair_Address_Match]: ...
     def __init__(
         self,
         *,
@@ -1647,9 +1116,7 @@ class RuleMatches(google.protobuf.message.Message):
         matches: collections.abc.Iterable[global___Pair_Address_Match] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["meta", b"meta"]) -> builtins.bool: ...
-    def ClearField(
-        self, field_name: typing_extensions.Literal["matches", b"matches", "meta", b"meta", "source", b"source"]
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["matches", b"matches", "meta", b"meta", "source", b"source"]) -> None: ...
 
 global___RuleMatches = RuleMatches
 
@@ -1704,35 +1171,7 @@ class RuleMetadata(google.protobuf.message.Message):
         is_subscope_rule: builtins.bool = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["maec", b"maec"]) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "attack",
-            b"attack",
-            "authors",
-            b"authors",
-            "description",
-            b"description",
-            "examples",
-            b"examples",
-            "is_subscope_rule",
-            b"is_subscope_rule",
-            "lib",
-            b"lib",
-            "maec",
-            b"maec",
-            "mbc",
-            b"mbc",
-            "name",
-            b"name",
-            "namespace",
-            b"namespace",
-            "references",
-            b"references",
-            "scope",
-            b"scope",
-        ],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["attack", b"attack", "authors", b"authors", "description", b"description", "examples", b"examples", "is_subscope_rule", b"is_subscope_rule", "lib", b"lib", "maec", b"maec", "mbc", b"mbc", "name", b"name", "namespace", b"namespace", "references", b"references", "scope", b"scope"]) -> None: ...
 
 global___RuleMetadata = RuleMetadata
 
@@ -1756,10 +1195,7 @@ class Sample(google.protobuf.message.Message):
         sha256: builtins.str = ...,
         path: builtins.str = ...,
     ) -> None: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal["md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"],
-    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"]) -> None: ...
 
 global___Sample = Sample
 
@@ -1780,18 +1216,9 @@ class SectionFeature(google.protobuf.message.Message):
         section: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "section", b"section", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "section", b"section", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___SectionFeature = SectionFeature
 
@@ -1812,18 +1239,9 @@ class SomeStatement(google.protobuf.message.Message):
         count: builtins.int = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "count", b"count", "description", b"description", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "count", b"count", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___SomeStatement = SomeStatement
 
@@ -1854,41 +1272,9 @@ class StatementNode(google.protobuf.message.Message):
         subscope: global___SubscopeStatement | None = ...,
         compound: global___CompoundStatement | None = ...,
     ) -> None: ...
-    def HasField(
-        self,
-        field_name: typing_extensions.Literal[
-            "compound",
-            b"compound",
-            "range",
-            b"range",
-            "some",
-            b"some",
-            "statement",
-            b"statement",
-            "subscope",
-            b"subscope",
-        ],
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "compound",
-            b"compound",
-            "range",
-            b"range",
-            "some",
-            b"some",
-            "statement",
-            b"statement",
-            "subscope",
-            b"subscope",
-            "type",
-            b"type",
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["statement", b"statement"]
-    ) -> typing_extensions.Literal["range", "some", "subscope", "compound"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["statement", b"statement"]) -> typing_extensions.Literal["range", "some", "subscope", "compound"] | None: ...
 
 global___StatementNode = StatementNode
 
@@ -1909,18 +1295,9 @@ class StringFeature(google.protobuf.message.Message):
         string: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "string", b"string", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "string", b"string", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___StringFeature = StringFeature
 
@@ -1941,18 +1318,9 @@ class SubscopeStatement(google.protobuf.message.Message):
         scope: global___Scope.ValueType = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "scope", b"scope", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "scope", b"scope", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___SubscopeStatement = SubscopeStatement
 
@@ -1973,18 +1341,9 @@ class SubstringFeature(google.protobuf.message.Message):
         substring: builtins.str = ...,
         description: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self,
-        field_name: typing_extensions.Literal[
-            "_description", b"_description", "description", b"description", "substring", b"substring", "type", b"type"
-        ],
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["_description", b"_description"]
-    ) -> typing_extensions.Literal["description"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "substring", b"substring", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___SubstringFeature = SubstringFeature
 
@@ -2020,9 +1379,7 @@ class Pair_Address_Match(google.protobuf.message.Message):
         address: global___Address | None = ...,
         match: global___Match | None = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["address", b"address", "match", b"match"]
-    ) -> builtins.bool: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address", "match", b"match"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "match", b"match"]) -> None: ...
 
 global___Pair_Address_Match = Pair_Address_Match
@@ -2062,13 +1419,9 @@ class Integer(google.protobuf.message.Message):
         u: builtins.int = ...,
         i: builtins.int = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["i", b"i", "u", b"u", "value", b"value"]
-    ) -> builtins.bool: ...
+    def HasField(self, field_name: typing_extensions.Literal["i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing_extensions.Literal["i", b"i", "u", b"u", "value", b"value"]) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["value", b"value"]
-    ) -> typing_extensions.Literal["u", "i"] | None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["u", "i"] | None: ...
 
 global___Integer = Integer
 
@@ -2089,14 +1442,8 @@ class Number(google.protobuf.message.Message):
         i: builtins.int = ...,
         f: builtins.float = ...,
     ) -> None: ...
-    def HasField(
-        self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]
-    ) -> builtins.bool: ...
-    def ClearField(
-        self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]
-    ) -> None: ...
-    def WhichOneof(
-        self, oneof_group: typing_extensions.Literal["value", b"value"]
-    ) -> typing_extensions.Literal["u", "i", "f"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["u", "i", "f"] | None: ...
 
 global___Number = Number
