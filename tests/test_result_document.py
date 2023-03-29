@@ -233,3 +233,8 @@ def test_basic_block_node_from_capa():
 def test_json_to_rdoc():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
     assert isinstance(rdoc.ResultDocument.parse_file(path),rdoc.ResultDocument)
+
+def test_rdoc_to_capa():
+    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    assert len(rdoc.ResultDocument.parse_file(path).to_capa()) ==2
+    assert isinstance(rdoc.ResultDocument.parse_file(path).to_capa(),tuple)
