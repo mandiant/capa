@@ -580,14 +580,7 @@ class ResultDocument(BaseModel):
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
-
-    @classmethod
-    def parse_raw(cls, path: str):
-        with open(path, "rb") as f:
-            buf= f.read()
-        data = json.loads(buf)
-        return ResultDocument(**data)    
-        
+  
     def to_capa(self, rules: RuleSet) -> Tuple[Dict, Dict]:
         meta = self.meta.to_capa()
         capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] ={}

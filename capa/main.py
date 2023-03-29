@@ -1125,7 +1125,7 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
     if format_ == FORMAT_RESULT:
-        result_doc = capa.render.result_document.ResultDocument.parse_raw(args.sample)
+        result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
         meta, capabilities = result_doc.to_capa(rules)
     elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
