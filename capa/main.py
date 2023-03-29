@@ -1157,6 +1157,7 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
+    if format_ != FORMAT_RESULT:
         meta = collect_metadata(argv, args.sample, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
