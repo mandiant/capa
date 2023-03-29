@@ -216,6 +216,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "kernel32-64.dll_")
     elif name == "pma01-01":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll_")
+    elif name == "pma01-01-rd":
+        return os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json")
     elif name == "pma12-04":
         return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
     elif name == "pma16-01":

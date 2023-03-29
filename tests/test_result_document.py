@@ -230,9 +230,6 @@ def test_basic_block_node_from_capa():
     assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.BasicBlockFeature)
 
-def test_json_to_rdoc (capsys, tmpdir):
-    path = fixtures.get_data_path_by_name("pma01-01")
-    assert capa.main.main([path, "-j"]) == 0
-    temp_file = tmpdir.join("capa.json")
-    temp_file.write(capsys.readouterr().out)
-    assert isinstance(rdoc.ResultDocument.parse_raw(temp_file),rdoc.ResultDocument)
+def test_json_to_rdoc():
+    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    assert isinstance(rdoc.ResultDocument.parse_file(path),rdoc.ResultDocument)
