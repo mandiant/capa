@@ -89,7 +89,7 @@ setuptools.setup(
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
-            "types-protobuf==4.21.0.5",
+            "types-protobuf==4.22.0.0",
         ],
         "build": [
             "pyinstaller==5.9.0",
