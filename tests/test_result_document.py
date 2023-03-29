@@ -6,6 +6,11 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+from typing import Dict, Tuple
+import textwrap
+import fixtures
+from fixtures import *
+
 import capa
 import capa.engine as ceng
 import capa.render.result_document as rdoc
@@ -227,3 +232,10 @@ def test_basic_block_node_from_capa():
     node = rdoc.node_from_capa(capa.features.basicblock.BasicBlock(""))
     assert isinstance(node, rdoc.FeatureNode)
     assert isinstance(node.feature, frzf.BasicBlockFeature)
+
+def test_json_to_rdoc (capsys, tmpdir):
+    path = fixtures.get_data_path_by_name("pma01-01")
+    assert capa.main.main([path, "-j"]) == 0
+    temp_file = tmpdir.join("capa.json")
+    temp_file.write(capsys.readouterr().out)
+    assert isinstance(rdoc.ResultDocument.parse_raw(temp_file),rdoc.ResultDocument)
