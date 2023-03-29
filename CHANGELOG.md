@@ -1,6 +1,7 @@
 # Change Log
 
 ## master (unreleased)
+- removed '.dynsym' as the library name for ELF imports. get_file_imports now only returns the API name.
 
 ### New Features
 - add protobuf format for result documents #1219 @williballenthin @mr-tz 
