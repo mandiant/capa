@@ -581,18 +581,19 @@ class ResultDocument(BaseModel):
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
   
-    def to_capa(self, rules: RuleSet) -> Tuple[Dict, Dict]:
+    def to_capa(self) -> Tuple[Dict, Dict]:
         meta = self.meta.to_capa()
-        capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] ={}
+        capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] = {}
 
         for rule_name, rule_match in self.rules.items():
-            
+            # Parse the YAML source into a Rule instance
+            rule = capa.rules.Rule.from_yaml(rule_match.source)
+
             # Extract the capabilities from the RuleMatches object
             for addr, match in rule_match.matches:
-
                 if isinstance(match.node, StatementNode):
                     if isinstance(match.node.statement, CompoundStatement):
-                        statement = rules[rule_name].statement
+                        statement = rule.statement
                     else:
                         statement = statement_from_capa(match.node.statement)
                 elif isinstance(match.node, FeatureNode):
@@ -601,15 +602,15 @@ class ResultDocument(BaseModel):
                         statement.matches = match.captures
                 else:
                     raise ValueError("Invalid node type")
-        
+
                 result = capa.features.common.Result(
-                statement=statement,
-                success=match.success,
-                locations=[frz.Address.to_capa(loc) for loc in match.locations],
-                children=[])
+                    statement=statement,
+                    success=match.success,
+                    locations=[frz.Address.to_capa(loc) for loc in match.locations],
+                    children=[])
 
                 if rule_name not in capabilities:
-                    capabilities[rule_name]=[]
-                capabilities[rule_name].append((frz.Address.from_capa(addr),result))
-                
+                    capabilities[rule_name] = []
+                capabilities[rule_name].append((frz.Address.from_capa(addr), result))
+
         return meta, capabilities
