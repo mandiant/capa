@@ -69,6 +69,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -1180,8 +1181,10 @@ def main(argv=None):
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
-
-    if format_ == FORMAT_FREEZE:
+    if format_ == FORMAT_RESULT:
+        result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
+        meta, capabilities = result_doc.to_capa()
+    elif format_ == FORMAT_FREEZE:
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
@@ -1217,17 +1220,18 @@ def main(argv=None):
             log_unsupported_os_error()
             return E_INVALID_FILE_OS
 
-    meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+    if format_ != FORMAT_RESULT:
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
-    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-    meta["analysis"].update(counts)
-    meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        meta["analysis"].update(counts)
+        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
 
-    if has_file_limitation(rules, capabilities):
-        # bail if capa encountered file limitation e.g. a packed binary
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+        if has_file_limitation(rules, capabilities):
+            # bail if capa encountered file limitation e.g. a packed binary
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
