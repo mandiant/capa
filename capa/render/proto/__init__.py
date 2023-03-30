@@ -645,6 +645,7 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         return frzf.OperandOffsetFeature(
             index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None
         )  # type: ignore
+        # Mypy is unable to recognize `operand_offset` as an argument due to aliasing
     elif type_ == "basic_block":
         ff = f.basic_block
         return frzf.BasicBlockFeature(description=ff.description or None)
