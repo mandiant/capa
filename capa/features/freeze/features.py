@@ -101,59 +101,79 @@ class FeatureModel(BaseModel):
 
 def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     if isinstance(f, capa.features.common.OS):
+        assert isinstance(f.value, str)
         return OSFeature(os=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.Arch):
+        assert isinstance(f.value, str)
         return ArchFeature(arch=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.Format):
+        assert isinstance(f.value, str)
         return FormatFeature(format=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.MatchedRule):
+        assert isinstance(f.value, str)
         return MatchFeature(match=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.Characteristic):
+        assert isinstance(f.value, str)
         return CharacteristicFeature(characteristic=f.value, description=f.description)
 
     elif isinstance(f, capa.features.file.Export):
+        assert isinstance(f.value, str)
         return ExportFeature(export=f.value, description=f.description)
 
     elif isinstance(f, capa.features.file.Import):
-        return ImportFeature(import_=f.value, description=f.description)
+        assert isinstance(f.value, str)
+        return ImportFeature(import_=f.value, description=f.description)  # type: ignore
+        # Mypy is unable to recognise `import_` as a argument due to alias
 
     elif isinstance(f, capa.features.file.Section):
+        assert isinstance(f.value, str)
         return SectionFeature(section=f.value, description=f.description)
 
     elif isinstance(f, capa.features.file.FunctionName):
-        return FunctionNameFeature(function_name=f.value, description=f.description)
+        assert isinstance(f.value, str)
+        return FunctionNameFeature(function_name=f.value, description=f.description)  # type: ignore
+        # Mypy is unable to recognise `function_name` as a argument due to alias
 
     # must come before check for String due to inheritance
     elif isinstance(f, capa.features.common.Substring):
+        assert isinstance(f.value, str)
         return SubstringFeature(substring=f.value, description=f.description)
 
     # must come before check for String due to inheritance
     elif isinstance(f, capa.features.common.Regex):
+        assert isinstance(f.value, str)
         return RegexFeature(regex=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.String):
+        assert isinstance(f.value, str)
         return StringFeature(string=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.Class):
-        return ClassFeature(class_=f.value, description=f.description)
+        assert isinstance(f.value, str)
+        return ClassFeature(class_=f.value, description=f.description)  # type: ignore
+        # Mypy is unable to recognise `class_` as a argument due to alias
 
     elif isinstance(f, capa.features.common.Namespace):
+        assert isinstance(f.value, str)
         return NamespaceFeature(namespace=f.value, description=f.description)
 
     elif isinstance(f, capa.features.basicblock.BasicBlock):
         return BasicBlockFeature(description=f.description)
 
     elif isinstance(f, capa.features.insn.API):
+        assert isinstance(f.value, str)
         return APIFeature(api=f.value, description=f.description)
 
     elif isinstance(f, capa.features.insn.Property):
+        assert isinstance(f.value, str)
         return PropertyFeature(property=f.value, access=f.access, description=f.description)
 
     elif isinstance(f, capa.features.insn.Number):
+        assert isinstance(f.value, (int, float))
         return NumberFeature(number=f.value, description=f.description)
 
     elif isinstance(f, capa.features.common.Bytes):
@@ -162,16 +182,22 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
         return BytesFeature(bytes=binascii.hexlify(buf).decode("ascii"), description=f.description)
 
     elif isinstance(f, capa.features.insn.Offset):
+        assert isinstance(f.value, int)
         return OffsetFeature(offset=f.value, description=f.description)
 
     elif isinstance(f, capa.features.insn.Mnemonic):
+        assert isinstance(f.value, str)
         return MnemonicFeature(mnemonic=f.value, description=f.description)
 
     elif isinstance(f, capa.features.insn.OperandNumber):
-        return OperandNumberFeature(index=f.index, operand_number=f.value, description=f.description)
+        assert isinstance(f.value, int)
+        return OperandNumberFeature(index=f.index, operand_number=f.value, description=f.description)  # type: ignore
+        # Mypy is unable to recognise `operand_number` as a argument due to alias
 
     elif isinstance(f, capa.features.insn.OperandOffset):
-        return OperandOffsetFeature(index=f.index, operand_offset=f.value, description=f.description)
+        assert isinstance(f.value, int)
+        return OperandOffsetFeature(index=f.index, operand_offset=f.value, description=f.description)  # type: ignore
+        # Mypy is unable to recognise `operand_offset` as a argument due to alias
 
     else:
         raise NotImplementedError(f"feature_from_capa({type(f)}) not implemented")

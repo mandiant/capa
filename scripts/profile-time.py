@@ -71,7 +71,7 @@ def main(argv=None):
         label += " (dirty)"
 
     parser = argparse.ArgumentParser(description="Profile capa performance")
-    capa.main.install_common_args(parser, wanted={"format", "sample", "signatures", "rules"})
+    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "rules"})
 
     parser.add_argument("--number", type=int, default=3, help="batch size of profile collection")
     parser.add_argument("--repeat", type=int, default=30, help="batch count of profile collection")
@@ -99,12 +99,14 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    if (args.format == "freeze") or (args.format == "auto" and capa.features.freeze.is_freeze(taste)):
+    if (args.format == "freeze") or (
+        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
+    ):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
         extractor = capa.main.get_extractor(
-            args.sample, args.format, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
+            args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
         )
 
     with tqdm.tqdm(total=args.number * args.repeat) as pbar:

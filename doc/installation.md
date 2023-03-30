@@ -126,6 +126,12 @@ Or install capa with build dependencies:
 
 `$ pip install -e /local/path/to/src[build]`
 
+#### Generate rule cache
+
+Generate cache for all rules in the `rules` folder and save the output in the `cache` folder.
+
+`$ python scripts/cache-ruleset.py rules/ cache/`
+
 #### Run Pyinstaller
 `$ pyinstaller .github/pyinstaller/pyinstaller.spec`
 

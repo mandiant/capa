@@ -44,7 +44,7 @@ def is_runtime_ida():
         return True
 
 
-def assert_never(value: NoReturn) -> NoReturn:
+def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 

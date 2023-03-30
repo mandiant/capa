@@ -58,8 +58,12 @@ from capa.helpers import (
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
+    OS_AUTO,
+    OS_LINUX,
+    OS_MACOS,
     FORMAT_PE,
     FORMAT_ELF,
+    OS_WINDOWS,
     FORMAT_AUTO,
     FORMAT_SC32,
     FORMAT_SC64,
@@ -74,6 +78,7 @@ RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 BACKEND_VIV = "vivisect"
 BACKEND_DOTNET = "dotnet"
+BACKEND_BINJA = "binja"
 
 E_MISSING_RULES = 10
 E_MISSING_FILE = 11
@@ -491,7 +496,13 @@ def get_workspace(path, format_, sigpaths):
 
 # TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
-    path: str, format_: str, backend: str, sigpaths: List[str], should_save_workspace=False, disable_progress=False
+    path: str,
+    format_: str,
+    os_: str,
+    backend: str,
+    sigpaths: List[str],
+    should_save_workspace=False,
+    disable_progress=False,
 ) -> FeatureExtractor:
     """
     raises:
@@ -506,13 +517,40 @@ def get_extractor(
         if not is_supported_arch(path):
             raise UnsupportedArchError()
 
-        if not is_supported_os(path):
+        if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+
+    elif backend == BACKEND_BINJA:
+        from capa.features.extractors.binja.find_binja_api import find_binja_path
+
+        # When we are running as a standalone executable, we cannot directly import binaryninja
+        # We need to fist find the binja API installation path and add it into sys.path
+        if is_running_standalone():
+            bn_api = find_binja_path()
+            if os.path.exists(bn_api):
+                sys.path.append(bn_api)
+
+        try:
+            from binaryninja import BinaryView, BinaryViewType
+        except ImportError:
+            raise RuntimeError(
+                "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
+                "https://docs.binary.ninja/dev/batch.html#install-the-api)."
+            )
+
+        import capa.features.extractors.binja.extractor
+
+        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+            bv: BinaryView = BinaryViewType.get_view_of_file(path)
+            if bv is None:
+                raise RuntimeError(f"Binary Ninja cannot open file {path}")
+
+        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     # default to use vivisect backend
     else:
@@ -531,7 +569,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
@@ -690,6 +728,8 @@ def get_signatures(sigs_path):
 def collect_metadata(
     argv: List[str],
     sample_path: str,
+    format_: str,
+    os_: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
 ):
@@ -707,9 +747,9 @@ def collect_metadata(
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
 
-    format_ = get_format(sample_path)
+    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
-    os_ = get_os(sample_path)
+    os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
     return {
         "timestamp": datetime.datetime.now().isoformat(),
@@ -791,6 +831,7 @@ def install_common_args(parser, wanted=None):
       wanted (Set[str]): collection of arguments to opt-into, including:
         - "sample": required positional argument to input file.
         - "format": flag to override file format.
+        - "os": flag to override file operating system.
         - "backend": flag to override analysis backend.
         - "rules": flag to override path to capa rules.
         - "tag": flag to override/specify which rules to match.
@@ -824,6 +865,7 @@ def install_common_args(parser, wanted=None):
     #
     #   - sample
     #   - format
+    #   - os
     #   - rules
     #   - tag
     #
@@ -860,8 +902,23 @@ def install_common_args(parser, wanted=None):
             "--backend",
             type=str,
             help="select the backend to use",
-            choices=(BACKEND_VIV,),
+            choices=(BACKEND_VIV, BACKEND_BINJA),
             default=BACKEND_VIV,
+        )
+
+    if "os" in wanted:
+        oses = [
+            (OS_AUTO, "detect OS automatically - default"),
+            (OS_LINUX,),
+            (OS_MACOS,),
+            (OS_WINDOWS,),
+        ]
+        os_help = ", ".join([f"{o[0]} ({o[1]})" if len(o) == 2 else o[0] for o in oses])
+        parser.add_argument(
+            "--os",
+            choices=[o[0] for o in oses],
+            default=OS_AUTO,
+            help=f"select sample OS: {os_help}",
         )
 
     if "rules" in wanted:
@@ -1027,7 +1084,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"sample", "format", "backend", "signatures", "rules", "tag"})
+    install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
     ret = handle_common_args(args)
@@ -1145,7 +1202,13 @@ def main(argv=None):
 
         try:
             extractor = get_extractor(
-                args.sample, format_, args.backend, sig_paths, should_save_workspace, disable_progress=args.quiet
+                args.sample,
+                format_,
+                args.os,
+                args.backend,
+                sig_paths,
+                should_save_workspace,
+                disable_progress=args.quiet,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()
@@ -1158,7 +1221,7 @@ def main(argv=None):
             return E_INVALID_FILE_OS
 
     if format_ != FORMAT_RESULT:
-        meta = collect_metadata(argv, args.sample, args.rules, extractor)
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
         meta["analysis"].update(counts)

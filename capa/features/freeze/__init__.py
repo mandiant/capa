@@ -268,7 +268,8 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                     basic_block=bbaddr,
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
-                )
+                )  # type: ignore
+                # Mypy is unable to recognise `basic_block` as a argument due to alias
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
 
@@ -287,38 +288,41 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
                 instructions.append(
                     InstructionFeatures(
                         address=iaddr,
-                        features=ifeatures,
+                        features=tuple(ifeatures),
                     )
                 )
 
             basic_blocks.append(
                 BasicBlockFeatures(
                     address=bbaddr,
-                    features=bbfeatures,
-                    instructions=instructions,
+                    features=tuple(bbfeatures),
+                    instructions=tuple(instructions),
                 )
             )
 
         function_features.append(
             FunctionFeatures(
                 address=faddr,
-                features=ffeatures,
+                features=tuple(ffeatures),
                 basic_blocks=basic_blocks,
-            )
+            )  # type: ignore
+            # Mypy is unable to recognise `basic_blocks` as a argument due to alias
         )
 
     features = Features(
         global_=global_features,
-        file=file_features,
-        functions=function_features,
-    )
+        file=tuple(file_features),
+        functions=tuple(function_features),
+    )  # type: ignore
+    # Mypy is unable to recognise `global_` as a argument due to alias
 
     freeze = Freeze(
         version=2,
         base_address=Address.from_capa(extractor.get_base_address()),
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
-    )
+    )  # type: ignore
+    # Mypy is unable to recognise `base_address` as a argument due to alias
 
     return freeze.json()
 
@@ -385,14 +389,14 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="save capa features to a file")
-    capa.main.install_common_args(parser, {"sample", "format", "backend", "signatures"})
+    capa.main.install_common_args(parser, {"sample", "format", "backend", "os", "signatures"})
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
     sigpaths = capa.main.get_signatures(args.signatures)
 
-    extractor = capa.main.get_extractor(args.sample, args.format, args.backend, sigpaths, False)
+    extractor = capa.main.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
 
     with open(args.output, "wb") as f:
         f.write(dump(extractor))

@@ -3,11 +3,15 @@
 ## master (unreleased)
 
 ### New Features
+- add protobuf format for result documents #1219 @williballenthin @mr-tz 
+- extractor: add Binary Ninja feature extractor @xusheng6
+- new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
+- Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
 - add new format to parse output json back to capa #1396 @ooprathamm
 
 ### Breaking Changes
 
-### New Rules (20)
+### New Rules (24)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -29,6 +33,10 @@
 - nursery/hash-data-using-ripemd256 raymond.leong@mandiant.com
 - nursery/hash-data-using-ripemd320 raymond.leong@mandiant.com
 - nursery/set-web-proxy-in-dotnet michael.hunhoff@mandiant.com
+- nursery/check-for-windows-sandbox-via-subdirectory echernofsky@google.com
+- nursery/enumerate-pe-sections-in-dotnet @mr-tz
+- nursery/destroy-software-breakpoint-capability echernofsky@google.com
+- nursery/send-data-to-internet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
