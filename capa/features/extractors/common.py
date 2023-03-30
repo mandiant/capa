@@ -68,13 +68,13 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
 def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(MATCH_PE):
         yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
+    
+    elif buf.startswith(MATCH_RESULT):
+        yield Arch(ARCH_ANY), NO_ADDRESS
 
     elif buf.startswith(MATCH_ELF):
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
-
-    elif buf.startswith(MATCH_RESULT):
-        arch = ARCH_ANY
 
         if arch not in capa.features.common.VALID_ARCH:
             logger.debug("unsupported arch: %s", arch)
