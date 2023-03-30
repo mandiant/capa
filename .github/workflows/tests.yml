@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       run: pip install -e .[dev]
     - name: Lint with ruff
-      run: ruff check .
+      run: ruff --config .github/ruff.toml --exclude "*_pb2.pyi" check .
     - name: Lint with isort
       run: isort --profile black --length-sort --line-width 120 --skip-glob "*_pb2.py" -c .
     - name: Lint with black

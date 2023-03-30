@@ -1,0 +1,5 @@
+select = ["E"]
+ignore = []
+
+# Same as pycodestyle.
+line-length = 180
