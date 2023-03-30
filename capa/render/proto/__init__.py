@@ -614,6 +614,7 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
     elif type_ == "class_":
         ff = f.class_
         return frzf.ClassFeature(class_=ff.class_, description=ff.description or None)  # type: ignore
+        # Mypy is unable to recognize `class_` as an argument due to aliasing
     elif type_ == "namespace":
         ff = f.namespace
         return frzf.NamespaceFeature(namespace=ff.namespace, description=ff.description or None)
