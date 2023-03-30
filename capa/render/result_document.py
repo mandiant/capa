@@ -5,8 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import datetime
 import json
+import datetime
 from typing import Any, Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
@@ -152,18 +152,14 @@ class Metadata(FrozenModel):
                 },
                 "feature_counts": {
                     "file": self.analysis.feature_counts.file,
-                    "functions": {
-                        fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions
-                    },
+                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
                 },
-                "library_functions": {
-                    lf.address.to_capa(): lf.name for lf in self.analysis.library_functions
-                },
+                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
             },
         }
 
         return capa_meta
-    
+
 
 class CompoundStatementType:
     AND = "and"
@@ -580,7 +576,7 @@ class ResultDocument(BaseModel):
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
-  
+
     def to_capa(self) -> Tuple[Dict, Dict]:
         meta = self.meta.to_capa()
         capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] = {}
@@ -607,7 +603,8 @@ class ResultDocument(BaseModel):
                     statement=statement,
                     success=match.success,
                     locations=[frz.Address.to_capa(loc) for loc in match.locations],
-                    children=[])
+                    children=[],
+                )
 
                 if rule_name not in capabilities:
                     capabilities[rule_name] = []

@@ -10,16 +10,30 @@ import capa.features
 import capa.features.extractors.elf
 import capa.features.extractors.pefile
 import capa.features.extractors.strings
-from capa.features.common import OS, FORMAT_PE, FORMAT_ELF, OS_ANY, OS_WINDOWS, FORMAT_FREEZE, FORMAT_RESULT, ARCH_ANY, Arch, Format, String, Feature
+from capa.features.common import (
+    OS,
+    OS_ANY,
+    ARCH_ANY,
+    FORMAT_PE,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    FORMAT_FREEZE,
+    FORMAT_RESULT,
+    Arch,
+    Format,
+    String,
+    Feature,
+)
 from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
 logger = logging.getLogger(__name__)
 
-#match strings for formats
+# match strings for formats
 MATCH_PE = b"MZ"
 MATCH_ELF = b"\x7fELF"
-MATCH_RESULT = b"{\"meta\":"
+MATCH_RESULT = b'{"meta":'
+
 
 def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
     """
@@ -57,7 +71,7 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
     elif buf.startswith(MATCH_ELF):
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
-    
+
     elif buf.startswith(MATCH_RESULT):
         arch = ARCH_ANY
 
