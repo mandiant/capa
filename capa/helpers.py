@@ -56,8 +56,8 @@ def get_format_from_extension(sample: str) -> str:
     return FORMAT_UNKNOWN
 
 
-def get_auto_format(path: str) -> str:
-    format_ = get_format(path)
+def get_auto_format(path: str, len: int) -> str:
+    format_ = get_format(path, len)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
     if format_ == FORMAT_UNKNOWN:
@@ -65,7 +65,7 @@ def get_auto_format(path: str) -> str:
     return format_
 
 
-def get_format(sample: str) -> str:
+def get_format(sample: str, len: int) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
     from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
@@ -75,7 +75,7 @@ def get_format(sample: str) -> str:
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):
-            dnfile_extractor = DnfileFeatureExtractor(sample)
+            dnfile_extractor = DnfileFeatureExtractor(sample, len)
             if dnfile_extractor.is_dotnet_file():
                 feature = Format(FORMAT_DOTNET)
 

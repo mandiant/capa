@@ -92,7 +92,7 @@ def xfail(condition, reason=None):
 def get_viv_extractor(path):
     import capa.main
     import capa.features.extractors.viv.extractor
-
+    from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
     sigpaths = [
         os.path.join(CD, "data", "sigs", "test_aulldiv.pat"),
         os.path.join(CD, "data", "sigs", "test_aullrem.pat.gz"),
@@ -108,7 +108,7 @@ def get_viv_extractor(path):
     else:
         vw = capa.main.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
-    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
+    extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO, DEFAULT_STRING_LENGTH)
     fixup_viv(path, extractor)
     return extractor
 

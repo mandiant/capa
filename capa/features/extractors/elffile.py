@@ -16,6 +16,7 @@ from capa.features.file import Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +50,8 @@ def extract_file_section_names(elf, **kwargs):
             yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
-def extract_file_strings(buf, **kwargs):
-    yield from capa.features.extractors.common.extract_file_strings(buf)
+def extract_file_strings(buf, len, **kwargs):
+    yield from capa.features.extractors.common.extract_file_strings(buf, len)
 
 
 def extract_file_os(elf, buf, **kwargs):
@@ -78,9 +79,9 @@ def extract_file_arch(elf, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(elf: ELFFile, buf: bytes, len: int) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(elf=elf, buf=buf):  # type: ignore
+        for feature, addr in file_handler(elf=elf, buf=buf, len=len):  # type: ignore
             yield feature, addr
 
 
@@ -107,9 +108,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: str, len):
         super().__init__()
         self.path = path
+        self.len = len
         with open(self.path, "rb") as f:
             self.elf = ELFFile(io.BytesIO(f.read()))
 
@@ -130,7 +132,7 @@ class ElfFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, addr in extract_file_features(self.elf, buf):
+        for feature, addr in extract_file_features(self.elf, buf, self.len):
             yield feature, addr
 
     def get_functions(self):

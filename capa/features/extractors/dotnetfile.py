@@ -33,6 +33,7 @@ from capa.features.extractors.dnfile.helpers import (
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
 )
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -117,8 +118,8 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_strings(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__)
+def extract_file_strings(pe: dnfile.dnPE, len: int, **kwargs) -> Iterator[Tuple[String, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__,len=len, **kwargs)
 
 
 def extract_file_mixed_mode_characteristic_features(
@@ -128,9 +129,9 @@ def extract_file_mixed_mode_characteristic_features(
         yield Characteristic("mixed mode"), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_features(pe: dnfile.dnPE, len: int, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(pe=pe):  # type: ignore
+        for feature, addr in file_handler(pe=pe, len=len, **kwargs):  # type: ignore
             yield feature, addr
 
 
@@ -158,10 +159,11 @@ GLOBAL_HANDLERS = (
 
 
 class DotnetFileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: str, len: int=DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        self.len: int = len
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -179,7 +181,7 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         yield from extract_global_features(self.pe)
 
     def extract_file_features(self):
-        yield from extract_file_features(self.pe)
+        yield from extract_file_features(self.pe, self.len)
 
     def is_dotnet_file(self) -> bool:
         return bool(self.pe.net)
