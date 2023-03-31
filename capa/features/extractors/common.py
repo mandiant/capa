@@ -36,14 +36,14 @@ MATCH_ELF = b"\x7fELF"
 MATCH_RESULT = b'{"meta":'
 
 
-def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
+def extract_file_strings(buf, len, **kwargs) -> Iterator[Tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
-    for s in capa.features.extractors.strings.extract_ascii_strings(buf):
+    for s in capa.features.extractors.strings.extract_ascii_strings(buf, n=len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
-    for s in capa.features.extractors.strings.extract_unicode_strings(buf):
+    for s in capa.features.extractors.strings.extract_unicode_strings(buf, n=len):
         yield String(s.s), FileOffsetAddress(s.offset)
 
 

@@ -11,11 +11,12 @@
 import re
 from collections import namedtuple
 
+DEFAULT_STRING_LENGTH = 4
 ASCII_BYTE = r" !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t".encode(
     "ascii"
 )
-ASCII_RE_4 = re.compile(b"([%s]{%d,})" % (ASCII_BYTE, 4))
-UNICODE_RE_4 = re.compile(b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, 4))
+ASCII_RE_4 = re.compile(b"([%s]{%d,})" % (ASCII_BYTE, DEFAULT_STRING_LENGTH))
+UNICODE_RE_4 = re.compile(b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, DEFAULT_STRING_LENGTH))
 REPEATS = [b"A", b"\x00", b"\xfe", b"\xff"]
 SLICE_SIZE = 4096
 
@@ -31,7 +32,7 @@ def buf_filled_with(buf, character):
     return True
 
 
-def extract_ascii_strings(buf, n=4):
+def extract_ascii_strings(buf, n=DEFAULT_STRING_LENGTH):
     """
     Extract ASCII strings from the given binary data.
 
@@ -49,7 +50,7 @@ def extract_ascii_strings(buf, n=4):
         return
 
     r = None
-    if n == 4:
+    if n == DEFAULT_STRING_LENGTH:
         r = ASCII_RE_4
     else:
         reg = b"([%s]{%d,})" % (ASCII_BYTE, n)
@@ -58,7 +59,7 @@ def extract_ascii_strings(buf, n=4):
         yield String(match.group().decode("ascii"), match.start())
 
 
-def extract_unicode_strings(buf, n=4):
+def extract_unicode_strings(buf, n=DEFAULT_STRING_LENGTH):
     """
     Extract naive UTF-16 strings from the given binary data.
 
@@ -75,7 +76,7 @@ def extract_unicode_strings(buf, n=4):
     if (buf[0] in REPEATS) and buf_filled_with(buf, buf[0]):
         return
 
-    if n == 4:
+    if n == DEFAULT_STRING_LENGTH:
         r = UNICODE_RE_4
     else:
         reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, n)

@@ -20,21 +20,22 @@ import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
-
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
-    def __init__(self, vw, path, os):
+    def __init__(self, vw, path, os, len: int=DEFAULT_STRING_LENGTH):
         super().__init__()
         self.vw = vw
         self.path = path
+        self.len = len
         with open(self.path, "rb") as f:
             self.buf = f.read()
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(self.buf))
+        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(self.buf, self.len))
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf, os))
         self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
@@ -46,11 +47,11 @@ class VivisectFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.viv.file.extract_features(self.vw, self.buf)
+        yield from capa.features.extractors.viv.file.extract_features(self.vw, self.buf, self.len)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for va in sorted(self.vw.getFunctions()):
-            yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va))
+            yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"len": self.len})
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.viv.function.extract_features(fh)

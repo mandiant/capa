@@ -69,7 +69,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[Tuple[int, int]]:
             yield off, i
 
 
-def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_embedded_pe(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features
 
     IDA must load resource sections for this to be complete
@@ -81,13 +81,13 @@ def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
-def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_export_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
     for _, _, ea, name in idautils.Entries():
         yield Export(name), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_import_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     """extract function imports
 
     1. imports by ordinal:
@@ -123,7 +123,7 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
         yield Import(info[1]), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_section_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     """extract section names
 
     IDA must load resource sections for this to be complete
@@ -134,7 +134,7 @@ def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
         yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
 
 
-def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_strings(len: int) -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings
 
     IDA must load resource sections for this to be complete
@@ -145,14 +145,14 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
 
         # differing to common string extractor factor in segment offset here
-        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff):
+        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff, n=len):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
-        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff):
+        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff, n=len):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
-def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_function_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     """
     extract the names of statically-linked library functions.
     """
@@ -169,7 +169,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
                 yield FunctionName(name[1:]), addr
 
 
-def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
+def extract_file_format(**kwargs) -> Iterator[Tuple[Feature, Address]]:
     file_info = idaapi.get_inf_structure()
 
     if file_info.filetype in (idaapi.f_PE, idaapi.f_COFF):
@@ -183,10 +183,10 @@ def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError(f"unexpected file format: {file_info.filetype}")
 
 
-def extract_features() -> Iterator[Tuple[Feature, Address]]:
+def extract_features(len: int) -> Iterator[Tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler():
+        for feature, addr in file_handler(len=len):
             yield feature, addr
 
 

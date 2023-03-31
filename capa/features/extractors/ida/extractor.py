@@ -19,15 +19,16 @@ import capa.features.extractors.ida.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
-
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 class IdaFeatureExtractor(FeatureExtractor):
-    def __init__(self):
+    def __init__(self, len: int=DEFAULT_STRING_LENGTH):
         super().__init__()
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
+        self.len = len
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
@@ -36,18 +37,18 @@ class IdaFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.ida.file.extract_features()
-
+        yield from capa.features.extractors.ida.file.extract_features(len=self.len)
+    
     def get_functions(self) -> Iterator[FunctionHandle]:
         import capa.features.extractors.ida.helpers as ida_helpers
 
         # ignore library functions and thunk functions as identified by IDA
         yield from ida_helpers.get_functions(skip_thunks=True, skip_libs=True)
 
-    @staticmethod
-    def get_function(ea: int) -> FunctionHandle:
-        f = idaapi.get_func(ea)
-        return FunctionHandle(address=AbsoluteVirtualAddress(f.start_ea), inner=f)
+    def get_function(self, ea: int) -> FunctionHandle:
+        f = idaapi.get_func(ea) 
+        # given the address, get the function data structure, with members like: f.start_ea, f.end_ea
+        return FunctionHandle(address=AbsoluteVirtualAddress(f.start_ea), inner=f, ctx={"len": self.len})
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.ida.function.extract_features(fh)

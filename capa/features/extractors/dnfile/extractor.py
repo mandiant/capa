@@ -30,7 +30,7 @@ from capa.features.extractors.dnfile.helpers import (
     get_dotnet_unmanaged_imports,
     get_dotnet_managed_method_bodies,
 )
-
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 class DnFileFeatureExtractorCache:
     def __init__(self, pe: dnfile.dnPE):
@@ -68,9 +68,10 @@ class DnFileFeatureExtractorCache:
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: str, len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        self.len = len
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
@@ -89,7 +90,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.dnfile.file.extract_features(self.pe)
+        yield from capa.features.extractors.dnfile.file.extract_features(self.pe, len=self.len)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         # create a method lookup table
@@ -98,7 +99,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
             fh: FunctionHandle = FunctionHandle(
                 address=DNTokenAddress(token),
                 inner=method,
-                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "cache": self.token_cache},
+                ctx={"pe": self.pe, "calls_from": set(), "calls_to": set(), "cache": self.token_cache, "len": self.len},
             )
 
             # method tokens should be unique

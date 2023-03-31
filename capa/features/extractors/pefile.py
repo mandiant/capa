@@ -87,8 +87,8 @@ def extract_file_section_names(pe, **kwargs):
         yield Section(name), AbsoluteVirtualAddress(base_address + section.VirtualAddress)
 
 
-def extract_file_strings(buf, **kwargs):
-    yield from capa.features.extractors.common.extract_file_strings(buf)
+def extract_file_strings(buf, len, **kwargs):
+    yield from capa.features.extractors.common.extract_file_strings(buf, n=len)
 
 
 def extract_file_function_names(**kwargs):
