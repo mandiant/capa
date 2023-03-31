@@ -40,7 +40,7 @@
 -
 
 ### Bug Fixes
-- extractor: removed '.dynsym' as the library name for ELF imports. get_file_imports now only returns the API name.
+- extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
