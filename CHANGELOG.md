@@ -37,6 +37,7 @@
 - nursery/enumerate-pe-sections-in-dotnet @mr-tz
 - nursery/destroy-software-breakpoint-capability echernofsky@google.com
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
+-
 
 ### Bug Fixes
 - extractor: removed '.dynsym' as the library name for ELF imports. get_file_imports now only returns the API name.
