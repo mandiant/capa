@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (24)
+### New Rules (25)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -37,6 +37,7 @@
 - nursery/enumerate-pe-sections-in-dotnet @mr-tz
 - nursery/destroy-software-breakpoint-capability echernofsky@google.com
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
+- nursery/compiled-with-cx_freeze @mr-tz
 -
 
 ### Bug Fixes
