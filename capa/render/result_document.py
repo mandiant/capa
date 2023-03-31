@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
-from typing import Any, Dict, Tuple, Union, Optional
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 
@@ -124,6 +124,41 @@ class Metadata(FrozenModel):
                 ),
             ),
         )
+
+    def to_capa(self) -> Dict[str, Any]:
+        capa_meta = {
+            "timestamp": self.timestamp.isoformat(),
+            "version": self.version,
+            "sample": {
+                "md5": self.sample.md5,
+                "sha1": self.sample.sha1,
+                "sha256": self.sample.sha256,
+                "path": self.sample.path,
+            },
+            "analysis": {
+                "format": self.analysis.format,
+                "arch": self.analysis.arch,
+                "os": self.analysis.os,
+                "extractor": self.analysis.extractor,
+                "rules": self.analysis.rules,
+                "base_address": self.analysis.base_address.to_capa(),
+                "layout": {
+                    "functions": {
+                        f.address.to_capa(): {
+                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
+                        }
+                        for f in self.analysis.layout.functions
+                    }
+                },
+                "feature_counts": {
+                    "file": self.analysis.feature_counts.file,
+                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
+                },
+                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
+            },
+        }
+
+        return capa_meta
 
 
 class CompoundStatementType:
@@ -543,3 +578,38 @@ class ResultDocument(FrozenModel):
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
+
+    def to_capa(self) -> Tuple[Dict, Dict]:
+        meta = self.meta.to_capa()
+        capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] = {}
+
+        for rule_name, rule_match in self.rules.items():
+            # Parse the YAML source into a Rule instance
+            rule = capa.rules.Rule.from_yaml(rule_match.source)
+
+            # Extract the capabilities from the RuleMatches object
+            for addr, match in rule_match.matches:
+                if isinstance(match.node, StatementNode):
+                    if isinstance(match.node.statement, CompoundStatement):
+                        statement = rule.statement
+                    else:
+                        statement = statement_from_capa(match.node.statement)
+                elif isinstance(match.node, FeatureNode):
+                    statement = match.node.feature.to_capa()
+                    if isinstance(statement, (capa.features.common.String, capa.features.common.Regex)):
+                        statement.matches = match.captures
+                else:
+                    raise ValueError("Invalid node type")
+
+                result = capa.features.common.Result(
+                    statement=statement,
+                    success=match.success,
+                    locations=[frz.Address.to_capa(loc) for loc in match.locations],
+                    children=[],
+                )
+
+                if rule_name not in capabilities:
+                    capabilities[rule_name] = []
+                capabilities[rule_name].append((frz.Address.from_capa(addr), result))
+
+        return meta, capabilities

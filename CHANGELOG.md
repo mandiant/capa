@@ -4,10 +4,10 @@
 
 ### New Features
 - add protobuf format for result documents #1219 @williballenthin @mr-tz 
-
 - extractor: add Binary Ninja feature extractor @xusheng6
 - new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
 - Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
+- add new format to parse output json back to capa #1396 @ooprathamm
 
 ### Breaking Changes
 
