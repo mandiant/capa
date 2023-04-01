@@ -90,8 +90,11 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
         if not library:
             continue
 
-        # IDA uses section names for the library of ELF imports, like ".dynsym"
-        library = library.lstrip(".")
+        # IDA uses section names for the library of ELF imports, like ".dynsym".
+        # These are not useful to us, we may need to expand this list over time
+        # TODO: exhaust this list, see #1419 
+        if library == ".dynsym":
+            library = ""
 
         def inspect_import(ea, function, ordinal):
             if function and function.startswith("__imp_"):
