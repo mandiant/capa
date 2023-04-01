@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (24)
+### New Rules (25)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -37,9 +37,11 @@
 - nursery/enumerate-pe-sections-in-dotnet @mr-tz
 - nursery/destroy-software-breakpoint-capability echernofsky@google.com
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
+- nursery/compiled-with-cx_freeze @mr-tz
 -
 
 ### Bug Fixes
+- extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
