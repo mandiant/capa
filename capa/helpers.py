@@ -56,8 +56,8 @@ def get_format_from_extension(sample: str) -> str:
     return FORMAT_UNKNOWN
 
 
-def get_auto_format(path: str, len: int) -> str:
-    format_ = get_format(path, len)
+def get_auto_format(path: str) -> str:
+    format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
     if format_ == FORMAT_UNKNOWN:

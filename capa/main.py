@@ -1106,7 +1106,7 @@ def main(argv=None):
     format_ = args.format
     if format_ == FORMAT_AUTO:
         try:
-            format_ = get_auto_format(args.sample, args.len)
+            format_ = get_auto_format(args.sample)
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
