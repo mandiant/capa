@@ -159,7 +159,7 @@ GLOBAL_HANDLERS = (
 
 
 class DotnetFileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, len: int=DEFAULT_STRING_LENGTH):
+    def __init__(self, path: str, len: int):
         super().__init__()
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)

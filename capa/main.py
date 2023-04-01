@@ -582,7 +582,7 @@ def get_file_extractors(sample: str, format_: str, len: int) -> List[FeatureExtr
 
     elif format_ == FORMAT_DOTNET:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
-        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample, len))
+        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample, len))
@@ -1213,6 +1213,7 @@ def main(argv=None):
                 sig_paths,
                 should_save_workspace,
                 disable_progress=args.quiet,
+                len=args.len
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()
