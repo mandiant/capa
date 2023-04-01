@@ -19,8 +19,9 @@ import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +52,9 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for va in sorted(self.vw.getFunctions()):
-            yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"len": self.len})
+            yield FunctionHandle(
+                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"len": self.len}
+            )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.viv.function.extract_features(fh)

@@ -72,8 +72,8 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -504,7 +504,7 @@ def get_extractor(
     sigpaths: List[str],
     should_save_workspace=False,
     disable_progress=False,
-    len=DEFAULT_STRING_LENGTH
+    len=DEFAULT_STRING_LENGTH,
 ) -> FeatureExtractor:
     """
     raises:
@@ -578,10 +578,10 @@ def get_file_extractors(sample: str, format_: str, len: int) -> List[FeatureExtr
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, len))
 
     elif format_ == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, len))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
@@ -946,7 +946,10 @@ def install_common_args(parser, wanted=None):
         parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
 
     if "len" in wanted:
-        parser.add_argument("-l", "--len", type=int, default=DEFAULT_STRING_LENGTH, help="override 4 as the string length")
+        parser.add_argument(
+            "-l", "--len", type=int, default=DEFAULT_STRING_LENGTH, help="override 4 as the string length"
+        )
+
 
 def handle_common_args(args):
     """
@@ -1047,6 +1050,9 @@ def handle_common_args(args):
             logger.debug("using signatures path: %s", sigs_path)
 
         args.signatures = sigs_path
+
+    if ~hasattr(args, "len"):
+        args.len = DEFAULT_STRING_LENGTH
 
 
 def main(argv=None):
@@ -1213,7 +1219,7 @@ def main(argv=None):
                 sig_paths,
                 should_save_workspace,
                 disable_progress=args.quiet,
-                len=args.len
+                len=args.len,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()
@@ -1281,7 +1287,9 @@ def ida_main():
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
-    capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor(DEFAULT_STRING_LENGTH))
+    capabilities, counts = find_capabilities(
+        rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor(DEFAULT_STRING_LENGTH)
+    )
     meta["analysis"].update(counts)
 
     if has_file_limitation(rules, capabilities, is_standalone=False):

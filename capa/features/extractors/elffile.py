@@ -15,8 +15,8 @@ import capa.features.extractors.common
 from capa.features.file import Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 

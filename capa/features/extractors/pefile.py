@@ -88,7 +88,7 @@ def extract_file_section_names(pe, **kwargs):
 
 
 def extract_file_strings(buf, len, **kwargs):
-    yield from capa.features.extractors.common.extract_file_strings(buf, n=len)
+    yield from capa.features.extractors.common.extract_file_strings(buf, len)
 
 
 def extract_file_function_names(**kwargs):
@@ -120,7 +120,7 @@ def extract_file_arch(pe, **kwargs):
         logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
 
-def extract_file_features(pe, buf):
+def extract_file_features(pe, buf, len):
     """
     extract file features from given workspace
 
@@ -134,7 +134,7 @@ def extract_file_features(pe, buf):
 
     for file_handler in FILE_HANDLERS:
         # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
-        for feature, va in file_handler(pe=pe, buf=buf):  # type: ignore
+        for feature, va in file_handler(pe=pe, buf=buf, len=len):  # type: ignore
             yield feature, va
 
 
@@ -173,10 +173,11 @@ GLOBAL_HANDLERS = (
 
 
 class PefileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: str, len: int):
         super().__init__()
         self.path = path
         self.pe = pefile.PE(path)
+        self.len = len
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
@@ -191,7 +192,7 @@ class PefileFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        yield from extract_file_features(self.pe, buf)
+        yield from extract_file_features(self.pe, buf, self.len)
 
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

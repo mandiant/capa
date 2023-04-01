@@ -23,6 +23,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import FeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     DnType,
@@ -33,7 +34,6 @@ from capa.features.extractors.dnfile.helpers import (
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
 )
-from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address
 
 
 def extract_file_strings(pe: dnfile.dnPE, len: int, **kwargs) -> Iterator[Tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__,len=len, **kwargs)
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__, len=len, **kwargs)
 
 
 def extract_file_mixed_mode_characteristic_features(

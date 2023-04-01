@@ -20,6 +20,7 @@ from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
+
 class IdaFeatureExtractor(FeatureExtractor):
     def __init__(self, len: int):
         super().__init__()

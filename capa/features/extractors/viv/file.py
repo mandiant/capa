@@ -70,8 +70,8 @@ def extract_file_section_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]
         yield Section(segname), AbsoluteVirtualAddress(va)
 
 
-def extract_file_strings(buf, len: int, **kwargs) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(buf, n=len)
+def extract_file_strings(buf, len, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(buf, len)
 
 
 def extract_file_function_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]:
@@ -91,11 +91,11 @@ def extract_file_function_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address
                 yield FunctionName(name[1:]), addr
 
 
-def extract_file_format(buf, len: int=len, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_format(buf, len: int = len, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     yield from capa.features.extractors.common.extract_format(buf)
 
 
-def extract_features(vw, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(vw, buf: bytes, len: int) -> Iterator[Tuple[Feature, Address]]:
     """
     extract file features from given workspace
 
