@@ -782,7 +782,7 @@ def guess_os_from_symtab(elf) -> Optional[OS]:
 
     if None in (strtab_buf, symtab_buf):
         # executable does not contain a symbol table
-		# or the symbol's names are stripped
+        # or the symbol's names are stripped
         return None
     
     symtab = SYMTAB(
