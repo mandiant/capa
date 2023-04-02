@@ -776,6 +776,7 @@ def guess_os_from_needed_dependencies(elf) -> Optional[OS]:
 def guess_os_from_symtab(elf) -> Optional[OS]:
     SHT_SYMTAB = 0x2
     SHT_STRTAB = 0x3
+    strtab_buf = symtab_buf = None
 
     for shdr in elf.section_headers:
         if shdr.type == SHT_STRTAB:
