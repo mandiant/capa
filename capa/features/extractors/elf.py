@@ -787,11 +787,11 @@ def guess_os_from_symtab(elf) -> Optional[OS]:
     
     symtab = SYMTAB(
         elf.endian, elf.bitness, symtab_buf, symtab_entsize, symtab_sz, strtab_buf, strtab_sz
-        )
+    )
 
     keywords = {
         OS.LINUX: ['linux', '/linux/',],
-        }
+    }
     
     for name, *_ in symtab.get_symbols():
         sym_name = symtab.fetch_str(name)
