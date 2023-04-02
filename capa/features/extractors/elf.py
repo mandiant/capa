@@ -827,6 +827,9 @@ def detect_elf_os(f) -> str:
     needed_dependencies_guess = guess_os_from_needed_dependencies(elf)
     logger.debug("guess: needed dependencies: %s", needed_dependencies_guess)
 
+    symtab_guess = guess_os_from_symtab(elf)    
+    logger.debug("guess: pertinent symbol name: %s", symtab_guess)
+
     ret = None
 
     if osabi_guess:
@@ -846,6 +849,10 @@ def detect_elf_os(f) -> str:
 
     elif needed_dependencies_guess:
         ret = needed_dependencies_guess
+
+    elif symtab_guess:
+        ret = symtab_guess
+
 
     return ret.value if ret is not None else "unknown"
 
