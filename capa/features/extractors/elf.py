@@ -88,6 +88,7 @@ class Shdr:
     offset: int
     size: int
     link: int
+    entsize: int
     buf: bytes
 
 
@@ -320,12 +321,12 @@ class ELF:
         shent = self.shbuf[shent_offset : shent_offset + self.e_shentsize]
 
         if self.bitness == 32:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(
-                self.endian + "IIIIIII", shent, 0x0
+            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
+                self.endian + "IIIIIIIIII", shent, 0x0
             )
         elif self.bitness == 64:
-            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link = struct.unpack_from(
-                self.endian + "IIQQQQI", shent, 0x0
+            sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, _, _, sh_entsize = struct.unpack_from(
+                self.endian + "IIQQQQIIQQ", shent, 0x0
             )
         else:
             raise NotImplementedError()
@@ -337,7 +338,7 @@ class ELF:
         if len(buf) != sh_size:
             raise ValueError("failed to read section header content")
 
-        return Shdr(sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, buf)
+        return Shdr(sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_entsize, buf)
 
     @property
     def section_headers(self):
