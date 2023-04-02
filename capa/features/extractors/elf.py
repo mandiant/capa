@@ -604,7 +604,7 @@ class SHNote:
         return ABITag(os, kmajor, kminor, kpatch)
 
 
-class SYMTAB:
+class SymTab:
     def __init__(self, endian: str, bitness: int, symtab_buf: bytes, symtab_entsize:int, symtab_sz: int, strtab_buf: bytes, strtab_sz: int) -> None:
         self.symbols = []
         self.symnum = int(symtab_sz / symtab_entsize)
@@ -785,7 +785,7 @@ def guess_os_from_symtab(elf) -> Optional[OS]:
         # or the symbol's names are stripped
         return None
     
-    symtab = SYMTAB(
+    symtab = SymTab(
         elf.endian, elf.bitness, symtab_buf, symtab_entsize, symtab_sz, strtab_buf, strtab_sz
     )
 
