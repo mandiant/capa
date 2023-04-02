@@ -769,6 +769,40 @@ def guess_os_from_needed_dependencies(elf) -> Optional[OS]:
     return None
 
 
+def guess_os_from_symtab(elf) -> Optional[OS]:
+    SHT_SYMTAB = 0x2
+    SHT_STRTAB = 0x3
+
+    for shdr in elf.section_headers:
+        if shdr.type == SHT_STRTAB:
+            strtab_buf, strtab_sz= shdr.buf, shdr.size
+
+        elif shdr.type == SHT_SYMTAB:
+            symtab_buf, symtab_entsize, symtab_sz = shdr.buf, shdr.entsize, shdr.size
+
+    if None in (strtab_buf, symtab_buf):
+        # executable does not contain a symbol table
+		# or the symbol's names are stripped
+        return None
+    
+    symtab = SYMTAB(
+        elf.endian, elf.bitness, symtab_buf, symtab_entsize, symtab_sz, strtab_buf, strtab_sz
+        )
+
+    keywords = {
+        OS.LINUX: ['linux', '/linux/',],
+        }
+    
+    for name, *_ in symtab.get_symbols():
+        sym_name = symtab.fetch_str(name)
+
+        for os, hints in keywords.items():
+            if any(map(lambda x: x in sym_name, hints)):
+                return os
+    
+    return None
+
+
 def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO]
