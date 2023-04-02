@@ -604,6 +604,44 @@ class SHNote:
         return ABITag(os, kmajor, kminor, kpatch)
 
 
+class SYMTAB:
+    def __init__(self, endian: str, bitness: int, symtab_buf: bytes, symtab_entsize:int, symtab_sz: int, strtab_buf: bytes, strtab_sz: int) -> None:
+        self.symbols = []
+        self.symnum = int(symtab_sz / symtab_entsize)
+        self.entsize = symtab_entsize
+        
+        self.strings = strtab_buf
+        self.strings_sz = strtab_sz
+
+        self._parse(endian, bitness, symtab_buf)
+
+    def _parse(self, endian: str, bitness: int, symtab_buf) -> None:
+        """
+        return the symbol's information in 
+        the order specified by sys/elf32.h
+        """
+        for i in range(self.symnum):
+            if bitness == 32:
+                name, value, size, info, other, shndx = struct.unpack_from(endian+"IIIBBH", symtab_buf, i*self.entsize)
+            elif bitness == 64:
+                name, info, other, shndx, value, size = struct.unpack_from(endian+"IBBBQQ", symtab_buf, i*self.entsize)
+
+            self.symbols.append((name, value, size, info, other, shndx))
+
+    def fetch_str(self, offset) -> str:
+        """
+        fetch a symbol's name from symtab's
+        associated strings' section (SHT_STRTAB)
+        """
+        for i in range(offset, self.strings_sz):
+            if self.strings[i] == 0:
+                return self.strings[offset:i].decode()
+
+    def get_symbols(self) -> Tuple[int, int, int, int, int, int]:
+        for symbol in self.symbols:
+            yield symbol
+
+
 def guess_os_from_osabi(elf) -> Optional[OS]:
     return elf.ei_osabi
 
