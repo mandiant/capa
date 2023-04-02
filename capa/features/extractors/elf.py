@@ -637,7 +637,11 @@ class SymTab:
             if self.strings[i] == 0:
                 return self.strings[offset:i].decode()
 
-    def get_symbols(self) -> Tuple[int, int, int, int, int, int]:
+    def get_symbols(self) -> Iterator[Tuple[int, int, int, int, int, int]]:
+        """
+        return a tuple: (name, value, size, info, other, shndx)
+        for each symbol contained in the symbol table
+        """
         for symbol in self.symbols:
             yield symbol
 
