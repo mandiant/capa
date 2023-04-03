@@ -504,7 +504,7 @@ def get_extractor(
     sigpaths: List[str],
     should_save_workspace=False,
     disable_progress=False,
-    len=DEFAULT_STRING_LENGTH,
+    min_len=DEFAULT_STRING_LENGTH,
 ) -> FeatureExtractor:
     """
     raises:
@@ -525,7 +525,7 @@ def get_extractor(
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path, len)
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path, min_len)
 
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
@@ -571,21 +571,21 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_, len)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_, min_len)
 
 
-def get_file_extractors(sample: str, format_: str, len: int) -> List[FeatureExtractor]:
+def get_file_extractors(sample: str, format_: str, min_len: int) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, len))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_len))
 
     elif format_ == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, len))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_len))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample, len))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample, min_len))
 
     return file_extractors
 
@@ -945,11 +945,6 @@ def install_common_args(parser, wanted=None):
     if "tag" in wanted:
         parser.add_argument("-t", "--tag", type=str, help="filter on rule meta field values")
 
-    if "len" in wanted:
-        parser.add_argument(
-            "-l", "--len", type=int, default=DEFAULT_STRING_LENGTH, help="override 4 as the string length"
-        )
-
 
 def handle_common_args(args):
     """
@@ -1050,9 +1045,6 @@ def handle_common_args(args):
             logger.debug("using signatures path: %s", sigs_path)
 
         args.signatures = sigs_path
-
-    if ~hasattr(args, "len"):
-        args.len = DEFAULT_STRING_LENGTH
 
 
 def main(argv=None):
@@ -1165,7 +1157,7 @@ def main(argv=None):
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
     try:
-        file_extractors = get_file_extractors(args.sample, format_, args.len)
+        file_extractors = get_file_extractors(args.sample, format_, DEFAULT_STRING_LENGTH)
     except PEFormatError as e:
         logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
@@ -1219,7 +1211,7 @@ def main(argv=None):
                 sig_paths,
                 should_save_workspace,
                 disable_progress=args.quiet,
-                len=args.len,
+                min_len=DEFAULT_STRING_LENGTH,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()

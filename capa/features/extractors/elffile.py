@@ -21,9 +21,11 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_import_names(elf, **kwargs):
+def extract_file_import_names(file_ctx):
     # see https://github.com/eliben/pyelftools/blob/0664de05ed2db3d39041e2d51d19622a8ef4fb0f/scripts/readelf.py#L372
-    symbol_tables = [(idx, s) for idx, s in enumerate(elf.iter_sections()) if isinstance(s, SymbolTableSection)]
+    symbol_tables = [
+        (idx, s) for idx, s in enumerate(file_ctx["elf"].iter_sections()) if isinstance(s, SymbolTableSection)
+    ]
 
     for _, section in symbol_tables:
         if not isinstance(section, SymbolTableSection):
@@ -42,23 +44,23 @@ def extract_file_import_names(elf, **kwargs):
                 yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
-def extract_file_section_names(elf, **kwargs):
-    for section in elf.iter_sections():
+def extract_file_section_names(file_ctx):
+    for section in file_ctx["elf"].iter_sections():
         if section.name:
             yield Section(section.name), AbsoluteVirtualAddress(section.header.sh_addr)
         elif section.is_null():
             yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
-def extract_file_strings(buf, len, **kwargs):
-    yield from capa.features.extractors.common.extract_file_strings(buf, len)
+def extract_file_strings(file_ctx):
+    yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
 
 
-def extract_file_os(elf, buf, **kwargs):
+def extract_file_os(file_ctx):
     # our current approach does not always get an OS value, e.g. for packed samples
     # for file limitation purposes, we're more lax here
     try:
-        os_tuple = next(capa.features.extractors.common.extract_os(buf))
+        os_tuple = next(capa.features.extractors.common.extract_os(file_ctx["buf"]))
         yield os_tuple
     except StopIteration:
         yield OS("unknown"), NO_ADDRESS
@@ -68,9 +70,9 @@ def extract_file_format(**kwargs):
     yield Format(FORMAT_ELF), NO_ADDRESS
 
 
-def extract_file_arch(elf, **kwargs):
+def extract_file_arch(file_ctx):
     # TODO merge with capa.features.extractors.elf.detect_elf_arch()
-    arch = elf.get_machine_arch()
+    arch = file_ctx["elf"].get_machine_arch()
     if arch == "x86":
         yield Arch("i386"), NO_ADDRESS
     elif arch == "x64":
@@ -79,9 +81,9 @@ def extract_file_arch(elf, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(elf: ELFFile, buf: bytes, len: int) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(file_ctx) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(elf=elf, buf=buf, len=len):  # type: ignore
+        for feature, addr in file_handler(file_ctx):  # type: ignore
             yield feature, addr
 
 
@@ -108,10 +110,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, len):
+    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path = path
-        self.len = len
+        self.min_len = min_len
         with open(self.path, "rb") as f:
             self.elf = ELFFile(io.BytesIO(f.read()))
 
@@ -132,7 +134,7 @@ class ElfFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, addr in extract_file_features(self.elf, buf, self.len):
+        for feature, addr in extract_file_features(file_ctx={"elf": self.elf, "buf": buf, "min_len": self.min_len}):
             yield feature, addr
 
     def get_functions(self):

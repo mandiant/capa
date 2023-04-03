@@ -172,7 +172,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     if ref != insn.ea:
         extracted_bytes = capa.features.extractors.ida.helpers.read_bytes_at(ref, MAX_BYTES_FEATURE_SIZE)
         if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-            if not capa.features.extractors.ida.helpers.find_string_at(ref):
+            if not capa.features.extractors.ida.helpers.find_string_at(ref, fh.ctx["min_len"]):
                 # don't extract byte features for obvious strings
                 yield Bytes(extracted_bytes), ih.address
 
@@ -190,8 +190,8 @@ def extract_insn_string_features(
 
     ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
     if ref != insn.ea:
-        found = capa.features.extractors.ida.helpers.find_string_at(ref)
-        if len(found) >= fh.ctx["len"]:
+        found = capa.features.extractors.ida.helpers.find_string_at(ref, fh.ctx["min_len"])
+        if len(found) >= fh.ctx["min_len"]:
             yield String(found), ih.address
 
 

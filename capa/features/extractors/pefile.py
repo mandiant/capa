@@ -18,21 +18,22 @@ import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
+from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
-def extract_file_embedded_pe(buf, **kwargs):
-    for offset, _ in capa.features.extractors.helpers.carve_pe(buf, 1):
+def extract_file_embedded_pe(file_ctx):
+    for offset, _ in capa.features.extractors.helpers.carve_pe(file_ctx["buf"], 1):
         yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
-def extract_file_export_names(pe, **kwargs):
-    base_address = pe.OPTIONAL_HEADER.ImageBase
+def extract_file_export_names(file_ctx):
+    base_address = file_ctx["pe"].OPTIONAL_HEADER.ImageBase
 
-    if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-        for export in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+    if hasattr(file_ctx["pe"], "DIRECTORY_ENTRY_EXPORT"):
+        for export in file_ctx["pe"].DIRECTORY_ENTRY_EXPORT.symbols:
             if not export.name:
                 continue
             try:
@@ -43,7 +44,7 @@ def extract_file_export_names(pe, **kwargs):
             yield Export(name), AbsoluteVirtualAddress(va)
 
 
-def extract_file_import_names(pe, **kwargs):
+def extract_file_import_names(file_ctx):
     """
     extract imported function names
     1. imports by ordinal:
@@ -52,8 +53,8 @@ def extract_file_import_names(pe, **kwargs):
      - modulename.importname
      - importname
     """
-    if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-        for dll in pe.DIRECTORY_ENTRY_IMPORT:
+    if hasattr(file_ctx["pe"], "DIRECTORY_ENTRY_IMPORT"):
+        for dll in file_ctx["pe"].DIRECTORY_ENTRY_IMPORT:
             try:
                 modname = dll.dll.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:
@@ -75,10 +76,10 @@ def extract_file_import_names(pe, **kwargs):
                     yield Import(name), AbsoluteVirtualAddress(imp.address)
 
 
-def extract_file_section_names(pe, **kwargs):
-    base_address = pe.OPTIONAL_HEADER.ImageBase
+def extract_file_section_names(file_ctx):
+    base_address = file_ctx["pe"].OPTIONAL_HEADER.ImageBase
 
-    for section in pe.sections:
+    for section in file_ctx["pe"].sections:
         try:
             name = section.Name.partition(b"\x00")[0].decode("ascii")
         except UnicodeDecodeError:
@@ -87,8 +88,8 @@ def extract_file_section_names(pe, **kwargs):
         yield Section(name), AbsoluteVirtualAddress(base_address + section.VirtualAddress)
 
 
-def extract_file_strings(buf, len, **kwargs):
-    yield from capa.features.extractors.common.extract_file_strings(buf, len)
+def extract_file_strings(file_ctx):
+    yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
 
 
 def extract_file_function_names(**kwargs):
@@ -120,7 +121,7 @@ def extract_file_arch(pe, **kwargs):
         logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
 
-def extract_file_features(pe, buf, len):
+def extract_file_features(file_ctx):
     """
     extract file features from given workspace
 
@@ -134,7 +135,7 @@ def extract_file_features(pe, buf, len):
 
     for file_handler in FILE_HANDLERS:
         # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
-        for feature, va in file_handler(pe=pe, buf=buf, len=len):  # type: ignore
+        for feature, va in file_handler(file_ctx=file_ctx):  # type: ignore
             yield feature, va
 
 
@@ -173,11 +174,11 @@ GLOBAL_HANDLERS = (
 
 
 class PefileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, len: int):
+    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path = path
         self.pe = pefile.PE(path)
-        self.len = len
+        self.min_len = min_len
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
@@ -192,7 +193,7 @@ class PefileFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        yield from extract_file_features(self.pe, buf, self.len)
+        yield from extract_file_features(file_ctx={"pe": self.pe, "buf": buf, "min_len": self.min_len})
 
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

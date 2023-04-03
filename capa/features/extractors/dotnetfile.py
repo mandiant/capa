@@ -118,8 +118,8 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Arch, Address
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_file_strings(pe: dnfile.dnPE, len: int, **kwargs) -> Iterator[Tuple[String, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(pe.__data__, len=len, **kwargs)
+def extract_file_strings(pe: dnfile.dnPE, min_len: int, **kwargs) -> Iterator[Tuple[String, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(pe.__data__, min_len=min_len, **kwargs)
 
 
 def extract_file_mixed_mode_characteristic_features(
@@ -129,9 +129,9 @@ def extract_file_mixed_mode_characteristic_features(
         yield Characteristic("mixed mode"), NO_ADDRESS
 
 
-def extract_file_features(pe: dnfile.dnPE, len: int, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_features(pe: dnfile.dnPE, min_len: int, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(pe=pe, len=len, **kwargs):  # type: ignore
+        for feature, addr in file_handler(pe=pe, min_len=min_len, **kwargs):  # type: ignore
             yield feature, addr
 
 
@@ -159,11 +159,11 @@ GLOBAL_HANDLERS = (
 
 
 class DotnetFileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, len: int):
+    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path: str = path
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
-        self.len: int = len
+        self.min_len: int = min_len
 
     def get_base_address(self):
         return NO_ADDRESS
@@ -181,7 +181,7 @@ class DotnetFileFeatureExtractor(FeatureExtractor):
         yield from extract_global_features(self.pe)
 
     def extract_file_features(self):
-        yield from extract_file_features(self.pe, self.len)
+        yield from extract_file_features(self.pe, self.min_len)
 
     def is_dotnet_file(self) -> bool:
         return bool(self.pe.net)

@@ -191,7 +191,7 @@ def extract_insn_string_features(fh: FunctionHandle, bh, ih: InsnHandle) -> Iter
     if user_string is None:
         return
 
-    if len(user_string) >= fh.ctx["len"]:
+    if len(user_string) >= fh.ctx["min_len"]:
         yield String(user_string), ih.address
 
 

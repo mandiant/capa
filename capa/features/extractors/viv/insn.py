@@ -685,7 +685,7 @@ def extract_op_string_features(
         except ValueError:
             continue
         else:
-            if len(s) >= fh.ctx["len"]:
+            if len(s) >= fh.ctx["min_len"]:
                 yield String(s), ih.address
 
 

@@ -197,10 +197,10 @@ def read_bytes_at(ea: int, count: int) -> bytes:
         return idc.get_bytes(ea, count)
 
 
-def find_string_at(ea: int, min_: int = 4) -> str:
+def find_string_at(ea: int, min_len: int) -> str:
     """check if ASCII string exists at a given virtual address"""
     found = idaapi.get_strlit_contents(ea, -1, idaapi.STRTYPE_C)
-    if found and len(found) >= min_:
+    if found and len(found) >= min_len:
         try:
             found = found.decode("ascii")
             # hacky check for IDA bug; get_strlit_contents also reads Unicode as

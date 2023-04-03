@@ -26,17 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
-    def __init__(self, vw, path, os, len):
+    def __init__(self, vw, path, os, min_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.vw = vw
         self.path = path
-        self.len = len
+        self.min_len = min_len
         with open(self.path, "rb") as f:
             self.buf = f.read()
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(self.buf, self.len))
+        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(file_ctx={"buf": self.buf}))
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf, os))
         self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
@@ -48,12 +48,14 @@ class VivisectFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.viv.file.extract_features(self.vw, self.buf, self.len)
+        yield from capa.features.extractors.viv.file.extract_features(
+            file_ctx={"vw": self.vw, "buf": self.buf, "min_len": self.min_len}
+        )
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(
-                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"len": self.len}
+                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"min_len": self.min_len}
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

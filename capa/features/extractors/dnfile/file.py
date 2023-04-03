@@ -18,39 +18,37 @@ from capa.features.common import Class, Format, String, Feature, Namespace, Char
 from capa.features.address import Address
 
 
-def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe=pe)
+def extract_file_import_names(file_ctx) -> Iterator[Tuple[Import, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_import_names(pe=file_ctx["pe"])
 
 
-def extract_file_format(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Format, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_format(pe=pe)
+def extract_file_format(file_ctx) -> Iterator[Tuple[Format, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_format(pe=file_ctx["pe"])
 
 
-def extract_file_function_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[FunctionName, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=pe)
+def extract_file_function_names(file_ctx) -> Iterator[Tuple[FunctionName, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_function_names(pe=file_ctx["pe"])
 
 
-def extract_file_strings(pe: dnfile.dnPE, len: int) -> Iterator[Tuple[String, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_strings(pe=pe, len=len)
+def extract_file_strings(file_ctx) -> Iterator[Tuple[String, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_strings(pe=file_ctx["pe"], min_len=file_ctx["min_len"])
 
 
-def extract_file_mixed_mode_characteristic_features(
-    pe: dnfile.dnPE, **kwargs
-) -> Iterator[Tuple[Characteristic, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(pe=pe)
+def extract_file_mixed_mode_characteristic_features(file_ctx) -> Iterator[Tuple[Characteristic, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(pe=file_ctx["pe"])
 
 
-def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Namespace, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(pe=pe)
+def extract_file_namespace_features(file_ctx) -> Iterator[Tuple[Namespace, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(pe=file_ctx["pe"])
 
 
-def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_class_features(pe=pe)
+def extract_file_class_features(file_ctx) -> Iterator[Tuple[Class, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_class_features(pe=file_ctx["pe"])
 
 
-def extract_features(pe: dnfile.dnPE, len: int) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(file_ctx) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, address in file_handler(pe, len=len):
+        for feature, address in file_handler(file_ctx=file_ctx):
             yield feature, address
 
 
