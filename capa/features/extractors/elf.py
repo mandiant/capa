@@ -664,10 +664,6 @@ class SymTab:
             if self.strings[i] == 0:
                 return self.strings[symbol.name_offset : i].decode("utf-8")
 
-        from rich import print
-        print(symbol)
-        import hexdump
-        hexdump.hexdump(self.strings)
         raise ValueError("symbol name not found")
 
     def get_symbols(self) -> Iterator[Symbol]:
