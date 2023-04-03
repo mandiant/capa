@@ -698,6 +698,9 @@ def get_rules(
 
 
 def get_signatures(sigs_path):
+    if not os.path.exists(sigs_path):
+        raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
+
     paths = []
     if os.path.isfile(sigs_path):
         paths.append(sigs_path)
@@ -1044,8 +1047,6 @@ def handle_common_args(args):
                 raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
             sigs_path = args.signatures
-            if not os.path.exists(sigs_path):
-                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
             logger.debug("using signatures path: %s", sigs_path)
 
         args.signatures = sigs_path
