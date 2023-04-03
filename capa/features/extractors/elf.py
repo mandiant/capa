@@ -831,7 +831,6 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
     }
 
     for symbol in symtab.get_symbols():
-        print(symbol)
         sym_name = symtab.get_name(symbol)
 
         for os, hints in keywords.items():
