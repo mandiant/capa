@@ -1182,6 +1182,11 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
+    # TODO: #1411 use a real type, not a dict here.
+    meta: Dict[str, Any]
+    capabilities: MatchResults
+    counts: Dict[str, Any]
+
     if format_ == FORMAT_RESULT:
         # result document directly parses into meta, capabilities
         result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
