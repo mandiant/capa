@@ -56,11 +56,11 @@ def extract_file_strings(file_ctx):
     yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
 
 
-def extract_file_os(file_ctx):
+def extract_file_os(elf, buf, **kwargs):
     # our current approach does not always get an OS value, e.g. for packed samples
     # for file limitation purposes, we're more lax here
     try:
-        os_tuple = next(capa.features.extractors.common.extract_os(file_ctx["buf"]))
+        os_tuple = next(capa.features.extractors.common.extract_os(buf))
         yield os_tuple
     except StopIteration:
         yield OS("unknown"), NO_ADDRESS
@@ -70,9 +70,9 @@ def extract_file_format(**kwargs):
     yield Format(FORMAT_ELF), NO_ADDRESS
 
 
-def extract_file_arch(file_ctx):
+def extract_file_arch(elf, **kwargs):
     # TODO merge with capa.features.extractors.elf.detect_elf_arch()
-    arch = file_ctx["elf"].get_machine_arch()
+    arch = elf.get_machine_arch()
     if arch == "x86":
         yield Arch("i386"), NO_ADDRESS
     elif arch == "x64":
