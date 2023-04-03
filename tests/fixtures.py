@@ -309,6 +309,8 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_")
     elif name.startswith("294b8d"):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
+    elif name.startswith("2bf18d"):
+        return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -367,6 +369,8 @@ def get_sample_md5_by_name(name):
     elif name.startswith("294b8d"):
         # file name is SHA256 hash
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
+    elif name.startswith("2bf18d"):
+        return "2bf18d0403677378adad9001b1243211"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 

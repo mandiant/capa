@@ -92,7 +92,7 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
 
         # IDA uses section names for the library of ELF imports, like ".dynsym".
         # These are not useful to us, we may need to expand this list over time
-        # TODO: exhaust this list, see #1419 
+        # TODO: exhaust this list, see #1419
         if library == ".dynsym":
             library = ""
 

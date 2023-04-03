@@ -1181,46 +1181,62 @@ def main(argv=None):
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
+
+    # TODO: #1411 use a real type, not a dict here.
+    meta: Dict[str, Any]
+    capabilities: MatchResults
+    counts: Dict[str, Any]
+
     if format_ == FORMAT_RESULT:
+        # result document directly parses into meta, capabilities
         result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
         meta, capabilities = result_doc.to_capa()
-    elif format_ == FORMAT_FREEZE:
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+
     else:
-        try:
-            if format_ == FORMAT_PE:
-                sig_paths = get_signatures(args.signatures)
-            else:
-                sig_paths = []
-                logger.debug("skipping library code matching: only have native PE signatures")
-        except IOError as e:
-            logger.error("%s", str(e))
-            return E_INVALID_SIG
+        # all other formats we must create an extractor
+        # and use that to extract meta and capabilities
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+        if format_ == FORMAT_FREEZE:
+            # freeze format deserializes directly into an extractor
+            with open(args.sample, "rb") as f:
+                extractor = capa.features.freeze.load(f.read())
+        else:
+            # all other formats we must create an extractor,
+            # such as viv, binary ninja, etc. workspaces
+            # and use those for extracting.
 
-        try:
-            extractor = get_extractor(
-                args.sample,
-                format_,
-                args.os,
-                args.backend,
-                sig_paths,
-                should_save_workspace,
-                disable_progress=args.quiet,
-            )
-        except UnsupportedFormatError:
-            log_unsupported_format_error()
-            return E_INVALID_FILE_TYPE
-        except UnsupportedArchError:
-            log_unsupported_arch_error()
-            return E_INVALID_FILE_ARCH
-        except UnsupportedOSError:
-            log_unsupported_os_error()
-            return E_INVALID_FILE_OS
+            try:
+                if format_ == FORMAT_PE:
+                    sig_paths = get_signatures(args.signatures)
+                else:
+                    sig_paths = []
+                    logger.debug("skipping library code matching: only have native PE signatures")
+            except IOError as e:
+                logger.error("%s", str(e))
+                return E_INVALID_SIG
 
-    if format_ != FORMAT_RESULT:
+            should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+
+            try:
+                extractor = get_extractor(
+                    args.sample,
+                    format_,
+                    args.os,
+                    args.backend,
+                    sig_paths,
+                    should_save_workspace,
+                    disable_progress=args.quiet,
+                )
+            except UnsupportedFormatError:
+                log_unsupported_format_error()
+                return E_INVALID_FILE_TYPE
+            except UnsupportedArchError:
+                log_unsupported_arch_error()
+                return E_INVALID_FILE_ARCH
+            except UnsupportedOSError:
+                log_unsupported_os_error()
+                return E_INVALID_FILE_OS
+
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
