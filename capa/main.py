@@ -1036,10 +1036,12 @@ def handle_common_args(args):
 
             sigs_path = os.path.join(get_default_root(), "sigs")
             if not os.path.exists(sigs_path):
-                raise IOError(
+                logger.error(
+                    "Using default signature path, but it doesn't exist. "
                     "Please install the signatures first: "
                     "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
                 )
+                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
             sigs_path = args.signatures
             logger.debug("using signatures path: %s", sigs_path)
