@@ -444,8 +444,8 @@ class Match(FrozenModel):
             captures={capture: tuple(captures[capture]) for capture in captures},
         )
 
-    def to_capa(self, rules: RuleSet) -> capa.engine.Result:
-        children = [child.to_capa(rules) for child in self.children]
+    def to_capa(self, rules_by_name: Dict[str, capa.rules.Rule]) -> capa.engine.Result:
+        children = [child.to_capa(rules_by_name) for child in self.children]
         statement = node_to_capa(self.node, [child.statement for child in children])
 
         if isinstance(self.node, FeatureNode):
@@ -462,6 +462,12 @@ class Match(FrozenModel):
                     statement = capa.features.common._MatchedRegex(statement, matches)
                 else:
                     assert_never(feature)
+
+        # i'm not sure if we need to fixup match and subscope entries here.
+        # children contains a single tree of results, corresponding to the logic of the matched rule.
+        # self.node.feature.match contains the name of the rule that was matched.
+        # so its all available to reconstruct. but im not sure where this would get used yet.
+        # probably need to look at the vverbose render emitting result document results.
 
         if (
             isinstance(self.node, FeatureNode)
@@ -671,11 +677,12 @@ class ResultDocument(FrozenModel):
             str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
         ] = collections.defaultdict(list)
 
-        rules = capa.rules.RuleSet([capa.rules.Rule.from_yaml(rule_match.source) for rule_match in self.rules.values()])
+        # this doesn't quite work because we don't have the rule source for rules that aren't matched.
+        rules_by_name = {rule_name: capa.rules.Rule.from_yaml(rule_match.source) for rule_name, rule_match in self.rules.items()}
 
         for rule_name, rule_match in self.rules.items():
             for addr, match in rule_match.matches:
-                result: capa.engine.Result = match.to_capa(rules)
+                result: capa.engine.Result = match.to_capa(rules_by_name)
 
                 capabilities[rule_name].append((addr.to_capa(), result))
 
