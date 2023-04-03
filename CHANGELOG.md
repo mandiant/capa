@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (25)
+### New Rules (26)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -38,6 +38,7 @@
 - nursery/destroy-software-breakpoint-capability echernofsky@google.com
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
 - nursery/compiled-with-cx_freeze @mr-tz
+- nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
