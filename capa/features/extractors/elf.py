@@ -604,25 +604,36 @@ class SHNote:
         return ABITag(os, kmajor, kminor, kpatch)
 
 
+@dataclass
+class Symbol:
+    name_offset: int
+    value: int
+    size: int
+    info: int
+    other: int
+    shndx: int
+
+
 class SymTab:
     def __init__(
         self,
         endian: str,
         bitness: int,
-        symtab_buf: bytes,
+        symtab_buf: Optional[bytes],
         symtab_entsize: int,
         symtab_sz: int,
-        strtab_buf: bytes,
+        strtab_buf: Optional[bytes],
         strtab_sz: int,
     ) -> None:
-        self.symbols = []
+        self.symbols: List[Symbol] = []
         self.symnum = int(symtab_sz / symtab_entsize)
         self.entsize = symtab_entsize
 
         self.strings = strtab_buf
         self.strings_sz = strtab_sz
 
-        self._parse(endian, bitness, symtab_buf)
+        if symtab_buf:
+            self._parse(endian, bitness, symtab_buf)
 
     def _parse(self, endian: str, bitness: int, symtab_buf: bytes) -> None:
         """
@@ -631,26 +642,35 @@ class SymTab:
         """
         for i in range(self.symnum):
             if bitness == 32:
-                name, value, size, info, other, shndx = struct.unpack_from(
+                name_offset, value, size, info, other, shndx = struct.unpack_from(
                     endian + "IIIBBH", symtab_buf, i * self.entsize
                 )
             elif bitness == 64:
-                name, info, other, shndx, value, size = struct.unpack_from(
+                name_offset, info, other, shndx, value, size = struct.unpack_from(
                     endian + "IBBBQQ", symtab_buf, i * self.entsize
                 )
 
-            self.symbols.append((name, value, size, info, other, shndx))
+            self.symbols.append(Symbol(name_offset, value, size, info, other, shndx))
 
-    def fetch_str(self, offset) -> str:
+    def get_name(self, symbol: Symbol) -> str:
         """
         fetch a symbol's name from symtab's
         associated strings' section (SHT_STRTAB)
         """
-        for i in range(offset, self.strings_sz):
-            if self.strings[i] == 0:
-                return self.strings[offset:i].decode()
+        if not self.strings:
+            raise ValueError("no strings found")
 
-    def get_symbols(self) -> Iterator[Tuple[int, int, int, int, int, int]]:
+        for i in range(symbol.name_offset, self.strings_sz):
+            if self.strings[i] == 0:
+                return self.strings[symbol.name_offset : i].decode("utf-8")
+
+        from rich import print
+        print(symbol)
+        import hexdump
+        hexdump.hexdump(self.strings)
+        raise ValueError("symbol name not found")
+
+    def get_symbols(self) -> Iterator[Symbol]:
         """
         return a tuple: (name, value, size, info, other, shndx)
         for each symbol contained in the symbol table
@@ -659,11 +679,11 @@ class SymTab:
             yield symbol
 
 
-def guess_os_from_osabi(elf) -> Optional[OS]:
+def guess_os_from_osabi(elf: ELF) -> Optional[OS]:
     return elf.ei_osabi
 
 
-def guess_os_from_ph_notes(elf) -> Optional[OS]:
+def guess_os_from_ph_notes(elf: ELF) -> Optional[OS]:
     # search for PT_NOTE sections that specify an OS
     # for example, on Linux there is a GNU section with minimum kernel version
     PT_NOTE = 0x4
@@ -702,7 +722,7 @@ def guess_os_from_ph_notes(elf) -> Optional[OS]:
     return None
 
 
-def guess_os_from_sh_notes(elf) -> Optional[OS]:
+def guess_os_from_sh_notes(elf: ELF) -> Optional[OS]:
     # search for notes stored in sections that aren't visible in program headers.
     # e.g. .note.Linux in Linux kernel modules.
     SHT_NOTE = 0x7
@@ -735,7 +755,7 @@ def guess_os_from_sh_notes(elf) -> Optional[OS]:
     return None
 
 
-def guess_os_from_linker(elf) -> Optional[OS]:
+def guess_os_from_linker(elf: ELF) -> Optional[OS]:
     # search for recognizable dynamic linkers (interpreters)
     # for example, on linux, we see file paths like: /lib64/ld-linux-x86-64.so.2
     linker = elf.linker
@@ -745,7 +765,7 @@ def guess_os_from_linker(elf) -> Optional[OS]:
     return None
 
 
-def guess_os_from_abi_versions_needed(elf) -> Optional[OS]:
+def guess_os_from_abi_versions_needed(elf: ELF) -> Optional[OS]:
     # then lets look for GLIBC symbol versioning requirements.
     # this will let us guess about linux/hurd in some cases.
 
@@ -776,7 +796,7 @@ def guess_os_from_abi_versions_needed(elf) -> Optional[OS]:
     return None
 
 
-def guess_os_from_needed_dependencies(elf) -> Optional[OS]:
+def guess_os_from_needed_dependencies(elf: ELF) -> Optional[OS]:
     for needed in elf.needed:
         if needed.startswith("libmachuser.so"):
             return OS.HURD
@@ -786,7 +806,7 @@ def guess_os_from_needed_dependencies(elf) -> Optional[OS]:
     return None
 
 
-def guess_os_from_symtab(elf) -> Optional[OS]:
+def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
     SHT_SYMTAB = 0x2
     SHT_STRTAB = 0x3
     strtab_buf = symtab_buf = None
@@ -812,8 +832,8 @@ def guess_os_from_symtab(elf) -> Optional[OS]:
         ],
     }
 
-    for name, *_ in symtab.get_symbols():
-        sym_name = symtab.fetch_str(name)
+    for symbol in symtab.get_symbols():
+        sym_name = symtab.get_name(symbol)
 
         for os, hints in keywords.items():
             if any(map(lambda x: x in sym_name, hints)):
