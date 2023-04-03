@@ -83,7 +83,7 @@ def extract_file_arch(file_ctx):
 
 def extract_file_features(file_ctx) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(file_ctx):  # type: ignore
+        for feature, addr in file_handler(file_ctx=file_ctx):  # type: ignore
             yield feature, addr
 
 
