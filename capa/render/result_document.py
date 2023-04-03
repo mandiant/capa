@@ -581,7 +581,7 @@ class ResultDocument(FrozenModel):
 
     def to_capa(self) -> Tuple[Dict, Dict]:
         meta = self.meta.to_capa()
-        capabilities: Dict[str, List[Tuple[frz.Address, capa.features.common.Result]]] = {}
+        capabilities: Dict[str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]] = {}
 
         for rule_name, rule_match in self.rules.items():
             # Parse the YAML source into a Rule instance
@@ -604,12 +604,12 @@ class ResultDocument(FrozenModel):
                 result = capa.features.common.Result(
                     statement=statement,
                     success=match.success,
-                    locations=[frz.Address.to_capa(loc) for loc in match.locations],
+                    locations={loc.to_capa() for loc in match.locations},
                     children=[],
                 )
 
                 if rule_name not in capabilities:
                     capabilities[rule_name] = []
-                capabilities[rule_name].append((frz.Address.from_capa(addr), result))
+                capabilities[rule_name].append((addr.to_capa(), result))
 
         return meta, capabilities
