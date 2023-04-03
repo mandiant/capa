@@ -297,7 +297,6 @@ def node_to_capa(
             )
 
         elif isinstance(node.statement, SubscopeStatement):
-            raise NotImplementedError("deserializing subscope statements are not supported")
             return capa.engine.Subscope(
                 description=node.statement.description, scope=node.statement.scope, child=children[0]
             )
@@ -463,21 +462,12 @@ class Match(FrozenModel):
                 else:
                     assert_never(feature)
 
-        # i'm not sure if we need to fixup match and subscope entries here.
+        # apparently we don't have to fixup match and subscope entries here.
+        # at least, default, verbose, and vverbose renderers seem to work well without any special handling here.
+        #
         # children contains a single tree of results, corresponding to the logic of the matched rule.
         # self.node.feature.match contains the name of the rule that was matched.
-        # so its all available to reconstruct. but im not sure where this would get used yet.
-        # probably need to look at the vverbose render emitting result document results.
-
-        if (
-            isinstance(self.node, FeatureNode)
-            and isinstance(self.node.feature, frzf.MatchFeature)
-            # only add subtree on success,
-            # because there won't be results for the other rule on failure.
-            and self.success
-        ):
-            # TODO: work is needed fixup subscope matches here.
-            raise NotImplementedError("deserializing subscope matches are not yet supported")
+        # so its all available to reconstruct, if necessary.
 
         return capa.features.common.Result(
             success=self.success,
@@ -678,7 +668,9 @@ class ResultDocument(FrozenModel):
         ] = collections.defaultdict(list)
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
-        rules_by_name = {rule_name: capa.rules.Rule.from_yaml(rule_match.source) for rule_name, rule_match in self.rules.items()}
+        rules_by_name = {
+            rule_name: capa.rules.Rule.from_yaml(rule_match.source) for rule_name, rule_match in self.rules.items()
+        }
 
         for rule_name, rule_match in self.rules.items():
             for addr, match in rule_match.matches:
