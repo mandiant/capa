@@ -74,6 +74,8 @@ jobs:
             python-version: "3.8"
           - os: ubuntu-20.04
             python-version: "3.9"
+          - os: ubuntu-20.04
+            python-version: "3.10"
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
