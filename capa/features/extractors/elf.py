@@ -605,7 +605,7 @@ class SHNote:
 
 
 class SymTab:
-    def __init__(self, endian: str, bitness: int, symtab_buf: bytes, symtab_entsize:int, symtab_sz: int, strtab_buf: bytes, strtab_sz: int) -> None:
+    def __init__(self, endian: str, bitness: int, symtab_buf: bytes, symtab_entsize: int, symtab_sz: int, strtab_buf: bytes, strtab_sz: int) -> None:
         self.symbols = []
         self.symnum = int(symtab_sz / symtab_entsize)
         self.entsize = symtab_entsize
@@ -615,7 +615,7 @@ class SymTab:
 
         self._parse(endian, bitness, symtab_buf)
 
-    def _parse(self, endian: str, bitness: int, symtab_buf) -> None:
+    def _parse(self, endian: str, bitness: int, symtab_buf: bytes) -> None:
         """
         return the symbol's information in 
         the order specified by sys/elf32.h
@@ -857,7 +857,6 @@ def detect_elf_os(f) -> str:
 
     elif symtab_guess:
         ret = symtab_guess
-
 
     return ret.value if ret is not None else "unknown"
 
