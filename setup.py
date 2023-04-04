@@ -27,8 +27,8 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.6",
-    "protobuf==4.21.12",
+    "pydantic==1.10.7",
+    "protobuf==4.22.1",
 ]
 
 # this sets __version__
@@ -71,7 +71,7 @@ setuptools.setup(
         "dev": [
             "pytest==7.1.3",
             "pytest-sugar==0.9.4",
-            "pytest-instafail==0.4.2",
+            "pytest-instafail==0.5.0",
             "pytest-cov==4.0.0",
             "pycodestyle==2.10.0",
             "ruff==0.0.259",
@@ -90,7 +90,7 @@ setuptools.setup(
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
-            "types-protobuf==4.21.0.5",
+            "types-protobuf==4.22.0.1",
         ],
         "build": [
             "pyinstaller==5.9.0",

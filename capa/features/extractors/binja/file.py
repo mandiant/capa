@@ -103,7 +103,7 @@ def extract_file_import_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address
 
         ordinal = sym.ordinal
         if ordinal != 0 and (lib_name != ""):
-            ordinal_name = "#%d" % (ordinal)
+            ordinal_name = f"#{ordinal}"
             for name in capa.features.extractors.helpers.generate_symbols(lib_name, ordinal_name):
                 yield Import(name), addr
 
@@ -147,7 +147,7 @@ def extract_file_format(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
-        raise NotImplementedError("unexpected file format: %d" % view_type)
+        raise NotImplementedError(f"unexpected file format: {view_type}")
 
 
 def extract_features(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:

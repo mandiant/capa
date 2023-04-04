@@ -4,13 +4,14 @@
 
 ### New Features
 - add protobuf format for result documents #1219 @williballenthin @mr-tz 
-
 - extractor: add Binary Ninja feature extractor @xusheng6
 - new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
+- Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
+- add new format to parse output json back to capa #1396 @ooprathamm
 
 ### Breaking Changes
 
-### New Rules (22)
+### New Rules (26)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -34,9 +35,14 @@
 - nursery/set-web-proxy-in-dotnet michael.hunhoff@mandiant.com
 - nursery/check-for-windows-sandbox-via-subdirectory echernofsky@google.com
 - nursery/enumerate-pe-sections-in-dotnet @mr-tz
+- nursery/destroy-software-breakpoint-capability echernofsky@google.com
+- nursery/send-data-to-internet michael.hunhoff@mandiant.com
+- nursery/compiled-with-cx_freeze @mr-tz
+- nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
+- extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 

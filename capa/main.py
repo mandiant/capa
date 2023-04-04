@@ -69,6 +69,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -498,7 +499,7 @@ def get_workspace(path, format_, sigpaths):
 def get_extractor(
     path: str,
     format_: str,
-    os: str,
+    os_: str,
     backend: str,
     sigpaths: List[str],
     should_save_workspace=False,
@@ -517,7 +518,7 @@ def get_extractor(
         if not is_supported_arch(path):
             raise UnsupportedArchError()
 
-        if os == OS_AUTO and not is_supported_os(path):
+        if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
@@ -548,7 +549,7 @@ def get_extractor(
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             bv: BinaryView = BinaryViewType.get_view_of_file(path)
             if bv is None:
-                raise RuntimeError("Binary Ninja cannot open file %s" % (path))
+                raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
         return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
@@ -569,7 +570,7 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
@@ -913,12 +914,12 @@ def install_common_args(parser, wanted=None):
             (OS_MACOS,),
             (OS_WINDOWS,),
         ]
-        os_help = ", ".join(["%s (%s)" % (o[0], o[1]) if len(o) == 2 else o[0] for o in oses])
+        os_help = ", ".join([f"{o[0]} ({o[1]})" if len(o) == 2 else o[0] for o in oses])
         parser.add_argument(
             "--os",
             choices=[o[0] for o in oses],
             default=OS_AUTO,
-            help="select sample OS: %s" % os_help,
+            help=f"select sample OS: {os_help}",
         )
 
     if "rules" in wanted:
@@ -1182,53 +1183,72 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-    if format_ == FORMAT_FREEZE:
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+    # TODO: #1411 use a real type, not a dict here.
+    meta: Dict[str, Any]
+    capabilities: MatchResults
+    counts: Dict[str, Any]
+
+    if format_ == FORMAT_RESULT:
+        # result document directly parses into meta, capabilities
+        result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
+        meta, capabilities = result_doc.to_capa()
+
     else:
-        try:
-            if format_ == FORMAT_PE:
-                sig_paths = get_signatures(args.signatures)
-            else:
-                sig_paths = []
-                logger.debug("skipping library code matching: only have native PE signatures")
-        except IOError as e:
-            logger.error("%s", str(e))
-            return E_INVALID_SIG
+        # all other formats we must create an extractor
+        # and use that to extract meta and capabilities
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+        if format_ == FORMAT_FREEZE:
+            # freeze format deserializes directly into an extractor
+            with open(args.sample, "rb") as f:
+                extractor = capa.features.freeze.load(f.read())
+        else:
+            # all other formats we must create an extractor,
+            # such as viv, binary ninja, etc. workspaces
+            # and use those for extracting.
 
-        try:
-            extractor = get_extractor(
-                args.sample,
-                format_,
-                args.os,
-                args.backend,
-                sig_paths,
-                should_save_workspace,
-                disable_progress=args.quiet,
-            )
-        except UnsupportedFormatError:
-            log_unsupported_format_error()
-            return E_INVALID_FILE_TYPE
-        except UnsupportedArchError:
-            log_unsupported_arch_error()
-            return E_INVALID_FILE_ARCH
-        except UnsupportedOSError:
-            log_unsupported_os_error()
-            return E_INVALID_FILE_OS
+            try:
+                if format_ == FORMAT_PE:
+                    sig_paths = get_signatures(args.signatures)
+                else:
+                    sig_paths = []
+                    logger.debug("skipping library code matching: only have native PE signatures")
+            except IOError as e:
+                logger.error("%s", str(e))
+                return E_INVALID_SIG
 
-    meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+            should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-    meta["analysis"].update(counts)
-    meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+            try:
+                extractor = get_extractor(
+                    args.sample,
+                    format_,
+                    args.os,
+                    args.backend,
+                    sig_paths,
+                    should_save_workspace,
+                    disable_progress=args.quiet,
+                )
+            except UnsupportedFormatError:
+                log_unsupported_format_error()
+                return E_INVALID_FILE_TYPE
+            except UnsupportedArchError:
+                log_unsupported_arch_error()
+                return E_INVALID_FILE_ARCH
+            except UnsupportedOSError:
+                log_unsupported_os_error()
+                return E_INVALID_FILE_OS
 
-    if has_file_limitation(rules, capabilities):
-        # bail if capa encountered file limitation e.g. a packed binary
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+
+        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        meta["analysis"].update(counts)
+        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+
+        if has_file_limitation(rules, capabilities):
+            # bail if capa encountered file limitation e.g. a packed binary
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
