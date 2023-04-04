@@ -52,20 +52,33 @@ def test_some():
     assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}}) is False
     assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}}) is False
     assert (
-        Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}) is True
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+            {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}
+        )
+        is True
     )
     assert (
-        Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}}) is True
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+            {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}}
+        )
+        is True
     )
     assert (
-        Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}, Number(4): {ADDR1}}) is True
+        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+            {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}, Number(4): {ADDR1}}
+        )
+        is True
     )
 
 
 def test_complex():
-    assert True is Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]).evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})
+    assert True is Or(
+        [And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]
+    ).evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})
 
-    assert False is Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})
+    assert False is Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate(
+        {Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}}
+    )
 
 
 def test_range():

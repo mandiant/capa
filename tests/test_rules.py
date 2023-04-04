@@ -992,5 +992,8 @@ def test_property_access_symbol():
         )
     )
     assert (
-        r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {ADDR1}}) is True
+        r.evaluate(
+            {Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {ADDR1}}
+        )
+        is True
     )
