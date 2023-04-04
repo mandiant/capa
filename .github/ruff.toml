@@ -1,5 +1,6 @@
 select = ["E"]
-ignore = []
+ignore = ["E402", "E722", "E902"]
+exclude = ["*_pb2.py", "*_pb2.pyi", "capa2yara.py"]
 
 # Same as pycodestyle.
 line-length = 180

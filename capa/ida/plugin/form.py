@@ -607,7 +607,8 @@ class CapaExplorerForm(idaapi.PluginForm):
         except UserCancelledError as e:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
-                f"You must specify a directory containing capa rules before running analysis. Download and extract the official rules from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
+                f"You must specify a directory containing capa rules before running analysis. "
+                f"Download and extract the official rules from {CAPA_OFFICIAL_RULESET_URL} (recommended)."
             )
             return False
         except Exception as e:
@@ -705,7 +706,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                         capa.ida.helpers.inform_user_ida_ui("Cached results were generated using different capas rules")
                         logger.warning(
-                            "capa is showing you cached results from a previous analysis run. Your rules have changed since and you should reanalyze the program to see new results."
+                            "capa is showing you cached results from a previous analysis run. "
+                            "Your rules have changed since and you should reanalyze the program to see new results."
                         )
                         view_status_rules = "no rules matched for cache"
 
