@@ -3,13 +3,37 @@
 ## master (unreleased)
 
 ### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
+- [capa-rules v5.1.0...master](https://github.com/mandiant/capa-rules/compare/v5.1.0...master)
+
+## v5.1.0
+capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the Binary Ninja team contributed a new feature extractor. Other new features are a new CLI flag to override the detected operating system, functionality to read and render result documents, and a change to the output color format for easier readability.
+
+Over 25 capa rules have been added and improved.
+
+Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046, @manasghandat, @ooprathamm, @linpeiyu164, @yelhamer, @HongThatCong, @naikordian, @stevemk14ebr, @emtuls, @raymondlleong, @bkojusner, @joren485, and everyone else who submitted bugs and provided feedback!
+
+### New Features
 - add protobuf format for result documents #1219 @williballenthin @mr-tz 
 - extractor: add Binary Ninja feature extractor @xusheng6
 - new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
-- Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
+- change colour/highlight to "cyan" instead of "blue" for better readability #1384 @ggold7046
 - add new format to parse output json back to capa #1396 @ooprathamm
-
-### Breaking Changes
+- parse ELF symbols' names to guess OS #1403 @yelhamer
 
 ### New Rules (26)
 
@@ -39,7 +63,6 @@
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
 - nursery/compiled-with-cx_freeze @mr-tz
 - nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
--
 
 ### Bug Fixes
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
@@ -51,11 +74,9 @@
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
-### Development
-
 ### Raw diffs
-- [capa v5.0.0...master](https://github.com/mandiant/capa/compare/v5.0.0...master)
-- [capa-rules v5.0.0...master](https://github.com/mandiant/capa-rules/compare/v5.0.0...master)
+- [capa v5.0.0...v5.1.0](https://github.com/mandiant/capa/compare/v5.0.0...v5.1.0)
+- [capa-rules v5.0.0...v5.1.0](https://github.com/mandiant/capa-rules/compare/v5.0.0...v5.1.0)
 
 
 ## v5.0.0 (2023-02-08)
