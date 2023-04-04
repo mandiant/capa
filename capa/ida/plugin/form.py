@@ -536,7 +536,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         @param new_ea: destination ea
         @param old_ea: source ea
         """
-        if not self.view_tabs.currentIndex() in (0, 1):
+        if self.view_tabs.currentIndex() not in (0, 1):
             return
 
         if idaapi.get_widget_type(widget) != idaapi.BWN_DISASM:
