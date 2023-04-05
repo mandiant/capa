@@ -59,7 +59,7 @@ unsupported = ["characteristic", "mnemonic", "offset", "subscope", "Range"]
 # -- https://github.com/mandiant/capa-rules/blob/master/collection/file-managers/gather-direct-ftp-information.yml
 # -- https://github.com/mandiant/capa-rules/blob/master/collection/browser/gather-firefox-profile-information.yml
 # - count(string    (1 rule: /executable/subfile/pe/contain-an-embedded-pe-file.yml)
-# - count(match( could be done by creating the referenced rule a 2nd time with the condition, that it hits x times 
+# - count(match( could be done by creating the referenced rule a 2nd time with the condition, that it hits x times
 # (only 1 rule: ./anti-analysis/anti-disasm/contain-anti-disasm-techniques.yml)
 # - it would be technically possible to get the "basic blocks" working, but the rules contain mostly other non supported statements in there => not worth the effort.
 
@@ -289,7 +289,7 @@ def convert_rule(rule, rulename, cround, depth):
 
             # all .* in the regexes of capa look like they should be maximum 100 chars so take 1000 to speed up rules and prevent yara warnings on poor performance
             regex = regex.replace(".*", ".{,1000}")
-            # strange: capa accepts regexes with unescaped / 
+            # strange: capa accepts regexes with unescaped /
             # like - string: /com/exe4j/runtime/exe4jcontroller/i in capa-rules/compiler/exe4j/compiled-with-exe4j.yml, needs a fix for yara:
             # would assume that get_value_str() gives the raw string
             regex = re.sub(r"(?<!\\)/", r"\/", regex)
@@ -298,7 +298,7 @@ def convert_rule(rule, rulename, cround, depth):
             # /reg(|.exe)/ => /reg(.exe)?/
             regex = re.sub(r"\(\|([^\)]+)\)", r"(\1)?", regex)
 
-            # change beginning of line to null byte, e.g. /^open => /\x00open 
+            # change beginning of line to null byte, e.g. /^open => /\x00open
             # (not word boundary because we're not looking for the beginning of a word in a text but usually a function name if there's ^ in a capa rule)
             regex = re.sub(r"^\^", r"\\x00", regex)
 
@@ -676,7 +676,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
 
                 yara += "  condition:" + condition_header + yara_condition + "\n}"
 
-                # TODO: now the rule is finished and could be automatically checked with the capa-testfile(s) named in meta 
+                # TODO: now the rule is finished and could be automatically checked with the capa-testfile(s) named in meta
                 # (doing it for all of them using yara-ci upload at the moment)
                 output_yar(yara)
                 converted_rules.append(rule_name)
