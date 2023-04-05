@@ -18,37 +18,37 @@ from capa.features.common import Class, Format, String, Feature, Namespace, Char
 from capa.features.address import Address
 
 
-def extract_file_import_names(file_ctx) -> Iterator[Tuple[Import, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_import_names(file_ctx)
+def extract_file_import_names(ctx) -> Iterator[Tuple[Import, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_import_names(ctx)
 
 
 def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_format()
 
 
-def extract_file_function_names(file_ctx) -> Iterator[Tuple[FunctionName, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_function_names(file_ctx)
+def extract_file_function_names(ctx) -> Iterator[Tuple[FunctionName, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_function_names(ctx)
 
 
-def extract_file_strings(file_ctx) -> Iterator[Tuple[String, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_strings(file_ctx)
+def extract_file_strings(ctx) -> Iterator[Tuple[String, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_strings(ctx)
 
 
-def extract_file_mixed_mode_characteristic_features(file_ctx) -> Iterator[Tuple[Characteristic, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(file_ctx)
+def extract_file_mixed_mode_characteristic_features(ctx) -> Iterator[Tuple[Characteristic, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_mixed_mode_characteristic_features(ctx)
 
 
-def extract_file_namespace_features(file_ctx) -> Iterator[Tuple[Namespace, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(file_ctx)
+def extract_file_namespace_features(ctx) -> Iterator[Tuple[Namespace, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_namespace_features(ctx)
 
 
-def extract_file_class_features(file_ctx) -> Iterator[Tuple[Class, Address]]:
-    yield from capa.features.extractors.dotnetfile.extract_file_class_features(file_ctx)
+def extract_file_class_features(ctx) -> Iterator[Tuple[Class, Address]]:
+    yield from capa.features.extractors.dotnetfile.extract_file_class_features(ctx)
 
 
-def extract_features(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ctx) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, address in file_handler(file_ctx=file_ctx):
+        for feature, address in file_handler(ctx={"pe": ctx["pe"], "min_len": ctx["min_str_len"]}):
             yield feature, address
 
 

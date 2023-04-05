@@ -20,18 +20,18 @@ from capa.features.common import String, Feature, Characteristic
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
-def extract_file_embedded_pe(file_ctx) -> Iterator[Tuple[Feature, Address]]:
-    for offset, _ in pe_carve.carve(file_ctx["buf"], 1):
+def extract_file_embedded_pe(ctx) -> Iterator[Tuple[Feature, Address]]:
+    for offset, _ in pe_carve.carve(ctx["buf"], 1):
         yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
-def extract_file_export_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
-    vw = file_ctx["vw"]
+def extract_file_export_names(ctx) -> Iterator[Tuple[Feature, Address]]:
+    vw = ctx["vw"]
     for va, _, name, _ in vw.getExports():
         yield Export(name), AbsoluteVirtualAddress(va)
 
 
-def extract_file_import_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_import_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """
     extract imported function names
     1. imports by ordinal:
@@ -40,7 +40,7 @@ def extract_file_import_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
      - modulename.importname
      - importname
     """
-    vw = file_ctx["vw"]
+    vw = ctx["vw"]
     for va, _, _, tinfo in vw.getImports():
         # vivisect source: tinfo = "%s.%s" % (libname, impname)
         modname, impname = tinfo.split(".", 1)
@@ -67,21 +67,21 @@ def is_viv_ord_impname(impname: str) -> bool:
         return True
 
 
-def extract_file_section_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
-    vw = file_ctx["vw"]
+def extract_file_section_names(ctx) -> Iterator[Tuple[Feature, Address]]:
+    vw = ctx["vw"]
     for va, _, segname, _ in vw.getSegments():
         yield Section(segname), AbsoluteVirtualAddress(va)
 
 
-def extract_file_strings(file_ctx) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
+def extract_file_strings(ctx) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
 
 
-def extract_file_function_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_function_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """
     extract the names of statically-linked library functions.
     """
-    vw = file_ctx["vw"]
+    vw = ctx["vw"]
     for va in sorted(vw.getFunctions()):
         addr = AbsoluteVirtualAddress(va)
         if viv_utils.flirt.is_library_function(vw, va):
@@ -95,11 +95,11 @@ def extract_file_function_names(file_ctx) -> Iterator[Tuple[Feature, Address]]:
                 yield FunctionName(name[1:]), addr
 
 
-def extract_file_format(file_ctx) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.common.extract_format(file_ctx["buf"])
+def extract_file_format(ctx) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_format(ctx["buf"])
 
 
-def extract_features(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ctx) -> Iterator[Tuple[Feature, Address]]:
     """
     extract file features from given workspace
 
@@ -112,7 +112,7 @@ def extract_features(file_ctx) -> Iterator[Tuple[Feature, Address]]:
     """
 
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(file_ctx=file_ctx):  # type: ignore
+        for feature, addr in file_handler(ctx=ctx):  # type: ignore
             yield feature, addr
 
 

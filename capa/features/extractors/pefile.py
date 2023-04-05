@@ -24,16 +24,16 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_embedded_pe(file_ctx):
-    for offset, _ in capa.features.extractors.helpers.carve_pe(file_ctx["buf"], 1):
+def extract_file_embedded_pe(ctx):
+    for offset, _ in capa.features.extractors.helpers.carve_pe(ctx["buf"], 1):
         yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
-def extract_file_export_names(file_ctx):
-    base_address = file_ctx["pe"].OPTIONAL_HEADER.ImageBase
+def extract_file_export_names(ctx):
+    base_address = ctx["pe"].OPTIONAL_HEADER.ImageBase
 
-    if hasattr(file_ctx["pe"], "DIRECTORY_ENTRY_EXPORT"):
-        for export in file_ctx["pe"].DIRECTORY_ENTRY_EXPORT.symbols:
+    if hasattr(ctx["pe"], "DIRECTORY_ENTRY_EXPORT"):
+        for export in ctx["pe"].DIRECTORY_ENTRY_EXPORT.symbols:
             if not export.name:
                 continue
             try:
@@ -44,7 +44,7 @@ def extract_file_export_names(file_ctx):
             yield Export(name), AbsoluteVirtualAddress(va)
 
 
-def extract_file_import_names(file_ctx):
+def extract_file_import_names(ctx):
     """
     extract imported function names
     1. imports by ordinal:
@@ -53,8 +53,8 @@ def extract_file_import_names(file_ctx):
      - modulename.importname
      - importname
     """
-    if hasattr(file_ctx["pe"], "DIRECTORY_ENTRY_IMPORT"):
-        for dll in file_ctx["pe"].DIRECTORY_ENTRY_IMPORT:
+    if hasattr(ctx["pe"], "DIRECTORY_ENTRY_IMPORT"):
+        for dll in ctx["pe"].DIRECTORY_ENTRY_IMPORT:
             try:
                 modname = dll.dll.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:
@@ -76,10 +76,10 @@ def extract_file_import_names(file_ctx):
                     yield Import(name), AbsoluteVirtualAddress(imp.address)
 
 
-def extract_file_section_names(file_ctx):
-    base_address = file_ctx["pe"].OPTIONAL_HEADER.ImageBase
+def extract_file_section_names(ctx):
+    base_address = ctx["pe"].OPTIONAL_HEADER.ImageBase
 
-    for section in file_ctx["pe"].sections:
+    for section in ctx["pe"].sections:
         try:
             name = section.Name.partition(b"\x00")[0].decode("ascii")
         except UnicodeDecodeError:
@@ -88,8 +88,8 @@ def extract_file_section_names(file_ctx):
         yield Section(name), AbsoluteVirtualAddress(base_address + section.VirtualAddress)
 
 
-def extract_file_strings(file_ctx):
-    yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
+def extract_file_strings(ctx):
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
 
 
 def extract_file_function_names(**kwargs):
@@ -121,7 +121,7 @@ def extract_file_arch(pe, **kwargs):
         logger.warning("unsupported architecture: %s", pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine])
 
 
-def extract_file_features(file_ctx):
+def extract_file_features(ctx):
     """
     extract file features from given workspace
 
@@ -135,7 +135,7 @@ def extract_file_features(file_ctx):
 
     for file_handler in FILE_HANDLERS:
         # file_handler: type: (pe, bytes) -> Iterable[Tuple[Feature, Address]]
-        for feature, va in file_handler(file_ctx=file_ctx):  # type: ignore
+        for feature, va in file_handler(ctx=ctx):  # type: ignore
             yield feature, va
 
 
@@ -193,7 +193,7 @@ class PefileFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        yield from extract_file_features(file_ctx={"pe": self.pe, "buf": buf, "min_len": self.min_len})
+        yield from extract_file_features(ctx={"pe": self.pe, "buf": buf, "min_len": self.min_len})
 
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

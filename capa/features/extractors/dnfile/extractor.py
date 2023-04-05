@@ -69,10 +69,10 @@ class DnFileFeatureExtractorCache:
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
+    def __init__(self, path: str, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
-        self.min_len = min_len
+        self.min_str_len = min_str_len
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
@@ -92,7 +92,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
 
     def extract_file_features(self):
         yield from capa.features.extractors.dnfile.file.extract_features(
-            file_ctx={"pe": self.pe, "min_len": self.min_len}
+            ctx={"pe": self.pe, "min_str_len": self.min_str_len}
         )
 
     def get_functions(self) -> Iterator[FunctionHandle]:
@@ -107,7 +107,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
                     "calls_from": set(),
                     "calls_to": set(),
                     "cache": self.token_cache,
-                    "min_len": self.min_len,
+                    "min_str_len": self.min_str_len,
                 },
             )
 

@@ -38,7 +38,7 @@ class IdaFeatureExtractor(FeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self):
-        yield from capa.features.extractors.ida.file.extract_features(file_ctx={"min_len": self.min_len})
+        yield from capa.features.extractors.ida.file.extract_features(ctx={"min_len": self.min_len})
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         import capa.features.extractors.ida.helpers as ida_helpers

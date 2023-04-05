@@ -134,7 +134,7 @@ def extract_file_section_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
         yield Section(idaapi.get_segm_name(seg)), AbsoluteVirtualAddress(seg.start_ea)
 
 
-def extract_file_strings(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_strings(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings
 
     IDA must load resource sections for this to be complete
@@ -145,10 +145,10 @@ def extract_file_strings(file_ctx) -> Iterator[Tuple[Feature, Address]]:
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
 
         # differing to common string extractor factor in segment offset here
-        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff, min_len=file_ctx["min_len"]):
+        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff, min_len=ctx["min_len"]):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
-        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff, min_len=file_ctx["min_len"]):
+        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff, min_len=ctx["min_len"]):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
@@ -183,10 +183,10 @@ def extract_file_format(**kwargs) -> Iterator[Tuple[Feature, Address]]:
         raise NotImplementedError(f"unexpected file format: {file_info.filetype}")
 
 
-def extract_features(file_ctx) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(file_ctx=file_ctx):
+        for feature, addr in file_handler(ctx=ctx):
             yield feature, addr
 
 

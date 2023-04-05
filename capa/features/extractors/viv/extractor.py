@@ -36,7 +36,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(file_ctx={"buf": self.buf}))
+        self.global_features.extend(capa.features.extractors.viv.file.extract_file_format(ctx={"buf": self.buf}))
         self.global_features.extend(capa.features.extractors.common.extract_os(self.buf, os))
         self.global_features.extend(capa.features.extractors.viv.global_.extract_arch(self.vw))
 
@@ -49,7 +49,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def extract_file_features(self):
         yield from capa.features.extractors.viv.file.extract_features(
-            file_ctx={"vw": self.vw, "buf": self.buf, "min_len": self.min_len}
+            ctx={"vw": self.vw, "buf": self.buf, "min_len": self.min_len}
         )
 
     def get_functions(self) -> Iterator[FunctionHandle]:

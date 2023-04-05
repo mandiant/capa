@@ -21,11 +21,9 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_import_names(file_ctx):
+def extract_file_import_names(ctx):
     # see https://github.com/eliben/pyelftools/blob/0664de05ed2db3d39041e2d51d19622a8ef4fb0f/scripts/readelf.py#L372
-    symbol_tables = [
-        (idx, s) for idx, s in enumerate(file_ctx["elf"].iter_sections()) if isinstance(s, SymbolTableSection)
-    ]
+    symbol_tables = [(idx, s) for idx, s in enumerate(ctx["elf"].iter_sections()) if isinstance(s, SymbolTableSection)]
 
     for _, section in symbol_tables:
         if not isinstance(section, SymbolTableSection):
@@ -44,16 +42,16 @@ def extract_file_import_names(file_ctx):
                 yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
-def extract_file_section_names(file_ctx):
-    for section in file_ctx["elf"].iter_sections():
+def extract_file_section_names(ctx):
+    for section in ctx["elf"].iter_sections():
         if section.name:
             yield Section(section.name), AbsoluteVirtualAddress(section.header.sh_addr)
         elif section.is_null():
             yield Section("NULL"), AbsoluteVirtualAddress(section.header.sh_addr)
 
 
-def extract_file_strings(file_ctx):
-    yield from capa.features.extractors.common.extract_file_strings(file_ctx["buf"], file_ctx["min_len"])
+def extract_file_strings(ctx):
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
 
 
 def extract_file_os(elf, buf, **kwargs):
@@ -81,9 +79,9 @@ def extract_file_arch(elf, **kwargs):
         logger.warning("unsupported architecture: %s", arch)
 
 
-def extract_file_features(file_ctx) -> Iterator[Tuple[Feature, int]]:
+def extract_file_features(ctx) -> Iterator[Tuple[Feature, int]]:
     for file_handler in FILE_HANDLERS:
-        for feature, addr in file_handler(file_ctx=file_ctx):  # type: ignore
+        for feature, addr in file_handler(ctx=ctx):  # type: ignore
             yield feature, addr
 
 
@@ -134,7 +132,7 @@ class ElfFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, addr in extract_file_features(file_ctx={"elf": self.elf, "buf": buf, "min_len": self.min_len}):
+        for feature, addr in extract_file_features(ctx={"elf": self.elf, "buf": buf, "min_len": self.min_len}):
             yield feature, addr
 
     def get_functions(self):
