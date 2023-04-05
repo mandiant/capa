@@ -21,7 +21,7 @@
 - [capa-rules v5.1.0...master](https://github.com/mandiant/capa-rules/compare/v5.1.0...master)
 
 ## v5.1.0
-capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the Binary Ninja team contributed a new feature extractor. Other new features are a new CLI flag to override the detected operating system, functionality to read and render result documents, and a change to the output color format for easier readability.
+capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and a output color format that's easier to read.
 
 Over 25 capa rules have been added and improved.
 
