@@ -439,7 +439,7 @@ def extract_insn_peb_access_characteristic_features(
             return True
 
         value = right.value.value
-        if not (reg, value) in (("fsbase", 0x30), ("gsbase", 0x60)):  # noqa: E713
+        if (reg, value) not in (("fsbase", 0x30), ("gsbase", 0x60)):
             return True
 
         results.append((Characteristic("peb access"), ih.address))

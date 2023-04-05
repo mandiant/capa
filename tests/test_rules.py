@@ -40,8 +40,8 @@ ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 def test_rule_ctor():
     r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Or([Number(1)]), {})
-    assert r.evaluate({Number(0): {ADDR1}}) is False
-    assert r.evaluate({Number(1): {ADDR2}}) is True
+    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(1): {ADDR2}})) is True
 
 
 def test_rule_yaml():
@@ -63,10 +63,10 @@ def test_rule_yaml():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(0): {ADDR1}}) is False
-    assert r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}}) is False
-    assert r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}) is True
-    assert r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}}) is True
+    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
 
 
 def test_rule_yaml_complex():
@@ -89,8 +89,8 @@ def test_rule_yaml_complex():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}}) is True
-    assert r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}}) is False
+    assert bool(r.evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is False
 
 
 def test_rule_descriptions():
@@ -167,8 +167,8 @@ def test_rule_yaml_not():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(1): {ADDR1}}) is True
-    assert r.evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}}) is False
+    assert bool(r.evaluate({Number(1): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}})) is False
 
 
 def test_rule_yaml_count():
@@ -182,9 +182,9 @@ def test_rule_yaml_count():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(100): set()}) is False
-    assert r.evaluate({Number(100): {ADDR1}}) is True
-    assert r.evaluate({Number(100): {ADDR1, ADDR2}}) is False
+    assert bool(r.evaluate({Number(100): set()})) is False
+    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is False
 
 
 def test_rule_yaml_count_range():
@@ -198,10 +198,10 @@ def test_rule_yaml_count_range():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(100): set()}) is False
-    assert r.evaluate({Number(100): {ADDR1}}) is True
-    assert r.evaluate({Number(100): {ADDR1, ADDR2}}) is True
-    assert r.evaluate({Number(100): {ADDR1, ADDR2, ADDR3}}) is False
+    assert bool(r.evaluate({Number(100): set()})) is False
+    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2, ADDR3}})) is False
 
 
 def test_rule_yaml_count_string():
@@ -215,10 +215,10 @@ def test_rule_yaml_count_string():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({String("foo"): set()}) is False
-    assert r.evaluate({String("foo"): {ADDR1}}) is False
-    assert r.evaluate({String("foo"): {ADDR1, ADDR2}}) is True
-    assert r.evaluate({String("foo"): {ADDR1, ADDR2, ADDR3}}) is False
+    assert bool(r.evaluate({String("foo"): set()})) is False
+    assert bool(r.evaluate({String("foo"): {ADDR1}})) is False
+    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2}})) is True
+    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2, ADDR3}})) is False
 
 
 def test_invalid_rule_feature():
@@ -488,11 +488,11 @@ def test_count_number_symbol():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(2): set()}) is False
-    assert r.evaluate({Number(2): {ADDR1}}) is True
-    assert r.evaluate({Number(2): {ADDR1, ADDR2}}) is False
-    assert r.evaluate({Number(0x100, description="symbol name"): {ADDR1}}) is False
-    assert r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
+    assert bool(r.evaluate({Number(2): set()})) is False
+    assert bool(r.evaluate({Number(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(2): {ADDR1, ADDR2}})) is False
+    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
 
 
 def test_invalid_number():
@@ -574,11 +574,11 @@ def test_count_offset_symbol():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Offset(2): set()}) is False
-    assert r.evaluate({Offset(2): {ADDR1}}) is True
-    assert r.evaluate({Offset(2): {ADDR1, ADDR2}}) is False
-    assert r.evaluate({Offset(0x100, description="symbol name"): {ADDR1}}) is False
-    assert r.evaluate({Offset(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
+    assert bool(r.evaluate({Offset(2): set()})) is False
+    assert bool(r.evaluate({Offset(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Offset(2): {ADDR1, ADDR2}})) is False
+    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1}})) is False
+    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
 
 
 def test_invalid_offset():
@@ -973,10 +973,10 @@ def test_property_access():
             """
         )
     )
-    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {ADDR1}}) is True
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {ADDR1}})) is True
 
-    assert r.evaluate({Property("System.IO.FileInfo::Length"): {ADDR1}}) is False
-    assert r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {ADDR1}}) is False
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length"): {ADDR1}})) is False
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {ADDR1}})) is False
 
 
 def test_property_access_symbol():
@@ -992,8 +992,14 @@ def test_property_access_symbol():
         )
     )
     assert (
-        r.evaluate(
-            {Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {ADDR1}}
+        bool(
+            r.evaluate(
+                {
+                    Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {
+                        ADDR1
+                    }
+                }
+            )
         )
         is True
     )
