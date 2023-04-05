@@ -467,11 +467,11 @@ def test_number_symbol():
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
     assert (Number(1) in children) is True
-    assert (Number(4294967295) in children) is True
+    assert (Number(0xFFFFFFFF) in children) is True
     assert (Number(2, description="symbol name") in children) is True
     assert (Number(3, description="symbol name") in children) is True
     assert (Number(4, description="symbol name = another name") in children) is True
-    assert (Number(256, description="symbol name") in children) is True
+    assert (Number(0x100, description="symbol name") in children) is True
 
 
 def test_count_number_symbol():
@@ -491,8 +491,8 @@ def test_count_number_symbol():
     assert r.evaluate({Number(2): set()}) is False
     assert r.evaluate({Number(2): {ADDR1}}) is True
     assert r.evaluate({Number(2): {ADDR1, ADDR2}}) is False
-    assert r.evaluate({Number(256, description="symbol name"): {ADDR1}}) is False
-    assert r.evaluate({Number(256, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
+    assert r.evaluate({Number(0x100, description="symbol name"): {ADDR1}}) is False
+    assert r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
 
 
 def test_invalid_number():
@@ -557,7 +557,7 @@ def test_offset_symbol():
     assert (Offset(2, description="symbol name") in children) is True
     assert (Offset(3, description="symbol name") in children) is True
     assert (Offset(4, description="symbol name = another name") in children) is True
-    assert (Offset(256, description="symbol name") in children) is True
+    assert (Offset(0x100, description="symbol name") in children) is True
 
 
 def test_count_offset_symbol():
@@ -577,8 +577,8 @@ def test_count_offset_symbol():
     assert r.evaluate({Offset(2): set()}) is False
     assert r.evaluate({Offset(2): {ADDR1}}) is True
     assert r.evaluate({Offset(2): {ADDR1, ADDR2}}) is False
-    assert r.evaluate({Offset(256, description="symbol name"): {ADDR1}}) is False
-    assert r.evaluate({Offset(256, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
+    assert r.evaluate({Offset(0x100, description="symbol name"): {ADDR1}}) is False
+    assert r.evaluate({Offset(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}}) is True
 
 
 def test_invalid_offset():
