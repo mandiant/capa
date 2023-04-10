@@ -76,7 +76,7 @@ setuptools.setup(
             "pycodestyle==2.10.0",
             "black==23.3.0",
             "isort==5.11.4",
-            "mypy==1.1.1",
+            "mypy==1.2.0",
             "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.28.0",
