@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- extractor: fix binja installation path detection does not work with Python 3.11
+
 ### capa explorer IDA Pro plugin
 
 ### Development
