@@ -12,6 +12,9 @@
 
 ### Bug Fixes
 
+- extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
+
+
 ### capa explorer IDA Pro plugin
 
 ### Development
