@@ -25,7 +25,7 @@ def extract_function_calls_to(fh: FunctionHandle):
         # Everything that is a code reference to the current function is considered a caller, which actually includes
         # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
         # considered a caller to the function
-        if caller.llil.operation in [
+        if caller.llil is not None and caller.llil.operation in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
             LowLevelILOperation.LLIL_JUMP,
