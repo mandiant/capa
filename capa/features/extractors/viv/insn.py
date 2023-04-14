@@ -120,6 +120,27 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 yield API(name[1:]), ih.address
             return
 
+        if imports == {}:
+            # no imports implies the binary was likely statically linked.
+            # therefore, we try to use the symbol's table to fetch the api names
+            name = f.vw.name_by_va.get(target)
+            if not name:
+                return
+
+            name = name.split('.')[-1]
+            prefixes = [
+                    "__GI_",
+                    "__libc_",
+            ]
+
+            for prefix in prefixes:
+                if name.startswith(prefix):
+                    yield API(name[len(prefix):]), ih.address
+                    return
+
+            yield API(name), ih.address
+            return
+
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
                 dll, symbol = imports[target]
