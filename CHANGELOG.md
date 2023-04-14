@@ -1,7 +1,7 @@
 # Change Log
 
 ## master (unreleased)
-
+- add support for api extraction from statically linked libraries.
 ### New Features
 
 ### Breaking Changes
