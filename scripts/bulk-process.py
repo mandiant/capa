@@ -129,7 +129,7 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
+    meta = capa.main.collect_metadata([], path, format, os_, [], extractor).to_capa()
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)

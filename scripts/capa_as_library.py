@@ -171,7 +171,7 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, rules_path, extractor)
+    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, rules_path, extractor).to_capa()
     meta["analysis"].update(counts)
     meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
 

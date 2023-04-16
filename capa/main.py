@@ -39,6 +39,7 @@ import capa.render.verbose
 import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
+import capa.render.result_document
 import capa.features.extractors
 import capa.features.extractors.common
 import capa.features.extractors.pefile
@@ -751,31 +752,36 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
-    return {
-        "timestamp": datetime.datetime.now().isoformat(),
-        "version": capa.version.__version__,
-        "argv": argv,
-        "sample": {
-            "md5": md5.hexdigest(),
-            "sha1": sha1.hexdigest(),
-            "sha256": sha256.hexdigest(),
-            "path": os.path.normpath(sample_path),
-        },
-        "analysis": {
-            "format": format_,
-            "arch": arch,
-            "os": os_,
-            "extractor": extractor.__class__.__name__,
-            "rules": rules_path,
-            "base_address": extractor.get_base_address(),
-            "layout": {
-                # this is updated after capabilities have been collected.
-                # will look like:
-                #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+    return capa.render.result_document.Metadata.from_capa(
+        {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "version": capa.version.__version__,
+            "argv": argv,
+            "sample": {
+                "md5": md5.hexdigest(),
+                "sha1": sha1.hexdigest(),
+                "sha256": sha256.hexdigest(),
+                "path": os.path.normpath(sample_path),
             },
-        },
-    }
+            "analysis": {
+                "format": format_,
+                "arch": arch,
+                "os": os_,
+                "extractor": extractor.__class__.__name__,
+                "rules": rules_path,
+                "base_address": extractor.get_base_address(),
+                "layout": {
+                    "functions": {}
+                    # this is updated after capabilities have been collected.
+                    # will look like:
+                    #
+                    # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+                },
+                "feature_counts": {"file": 0, "functions": {}},
+                "library_functions": {},
+            },
+        }
+    )
 
 
 def compute_layout(rules, extractor, capabilities):
@@ -1244,8 +1250,7 @@ def main(argv=None):
                 log_unsupported_os_error()
                 return E_INVALID_FILE_OS
 
-        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
-
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor).to_capa()
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
         meta["analysis"].update(counts)
         meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
