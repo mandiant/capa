@@ -39,8 +39,8 @@ import capa.render.verbose
 import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
-import capa.render.result_document
 import capa.features.extractors
+import capa.render.result_document
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
