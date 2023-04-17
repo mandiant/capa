@@ -255,7 +255,8 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     if disable_progress:
         # do not use tqdm to avoid unnecessary side effects when caller intends
         # to disable progress completely
-        pbar = lambda s, *args, **kwargs: s
+        def pbar(s, *args, **kwargs):
+            return s
 
     functions = list(extractor.get_functions())
     n_funcs = len(functions)
