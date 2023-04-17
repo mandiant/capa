@@ -1,7 +1,7 @@
 # Change Log
 
 ## master (unreleased)
-- add support for api extraction from statically linked libraries.
+- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
 ### New Features
 
 ### Breaking Changes
