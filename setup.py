@@ -18,7 +18,7 @@ requirements = [
     "termcolor==2.2.0",
     "wcwidth==0.2.6",
     "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.7.8",
+    "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
     "ruamel.yaml==0.17.21",
