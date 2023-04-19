@@ -6,8 +6,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
