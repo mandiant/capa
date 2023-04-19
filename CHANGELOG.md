@@ -6,9 +6,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
 -
 
 ### Bug Fixes
