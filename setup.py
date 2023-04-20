@@ -22,7 +22,7 @@ requirements = [
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
     "ruamel.yaml==0.17.21",
-    "vivisect==1.1.0",
+    "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.29",
     "dnfile==0.13.0",
