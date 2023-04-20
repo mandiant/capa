@@ -59,6 +59,7 @@ hiddenimports = [
     "vivisect.analysis.generic.relocations",
     "vivisect.analysis.generic.strconst",
     "vivisect.analysis.generic.switchcase",
+    "vivisect.analysis.generic.symswitchcase",
     "vivisect.analysis.generic.thunks",
     "vivisect.analysis.generic.noret",
     "vivisect.analysis.i386",
