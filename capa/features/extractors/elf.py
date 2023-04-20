@@ -24,7 +24,7 @@ def align(v, alignment):
         return v + (alignment - remainder)
 
 
-def read_cstr(buf, offset):
+def read_cstr(buf, offset) -> str:
     s = buf[offset:]
     s, _, _ = s.partition(b"\x00")
     return s.decode("utf-8")
@@ -458,10 +458,12 @@ class ELF:
         for d_tag, d_val in self.dynamic_entries:
             if d_tag == DT_STRTAB:
                 strtab_addr = d_val
+                break
 
         for d_tag, d_val in self.dynamic_entries:
             if d_tag == DT_STRSZ:
                 strtab_size = d_val
+                break
 
         if strtab_addr is None:
             return None
@@ -471,8 +473,10 @@ class ELF:
 
         strtab_offset = None
         for shdr in self.section_headers:
-            if shdr.addr <= strtab_addr < shdr.addr + shdr.size:
+            # the section header address should be defined
+            if shdr.addr and shdr.addr <= strtab_addr < shdr.addr + shdr.size:
                 strtab_offset = shdr.offset + (strtab_addr - shdr.addr)
+                break
 
         if strtab_offset is None:
             return None
@@ -501,7 +505,10 @@ class ELF:
             if d_tag != DT_NEEDED:
                 continue
 
-            yield read_cstr(strtab, d_val)
+            try:
+                yield read_cstr(strtab, d_val)
+            except UnicodeDecodeError as e:
+                logger.warning("failed to read DT_NEEDED entry: %s", str(e))
 
     @property
     def symtab(self) -> Optional[Tuple[Shdr, Shdr]]:

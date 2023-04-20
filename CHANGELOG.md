@@ -11,6 +11,7 @@
 -
 
 ### Bug Fixes
+- improve ELF strtab and needed parsing @mr-tz
 
 ### capa explorer IDA Pro plugin
 
