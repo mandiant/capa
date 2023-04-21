@@ -96,9 +96,12 @@ jobs:
       run: pytest -v tests/
 
   binja-tests:
-    name: Binary Ninja tests for ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Binary Ninja tests for ${{ matrix.python-version }}
     runs-on: ubuntu-20.04
     needs: [code_style, rule_linter]
+    # do not run on forks, because:
+    # with the exception of GITHUB_TOKEN, secrets are not passed to the runner when a workflow is triggered from a forked repository.
+    if: "! github.event.pull_request.head.repo.fork"
     strategy:
       fail-fast: false
       matrix:
