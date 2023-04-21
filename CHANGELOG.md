@@ -2,6 +2,7 @@
 
 ## master (unreleased)
 - extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
+
 ### New Features
 
 ### Breaking Changes
