@@ -90,6 +90,24 @@ class Shdr:
     link: int
     entsize: int
     buf: bytes
+    
+    @classmethod
+    def from_viv(cls, section, buf: bytes):
+        """
+        construct a Shdr object from vivisect's representation of
+        section headers (Elf.Elf32Section or Elf.Elf64Section)
+        """
+        return cls(
+            int(section.vsGetField('sh_name')),
+            int(section.vsGetField('sh_type')),
+            int(section.vsGetField('sh_flags')),
+            int(section.vsGetField('sh_addr')),
+            int(section.vsGetField('sh_offset')),
+            int(section.vsGetField('sh_size')),
+            int(section.vsGetField('sh_link')),
+            int(section.vsGetField('sh_entsize')),
+            buf,
+    )
 
 
 class ELF:
