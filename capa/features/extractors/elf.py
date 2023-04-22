@@ -651,6 +651,9 @@ class SymTab:
         return the symbol's information in
         the order specified by sys/elf32.h
         """
+        if self.symtab.entsize == 0:
+            return
+
         for i in range(int(len(self.symtab.buf) / self.symtab.entsize)):
             if bitness == 32:
                 name_offset, value, size, info, other, shndx = struct.unpack_from(
