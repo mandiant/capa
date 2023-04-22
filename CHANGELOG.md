@@ -15,6 +15,8 @@
 ### Bug Fixes
 
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
+- symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
+- symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
 
 
 ### capa explorer IDA Pro plugin
