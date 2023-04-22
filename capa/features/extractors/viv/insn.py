@@ -22,6 +22,7 @@ import capa.features.extractors.viv.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.elf import Shdr, SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -120,26 +121,33 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 yield API(name[1:]), ih.address
             return
 
-        if imports == {}:
-            # no imports implies the binary was likely statically linked.
-            # therefore, we try to use the symbol's table to fetch the api names
-            name = f.vw.name_by_va.get(target)
-            if not name:
-                return
+        if f.vw.metadata['Format'] == 'elf':
+            if not hasattr(extract_insn_api_features, 'symtab'):
+                # the symbol table gets stored as a function's attribute in order to avoid running
+                # this code everytime the call is made, thus preventing the computational overhead.
+                elf = f.vw.parsedbin
+                endian = '<' if elf.getEndian() == 0 else '>'
+                bitness = elf.bits
 
-            name = name.split('.')[-1]
-            prefixes = [
-                    "__GI_",
-                    "__libc_",
-            ]
+                SHT_SYMTAB = 0x2
+                for section in elf.sections:
+                    if section.vsGetField('sh_info') & SHT_SYMTAB != 0:
+                        strtab = elf.sections[section.vsGetField('sh_link')]
+                        sh_symtab = Shdr.from_viv(section, elf.getSectionBytes(section.name))
+                        sh_strtab = Shdr.from_viv(strtab, elf.getSectionBytes(strtab.name))
 
-            for prefix in prefixes:
-                if name.startswith(prefix):
-                    yield API(name[len(prefix):]), ih.address
-                    return
+                symtab = SymTab(endian, bitness, sh_symtab, sh_strtab)
+                extract_insn_api_features.symtab = symtab
 
-            yield API(name), ih.address
-            return
+            symtab = extract_insn_api_features.symtab
+            for symbol in symtab.get_symbols():
+                sym_name = symtab.get_name(symbol)
+                sym_value = symbol.value
+                sym_info = symbol.info
+                
+                STT_FUNC = 0x2
+                if sym_value == target and sym_info & STT_FUNC != 0:
+                    yield API(sym_name), ih.address
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
