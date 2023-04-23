@@ -122,18 +122,18 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 yield API(name[1:]), ih.address
             return
 
-        if f.vw.metadata['Format'] == 'elf':
-            if not hasattr(extract_insn_api_features, 'symtab'):
+        if f.vw.metadata["Format"] == "elf":
+            if not hasattr(extract_insn_api_features, "symtab"):
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code everytime the call is made, thus preventing the computational overhead.
                 elf = f.vw.parsedbin
-                endian = '<' if elf.getEndian() == 0 else '>'
+                endian = "<" if elf.getEndian() == 0 else ">"
                 bitness = elf.bits
 
                 SHT_SYMTAB = 0x2
                 for section in elf.sections:
-                    if section.vsGetField('sh_info') & SHT_SYMTAB != 0:
-                        strtab = elf.sections[section.vsGetField('sh_link')]
+                    if section.vsGetField("sh_info") & SHT_SYMTAB != 0:
+                        strtab = elf.sections[section.vsGetField("sh_link")]
                         sh_symtab = Shdr.from_viv(section, elf.getSectionBytes(section.name))
                         sh_strtab = Shdr.from_viv(strtab, elf.getSectionBytes(strtab.name))
 
@@ -145,7 +145,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 sym_name = symtab.get_name(symbol)
                 sym_value = symbol.value
                 sym_info = symbol.info
-                
+
                 STT_FUNC = 0x2
                 if sym_value == target and sym_info & STT_FUNC != 0:
                     yield API(sym_name), ih.address
