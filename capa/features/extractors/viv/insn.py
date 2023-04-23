@@ -19,6 +19,7 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
+from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -148,6 +149,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 STT_FUNC = 0x2
                 if sym_value == target and sym_info & STT_FUNC != 0:
                     yield API(sym_name), ih.address
+                    yield FunctionName(sym_name), ih.address
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
