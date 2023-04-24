@@ -651,6 +651,9 @@ class SymTab:
         return the symbol's information in
         the order specified by sys/elf32.h
         """
+        if self.symtab.entsize == 0:
+            return
+
         for i in range(int(len(self.symtab.buf) / self.symtab.entsize)):
             if bitness == 32:
                 name_offset, value, size, info, other, shndx = struct.unpack_from(
@@ -658,7 +661,7 @@ class SymTab:
                 )
             elif bitness == 64:
                 name_offset, info, other, shndx, value, size = struct.unpack_from(
-                    endian + "IBBBQQ", symtab_buf, i * self.symtab.entsize
+                    endian + "IBBHQQ", symtab_buf, i * self.symtab.entsize
                 )
 
             self.symbols.append(Symbol(name_offset, value, size, info, other, shndx))
