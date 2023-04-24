@@ -661,7 +661,7 @@ class SymTab:
                 )
             elif bitness == 64:
                 name_offset, info, other, shndx, value, size = struct.unpack_from(
-                    endian + "IBBhQQ", symtab_buf, i * self.symtab.entsize
+                    endian + "IBBHQQ", symtab_buf, i * self.symtab.entsize
                 )
 
             self.symbols.append(Symbol(name_offset, value, size, info, other, shndx))
