@@ -19,6 +19,8 @@
 - symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
 - improve ELF strtab and needed parsing @mr-tz
 
+- extractor: fix binja installation path detection does not work with Python 3.11
+
 ### capa explorer IDA Pro plugin
 
 ### Development
