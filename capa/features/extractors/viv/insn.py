@@ -123,7 +123,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
             return
 
         if f.vw.metadata["Format"] == "elf":
-            if not hasattr(extract_insn_api_features, "symtab"):
+            if "SymbolTable" not in f.vw.metadata:
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code everytime the call is made, thus preventing the computational overhead.
                 elf = f.vw.parsedbin
@@ -138,9 +138,9 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                         sh_strtab = Shdr.from_viv(strtab, elf.getSectionBytes(strtab.name))
 
                 symtab = SymTab(endian, bitness, sh_symtab, sh_strtab)
-                extract_insn_api_features.symtab = symtab
+                f.vw.metadata["SymbolTable"] = symtab
 
-            symtab = extract_insn_api_features.symtab
+            symtab = f.vw.metadata["SymbolTable"]
             for symbol in symtab.get_symbols():
                 sym_name = symtab.get_name(symbol)
                 sym_value = symbol.value
