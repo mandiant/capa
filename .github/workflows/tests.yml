@@ -108,10 +108,12 @@ jobs:
         python-version: ["3.7", "3.11"]
     steps:
     - name: Show repo/fork info
-      run: |
-        echo "github.repository: {{ github.repository }}"
-        echo "github.event.pull_request.head.repo.full_name: {{ github.event.pull_request.head.repo.full_name }}"
-        echo "github.event.pull_request.head.repo.fork: {{ github.event.pull_request.head.repo.fork }}"
+      # github.repository
+      # github.event.pull_request.head.repo.full_name
+      # github.event.pull_request.head.repo.fork
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
