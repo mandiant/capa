@@ -18,17 +18,17 @@ requirements = [
     "termcolor==2.2.0",
     "wcwidth==0.2.6",
     "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.7.7",
+    "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
     "ruamel.yaml==0.17.21",
-    "vivisect==1.0.8",
-    "pefile==2022.5.30",
+    "vivisect==1.1.1",
+    "pefile==2023.2.7",
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==1.10.7",
-    "protobuf==4.22.1",
+    "protobuf==4.22.3",
 ]
 
 # this sets __version__
@@ -69,14 +69,15 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
-            "pytest==7.1.3",
+            "pytest==7.3.1",
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.5.0",
             "pytest-cov==4.0.0",
             "pycodestyle==2.10.0",
+            "ruff==0.0.260",
             "black==23.3.0",
             "isort==5.11.4",
-            "mypy==1.1.1",
+            "mypy==1.2.0",
             "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.28.0",
@@ -89,7 +90,7 @@ setuptools.setup(
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
-            "types-protobuf==4.22.0.1",
+            "types-protobuf==4.22.0.2",
         ],
         "build": [
             "pyinstaller==5.9.0",

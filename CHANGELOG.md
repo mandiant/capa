@@ -6,11 +6,17 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (2)
 
+- load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
 -
 
 ### Bug Fixes
+- extractor: update vivisect Arch extraction #1334 @mr-tz
+- extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
+- symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
+- symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
 - improve ELF strtab and needed parsing @mr-tz
 
 ### capa explorer IDA Pro plugin
@@ -69,7 +75,7 @@ Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
-- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
+- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
