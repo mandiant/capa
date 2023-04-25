@@ -97,38 +97,42 @@ jobs:
 
   binja-tests:
     name: Binary Ninja tests for ${{ matrix.python-version }}
+    env:
+      BN_SERIAL: ${{ secrets.BN_SERIAL }}
     runs-on: ubuntu-20.04
     needs: [code_style, rule_linter]
-    # do not run on forks, because:
-    # with the exception of GITHUB_TOKEN, secrets are not passed to the runner when a workflow is triggered from a forked repository.
-    if: github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.11"]
     steps:
     - name: Checkout capa with submodules
+      # do only run if BN_SERIAL is available, have to do this in every step, see https://github.com/orgs/community/discussions/26726#discussioncomment-3253118
+      if: ${{ env.BN_SERIAL }} != ""
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
     - name: Set up Python ${{ matrix.python-version }}
+      if: ${{ env.BN_SERIAL }} != ""
       uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install pyyaml
+      if: ${{ env.BN_SERIAL }} != ""
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
+      if: ${{ env.BN_SERIAL }} != ""
       run: pip install -e .[dev]
     - name: install Binary Ninja
-      env:
-        BN_SERIAL: ${{ secrets.BN_SERIAL }}
+      if: ${{ env.BN_SERIAL }} != ""
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
-        python ./.github/binja/download_headless.py --serial $BN_SERIAL --output .github/binja/BinaryNinja-headless.zip
+        python ./.github/binja/download_headless.py --serial ${{ env.BN_SERIAL }} --output .github/binja/BinaryNinja-headless.zip
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py --install-on-root --silent
     - name: Run tests
+      if: ${{ env.BN_SERIAL }} != ""
       env:
         BN_LICENSE: ${{ secrets.BN_LICENSE }}
       run: pytest -v tests/test_binja_features.py  # explicitly refer to the binja tests for performance. other tests run above.
