@@ -14,11 +14,10 @@
 
 ### Bug Fixes
 - extractor: update vivisect Arch extraction #1334 @mr-tz
-
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
 - symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
-
+- improve ELF strtab and needed parsing @mr-tz
 
 ### capa explorer IDA Pro plugin
 
