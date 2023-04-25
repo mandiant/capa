@@ -98,14 +98,14 @@ class Shdr:
         section headers (Elf.Elf32Section or Elf.Elf64Section)
         """
         return cls(
-            int(section.vsGetField("sh_name")),
-            int(section.vsGetField("sh_type")),
-            int(section.vsGetField("sh_flags")),
-            int(section.vsGetField("sh_addr")),
-            int(section.vsGetField("sh_offset")),
-            int(section.vsGetField("sh_size")),
-            int(section.vsGetField("sh_link")),
-            int(section.vsGetField("sh_entsize")),
+            section.sh_name,
+            section.sh_type,
+            section.sh_flags,
+            section.sh_addr,
+            section.sh_offset,
+            section.sh_size,
+            section.sh_link,
+            section.sh_entsize,
             buf,
         )
 
