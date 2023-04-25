@@ -13,6 +13,7 @@
 -
 
 ### Bug Fixes
+- extractor: update vivisect Arch extraction #1334 @mr-tz
 
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
@@ -75,7 +76,7 @@ Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
-- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
+- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
