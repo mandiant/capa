@@ -103,7 +103,7 @@ jobs:
     needs: [code_style, rule_linter]
     # do not run on forks, because:
     # with the exception of GITHUB_TOKEN, secrets are not passed to the runner when a workflow is triggered from a forked repository.
-    if: $BN_SERIAL != ""
+    if: ${{ env.BN_SERIAL }} != ""
     strategy:
       fail-fast: false
       matrix:
@@ -125,7 +125,7 @@ jobs:
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
-        python ./.github/binja/download_headless.py --serial $BN_SERIAL --output .github/binja/BinaryNinja-headless.zip
+        python ./.github/binja/download_headless.py --serial ${{ env.BN_SERIAL }} --output .github/binja/BinaryNinja-headless.zip
         unzip .github/binja/BinaryNinja-headless.zip -d .github/binja/
         python .github/binja/binaryninja/scripts/install_api.py --install-on-root --silent
     - name: Run tests
