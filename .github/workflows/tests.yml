@@ -101,12 +101,17 @@ jobs:
     needs: [code_style, rule_linter]
     # do not run on forks, because:
     # with the exception of GITHUB_TOKEN, secrets are not passed to the runner when a workflow is triggered from a forked repository.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: "! github.event.pull_request.head.repo.fork"
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.11"]
     steps:
+    - name: Show repo/fork info
+      run: |
+        echo "github.repository: {{ github.repository }}"
+        echo "github.event.pull_request.head.repo.full_name: {{ github.event.pull_request.head.repo.full_name }}"
+        echo "github.event.pull_request.head.repo.fork: {{ github.event.pull_request.head.repo.fork }}"
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
