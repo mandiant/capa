@@ -97,8 +97,6 @@ jobs:
 
   binja-tests:
     name: Binary Ninja tests for ${{ matrix.python-version }}
-    env:
-      BN_SERIAL: ${{ secrets.BN_SERIAL }}
     runs-on: ubuntu-20.04
     needs: [code_style, rule_linter]
     # do not run on forks, because:
@@ -110,7 +108,6 @@ jobs:
         python-version: ["3.7", "3.11"]
     steps:
     - name: Checkout capa with submodules
-      if: ${{ env.BN_SERIAL }} != ""
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
         submodules: recursive
@@ -123,6 +120,8 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: install Binary Ninja
+      env:
+        BN_SERIAL: ${{ secrets.BN_SERIAL }}
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
