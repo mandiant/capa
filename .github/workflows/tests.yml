@@ -97,23 +97,18 @@ jobs:
 
   binja-tests:
     name: Binary Ninja tests for ${{ matrix.python-version }}
+    env:
+      BN_SERIAL: ${{ secrets.BN_SERIAL }}
     runs-on: ubuntu-20.04
     needs: [code_style, rule_linter]
     # do not run on forks, because:
     # with the exception of GITHUB_TOKEN, secrets are not passed to the runner when a workflow is triggered from a forked repository.
-    if: "! github.event.pull_request.head.repo.fork"
+    if: $BN_SERIAL != ""
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.11"]
     steps:
-    - name: Show repo/fork info
-      # github.repository
-      # github.event.pull_request.head.repo.full_name
-      # github.event.pull_request.head.repo.fork
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
@@ -127,8 +122,6 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev]
     - name: install Binary Ninja
-      env:
-        BN_SERIAL: ${{ secrets.BN_SERIAL }}
       run: |
         mkdir ./.github/binja
         curl "https://raw.githubusercontent.com/Vector35/binaryninja-api/6812c97/scripts/download_headless.py" -o ./.github/binja/download_headless.py
