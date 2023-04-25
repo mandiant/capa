@@ -133,4 +133,6 @@ jobs:
         python .github/binja/binaryninja/scripts/install_api.py --install-on-root --silent
     - name: Run tests
       if: ${{ env.BN_SERIAL }} != ""
+      env:
+        BN_LICENSE: ${{ secrets.BN_LICENSE }}
       run: pytest -v tests/test_binja_features.py  # explicitly refer to the binja tests for performance. other tests run above.
