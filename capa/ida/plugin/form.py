@@ -1248,7 +1248,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """run capa analysis and reload UI controls
 
         called when user selects plugin reload from menu
-        """    
+        """
         if self.view_tabs.currentIndex() == 0:
             self.analyze_program()
         elif self.view_tabs.currentIndex() == 1:

@@ -56,7 +56,7 @@ class CapaRuleGenFeatureCache:
         self.func_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
         self.bb_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
         self.insn_nodes: Dict[Address, CapaRuleGenFeatureCacheNode] = {}
-        
+
         self._find_global_features()
         self._find_file_features()
 
@@ -201,7 +201,7 @@ class CapaRuleGenFeatureCache:
             self._find_function_and_below_features(fh)
             f_node = self.func_nodes.get(fh.address, None)
         return f_node
-        
+
     def get_all_function_features(self, fh: FunctionHandle) -> FeatureSet:
         f_node: Optional[CapaRuleGenFeatureCacheNode] = self._get_cached_func_node(fh)
         if f_node is None:
