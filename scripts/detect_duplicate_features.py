@@ -1,4 +1,5 @@
 import os
+import argparse
 
 import yaml
 
@@ -54,20 +55,35 @@ def find_overlapping_rules(new_rule_path, rules_path):
     return result
 
 
-# usage
-base_dir = ""
-new_rule_path = base_dir + "rules\\anti-analysis\\reference-analysis-tools-strings.yml"
-rules_path = base_dir + "rules"
+# python script.py --base-dir /path/to/capa/rules rules/anti-analysis/reference-analysis-tools-strings.yml rules
 
-try:
-    result = find_overlapping_rules(new_rule_path, rules_path)
-    print("New rule path : %s" % new_rule_path)
-    print("Number of rules checked : %s " % result["count"])
-    print("Paths to overlapping rules : ", result["overlapping_rules"])
-    print("Number of rules containing same features : %s" % len(result["overlapping_rules"]))
-except Exception as e:
-    print(e)
+
+def main():
+    # usage
+
+    parser = argparse.ArgumentParser(description="Find overlapping rules in Capa rules.")
+    parser.add_argument("-b", "--base-dir", default="", help="Base directory for Capa rules.")
+    parser.add_argument("-f", "--new_rule_path", required=True, help="Path to the new Capa rule.")
+    parser.add_argument("-d", "--rules_path", required=True, help="Path to the directory containing Capa rules.")
+    args = parser.parse_args()
+
+    base_dir = args.base_dir
+    new_rule_path = os.path.join(base_dir, args.new_rule_path)
+    rules_path = os.path.join(base_dir, args.rules_path)
+
     try:
-        print(result, "")
-    except:
-        pass
+        result = find_overlapping_rules(new_rule_path, rules_path)
+        print("New rule path : %s" % new_rule_path)
+        print("Number of rules checked : %s " % result["count"])
+        print("Paths to overlapping rules : ", result["overlapping_rules"])
+        print("Number of rules containing same features : %s" % len(result["overlapping_rules"]))
+    except Exception as e:
+        print(e)
+        try:
+            print(result, "")
+        except:
+            pass
+
+
+if __name__ == "__main__":
+    main()
