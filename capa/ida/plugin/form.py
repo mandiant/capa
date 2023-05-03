@@ -189,11 +189,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         self.parent: Any  # QtWidget
         self.ida_hooks: CapaExplorerIdaHooks
 
+        # these are init once objects
+        try:
+            ida_kernwin.show_wait_box("Performing one-time file analysis")
+            self.extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
+            self.feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.extractor)
+        except Exception as e:
+            logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+            return
+        finally:
+            ida_kernwin.hide_wait_box()
+
         # caches used to speed up capa explorer analysis - these must be init to None
         self.resdoc_cache: Optional[capa.render.result_document.ResultDocument] = None
         self.program_analysis_ruleset_cache: Optional[capa.rules.RuleSet] = None
         self.rulegen_ruleset_cache: Optional[capa.rules.RuleSet] = None
-        self.rulegen_feature_cache: Optional[CapaRuleGenFeatureCache] = None
         self.rulegen_current_function: Optional[FunctionHandle] = None
 
         # models
@@ -725,23 +735,12 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box(f"{text} ({self.process_count} of {self.process_total})")
                     self.process_count += 1
 
-                update_wait_box("initializing feature extractor")
-
-                try:
-                    extractor = CapaExplorerFeatureExtractor()
-                    extractor.indicator.progress.connect(slot_progress_feature_extraction)
-                except Exception as e:
-                    logger.error("Failed to initialize feature extractor (error: %s).", e, exc_info=True)
-                    return False
-
-                if ida_kernwin.user_cancelled():
-                    logger.info("User cancelled analysis.")
-                    return False
+                self.extractor.indicator.progress.connect(slot_progress_feature_extraction)
 
                 update_wait_box("calculating analysis")
 
                 try:
-                    self.process_total += len(tuple(extractor.get_functions()))
+                    self.process_total += len(tuple(self.extractor.get_functions()))
                 except Exception as e:
                     logger.error("Failed to calculate analysis (error: %s).", e, exc_info=True)
                     return False
@@ -768,9 +767,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
-                    capabilities, counts = capa.main.find_capabilities(ruleset, extractor, disable_progress=True)
+                    capabilities, counts = capa.main.find_capabilities(ruleset, self.extractor, disable_progress=True)
                     meta["analysis"].update(counts)
-                    meta["analysis"]["layout"] = capa.main.compute_layout(ruleset, extractor, capabilities)
+                    meta["analysis"]["layout"] = capa.main.compute_layout(ruleset, self.extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
@@ -973,26 +972,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         # so we'll work with a local copy of the ruleset.
         ruleset = copy.deepcopy(self.rulegen_ruleset_cache)
 
-        # clear feature cache
-        if self.rulegen_feature_cache is not None:
-            self.rulegen_feature_cache = None
-
         # clear cached function
         if self.rulegen_current_function is not None:
             self.rulegen_current_function = None
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        update_wait_box("Initializing feature extractor")
-
-        try:
-            # must use extractor to get function, as capa analysis requires casted object
-            extractor = CapaExplorerFeatureExtractor()
-        except Exception as e:
-            logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-            return False
 
         if ida_kernwin.user_cancelled():
             logger.info("User cancelled analysis.")
@@ -1004,24 +986,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
-                self.rulegen_current_function = extractor.get_function(f.start_ea)
+                self.rulegen_current_function = self.extractor.get_function(f.start_ea)
         except Exception as e:
             logger.error("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e, exc_info=True)
-            return False
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        # extract features
-        try:
-            fh_list: List[FunctionHandle] = []
-            if self.rulegen_current_function is not None:
-                fh_list.append(self.rulegen_current_function)
-
-            self.rulegen_feature_cache = CapaRuleGenFeatureCache(fh_list, extractor)
-        except Exception as e:
-            logger.error("Failed to extract features (error: %s)", e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1033,11 +1000,11 @@ class CapaExplorerForm(idaapi.PluginForm):
         all_function_features: FeatureSet = collections.defaultdict(set)
         try:
             if self.rulegen_current_function is not None:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
+                _, func_matches, bb_matches, insn_matches = self.feature_cache.find_code_capabilities(
                     ruleset, self.rulegen_current_function
                 )
                 all_function_features.update(
-                    self.rulegen_feature_cache.get_all_function_features(self.rulegen_current_function)
+                    self.feature_cache.get_all_function_features(self.rulegen_current_function)
                 )
 
                 for name, result in itertools.chain(func_matches.items(), bb_matches.items(), insn_matches.items()):
@@ -1058,8 +1025,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         all_file_features: FeatureSet = collections.defaultdict(set)
         try:
-            _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
-            all_file_features.update(self.rulegen_feature_cache.get_all_file_features())
+            _, file_matches = self.feature_cache.find_file_capabilities(ruleset)
+            all_file_features.update(self.feature_cache.get_all_file_features())
 
             for name, result in file_matches.items():
                 rule = ruleset[name]
@@ -1213,7 +1180,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             capa.rules.Scope.INSTRUCTION,
         ):
             try:
-                _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
+                _, func_matches, bb_matches, insn_matches = self.feature_cache.find_code_capabilities(
                     ruleset, self.rulegen_current_function
                 )
             except Exception as e:
@@ -1228,7 +1195,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 is_match = True
         elif rule.scope == capa.rules.Scope.FILE:
             try:
-                _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
+                _, file_matches = self.feature_cache.find_file_capabilities(ruleset)
             except Exception as e:
                 self.set_rulegen_status(f"Failed to create file rule matches from rule set ({e})")
                 return
@@ -1281,7 +1248,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         """run capa analysis and reload UI controls
 
         called when user selects plugin reload from menu
-        """
+        """    
         if self.view_tabs.currentIndex() == 0:
             self.analyze_program()
         elif self.view_tabs.currentIndex() == 1:
