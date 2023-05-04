@@ -19,6 +19,7 @@
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
 - symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
 - improve ELF strtab and needed parsing @mr-tz
+- better handle exceptional cases when parsing ELF files #1471 @Aayush-Goel-04
 
 - extractor: fix binja installation path detection does not work with Python 3.11
 
