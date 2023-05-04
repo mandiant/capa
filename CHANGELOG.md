@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- Utility script to detect feature overlap between new and existing CAPA rules #1451 @Aayush-Goel-04
 
 ### Breaking Changes
 
