@@ -854,28 +854,60 @@ def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO]
     """
-    elf = ELF(f)
+    try:
+        elf = ELF(f)
+    except Exception as e:
+        logger.warning("Error parsing ELF file: %s", e)
+        return "unknown"
 
-    osabi_guess = guess_os_from_osabi(elf)
-    logger.debug("guess: osabi: %s", osabi_guess)
+    try:
+        osabi_guess = guess_os_from_osabi(elf)
+        logger.debug("guess: osabi: %s", osabi_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from OSABI: %s", e)
+        osabi_guess = None
 
-    ph_notes_guess = guess_os_from_ph_notes(elf)
-    logger.debug("guess: ph notes: %s", ph_notes_guess)
+    try:
+        ph_notes_guess = guess_os_from_ph_notes(elf)
+        logger.debug("guess: ph notes: %s", ph_notes_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from program header notes: %s", e)
+        ph_notes_guess = None
 
-    sh_notes_guess = guess_os_from_sh_notes(elf)
-    logger.debug("guess: sh notes: %s", sh_notes_guess)
+    try:
+        sh_notes_guess = guess_os_from_sh_notes(elf)
+        logger.debug("guess: sh notes: %s", sh_notes_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from section header notes: %s", e)
+        sh_notes_guess = None
 
-    linker_guess = guess_os_from_linker(elf)
-    logger.debug("guess: linker: %s", linker_guess)
+    try:
+        linker_guess = guess_os_from_linker(elf)
+        logger.debug("guess: linker: %s", linker_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from linker: %s", e)
+        linker_guess = None
 
-    abi_versions_needed_guess = guess_os_from_abi_versions_needed(elf)
-    logger.debug("guess: ABI versions needed: %s", abi_versions_needed_guess)
+    try:
+        abi_versions_needed_guess = guess_os_from_abi_versions_needed(elf)
+        logger.debug("guess: ABI versions needed: %s", abi_versions_needed_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from ABI versions needed: %s", e)
+        abi_versions_needed_guess = None
 
-    needed_dependencies_guess = guess_os_from_needed_dependencies(elf)
-    logger.debug("guess: needed dependencies: %s", needed_dependencies_guess)
+    try:
+        needed_dependencies_guess = guess_os_from_needed_dependencies(elf)
+        logger.debug("guess: needed dependencies: %s", needed_dependencies_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from needed dependencies: %s", e)
+        needed_dependencies_guess = None
 
-    symtab_guess = guess_os_from_symtab(elf)
-    logger.debug("guess: pertinent symbol name: %s", symtab_guess)
+    try:
+        symtab_guess = guess_os_from_symtab(elf)
+        logger.debug("guess: pertinent symbol name: %s", symtab_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from symbol table: %s", e)
+        symtab_guess = None
 
     ret = None
 
