@@ -23,7 +23,7 @@ def findall_features(features):
 
 def find_overlapping_rules(new_rule_path, rules_path):
     if not new_rule_path.endswith(".yml"):
-        return "ERROR ! New rule path file name incorrect"
+        raise ValueError("ERROR ! New rule path file name incorrect")
 
     count = 0
 
@@ -31,24 +31,24 @@ def find_overlapping_rules(new_rule_path, rules_path):
         new_rule = yaml.safe_load(f)
 
     if "rule" not in new_rule:
-        return "ERROR ! given new rule path isn't a rule"
+        raise ValueError("ERROR ! given new rule path isn't a rule")
 
     new_rule_features = findall_features(new_rule["rule"]["features"])
 
     overlapping_rules = []
-
-    for dirpath, dirnames, filenames in os.walk(rules_path):
-        for filename in filenames:
-            if filename.endswith(".yml"):
-                rule_path = os.path.join(dirpath, filename)
-                with open(rule_path, "r") as f:
-                    rule = yaml.safe_load(f)
-                    if "rule" not in rule:
-                        continue
-                    rule_features = findall_features(rule["rule"]["features"])
-                    count += 1
-                if any([feature in rule_features for feature in new_rule_features]):
-                    overlapping_rules.append(rule_path)
+    for rules in rules_path:
+        for dirpath, dirnames, filenames in os.walk(rules):
+            for filename in filenames:
+                if filename.endswith(".yml"):
+                    rule_path = os.path.join(dirpath, filename)
+                    with open(rule_path, "r") as f:
+                        rule = yaml.safe_load(f)
+                        if "rule" not in rule:
+                            continue
+                        rule_features = findall_features(rule["rule"]["features"])
+                        count += 1
+                    if any([feature in rule_features for feature in new_rule_features]):
+                        overlapping_rules.append(rule_path)
 
     result = {"overlapping_rules": overlapping_rules, "count": count}
 
@@ -59,17 +59,15 @@ def find_overlapping_rules(new_rule_path, rules_path):
 
 
 def main():
-    # usage
+    parser = argparse.ArgumentParser(description="Find overlapping features in Capa rules.")
 
-    parser = argparse.ArgumentParser(description="Find overlapping rules in Capa rules.")
-    parser.add_argument("-b", "--base-dir", default="", help="Base directory for Capa rules.")
-    parser.add_argument("-f", "--new_rule_path", required=True, help="Path to the new Capa rule.")
-    parser.add_argument("-d", "--rules_path", required=True, help="Path to the directory containing Capa rules.")
+    parser.add_argument("rules", type=str, action="append", help="Path to rules")
+    parser.add_argument("new_rule", type=str, help="Path to new rule")
+
     args = parser.parse_args()
 
-    base_dir = args.base_dir
-    new_rule_path = os.path.join(base_dir, args.new_rule_path)
-    rules_path = os.path.join(base_dir, args.rules_path)
+    new_rule_path = args.new_rule
+    rules_path = args.rules
 
     try:
         result = find_overlapping_rules(new_rule_path, rules_path)
@@ -80,7 +78,7 @@ def main():
     except Exception as e:
         print(e)
         try:
-            print(result, "")
+            print(result)
         except:
             pass
 
