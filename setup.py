@@ -89,7 +89,7 @@ setuptools.setup(
             "types-tabulate==0.9.0.1",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
-            "types_requests==2.28.1",
+            "types_requests==2.30.0.0",
             "types-protobuf==4.22.0.2",
         ],
         "build": [
