@@ -5,11 +5,15 @@ import capa.rules
 import capa.engine as ceng
 
 
-def get_child_features(feature) -> list:
+def get_child_features(feature: ceng.Statement) -> list:
     """
-    args:
-    \tfeature : capa.rule.Rule.statement containing feature statements
-    returns a list containg all the features in the rule
+    Recursively extracts all feature statements from a given rule statement.
+
+    Args:
+        feature (capa.engine.Statement): The feature statement to extract features from.
+
+    Returns:
+        list: A list of all feature statements contained within the given feature statement.
     """
     children = []
 
@@ -23,11 +27,15 @@ def get_child_features(feature) -> list:
     return children
 
 
-def get_features(rule_path):
+def get_features(rule_path: str) -> list:
     """
-    args:
-    \tfeature : rule path
-    returns a list containg all the features in the rule
+    Extracts all features from a given rule file.
+
+    Args:
+        rule_path (str): The path to the rule file to extract features from.
+
+    Returns:
+        list: A list of all feature statements contained within the rule file.
     """
     feature_list = []
     with open(rule_path, "r") as f:
