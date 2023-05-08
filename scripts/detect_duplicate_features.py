@@ -18,24 +18,25 @@ def get_child_features(feature):
     return children
 
 
-def get_features(rule_path, errors):
+def get_features(rule_path):
+    error = ""
+    feature_list = []
     with open(rule_path, "r") as f:
-        feature_list = []
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)
         except Exception as e:
-            errors.append("rule :" + rule_path + " " + str(type(e)) + " " + str(e))
-    return feature_list, errors
+            error = "rule :" + rule_path + " " + str(type(e)) + " " + str(e)
+    return feature_list, error
 
 
 def find_overlapping_rules(new_rule_path, rules_path):
     if not new_rule_path.endswith(".yml"):
         raise FileNotFoundError("FileNotFoundError ! New rule file name doesn't end with yml")
 
-    new_rule_features, error = get_features(new_rule_path, [])
+    new_rule_features, error = get_features(new_rule_path)
     if error:
-        raise Warning(error[0])
+        raise Warning(error)
 
     errors: list = []
     count = 0
@@ -45,7 +46,9 @@ def find_overlapping_rules(new_rule_path, rules_path):
             for filename in filenames:
                 if filename.endswith(".yml"):
                     rule_path = os.path.join(dirpath, filename)
-                    rule_features, errors = get_features(rule_path, errors)
+                    rule_features, error = get_features(rule_path)
+                    if error:
+                        errors.append(error)
                     if not len(rule_features):
                         continue
                     count += 1
@@ -70,12 +73,15 @@ def main():
         result = find_overlapping_rules(new_rule_path, rules_path)
         print("\nNew rule path : %s" % new_rule_path)
         print("Number of rules checked : %s " % result["count"])
-        print("Paths to overlapping rules : ", result["overlapping_rules"])
+        print("Paths to overlapping rules : ")
+        for r in result["overlapping_rules"]:
+            print(r)
         print("Number of rules containing same features : %s" % len(result["overlapping_rules"]))
-
-        print("\nWhile checking following .yml files error occured:")
-        for error in result["errors"]:
-            print(error)
+        if result["errors"]:
+            print("\nWhile checking following .yml files error occured:")
+            for error in result["errors"]:
+                print(error)
+            print("\n")
     except Exception as e:
         print(e)
 
