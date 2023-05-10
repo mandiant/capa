@@ -73,7 +73,7 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     """
     insn: idaapi.insn_t = ih.inner
 
-    if not insn.get_canon_mnem() in ("call", "jmp"):
+    if insn.get_canon_mnem() not in ("call", "jmp"):
         return
 
     # check calls to imported functions

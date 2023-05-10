@@ -256,7 +256,8 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     if disable_progress:
         # do not use tqdm to avoid unnecessary side effects when caller intends
         # to disable progress completely
-        pbar = lambda s, *args, **kwargs: s
+        def pbar(s, *args, **kwargs):
+            return s
 
     functions = list(extractor.get_functions())
     n_funcs = len(functions)
@@ -1040,6 +1041,13 @@ def handle_common_args(args):
             logger.debug("-" * 80)
 
             sigs_path = os.path.join(get_default_root(), "sigs")
+            if not os.path.exists(sigs_path):
+                logger.error(
+                    "Using default signature path, but it doesn't exist. "
+                    "Please install the signatures first: "
+                    "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
+                )
+                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
             sigs_path = args.signatures
             logger.debug("using signatures path: %s", sigs_path)
@@ -1183,24 +1191,41 @@ def main(argv=None):
             if not (args.verbose or args.vverbose or args.json):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
+
+    # TODO: #1411 use a real type, not a dict here.
+    meta: Dict[str, Any]
+    capabilities: MatchResults
+    counts: Dict[str, Any]
+
     if format_ == FORMAT_RESULT:
+        # result document directly parses into meta, capabilities
         result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
         meta, capabilities = result_doc.to_capa()
-    elif format_ == FORMAT_FREEZE:
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
-    else:
-        try:
-            if format_ == FORMAT_PE:
-                sig_paths = get_signatures(args.signatures)
-            else:
-                sig_paths = []
-                logger.debug("skipping library code matching: only have native PE signatures")
-        except IOError as e:
-            logger.error("%s", str(e))
-            return E_INVALID_SIG
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    else:
+        # all other formats we must create an extractor
+        # and use that to extract meta and capabilities
+
+        if format_ == FORMAT_FREEZE:
+            # freeze format deserializes directly into an extractor
+            with open(args.sample, "rb") as f:
+                extractor = capa.features.freeze.load(f.read())
+        else:
+            # all other formats we must create an extractor,
+            # such as viv, binary ninja, etc. workspaces
+            # and use those for extracting.
+
+            try:
+                if format_ == FORMAT_PE:
+                    sig_paths = get_signatures(args.signatures)
+                else:
+                    sig_paths = []
+                    logger.debug("skipping library code matching: only have native PE signatures")
+            except IOError as e:
+                logger.error("%s", str(e))
+                return E_INVALID_SIG
+
+            should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
             extractor = get_extractor(

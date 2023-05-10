@@ -278,5 +278,9 @@ def test_json_to_rdoc():
 
 def test_rdoc_to_capa():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
-    assert len(rdoc.ResultDocument.parse_file(path).to_capa()) == 2
-    assert isinstance(rdoc.ResultDocument.parse_file(path).to_capa(), tuple)
+
+    rd = rdoc.ResultDocument.parse_file(path)
+
+    meta, capabilites = rd.to_capa()
+    assert isinstance(meta, dict)
+    assert isinstance(capabilites, dict)
