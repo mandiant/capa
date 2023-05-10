@@ -82,3 +82,15 @@ def test_proto_conversion(tmpdir):
     assert p.returncode == 0
 
     assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')
+
+
+def test_detect_duplicate_features():
+    new_rule_path = "collection/credit-card/parse-credit-card-information.yml"
+    args = [
+        get_rules_path(),
+        os.path.join(get_rules_path(), new_rule_path),
+    ]
+    expected_overlaps = 49
+    script_path = get_script_path("detect_duplicate_features.py")
+    p = run_program(script_path, args)
+    assert p.returncode == expected_overlaps

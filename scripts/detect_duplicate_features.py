@@ -1,8 +1,12 @@
+import sys
+import logging
 import argparse
 
 import capa.main
 import capa.rules
 import capa.engine as ceng
+
+logger = logging.getLogger("detect_duplicate_features")
 
 
 def get_child_features(feature: ceng.Statement) -> list:
@@ -43,13 +47,15 @@ def get_features(rule_path: str) -> list:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)
         except Exception as e:
-            raise Warning("Error: " + rule_path + " " + str(type(e)) + " " + str(e))
+            logger.error("Error: New rule " + rule_path + " " + str(type(e)) + " " + str(e))
+            sys.exit(1)
     return feature_list
 
 
 def find_overlapping_rules(new_rule_path, rules_path):
     if not new_rule_path.endswith(".yml"):
-        raise FileNotFoundError("FileNotFoundError ! New rule file name doesn't end with yml")
+        logger.error("FileNotFoundError ! New rule file name doesn't end with .yml")
+        sys.exit(1)
 
     # Loads features of new rule in a list.
     new_rule_features = get_features(new_rule_path)
@@ -84,21 +90,22 @@ def main():
 
     new_rule_path = args.new_rule
     rules_path = args.rules
-    try:
-        result = find_overlapping_rules(new_rule_path, rules_path)
-        print("\nNew rule path : %s" % new_rule_path)
-        print("Number of rules checked : %s " % result["count"])
-        if result["overlapping_rules"]:
-            print("Paths to overlapping rules : ")
-            for r in result["overlapping_rules"]:
-                print("- %s" % r)
-        else:
-            print("Paths to overlapping rules : None")
-        print("Number of rules containing same features : %s" % len(result["overlapping_rules"]))
-        print("\n")
-    except Exception as e:
-        print(e)
+
+    result = find_overlapping_rules(new_rule_path, rules_path)
+
+    print("\nNew rule path : %s" % new_rule_path)
+    print("Number of rules checked : %s " % result["count"])
+    if result["overlapping_rules"]:
+        print("Paths to overlapping rules : ")
+        for r in result["overlapping_rules"]:
+            print("- %s" % r)
+    else:
+        print("Paths to overlapping rules : None")
+    print("Number of rules containing same features : %s" % len(result["overlapping_rules"]))
+    print("\n")
+
+    return len(result["overlapping_rules"])
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
