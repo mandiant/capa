@@ -22,7 +22,7 @@ def extract_file_import_names(ctx) -> Iterator[Tuple[Import, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_import_names(ctx)
 
 
-def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
+def extract_file_format(ctx) -> Iterator[Tuple[Format, Address]]:
     yield from capa.features.extractors.dotnetfile.extract_file_format()
 
 

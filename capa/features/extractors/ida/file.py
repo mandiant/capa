@@ -69,7 +69,7 @@ def check_segment_for_pe(seg: idaapi.segment_t) -> Iterator[Tuple[int, int]]:
             yield off, i
 
 
-def extract_file_embedded_pe(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_embedded_pe(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features
 
     IDA must load resource sections for this to be complete
@@ -81,13 +81,13 @@ def extract_file_embedded_pe(**kwargs) -> Iterator[Tuple[Feature, Address]]:
             yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
-def extract_file_export_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_export_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
     for _, _, ea, name in idautils.Entries():
         yield Export(name), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_import_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_import_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract function imports
 
     1. imports by ordinal:
@@ -123,7 +123,7 @@ def extract_file_import_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
         yield Import(info[1]), AbsoluteVirtualAddress(ea)
 
 
-def extract_file_section_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_section_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """extract section names
 
     IDA must load resource sections for this to be complete
@@ -152,7 +152,7 @@ def extract_file_strings(ctx) -> Iterator[Tuple[Feature, Address]]:
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
-def extract_file_function_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_function_names(ctx) -> Iterator[Tuple[Feature, Address]]:
     """
     extract the names of statically-linked library functions.
     """
@@ -169,7 +169,7 @@ def extract_file_function_names(**kwargs) -> Iterator[Tuple[Feature, Address]]:
                 yield FunctionName(name[1:]), addr
 
 
-def extract_file_format(**kwargs) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_format(ctx) -> Iterator[Tuple[Feature, Address]]:
     file_info = idaapi.get_inf_structure()
 
     if file_info.filetype in (idaapi.f_PE, idaapi.f_COFF):
