@@ -205,7 +205,9 @@ def main():
     """ """
     import pprint
 
-    pprint.pprint(list(extract_features()))
+    from capa.features.extractors.strings import DEFAULT_STRING_LENGTH
+
+    pprint.pprint(list(extract_features(ctx={"min_len": DEFAULT_STRING_LENGTH})))
 
 
 if __name__ == "__main__":
