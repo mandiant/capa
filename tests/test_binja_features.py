@@ -10,6 +10,8 @@ import logging
 import fixtures
 from fixtures import *
 
+import capa.main
+
 logger = logging.getLogger(__file__)
 
 # We need to skip the binja test if we cannot import binaryninja, e.g., in GitHub CI.
@@ -45,3 +47,8 @@ def test_binja_features(sample, scope, feature, expected):
 )
 def test_binja_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_binja_extractor, sample, scope, feature, expected)
+
+
+@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+def test_standalone_binja_backend():
+    assert capa.main.main(["path/to/file", "-b", capa.main.BACKEND_BINJA]) == 0
