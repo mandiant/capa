@@ -74,7 +74,7 @@ def extract_file_section_names(ctx) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_file_strings(ctx) -> Iterator[Tuple[Feature, Address]]:
-    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_str_len"])
 
 
 def extract_file_function_names(ctx) -> Iterator[Tuple[Feature, Address]]:

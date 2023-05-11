@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
-    def __init__(self, vw, path, os, min_len: int = DEFAULT_STRING_LENGTH):
+    def __init__(self, vw, path, os, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.vw = vw
         self.path = path
-        self.min_len = min_len
+        self.min_str_len = min_str_len
         with open(self.path, "rb") as f:
             self.buf = f.read()
 
@@ -49,13 +49,15 @@ class VivisectFeatureExtractor(FeatureExtractor):
 
     def extract_file_features(self):
         yield from capa.features.extractors.viv.file.extract_features(
-            ctx={"vw": self.vw, "buf": self.buf, "min_len": self.min_len}
+            ctx={"vw": self.vw, "buf": self.buf, "min_str_len": self.min_str_len}
         )
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(
-                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"min_len": self.min_len}
+                address=AbsoluteVirtualAddress(va),
+                inner=viv_utils.Function(self.vw, va),
+                ctx={"min_str_len": self.min_str_len},
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

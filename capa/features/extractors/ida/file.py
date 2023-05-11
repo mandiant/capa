@@ -145,10 +145,10 @@ def extract_file_strings(ctx=None) -> Iterator[Tuple[Feature, Address]]:
         seg_buff = capa.features.extractors.ida.helpers.get_segment_buffer(seg)
 
         # differing to common string extractor factor in segment offset here
-        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff, min_str_len=ctx["min_str_len"]):
+        for s in capa.features.extractors.strings.extract_ascii_strings(seg_buff, min_len=ctx["min_str_len"]):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
-        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff, min_str_len=ctx["min_str_len"]):
+        for s in capa.features.extractors.strings.extract_unicode_strings(seg_buff, min_len=ctx["min_str_len"]):
             yield String(s.s), FileOffsetAddress(seg.start_ea + s.offset)
 
 
