@@ -89,7 +89,7 @@ def extract_file_section_names(ctx):
 
 
 def extract_file_strings(ctx):
-    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_str_len"])
 
 
 def extract_file_function_names(**kwargs):
@@ -174,11 +174,11 @@ GLOBAL_HANDLERS = (
 
 
 class PefileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
+    def __init__(self, path: str, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path = path
         self.pe = pefile.PE(path)
-        self.min_len = min_len
+        self.min_str_len = min_str_len
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
@@ -193,7 +193,7 @@ class PefileFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        yield from extract_file_features(ctx={"pe": self.pe, "buf": buf, "min_len": self.min_len})
+        yield from extract_file_features(ctx={"pe": self.pe, "buf": buf, "min_str_len": self.min_str_len})
 
     def get_functions(self):
         raise NotImplementedError("PefileFeatureExtract can only be used to extract file features")

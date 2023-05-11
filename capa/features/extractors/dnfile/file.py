@@ -48,7 +48,7 @@ def extract_file_class_features(ctx) -> Iterator[Tuple[Class, Address]]:
 
 def extract_features(ctx) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, address in file_handler(ctx={"pe": ctx["pe"], "min_len": ctx["min_str_len"]}):
+        for feature, address in file_handler(ctx={"pe": ctx["pe"], "min_str_len": ctx["min_str_len"]}):
             yield feature, address
 
 

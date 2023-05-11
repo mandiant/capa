@@ -505,7 +505,7 @@ def get_extractor(
     sigpaths: List[str],
     should_save_workspace=False,
     disable_progress=False,
-    min_len=DEFAULT_STRING_LENGTH,
+    min_str_len=DEFAULT_STRING_LENGTH,
 ) -> FeatureExtractor:
     """
     raises:
@@ -526,7 +526,7 @@ def get_extractor(
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path, min_len)
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path, min_str_len)
 
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
@@ -572,21 +572,21 @@ def get_extractor(
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_, min_len)
+        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_, min_str_len)
 
 
-def get_file_extractors(sample: str, format_: str, min_len: int) -> List[FeatureExtractor]:
+def get_file_extractors(sample: str, format_: str, min_str_len: int) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_len))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_str_len))
 
     elif format_ == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_len))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample, min_str_len))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample, min_len))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample, min_str_len))
 
     return file_extractors
 
@@ -1236,7 +1236,7 @@ def main(argv=None):
                 sig_paths,
                 should_save_workspace,
                 disable_progress=args.quiet,
-                min_len=DEFAULT_STRING_LENGTH,
+                min_str_len=DEFAULT_STRING_LENGTH,
             )
         except UnsupportedFormatError:
             log_unsupported_format_error()

@@ -190,8 +190,8 @@ def extract_insn_string_features(
 
     ref = capa.features.extractors.ida.helpers.find_data_reference_from_insn(insn)
     if ref != insn.ea:
-        found = capa.features.extractors.ida.helpers.find_string_at(ref, fh.ctx["min_len"])
-        if len(found) >= fh.ctx["min_len"]:
+        found = capa.features.extractors.ida.helpers.find_string_at(ref, fh.ctx["min_str_len"])
+        if len(found) >= fh.ctx["min_str_len"]:
             yield String(found), ih.address
 
 

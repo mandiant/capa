@@ -51,7 +51,7 @@ def extract_file_section_names(ctx):
 
 
 def extract_file_strings(ctx):
-    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_len"])
+    yield from capa.features.extractors.common.extract_file_strings(ctx["buf"], ctx["min_str_len"])
 
 
 def extract_file_os(elf, buf, **kwargs):
@@ -108,10 +108,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str, min_len: int = DEFAULT_STRING_LENGTH):
+    def __init__(self, path: str, min_str_len: int = DEFAULT_STRING_LENGTH):
         super().__init__()
         self.path = path
-        self.min_len = min_len
+        self.min_str_len = min_str_len
         with open(self.path, "rb") as f:
             self.elf = ELFFile(io.BytesIO(f.read()))
 
@@ -132,7 +132,7 @@ class ElfFeatureExtractor(FeatureExtractor):
         with open(self.path, "rb") as f:
             buf = f.read()
 
-        for feature, addr in extract_file_features(ctx={"elf": self.elf, "buf": buf, "min_len": self.min_len}):
+        for feature, addr in extract_file_features(ctx={"elf": self.elf, "buf": buf, "min_str_len": self.min_str_len}):
             yield feature, addr
 
     def get_functions(self):
