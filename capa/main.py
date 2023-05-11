@@ -812,6 +812,7 @@ def compute_layout(rules, extractor, capabilities):
                 # such as with the function name, etc.
             }
             for f, bbs in bbs_by_function.items()
+            if len([bb for bb in bbs if bb in matched_bbs]) > 0
         }
     }
 
