@@ -14,8 +14,6 @@ import subprocess
 import pytest
 from fixtures import *
 
-import capa.main
-
 CD = os.path.dirname(__file__)
 
 
@@ -88,41 +86,73 @@ def test_proto_conversion(tmpdir):
     assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')
 
 
-def run_detect_duplicate_features(rule_path):
+def run_detect_duplicate_features(rule_dir, rule_path):
     # rule_path = "collection/credit-card/parse-credit-card-information.yml"
-    args = [get_rules_path(), rule_path]
+    args = [rule_dir, rule_path]
     script_path = get_script_path("detect_duplicate_features.py")
     args = [sys.executable] + [script_path] + args
     print(f"running: '{args}'")
     return subprocess.run(args)
 
 
-def test_detect_duplicate_features(z9324d_extractor, tmpdir):
-    RULE_CONTENT = textwrap.dedent(
-        """
-        rule:
-          meta:
-            name: Test Rule
-            scope: function
-          features:
-            - string: "sites.ini"
-        """
-    )
-    expected_overlaps = 3
-    path = z9324d_extractor.path
-    rule_file = tmpdir.mkdir("capa").join("rule.yml")
-    rule_file.write(RULE_CONTENT)
-    assert (
-        capa.main.main(
-            [
-                path,
-                "-v",
-                "-r",
-                rule_file.strpath,
-            ]
-        )
-        == 0
-    )
-    # tests if number of overlaps found are correct.
-    overlaps_found = run_detect_duplicate_features(rule_file.strpath).returncode
-    assert overlaps_found == expected_overlaps
+def test_detect_duplicate_features(tmpdir):
+    RULESET = {
+        "rule_1": textwrap.dedent(
+            """
+                rule:
+                    meta:
+                        name: Test Rule 1
+                        scope: function
+                    features:
+                      - or:
+                        - string: "sites.ini"
+                        - number: 0xEDB88320
+            """
+        ),
+        "rule_2": textwrap.dedent(
+            """
+                rule:
+                    meta:
+                        name: Test Rule 2
+                        scope: function
+                    features:
+                      - and:
+                        - string: "sites.ini"
+                        - number: 8
+            """
+        ),
+        "rule_3": textwrap.dedent(
+            """
+                rule:
+                    meta:
+                        name: Test Rule 3
+                        scope: function
+                    features:
+                      - not:
+                        - number: 0xEDB88320
+            """
+        ),
+        "rule_4": textwrap.dedent(
+            """
+                rule:
+                    meta:
+                        name: Test Rule 4
+                        scope: function
+                    features:
+                      - not:
+                        - number: 4
+            """
+        ),
+    }
+
+    rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
+    rule_overlaps = [3, 2, 2, 1]
+    rule_paths = []
+    for rule_name, RULE_CONTENT in RULESET.items():
+        rule_file = rule_dir.join("%s.yml" % rule_name)
+        rule_file.write(RULE_CONTENT)
+        rule_paths.append(rule_file.strpath)
+    # tests if number of overlaps for rules in RULESET found are correct.
+    for expected_overlaps, rule_path in zip(rule_overlaps, rule_paths):
+        overlaps_found = run_detect_duplicate_features(rule_dir.strpath, rule_path)
+        assert overlaps_found.returncode == expected_overlaps

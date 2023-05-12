@@ -48,14 +48,14 @@ def get_features(rule_path: str) -> list:
             feature_list = get_child_features(new_rule.statement)
         except Exception as e:
             logger.error("Error: New rule " + rule_path + " " + str(type(e)) + " " + str(e))
-            sys.exit(1)
+            sys.exit(-1)
     return feature_list
 
 
 def find_overlapping_rules(new_rule_path, rules_path):
     if not new_rule_path.endswith(".yml"):
         logger.error("FileNotFoundError ! New rule file name doesn't end with .yml")
-        sys.exit(1)
+        sys.exit(-1)
 
     # Loads features of new rule in a list.
     new_rule_features = get_features(new_rule_path)
