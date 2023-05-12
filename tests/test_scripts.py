@@ -98,7 +98,6 @@ def run_detect_duplicate_features(rule_path):
 
 
 def test_detect_duplicate_features(z9324d_extractor, tmpdir):
-    # tests a single rule can be loaded successfully
     RULE_CONTENT = textwrap.dedent(
         """
         rule:
