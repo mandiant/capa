@@ -144,8 +144,18 @@ def test_detect_duplicate_features(tmpdir):
         ),
     }
 
-    rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_overlaps = [3, 2, 2, 1]
+    """
+        The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
+        An overlap includes a rule overlap with itself.
+        The overlaps are like:
+        - Rule 1 overlaps with 3 other rules in RULESET
+        - Rule 4 overlaps with itself in RULESET
+        These overlap values indicate the number of rules with which
+        each rule in RULESET has overlapping features.
+    """
+
+    rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_paths = []
     for rule_name, RULE_CONTENT in RULESET.items():
         rule_file = rule_dir.join("%s.yml" % rule_name)
