@@ -87,7 +87,6 @@ def test_proto_conversion(tmpdir):
 
 
 def run_detect_duplicate_features(rule_dir, rule_path):
-    # rule_path = "collection/credit-card/parse-credit-card-information.yml"
     args = [rule_dir, rule_path]
     script_path = get_script_path("detect_duplicate_features.py")
     args = [sys.executable] + [script_path] + args
