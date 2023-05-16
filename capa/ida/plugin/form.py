@@ -961,15 +961,6 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def load_capa_function_results(self):
         """ """
-        # these are init once objects
-        try:
-            update_wait_box("Performing one-time file analysis")
-            self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
-            self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
-        except Exception as e:
-            logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-            return
-
         if self.rulegen_ruleset_cache is None:
             # only reload rules if cache is empty
             self.rulegen_ruleset_cache = self.load_capa_rules()
@@ -1237,8 +1228,18 @@ class CapaExplorerForm(idaapi.PluginForm):
         elif index == 1:
             self.set_view_status_label(self.view_status_label_rulegen_cache)
             self.view_status_label_analysis_cache = status_prev
-
             self.view_reset_button.setText("Clear")
+
+            # these are init once objects, create on tab change
+            try:
+                ida_kernwin.show_wait_box("performing one-time file analysis")
+                self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
+                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
+            except Exception as e:
+                logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+                return
+            finally:
+                ida_kernwin.hide_wait_box()
 
     def slot_rulegen_editor_update(self):
         """ """
