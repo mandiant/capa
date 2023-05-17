@@ -95,7 +95,22 @@ def run_detect_duplicate_features(rule_dir, rule_path):
 
 
 def test_detect_duplicate_features(tmpdir):
-    RULESET = {
+    TEST_RULE_0 = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: Test Rule 0
+                scope: function
+            features:
+              - and:
+                - number: 2
+                - or:
+                  - mnemonic: shr
+                  - api: connect
+        """
+    )
+
+    TEST_RULESET = {
         "rule_1": textwrap.dedent(
             """
                 rule:
@@ -106,6 +121,14 @@ def test_detect_duplicate_features(tmpdir):
                       - or:
                         - string: "sites.ini"
                         - number: 0xEDB88320
+                        - and:
+                          - or:
+                            - arch: i386
+                            - number: 4
+                            - not:
+                              - count(mnemonic(xor)): 5
+                          - not:
+                            - os: linux
             """
         ),
         "rule_2": textwrap.dedent(
@@ -117,7 +140,11 @@ def test_detect_duplicate_features(tmpdir):
                     features:
                       - and:
                         - string: "sites.ini"
-                        - number: 8
+                        - arch: i386
+                        - basic block:
+                          - and:
+                            - api: setsockopt
+                            - count(mnemonic(mov)): 3
             """
         ),
         "rule_3": textwrap.dedent(
@@ -127,8 +154,13 @@ def test_detect_duplicate_features(tmpdir):
                         name: Test Rule 3
                         scope: function
                     features:
-                      - not:
-                        - number: 0xEDB88320
+                      - or:
+                        - not:
+                          - os: linux
+                        - basic block:
+                          - and:
+                            - api: bind
+                            - count(mnemonic(mov)): 3
             """
         ),
         "rule_4": textwrap.dedent(
@@ -139,28 +171,35 @@ def test_detect_duplicate_features(tmpdir):
                         scope: function
                     features:
                       - not:
-                        - number: 4
+                        - string: "expa"
             """
         ),
     }
 
-    rule_overlaps = [3, 2, 2, 1]
     """
         The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
         An overlap includes a rule overlap with itself.
         The overlaps are like:
+        - Rule 0 has zero overlaps in RULESET
         - Rule 1 overlaps with 3 other rules in RULESET
         - Rule 4 overlaps with itself in RULESET
         These overlap values indicate the number of rules with which
         each rule in RULESET has overlapping features.
     """
+    rule_overlaps = [0, 3, 4, 4, 1]
 
     rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_paths = []
-    for rule_name, RULE_CONTENT in RULESET.items():
+
+    rule_file = tmpdir.join("%s.yml" % "rule_0")
+    rule_file.write(TEST_RULE_0)
+    rule_paths.append(rule_file.strpath)
+
+    for rule_name, RULE_CONTENT in TEST_RULESET.items():
         rule_file = rule_dir.join("%s.yml" % rule_name)
         rule_file.write(RULE_CONTENT)
         rule_paths.append(rule_file.strpath)
+
     # tests if number of overlaps for rules in RULESET found are correct.
     for expected_overlaps, rule_path in zip(rule_overlaps, rule_paths):
         overlaps_found = run_detect_duplicate_features(rule_dir.strpath, rule_path)
