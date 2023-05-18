@@ -6,8 +6,12 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import os
+import inspect
 import logging
+import contextlib
 from typing import NoReturn
+
+import tqdm
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
@@ -83,6 +87,39 @@ def get_format(sample: str) -> str:
         return feature.value
 
     return FORMAT_UNKNOWN
+
+
+@contextlib.contextmanager
+def redirecting_print_to_tqdm(disable_progress):
+    """
+    tqdm (progress bar) expects to have fairly tight control over console output.
+    so calls to `print()` will break the progress bar and make things look bad.
+    so, this context manager temporarily replaces the `print` implementation
+    with one that is compatible with tqdm.
+    via: https://stackoverflow.com/a/42424890/87207
+    """
+    old_print = print
+
+    def new_print(*args, **kwargs):
+        # If tqdm.tqdm.write raises error, use builtin print
+        if disable_progress:
+            old_print(*args, **kwargs)
+        else:
+            try:
+                tqdm.tqdm.write(*args, **kwargs)
+            except:
+                old_print(*args, **kwargs)
+
+    try:
+        # Globally replace print with new_print.
+        # Verified this works manually on Python 3.11:
+        #     >>> import inspect
+        #     >>> inspect.builtins
+        #     <module 'builtins' (built-in)>
+        inspect.builtins.print = new_print  # type: ignore
+        yield
+    finally:
+        inspect.builtins.print = old_print  # type: ignore
 
 
 def log_unsupported_format_error():
