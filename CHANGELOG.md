@@ -23,6 +23,7 @@
 - improve ELF strtab and needed parsing @mr-tz
 - better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Add redirect print to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 
 ### capa explorer IDA Pro plugin
