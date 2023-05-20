@@ -1349,7 +1349,6 @@ def is_runtime_ghidra():
     try:
         import ghidra.program.flatapi
     except ImportError:
-        print("Not in Ghidra...")
         return False
     else:
         return True
@@ -1359,7 +1358,6 @@ if __name__ == "__main__":
     if is_runtime_ida():
         ida_main()
     elif is_runtime_ghidra():
-        print("Calling Ghidra Main")
         ghidra_main()
     else:
         sys.exit(main())
