@@ -12,3 +12,4 @@ class GhidraFeatureExtractor(FeatureExtractor):
         super().__init__()
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_os())
+        self.global_features.extend(capa.features.extractors.ghidra.global_.extract_arch())

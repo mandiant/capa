@@ -3,6 +3,10 @@ import contextlib
 from io import BytesIO
 from typing import Tuple, Iterator 
 
+# imports for clarity
+#   note: currentProgram is a static variable accessible in
+#         the specific ghidra runtime environment
+import ghidra.program.database.mem
 import ghidra.program.flatapi as flatapi
 ghidraapi = flatapi.FlatProgramAPI(currentProgram) # Ghidrathon hacks :)
 
@@ -20,12 +24,13 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
         yield OS(OS_WINDOWS), NO_ADDRESS
 
     elif "ELF" in format_name:
-        program_memory = current_program.getMemory()
+        program_memory = current_program.getMemory()   # ghidra.program.database.mem.MemoryMapDB
         fbytes_list = program_memory.getAllFileBytes() # java.util.List<FileBytes>
         fbytes = fbytes_list[0]                        # ghidra.program.database.mem.FileBytes
 
         # Java likes to return signed ints, so we must convert them
         # back into unsigned bytes manually and write to BytesIO
+        #   note: May be deprecated if Jep has implements better support for Java Lists 
         pb_arr = b''
         for i in range(fbytes.getSize()):
             pb_arr = pb_arr + (fbytes.getOriginalByte(i) & 0xff).to_bytes(1, 'little')
@@ -48,6 +53,29 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
         #
         # for (2), this logic will need to be updated as the format is implemented.
         logger.debug("unsupported file format: %s, will not guess OS", format_name)
+        return
+
+
+def extract_arch() -> Iterator[Tuple[Feature, Address]]:
+    current_program = ghidraapi.getCurrentProgram()
+    lang_id = current_program.getMetadata().get('Language ID')
+
+    if 'x86' in lang_id and '64' in lang_id:
+        yield Arch(ARCH_AMD64), NO_ADDRESS
+
+    elif 'x86' in lang_id and '32' in lang_id:
+        yield Arch(ARCH_I386), NO_ADDRESS
+
+    elif 'x86' not in lang_id:
+        logger.debug("unsupported architecture: non-32-bit nor non-64-bit intel")
+        return
+
+    else:
+        # we likely end up here:
+        #  1. handling a new architecture (e.g. aarch64)
+        #
+        # for (1), this logic will need to be updated as the format is implemented.
+        logger.debug("unsupported architecture: %s", lang_id)
         return
 
 
