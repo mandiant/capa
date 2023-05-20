@@ -86,14 +86,6 @@ def test_proto_conversion(tmpdir):
     assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')
 
 
-def run_detect_duplicate_features(rule_dir, rule_path):
-    args = [rule_dir, rule_path]
-    script_path = get_script_path("detect_duplicate_features.py")
-    args = [sys.executable] + [script_path] + args
-    print(f"running: '{args}'")
-    return subprocess.run(args)
-
-
 def test_detect_duplicate_features(tmpdir):
     TEST_RULE_0 = textwrap.dedent(
         """
@@ -103,10 +95,9 @@ def test_detect_duplicate_features(tmpdir):
                 scope: function
             features:
               - and:
-                - number: 2
-                - or:
-                  - mnemonic: shr
-                  - api: connect
+                - number: 1
+                - not:
+                  - string: process
         """
     )
 
@@ -116,11 +107,10 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 1
-                        scope: function
                     features:
                       - or:
-                        - string: "sites.ini"
-                        - number: 0xEDB88320
+                        - string: unique
+                        - number: 2
                         - and:
                           - or:
                             - arch: i386
@@ -136,15 +126,13 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 2
-                        scope: function
                     features:
                       - and:
                         - string: "sites.ini"
-                        - arch: i386
                         - basic block:
                           - and:
-                            - api: setsockopt
-                            - count(mnemonic(mov)): 3
+                            - api: CreateFile
+                            - mnemonic: xor
             """
         ),
         "rule_3": textwrap.dedent(
@@ -152,15 +140,14 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 3
-                        scope: function
                     features:
                       - or:
                         - not:
-                          - os: linux
+                          - number: 4
                         - basic block:
                           - and:
                             - api: bind
-                            - count(mnemonic(mov)): 3
+                            - number: 2
             """
         ),
         "rule_4": textwrap.dedent(
@@ -168,7 +155,6 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 4
-                        scope: function
                     features:
                       - not:
                         - string: "expa"
@@ -179,6 +165,7 @@ def test_detect_duplicate_features(tmpdir):
     """
         The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
         An overlap includes a rule overlap with itself.
+        The scripts 
         The overlaps are like:
         - Rule 0 has zero overlaps in RULESET
         - Rule 1 overlaps with 3 other rules in RULESET
@@ -186,7 +173,7 @@ def test_detect_duplicate_features(tmpdir):
         These overlap values indicate the number of rules with which
         each rule in RULESET has overlapping features.
     """
-    rule_overlaps = [0, 3, 4, 4, 1]
+    rule_overlaps = [0, 4, 3, 3, 1]
 
     rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_paths = []
@@ -201,6 +188,8 @@ def test_detect_duplicate_features(tmpdir):
         rule_paths.append(rule_file.strpath)
 
     # tests if number of overlaps for rules in RULESET found are correct.
+    script_path = get_script_path("detect_duplicate_features.py")
     for expected_overlaps, rule_path in zip(rule_overlaps, rule_paths):
-        overlaps_found = run_detect_duplicate_features(rule_dir.strpath, rule_path)
+        args = [rule_dir.strpath, rule_path]
+        overlaps_found = run_program(script_path, args)
         assert overlaps_found.returncode == expected_overlaps
