@@ -178,7 +178,7 @@ def test_detect_duplicate_features(tmpdir):
     rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_paths = []
 
-    rule_file = tmpdir.join("%s.yml" % "rule_0")
+    rule_file = tmpdir.join("rule_0.yml")
     rule_file.write(TEST_RULE_0)
     rule_paths.append(rule_file.strpath)
 
