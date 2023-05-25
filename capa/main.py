@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Tuple, Callable
 import halo
 import tqdm
 import colorama
+import tqdm.contrib.logging
 from pefile import PEFormatError
 from elftools.common.exceptions import ELFError
 
@@ -253,38 +254,41 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     }  # type: Dict[str, Any]
 
     with redirecting_print_to_tqdm(disable_progress):
-        pbar = tqdm.tqdm
-        if disable_progress:
-            # do not use tqdm to avoid unnecessary side effects when caller intends
-            # to disable progress completely
-            def pbar(s, *args, **kwargs):
-                return s
+        with tqdm.contrib.logging.logging_redirect_tqdm():
+            pbar = tqdm.tqdm
+            if disable_progress:
+                # do not use tqdm to avoid unnecessary side effects when caller intends
+                # to disable progress completely
+                def pbar(s, *args, **kwargs):
+                    return s
 
-        functions = list(extractor.get_functions())
-        n_funcs = len(functions)
+            functions = list(extractor.get_functions())
+            n_funcs = len(functions)
 
-        pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
-        for f in pb:
-            if extractor.is_library_function(f.address):
-                function_name = extractor.get_function_name(f.address)
-                logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-                meta["library_functions"][f.address] = function_name
-                n_libs = len(meta["library_functions"])
-                percentage = round(100 * (n_libs / n_funcs))
-                if isinstance(pb, tqdm.tqdm):
-                    pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
-                continue
+            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
+            for f in pb:
+                if extractor.is_library_function(f.address):
+                    function_name = extractor.get_function_name(f.address)
+                    logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
+                    meta["library_functions"][f.address] = function_name
+                    n_libs = len(meta["library_functions"])
+                    percentage = round(100 * (n_libs / n_funcs))
+                    if isinstance(pb, tqdm.tqdm):
+                        pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
+                    continue
 
-            function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
-            meta["feature_counts"]["functions"][f.address] = feature_count
-            logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
+                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
+                    ruleset, extractor, f
+                )
+                meta["feature_counts"]["functions"][f.address] = feature_count
+                logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
 
-            for rule_name, res in function_matches.items():
-                all_function_matches[rule_name].extend(res)
-            for rule_name, res in bb_matches.items():
-                all_bb_matches[rule_name].extend(res)
-            for rule_name, res in insn_matches.items():
-                all_insn_matches[rule_name].extend(res)
+                for rule_name, res in function_matches.items():
+                    all_function_matches[rule_name].extend(res)
+                for rule_name, res in bb_matches.items():
+                    all_bb_matches[rule_name].extend(res)
+                for rule_name, res in insn_matches.items():
+                    all_insn_matches[rule_name].extend(res)
 
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
