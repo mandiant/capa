@@ -978,6 +978,18 @@ class CapaExplorerForm(idaapi.PluginForm):
         if self.rulegen_current_function is not None:
             self.rulegen_current_function = None
 
+        # these are init once objects, create on tab change
+        if self.rulegen_feature_cache is None:
+            try:
+                update_wait_box("performing one-time file analysis")
+                self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
+                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
+            except Exception as e:
+                logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+                return
+        else:
+            logger.info("Reusing prior rulegen cache")
+
         if ida_kernwin.user_cancelled():
             logger.info("User cancelled analysis.")
             return False
@@ -1229,17 +1241,6 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.set_view_status_label(self.view_status_label_rulegen_cache)
             self.view_status_label_analysis_cache = status_prev
             self.view_reset_button.setText("Clear")
-
-            # these are init once objects, create on tab change
-            try:
-                ida_kernwin.show_wait_box("performing one-time file analysis")
-                self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
-                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
-            except Exception as e:
-                logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-                return
-            finally:
-                ida_kernwin.hide_wait_box()
 
     def slot_rulegen_editor_update(self):
         """ """
