@@ -1333,6 +1333,7 @@ def ghidra_main():
     
     globl_features: List[Tuple[Feature, Address]] = []
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
+    globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
     print(globl_features)
 
 
