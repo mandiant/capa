@@ -136,3 +136,43 @@ jobs:
       env:
         BN_LICENSE: ${{ secrets.BN_LICENSE }}
       run: pytest -v tests/test_binja_features.py  # explicitly refer to the binja tests for performance. other tests run above.
+
+  ghidra-tests:
+    name: Ghidra tests for ${{ matrix.python-version }}
+    runs-on: ubuntu-20.04
+    needs: [code_style, rule_linter]
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.11"]
+        java-version: ["17"]
+    steps:
+    - name: Checkout capa with submodules
+      uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      with:
+        submodules: recursive
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Set up Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java-version }}
+    - name: Install Ghidra
+      run: |
+        mkdir ./.github/ghidra
+        wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3_build/ghidra_10.3_PUBLIC_20230510.zip" -O ./.github/ghidra/ghidra_10.3_PUBLIC.zip
+        unzip .github/ghidra/ghidra_10.3_PUBLIC.zip -d .github/ghidra/
+      env:
+        GHIDRA_INSTALL_DIR: /github/ghidra
+    - name: Install Ghidrathon
+      run : |
+        mkdir ./.github/ghidrathon
+        wget ""
+    - name: Install pyyaml
+      run: sudo apt-get install -y libyaml-dev
+    - name: Install capa
+      run: pip install -e .[dev]
+ 
