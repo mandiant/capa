@@ -146,6 +146,7 @@ jobs:
       matrix:
         python-version: ["3.7", "3.11"]
         java-version: ["17"]
+        gradle-version: ["7.3"]
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -160,17 +161,31 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java-version }}
-    - name: Install Ghidra
+    - name: Set up Gradle ${{ matrix.gradle-version }}
+      uses: actions/gradle/gradle-build-action@v2
+      with:
+        gradle-version: ${{ matrix.gradle-version }}
+    - name: Install Ghidra 10.3
       run: |
         mkdir ./.github/ghidra
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3_build/ghidra_10.3_PUBLIC_20230510.zip" -O ./.github/ghidra/ghidra_10.3_PUBLIC.zip
         unzip .github/ghidra/ghidra_10.3_PUBLIC.zip -d .github/ghidra/
+        export PATH="/.github/ghidra/ghidra_10.3_PUBLIC/Support:$PATH"
       env:
-        GHIDRA_INSTALL_DIR: /github/ghidra
+        GHIDRA_INSTALL_DIR: /github/ghidra/ghidra_10.3_PUBLIC
+        GHIDRA_EXT_DIR: /github/ghidra/ghidra_10.3_PUBLIC/Extensions
+    - name: Install Jep 4.1.1
+      run : |
+        mkdir ./.github/jep
+        wget "https://github.com/ninia/jep/archive/refs/tags/v4.1.1.zip" -O ./.github/jep/jep-4.1.1.zip
+        unzip .github/jep/jep-4.1.1.zip -d .github/jep/
+        pip install .github/jep/jep-4.1.1/
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        wget ""
+        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v2.1.0.zip" -O ./.github/ghidrathon/ghidrathon-2.1.0.zip
+        unzip .github/ghidrathon/ghidrathon-2.1.0.zip -d .github/ghidrathon/
+        gradle -p ./.github/ghidrathon/Ghidrathon-2.1.0/
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
