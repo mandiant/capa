@@ -1,11 +1,6 @@
 name: CI
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-  workflow_dispatch:
+on: workflow_dispatch
 
 # save workspaces to speed up testing
 env:
