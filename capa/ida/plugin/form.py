@@ -771,8 +771,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                 try:
                     meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
                     capabilities, counts = capa.main.find_capabilities(ruleset, extractor, disable_progress=True)
-                    meta["analysis"].update(counts)
-                    meta["analysis"]["layout"] = capa.main.compute_layout(ruleset, extractor, capabilities)
+                    meta.analysis.__dict__.update(counts)
+                    meta.analysis.__dict__.update(capa.main.compute_layout(ruleset, extractor, capabilities))
+                    meta = capa.render.result_document.Metadata.from_capa(meta.dict())
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False

@@ -47,6 +47,20 @@ class FunctionLayout(FrozenModel):
 class Layout(FrozenModel):
     functions: Tuple[FunctionLayout, ...]
 
+    @classmethod
+    def from_capa(cls, layout: dict) -> "Layout":
+        return cls(
+            functions=tuple(
+                FunctionLayout(
+                    address=frz.Address.from_capa(address),
+                    matched_basic_blocks=tuple(
+                        BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in f["matched_basic_blocks"]
+                    ),
+                )
+                for address, f in layout["functions"].items()
+            )
+        )
+
 
 class LibraryFunction(FrozenModel):
     address: frz.Address
@@ -61,6 +75,16 @@ class FunctionFeatureCount(FrozenModel):
 class FeatureCounts(FrozenModel):
     file: int
     functions: Tuple[FunctionFeatureCount, ...]
+
+    @classmethod
+    def from_capa(cls, feature_counts: dict) -> "FeatureCounts":
+        return cls(
+            file=feature_counts["file"],
+            functions=tuple(
+                FunctionFeatureCount(address=frz.Address.from_capa(address), count=count)
+                for address, count in feature_counts["functions"].items()
+            ),
+        )
 
 
 class Analysis(FrozenModel):
@@ -83,7 +107,7 @@ class Metadata(FrozenModel):
     analysis: Analysis
 
     @classmethod
-    def from_capa(cls, meta: Any) -> "Metadata":
+    def from_capa(cls, meta: dict) -> "Metadata":
         return cls(
             timestamp=meta["timestamp"],
             version=meta["version"],
@@ -125,41 +149,6 @@ class Metadata(FrozenModel):
                 ),
             ),
         )
-
-    def to_capa(self) -> Dict[str, Any]:
-        capa_meta = {
-            "timestamp": self.timestamp.isoformat(),
-            "version": self.version,
-            "sample": {
-                "md5": self.sample.md5,
-                "sha1": self.sample.sha1,
-                "sha256": self.sample.sha256,
-                "path": self.sample.path,
-            },
-            "analysis": {
-                "format": self.analysis.format,
-                "arch": self.analysis.arch,
-                "os": self.analysis.os,
-                "extractor": self.analysis.extractor,
-                "rules": self.analysis.rules,
-                "base_address": self.analysis.base_address.to_capa(),
-                "layout": {
-                    "functions": {
-                        f.address.to_capa(): {
-                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
-                        }
-                        for f in self.analysis.layout.functions
-                    }
-                },
-                "feature_counts": {
-                    "file": self.analysis.feature_counts.file,
-                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
-                },
-                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
-            },
-        }
-
-        return capa_meta
 
 
 class CompoundStatementType:
@@ -659,10 +648,12 @@ class ResultDocument(FrozenModel):
                 ),
             )
 
+        if isinstance(meta, Metadata):
+            return ResultDocument(meta=meta, rules=rule_matches)
+
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
 
-    def to_capa(self) -> Tuple[Dict, Dict]:
-        meta = self.meta.to_capa()
+    def to_capa(self) -> Tuple[Metadata, Dict]:
         capabilities: Dict[
             str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
         ] = collections.defaultdict(list)
@@ -678,4 +669,4 @@ class ResultDocument(FrozenModel):
 
                 capabilities[rule_name].append((addr.to_capa(), result))
 
-        return meta, capabilities
+        return self.meta, capabilities

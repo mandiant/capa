@@ -282,5 +282,5 @@ def test_rdoc_to_capa():
     rd = rdoc.ResultDocument.parse_file(path)
 
     meta, capabilites = rd.to_capa()
-    assert isinstance(meta, dict)
+    assert isinstance(meta, rdoc.Metadata)
     assert isinstance(capabilites, dict)
