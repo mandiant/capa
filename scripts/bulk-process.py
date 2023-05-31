@@ -131,8 +131,9 @@ def get_capa_results(args):
 
     meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
-    meta["analysis"].update(counts)
-    meta["analysis"]["layout"] = capa.main.compute_layout(rules, extractor, capabilities)
+    meta.analysis.__dict__.update(counts)
+    meta.analysis.layout.__dict__.update(capa.main.compute_layout(rules, extractor, capabilities))
+    meta = capa.render.result_document.Metadata.from_capa(meta.dict())
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
 

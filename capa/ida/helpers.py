@@ -140,37 +140,39 @@ def collect_metadata(rules):
     else:
         os = "unknown os"
 
-    return {
-        "timestamp": datetime.datetime.now().isoformat(),
-        "argv": [],
-        "sample": {
-            "md5": md5,
-            "sha1": "",  # not easily accessible
-            "sha256": sha256,
-            "path": idaapi.get_input_file_path(),
-        },
-        "analysis": {
-            "format": idaapi.get_file_type_name(),
-            "arch": arch,
-            "os": os,
-            "extractor": "ida",
-            "rules": rules,
-            "base_address": idaapi.get_imagebase(),
-            "layout": {
-                # this is updated after capabilities have been collected.
-                # will look like:
-                #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+    return capa.render.result_document.Metadata.from_capa(
+        {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "argv": [],
+            "sample": {
+                "md5": md5,
+                "sha1": "",  # not easily accessible
+                "sha256": sha256,
+                "path": idaapi.get_input_file_path(),
             },
-            # ignore these for now - not used by IDA plugin.
-            "feature_counts": {
-                "file": {},
-                "functions": {},
+            "analysis": {
+                "format": idaapi.get_file_type_name(),
+                "arch": arch,
+                "os": os,
+                "extractor": "ida",
+                "rules": rules,
+                "base_address": idaapi.get_imagebase(),
+                "layout": {
+                    # this is updated after capabilities have been collected.
+                    # will look like:
+                    #
+                    # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+                },
+                # ignore these for now - not used by IDA plugin.
+                "feature_counts": {
+                    "file": {},
+                    "functions": {},
+                },
+                "library_functions": {},
             },
-            "library_functions": {},
-        },
-        "version": capa.version.__version__,
-    }
+            "version": capa.version.__version__,
+        }
+    )
 
 
 class IDAIO:

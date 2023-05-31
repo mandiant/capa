@@ -41,6 +41,7 @@ import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
 import capa.features.extractors
+import capa.render.result_document
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
@@ -74,6 +75,7 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
+from capa.render.result_document import Metadata
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -739,7 +741,7 @@ def collect_metadata(
     os_: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
-):
+) -> Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
@@ -758,31 +760,36 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
-    return {
-        "timestamp": datetime.datetime.now().isoformat(),
-        "version": capa.version.__version__,
-        "argv": argv,
-        "sample": {
-            "md5": md5.hexdigest(),
-            "sha1": sha1.hexdigest(),
-            "sha256": sha256.hexdigest(),
-            "path": os.path.normpath(sample_path),
-        },
-        "analysis": {
-            "format": format_,
-            "arch": arch,
-            "os": os_,
-            "extractor": extractor.__class__.__name__,
-            "rules": rules_path,
-            "base_address": extractor.get_base_address(),
-            "layout": {
-                # this is updated after capabilities have been collected.
-                # will look like:
-                #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+    return Metadata.from_capa(
+        {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "version": capa.version.__version__,
+            "argv": argv,
+            "sample": {
+                "md5": md5.hexdigest(),
+                "sha1": sha1.hexdigest(),
+                "sha256": sha256.hexdigest(),
+                "path": os.path.normpath(sample_path),
             },
-        },
-    }
+            "analysis": {
+                "format": format_,
+                "arch": arch,
+                "os": os_,
+                "extractor": extractor.__class__.__name__,
+                "rules": rules_path,
+                "base_address": extractor.get_base_address(),
+                "layout": {
+                    "functions": {},
+                    # this is updated after capabilities have been collected.
+                    # will look like:
+                    #
+                    # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+                },
+                "feature_counts": {"file": 0, "functions": {}},
+                "library_functions": {},
+            },
+        }
+    )
 
 
 def compute_layout(rules, extractor, capabilities):
@@ -1198,7 +1205,7 @@ def main(argv=None):
                 return E_FILE_LIMITATION
 
     # TODO: #1411 use a real type, not a dict here.
-    meta: Dict[str, Any]
+    meta: Metadata
     capabilities: MatchResults
     counts: Dict[str, Any]
 
@@ -1255,15 +1262,16 @@ def main(argv=None):
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-        meta["analysis"].update(counts)
-        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+
+        meta.analysis.__dict__.update(counts)
+        meta.analysis.layout.__dict__.update(compute_layout(rules, extractor, capabilities))
+        meta = Metadata.from_capa(meta.dict())
 
         if has_file_limitation(rules, capabilities):
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION
-
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
     elif args.vverbose:
@@ -1308,7 +1316,9 @@ def ida_main():
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
-    meta["analysis"].update(counts)
+    # meta["analysis"].update(counts)
+    meta.analysis.__dict__.update(counts)
+    meta = Metadata.from_capa(meta.dict())
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")

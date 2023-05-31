@@ -126,41 +126,6 @@ class Metadata(FrozenModel):
             ),
         )
 
-    def to_capa(self) -> Dict[str, Any]:
-        capa_meta = {
-            "timestamp": self.timestamp.isoformat(),
-            "version": self.version,
-            "sample": {
-                "md5": self.sample.md5,
-                "sha1": self.sample.sha1,
-                "sha256": self.sample.sha256,
-                "path": self.sample.path,
-            },
-            "analysis": {
-                "format": self.analysis.format,
-                "arch": self.analysis.arch,
-                "os": self.analysis.os,
-                "extractor": self.analysis.extractor,
-                "rules": self.analysis.rules,
-                "base_address": self.analysis.base_address.to_capa(),
-                "layout": {
-                    "functions": {
-                        f.address.to_capa(): {
-                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
-                        }
-                        for f in self.analysis.layout.functions
-                    }
-                },
-                "feature_counts": {
-                    "file": self.analysis.feature_counts.file,
-                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
-                },
-                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
-            },
-        }
-
-        return capa_meta
-
 
 class CompoundStatementType:
     AND = "and"
@@ -659,10 +624,12 @@ class ResultDocument(FrozenModel):
                 ),
             )
 
+        if isinstance(meta, Metadata):
+            return ResultDocument(meta=meta, rules=rule_matches)
+
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
 
-    def to_capa(self) -> Tuple[Dict, Dict]:
-        meta = self.meta.to_capa()
+    def to_capa(self) -> Tuple[Metadata, Dict]:
         capabilities: Dict[
             str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
         ] = collections.defaultdict(list)
@@ -678,4 +645,4 @@ class ResultDocument(FrozenModel):
 
                 capabilities[rule_name].append((addr.to_capa(), result))
 
-        return meta, capabilities
+        return self.meta, capabilities
