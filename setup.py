@@ -93,7 +93,7 @@ setuptools.setup(
             "types-protobuf==4.23.0.1",
         ],
         "build": [
-            "pyinstaller==5.10.1",
+            "pyinstaller==5.11.0",
         ],
     },
     zip_safe=False,
