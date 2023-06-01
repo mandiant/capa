@@ -631,7 +631,7 @@ class ResultDocument(FrozenModel):
     rules: Dict[str, RuleMatches]
 
     @classmethod
-    def from_capa(cls, meta, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
+    def from_capa(cls, meta: Metadata, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
         rule_matches: Dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
             rule = rules[rule_name]
