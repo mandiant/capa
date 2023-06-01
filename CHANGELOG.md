@@ -7,14 +7,26 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (6)
 
+- load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
+- data-manipulation/encryption/aes/encrypt-data-using-aes-mixcolumns-step @mr-tz
+- linking/static/aplib/linked-against-aplib still@teamt5.org
+- communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
+- nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
 -
 
 ### Bug Fixes
-
+- extractor: update vivisect Arch extraction #1334 @mr-tz
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
-
+- symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
+- symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
+- improve ELF strtab and needed parsing @mr-tz
+- better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- extractor: fix binja installation path detection does not work with Python 3.11
 
 ### capa explorer IDA Pro plugin
 
@@ -72,7 +84,7 @@ Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
-- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
+- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff

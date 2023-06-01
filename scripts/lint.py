@@ -22,13 +22,11 @@ import time
 import string
 import difflib
 import hashlib
-import inspect
 import logging
 import pathlib
 import argparse
 import itertools
 import posixpath
-import contextlib
 from typing import Set, Dict, List
 from pathlib import Path
 from dataclasses import field, dataclass
@@ -866,37 +864,6 @@ def width(s, count):
         return s.ljust(count)
 
 
-@contextlib.contextmanager
-def redirecting_print_to_tqdm():
-    """
-    tqdm (progress bar) expects to have fairly tight control over console output.
-    so calls to `print()` will break the progress bar and make things look bad.
-    so, this context manager temporarily replaces the `print` implementation
-    with one that is compatible with tqdm.
-
-    via: https://stackoverflow.com/a/42424890/87207
-    """
-    old_print = print
-
-    def new_print(*args, **kwargs):
-        # If tqdm.tqdm.write raises error, use builtin print
-        try:
-            tqdm.tqdm.write(*args, **kwargs)
-        except:
-            old_print(*args, **kwargs)
-
-    try:
-        # Globally replace print with new_print.
-        # Verified this works manually on Python 3.11:
-        #     >>> import inspect
-        #     >>> inspect.builtins
-        #     <module 'builtins' (built-in)>
-        inspect.builtins.print = new_print  # type: ignore
-        yield
-    finally:
-        inspect.builtins.print = old_print  # type: ignore
-
-
 def lint(ctx: Context):
     """
     Returns: Dict[string, Tuple(int, int)]
@@ -907,7 +874,7 @@ def lint(ctx: Context):
 
     source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
     with tqdm.contrib.logging.tqdm_logging_redirect(source_rules, unit="rule") as pbar:
-        with redirecting_print_to_tqdm():
+        with capa.helpers.redirecting_print_to_tqdm(False):
             for rule in pbar:
                 name = rule.name
                 pbar.set_description(width(f"linting rule: {name}", 48))
