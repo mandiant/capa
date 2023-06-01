@@ -81,4 +81,4 @@ def test_proto_conversion(tmpdir):
     p = run_program(get_script_path("proto-to-results.py"), [pb])
     assert p.returncode == 0
 
-    assert p.stdout.startswith(b'{\n  "meta": ')
+    assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')

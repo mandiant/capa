@@ -6,7 +6,8 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
-from typing import Any, Dict, Tuple, Union, Optional
+import collections
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 
@@ -125,6 +126,41 @@ class Metadata(FrozenModel):
             ),
         )
 
+    def to_capa(self) -> Dict[str, Any]:
+        capa_meta = {
+            "timestamp": self.timestamp.isoformat(),
+            "version": self.version,
+            "sample": {
+                "md5": self.sample.md5,
+                "sha1": self.sample.sha1,
+                "sha256": self.sample.sha256,
+                "path": self.sample.path,
+            },
+            "analysis": {
+                "format": self.analysis.format,
+                "arch": self.analysis.arch,
+                "os": self.analysis.os,
+                "extractor": self.analysis.extractor,
+                "rules": self.analysis.rules,
+                "base_address": self.analysis.base_address.to_capa(),
+                "layout": {
+                    "functions": {
+                        f.address.to_capa(): {
+                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
+                        }
+                        for f in self.analysis.layout.functions
+                    }
+                },
+                "feature_counts": {
+                    "file": self.analysis.feature_counts.file,
+                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
+                },
+                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
+            },
+        }
+
+        return capa_meta
+
 
 class CompoundStatementType:
     AND = "and"
@@ -222,6 +258,54 @@ def node_from_capa(node: Union[capa.engine.Statement, capa.engine.Feature]) -> N
 
     elif isinstance(node, capa.engine.Feature):
         return FeatureNode(feature=frz.feature_from_capa(node))
+
+    else:
+        assert_never(node)
+
+
+def node_to_capa(
+    node: Node, children: List[Union[capa.engine.Statement, capa.engine.Feature]]
+) -> Union[capa.engine.Statement, capa.engine.Feature]:
+    if isinstance(node, StatementNode):
+        if isinstance(node.statement, CompoundStatement):
+            if node.statement.type == CompoundStatementType.AND:
+                return capa.engine.And(description=node.statement.description, children=children)
+
+            elif node.statement.type == CompoundStatementType.OR:
+                return capa.engine.Or(description=node.statement.description, children=children)
+
+            elif node.statement.type == CompoundStatementType.NOT:
+                return capa.engine.Not(description=node.statement.description, child=children[0])
+
+            elif node.statement.type == CompoundStatementType.OPTIONAL:
+                return capa.engine.Some(description=node.statement.description, count=0, children=children)
+
+            else:
+                assert_never(node.statement.type)
+
+        elif isinstance(node.statement, SomeStatement):
+            return capa.engine.Some(
+                description=node.statement.description, count=node.statement.count, children=children
+            )
+
+        elif isinstance(node.statement, RangeStatement):
+            return capa.engine.Range(
+                description=node.statement.description,
+                min=node.statement.min,
+                max=node.statement.max,
+                child=node.statement.child.to_capa(),
+            )
+
+        elif isinstance(node.statement, SubscopeStatement):
+            return capa.engine.Subscope(
+                description=node.statement.description, scope=node.statement.scope, child=children[0]
+            )
+
+        else:
+            assert_never(node.statement)
+
+    elif isinstance(node, FeatureNode):
+        return node.feature.to_capa()
 
     else:
         assert_never(node)
@@ -357,6 +441,39 @@ class Match(FrozenModel):
             children=tuple(children),
             locations=tuple(locations),
             captures={capture: tuple(captures[capture]) for capture in captures},
+        )
+
+    def to_capa(self, rules_by_name: Dict[str, capa.rules.Rule]) -> capa.engine.Result:
+        children = [child.to_capa(rules_by_name) for child in self.children]
+        statement = node_to_capa(self.node, [child.statement for child in children])
+
+        if isinstance(self.node, FeatureNode):
+            feature = self.node.feature
+
+            if isinstance(feature, (frzf.SubstringFeature, frzf.RegexFeature)):
+                matches = {capture: {loc.to_capa() for loc in locs} for capture, locs in self.captures.items()}
+
+                if isinstance(feature, frzf.SubstringFeature):
+                    assert isinstance(statement, capa.features.common.Substring)
+                    statement = capa.features.common._MatchedSubstring(statement, matches)
+                elif isinstance(feature, frzf.RegexFeature):
+                    assert isinstance(statement, capa.features.common.Regex)
+                    statement = capa.features.common._MatchedRegex(statement, matches)
+                else:
+                    assert_never(feature)
+
+        # apparently we don't have to fixup match and subscope entries here.
+        # at least, default, verbose, and vverbose renderers seem to work well without any special handling here.
+        #
+        # children contains a single tree of results, corresponding to the logic of the matched rule.
+        # self.node.feature.match contains the name of the rule that was matched.
+        # so its all available to reconstruct, if necessary.
+
+        return capa.features.common.Result(
+            success=self.success,
+            statement=statement,
+            locations={loc.to_capa() for loc in self.locations},
+            children=children,
         )
 
 
@@ -543,3 +660,22 @@ class ResultDocument(FrozenModel):
             )
 
         return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
+
+    def to_capa(self) -> Tuple[Dict, Dict]:
+        meta = self.meta.to_capa()
+        capabilities: Dict[
+            str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
+        ] = collections.defaultdict(list)
+
+        # this doesn't quite work because we don't have the rule source for rules that aren't matched.
+        rules_by_name = {
+            rule_name: capa.rules.Rule.from_yaml(rule_match.source) for rule_name, rule_match in self.rules.items()
+        }
+
+        for rule_name, rule_match in self.rules.items():
+            for addr, match in rule_match.matches:
+                result: capa.engine.Result = match.to_capa(rules_by_name)
+
+                capabilities[rule_name].append((addr.to_capa(), result))
+
+        return meta, capabilities

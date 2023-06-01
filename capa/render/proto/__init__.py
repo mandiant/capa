@@ -502,27 +502,36 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             rules=tuple(meta.analysis.rules),
             base_address=addr_from_pb2(meta.analysis.base_address),
             layout=rd.Layout(
-                functions=[
-                    rd.FunctionLayout(
-                        address=addr_from_pb2(f.address),
-                        matched_basic_blocks=[
-                            rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks
-                        ],
-                    )
-                    for f in meta.analysis.layout.functions
-                ]
+                functions=tuple(
+                    [
+                        rd.FunctionLayout(
+                            address=addr_from_pb2(f.address),
+                            matched_basic_blocks=tuple(
+                                [
+                                    rd.BasicBlockLayout(address=addr_from_pb2(bb.address))
+                                    for bb in f.matched_basic_blocks
+                                ]
+                            ),
+                        )
+                        for f in meta.analysis.layout.functions
+                    ]
+                )
             ),
             feature_counts=rd.FeatureCounts(
                 file=meta.analysis.feature_counts.file,
-                functions=[
-                    rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
-                    for f in meta.analysis.feature_counts.functions
-                ],
+                functions=tuple(
+                    [
+                        rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
+                        for f in meta.analysis.feature_counts.functions
+                    ]
+                ),
             ),
-            library_functions=[
-                rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
-                for lf in meta.analysis.library_functions
-            ],
+            library_functions=tuple(
+                [
+                    rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
+                    for lf in meta.analysis.library_functions
+                ]
+            ),
         ),
     )
 
@@ -585,13 +594,14 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         return frzf.ExportFeature(export=ff.export, description=ff.description or None)
     elif type_ == "import_":
         ff = f.import_
-        return frzf.ImportFeature(import_=ff.import_, description=ff.description or None)
+        return frzf.ImportFeature(import_=ff.import_, description=ff.description or None)  # type: ignore
+        # Mypy is unable to recognize `import_` as an argument
     elif type_ == "section":
         ff = f.section
         return frzf.SectionFeature(section=ff.section, description=ff.description or None)
     elif type_ == "function_name":
         ff = f.function_name
-        return frzf.FunctionNameFeature(function_name=ff.function_name, description=ff.description or None)
+        return frzf.FunctionNameFeature(function_name=ff.function_name, description=ff.description or None)  # type: ignore
     elif type_ == "substring":
         ff = f.substring
         return frzf.SubstringFeature(substring=ff.substring, description=ff.description or None)
@@ -603,7 +613,8 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         return frzf.StringFeature(string=ff.string, description=ff.description or None)
     elif type_ == "class_":
         ff = f.class_
-        return frzf.ClassFeature(class_=ff.class_, description=ff.description or None)
+        return frzf.ClassFeature(class_=ff.class_, description=ff.description or None)  # type: ignore
+        # Mypy is unable to recognize `class_` as an argument due to aliasing
     elif type_ == "namespace":
         ff = f.namespace
         return frzf.NamespaceFeature(namespace=ff.namespace, description=ff.description or None)
@@ -629,12 +640,13 @@ def feature_from_pb2(f: capa_pb2.FeatureNode) -> frzf.Feature:
         ff = f.operand_number
         return frzf.OperandNumberFeature(
             index=ff.index, operand_number=number_from_pb2(ff.operand_number), description=ff.description or None
-        )
+        )  # type: ignore
     elif type_ == "operand_offset":
         ff = f.operand_offset
         return frzf.OperandOffsetFeature(
             index=ff.index, operand_offset=int_from_pb2(ff.operand_offset), description=ff.description or None
-        )
+        )  # type: ignore
+        # Mypy is unable to recognize `operand_offset` as an argument due to aliasing
     elif type_ == "basic_block":
         ff = f.basic_block
         return frzf.BasicBlockFeature(description=ff.description or None)
@@ -651,16 +663,16 @@ def match_from_pb2(match: capa_pb2.Match) -> rd.Match:
         return rd.Match(
             success=match.success,
             node=rd.StatementNode(statement=statement_from_pb2(match.statement)),
-            children=children,
-            locations=locations,
+            children=tuple(children),
+            locations=tuple(locations),
             captures={},
         )
     elif node_type == "feature":
         return rd.Match(
             success=match.success,
             node=rd.FeatureNode(feature=feature_from_pb2(match.feature)),
-            children=children,
-            locations=locations,
+            children=tuple(children),
+            locations=tuple(locations),
             captures={capture: tuple(map(addr_from_pb2, locs.address)) for capture, locs in match.captures.items()},
         )
     else:
@@ -694,7 +706,8 @@ def maec_from_pb2(pb: capa_pb2.MaecMetadata) -> rd.MaecMetadata:
         malware_family=pb.malware_family or None,
         malware_category=pb.malware_category or None,
         malware_category_ov=pb.malware_category_ov or None,
-    )
+    )  # type: ignore
+    # Mypy is unable to recognise arguments due to alias
 
 
 def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
@@ -711,7 +724,8 @@ def rule_metadata_from_pb2(pb: capa_pb2.RuleMetadata) -> rd.RuleMetadata:
         lib=pb.lib,
         is_subscope_rule=pb.is_subscope_rule,
         maec=maec_from_pb2(pb.maec),
-    )
+    )  # type: ignore
+    # Mypy is unable to recognise `attack` and `is_subscope_rule` as arguments due to alias
 
 
 def doc_from_pb2(doc: capa_pb2.ResultDocument) -> rd.ResultDocument:

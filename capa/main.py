@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Tuple, Callable
 import halo
 import tqdm
 import colorama
+import tqdm.contrib.logging
 from pefile import PEFormatError
 from elftools.common.exceptions import ELFError
 
@@ -53,6 +54,7 @@ from capa.helpers import (
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
+    redirecting_print_to_tqdm,
     log_unsupported_arch_error,
     log_unsupported_format_error,
 )
@@ -69,6 +71,7 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
@@ -250,37 +253,42 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
         "library_functions": {},
     }  # type: Dict[str, Any]
 
-    pbar = tqdm.tqdm
-    if disable_progress:
-        # do not use tqdm to avoid unnecessary side effects when caller intends
-        # to disable progress completely
-        pbar = lambda s, *args, **kwargs: s
+    with redirecting_print_to_tqdm(disable_progress):
+        with tqdm.contrib.logging.logging_redirect_tqdm():
+            pbar = tqdm.tqdm
+            if disable_progress:
+                # do not use tqdm to avoid unnecessary side effects when caller intends
+                # to disable progress completely
+                def pbar(s, *args, **kwargs):
+                    return s
 
-    functions = list(extractor.get_functions())
-    n_funcs = len(functions)
+            functions = list(extractor.get_functions())
+            n_funcs = len(functions)
 
-    pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
-    for f in pb:
-        if extractor.is_library_function(f.address):
-            function_name = extractor.get_function_name(f.address)
-            logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-            meta["library_functions"][f.address] = function_name
-            n_libs = len(meta["library_functions"])
-            percentage = round(100 * (n_libs / n_funcs))
-            if isinstance(pb, tqdm.tqdm):
-                pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
-            continue
+            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
+            for f in pb:
+                if extractor.is_library_function(f.address):
+                    function_name = extractor.get_function_name(f.address)
+                    logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
+                    meta["library_functions"][f.address] = function_name
+                    n_libs = len(meta["library_functions"])
+                    percentage = round(100 * (n_libs / n_funcs))
+                    if isinstance(pb, tqdm.tqdm):
+                        pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
+                    continue
 
-        function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(ruleset, extractor, f)
-        meta["feature_counts"]["functions"][f.address] = feature_count
-        logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
+                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
+                    ruleset, extractor, f
+                )
+                meta["feature_counts"]["functions"][f.address] = feature_count
+                logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
 
-        for rule_name, res in function_matches.items():
-            all_function_matches[rule_name].extend(res)
-        for rule_name, res in bb_matches.items():
-            all_bb_matches[rule_name].extend(res)
-        for rule_name, res in insn_matches.items():
-            all_insn_matches[rule_name].extend(res)
+                for rule_name, res in function_matches.items():
+                    all_function_matches[rule_name].extend(res)
+                for rule_name, res in bb_matches.items():
+                    all_bb_matches[rule_name].extend(res)
+                for rule_name, res in insn_matches.items():
+                    all_insn_matches[rule_name].extend(res)
 
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
@@ -810,6 +818,7 @@ def compute_layout(rules, extractor, capabilities):
                 # such as with the function name, etc.
             }
             for f, bbs in bbs_by_function.items()
+            if len([bb for bb in bbs if bb in matched_bbs]) > 0
         }
     }
 
@@ -1037,6 +1046,13 @@ def handle_common_args(args):
             logger.debug("-" * 80)
 
             sigs_path = os.path.join(get_default_root(), "sigs")
+            if not os.path.exists(sigs_path):
+                logger.error(
+                    "Using default signature path, but it doesn't exist. "
+                    "Please install the signatures first: "
+                    "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
+                )
+                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
             sigs_path = args.signatures
             logger.debug("using signatures path: %s", sigs_path)
@@ -1181,53 +1197,72 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-    if format_ == FORMAT_FREEZE:
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+    # TODO: #1411 use a real type, not a dict here.
+    meta: Dict[str, Any]
+    capabilities: MatchResults
+    counts: Dict[str, Any]
+
+    if format_ == FORMAT_RESULT:
+        # result document directly parses into meta, capabilities
+        result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
+        meta, capabilities = result_doc.to_capa()
+
     else:
-        try:
-            if format_ == FORMAT_PE:
-                sig_paths = get_signatures(args.signatures)
-            else:
-                sig_paths = []
-                logger.debug("skipping library code matching: only have native PE signatures")
-        except IOError as e:
-            logger.error("%s", str(e))
-            return E_INVALID_SIG
+        # all other formats we must create an extractor
+        # and use that to extract meta and capabilities
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+        if format_ == FORMAT_FREEZE:
+            # freeze format deserializes directly into an extractor
+            with open(args.sample, "rb") as f:
+                extractor = capa.features.freeze.load(f.read())
+        else:
+            # all other formats we must create an extractor,
+            # such as viv, binary ninja, etc. workspaces
+            # and use those for extracting.
 
-        try:
-            extractor = get_extractor(
-                args.sample,
-                format_,
-                args.os,
-                args.backend,
-                sig_paths,
-                should_save_workspace,
-                disable_progress=args.quiet,
-            )
-        except UnsupportedFormatError:
-            log_unsupported_format_error()
-            return E_INVALID_FILE_TYPE
-        except UnsupportedArchError:
-            log_unsupported_arch_error()
-            return E_INVALID_FILE_ARCH
-        except UnsupportedOSError:
-            log_unsupported_os_error()
-            return E_INVALID_FILE_OS
+            try:
+                if format_ == FORMAT_PE:
+                    sig_paths = get_signatures(args.signatures)
+                else:
+                    sig_paths = []
+                    logger.debug("skipping library code matching: only have native PE signatures")
+            except IOError as e:
+                logger.error("%s", str(e))
+                return E_INVALID_SIG
 
-    meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+            should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-    capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-    meta["analysis"].update(counts)
-    meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+            try:
+                extractor = get_extractor(
+                    args.sample,
+                    format_,
+                    args.os,
+                    args.backend,
+                    sig_paths,
+                    should_save_workspace,
+                    disable_progress=args.quiet,
+                )
+            except UnsupportedFormatError:
+                log_unsupported_format_error()
+                return E_INVALID_FILE_TYPE
+            except UnsupportedArchError:
+                log_unsupported_arch_error()
+                return E_INVALID_FILE_ARCH
+            except UnsupportedOSError:
+                log_unsupported_os_error()
+                return E_INVALID_FILE_OS
 
-    if has_file_limitation(rules, capabilities):
-        # bail if capa encountered file limitation e.g. a packed binary
-        # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
-            return E_FILE_LIMITATION
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+
+        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        meta["analysis"].update(counts)
+        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+
+        if has_file_limitation(rules, capabilities):
+            # bail if capa encountered file limitation e.g. a packed binary
+            # do show the output in verbose mode, though.
+            if not (args.verbose or args.vverbose or args.json):
+                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
