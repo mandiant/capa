@@ -111,17 +111,6 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
         if not target:
             return
 
-        if viv_utils.flirt.is_library_function(f.vw, target):
-            name = viv_utils.get_function_name(f.vw, target)
-            yield API(name), ih.address
-            if name.startswith("_"):
-                # some linkers may prefix linked routines with a `_` to avoid name collisions.
-                # extract features for both the mangled and un-mangled representations.
-                # e.g. `_fwrite` -> `fwrite`
-                # see: https://stackoverflow.com/a/2628384/87207
-                yield API(name[1:]), ih.address
-            return
-
         if f.vw.metadata["Format"] == "elf":
             if "SymbolTable" not in f.vw.metadata:
                 # the symbol table gets stored as a function's attribute in order to avoid running
@@ -150,6 +139,17 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 if sym_value == target and sym_info & STT_FUNC != 0:
                     yield API(sym_name), ih.address
                     yield FunctionName(sym_name), ih.address
+
+        if viv_utils.flirt.is_library_function(f.vw, target):
+            name = viv_utils.get_function_name(f.vw, target)
+            yield API(name), ih.address
+            if name.startswith("_"):
+                # some linkers may prefix linked routines with a `_` to avoid name collisions.
+                # extract features for both the mangled and un-mangled representations.
+                # e.g. `_fwrite` -> `fwrite`
+                # see: https://stackoverflow.com/a/2628384/87207
+                yield API(name[1:]), ih.address
+            return
 
         for _ in range(THUNK_CHAIN_DEPTH_DELTA):
             if target in imports:
