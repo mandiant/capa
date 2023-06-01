@@ -761,6 +761,14 @@ FEATURE_PRESENCE_TESTS = sorted(
     key=lambda t: (t[0], t[1]),
 )
 
+# this list should be merged into the one above (FEATURE_PRESENSE_TESTS)
+# once the debug symbol functionality has been added to all backends
+FEATURE_SYMTAB_FUNC_TESTS = [
+        ("2bf18d", "function=0x4027b3,bb=0x402861,insn=0x40286d", capa.features.insn.API("__GI_connect"), True),
+        ("2bf18d", "function=0x4027b3,bb=0x402861,insn=0x40286d", capa.features.insn.API("connect"), True),
+        ("2bf18d", "function=0x4027b3,bb=0x402861,insn=0x40286d", capa.features.insn.API("__libc_connect"), True),
+]
+
 FEATURE_PRESENCE_TESTS_DOTNET = sorted(
     [
         ("b9f5b", "file", Arch(ARCH_I386), True),
