@@ -773,13 +773,31 @@ FEATURE_SYMTAB_FUNC_TESTS = [
     (
         "2bf18d",
         "function=0x4027b3,bb=0x402861,insn=0x40286d",
+        capa.features.file.FunctionName("__GI_connect"),
+        True,
+    ),
+    (
+        "2bf18d",
+        "function=0x4027b3,bb=0x402861,insn=0x40286d",
         capa.features.insn.API("connect"),
         True,
     ),
     (
         "2bf18d",
         "function=0x4027b3,bb=0x402861,insn=0x40286d",
+        capa.features.file.FunctionName("connect"),
+        True,
+    ),
+    (
+        "2bf18d",
+        "function=0x4027b3,bb=0x402861,insn=0x40286d",
         capa.features.insn.API("__libc_connect"),
+        True,
+    ),
+    (
+        "2bf18d",
+        "function=0x4027b3,bb=0x402861,insn=0x40286d",
+        capa.features.file.FunctionName("__libc_connect"),
         True,
     ),
 ]
