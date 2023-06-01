@@ -124,7 +124,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                     if section.sh_info & SHT_SYMTAB:
                         strtab_section = elf.sections[section.vsGetField("sh_link")]
                         sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
-                        sh_strtab = Shdr.from_viv(strtab, elf.readAtOffset(strtab.sh_offset, strtab.sh_size))
+                        sh_strtab = Shdr.from_viv(strtab_section, elf.readAtOffset(strtab.sh_offset, strtab.sh_size))
 
                 symtab = SymTab(endian, bitness, sh_symtab, sh_strtab)
                 f.vw.metadata["SymbolTable"] = symtab
