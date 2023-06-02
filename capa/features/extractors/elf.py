@@ -91,6 +91,21 @@ class Shdr:
     entsize: int
     buf: bytes
 
+    @classmethod
+    def from_viv(cls, section, buf: bytes):
+        return cls(
+            section.sh_name,
+            section.sh_type,
+            section.sh_flags,
+            section.sh_addr,
+            section.sh_offset,
+            section.sh_size,
+            section.sh_link,
+            section.sh_entsize,
+            buf,
+        )
+
+
 
 class ELF:
     def __init__(self, f: BinaryIO):
