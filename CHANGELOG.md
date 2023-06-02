@@ -6,6 +6,7 @@
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
 ### Breaking Changes
+- Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
 ### New Rules (7)
 
@@ -27,7 +28,6 @@
 - better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
-- Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 - extractor: fix binja installation path detection does not work with Python 3.11
 
 ### capa explorer IDA Pro plugin
