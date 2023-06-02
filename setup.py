@@ -21,14 +21,14 @@ requirements = [
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
-    "ruamel.yaml==0.17.21",
+    "ruamel.yaml==0.17.28",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==1.10.7",
-    "protobuf==4.22.3",
+    "protobuf==4.23.2",
 ]
 
 # this sets __version__
@@ -90,7 +90,7 @@ setuptools.setup(
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
             "types_requests==2.28.1",
-            "types-protobuf==4.22.0.2",
+            "types-protobuf==4.23.0.1",
         ],
         "build": [
             "pyinstaller==5.10.1",
