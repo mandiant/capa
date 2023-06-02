@@ -707,7 +707,7 @@ class SymTab:
                 sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size))
 
-         return cls(endian, bitness, sh_symtab, sh_strtab)
+        return cls(endian, bitness, sh_symtab, sh_strtab)
 
 
 def guess_os_from_osabi(elf: ELF) -> Optional[OS]:
