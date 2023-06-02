@@ -115,17 +115,21 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
             if "symtab" not in fh.ctx["cache"]:
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code everytime the call is made, thus preventing the computational overhead.
-                fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
+                try:
+                    fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
+                except:
+                    fh.ctx["cache"]["symtab"] = None
 
             symtab = fh.ctx["cache"]["symtab"]
-            for symbol in symtab.get_symbols():
-                sym_name = symtab.get_name(symbol)
-                sym_value = symbol.value
-                sym_info = symbol.info
+            if symtab:
+                for symbol in symtab.get_symbols():
+                    sym_name = symtab.get_name(symbol)
+                    sym_value = symbol.value
+                    sym_info = symbol.info
 
-                STT_FUNC = 0x2
-                if sym_value == target and sym_info & STT_FUNC != 0:
-                    yield API(sym_name), ih.address
+                    STT_FUNC = 0x2
+                    if sym_value == target and sym_info & STT_FUNC != 0:
+                        yield API(sym_name), ih.address
 
         if viv_utils.flirt.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)

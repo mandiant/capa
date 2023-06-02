@@ -722,7 +722,14 @@ class SymTab:
                 sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size))
 
-        return cls(endian, bitness, sh_symtab, sh_strtab)
+        try:
+            return cls(endian, bitness, sh_symtab, sh_strtab)
+        except NameError:
+            return None
+        except:
+            # all exceptions that could be encountered by
+            # cls._parse() imply a faulty symbol's table.
+            raise CorruptElfFile("malformed symbol's table")
 
 
 def guess_os_from_osabi(elf: ELF) -> Optional[OS]:
