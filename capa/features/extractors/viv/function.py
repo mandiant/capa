@@ -30,6 +30,23 @@ def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature
     raise NotImplementedError
 
 
+def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    if fh.inner.vw.metadata["Format"] == "Elf":
+        # the file's symbol table gets added to the metadata of the vivisect workspace.
+        # this is in order to eliminate the computational overhead of refetching symtab each time.
+        fh.ctx["cache"]["symtab"] = SymTab.from_Elf(fh.inner.vw.parsedbin)
+
+    symtab = fh.ctx["cache"]["symtab"]
+    for symbol in symtab.get_symbols():
+        sym_name = symtab.get_name(symbol)
+        sym_value = symbol.value
+        sym_info = symbol.info
+
+        STT_FUNC = 0x2
+        if sym_value == fh.address and sym_info & STT_FUNC != 0:
+            yield FunctionName(sym_name), fh.address
+
+
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     f: viv_utils.Function = fhandle.inner
     for src, _, _, _ in f.vw.getXrefsTo(f.va, rtype=vivisect.const.REF_CODE):
@@ -79,4 +96,8 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop)
+FUNCTION_HANDLERS = (
+    extract_function_symtab_names,
+    extract_function_calls_to,
+    extract_function_loop,
+)
