@@ -6,7 +6,7 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (7)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -14,6 +14,7 @@
 - linking/static/aplib/linked-against-aplib still@teamt5.org
 - communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
+- nursery/compiled-with-exescript jonathanlepore@google.com
 -
 
 ### Bug Fixes
