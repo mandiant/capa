@@ -115,19 +115,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
             if "symtab" not in fh.ctx["cache"]:
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code everytime the call is made, thus preventing the computational overhead.
-                elf = f.vw.parsedbin
-                endian = "<" if elf.getEndian() == 0 else ">"
-                bitness = elf.bits
-
-                SHT_SYMTAB = 0x2
-                for section in elf.sections:
-                    if section.sh_info & SHT_SYMTAB:
-                        strtab_section = elf.sections[section.vsGetField("sh_link")]
-                        sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
-                        sh_strtab = Shdr.from_viv(strtab_section, elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size))
-
-                symtab = SymTab(endian, bitness, sh_symtab, sh_strtab)
-                fh.ctx["cache"]["symtab"] = symtab
+                fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
 
             symtab = fh.ctx["cache"]["symtab"]
             for symbol in symtab.get_symbols():

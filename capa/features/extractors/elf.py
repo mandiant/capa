@@ -91,24 +91,6 @@ class Shdr:
     entsize: int
     buf: bytes
 
-    @classmethod
-    def from_viv(cls, section, buf: bytes):
-        """
-        construct a Shdr object from vivisect's representation of
-        section headers (Elf.Elf32Section or Elf.Elf64Section)
-        """
-        return cls(
-            section.sh_name,
-            section.sh_type,
-            section.sh_flags,
-            section.sh_addr,
-            section.sh_offset,
-            section.sh_size,
-            section.sh_link,
-            section.sh_entsize,
-            buf,
-        )
-
 
 class ELF:
     def __init__(self, f: BinaryIO):
@@ -712,6 +694,20 @@ class SymTab:
         """
         for symbol in self.symbols:
             yield symbol
+
+    @classmethod
+    def from_Elf(cls, ElfBinary) -> "SymTab":
+        endian = "<" if ElfBinary.getEndian() == 0 else ">"
+        bitness = ElfBinary.bits
+
+        SHT_SYMTAB = 0x2
+        for section in ElfBinary.sections:
+            if section.sh_info & SHT_SYMTAB:
+                strtab_section = ElfBinary.sections[section.vsGetField("sh_link")]
+                sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
+                sh_strtab = Shdr.from_viv(strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size))
+
+         return cls(endian, bitness, sh_symtab, sh_strtab)
 
 
 def guess_os_from_osabi(elf: ELF) -> Optional[OS]:
