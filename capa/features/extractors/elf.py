@@ -92,7 +92,7 @@ class Shdr:
     buf: bytes
 
     @classmethod
-    def from_viv(cls, section, buf: bytes):
+    def from_viv(cls, section, buf: bytes) -> "Shdr":
         return cls(
             section.sh_name,
             section.sh_type,
