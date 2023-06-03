@@ -22,7 +22,8 @@ import capa
 import capa.version
 import capa.render.utils as rutils
 import capa.features.common
-import capa.render.result_document
+import capa.features.freeze
+import capa.render.result_document as rdoc
 from capa.features.address import AbsoluteVirtualAddress
 
 logger = logging.getLogger("capa")
@@ -140,38 +141,34 @@ def collect_metadata(rules):
     else:
         os = "unknown os"
 
-    return capa.render.result_document.Metadata.from_capa(
-        {
-            "timestamp": datetime.datetime.now().isoformat(),
-            "argv": [],
-            "sample": {
-                "md5": md5,
-                "sha1": "",  # not easily accessible
-                "sha256": sha256,
-                "path": idaapi.get_input_file_path(),
-            },
-            "analysis": {
-                "format": idaapi.get_file_type_name(),
-                "arch": arch,
-                "os": os,
-                "extractor": "ida",
-                "rules": rules,
-                "base_address": idaapi.get_imagebase(),
-                "layout": {
-                    # this is updated after capabilities have been collected.
-                    # will look like:
-                    #
-                    # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
-                },
-                # ignore these for now - not used by IDA plugin.
-                "feature_counts": {
-                    "file": {},
-                    "functions": {},
-                },
-                "library_functions": {},
-            },
-            "version": capa.version.__version__,
-        }
+    return rdoc.Metadata(
+        timestamp=datetime.datetime.now(),
+        version=capa.version.__version__,
+        argv=(),
+        sample=rdoc.Sample(
+            md5=md5,
+            sha1="",  # not easily accessible
+            sha256=sha256,
+            path=idaapi.get_input_file_path(),
+        ),
+        analysis=rdoc.Analysis(
+            format=idaapi.get_file_type_name(),
+            arch=arch,
+            os=os,
+            extractor="ida",
+            rules=rules,
+            base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
+            layout=rdoc.Layout(
+                functions=tuple()
+                # this is updated after capabilities have been collected.
+                # will look like:
+                #
+                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+            ),
+            # ignore these for now - not used by IDA plugin.
+            feature_counts=rdoc.FeatureCounts(file=0, functions=tuple()),
+            library_functions=tuple(),
+        ),
     )
 
 
@@ -219,12 +216,12 @@ def idb_contains_cached_results() -> bool:
         return False
 
 
-def load_and_verify_cached_results() -> Optional[capa.render.result_document.ResultDocument]:
+def load_and_verify_cached_results() -> Optional[rdoc.ResultDocument]:
     """verifies that cached results have valid (mapped) addresses for the current database"""
     logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
 
     n = netnode.Netnode(CAPA_NETNODE)
-    doc = capa.render.result_document.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
+    doc = rdoc.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
 
     for rule in rutils.capability_rules(doc):
         for location_, _ in rule.matches:

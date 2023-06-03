@@ -172,10 +172,13 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
 
     # collect metadata (used only to make rendering more complete)
     meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, rules_path, extractor)
-    meta.analysis.__dict__.update(counts)
-    meta.analysis.__dict__.update(capa.main.compute_layout(rules, extractor, capabilities))
+
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
     capa_output: Any = False
+
     if output_format == "dictionary":
         # ...as python dictionary, simplified as textable but in dictionary
         doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
