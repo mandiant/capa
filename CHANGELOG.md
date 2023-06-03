@@ -3,15 +3,19 @@
 ## master (unreleased)
 
 ### New Features
+- Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (7)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
 - data-manipulation/encryption/aes/encrypt-data-using-aes-mixcolumns-step @mr-tz
 - linking/static/aplib/linked-against-aplib still@teamt5.org
+- communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
+- nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
+- nursery/compiled-with-exescript jonathanlepore@google.com
 -
 
 ### Bug Fixes
@@ -22,6 +26,7 @@
 - improve ELF strtab and needed parsing @mr-tz
 - better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 
 ### capa explorer IDA Pro plugin
