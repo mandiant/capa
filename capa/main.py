@@ -1337,6 +1337,7 @@ def ghidra_main():
     logger.debug("rule path: %s", rules_path)
     rules = get_rules([rules_path])
     
+    # temp test for OS & ARCH extractions
     globl_features: List[Tuple[Feature, Address]] = []
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
