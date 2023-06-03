@@ -1317,6 +1317,33 @@ def ida_main():
     print(capa.render.default.render(meta, rules, capabilities))
 
 
+def ghidra_main():
+    import capa.rules
+    #import capa.render.default
+    #import capa.features.extractors.ghidra.extractor
+    import capa.features.extractors.ghidra.global_
+
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
+
+    logger.debug("-" * 80)
+    logger.debug(" Using default embedded rules.")
+    logger.debug(" ")
+    logger.debug(" You can see the current default rule set here:")
+    logger.debug("     https://github.com/mandiant/capa-rules")
+    logger.debug("-" * 80)
+
+    rules_path = os.path.join(get_default_root(), "rules")
+    logger.debug("rule path: %s", rules_path)
+    rules = get_rules([rules_path])
+    
+    # temp test for OS & ARCH extractions
+    globl_features: List[Tuple[Feature, Address]] = []
+    globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
+    globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
+    print(globl_features)
+
+
 def is_runtime_ida():
     try:
         import idc
@@ -1326,8 +1353,20 @@ def is_runtime_ida():
         return True
 
 
+def is_runtime_ghidra():
+    try:
+        import ghidra.program.flatapi
+    except ImportError:
+        return False
+    else:
+        return True
+
+
 if __name__ == "__main__":
     if is_runtime_ida():
         ida_main()
+    elif is_runtime_ghidra():
+        ghidra_main()
     else:
         sys.exit(main())
+
