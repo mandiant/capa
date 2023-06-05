@@ -80,7 +80,7 @@ setuptools.setup(
             "mypy==1.3.0",
             "psutil==5.9.2",
             "stix2==3.0.1",
-            "requests==2.28.0",
+            "requests==2.31.0",
             "mypy-protobuf==3.4.0",
             # type stubs for mypy
             "types-backports==0.1.3",
