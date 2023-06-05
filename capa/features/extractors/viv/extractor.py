@@ -51,7 +51,9 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         cache = {}
         for va in sorted(self.vw.getFunctions()):
-            yield FunctionHandle(address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"cache":cache})
+            yield FunctionHandle(
+                address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"cache": cache}
+            )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.viv.function.extract_features(fh)

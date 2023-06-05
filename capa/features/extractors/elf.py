@@ -106,7 +106,6 @@ class Shdr:
         )
 
 
-
 class ELF:
     def __init__(self, f: BinaryIO):
         self.f = f
@@ -720,7 +719,9 @@ class SymTab:
             if section.sh_info & SHT_SYMTAB:
                 strtab_section = ElfBinary.sections[section.sh_link]
                 sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
-                sh_strtab = Shdr.from_viv(strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size))
+                sh_strtab = Shdr.from_viv(
+                    strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
+                )
 
         try:
             return cls(endian, bitness, sh_symtab, sh_strtab)
