@@ -27,7 +27,7 @@ requirements = [
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.7",
+    "pydantic==1.10.8",
     "protobuf==4.23.2",
 ]
 
