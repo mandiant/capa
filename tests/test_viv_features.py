@@ -11,7 +11,7 @@ from fixtures import *
 
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS,
+    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
     indirect=["sample", "scope"],
 )
 def test_viv_features(sample, scope, feature, expected):

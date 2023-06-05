@@ -1,6 +1,7 @@
 # Change Log
 
 ## master (unreleased)
+- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
 
 ### New Features
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)

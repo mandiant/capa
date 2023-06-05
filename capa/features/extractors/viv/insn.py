@@ -19,9 +19,11 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
+from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.elf import Shdr, SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -108,6 +110,26 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
         target = capa.features.extractors.viv.helpers.get_coderef_from(f.vw, insn.va)
         if not target:
             return
+
+        if f.vw.metadata["Format"] == "elf":
+            if "symtab" not in fh.ctx["cache"]:
+                # the symbol table gets stored as a function's attribute in order to avoid running
+                # this code everytime the call is made, thus preventing the computational overhead.
+                try:
+                    fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
+                except:
+                    fh.ctx["cache"]["symtab"] = None
+
+            symtab = fh.ctx["cache"]["symtab"]
+            if symtab:
+                for symbol in symtab.get_symbols():
+                    sym_name = symtab.get_name(symbol)
+                    sym_value = symbol.value
+                    sym_info = symbol.info
+
+                    STT_FUNC = 0x2
+                    if sym_value == target and sym_info & STT_FUNC != 0:
+                        yield API(sym_name), ih.address
 
         if viv_utils.flirt.is_library_function(f.vw, target):
             name = viv_utils.get_function_name(f.vw, target)
