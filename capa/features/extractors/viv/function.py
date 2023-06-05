@@ -33,7 +33,7 @@ def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature
 
 
 def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
-    if fh.inner.vw.metadata["Format"] == "Elf":
+    if fh.inner.vw.metadata["Format"] == "elf":
         # the file's symbol table gets added to the metadata of the vivisect workspace.
         # this is in order to eliminate the computational overhead of refetching symtab each time.
         if "symtab" not in fh.ctx["cache"]:
