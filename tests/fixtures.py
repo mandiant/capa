@@ -784,19 +784,19 @@ FEATURE_SYMTAB_FUNC_TESTS = [
     ),
     (
         "2bf18d",
-        "function=0x40286d",
+        "function=0x4088a4",
         capa.features.file.FunctionName("__GI_connect"),
         True,
     ),
     (
         "2bf18d",
-        "function=0x40286d",
+        "function=0x4088a4",
         capa.features.file.FunctionName("connect"),
         True,
     ),
     (
         "2bf18d",
-        "function=0x40286d",
+        "function=0x4088a4",
         capa.features.file.FunctionName("__libc_connect"),
         True,
     ),
