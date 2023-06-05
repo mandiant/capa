@@ -21,7 +21,7 @@ requirements = [
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
-    "ruamel.yaml==0.17.28",
+    "ruamel.yaml==0.17.31",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.29",
