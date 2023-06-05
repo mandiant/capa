@@ -11,9 +11,11 @@ import envi
 import viv_utils
 import vivisect.const
 
+from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import FunctionHandle
 
 

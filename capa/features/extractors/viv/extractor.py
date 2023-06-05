@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator, Any
 
 import viv_utils
 import viv_utils.flirt
@@ -49,7 +49,7 @@ class VivisectFeatureExtractor(FeatureExtractor):
         yield from capa.features.extractors.viv.file.extract_features(self.vw, self.buf)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
-        cache = {}
+        cache: Dict[str, Any] = {}
         for va in sorted(self.vw.getFunctions()):
             yield FunctionHandle(
                 address=AbsoluteVirtualAddress(va), inner=viv_utils.Function(self.vw, va), ctx={"cache": cache}

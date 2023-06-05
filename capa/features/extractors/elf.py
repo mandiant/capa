@@ -710,7 +710,7 @@ class SymTab:
             yield symbol
 
     @classmethod
-    def from_Elf(cls, ElfBinary) -> "SymTab":
+    def from_Elf(cls, ElfBinary) -> Optional["SymTab"]:
         endian = "<" if ElfBinary.getEndian() == 0 else ">"
         bitness = ElfBinary.bits
 
