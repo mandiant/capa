@@ -1208,7 +1208,6 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-    # TODO: #1411 use a real type, not a dict here.
     meta: rdoc.Metadata
     capabilities: MatchResults
     counts: Dict[str, Any]

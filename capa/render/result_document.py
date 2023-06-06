@@ -24,45 +24,51 @@ from capa.helpers import assert_never
 
 class FrozenModel(BaseModel):
     class Config:
+        frozen = True
         extra = "forbid"
 
 
-class Sample(FrozenModel):
+class Model(BaseModel):
+    class Config:
+        extra = "forbid"
+
+
+class Sample(Model):
     md5: str
     sha1: str
     sha256: str
     path: str
 
 
-class BasicBlockLayout(FrozenModel):
+class BasicBlockLayout(Model):
     address: frz.Address
 
 
-class FunctionLayout(FrozenModel):
+class FunctionLayout(Model):
     address: frz.Address
     matched_basic_blocks: Tuple[BasicBlockLayout, ...]
 
 
-class Layout(FrozenModel):
+class Layout(Model):
     functions: Tuple[FunctionLayout, ...]
 
 
-class LibraryFunction(FrozenModel):
+class LibraryFunction(Model):
     address: frz.Address
     name: str
 
 
-class FunctionFeatureCount(FrozenModel):
+class FunctionFeatureCount(Model):
     address: frz.Address
     count: int
 
 
-class FeatureCounts(FrozenModel):
+class FeatureCounts(Model):
     file: int
     functions: Tuple[FunctionFeatureCount, ...]
 
 
-class Analysis(FrozenModel):
+class Analysis(Model):
     format: str
     arch: str
     os: str
@@ -74,7 +80,7 @@ class Analysis(FrozenModel):
     library_functions: Tuple[LibraryFunction, ...]
 
 
-class Metadata(FrozenModel):
+class Metadata(Model):
     timestamp: datetime.datetime
     version: str
     argv: Optional[Tuple[str, ...]]
