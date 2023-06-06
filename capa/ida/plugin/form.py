@@ -728,17 +728,16 @@ class CapaExplorerForm(idaapi.PluginForm):
                     self.process_count += 1
 
                 try:
-                    update_wait_box("Performing one-time file analysis")
                     self.feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
                     self.feature_extractor.indicator.progress.connect(slot_progress_feature_extraction)
                 except Exception as e:
                     logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-                    return
+                    return False
 
                 if ida_kernwin.user_cancelled():
                     logger.info("User cancelled analysis.")
                     return False
-                
+
                 update_wait_box("calculating analysis")
 
                 try:
@@ -769,7 +768,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
-                    capabilities, counts = capa.main.find_capabilities(ruleset, self.feature_extractor, disable_progress=True)
+                    capabilities, counts = capa.main.find_capabilities(
+                        ruleset, self.feature_extractor, disable_progress=True
+                    )
                     meta["analysis"].update(counts)
                     meta["analysis"]["layout"] = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
@@ -983,10 +984,12 @@ class CapaExplorerForm(idaapi.PluginForm):
             try:
                 update_wait_box("performing one-time file analysis")
                 self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
-                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
+                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(
+                    self.rulegen_feature_extractor
+                )
             except Exception as e:
                 logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-                return
+                return False
         else:
             logger.info("Reusing prior rulegen cache")
 
