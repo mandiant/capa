@@ -12,11 +12,14 @@ import capa.features.extractors.pefile
 import capa.features.extractors.strings
 from capa.features.common import (
     OS,
+    OS_ANY,
     OS_AUTO,
+    ARCH_ANY,
     FORMAT_PE,
     FORMAT_ELF,
     OS_WINDOWS,
     FORMAT_FREEZE,
+    FORMAT_RESULT,
     Arch,
     Format,
     String,
@@ -26,6 +29,11 @@ from capa.features.freeze import is_freeze
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress
 
 logger = logging.getLogger(__name__)
+
+# match strings for formats
+MATCH_PE = b"MZ"
+MATCH_ELF = b"\x7fELF"
+MATCH_RESULT = b'{"meta":'
 
 
 def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
@@ -40,12 +48,14 @@ def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
 
 
 def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
-    if buf.startswith(b"MZ"):
+    if buf.startswith(MATCH_PE):
         yield Format(FORMAT_PE), NO_ADDRESS
-    elif buf.startswith(b"\x7fELF"):
+    elif buf.startswith(MATCH_ELF):
         yield Format(FORMAT_ELF), NO_ADDRESS
     elif is_freeze(buf):
         yield Format(FORMAT_FREEZE), NO_ADDRESS
+    elif buf.startswith(MATCH_RESULT):
+        yield Format(FORMAT_RESULT), NO_ADDRESS
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
@@ -56,10 +66,13 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
-    if buf.startswith(b"MZ"):
+    if buf.startswith(MATCH_PE):
         yield from capa.features.extractors.pefile.extract_file_arch(pe=pefile.PE(data=buf))
 
-    elif buf.startswith(b"\x7fELF"):
+    elif buf.startswith(MATCH_RESULT):
+        yield Arch(ARCH_ANY), NO_ADDRESS
+
+    elif buf.startswith(MATCH_ELF):
         with contextlib.closing(io.BytesIO(buf)) as f:
             arch = capa.features.extractors.elf.detect_elf_arch(f)
 
@@ -88,9 +101,11 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
     if os != OS_AUTO:
         yield OS(os), NO_ADDRESS
 
-    if buf.startswith(b"MZ"):
+    if buf.startswith(MATCH_PE):
         yield OS(OS_WINDOWS), NO_ADDRESS
-    elif buf.startswith(b"\x7fELF"):
+    elif buf.startswith(MATCH_RESULT):
+        yield OS(OS_ANY), NO_ADDRESS
+    elif buf.startswith(MATCH_ELF):
         with contextlib.closing(io.BytesIO(buf)) as f:
             os = capa.features.extractors.elf.detect_elf_os(f)
 

@@ -1,0 +1,10 @@
+# Enable pycodestyle (`E`) codes
+select = ["E"]
+
+# E402 module level import not at top of file
+# E722 do not use bare 'except'
+ignore = ["E402", "E722"]
+exclude = ["*_pb2.py", "*_pb2.pyi"]
+
+# Same as pycodestyle.
+line-length = 180

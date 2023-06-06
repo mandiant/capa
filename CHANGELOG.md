@@ -3,15 +3,54 @@
 ## master (unreleased)
 
 ### New Features
-- add protobuf format for result documents #1219 @williballenthin @mr-tz 
-
-- extractor: add Binary Ninja feature extractor @xusheng6
-- new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
-- Change colour/highlight to "cyan" instead of "blue" for easy noticing.#1384 @ggold7046
 
 ### Breaking Changes
 
-### New Rules (24)
+### New Rules (6)
+
+- load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
+- data-manipulation/encryption/aes/encrypt-data-using-aes-mixcolumns-step @mr-tz
+- linking/static/aplib/linked-against-aplib still@teamt5.org
+- communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
+- nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
+-
+
+### Bug Fixes
+- extractor: update vivisect Arch extraction #1334 @mr-tz
+- extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
+- symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
+- symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
+- improve ELF strtab and needed parsing @mr-tz
+- better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- extractor: fix binja installation path detection does not work with Python 3.11
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
+- [capa-rules v5.1.0...master](https://github.com/mandiant/capa-rules/compare/v5.1.0...master)
+
+## v5.1.0
+capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and a output color format that's easier to read.
+
+Over 25 capa rules have been added and improved.
+
+Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046, @manasghandat, @ooprathamm, @linpeiyu164, @yelhamer, @HongThatCong, @naikordian, @stevemk14ebr, @emtuls, @raymondlleong, @bkojusner, @joren485, and everyone else who submitted bugs and provided feedback!
+
+### New Features
+- add protobuf format for result documents #1219 @williballenthin @mr-tz 
+- extractor: add Binary Ninja feature extractor @xusheng6
+- new cli flag `--os` to override auto-detected operating system for a sample @captainGeech42
+- change colour/highlight to "cyan" instead of "blue" for better readability #1384 @ggold7046
+- add new format to parse output json back to capa #1396 @ooprathamm
+- parse ELF symbols' names to guess OS #1403 @yelhamer
+
+### New Rules (26)
 
 - persistence/scheduled-tasks/schedule-task-via-at joren485
 - data-manipulation/prng/generate-random-numbers-via-rtlgenrandom william.ballenthin@mandiant.com
@@ -37,25 +76,24 @@
 - nursery/enumerate-pe-sections-in-dotnet @mr-tz
 - nursery/destroy-software-breakpoint-capability echernofsky@google.com
 - nursery/send-data-to-internet michael.hunhoff@mandiant.com
--
+- nursery/compiled-with-cx_freeze @mr-tz
+- nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
 
 ### Bug Fixes
 - extractor: interface of cache modified to prevent extracting file and global features multiple times @stevemk14ebr
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
-- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6 
+- extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
 - rule generator plugin now loads faster when jumping between functions @stevemk14ebr
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
-### Development
-
 ### Raw diffs
-- [capa v5.0.0...master](https://github.com/mandiant/capa/compare/v5.0.0...master)
-- [capa-rules v5.0.0...master](https://github.com/mandiant/capa-rules/compare/v5.0.0...master)
+- [capa v5.0.0...v5.1.0](https://github.com/mandiant/capa/compare/v5.0.0...v5.1.0)
+- [capa-rules v5.0.0...v5.1.0](https://github.com/mandiant/capa-rules/compare/v5.0.0...v5.1.0)
 
 
 ## v5.0.0 (2023-02-08)

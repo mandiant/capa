@@ -15,8 +15,8 @@ import subprocess
 # binaryninja module is extracted by the PyInstaller.
 code = r"""
 from pathlib import Path
-import importlib
-spec = importlib.util.find_spec('binaryninja')
+from importlib import util
+spec = util.find_spec('binaryninja')
 if spec is not None:
     if len(spec.submodule_search_locations) > 0:
             path = Path(spec.submodule_search_locations[0])

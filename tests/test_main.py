@@ -467,3 +467,12 @@ def test_main_dotnet4(_039a6_dotnetfile_extractor):
     # tests successful execution and one rendering
     path = _039a6_dotnetfile_extractor.path
     assert capa.main.main([path, "-vv"]) == 0
+
+
+def test_main_rd():
+    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0
