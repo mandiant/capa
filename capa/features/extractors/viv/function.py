@@ -11,9 +11,11 @@ import envi
 import viv_utils
 import vivisect.const
 
+from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
@@ -28,6 +30,28 @@ def interface_extract_function_XXX(fh: FunctionHandle) -> Iterator[Tuple[Feature
       (Feature, Address): the feature and the address at which its found.
     """
     raise NotImplementedError
+
+
+def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+    if fh.inner.vw.metadata["Format"] == "elf":
+        # the file's symbol table gets added to the metadata of the vivisect workspace.
+        # this is in order to eliminate the computational overhead of refetching symtab each time.
+        if "symtab" not in fh.ctx["cache"]:
+            try:
+                fh.ctx["cache"]["symtab"] = SymTab.from_Elf(fh.inner.vw.parsedbin)
+            except:
+                fh.ctx["cache"]["symtab"] = None
+
+        symtab = fh.ctx["cache"]["symtab"]
+        if symtab:
+            for symbol in symtab.get_symbols():
+                sym_name = symtab.get_name(symbol)
+                sym_value = symbol.value
+                sym_info = symbol.info
+
+                STT_FUNC = 0x2
+                if sym_value == fh.address and sym_info & STT_FUNC != 0:
+                    yield FunctionName(sym_name), fh.address
 
 
 def extract_function_calls_to(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -79,4 +103,8 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop)
+FUNCTION_HANDLERS = (
+    extract_function_symtab_names,
+    extract_function_calls_to,
+    extract_function_loop,
+)
