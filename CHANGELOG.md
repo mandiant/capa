@@ -1,12 +1,15 @@
 # Change Log
 
 ## master (unreleased)
+- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
 
 ### New Features
+- Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
 ### Breaking Changes
+- Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
-### New Rules (6)
+### New Rules (7)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -14,6 +17,7 @@
 - linking/static/aplib/linked-against-aplib still@teamt5.org
 - communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
+- nursery/compiled-with-exescript jonathanlepore@google.com
 -
 
 ### Bug Fixes
