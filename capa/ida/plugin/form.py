@@ -730,7 +730,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     self.process_count += 1
 
                 try:
-                    self.feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
+                    self.feature_extractor = CapaExplorerFeatureExtractor()
                     self.feature_extractor.indicator.progress.connect(slot_progress_feature_extraction)
                 except Exception as e:
                     logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
@@ -982,11 +982,11 @@ class CapaExplorerForm(idaapi.PluginForm):
             self.rulegen_current_function = None
 
         # these are init once objects, create on tab change
-        if self.rulegen_feature_cache is None:
+        if self.rulegen_feature_cache is None or self.rulegen_feature_extractor is None:
             try:
                 update_wait_box("performing one-time file analysis")
-                self.rulegen_feature_extractor: CapaExplorerFeatureExtractor = CapaExplorerFeatureExtractor()
-                self.rulegen_feature_cache: CapaRuleGenFeatureCache = CapaRuleGenFeatureCache(
+                self.rulegen_feature_extractor = CapaExplorerFeatureExtractor()
+                self.rulegen_feature_cache = CapaRuleGenFeatureCache(
                     self.rulegen_feature_extractor
                 )
             except Exception as e:
