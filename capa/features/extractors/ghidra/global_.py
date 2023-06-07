@@ -3,13 +3,6 @@ import contextlib
 from io import BytesIO
 from typing import Tuple, Iterator 
 
-# imports for clarity
-#   note: currentProgram is a static variable accessible in
-#         the specific ghidra runtime environment
-import ghidra.program.database.mem
-import ghidra.program.flatapi as flatapi
-ghidraapi = flatapi.FlatProgramAPI(currentProgram) # Ghidrathon hacks :)
-
 import capa.features.extractors.elf
 from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
@@ -17,14 +10,13 @@ from capa.features.address import NO_ADDRESS, Address
 logger = logging.getLogger(__name__)
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:
-    current_program = ghidraapi.getCurrentProgram()
-    format_name: str = current_program.getExecutableFormat()
+    format_name: str = currentProgram.getExecutableFormat() # currentProgram: static Ghidra variable
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS
 
     elif "ELF" in format_name:
-        program_memory = current_program.getMemory()   # ghidra.program.database.mem.MemoryMapDB
+        program_memory = currentProgram.getMemory()   # ghidra.program.database.mem.MemoryMapDB
         fbytes_list = program_memory.getAllFileBytes() # java.util.List<FileBytes>
         fbytes = fbytes_list[0]                        # ghidra.program.database.mem.FileBytes
 
@@ -57,8 +49,7 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
-    current_program = ghidraapi.getCurrentProgram()
-    lang_id = current_program.getMetadata().get('Language ID')
+    lang_id = currentProgram.getMetadata().get('Language ID')
 
     if 'x86' in lang_id and '64' in lang_id:
         yield Arch(ARCH_AMD64), NO_ADDRESS
