@@ -167,8 +167,10 @@ jobs:
     - name: Install Ghidra 10.3
       run: |
         mkdir ./.github/ghidra
+        mkdir ./.github/ghidra/project
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3_build/ghidra_10.3_PUBLIC_20230510.zip" -O ./.github/ghidra/ghidra_10.3_PUBLIC.zip
         unzip .github/ghidra/ghidra_10.3_PUBLIC.zip -d .github/ghidra/
+        .github/ghidra/ghidra_10.3_PUBLIC/ghidraRun 
     - name: Install Jep 4.1.1
       run : |
         mkdir ./.github/jep
@@ -178,13 +180,25 @@ jobs:
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
+        .github/ghidra/ghidra_10.3_PUBLIC/ghidraRun
+        mkdir ~/.ghidra/.ghidra_10.3_PUBLIC/Extensions
         wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v2.1.0.zip" -O ./.github/ghidrathon/ghidrathon-2.1.0.zip
         unzip .github/ghidrathon/ghidrathon-2.1.0.zip -d .github/ghidrathon/
         workdir=$(pwd)
         /opt/gradle/gradle-7.3/bin/gradle -p ./.github/ghidrathon/Ghidrathon-2.1.0/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_10.3_PUBLIC 
-        unzip .github/ghidrathon/Ghidrathon-2.1.0/dist/*.zip -d $workdir/.github/ghidra/ghidra_10.3_PUBLIC/Extensions
+        unzip .github/ghidrathon/Ghidrathon-2.1.0/dist/*.zip -d ~/.ghidra/.ghidra_10.3_PUBLIC/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: pip install -e .[dev]
+      run: | 
+        pip install -e .[dev]
+        git submodule update --init rules
+        python scripts/cache-ruleset.py rules/ cache/
+    - name: Get test data
+      run: | 
+        curl "https://raw.githubusercontent.com/mandiant/capa-testfiles/a37873c8a571b515f2baaf19bfcfaff5c7ef5342/Practical%20Malware%20Analysis%20Lab%2001-01.exe_" -o /tmp/pma_01-01.exe_      
+    - name: Run tests
+      run: | # runs main.py for now...
+        .github/ghidra/ghidra_10.3_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -import /tmp/pma_01-01.exe_
+        .github/ghidra/ghidra_10.3_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -process pma_01-01.exe_ -ScriptPath ./capa -PostScript main.py
  
