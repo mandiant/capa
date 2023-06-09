@@ -341,7 +341,7 @@ class DynamicExtractor(FeatureExtractor):
         """
         Yields all the features of a thread. These include:
         - sequenced api traces
-        - files/registris interacted with
+        - file/registry interactions
         - network activity
         """
         raise NotImplementedError()
