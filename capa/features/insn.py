@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import abc
-from typing import Union, Optional
+from typing import Tuple, Union, Optional, Dict
 
 import capa.helpers
 from capa.features.common import VALID_FEATURE_ACCESS, Feature
@@ -21,9 +21,55 @@ def hex(n: int) -> str:
 
 
 class API(Feature):
-    def __init__(self, name: str, description=None):
-        super().__init__(name, description=description)
+    def __init__(self, signature: str, description=None):
+        if signature.isidentifier():
+            # api call is in the legacy format
+            super().__init__(signature, description=description)
+            self.args = {}
+            self.ret = False
+        else:
+            # api call is in the strace format and therefore has to be parsed
+            name, self.args, self.ret = self.parse_signature(signature)
+            super().__init__(name, description=description)
 
+        # store the original signature for hashing purposes
+        self.signature = signature
+
+    def __hash__(self):
+        return hash(self.signature)
+
+    def __eq__(self, other):
+        if not isinstance(other, API):
+            return False
+        
+        assert(isinstance(other, API))
+        if {} in (self.args, other.args) or False in (self.ret, other.ret):
+            # Legacy API feature
+            return super().__eq__(other)
+
+        # API call with arguments
+        return super().__eq__(other) and self.args == other.args and self.ret == other.ret
+
+    def parse_signature(self, signature: str) -> Tuple[str, Optional[Dict[str, str]], Optional[str]]:
+        # todo: optimize this method and improve the code quality
+        import re
+
+        args = ret = False
+
+        match = re.findall(r"(.+\(.*\)) ?=? ?([^=]*)", signature)
+        if not match:
+            return "", None, None
+        if len(match[0]) == 2:
+            ret = match[0][1]
+
+        match = re.findall(r"(.*)\((.*)\)", match[0][0])
+        if len(match[0]) == 2:
+            args = (match[0][1]+", ").split(", ")
+            map(lambda x: {f"arg{x[0]}": x[1]}, enumerate(args))
+            args = [{} | arg for arg in args][0]
+        
+        return match[0][0], args, ret
+    
 
 class _AccessFeature(Feature, abc.ABC):
     # superclass: don't use directly
