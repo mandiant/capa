@@ -284,6 +284,18 @@ class Registry(String):
         return False
 
 
+class Filename(String):
+    # todo: add a way to tell whether this file was created, accessed, or deleted.
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description)
+
+    def __eq__(self, other):
+        # Mutex instance is in a ruleset
+        if isinstance(other, Filename):
+            return super().__eq__(other)
+        return False
+
+
 class Regex(String):
     def __init__(self, value: str, description=None):
         super().__init__(value, description=description)
