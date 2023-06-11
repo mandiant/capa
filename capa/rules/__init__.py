@@ -265,6 +265,8 @@ def parse_feature(key: str):
         return capa.features.common.Registry
     elif key == "filename":
         return capa.features.common.Filename
+    elif key == "mutex":
+        return capa.features.common.Mutex
     elif key == "bytes":
         return capa.features.common.Bytes
     elif key == "number":
