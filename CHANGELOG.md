@@ -9,7 +9,7 @@
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
-### New Rules (8)
+### New Rules (9)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -19,6 +19,7 @@
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
 - nursery/compiled-with-exescript jonathanlepore@google.com
 - nursery/check-for-sandbox-via-mac-address-ouis-in-dotnet jonathanlepore@google.com
+- host-interaction/hardware/enumerate-devices-by-category @mr-tz
 -
 
 ### Bug Fixes
