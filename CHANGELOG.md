@@ -23,6 +23,8 @@
 -
 
 ### Bug Fixes
+- extractor: add a Binary Ninja test that asserts its version #1487 @xusheng6
+- extractor: update Binary Ninja stack string detection after the new constant outlining feature #1473 @xusheng6
 - extractor: update vivisect Arch extraction #1334 @mr-tz
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
