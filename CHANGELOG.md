@@ -88,12 +88,14 @@ Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046
 - nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
 
 ### Bug Fixes
+- extractor: interface of cache modified to prevent extracting file and global features multiple times @stevemk14ebr
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
+- rule generator plugin now loads faster when jumping between functions @stevemk14ebr
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
