@@ -9,7 +9,7 @@
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
-### New Rules (7)
+### New Rules (9)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -18,9 +18,13 @@
 - communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
 - nursery/compiled-with-exescript jonathanlepore@google.com
+- nursery/check-for-sandbox-via-mac-address-ouis-in-dotnet jonathanlepore@google.com
+- host-interaction/hardware/enumerate-devices-by-category @mr-tz
 -
 
 ### Bug Fixes
+- extractor: add a Binary Ninja test that asserts its version #1487 @xusheng6
+- extractor: update Binary Ninja stack string detection after the new constant outlining feature #1473 @xusheng6
 - extractor: update vivisect Arch extraction #1334 @mr-tz
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
