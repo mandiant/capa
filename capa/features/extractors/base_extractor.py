@@ -345,22 +345,3 @@ class DynamicExtractor(FeatureExtractor):
         - network activity
         """
         raise NotImplementedError()
-
-    @abc.abstractclassmethod
-    def from_trace(cls, trace: TextIO) -> "DynamicExtractor":
-        """
-        Most sandboxes provide reports in a serialized text format (i.e. JSON for Cuckoo and CAPE).
-        This routine takes a file descriptor of such report (analysis trace) and returns a corresponding DynamicExtractor object.
-        """
-        raise NotImplementedError()
-    
-    @abc.abstractclassmethod
-    def submit_sample(cls, sample: BinaryIO, api: Dict[str, str]) -> "DynamicExtractor":
-        """
-        This routine takes a sample and submits it for analysis to the provided api. The trace should then ideally be passed to the from_trace() method.
-
-        Attributes:
-            sample: file descriptor of the sample
-            api: contains information such as the uri, api key, etc.
-        """
-        raise NotImplementedError()
