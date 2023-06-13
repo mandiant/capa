@@ -272,6 +272,42 @@ class _MatchedSubstring(Substring):
         return f'substring("{self.value}", matches = {matches})'
 
 
+class Registry(String):
+    # todo: add a way to tell whether this registry key was created, accessed, or deleted.
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description)
+
+    def __eq__(self, other):
+        # Registry instance is in a ruleset
+        if isinstance(other, Registry):
+            return super().__eq__(other)
+        return False
+
+
+class Filename(String):
+    # todo: add a way to tell whether this file was created, accessed, or deleted.
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description)
+
+    def __eq__(self, other):
+        # Mutex instance is in a ruleset
+        if isinstance(other, Filename):
+            return super().__eq__(other)
+        return False
+
+
+class Mutex(String):
+    # todo: add a way to tell whether this mutex was created or used
+    def __init__(self, value: str, description=None):
+        super().__init__(value, description)
+
+    def __eq__(self, other):
+        # Mutex instance is in a ruleset
+        if isinstance(other, Mutex):
+            return super().__eq__(other)
+        return False
+
+
 class Regex(String):
     def __init__(self, value: str, description=None):
         super().__init__(value, description=description)
