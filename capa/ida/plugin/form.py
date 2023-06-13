@@ -986,9 +986,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             try:
                 update_wait_box("performing one-time file analysis")
                 self.rulegen_feature_extractor = CapaExplorerFeatureExtractor()
-                self.rulegen_feature_cache = CapaRuleGenFeatureCache(
-                    self.rulegen_feature_extractor
-                )
+                self.rulegen_feature_cache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
             except Exception as e:
                 logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
                 return False
