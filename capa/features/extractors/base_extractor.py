@@ -8,7 +8,7 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator, TextIO, BinaryIO
+from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 import capa.features.address
@@ -274,7 +274,6 @@ class ProcessHandle:
         inner: sandbox-specific data
     """
 
-    ppid: int
     pid: int
     inner: Any
 
@@ -303,17 +302,10 @@ class DynamicExtractor(FeatureExtractor):
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
-
-    def __init__(self):
-        super().__init__()
-
     @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
-        Yields all the child-processes of a parent one.
-
-        Attributes:
-            ph: parent process
+        Enumerate processes in the trace.
         """
         raise NotImplementedError()
 
@@ -330,10 +322,7 @@ class DynamicExtractor(FeatureExtractor):
     @abc.abstractmethod
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         """
-        Yields all the threads that a process created.
-
-        Attributes:
-            ph: parent process
+        Enumerate threads in the given process.
         """
         raise NotImplementedError()
 

@@ -55,3 +55,9 @@ def test_standalone_binja_backend():
     CD = os.path.dirname(__file__)
     test_path = os.path.join(CD, "..", "tests", "data", "Practical Malware Analysis Lab 01-01.exe_")
     assert capa.main.main([test_path, "-b", capa.main.BACKEND_BINJA]) == 0
+
+
+@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+def test_binja_version():
+    version = binaryninja.core_version_info()
+    assert version.major == 3 and version.minor == 4

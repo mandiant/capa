@@ -11,10 +11,13 @@ import string
 import struct
 from typing import Tuple, Iterator
 
-from binaryninja import Function
+from binaryninja import Function, Settings
 from binaryninja import BasicBlock as BinjaBasicBlock
 from binaryninja import (
     BinaryView,
+    DataBuffer,
+    SymbolType,
+    RegisterValueType,
     VariableSourceType,
     MediumLevelILSetVar,
     MediumLevelILOperation,
@@ -27,6 +30,66 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
+
+use_const_outline: bool = False
+settings: Settings = Settings()
+if settings.contains("analysis.outlining.builtins") and settings.get_bool("analysis.outlining.builtins"):
+    use_const_outline = True
+
+
+def get_printable_len_ascii(s: bytes) -> int:
+    """Return string length if all operand bytes are ascii or utf16-le printable"""
+    count = 0
+    for c in s:
+        if c == 0:
+            return count
+        if c < 127 and chr(c) in string.printable:
+            count += 1
+    return count
+
+
+def get_printable_len_wide(s: bytes) -> int:
+    """Return string length if all operand bytes are ascii or utf16-le printable"""
+    if all(c == 0x00 for c in s[1::2]):
+        return get_printable_len_ascii(s[::2])
+    return 0
+
+
+def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
+    bv: BinaryView = f.view
+
+    if il.operation != MediumLevelILOperation.MLIL_CALL:
+        return 0
+
+    target = il.dest
+    if target.operation not in [MediumLevelILOperation.MLIL_CONST, MediumLevelILOperation.MLIL_CONST_PTR]:
+        return 0
+
+    addr = target.value.value
+    sym = bv.get_symbol_at(addr)
+    if not sym or sym.type != SymbolType.LibraryFunctionSymbol:
+        return 0
+
+    if sym.name not in ["__builtin_strncpy", "__builtin_strcpy", "__builtin_wcscpy"]:
+        return 0
+
+    if len(il.params) < 2:
+        return 0
+
+    dest = il.params[0]
+    if dest.operation != MediumLevelILOperation.MLIL_ADDRESS_OF:
+        return 0
+
+    var = dest.src
+    if var.source_type != VariableSourceType.StackVariableSourceType:
+        return 0
+
+    src = il.params[1]
+    if src.value.type != RegisterValueType.ConstantDataAggregateValue:
+        return 0
+
+    s = f.get_constant_data(RegisterValueType.ConstantDataAggregateValue, src.value.value)
+    return max(get_printable_len_ascii(bytes(s)), get_printable_len_wide(bytes(s)))
 
 
 def get_printable_len(il: MediumLevelILSetVar) -> int:
@@ -82,8 +145,11 @@ def bb_contains_stackstring(f: Function, bb: MediumLevelILBasicBlock) -> bool:
     """
     count = 0
     for il in bb:
-        if is_mov_imm_to_stack(il):
-            count += get_printable_len(il)
+        if use_const_outline:
+            count += get_stack_string_len(f, il)
+        else:
+            if is_mov_imm_to_stack(il):
+                count += get_printable_len(il)
 
     if count > MIN_STACKSTRING_LEN:
         return True
