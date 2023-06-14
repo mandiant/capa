@@ -66,7 +66,7 @@ def extract_format(static) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_os(static) -> Iterator[Tuple[Feature, Address]]:
-    # CAPE includes the output of the file command in the 
+    # this variable contains the output of the file command
     file_command = static["target"]["type"]
 
     if "WINDOWS" in file_command:
@@ -82,8 +82,8 @@ def extract_os(static) -> Iterator[Tuple[Feature, Address]]:
 
 def extract_features(static) -> Iterator[Tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLER:
-        for feature, va in global_handler(static):
-            yield feature, va
+        for feature, addr in global_handler(static):
+            yield feature, addr
 
 
 GLOBAL_HANDLER = (

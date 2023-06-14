@@ -7,14 +7,14 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Dict, Tuple, Iterator
 
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address
 from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle, DynamicExtractor
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,7 @@ class CapeExtractor(DynamicExtractor):
         format_ = list(static.keys())[0]
         static = static[format_]
         static.update(report["target"])
+        static.update({"strings": report["strings"]})
         static.update({"format": format_})
 
         behavior = report.pop("behavior")

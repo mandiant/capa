@@ -9,44 +9,57 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
-import capa.features.extractors.cape.global_
-import capa.features.extractors.cape.process
-import capa.features.extractors.cape.file
-import capa.features.extractors.cape.thread
 from capa.features.common import Feature, String
 from capa.features.insn import API, Number
-from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle, DynamicExtractor
+from capa.features.address import Address
+from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle
 
 
 logger = logging.getLogger(__name__)
 
 
-def extract_call_features(calls: List[Dict], th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_call_features(behavior: Dict, ph:ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    """
+    this method goes through the specified thread's call trace, and extracts all possible
+    features such as: API, Number (for arguments), String (for arguments).
+
+    args:
+      behavior: a dictionary of behavioral artifacts extracted by the sandbox
+      ph: process handle (for defining the extraction scope)
+      th: thread handle (for defining the extraction scope)
+
+    yields:
+      Feature, address; where Feature is either: API, Number, or String.
+    """
+
+    calls:List[Dict] = None
+    for process in behavior["processes"]:
+        if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
+            calls:List[Dict] = process
+
     tid = str(th.tid)
     for call in calls:
         if call["thread_id"] != tid:
             continue
-
-        yield API(call["api"]), int(call["caller"], 16)
         yield Number(int(call["return"], 16)), int(call["caller"], 16)
+        yield API(call["api"]), int(call["caller"], 16)
         for arg in call["arguments"]:
             if arg["value"].isdecimal():
                 yield Number(int(arg["value"])), int(call["caller"], 16)
                 continue
             try:
+                # argument could be in hexadecimal
                 yield Number(int(arg["value"], 16)), int(call["caller"], 16)
             except:
-                yield String{arg["value"]}, int(call["caller"], 16)
+                if arg["value"]:
+                    # argument is a non-empty string
+                    yield String(arg["value"]), int(call["caller"], 16)
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-    processes: List = behavior["processes"]
-    search_result = list(map(lambda proc: proc["process_id"] == ph.pid and proc["parent_id"] == ph.ppid, processes))
-    process = processes[search_result.index(True)]
-
     for handler in THREAD_HANDLERS:
-        handler(process["calls"])
+        for feature, addr in handler(behavior, ph, th):
+            yield feature, addr
 
 
 THREAD_HANDLERS = (
