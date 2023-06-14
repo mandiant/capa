@@ -262,3 +262,76 @@ class FeatureExtractor:
           Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
+
+
+@dataclass
+class ProcessHandle:
+    """
+    reference to a process extracted by the sandbox.
+
+    Attributes:
+        pid: process id
+        inner: sandbox-specific data
+    """
+
+    pid: int
+    inner: Any
+
+
+@dataclass
+class ThreadHandle:
+    """
+    reference to a thread extracted by the sandbox.
+
+    Attributes:
+        tid: thread id
+        inner: sandbox-specific data
+    """
+
+    tid: int
+    inner: Any
+
+
+class DynamicExtractor(FeatureExtractor):
+    """
+    DynamicExtractor defines the interface for fetching features from a sandbox' analysis of a sample.
+
+    Features are grouped mainly into threads that alongside their meta-features are also grouped into 
+    processes (that also have their own features). Other scopes (such as function and file) may also apply 
+    for a specific sandbox.
+
+    This class is not instantiated directly; it is the base class for other implementations.
+    """
+    @abc.abstractmethod
+    def get_processes(self) -> Iterator[ProcessHandle]:
+        """
+        Enumerate processes in the trace.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all the features of a process. These include:
+        - file features of the process' image
+        - inter-process injection
+        - detected dynamic DLL loading
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
+        """
+        Enumerate threads in the given process.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all the features of a thread. These include:
+        - sequenced api traces
+        - file/registry interactions
+        - network activity
+        """
+        raise NotImplementedError()
