@@ -270,6 +270,7 @@ class ProcessHandle:
     reference to a process extracted by the sandbox.
 
     Attributes:
+        ppid: parent process id
         pid: process id
         inner: sandbox-specific data
     """
