@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 def extract_call_features(calls: List[Dict], th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
     tid = str(th.tid)
     for call in calls:
-        if call["thead_id"] != tid:
+        if call["thread_id"] != tid:
             continue
 
         yield API(call["api"]), int(call["caller"], 16)
