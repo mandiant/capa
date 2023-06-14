@@ -278,7 +278,6 @@ class Registry(String):
         super().__init__(value, description)
 
     def __eq__(self, other):
-        # Registry instance is in a ruleset
         if isinstance(other, Registry):
             return super().__eq__(other)
         return False
@@ -290,7 +289,6 @@ class Filename(String):
         super().__init__(value, description)
 
     def __eq__(self, other):
-        # Mutex instance is in a ruleset
         if isinstance(other, Filename):
             return super().__eq__(other)
         return False
@@ -302,7 +300,6 @@ class Mutex(String):
         super().__init__(value, description)
 
     def __eq__(self, other):
-        # Mutex instance is in a ruleset
         if isinstance(other, Mutex):
             return super().__eq__(other)
         return False
