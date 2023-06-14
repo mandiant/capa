@@ -275,7 +275,6 @@ class ProcessHandle:
         inner: sandbox-specific data
     """
 
-    ppid: int
     pid: int
     inner: Any
 
