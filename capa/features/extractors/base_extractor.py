@@ -8,7 +8,7 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator, TextIO, BinaryIO
+from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 import capa.features.address
