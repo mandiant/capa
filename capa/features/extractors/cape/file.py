@@ -9,7 +9,7 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
-from capa.features.common import Feature, String
+from capa.features.common import Feature, String, Registry, Filename, Mutex
 from capa.features.file import Section, Import, Export, FunctionName
 from capa.features.address import Address, AbsoluteVirtualAddress, NO_ADDRESS
 
@@ -53,6 +53,21 @@ def extract_file_strings(static: Dict) -> Iterator[Tuple[Feature, Address]]:
         yield String(string_), NO_ADDRESS
 
 
+def extract_used_regkeys(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+    for regkey in static["keys"]:
+        yield Registry(regkey), NO_ADDRESS
+
+
+def extract_used_files(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+    for filename in static["files"]:
+        yield Filename(filename), NO_ADDRESS
+
+
+def extract_used_mutexes(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+    for mutex in static["mutexes"]:
+        yield Mutex(mutex), NO_ADDRESS
+
+
 def extract_features(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(static):
@@ -65,4 +80,7 @@ FILE_HANDLERS = (
     extract_section_names,
     extract_function_names,
     extract_file_strings,
+    extract_used_regkeys,
+    extract_used_files,
+    extract_used_mutexes,
 )

@@ -57,11 +57,11 @@ class CapeExtractor(DynamicExtractor):
         format_ = list(static.keys())[0]
         static = static[format_]
         static.update(report["target"])
+        static.update(report["behavior"].pop("summary"))
         static.update({"strings": report["strings"]})
         static.update({"format": format_})
 
         behavior = report.pop("behavior")
-        behavior.update(behavior.pop("summary"))
         behavior["network"] = report.pop("network")
 
         return cls(static, behavior)
