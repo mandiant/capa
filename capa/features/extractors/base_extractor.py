@@ -303,10 +303,6 @@ class DynamicExtractor(FeatureExtractor):
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
-
-    def __init__(self):
-        super().__init__()
-
     @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
