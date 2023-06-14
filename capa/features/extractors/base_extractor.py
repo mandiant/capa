@@ -305,10 +305,7 @@ class DynamicExtractor(FeatureExtractor):
     @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
-        Yields all the child-processes of a parent one.
-
-        Attributes:
-            ph: parent process
+        Enumerate processes in the trace.
         """
         raise NotImplementedError()
 
