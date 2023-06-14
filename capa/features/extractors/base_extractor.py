@@ -322,10 +322,7 @@ class DynamicExtractor(FeatureExtractor):
     @abc.abstractmethod
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         """
-        Yields all the threads that a process created.
-
-        Attributes:
-            ph: parent process
+        Enumerate threads in the given process.
         """
         raise NotImplementedError()
 
