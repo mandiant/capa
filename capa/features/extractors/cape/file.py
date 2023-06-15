@@ -9,10 +9,9 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
-from capa.features.common import Feature, String
-from capa.features.file import Section, Import, Export, FunctionName
-from capa.features.address import Address, AbsoluteVirtualAddress, NO_ADDRESS
-
+from capa.features.file import Export, Import, Section, FunctionName
+from capa.features.common import String, Feature
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 
 logger = logging.getLogger(__name__)
 

@@ -9,16 +9,15 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
-from capa.features.common import Feature, String
 from capa.features.insn import API, Number
+from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle
-
+from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def extract_call_features(behavior: Dict, ph:ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     this method goes through the specified thread's call trace, and extracts all possible
     features such as: API, Number (for arguments), String (for arguments).
@@ -32,10 +31,10 @@ def extract_call_features(behavior: Dict, ph:ProcessHandle, th: ThreadHandle) ->
       Feature, address; where Feature is either: API, Number, or String.
     """
 
-    calls:List[Dict] = None
+    calls: List[Dict] = None
     for process in behavior["processes"]:
         if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            calls:List[Dict] = process
+            calls: List[Dict] = process
 
     tid = str(th.tid)
     for call in calls:
@@ -51,6 +50,4 @@ def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Ite
             yield feature, addr
 
 
-THREAD_HANDLERS = (
-    extract_call_features,
-)
+THREAD_HANDLERS = (extract_call_features,)

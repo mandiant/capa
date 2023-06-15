@@ -9,23 +9,22 @@
 import logging
 from typing import Tuple, Iterator
 
-from capa.features.address import Address, NO_ADDRESS
 from capa.features.common import (
     OS,
     OS_ANY,
-    ARCH_I386,
-    ARCH_AMD64,
     ARCH_ANY,
-    FORMAT_PE,
-    FORMAT_ELF,
-    FORMAT_UNKNOWN,
-    OS_WINDOWS,
     OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    FORMAT_UNKNOWN,
     Arch,
     Format,
     Feature,
 )
-
+from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
 

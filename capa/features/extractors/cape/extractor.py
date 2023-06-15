@@ -9,13 +9,13 @@
 import logging
 from typing import Dict, Tuple, Iterator
 
-import capa.features.extractors.cape.global_
-import capa.features.extractors.cape.process
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
+import capa.features.extractors.cape.global_
+import capa.features.extractors.cape.process
 from capa.features.common import Feature
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle, DynamicExtractor
+from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,12 @@ class CapeExtractor(DynamicExtractor):
 
         self.global_features = capa.features.extractors.cape.global_.extract_features(self.static)
 
-
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
     def get_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.file.extract_features(self.static)
-        
+
     def get_processes(self) -> Iterator[ProcessHandle]:
         yield from capa.features.extractors.cape.process.get_processes(self.behavior)
 
@@ -46,7 +45,6 @@ class CapeExtractor(DynamicExtractor):
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.thread.extract_features(self.behavior, ph, th)
-
 
     @classmethod
     def from_report(cls, report: Dict) -> "DynamicExtractor":

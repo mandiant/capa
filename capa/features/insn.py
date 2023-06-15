@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import abc
-from typing import Tuple, Union, Optional, Dict
+from typing import Dict, Tuple, Union, Optional
 
 import capa.helpers
 from capa.features.common import VALID_FEATURE_ACCESS, Feature
@@ -41,8 +41,8 @@ class API(Feature):
     def __eq__(self, other):
         if not isinstance(other, API):
             return False
-        
-        assert(isinstance(other, API))
+
+        assert isinstance(other, API)
         if {} in (self.args, other.args) or False in (self.ret, other.ret):
             # Legacy API feature
             return super().__eq__(other)
@@ -64,12 +64,12 @@ class API(Feature):
 
         match = re.findall(r"(.*)\((.*)\)", match[0][0])
         if len(match[0]) == 2:
-            args = (match[0][1]+", ").split(", ")
+            args = (match[0][1] + ", ").split(", ")
             map(lambda x: {f"arg{x[0]}": x[1]}, enumerate(args))
             args = [{} | arg for arg in args][0]
-        
+
         return match[0][0], args, ret
-    
+
 
 class _AccessFeature(Feature, abc.ABC):
     # superclass: don't use directly

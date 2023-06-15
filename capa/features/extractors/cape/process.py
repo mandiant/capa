@@ -9,13 +9,13 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
-import capa.features.extractors.cape.global_
-import capa.features.extractors.cape.process
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
-from capa.features.common import Feature, String
-from capa.features.address import Address, AbsoluteVirtualAddress, NO_ADDRESS
-from capa.features.extractors.base_extractor import ProcessHandle, ThreadHandle, DynamicExtractor
+import capa.features.extractors.cape.global_
+import capa.features.extractors.cape.process
+from capa.features.common import String, Feature
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +54,8 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
 
     if not environ:
         return
-    
-    for (variable, value) in environ.items():
+
+    for variable, value in environ.items():
         if value:
             yield String(value), NO_ADDRESS
 
@@ -66,6 +66,4 @@ def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Featur
             yield feature, addr
 
 
-PROCESS_HANDLERS = (
-    extract_environ_strings
-)
+PROCESS_HANDLERS = extract_environ_strings

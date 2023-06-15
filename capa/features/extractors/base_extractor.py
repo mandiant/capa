@@ -296,12 +296,13 @@ class DynamicExtractor(FeatureExtractor):
     """
     DynamicExtractor defines the interface for fetching features from a sandbox' analysis of a sample.
 
-    Features are grouped mainly into threads that alongside their meta-features are also grouped into 
-    processes (that also have their own features). Other scopes (such as function and file) may also apply 
+    Features are grouped mainly into threads that alongside their meta-features are also grouped into
+    processes (that also have their own features). Other scopes (such as function and file) may also apply
     for a specific sandbox.
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
+
     @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
