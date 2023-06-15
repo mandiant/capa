@@ -43,17 +43,6 @@ def extract_call_features(behavior: Dict, ph:ProcessHandle, th: ThreadHandle) ->
             continue
         yield Number(int(call["return"], 16)), int(call["caller"], 16)
         yield API(call["api"]), int(call["caller"], 16)
-        for arg in call["arguments"]:
-            if arg["value"].isdecimal():
-                yield Number(int(arg["value"])), int(call["caller"], 16)
-                continue
-            try:
-                # argument could be in hexadecimal
-                yield Number(int(arg["value"], 16)), int(call["caller"], 16)
-            except:
-                if arg["value"]:
-                    # argument is a non-empty string
-                    yield String(arg["value"]), int(call["caller"], 16)
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
