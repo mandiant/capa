@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, "dynamic-feature-extraction" ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, "dynamic-feature-extraction" ]
 
 # save workspaces to speed up testing
 env:
