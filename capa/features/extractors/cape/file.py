@@ -68,7 +68,6 @@ FILE_HANDLERS = (
     extract_import_names,
     extract_export_names,
     extract_section_names,
-    extract_function_names,
     extract_file_strings,
     extract_used_regkeys,
     extract_used_files,

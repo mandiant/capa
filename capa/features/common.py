@@ -272,17 +272,6 @@ class _MatchedSubstring(Substring):
         return f'substring("{self.value}", matches = {matches})'
 
 
-class Registry(String):
-    pass
-
-
-class Filename(String):
-    pass
-
-
-class Mutex(String):
-    pass
-
 class Regex(String):
     def __init__(self, value: str, description=None):
         super().__init__(value, description=description)
