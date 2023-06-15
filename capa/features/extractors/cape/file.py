@@ -38,16 +38,6 @@ def extract_section_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
         yield Section(name), address
 
 
-def extract_function_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    """
-    extract the names of imported functions.
-    """
-    for library in static["imports"]:
-        for function in library["imports"]:
-            name, address = function["name"], int(function["address"], 16)
-            yield FunctionName(name), AbsoluteVirtualAddress(address)
-
-
 def extract_file_strings(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     for string_ in static["strings"]:
         yield String(string_), NO_ADDRESS
