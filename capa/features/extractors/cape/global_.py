@@ -36,7 +36,7 @@ def guess_elf_os(file_output) -> Iterator[Tuple[Feature, Address]]:
         return OS(OS_LINUX), NO_ADDRESS
     elif "Hurd" in file_output:
         return OS("hurd"), NO_ADDRESS
-    elif "Solairs" in file_output:
+    elif "Solaris" in file_output:
         return OS("solaris"), NO_ADDRESS
     elif "kFreeBSD" in file_output:
         return OS("freebsd"), NO_ADDRESS
