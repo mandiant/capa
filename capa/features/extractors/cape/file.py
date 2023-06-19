@@ -13,6 +13,7 @@ from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import ProcessHandle
+from capa.features.extractors.helpers import generate_symbols
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +39,9 @@ def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     """
     for library in static["imports"]:
         for function in library["imports"]:
-            name, address = function["name"], int(function["address"], 16)
-            yield Import(name), AbsoluteVirtualAddress(address)
+            addr = int(function["address"], 16)
+            for name in generate_symbols(function["name"]):
+                yield Import(name), AbsoluteVirtualAddress(addr)
 
 
 def extract_export_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
