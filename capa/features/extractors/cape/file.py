@@ -12,8 +12,8 @@ from typing import Dict, Tuple, Iterator
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import ProcessHandle
 from capa.features.extractors.helpers import generate_symbols
+from capa.features.extractors.base_extractor import ProcessHandle
 
 logger = logging.getLogger(__name__)
 
