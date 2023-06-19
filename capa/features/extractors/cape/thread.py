@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple, Iterator
 
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
-from capa.features.address import Address
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -31,17 +31,24 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
       Feature, address; where Feature is either: API, Number, or String.
     """
 
-    calls: List[Dict] = None
     for process in behavior["processes"]:
         if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            calls: List[Dict] = process
+            calls: List[Dict] = process["calls"]
 
     tid = str(th.tid)
     for call in calls:
         if call["thread_id"] != tid:
             continue
-        yield Number(int(call["return"], 16)), int(call["caller"], 16)
-        yield API(call["api"]), int(call["caller"], 16)
+
+        caller = int(call["caller"], 16)
+        caller = AbsoluteVirtualAddress(caller)
+        for arg in call["arguments"]:
+            try:
+                yield Number(int(arg["value"], 16)), caller
+            except ValueError:
+                continue
+        yield Number(int(call["return"], 16)), caller
+        yield API(call["api"]), caller
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:

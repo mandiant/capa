@@ -19,37 +19,27 @@ from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle,
 logger = logging.getLogger(__name__)
 
 
-def get_processes(behavior: Dict) -> Iterator[ProcessHandle]:
-    """
-    get all created processes for a sample
-    """
-    for process in behavior["processes"]:
-        inner: Dict[str, str] = {"name": process["name"], "ppid": process["parent_id"]}
-        yield ProcessHandle(pid=process["process_id"], inner=inner)
-
-
-def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[ThreadHandle]:
     """
     get a thread's child processes
     """
 
-    threads: List = None
     for process in behavior["processes"]:
         if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            threads = process["threads"]
+            threads: List = process["threads"]
 
     for thread in threads:
-        yield ThreadHandle(int(thread))
+        yield ThreadHandle(int(thread), inner={})
 
 
 def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract strings from a process' provided environment variables.
     """
-    environ: Dict[str, str] = None
+
     for process in behavior["processes"]:
         if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            environ = process["environ"]
+            environ: Dict[str, str] = process["environ"]
 
     if not environ:
         return

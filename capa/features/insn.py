@@ -25,8 +25,8 @@ class API(Feature):
         if signature.isidentifier():
             # api call is in the legacy format
             super().__init__(signature, description=description)
-            self.args = {}
-            self.ret = False
+            self.args: Dict[str, str] = {}
+            self.ret = ""
         else:
             # api call is in the strace format and therefore has to be parsed
             name, self.args, self.ret = self.parse_signature(signature)
@@ -43,30 +43,32 @@ class API(Feature):
             return False
 
         assert isinstance(other, API)
-        if {} in (self.args, other.args) or False in (self.ret, other.ret):
+        if {} in (self.args, other.args) or "" in (self.ret, other.ret):
             # Legacy API feature
             return super().__eq__(other)
 
         # API call with arguments
         return super().__eq__(other) and self.args == other.args and self.ret == other.ret
 
-    def parse_signature(self, signature: str) -> Tuple[str, Optional[Dict[str, str]], Optional[str]]:
+    def parse_signature(self, signature: str) -> Tuple[str, Dict[str, str], str]:
         # todo: optimize this method and improve the code quality
         import re
 
-        args = ret = False
+        args: Dict[str, str] = {}
+        ret = ""
 
         match = re.findall(r"(.+\(.*\)) ?=? ?([^=]*)", signature)
         if not match:
-            return "", None, None
+            return "", {}, ""
         if len(match[0]) == 2:
             ret = match[0][1]
 
         match = re.findall(r"(.*)\((.*)\)", match[0][0])
         if len(match[0]) == 2:
-            args = (match[0][1] + ", ").split(", ")
+            args_: Dict[str, str] = (match[0][1] + ", ").split(", ")
             map(lambda x: {f"arg{x[0]}": x[1]}, enumerate(args))
-            args = [{} | arg for arg in args][0]
+            for num, arg in enumerate(args_):
+                args.update({f"arg {0}": arg})
 
         return match[0][0], args, ret
 

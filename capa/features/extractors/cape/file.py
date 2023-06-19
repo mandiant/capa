@@ -7,9 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Dict, Tuple, Iterator
 
-from capa.features.file import Export, Import, Section, FunctionName
+from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import ProcessHandle
@@ -21,13 +21,15 @@ def get_processes(static: Dict) -> Iterator[ProcessHandle]:
     """
     get all the created processes for a sample
     """
+
     def rec(process):
         inner: Dict[str, str] = {"name": process["name"], "ppid": process["parent_id"]}
         yield ProcessHandle(pid=process["pid"], inner=inner)
         for child in process["children"]:
-            rec(child)
+            yield from rec(child)
 
-    yield from rec(static["processtree"])
+    for process in static["processtree"]:
+        yield from rec(process)
 
 
 def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
@@ -35,20 +37,21 @@ def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     extract the names of imported library files, for example: USER32.dll
     """
     for library in static["imports"]:
-        name, address = library["name"], int(library["virtual_address"], 16)
-        yield Import(name), address
+        for function in library["imports"]:
+            name, address = function["name"], int(function["address"], 16)
+            yield Import(name), AbsoluteVirtualAddress(address)
 
 
 def extract_export_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     for function in static["exports"]:
-        name, address = function["name"], int(function["virtual_address"], 16)
-        yield Export(name), address
+        name, address = function["name"], int(function["address"], 16)
+        yield Export(name), AbsoluteVirtualAddress(address)
 
 
 def extract_section_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     for section in static["sections"]:
         name, address = section["name"], int(section["virtual_address"], 16)
-        yield Section(name), address
+        yield Section(name), AbsoluteVirtualAddress(address)
 
 
 def extract_file_strings(static: Dict) -> Iterator[Tuple[Feature, Address]]:

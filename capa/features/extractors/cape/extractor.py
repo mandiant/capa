@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class CapeExtractor(DynamicExtractor):
-    def __init__(self, static: Dict, behavior: Dict, network: Dict):
+    def __init__(self, static: Dict, behavior: Dict):
         super().__init__()
         self.static = static
         self.behavior = behavior
@@ -30,7 +30,7 @@ class CapeExtractor(DynamicExtractor):
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
-    def get_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.file.extract_features(self.static)
 
     def get_processes(self) -> Iterator[ProcessHandle]:
@@ -39,19 +39,19 @@ class CapeExtractor(DynamicExtractor):
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.process.extract_features(self.behavior, ph)
 
-    def get_threads(self, ph: ProcessHandle) -> Iterator[ProcessHandle]:
+    def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         yield from capa.features.extractors.cape.process.get_threads(self.behavior, ph)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.thread.extract_features(self.behavior, ph, th)
 
     @classmethod
-    def from_report(cls, report: Dict) -> "DynamicExtractor":
+    def from_report(cls, report: Dict) -> "CapeExtractor":
         static = report["static"]
         format_ = list(static.keys())[0]
         static = static[format_]
-        static.update(report["target"])
         static.update(report["behavior"].pop("summary"))
+        static.update(report["target"])
         static.update({"processtree": report["behavior"]["processtree"]})
         static.update({"strings": report["strings"]})
         static.update({"format": format_})
