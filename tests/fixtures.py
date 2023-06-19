@@ -41,7 +41,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, ProcessHandle, ThreadHandle
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, ThreadHandle, ProcessHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 CD = os.path.dirname(__file__)
@@ -185,15 +185,17 @@ def get_binja_extractor(path):
 
 @lru_cache(maxsize=1)
 def get_cape_extractor(path):
-    from capa.features.extractors.cape.extractor import CapeExtractor
     import json
+
+    from capa.features.extractors.cape.extractor import CapeExtractor
 
     with open(path) as report_file:
         report = report_file.read()
         report = json.loads(report)
-    
+
     extractor = CapeExtractor.from_report(report)
     return extractor
+
 
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
@@ -616,8 +618,8 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
         ("", "process=(),thread=", capa.features.insn.API(""), True),
         ("", "process=(),thread=", capa.features.insn.API(""), False),
         # thread/number call argument
-        ("", "process=(),thread=", capa.features.insn.Number(""), True),
-        ("", "process=(),thread=", capa.features.insn.Number(""), False),
+        ("", "process=(),thread=", capa.features.insn.Number(), True),
+        ("", "process=(),thread=", capa.features.insn.Number(), False),
         # thread/string call argument
         ("", "process=(),thread=", capa.features.common.String(""), True),
         ("", "process=(),thread=", capa.features.common.String(""), False),
@@ -630,7 +632,11 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
 DYNAMIC_FEATURE_COUNT_PRESENCE_TESTS = sorted(
     [
         # file/string
-        ("", "file", capa.features.common.String(""), ),
+        (
+            "",
+            "file",
+            capa.features.common.String(""),
+        ),
         ("", "file", capa.features.common.String("makansh menah"), 0),
         # file/sections
         ("", "file", capa.features.file.Section(""), 1),
@@ -648,8 +654,8 @@ DYNAMIC_FEATURE_COUNT_PRESENCE_TESTS = sorted(
         ("", "process=(),thread=", capa.features.insn.API(""), 1),
         ("", "process=(),thread=", capa.features.insn.API(""), 0),
         # thread/number call argument
-        ("", "process=(),thread=", capa.features.insn.Number(""), 1),
-        ("", "process=(),thread=", capa.features.insn.Number(""), 0),
+        ("", "process=(),thread=", capa.features.insn.Number(), 1),
+        ("", "process=(),thread=", capa.features.insn.Number(), 0),
         # thread/string call argument
         ("", "process=(),thread=", capa.features.common.String(""), 1),
         ("", "process=(),thread=", capa.features.common.String(""), 0),

@@ -8,6 +8,7 @@
 import fixtures
 from fixtures import *
 
+
 @fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.DYNAMIC_FEATURE_PRESENCE_TESTS,
