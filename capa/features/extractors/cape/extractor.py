@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
 from typing import Dict, Tuple, Iterator
 
@@ -35,7 +34,7 @@ class CapeExtractor(DynamicExtractor):
         yield from capa.features.extractors.cape.file.extract_features(self.static)
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        yield from capa.features.extractors.cape.process.get_processes(self.behavior)
+        yield from capa.features.extractors.cape.file.get_processes(self.behavior)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.process.extract_features(self.behavior, ph)
@@ -48,14 +47,12 @@ class CapeExtractor(DynamicExtractor):
 
     @classmethod
     def from_report(cls, report: Dict) -> "DynamicExtractor":
-        # todo:
-        # 1. make the information extraction code more elegant
-        # 2. filter out redundant cape features in an efficient way
         static = report["static"]
         format_ = list(static.keys())[0]
         static = static[format_]
         static.update(report["target"])
         static.update(report["behavior"].pop("summary"))
+        static.update({"processtree": report["behavior"]["processtree"]})
         static.update({"strings": report["strings"]})
         static.update({"format": format_})
 

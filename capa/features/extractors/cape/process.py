@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
@@ -66,4 +65,4 @@ def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Featur
             yield feature, addr
 
 
-PROCESS_HANDLERS = extract_environ_strings
+PROCESS_HANDLERS = (extract_environ_strings,)

@@ -12,8 +12,22 @@ from typing import Any, Dict, List, Tuple, Iterator
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import ProcessHandle
 
 logger = logging.getLogger(__name__)
+
+
+def get_processes(static: Dict) -> Iterator[ProcessHandle]:
+    """
+    get all the created processes for a sample
+    """
+    def rec(process):
+        inner: Dict[str, str] = {"name": process["name"], "ppid": process["parent_id"]}
+        yield ProcessHandle(pid=process["pid"], inner=inner)
+        for child in process["children"]:
+            rec(child)
+
+    yield from rec(static["processtree"])
 
 
 def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
