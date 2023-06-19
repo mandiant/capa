@@ -41,7 +41,7 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, ThreadHandle, ProcessHandle, FunctionHandle
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, ThreadHandle, ProcessHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 CD = os.path.dirname(__file__)
@@ -342,7 +342,7 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     elif name.startswith("2bf18d"):
         return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
-    elif name.startswith("02179f"):
+    elif name.startswith("dynamic_02179f"):
         return os.path.join(CD, "data", "dynamic_02179f3ba93663074740b5c0d283bae2.json")
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
@@ -404,6 +404,8 @@ def get_sample_md5_by_name(name):
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     elif name.startswith("2bf18d"):
         return "2bf18d0403677378adad9001b1243211"
+    elif name.startswith("dynamic_02179f"):
+        return "dynamic_02179f3ba93663074740b5c0d283bae2.json"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -428,7 +430,7 @@ def get_thread(extractor, ph: ProcessHandle, tid: int) -> ThreadHandle:
     for th in extractor.get_processes(ph):
         if th.tid == tid:
             return ThreadHandle(tid)
-    raise ValueError("process not found")
+    raise ValueError("thread not found")
 
 
 def get_function(extractor, fva: int) -> FunctionHandle:
@@ -539,9 +541,10 @@ def resolve_scope(scope):
         inner_function.__name__ = scope
         return inner_function
     elif "thread=" in scope:
+        # like `process=(712:935),thread=1002`
         assert "process=" in scope
         pspec, _, tspec = scope.partition(",")
-        pspec = scope.partition("=")[2].split(",")
+        pspec = scope.partition("=")[2].split(":")
         assert len(pspec) == 2
         ppid, pid = map(lambda x: int(x), pspec)
         tid = int(tspec)
@@ -557,7 +560,8 @@ def resolve_scope(scope):
         inner_thread.__name__ = scope
         return inner_thread
     elif "process=" in scope:
-        pspec = scope.partition("=")[2].split(",")
+        # like `process=(712:935)`
+        pspec = scope.partition("=")[2].split(":")
         assert len(pspec) == 2
         ppid, pid = map(lambda x: int(x), pspec)
 
@@ -601,7 +605,7 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
         ("", "file", capa.features.common.String(""), True),
         ("", "file", capa.features.common.String(""), True),
         ("", "file", capa.features.common.String(""), True),
-        ("", "file", capa.features.common.String("makansh menah"), False),
+        ("", "file", capa.features.common.String("nope"), False),
         # file/sections
         ("", "file", capa.features.file.Section(""), True),
         ("", "file", capa.features.file.Section(""), False),
@@ -637,7 +641,7 @@ DYNAMIC_FEATURE_COUNT_PRESENCE_TESTS = sorted(
             "file",
             capa.features.common.String(""),
         ),
-        ("", "file", capa.features.common.String("makansh menah"), 0),
+        ("", "file", capa.features.common.String("nope"), 0),
         # file/sections
         ("", "file", capa.features.file.Section(""), 1),
         ("", "file", capa.features.file.Section(""), 0),
