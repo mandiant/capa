@@ -40,7 +40,7 @@ def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     for library in static["imports"]:
         for function in library["imports"]:
             addr = int(function["address"], 16)
-            for name in generate_symbols(library["name"], function["name"]):
+            for name in generate_symbols(library["dll"], function["name"]):
                 yield Import(name), AbsoluteVirtualAddress(addr)
 
 
