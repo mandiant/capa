@@ -66,7 +66,6 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
             continue
 
         peoff = off.add(newoff)
-        print(hex(peoff.getOffset()))
         if seg_max.getOffset() < (peoff.getOffset() + 2):
             continue
 
