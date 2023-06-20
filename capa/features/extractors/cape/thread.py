@@ -42,13 +42,12 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
 
         caller = int(call["caller"], 16)
         caller = AbsoluteVirtualAddress(caller)
+        yield API(call["api"]), caller
         for arg in call["arguments"]:
             try:
                 yield Number(int(arg["value"], 16)), caller
             except ValueError:
-                continue
-        yield Number(int(call["return"], 16)), caller
-        yield API(call["api"]), caller
+                yield String(arg["value"]), caller
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
