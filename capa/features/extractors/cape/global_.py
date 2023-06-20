@@ -42,6 +42,7 @@ def guess_elf_os(file_output) -> Iterator[Tuple[Feature, Address]]:
     elif "kNetBSD" in file_output:
         yield OS("netbsd"), NO_ADDRESS
     else:
+        logger.warn("unrecognized OS: %s", file_output)
         yield OS(OS_ANY), NO_ADDRESS
 
 
@@ -51,6 +52,7 @@ def extract_arch(static) -> Iterator[Tuple[Feature, Address]]:
     elif "x86-64" in static["file"]["type"]:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
+        logger.warn("unrecognized Architecture: %s", static["file"]["type"])
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
@@ -60,7 +62,7 @@ def extract_format(static) -> Iterator[Tuple[Feature, Address]]:
     elif "ELF" in static["file"]["type"]:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.debug(f"unknown file format, file command output: {static['file']['type']}")
+        logger.warn("unknown file format, file command output: %s", static["file"]["type"])
         yield Format(FORMAT_UNKNOWN), NO_ADDRESS
 
 
