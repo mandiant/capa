@@ -1322,6 +1322,7 @@ def ghidra_main():
     #import capa.render.default
     #import capa.features.extractors.ghidra.extractor
     import capa.features.extractors.ghidra.global_
+    import capa.features.extractors.ghidra.file
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
@@ -1333,15 +1334,19 @@ def ghidra_main():
     logger.debug("     https://github.com/mandiant/capa-rules")
     logger.debug("-" * 80)
 
-    rules_path = os.path.join(get_default_root(), "rules")
-    logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    #rules_path = os.path.join(get_default_root(), "rules")
+    #logger.debug("rule path: %s", rules_path)
+    #rules = get_rules([rules_path])
     
     # temp test for OS & ARCH extractions
     globl_features: List[Tuple[Feature, Address]] = []
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
     print(globl_features)
+
+    file_features: List[Tuple[Feature, Address]] = []
+    file_features.extend(capa.features.extractors.ghidra.file.extract_features())
+    print(file_features)
 
 
 def is_runtime_ida():
