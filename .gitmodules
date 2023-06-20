@@ -4,3 +4,4 @@
 [submodule "tests/data"]
 	path = tests/data
 	url = ../capa-testfiles.git
+	branch = dynamic-feature-extractor
