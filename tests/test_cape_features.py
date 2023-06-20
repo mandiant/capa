@@ -23,5 +23,5 @@ def test_cape_features(sample, scope, feature, expected):
     fixtures.DYNAMIC_FEATURE_COUNT_TESTS,
     indirect=["sample", "scope"],
 )
-def test_viv_feature_counts(sample, scope, feature, expected):
+def test_cape_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_cape_extractor, sample, scope, feature, expected)
