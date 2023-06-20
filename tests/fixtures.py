@@ -630,8 +630,8 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), True),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), False),
         # thread/string call argument
-        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
-        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("NtQuerySystemInformation"), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), False),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -667,8 +667,8 @@ DYNAMIC_FEATURE_COUNT_TESTS = sorted(
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), 0),
         # thread/string call argument
-        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
-        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("NtQuerySystemInformation"), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), False),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
