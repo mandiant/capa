@@ -185,13 +185,14 @@ def get_binja_extractor(path):
 
 @lru_cache(maxsize=1)
 def get_cape_extractor(path):
+    import gzip
     import json
 
     from capa.features.extractors.cape.extractor import CapeExtractor
 
-    with open(path, "r", encoding="utf-8") as report_file:
-        report = report_file.read()
-        report = json.loads(report)
+    with gzip.open(path, "r") as compressed_report:
+        report_json = compressed_report.read()
+        report = json.loads(report_json)
 
     return CapeExtractor.from_report(report)
 
@@ -341,8 +342,10 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
     elif name.startswith("2bf18d"):
         return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
-    elif name.startswith("dynamic_02179f"):
-        return os.path.join(CD, "data", "dynamic_02179f3ba93663074740b5c0d283bae2.json_")
+    elif name.startswith("0000a657"):
+        return os.path.join(
+            CD, "data/dynamic/cape", "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        )
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -403,8 +406,8 @@ def get_sample_md5_by_name(name):
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     elif name.startswith("2bf18d"):
         return "2bf18d0403677378adad9001b1243211"
-    elif name.startswith("dynamic_02179f"):
-        return "dynamic_02179f3ba93663074740b5c0d283bae2.json_"
+    elif name.startswith("0000a657"):
+        return "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -601,34 +604,34 @@ def parametrize(params, values, **kwargs):
 DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
     [
         # file/string
-        ("dynamic_02179f", "file", capa.features.common.String("T_Ba?.BcRJa"), True),
-        ("dynamic_02179f", "file", capa.features.common.String("GetNamedPipeClientSessionId"), True),
-        ("dynamic_02179f", "file", capa.features.common.String("nope"), False),
+        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), True),
+        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), True),
+        ("0000a657", "file", capa.features.common.String("nope"), False),
         # file/sections
-        ("dynamic_02179f", "file", capa.features.file.Section(".rdata"), True),
-        ("dynamic_02179f", "file", capa.features.file.Section(".nope"), False),
+        ("0000a657", "file", capa.features.file.Section(".rdata"), True),
+        ("0000a657", "file", capa.features.file.Section(".nope"), False),
         # file/imports
-        ("dynamic_02179f", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), True),
-        ("dynamic_02179f", "file", capa.features.file.Import("Nope"), False),
+        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), True),
+        ("0000a657", "file", capa.features.file.Import("Nope"), False),
         # file/exports
-        ("dynamic_02179f", "file", capa.features.file.Export("Nope"), False),
+        ("0000a657", "file", capa.features.file.Export("Nope"), False),
         # process/environment variables
         (
-            "dynamic_02179f",
+            "0000a657",
             "process=(1180:3052)",
             capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
             True,
         ),
-        ("dynamic_02179f", "process=(1180:3052)", capa.features.common.String("nope"), False),
+        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), False),
         # thread/api calls
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), True),
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), False),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), False),
         # thread/number call argument
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), True),
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), False),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), False),
         # thread/string call argument
-        # ("dynamic_02179f", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
-        # ("dynamic_02179f", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
+        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
+        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -638,34 +641,34 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
 DYNAMIC_FEATURE_COUNT_TESTS = sorted(
     [
         # file/string
-        ("dynamic_02179f", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
-        ("dynamic_02179f", "file", capa.features.common.String("GetNamedPipeClientSessionId"), 1),
-        ("dynamic_02179f", "file", capa.features.common.String("nope"), 0),
+        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
+        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), 1),
+        ("0000a657", "file", capa.features.common.String("nope"), 0),
         # file/sections
-        ("dynamic_02179f", "file", capa.features.file.Section(".rdata"), 1),
-        ("dynamic_02179f", "file", capa.features.file.Section(".nope"), 0),
+        ("0000a657", "file", capa.features.file.Section(".rdata"), 1),
+        ("0000a657", "file", capa.features.file.Section(".nope"), 0),
         # file/imports
-        ("dynamic_02179f", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), 1),
-        ("dynamic_02179f", "file", capa.features.file.Import("Nope"), 0),
+        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), 1),
+        ("0000a657", "file", capa.features.file.Import("Nope"), 0),
         # file/exports
-        ("dynamic_02179f", "file", capa.features.file.Export("Nope"), 0),
+        ("0000a657", "file", capa.features.file.Export("Nope"), 0),
         # process/environment variables
         (
-            "dynamic_02179f",
+            "0000a657",
             "process=(1180:3052)",
             capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
             1,
         ),
-        ("dynamic_02179f", "process=(1180:3052)", capa.features.common.String("nope"), 0),
+        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), 0),
         # thread/api calls
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 5),
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), 0),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 5),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), 0),
         # thread/number call argument
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
-        ("dynamic_02179f", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), 0),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), 0),
         # thread/string call argument
-        # ("dynamic_02179f", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
-        # ("dynamic_02179f", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
+        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("NtQuerySystemInformation"), True),
+        # ("0000a657", "process=(2852:3052),thread=500", capa.features.common.String("nope"), False),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
