@@ -189,7 +189,7 @@ def get_cape_extractor(path):
 
     from capa.features.extractors.cape.extractor import CapeExtractor
 
-    with open(path) as report_file:
+    with open(path, "r", encoding="utf-8") as report_file:
         report = report_file.read()
         report = json.loads(report)
 
