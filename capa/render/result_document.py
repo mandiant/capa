@@ -28,42 +28,47 @@ class FrozenModel(BaseModel):
         extra = "forbid"
 
 
-class Sample(FrozenModel):
+class Model(BaseModel):
+    class Config:
+        extra = "forbid"
+
+
+class Sample(Model):
     md5: str
     sha1: str
     sha256: str
     path: str
 
 
-class BasicBlockLayout(FrozenModel):
+class BasicBlockLayout(Model):
     address: frz.Address
 
 
-class FunctionLayout(FrozenModel):
+class FunctionLayout(Model):
     address: frz.Address
     matched_basic_blocks: Tuple[BasicBlockLayout, ...]
 
 
-class Layout(FrozenModel):
+class Layout(Model):
     functions: Tuple[FunctionLayout, ...]
 
 
-class LibraryFunction(FrozenModel):
+class LibraryFunction(Model):
     address: frz.Address
     name: str
 
 
-class FunctionFeatureCount(FrozenModel):
+class FunctionFeatureCount(Model):
     address: frz.Address
     count: int
 
 
-class FeatureCounts(FrozenModel):
+class FeatureCounts(Model):
     file: int
     functions: Tuple[FunctionFeatureCount, ...]
 
 
-class Analysis(FrozenModel):
+class Analysis(Model):
     format: str
     arch: str
     os: str
@@ -75,91 +80,12 @@ class Analysis(FrozenModel):
     library_functions: Tuple[LibraryFunction, ...]
 
 
-class Metadata(FrozenModel):
+class Metadata(Model):
     timestamp: datetime.datetime
     version: str
     argv: Optional[Tuple[str, ...]]
     sample: Sample
     analysis: Analysis
-
-    @classmethod
-    def from_capa(cls, meta: Any) -> "Metadata":
-        return cls(
-            timestamp=meta["timestamp"],
-            version=meta["version"],
-            argv=meta["argv"] if "argv" in meta else None,
-            sample=Sample(
-                md5=meta["sample"]["md5"],
-                sha1=meta["sample"]["sha1"],
-                sha256=meta["sample"]["sha256"],
-                path=meta["sample"]["path"],
-            ),
-            analysis=Analysis(
-                format=meta["analysis"]["format"],
-                arch=meta["analysis"]["arch"],
-                os=meta["analysis"]["os"],
-                extractor=meta["analysis"]["extractor"],
-                rules=meta["analysis"]["rules"],
-                base_address=frz.Address.from_capa(meta["analysis"]["base_address"]),
-                layout=Layout(
-                    functions=tuple(
-                        FunctionLayout(
-                            address=frz.Address.from_capa(address),
-                            matched_basic_blocks=tuple(
-                                BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in f["matched_basic_blocks"]
-                            ),
-                        )
-                        for address, f in meta["analysis"]["layout"]["functions"].items()
-                    )
-                ),
-                feature_counts=FeatureCounts(
-                    file=meta["analysis"]["feature_counts"]["file"],
-                    functions=tuple(
-                        FunctionFeatureCount(address=frz.Address.from_capa(address), count=count)
-                        for address, count in meta["analysis"]["feature_counts"]["functions"].items()
-                    ),
-                ),
-                library_functions=tuple(
-                    LibraryFunction(address=frz.Address.from_capa(address), name=name)
-                    for address, name in meta["analysis"]["library_functions"].items()
-                ),
-            ),
-        )
-
-    def to_capa(self) -> Dict[str, Any]:
-        capa_meta = {
-            "timestamp": self.timestamp.isoformat(),
-            "version": self.version,
-            "sample": {
-                "md5": self.sample.md5,
-                "sha1": self.sample.sha1,
-                "sha256": self.sample.sha256,
-                "path": self.sample.path,
-            },
-            "analysis": {
-                "format": self.analysis.format,
-                "arch": self.analysis.arch,
-                "os": self.analysis.os,
-                "extractor": self.analysis.extractor,
-                "rules": self.analysis.rules,
-                "base_address": self.analysis.base_address.to_capa(),
-                "layout": {
-                    "functions": {
-                        f.address.to_capa(): {
-                            "matched_basic_blocks": [bb.address.to_capa() for bb in f.matched_basic_blocks]
-                        }
-                        for f in self.analysis.layout.functions
-                    }
-                },
-                "feature_counts": {
-                    "file": self.analysis.feature_counts.file,
-                    "functions": {fc.address.to_capa(): fc.count for fc in self.analysis.feature_counts.functions},
-                },
-                "library_functions": {lf.address.to_capa(): lf.name for lf in self.analysis.library_functions},
-            },
-        }
-
-        return capa_meta
 
 
 class CompoundStatementType:
@@ -642,7 +568,7 @@ class ResultDocument(FrozenModel):
     rules: Dict[str, RuleMatches]
 
     @classmethod
-    def from_capa(cls, meta, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
+    def from_capa(cls, meta: Metadata, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
         rule_matches: Dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
             rule = rules[rule_name]
@@ -659,10 +585,9 @@ class ResultDocument(FrozenModel):
                 ),
             )
 
-        return ResultDocument(meta=Metadata.from_capa(meta), rules=rule_matches)
+        return ResultDocument(meta=meta, rules=rule_matches)
 
-    def to_capa(self) -> Tuple[Dict, Dict]:
-        meta = self.meta.to_capa()
+    def to_capa(self) -> Tuple[Metadata, Dict]:
         capabilities: Dict[
             str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
         ] = collections.defaultdict(list)
@@ -678,4 +603,4 @@ class ResultDocument(FrozenModel):
 
                 capabilities[rule_name].append((addr.to_capa(), result))
 
-        return meta, capabilities
+        return self.meta, capabilities

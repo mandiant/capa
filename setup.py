@@ -21,13 +21,13 @@ requirements = [
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==2.5.1",  # newer versions no longer support py3.7.
-    "ruamel.yaml==0.17.28",
+    "ruamel.yaml==0.17.32",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.29",
     "dnfile==0.13.0",
     "dncil==1.0.2",
-    "pydantic==1.10.7",
+    "pydantic==1.10.9",
     "protobuf==4.23.2",
 ]
 
@@ -72,7 +72,7 @@ setuptools.setup(
             "pytest==7.3.1",
             "pytest-sugar==0.9.4",
             "pytest-instafail==0.5.0",
-            "pytest-cov==4.0.0",
+            "pytest-cov==4.1.0",
             "pycodestyle==2.10.0",
             "ruff==0.0.270",
             "black==23.3.0",
@@ -80,7 +80,7 @@ setuptools.setup(
             "mypy==1.3.0",
             "psutil==5.9.2",
             "stix2==3.0.1",
-            "requests==2.28.0",
+            "requests==2.31.0",
             "mypy-protobuf==3.4.0",
             # type stubs for mypy
             "types-backports==0.1.3",
@@ -89,7 +89,7 @@ setuptools.setup(
             "types-tabulate==0.9.0.1",
             "types-termcolor==1.1.4",
             "types-psutil==5.8.23",
-            "types_requests==2.28.1",
+            "types_requests==2.31.0.1",
             "types-protobuf==4.23.0.1",
         ],
         "build": [

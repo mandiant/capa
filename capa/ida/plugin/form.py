@@ -192,8 +192,10 @@ class CapaExplorerForm(idaapi.PluginForm):
         # caches used to speed up capa explorer analysis - these must be init to None
         self.resdoc_cache: Optional[capa.render.result_document.ResultDocument] = None
         self.program_analysis_ruleset_cache: Optional[capa.rules.RuleSet] = None
-        self.rulegen_ruleset_cache: Optional[capa.rules.RuleSet] = None
+        self.feature_extractor: Optional[CapaExplorerFeatureExtractor] = None
+        self.rulegen_feature_extractor: Optional[CapaExplorerFeatureExtractor] = None
         self.rulegen_feature_cache: Optional[CapaRuleGenFeatureCache] = None
+        self.rulegen_ruleset_cache: Optional[capa.rules.RuleSet] = None
         self.rulegen_current_function: Optional[FunctionHandle] = None
 
         # models
@@ -727,13 +729,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box(f"{text} ({self.process_count} of {self.process_total})")
                     self.process_count += 1
 
-                update_wait_box("initializing feature extractor")
-
                 try:
-                    extractor = CapaExplorerFeatureExtractor()
-                    extractor.indicator.progress.connect(slot_progress_feature_extraction)
+                    self.feature_extractor = CapaExplorerFeatureExtractor()
+                    self.feature_extractor.indicator.progress.connect(slot_progress_feature_extraction)
                 except Exception as e:
-                    logger.error("Failed to initialize feature extractor (error: %s).", e, exc_info=True)
+                    logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -743,7 +743,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("calculating analysis")
 
                 try:
-                    self.process_total += len(tuple(extractor.get_functions()))
+                    self.process_total += len(tuple(self.feature_extractor.get_functions()))
                 except Exception as e:
                     logger.error("Failed to calculate analysis (error: %s).", e, exc_info=True)
                     return False
@@ -770,9 +770,13 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
-                    capabilities, counts = capa.main.find_capabilities(ruleset, extractor, disable_progress=True)
-                    meta["analysis"].update(counts)
-                    meta["analysis"]["layout"] = capa.main.compute_layout(ruleset, extractor, capabilities)
+                    capabilities, counts = capa.main.find_capabilities(
+                        ruleset, self.feature_extractor, disable_progress=True
+                    )
+
+                    meta.analysis.feature_counts = counts["feature_counts"]
+                    meta.analysis.library_functions = counts["library_functions"]
+                    meta.analysis.layout = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
@@ -975,26 +979,21 @@ class CapaExplorerForm(idaapi.PluginForm):
         # so we'll work with a local copy of the ruleset.
         ruleset = copy.deepcopy(self.rulegen_ruleset_cache)
 
-        # clear feature cache
-        if self.rulegen_feature_cache is not None:
-            self.rulegen_feature_cache = None
-
         # clear cached function
         if self.rulegen_current_function is not None:
             self.rulegen_current_function = None
 
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        update_wait_box("Initializing feature extractor")
-
-        try:
-            # must use extractor to get function, as capa analysis requires casted object
-            extractor = CapaExplorerFeatureExtractor()
-        except Exception as e:
-            logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
-            return False
+        # these are init once objects, create on tab change
+        if self.rulegen_feature_cache is None or self.rulegen_feature_extractor is None:
+            try:
+                update_wait_box("performing one-time file analysis")
+                self.rulegen_feature_extractor = CapaExplorerFeatureExtractor()
+                self.rulegen_feature_cache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
+            except Exception as e:
+                logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+                return False
+        else:
+            logger.info("Reusing prior rulegen cache")
 
         if ida_kernwin.user_cancelled():
             logger.info("User cancelled analysis.")
@@ -1006,24 +1005,9 @@ class CapaExplorerForm(idaapi.PluginForm):
         try:
             f = idaapi.get_func(idaapi.get_screen_ea())
             if f is not None:
-                self.rulegen_current_function = extractor.get_function(f.start_ea)
+                self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
             logger.error("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e, exc_info=True)
-            return False
-
-        if ida_kernwin.user_cancelled():
-            logger.info("User cancelled analysis.")
-            return False
-
-        # extract features
-        try:
-            fh_list: List[FunctionHandle] = []
-            if self.rulegen_current_function is not None:
-                fh_list.append(self.rulegen_current_function)
-
-            self.rulegen_feature_cache = CapaRuleGenFeatureCache(fh_list, extractor)
-        except Exception as e:
-            logger.error("Failed to extract features (error: %s)", e, exc_info=True)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1261,7 +1245,6 @@ class CapaExplorerForm(idaapi.PluginForm):
         elif index == 1:
             self.set_view_status_label(self.view_status_label_rulegen_cache)
             self.view_status_label_analysis_cache = status_prev
-
             self.view_reset_button.setText("Clear")
 
     def slot_rulegen_editor_update(self):
