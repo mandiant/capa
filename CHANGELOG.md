@@ -34,6 +34,7 @@
 - Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
+- tests: refine the IDA test runner script #1513 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
