@@ -5,5 +5,3 @@
 	path = tests/data
 	url = ../capa-testfiles.git
 	branch = dynamic-feature-extractor
-[submodule "tests/data/"]
-	branch = dynamic-feature-extractor
