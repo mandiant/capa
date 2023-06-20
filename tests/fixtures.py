@@ -193,8 +193,7 @@ def get_cape_extractor(path):
         report = report_file.read()
         report = json.loads(report)
 
-    extractor = CapeExtractor.from_report(report)
-    return extractor
+    return CapeExtractor.from_report(report)
 
 
 def extract_global_features(extractor):
