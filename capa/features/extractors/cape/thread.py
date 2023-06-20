@@ -9,6 +9,7 @@
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
+import capa.features.extractors.cape.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -31,9 +32,8 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
       Feature, address; where Feature is either: API, Number, or String.
     """
 
-    for process in behavior["processes"]:
-        if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            calls: List[Dict] = process["calls"]
+    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
+    calls: List[Dict[str, Any]] = process["calls"]
 
     tid = str(th.tid)
     for call in calls:

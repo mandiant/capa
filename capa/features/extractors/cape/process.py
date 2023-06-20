@@ -24,9 +24,8 @@ def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[ThreadHandle]:
     get a thread's child processes
     """
 
-    for process in behavior["processes"]:
-        if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            threads: List = process["threads"]
+    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
+    threads: List = process["threads"]
 
     for thread in threads:
         yield ThreadHandle(int(thread), inner={})
@@ -37,9 +36,8 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
     extract strings from a process' provided environment variables.
     """
 
-    for process in behavior["processes"]:
-        if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
-            environ: Dict[str, str] = process["environ"]
+    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
+    environ: Dict[str, str] = process["environ"]
 
     if not environ:
         return
