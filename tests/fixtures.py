@@ -562,7 +562,7 @@ def resolve_scope(scope):
         # like `process=(pid:ppid)`
         pspec = scope.partition("=")[2][1:-1].split(":")
         assert len(pspec) == 2
-        pid, ppid = map(lambda x: int(x), pspec)
+        pid, ppid = map(int, pspec)
 
         def inner_process(extractor):
             ph = get_process(extractor, ppid, pid)
