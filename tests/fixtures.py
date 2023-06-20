@@ -406,8 +406,6 @@ def get_sample_md5_by_name(name):
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     elif name.startswith("2bf18d"):
         return "2bf18d0403677378adad9001b1243211"
-    elif name.startswith("0000a657"):
-        return "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
