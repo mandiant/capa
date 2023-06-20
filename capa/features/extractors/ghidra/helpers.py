@@ -16,8 +16,13 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
         end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
-    seqstr = " ".join([f"{b:02x}" for b in seq])
-    print(seqstr)
-    yield currentAddress
+    seqstr = seq.decode('utf-8', errors='ignore')
+    try:
+        ea = findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)
+        for e in ea:
+            yield e
+    except ValueError as e:
+        return
+        
 
 

@@ -22,7 +22,7 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
 
-def check_segment_for_pe(mem_block) -> Iterator[Tuple[int, int]]:
+def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for Ghidra from:
@@ -44,7 +44,7 @@ def check_segment_for_pe(mem_block) -> Iterator[Tuple[int, int]]:
         for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(mzx):
             todo.append((off, mzx, pex, i))
 
-    seg_max = mem_block.getEnd() 
+    seg_max = currentProgram.getMaxAddress() 
     while len(todo):
         off, mzx, pex, i = todo.pop()
 
@@ -66,19 +66,25 @@ def check_segment_for_pe(mem_block) -> Iterator[Tuple[int, int]]:
             continue
 
         peoff = off.add(newoff)
+        print(hex(peoff.getOffset()))
         if seg_max.getOffset() < (peoff.getOffset() + 2):
             continue
 
-        if getBytes(peoff, 2) == pex:
-            yield off, i
+        pe_bytes = b''
+        pe_off_bytes = getBytes(peoff, 2)
+        for b in pe_off_bytes:
+            b = (b & 0xFF).to_bytes(1, 'little')
+            pe_bytes = pe_bytes + b
+        if pe_bytes == pex:
+            yield off.getOffset(), i
 
 
 def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features
     """
-    for seg in currentProgram.getMemory().getBlocks():
-        for ea, _ in check_segment_for_pe(seg):
-            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+
+    for ea, _ in check_segment_for_pe():
+        yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
