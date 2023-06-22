@@ -69,6 +69,7 @@ import sys
 import logging
 import os.path
 import argparse
+from typing import cast
 
 import capa.main
 import capa.rules
@@ -80,8 +81,8 @@ import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
 import capa.features.address
-import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
+from capa.features.extractors.base_extractor import DynamicExtractor, FeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
 
@@ -121,7 +122,7 @@ def main(argv=None):
         # this should be moved above the previous if clause after implementing
         # feature freeze for the dynamic analysis flavor
         with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+            extractor: (FeatureExtractor | DynamicExtractor) = capa.features.freeze.load(f.read())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
@@ -136,14 +137,14 @@ def main(argv=None):
             return -1
 
     if dynamic:
-        dynamic_analysis(extractor, args)
+        dynamic_analysis(cast(DynamicExtractor, extractor), args)
     else:
         static_analysis(extractor, args)
 
     return 0
 
 
-def static_analysis(extractor: capa.features.extractors.base_extractor.FeatureExtractor, args):
+def static_analysis(extractor: FeatureExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -171,7 +172,7 @@ def static_analysis(extractor: capa.features.extractors.base_extractor.FeatureEx
     print_function_features(function_handles, extractor)
 
 
-def dynamic_analysis(extractor: capa.features.extractors.base_extractor.DynamicExtractor, args):
+def dynamic_analysis(extractor: DynamicExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -190,25 +191,7 @@ def dynamic_analysis(extractor: capa.features.extractors.base_extractor.DynamicE
     print_process_features(process_handles, extractor)
 
 
-def print_process_features(processes, extractor: capa.features.extractors.base_extractor.DynamicExtractor):
-    for p in processes:
-        print(f"proc: {p.inner['name']} (ppid={p.inner['ppid']}, pid={p.pid})")
-
-        for feature, addr in extractor.extract_process_features(p):
-            if capa.features.common.is_global_feature(feature):
-                continue
-
-            print(f" proc: {p.inner['name']}: {feature}")
-
-            for t in extractor.get_threads(p):
-                for feature, addr in extractor.extract_thread_features(p, t):
-                    if capa.features.common.is_global_feature(feature):
-                        continue
-
-                    print(f" thread: {t.tid}: {feature}")
-
-
-def print_function_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
+def print_function_features(functions, extractor: FeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
@@ -252,6 +235,24 @@ def print_function_features(functions, extractor: capa.features.extractors.base_
                     except UnicodeEncodeError:
                         # may be an issue while piping to less and encountering non-ascii characters
                         continue
+
+
+def print_process_features(processes, extractor: DynamicExtractor):
+    for p in processes:
+        print(f"proc: {p.inner['name']} (ppid={p.inner['ppid']}, pid={p.pid})")
+
+        for feature, addr in extractor.extract_process_features(p):
+            if capa.features.common.is_global_feature(feature):
+                continue
+
+            print(f" proc: {p.inner['name']}: {feature}")
+
+            for t in extractor.get_threads(p):
+                for feature, addr in extractor.extract_thread_features(p, t):
+                    if capa.features.common.is_global_feature(feature):
+                        continue
+
+                    print(f" thread: {t.tid}: {feature}")
 
 
 def ida_main():
