@@ -1319,6 +1319,7 @@ def ida_main():
 
 def ghidra_main():
     import capa.rules
+
     # import capa.render.default
     # import capa.features.extractors.ghidra.extractor
     import capa.features.extractors.ghidra.global_

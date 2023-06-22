@@ -21,7 +21,8 @@ logger = logging.getLogger("test_ghidra_features")
 ghidra_present: bool = False
 try:
     import ghidra.program.flatapi as flatapi
-    ghidraapi = flatapi.FlatProgramAPI(currentProgram) 
+
+    ghidraapi = flatapi.FlatProgramAPI(currentProgram)
 
     try:
         current_program_test = ghidraapi.getCurrentProgram()
