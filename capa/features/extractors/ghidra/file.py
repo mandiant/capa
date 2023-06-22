@@ -9,6 +9,7 @@
 import struct
 from typing import Tuple, Iterator
 
+import ghidra
 from ghidra.program.model.symbol import SourceType, SymbolType
 
 import capa.features.extractors.common
@@ -18,6 +19,8 @@ import capa.features.extractors.ghidra.helpers
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
+
+currentProgram: ghidra.program.database.ProgramDB
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 

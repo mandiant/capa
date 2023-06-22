@@ -7,6 +7,10 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Any, Dict, Tuple, Iterator, Optional
 
+import ghidra
+
+currentProgram: ghidra.program.database.ProgramDB
+
 
 def find_byte_sequence(seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
