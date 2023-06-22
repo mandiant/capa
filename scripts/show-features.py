@@ -135,12 +135,10 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
-
     if dynamic:
         dynamic_analysis(extractor, args)
     else:
         static_analysis(extractor, args)
-
 
     return 0
 
@@ -188,7 +186,7 @@ def dynamic_analysis(extractor: capa.features.extractors.base_extractor.DynamicE
         if args.process not in [ph.inner["name"] for ph in args.process]:
             print(f"{args.process} not a process")
             return -1
-        
+
     print_process_features(process_handles, extractor)
 
 
@@ -255,6 +253,7 @@ def print_function_features(functions, extractor: capa.features.extractors.base_
                         # may be an issue while piping to less and encountering non-ascii characters
                         continue
 
+
 def ida_main():
     import idc
 
@@ -282,7 +281,6 @@ def ida_main():
     print_function_features(function_handles, extractor)
 
     return 0
-
 
 
 if __name__ == "__main__":

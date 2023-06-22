@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Dict, List, Tuple, Union, Callable
 
 import halo
 import tqdm
@@ -43,13 +43,13 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
-import capa.features.extractors.cape.extractor
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
+import capa.features.extractors.cape.extractor
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
@@ -70,15 +70,21 @@ from capa.features.common import (
     FORMAT_ELF,
     OS_WINDOWS,
     FORMAT_AUTO,
+    FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
-    FORMAT_CAPE,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    FunctionHandle,
+    DynamicExtractor,
+    FeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -518,7 +524,7 @@ def get_extractor(
     sigpaths: List[str],
     should_save_workspace=False,
     disable_progress=False,
-) -> FeatureExtractor:
+) -> Union[FeatureExtractor, DynamicExtractor]:
     """
     raises:
       UnsupportedFormatError
@@ -537,8 +543,9 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_CAPE:
-        import capa.features.extractors.cape.extractor
         import json
+
+        import capa.features.extractors.cape.extractor
 
         with open(path, "r+", encoding="utf-8") as f:
             report = json.load(f)

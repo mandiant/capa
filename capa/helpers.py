@@ -14,7 +14,7 @@ from typing import NoReturn
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_CAPE, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
