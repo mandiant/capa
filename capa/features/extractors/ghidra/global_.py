@@ -1,7 +1,7 @@
 import logging
 import contextlib
 from io import BytesIO
-from typing import Tuple, Iterator 
+from typing import Tuple, Iterator
 
 import capa.features.extractors.elf
 from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
