@@ -55,10 +55,14 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
             continue
 
         e_lfanew_bytes = b''
-        e_lfanew_sbytes = getBytes(e_lfanew, 4) 
-        for b in e_lfanew_sbytes:
-            b = (b & 0xFF).to_bytes(1, 'little')
-            e_lfanew_bytes = e_lfanew_bytes + b
+        try:
+            e_lfanew_sbytes = getBytes(e_lfanew, 4) 
+            for b in e_lfanew_sbytes:
+                b = (b & 0xFF).to_bytes(1, 'little')
+                e_lfanew_bytes = e_lfanew_bytes + b
+        except RuntimeError:
+            return
+
         newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
 
         # assume XOR'd "PE" bytes exist within threshold
@@ -70,10 +74,14 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
             continue
 
         pe_bytes = b''
-        pe_off_bytes = getBytes(peoff, 2)
-        for b in pe_off_bytes:
-            b = (b & 0xFF).to_bytes(1, 'little')
-            pe_bytes = pe_bytes + b
+        try:
+            pe_off_bytes = getBytes(peoff, 2)
+            for b in pe_off_bytes:
+                b = (b & 0xFF).to_bytes(1, 'little')
+                pe_bytes = pe_bytes + b
+        except RuntimeError:
+            return
+
         if pe_bytes == pex:
             yield off.getOffset(), i
 
@@ -94,11 +102,9 @@ def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
         - SourceType = IMPORTED
     """
 
-    fm = currentProgram.getFunctionManager().getFunctions(True) # Only Global functions
-    while fm.hasNext():
-        f = fm.next().getSymbol()
-        if (f.getSource() == SourceType.IMPORTED):
-            yield Export(f.toString()), AbsoluteVirtualAddress(f.getAddress().getOffset())
+    for f in currentProgram.getFunctionManager().getFunctions(True):
+        if f.getSymbol().getSource() == SourceType.IMPORTED:
+            yield Export(f.toString()), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
 def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
@@ -113,11 +119,9 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
      - importname
     """
 
-    fm = currentProgram.getFunctionManager().getExternalFunctions()
-    while fm.hasNext():
-        f = fm.next()
-        addr = int(f.getEntryPoint().toString().split(':')[1], 16)  # format: EXTERNAL:<hex_addr>
-        fstr = f.getName()  # format: 'importname' / 'Ordinal_*'
+    for f in currentProgram.getFunctionManager().getExternalFunctions():
+        addr = f.getEntryPoint().getOffset()
+        fstr = f.getName()
         if 'Ordinal_' in fstr:
             fstr = f"#{fstr.split('_')[1]}"
         yield Import(fstr), AbsoluteVirtualAddress(addr)
@@ -145,12 +149,10 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    fm = currentProgram.getFunctionManager().getExternalFunctions()
-    while fm.hasNext():
-        f = fm.next()
-        addr = int(f.getEntryPoint().toString().split(':')[1], 16)  # format: EXTERNAL:<hex_addr>
+    for f in currentProgram.getFunctionManager().getExternalFunctions():
+        addr = f.getEntryPoint().getOffset()
         name = f.getName()
-        yield FunctionName(name), AbsoluteVirtualAddress(addr)
+        yield (FunctionName(name), AbsoluteVirtualAddress(addr))
         if name.startswith("_"):
             # some linkers may prefix linked routines with a `_` to avoid name collisions.
             # extract features for both the mangled and un-mangled representations.
@@ -170,7 +172,7 @@ def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
-        raise NotImplementedError(f"unexpected file format: {view_type}")
+        raise NotImplementedError(f"unexpected file format: {ef}")
 
 
 def extract_features() -> Iterator[Tuple[Feature, Address]]:
