@@ -14,10 +14,11 @@ from typing import NoReturn
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_CAPE, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_CAPE = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
@@ -57,6 +58,10 @@ def get_format_from_extension(sample: str) -> str:
         return FORMAT_SC32
     elif sample.endswith(EXTENSIONS_SHELLCODE_64):
         return FORMAT_SC64
+    elif sample.endswith(EXTENSIONS_CAPE):
+        # once we have support for more sandboxes that use json-formatted reports,
+        # we update this logic to ask the user to explicity specify the format
+        return FORMAT_CAPE
     return FORMAT_UNKNOWN
 
 

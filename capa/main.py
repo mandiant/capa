@@ -43,6 +43,7 @@ import capa.render.vverbose
 import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
+import capa.features.extractors.cape
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
@@ -71,6 +72,7 @@ from capa.features.common import (
     FORMAT_AUTO,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_CAPE,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
@@ -533,6 +535,14 @@ def get_extractor(
         if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
+    elif format_ == FORMAT_CAPE:
+        import capa.features.extractors.cape
+        import json
+
+        with open(path, "r+", encoding="utf-8") as f:
+            report = json.load(f)
+        return capa.features.extractors.cape.from_report(report)
+
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
@@ -597,6 +607,13 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
+
+    if format_ == FORMAT_CAPE:
+        import json
+
+        with open(sample, "r+", encoding="utf-8") as f:
+            report = json.load(f)
+        file_extractors.append(capa.features.extractors.cape.from_report(report))
 
     return file_extractors
 
@@ -904,6 +921,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_ELF, "Executable and Linkable Format"),
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
+            (FORMAT_CAPE, "CAPE sandbox report")
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
