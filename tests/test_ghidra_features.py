@@ -51,5 +51,3 @@ def test_ghidra_features(sample, scope, feature, expected):
 )
 def test_ghidra_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
-
-
