@@ -122,7 +122,7 @@ def main(argv=None):
         # this should be moved above the previous if clause after implementing
         # feature freeze for the dynamic analysis flavor
         with open(args.sample, "rb") as f:
-            extractor: (FeatureExtractor | DynamicExtractor) = capa.features.freeze.load(f.read())
+            extractor = capa.features.freeze.load(f.read())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
