@@ -10,6 +10,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import json
 import time
 import hashlib
 import logging
@@ -543,8 +544,6 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_CAPE:
-        import json
-
         import capa.features.extractors.cape.extractor
 
         with open(path, "r", encoding="utf-8") as f:
@@ -617,8 +616,6 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
-        import json
-
         with open(sample, "r+", encoding="utf-8") as f:
             report = json.load(f)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
