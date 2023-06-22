@@ -524,7 +524,7 @@ def get_extractor(
     sigpaths: List[str],
     should_save_workspace=False,
     disable_progress=False,
-) -> FeatureExtractor | DynamicExtractor:
+) -> FeatureExtractor:
     """
     raises:
       UnsupportedFormatError
