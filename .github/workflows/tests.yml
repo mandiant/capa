@@ -2,9 +2,9 @@ name: CI
 
 on: 
   push:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
 
 # save workspaces to speed up testing
 env:
