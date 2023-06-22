@@ -344,7 +344,7 @@ def get_data_path_by_name(name):
         return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
     elif name.startswith("0000a657"):
         return os.path.join(
-            CD, "data/dynamic/cape", "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+            CD, "data", "dynamic", "cape", "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
         )
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
