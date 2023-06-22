@@ -73,7 +73,6 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
-    FORMAT_CAPE,
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
@@ -906,7 +905,6 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
-            (FORMAT_CAPE, "CAPE sandbox json report"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
         parser.add_argument(
