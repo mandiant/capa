@@ -151,7 +151,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in currentProgram.getSymbolTable().getAllSymbols(False):
+    for sym in currentProgram.getSymbolTable().getExternalSymbols():
         if (sym.getSymbolType() == SymbolType.FUNCTION):
             name = sym.getName()
             addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
@@ -163,18 +163,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
                 # see: https://stackoverflow.com/a/2628384/87207
                 yield FunctionName(name[1:]), addr
 
-    #for f in currentProgram.getFunctionManager().getExternalFunctions():
-    #    addr = f.getEntryPoint().getOffset()
-    #    name = f.getName()
-    #    yield (FunctionName(name), AbsoluteVirtualAddress(addr))
-    #    if name.startswith("_"):
-            # some linkers may prefix linked routines with a `_` to avoid name collisions.
-            # extract features for both the mangled and un-mangled representations.
-            # e.g. `_fwrite` -> `fwrite`
-            # see: https://stackoverflow.com/a/2628384/87207
-    #        yield FunctionName(name[1:]), AbsoluteVirtualAddress(addr)
-
-
+    
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
 
     ef = currentProgram.getExecutableFormat()
