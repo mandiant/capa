@@ -546,7 +546,7 @@ def get_extractor(
     if format_ == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "rb") as f:
             report = json.load(f)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
@@ -616,7 +616,7 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
-        with open(sample, "r+", encoding="utf-8") as f:
+        with open(sample, "rb") as f:
             report = json.load(f)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
