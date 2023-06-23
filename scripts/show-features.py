@@ -115,7 +115,7 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    is_dynamic = (args.process) or (args.format == "cape") or (os.path.splitext(args.sample)[1] in ("json", "json_"))
+    is_dynamic = (args.process) or (args.format == "cape") or (os.path.splitext(args.sample)[1] in capa.helpers.EXTENSIONS_CAPE)
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
@@ -136,7 +136,7 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
-    if dynamic:
+    if is_dynamic:
         dynamic_analysis(cast(DynamicExtractor, extractor), args)
     else:
         static_analysis(extractor, args)
@@ -252,7 +252,7 @@ def print_process_features(processes, extractor: DynamicExtractor):
                     if capa.features.common.is_global_feature(feature):
                         continue
 
-                    print(f" thread: {t.tid}: {feature}")
+                    print(f"  thread: {t.tid}: {feature}")
 
 
 def ida_main():
