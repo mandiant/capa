@@ -115,7 +115,9 @@ def main(argv=None):
         logger.error("%s", str(e))
         return -1
 
-    is_dynamic = (args.process) or (args.format == "cape") or (os.path.splitext(args.sample)[1] in capa.helpers.EXTENSIONS_CAPE)
+    is_dynamic = (
+        (args.process) or (args.format == "cape") or (os.path.splitext(args.sample)[1] in capa.helpers.EXTENSIONS_CAPE)
+    )
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
