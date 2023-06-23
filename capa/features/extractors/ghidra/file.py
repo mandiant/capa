@@ -60,7 +60,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
             for b in e_lfanew_sbytes:
                 b = (b & 0xFF).to_bytes(1, 'little')
                 e_lfanew_bytes = e_lfanew_bytes + b
-        except RuntimeError:
+        except RuntimeError:  # no bytes will be returned, so we can bail out here
             return
 
         newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
@@ -121,10 +121,11 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():
         addr = f.getEntryPoint().getOffset()
-        fstr = f.getName()
-        if 'Ordinal_' in fstr:
-            fstr = f"#{fstr.split('_')[1]}"
-        yield Import(fstr), AbsoluteVirtualAddress(addr)
+        fstr = f.toString().split('::')  # format: MODULE::import / MODULE::Ordinal_*
+        if 'Ordinal_' in fstr[1]:
+            fstr[1] = f"#{fstr[1].split('_')[1]}"
+        for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
+            yield Import(name), AbsoluteVirtualAddress(addr)
 
 
 def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
