@@ -10,6 +10,7 @@ import struct
 from typing import Tuple, Iterator
 
 from ghidra.program.model.symbol import SourceType
+from ghidra.program.model.symbol import SymbolType
 
 import capa.features.extractors.common
 import capa.features.extractors.helpers
@@ -150,16 +151,28 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for f in currentProgram.getFunctionManager().getExternalFunctions():
-        addr = f.getEntryPoint().getOffset()
-        name = f.getName()
-        yield (FunctionName(name), AbsoluteVirtualAddress(addr))
-        if name.startswith("_"):
+    for sym in currentProgram.getSymbolTable().getAllSymbols(False):
+        if (sym.getSymbolType() == SymbolType.FUNCTION):
+            name = sym.getName()
+            addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
+            yield FunctionName(name), addr
+            if name.startswith("_"):
+                # some linkers may prefix linked routines with a `_` to avoid name collisions.
+                # extract features for both the mangled and un-mangled representations.
+                # e.g. `_fwrite` -> `fwrite`
+                # see: https://stackoverflow.com/a/2628384/87207
+                yield FunctionName(name[1:]), addr
+
+    #for f in currentProgram.getFunctionManager().getExternalFunctions():
+    #    addr = f.getEntryPoint().getOffset()
+    #    name = f.getName()
+    #    yield (FunctionName(name), AbsoluteVirtualAddress(addr))
+    #    if name.startswith("_"):
             # some linkers may prefix linked routines with a `_` to avoid name collisions.
             # extract features for both the mangled and un-mangled representations.
             # e.g. `_fwrite` -> `fwrite`
             # see: https://stackoverflow.com/a/2628384/87207
-            yield FunctionName(name[1:]), AbsoluteVirtualAddress(addr)
+    #        yield FunctionName(name[1:]), AbsoluteVirtualAddress(addr)
 
 
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
