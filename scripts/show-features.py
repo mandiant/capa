@@ -139,14 +139,14 @@ def main(argv=None):
             return -1
 
     if is_dynamic:
-        dynamic_analysis(cast(DynamicExtractor, extractor), args)
+        print_dynamic_analysis(cast(DynamicExtractor, extractor), args)
     else:
-        static_analysis(extractor, args)
+        print_static_analysis(extractor, args)
 
     return 0
 
 
-def static_analysis(extractor: FeatureExtractor, args):
+def print_static_analysis(extractor: FeatureExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -174,7 +174,7 @@ def static_analysis(extractor: FeatureExtractor, args):
     print_function_features(function_handles, extractor)
 
 
-def dynamic_analysis(extractor: DynamicExtractor, args):
+def print_dynamic_analysis(extractor: DynamicExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
