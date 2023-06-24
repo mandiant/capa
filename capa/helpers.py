@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import os
+import json
 import inspect
 import logging
 import contextlib
@@ -18,7 +19,7 @@ from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC6
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_CAPE = ("json", "json_")
+EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
@@ -53,16 +54,25 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 
-def get_format_from_extension(sample: str) -> str:
-    if sample.endswith(EXTENSIONS_SHELLCODE_32):
-        return FORMAT_SC32
-    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
-        return FORMAT_SC64
-    elif sample.endswith(EXTENSIONS_CAPE):
-        # once we have support for more sandboxes that use json-formatted reports,
-        # we update this logic to ask the user to explicity specify the format
+def get_format_from_report(sample: str) -> str:
+    with open(sample, "rb") as f:
+        report = json.load(f)
+    if FORMAT_CAPE.upper() in report.keys():
         return FORMAT_CAPE
-    return FORMAT_UNKNOWN
+    else:
+        # unknown report format
+        return FORMAT_UNKNOWN
+
+
+def get_format_from_extension(sample: str) -> str:
+    format_ = FORMAT_UNKNOWN
+    if sample.endswith(EXTENSIONS_SHELLCODE_32):
+        format_ = FORMAT_SC32
+    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
+        format_ = FORMAT_SC64
+    elif sample.endswith(EXTENSIONS_DYNAMIC):
+        format_ = get_format_from_report(sample)
+    return format_
 
 
 def get_auto_format(path: str) -> str:
