@@ -54,6 +54,7 @@
       "T1583.005": "Acquire Infrastructure::Botnet",
       "T1583.006": "Acquire Infrastructure::Web Services",
       "T1583.007": "Acquire Infrastructure::Serverless",
+      "T1583.008": "Acquire Infrastructure::Malvertising",
       "T1584": "Compromise Infrastructure",
       "T1584.001": "Compromise Infrastructure::Domains",
       "T1584.002": "Compromise Infrastructure::DNS Server",
@@ -88,7 +89,8 @@
       "T1608.003": "Stage Capabilities::Install Digital Certificate",
       "T1608.004": "Stage Capabilities::Drive-by Target",
       "T1608.005": "Stage Capabilities::Link Target",
-      "T1608.006": "Stage Capabilities::SEO Poisoning"
+      "T1608.006": "Stage Capabilities::SEO Poisoning",
+      "T1650": "Acquire Access"
     },
     "Initial Access": {
       "T1078": "Valid Accounts",
@@ -128,6 +130,7 @@
       "T1059.006": "Command and Scripting Interpreter::Python",
       "T1059.007": "Command and Scripting Interpreter::JavaScript",
       "T1059.008": "Command and Scripting Interpreter::Network Device CLI",
+      "T1059.009": "Command and Scripting Interpreter::Cloud API",
       "T1072": "Software Deployment Tools",
       "T1106": "Native API",
       "T1129": "Shared Modules",
@@ -145,7 +148,8 @@
       "T1569.002": "System Services::Service Execution",
       "T1609": "Container Administration Command",
       "T1610": "Deploy Container",
-      "T1648": "Serverless Execution"
+      "T1648": "Serverless Execution",
+      "T1651": "Cloud Administration Command"
     },
     "Persistence": {
       "T1037": "Boot or Logon Initialization Scripts",
@@ -247,6 +251,7 @@
       "T1556.005": "Modify Authentication Process::Reversible Encryption",
       "T1556.006": "Modify Authentication Process::Multi-Factor Authentication",
       "T1556.007": "Modify Authentication Process::Hybrid Identity",
+      "T1556.008": "Modify Authentication Process::Network Provider DLL",
       "T1574": "Hijack Execution Flow",
       "T1574.001": "Hijack Execution Flow::DLL Search Order Hijacking",
       "T1574.002": "Hijack Execution Flow::DLL Side-Loading",
@@ -372,6 +377,8 @@
       "T1027.007": "Obfuscated Files or Information::Dynamic API Resolution",
       "T1027.008": "Obfuscated Files or Information::Stripped Payloads",
       "T1027.009": "Obfuscated Files or Information::Embedded Payloads",
+      "T1027.010": "Obfuscated Files or Information::Command Obfuscation",
+      "T1027.011": "Obfuscated Files or Information::Fileless Storage",
       "T1036": "Masquerading",
       "T1036.001": "Masquerading::Invalid Code Signature",
       "T1036.002": "Masquerading::Right-to-Left Override",
@@ -380,6 +387,7 @@
       "T1036.005": "Masquerading::Match Legitimate Name or Location",
       "T1036.006": "Masquerading::Space after Filename",
       "T1036.007": "Masquerading::Double File Extension",
+      "T1036.008": "Masquerading::Masquerade File Type",
       "T1055": "Process Injection",
       "T1055.001": "Process Injection::Dynamic-link Library Injection",
       "T1055.002": "Process Injection::Portable Executable Injection",
@@ -487,6 +495,7 @@
       "T1556.005": "Modify Authentication Process::Reversible Encryption",
       "T1556.006": "Modify Authentication Process::Multi-Factor Authentication",
       "T1556.007": "Modify Authentication Process::Hybrid Identity",
+      "T1556.008": "Modify Authentication Process::Network Provider DLL",
       "T1562": "Impair Defenses",
       "T1562.001": "Impair Defenses::Disable or Modify Tools",
       "T1562.002": "Impair Defenses::Disable Windows Event Logging",
@@ -497,6 +506,7 @@
       "T1562.008": "Impair Defenses::Disable Cloud Logs",
       "T1562.009": "Impair Defenses::Safe Mode Boot",
       "T1562.010": "Impair Defenses::Downgrade Attack",
+      "T1562.011": "Impair Defenses::Spoof Security Alerting",
       "T1564": "Hide Artifacts",
       "T1564.001": "Hide Artifacts::Hidden Files and Directories",
       "T1564.002": "Hide Artifacts::Hidden Users",
@@ -574,6 +584,7 @@
       "T1552.005": "Unsecured Credentials::Cloud Instance Metadata API",
       "T1552.006": "Unsecured Credentials::Group Policy Preferences",
       "T1552.007": "Unsecured Credentials::Container API",
+      "T1552.008": "Unsecured Credentials::Chat Messages",
       "T1555": "Credentials from Password Stores",
       "T1555.001": "Credentials from Password Stores::Keychain",
       "T1555.002": "Credentials from Password Stores::Securityd Memory",
@@ -588,6 +599,7 @@
       "T1556.005": "Modify Authentication Process::Reversible Encryption",
       "T1556.006": "Modify Authentication Process::Multi-Factor Authentication",
       "T1556.007": "Modify Authentication Process::Hybrid Identity",
+      "T1556.008": "Modify Authentication Process::Network Provider DLL",
       "T1557": "Adversary-in-the-Middle",
       "T1557.001": "Adversary-in-the-Middle::LLMNR/NBT-NS Poisoning and SMB Relay",
       "T1557.002": "Adversary-in-the-Middle::ARP Cache Poisoning",
@@ -630,7 +642,7 @@
       "T1124": "System Time Discovery",
       "T1135": "Network Share Discovery",
       "T1201": "Password Policy Discovery",
-      "T1217": "Browser Bookmark Discovery",
+      "T1217": "Browser Information Discovery",
       "T1482": "Domain Trust Discovery",
       "T1497": "Virtualization/Sandbox Evasion",
       "T1497.001": "Virtualization/Sandbox Evasion::System Checks",
@@ -646,7 +658,8 @@
       "T1614.001": "System Location Discovery::System Language Discovery",
       "T1615": "Group Policy Discovery",
       "T1619": "Cloud Storage Object Discovery",
-      "T1622": "Debugger Evasion"
+      "T1622": "Debugger Evasion",
+      "T1652": "Device Driver Discovery"
     },
     "Lateral Movement": {
       "T1021": "Remote Services",
@@ -656,6 +669,7 @@
       "T1021.004": "Remote Services::SSH",
       "T1021.005": "Remote Services::VNC",
       "T1021.006": "Remote Services::Windows Remote Management",
+      "T1021.007": "Remote Services::Cloud Services",
       "T1072": "Software Deployment Tools",
       "T1080": "Taint Shared Content",
       "T1091": "Replication Through Removable Media",
@@ -768,7 +782,8 @@
       "T1537": "Transfer Data to Cloud Account",
       "T1567": "Exfiltration Over Web Service",
       "T1567.001": "Exfiltration Over Web Service::Exfiltration to Code Repository",
-      "T1567.002": "Exfiltration Over Web Service::Exfiltration to Cloud Storage"
+      "T1567.002": "Exfiltration Over Web Service::Exfiltration to Cloud Storage",
+      "T1567.003": "Exfiltration Over Web Service::Exfiltration to Text Storage Sites"
     },
     "Impact": {
       "T1485": "Data Destruction",
