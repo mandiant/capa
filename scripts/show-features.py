@@ -81,7 +81,7 @@ import capa.render.verbose as v
 import capa.features.freeze
 import capa.features.address
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
-from capa.features.common import FORMAT_AUTO, FORMAT_CAPE, FORMAT_FREEZE, is_global_feature
+from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
 from capa.features.extractors.base_extractor import DynamicExtractor, FeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
@@ -134,7 +134,7 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
-    if format_ in (FORMAT_CAPE):
+    if format_ in DYNAMIC_FORMATS:
         print_dynamic_analysis(cast(DynamicExtractor, extractor), args)
     else:
         print_static_analysis(extractor, args)

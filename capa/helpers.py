@@ -59,9 +59,7 @@ def get_format_from_report(sample: str) -> str:
         report = json.load(f)
     if FORMAT_CAPE.upper() in report.keys():
         return FORMAT_CAPE
-    else:
-        # unknown report format
-        return FORMAT_UNKNOWN
+    return FORMAT_UNKNOWN
 
 
 def get_format_from_extension(sample: str) -> str:
