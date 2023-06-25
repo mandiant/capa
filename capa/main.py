@@ -76,7 +76,14 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    FunctionHandle,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -117,7 +124,7 @@ def set_vivisect_log_level(level):
 
 
 def find_instruction_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
 ) -> Tuple[FeatureSet, MatchResults]:
     """
     find matches for the given rules for the given instruction.
@@ -144,7 +151,7 @@ def find_instruction_capabilities(
 
 
 def find_basic_block_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle
 ) -> Tuple[FeatureSet, MatchResults, MatchResults]:
     """
     find matches for the given rules within the given basic block.
@@ -184,7 +191,7 @@ def find_basic_block_capabilities(
 
 
 def find_code_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, fh: FunctionHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
 ) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
@@ -242,7 +249,9 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None) -> Tuple[MatchResults, Any]:
+def find_capabilities(
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
+) -> Tuple[MatchResults, Any]:
     all_function_matches = collections.defaultdict(list)  # type: MatchResults
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
@@ -744,7 +753,7 @@ def collect_metadata(
     format_: str,
     os_: str,
     rules_path: List[str],
-    extractor: capa.features.extractors.base_extractor.FeatureExtractor,
+    extractor: FeatureExtractor,
 ) -> rdoc.Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()

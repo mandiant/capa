@@ -226,7 +226,7 @@ class Freeze(BaseModel):
         allow_population_by_field_name = True
 
 
-def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -> str:
+def dumps(extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
@@ -327,7 +327,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
     return freeze.json()
 
 
-def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
+def loads(s: str) -> capa.features.extractors.base_extractor.StaticFeatureExtractor:
     """deserialize a set of features (as a NullFeatureExtractor) from a string."""
     import capa.features.extractors.null as null
 
@@ -363,7 +363,7 @@ def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
 MAGIC = "capa0000".encode("ascii")
 
 
-def dump(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -> bytes:
+def dump(extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor) -> bytes:
     """serialize the given extractor to a byte array."""
     return MAGIC + zlib.compress(dumps(extractor).encode("utf-8"))
 
@@ -372,7 +372,7 @@ def is_freeze(buf: bytes) -> bool:
     return buf[: len(MAGIC)] == MAGIC
 
 
-def load(buf: bytes) -> capa.features.extractors.base_extractor.FeatureExtractor:
+def load(buf: bytes) -> capa.features.extractors.base_extractor.StaticFeatureExtractor:
     """deserialize a set of features (as a NullFeatureExtractor) from a byte array."""
     if not is_freeze(buf):
         raise ValueError("missing magic header")

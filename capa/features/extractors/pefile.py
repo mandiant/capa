@@ -18,7 +18,7 @@ import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +172,7 @@ GLOBAL_HANDLERS = (
 )
 
 
-class PefileFeatureExtractor(FeatureExtractor):
+class PefileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: str):
         super().__init__()
         self.path = path

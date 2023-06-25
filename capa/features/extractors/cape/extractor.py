@@ -14,12 +14,12 @@ import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import Feature
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicExtractor
+from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
-class CapeExtractor(DynamicExtractor):
+class CapeExtractor(DynamicFeatureExtractor):
     def __init__(self, static: Dict, behavior: Dict):
         super().__init__()
         self.static = static
