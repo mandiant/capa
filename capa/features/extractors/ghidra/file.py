@@ -139,11 +139,20 @@ def extract_file_section_names() -> Iterator[Tuple[Feature, Address]]:
 def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
-    dat = getFirstData()
-    while (dat != None):
-        if (dat.hasStringValue()):
-            yield String(dat.getValue()), FileOffsetAddress(dat.getAddress().getOffset()) 
-        dat = getDataAfter(dat)
+    for block in currentProgram.getMemory().getBlocks():
+        p_bytes = b''
+        addr = block.getStart()
+        while (block.isInitialized() and addr.getOffset() <= block.getEnd().getOffset()):
+            p_bytes = p_bytes + ((block.getByte(addr) & 0xFF).to_bytes(1, 'little'))
+            addr = addr.add(1)
+
+        for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
+            offset = block.getStart().getOffset() + int(s.offset)
+            yield String(s.s), FileOffsetAddress(offset)
+
+        for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
+            offset = block.getStart().getOffset() + int(s.offset)
+            yield String(s.s), FileOffsetAddress(offset)
 
 
 def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
