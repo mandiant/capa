@@ -10,6 +10,7 @@
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+- Change the old FeatureExtractor class' name into StaticFeatureExtractor, and make the former an alias for both the StaticFeatureExtractor and DynamicFeatureExtractor classes @yelhamer [#1567](https://github.com/mandiant/capa/issues/1567)
 
 ### New Rules (9)
 
