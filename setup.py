@@ -28,7 +28,7 @@ requirements = [
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==1.10.9",
-    "protobuf==4.23.2",
+    "protobuf==4.23.3",
 ]
 
 # this sets __version__
