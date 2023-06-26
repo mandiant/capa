@@ -70,6 +70,7 @@ import capa.render.result_document as rd
 from capa.helpers import get_file_taste
 from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -166,7 +167,7 @@ def main(argv=None):
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
-            extractor = capa.main.get_extractor(
+            extractor: FeatureExtractor = capa.main.get_extractor(
                 args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
         except capa.exceptions.UnsupportedFormatError:

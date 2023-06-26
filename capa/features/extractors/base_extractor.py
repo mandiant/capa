@@ -308,6 +308,13 @@ class DynamicFeatureExtractor:
     """
 
     @abc.abstractmethod
+    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
+        """
+        fetch the preferred load address at which the sample was analyzed.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
         Enumerate processes in the trace.

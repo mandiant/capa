@@ -46,6 +46,7 @@ import capa.helpers
 import capa.features
 import capa.features.common
 import capa.features.freeze
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger("capa.profile")
 
@@ -105,7 +106,7 @@ def main(argv=None):
         with open(args.sample, "rb") as f:
             extractor = capa.features.freeze.load(f.read())
     else:
-        extractor = capa.main.get_extractor(
+        extractor: FeatureExtractor = capa.main.get_extractor(
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
         )
 

@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Dict, List, Tuple, Callable, cast
 
 import halo
 import tqdm
@@ -231,7 +231,12 @@ def find_code_capabilities(
 def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
     file_features = collections.defaultdict(set)  # type: FeatureSet
 
-    for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
+    if isinstance(extractor, StaticFeatureExtractor):
+        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
+    else:
+        extractor_: DynamicFeatureExtractor = cast(DynamicFeatureExtractor, extractor)
+
+    for feature, va in itertools.chain(extractor_.extract_file_features(), extractor_.extract_global_features()):
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
@@ -249,7 +254,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
-def find_capabilities(
+def find_capabilities_static(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
     all_function_matches = collections.defaultdict(list)  # type: MatchResults
@@ -332,6 +337,15 @@ def find_capabilities(
     }
 
     return matches, meta
+
+
+def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
+    if isinstance(extractor, StaticFeatureExtractor):
+        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
+        return find_capabilities_static(ruleset, extractor_, kwargs)
+    else:
+        # extractor_ = cast(DynamicFeatureExtractor, extractor)
+        print("nni")
 
 
 # TODO move all to helpers?
@@ -1252,7 +1266,7 @@ def main(argv=None):
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
             try:
-                extractor = get_extractor(
+                extractor: FeatureExtractor = get_extractor(
                     args.sample,
                     format_,
                     args.os,
