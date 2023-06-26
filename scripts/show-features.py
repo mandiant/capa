@@ -80,8 +80,8 @@ import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
 import capa.features.address
-import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
 
@@ -117,14 +117,13 @@ def main(argv=None):
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
         with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+            extractor: FeatureExtractor = capa.features.freeze.load(f.read())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
             extractor = capa.main.get_extractor(
                 args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
-            assert isinstance(extractor, capa.features.extractors.base_extractor.StaticFeatureExtractor)
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
             return -1
@@ -132,6 +131,7 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -190,7 +190,7 @@ def ida_main():
     return 0
 
 
-def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
+def print_features(functions, extractor: StaticFeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)

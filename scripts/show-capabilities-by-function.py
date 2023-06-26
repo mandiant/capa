@@ -70,7 +70,7 @@ import capa.render.result_document as rd
 from capa.helpers import get_file_taste
 from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
-from capa.features.extractors.base_extractor import StaticFeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -161,7 +161,7 @@ def main(argv=None):
     if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
         with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+            extractor: FeatureExtractor = capa.features.freeze.load(f.read())
     else:
         format_ = args.format
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
