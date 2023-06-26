@@ -124,6 +124,7 @@ def main(argv=None):
             extractor = capa.main.get_extractor(
                 args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
+            assert isinstance(extractor, capa.features.extractors.base_extractor.StaticFeatureExtractor)
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
             return -1
