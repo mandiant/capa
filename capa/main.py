@@ -233,8 +233,10 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 
     if isinstance(extractor, StaticFeatureExtractor):
         extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
-    else:
+    elif isinstance(extractor, DynamicFeatureExtractor):
         extractor_: DynamicFeatureExtractor = cast(DynamicFeatureExtractor, extractor)
+    else:
+        raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
     for feature, va in itertools.chain(extractor_.extract_file_features(), extractor_.extract_global_features()):
         # not all file features may have virtual addresses.
