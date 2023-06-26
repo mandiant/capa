@@ -8,7 +8,7 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator
+from typing import Any, Dict, Tuple, Union, Iterator, TypeAlias
 from dataclasses import dataclass
 
 import capa.features.address
@@ -315,6 +315,38 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract features found at every scope ("global").
+
+        example::
+
+            extractor = VivisectFeatureExtractor(vw, path)
+            for feature, va in extractor.get_global_features():
+                print('0x%x: %s', va, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract file-scope features.
+
+        example::
+
+            extractor = VivisectFeatureExtractor(vw, path)
+            for feature, va in extractor.get_file_features():
+                print('0x%x: %s', va, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
         """
         Enumerate processes in the trace.
@@ -349,4 +381,4 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
 
-FeatureExtractor = StaticFeatureExtractor | DynamicFeatureExtractor
+FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]
