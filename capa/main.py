@@ -256,7 +256,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
-def find_capabilities_static(
+def find_static_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
     all_function_matches = collections.defaultdict(list)  # type: MatchResults
@@ -344,10 +344,12 @@ def find_capabilities_static(
 def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
     if isinstance(extractor, StaticFeatureExtractor):
         extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
-        return find_capabilities_static(ruleset, extractor_, kwargs)
-    else:
+        return find_static_capabilities(ruleset, extractor_, kwargs)
+    elif isinstance(extractor, DynamicFeatureExtractor):
         # extractor_ = cast(DynamicFeatureExtractor, extractor)
-        print("nni")
+        raise NotImplementedError()
+    else:
+        raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
 
 # TODO move all to helpers?
