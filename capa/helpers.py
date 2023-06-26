@@ -57,7 +57,7 @@ def assert_never(value) -> NoReturn:
 def get_format_from_report(sample: str) -> str:
     with open(sample, "rb") as f:
         report = json.load(f)
-    if FORMAT_CAPE.upper() in report.keys():
+    if "CAPE" in report.keys():
         return FORMAT_CAPE
     return FORMAT_UNKNOWN
 
