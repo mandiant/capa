@@ -77,7 +77,7 @@ setuptools.setup(
             "ruff==0.0.270",
             "black==23.3.0",
             "isort==5.11.4",
-            "mypy==1.3.0",
+            "mypy==1.4.1",
             "psutil==5.9.2",
             "stix2==3.0.1",
             "requests==2.31.0",
