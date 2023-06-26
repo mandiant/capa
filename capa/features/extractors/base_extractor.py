@@ -8,8 +8,10 @@
 
 import abc
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator, TypeAlias
+from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
+
+from typing_extensions import TypeAlias
 
 import capa.features.address
 from capa.features.common import Feature

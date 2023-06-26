@@ -231,14 +231,7 @@ def find_code_capabilities(
 def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
     file_features = collections.defaultdict(set)  # type: FeatureSet
 
-    if isinstance(extractor, StaticFeatureExtractor):
-        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
-    elif isinstance(extractor, DynamicFeatureExtractor):
-        extractor_: DynamicFeatureExtractor = cast(DynamicFeatureExtractor, extractor)
-    else:
-        raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
-
-    for feature, va in itertools.chain(extractor_.extract_file_features(), extractor_.extract_global_features()):
+    for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
         # not all file features may have virtual addresses.
         # if not, then at least ensure the feature shows up in the index.
         # the set of addresses will still be empty.
@@ -1251,7 +1244,8 @@ def main(argv=None):
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
             with open(args.sample, "rb") as f:
-                extractor = frz.load(f.read())
+                extractor: FeatureExtractor = frz.load(f.read())
+                assert isinstance(extractor, StaticFeatureExtractor)
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces
@@ -1270,7 +1264,7 @@ def main(argv=None):
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
             try:
-                extractor: FeatureExtractor = get_extractor(
+                extractor = get_extractor(
                     args.sample,
                     format_,
                     args.os,
