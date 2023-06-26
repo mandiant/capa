@@ -277,7 +277,7 @@ def ida_main():
             print(f"{hex(function)} not a function")
             return -1
 
-    print_function_features(function_handles, extractor)
+    print_static_features(function_handles, extractor)
 
     return 0
 
