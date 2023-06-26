@@ -167,7 +167,7 @@ def print_static_analysis(extractor: FeatureExtractor, args):
             print(f"{args.function} not a function")
             return -1
 
-    print_function_features(function_handles, extractor)
+    print_static_features(function_handles, extractor)
 
 
 def print_dynamic_analysis(extractor: DynamicExtractor, args):
@@ -186,10 +186,10 @@ def print_dynamic_analysis(extractor: DynamicExtractor, args):
             print(f"{args.process} not a process")
             return -1
 
-    print_process_features(process_handles, extractor)
+    print_dynamic_features(process_handles, extractor)
 
 
-def print_function_features(functions, extractor: FeatureExtractor):
+def print_static_features(functions, extractor: FeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
@@ -235,7 +235,7 @@ def print_function_features(functions, extractor: FeatureExtractor):
                         continue
 
 
-def print_process_features(processes, extractor: DynamicExtractor):
+def print_dynamic_features(processes, extractor: DynamicExtractor):
     for p in processes:
         print(f"proc: {p.inner['name']} (ppid={p.inner['ppid']}, pid={p.pid})")
 
