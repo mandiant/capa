@@ -310,13 +310,6 @@ class DynamicFeatureExtractor:
     """
 
     @abc.abstractmethod
-    def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
-        """
-        fetch the preferred load address at which the sample was analyzed.
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         """
         extract features found at every scope ("global").

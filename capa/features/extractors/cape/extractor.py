@@ -26,10 +26,6 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.behavior = behavior
 
         self.global_features = capa.features.extractors.cape.global_.extract_features(self.static)
-
-    def get_base_address(self):
-        return NO_ADDRESS
-
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
