@@ -84,7 +84,6 @@ from capa.helpers import get_auto_format, log_unsupported_runtime_error
 from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
-
 logger = logging.getLogger("capa.show-features")
 
 

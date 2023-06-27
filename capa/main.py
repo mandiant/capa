@@ -21,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, cast, Union
+from typing import Any, Dict, List, Tuple, Union, Callable, cast
 
 import halo
 import tqdm
@@ -786,6 +786,7 @@ def collect_metadata(
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     with open(sample_path, "rb") as f:
         buf = f.read()
 
