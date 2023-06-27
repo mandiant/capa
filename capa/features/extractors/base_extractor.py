@@ -339,9 +339,9 @@ class DynamicFeatureExtractor:
 
         example::
 
-            extractor = VivisectFeatureExtractor(vw, path)
-            for feature, va in extractor.get_file_features():
-                print('0x%x: %s', va, feature)
+            extractor = CapeFeatureExtractor.from_report(json.loads(buf))
+            for feature, addr in extractor.get_file_features():
+                print(addr, feature)
 
         yields:
           Tuple[Feature, Address]: feature and its location
