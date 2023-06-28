@@ -172,8 +172,8 @@ SUPPORTED_FEATURES[FILE_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 
-# all thread scope features are also function features
-SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
+# all thread scope features are also process features
+SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
