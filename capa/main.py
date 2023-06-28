@@ -21,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Union, Callable
+from typing import Any, Dict, List, Tuple, Union, Callable, cast
 
 import halo
 import tqdm
@@ -83,8 +83,9 @@ from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
     FunctionHandle,
-    DynamicExtractor,
     FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
 )
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -126,7 +127,7 @@ def set_vivisect_log_level(level):
 
 
 def find_instruction_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
 ) -> Tuple[FeatureSet, MatchResults]:
     """
     find matches for the given rules for the given instruction.
@@ -153,7 +154,7 @@ def find_instruction_capabilities(
 
 
 def find_basic_block_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle
 ) -> Tuple[FeatureSet, MatchResults, MatchResults]:
     """
     find matches for the given rules within the given basic block.
@@ -193,7 +194,7 @@ def find_basic_block_capabilities(
 
 
 def find_code_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, fh: FunctionHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
 ) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
@@ -251,7 +252,9 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None) -> Tuple[MatchResults, Any]:
+def find_static_capabilities(
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
+) -> Tuple[MatchResults, Any]:
     all_function_matches = collections.defaultdict(list)  # type: MatchResults
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
@@ -332,6 +335,17 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     }
 
     return matches, meta
+
+
+def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
+    if isinstance(extractor, StaticFeatureExtractor):
+        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
+        return find_static_capabilities(ruleset, extractor_, kwargs)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        # extractor_ = cast(DynamicFeatureExtractor, extractor)
+        raise NotImplementedError()
+    else:
+        raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
 
 # TODO move all to helpers?
@@ -766,12 +780,13 @@ def collect_metadata(
     format_: str,
     os_: str,
     rules_path: List[str],
-    extractor: capa.features.extractors.base_extractor.FeatureExtractor,
+    extractor: FeatureExtractor,
 ) -> rdoc.Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     with open(sample_path, "rb") as f:
         buf = f.read()
 
@@ -1247,7 +1262,8 @@ def main(argv=None):
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
             with open(args.sample, "rb") as f:
-                extractor = frz.load(f.read())
+                extractor: FeatureExtractor = frz.load(f.read())
+                assert isinstance(extractor, StaticFeatureExtractor)
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces

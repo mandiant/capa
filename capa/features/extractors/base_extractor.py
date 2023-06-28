@@ -11,6 +11,8 @@ import dataclasses
 from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
+from typing_extensions import TypeAlias
+
 import capa.features.address
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -63,16 +65,18 @@ class InsnHandle:
     inner: Any
 
 
-class FeatureExtractor:
+class StaticFeatureExtractor:
     """
-    FeatureExtractor defines the interface for fetching features from a sample.
+    StaticFeatureExtractor defines the interface for fetching features from a
+    sample without running it; extractors that rely on the execution trace of
+    a sample must implement the other sibling class, DynamicFeatureExtracor.
 
     There may be multiple backends that support fetching features for capa.
     For example, we use vivisect by default, but also want to support saving
      and restoring features from a JSON file.
     When we restore the features, we'd like to use exactly the same matching logic
      to find matching rules.
-    Therefore, we can define a FeatureExtractor that provides features from the
+    Therefore, we can define a StaticFeatureExtractor that provides features from the
      serialized JSON file and do matching without a binary analysis pass.
     Also, this provides a way to hook in an IDA backend.
 
@@ -292,9 +296,11 @@ class ThreadHandle:
     inner: Any
 
 
-class DynamicExtractor(FeatureExtractor):
+class DynamicFeatureExtractor:
     """
-    DynamicExtractor defines the interface for fetching features from a sandbox' analysis of a sample.
+    DynamicFeatureExtractor defines the interface for fetching features from a
+    sandbox' analysis of a sample; extractors that rely on statically analyzing
+    a sample must implement the sibling extractor, StaticFeatureExtractor.
 
     Features are grouped mainly into threads that alongside their meta-features are also grouped into
     processes (that also have their own features). Other scopes (such as function and file) may also apply
@@ -302,6 +308,38 @@ class DynamicExtractor(FeatureExtractor):
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
+
+    @abc.abstractmethod
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract features found at every scope ("global").
+
+        example::
+
+            extractor = CapeFeatureExtractor.from_report(json.loads(buf))
+            for feature, addr in extractor.get_global_features():
+                print(addr, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract file-scope features.
+
+        example::
+
+            extractor = CapeFeatureExtractor.from_report(json.loads(buf))
+            for feature, addr in extractor.get_file_features():
+                print(addr, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_processes(self) -> Iterator[ProcessHandle]:
@@ -336,3 +374,6 @@ class DynamicExtractor(FeatureExtractor):
         - network activity
         """
         raise NotImplementedError()
+
+
+FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

@@ -18,10 +18,10 @@ import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 
-class IdaFeatureExtractor(FeatureExtractor):
+class IdaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self):
         super().__init__()
         self.global_features: List[Tuple[Feature, Address]] = []

@@ -17,10 +17,10 @@ import capa.features.extractors.binja.function
 import capa.features.extractors.binja.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 
-class BinjaFeatureExtractor(FeatureExtractor):
+class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
         super().__init__()
         self.bv = bv

@@ -17,7 +17,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DnfileFeatureExtractor(FeatureExtractor):
+class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: str):
         super().__init__()
         self.path: str = path

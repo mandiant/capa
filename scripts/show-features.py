@@ -82,7 +82,7 @@ import capa.features.freeze
 import capa.features.address
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
 from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
-from capa.features.extractors.base_extractor import DynamicExtractor, FeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
 
@@ -120,7 +120,7 @@ def main(argv=None):
         # this should be moved above the previous if clause after implementing
         # feature freeze for the dynamic analysis flavor
         with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+            extractor: FeatureExtractor = capa.features.freeze.load(f.read())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
@@ -135,14 +135,16 @@ def main(argv=None):
             return -1
 
     if format_ in DYNAMIC_FORMATS:
-        print_dynamic_analysis(cast(DynamicExtractor, extractor), args)
+        assert isinstance(extractor, DynamicFeatureExtractor)
+        print_dynamic_analysis(extractor, args)
     else:
+        assert isinstance(extractor, StaticFeatureExtractor)
         print_static_analysis(extractor, args)
 
     return 0
 
 
-def print_static_analysis(extractor: FeatureExtractor, args):
+def print_static_analysis(extractor: StaticFeatureExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -170,7 +172,7 @@ def print_static_analysis(extractor: FeatureExtractor, args):
     print_static_features(function_handles, extractor)
 
 
-def print_dynamic_analysis(extractor: DynamicExtractor, args):
+def print_dynamic_analysis(extractor: DynamicFeatureExtractor, args):
     for feature, addr in extractor.extract_global_features():
         print(f"global: {format_address(addr)}: {feature}")
 
@@ -189,7 +191,7 @@ def print_dynamic_analysis(extractor: DynamicExtractor, args):
     print_dynamic_features(process_handles, extractor)
 
 
-def print_static_features(functions, extractor: FeatureExtractor):
+def print_static_features(functions, extractor: StaticFeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
             function_name = extractor.get_function_name(f.address)
@@ -235,7 +237,7 @@ def print_static_features(functions, extractor: FeatureExtractor):
                         continue
 
 
-def print_dynamic_features(processes, extractor: DynamicExtractor):
+def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
         print(f"proc: {p.inner['name']} (ppid={p.inner['ppid']}, pid={p.pid})")
 

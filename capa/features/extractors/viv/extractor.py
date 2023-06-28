@@ -19,12 +19,12 @@ import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
 
-class VivisectFeatureExtractor(FeatureExtractor):
+class VivisectFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, vw, path, os):
         super().__init__()
         self.vw = vw

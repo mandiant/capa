@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 
 @dataclass
@@ -24,7 +24,7 @@ class FunctionFeatures:
 
 
 @dataclass
-class NullFeatureExtractor(FeatureExtractor):
+class NullFeatureExtractor(StaticFeatureExtractor):
     """
     An extractor that extracts some user-provided features.
 
