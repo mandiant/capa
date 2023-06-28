@@ -361,6 +361,21 @@ def test_subscope_rules():
                     """
                 )
             ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test thread subscope
+                            scope: process
+                        features:
+                            - and:
+                                 - string: "explorer.exe"
+                                 - thread:
+                                    - api: HttpOpenRequestW
+                    """
+                )
+            ),
         ]
     )
     # the file rule scope will have two rules:
@@ -372,8 +387,13 @@ def test_subscope_rules():
     assert len(rules.function_rules) == 1
 
     # the process rule scope has one rule:
-    # - the rule on which `test process subscope` depends
-    assert len(rules.process_rules) == 1
+    # - the rule on which `test process subscope` and depends
+    # as well as `test thread scope`
+    assert len(rules.process_rules) == 2
+
+    # the thread rule scope has one rule:
+    # - the rule on which `test thread subscope` depends
+    assert len(rules.thread_rules) == 1
 
 
 def test_duplicate_rules():

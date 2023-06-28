@@ -74,6 +74,7 @@ HIDDEN_META_KEYS = ("capa/nursery", "capa/path")
 class Scope(str, Enum):
     FILE = "file"
     PROCESS = "process"
+    THREAD = "thread"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
     INSTRUCTION = "instruction"
@@ -81,6 +82,7 @@ class Scope(str, Enum):
 
 FILE_SCOPE = Scope.FILE.value
 PROCESS_SCOPE = Scope.PROCESS.value
+THREAD_SCOPE = Scope.THREAD.value
 FUNCTION_SCOPE = Scope.FUNCTION.value
 BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
@@ -114,6 +116,14 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Substring,
         capa.features.common.Regex,
         capa.features.common.Characteristic("embedded pe"),
+    },
+    THREAD_SCOPE: {
+        capa.features.common.MatchedRule,
+        capa.features.common.String,
+        capa.features.common.Substring,
+        capa.features.common.Regex,
+        capa.features.insn.API,
+        capa.features.insn.Number,
     },
     FUNCTION_SCOPE: {
         capa.features.common.MatchedRule,
@@ -160,7 +170,10 @@ SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[FILE_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 
+# all thread scope features are also function features
+SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
@@ -456,6 +469,15 @@ def build_statements(d, scope: str):
             raise InvalidRule("subscope must have exactly one child statement")
 
         return ceng.Subscope(PROCESS_SCOPE, build_statements(d[key][0], PROCESS_SCOPE), description=description)
+
+    elif key == "thread":
+        if scope != PROCESS_SCOPE:
+            raise InvalidRule("thread subscope supported only for the process scope")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        return ceng.Subscope(THREAD_SCOPE, build_statements(d[key][0], THREAD_SCOPE), description=description)
 
     elif key == "function":
         if scope != FILE_SCOPE:
@@ -1118,6 +1140,7 @@ class RuleSet:
 
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.process_rules = self._get_rules_for_scope(rules, PROCESS_SCOPE)
+        self.thread_rules = self._get_rules_for_scope(rules, THREAD_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
         self.instruction_rules = self._get_rules_for_scope(rules, INSTRUCTION_SCOPE)
@@ -1129,6 +1152,7 @@ class RuleSet:
         (self._easy_process_rules_by_feature, self._hard_process_rules) = self._index_rules_by_feature(
             self.process_rules
         )
+        (self._easy_thread_rules_by_feature, self._hard_thread_rules) = self._index_rules_by_feature(self.thread_rules)
         (self._easy_function_rules_by_feature, self._hard_function_rules) = self._index_rules_by_feature(
             self.function_rules
         )
@@ -1381,6 +1405,9 @@ class RuleSet:
         elif scope is Scope.PROCESS:
             easy_rules_by_feature = self._easy_process_rules_by_feature
             hard_rule_names = self._hard_process_rules
+        elif scope is Scope.THREAD:
+            easy_rules_by_feature = self._easy_thread_rules_by_feature
+            hard_rule_names = self._hard_thread_rules
         elif scope is Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules
