@@ -277,6 +277,20 @@ def test_invalid_rule_feature():
             )
         )
 
+    with pytest.raises(capa.rules.InvalidRule):
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scope: process
+                    features:
+                        - mnemonic: xor
+                """
+            )
+        )
+
 
 def test_lib_rules():
     rules = capa.rules.RuleSet(
@@ -319,7 +333,7 @@ def test_subscope_rules():
                     """
                     rule:
                         meta:
-                            name: test rule
+                            name: test function subscope
                             scope: file
                         features:
                             - and:
@@ -330,16 +344,36 @@ def test_subscope_rules():
                                         - characteristic: loop
                     """
                 )
-            )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test process subscope
+                            scope: file
+                        features:
+                            - and:
+                                - import: WININET.dll.HttpOpenRequestW
+                                - process:
+                                    - and:
+                                        - substring: "http://"
+                    """
+                )
+            ),
         ]
     )
-    # the file rule scope will have one rules:
-    #  - `test rule`
-    assert len(rules.file_rules) == 1
+    # the file rule scope will have two rules:
+    #  - `test function subscope` and `test process subscope`
+    assert len(rules.file_rules) == 2
 
     # the function rule scope have one rule:
-    #  - the rule on which `test rule` depends
+    #  - the rule on which `test function subscope` depends
     assert len(rules.function_rules) == 1
+
+    # the process rule scope has one rule:
+    # - the rule on which `test process subscope` depends
+    assert len(rules.process_rules) == 1
 
 
 def test_duplicate_rules():
