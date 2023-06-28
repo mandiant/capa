@@ -133,11 +133,37 @@ def test_ruleset():
                     """
                 )
             ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: process rule
+                            scope: process
+                        features:
+                          - string: "explorer.exe"
+                    """
+                )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                        rule:
+                            meta:
+                                name: thread rule
+                                scope: thread
+                            features:
+                              - api: RegDeleteKey
+                        """
+                )
+            ),
         ]
     )
     assert len(rules.file_rules) == 1
     assert len(rules.function_rules) == 1
     assert len(rules.basic_block_rules) == 1
+    assert len(rules.process_rules) == 1
+    assert len(rules.thread_rules) == 1
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
