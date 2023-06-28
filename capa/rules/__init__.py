@@ -109,6 +109,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Characteristic("mixed mode"),
     },
     PROCESS_SCOPE: {
+        capa.features.common.MatchedRule,
         capa.features.common.String,
         capa.features.common.Substring,
         capa.features.common.Regex,
