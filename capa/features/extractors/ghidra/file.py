@@ -97,15 +97,10 @@ def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
     """extract function exports
-
-    Exports in Ghidra:
-        - namespace = Global
-        - SourceType = IMPORTED
     """
-
-    for f in currentProgram.getFunctionManager().getFunctions(True):
-        if f.getSymbol().getSource() == SourceType.IMPORTED:
-            yield Export(f.toString()), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
+    st = currentProgram.getSymbolTable()
+    for addr in st.getExternalEntryPointIterator():
+        yield Export(st.getPrimarySymbol(addr).getName()), AbsoluteVirtualAddress(addr.getOffset()) 
 
 
 def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
@@ -144,7 +139,10 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
         addr = block.getStart()
         while (block.isInitialized() and addr.getOffset() <= block.getEnd().getOffset()):
             p_bytes = p_bytes + ((block.getByte(addr) & 0xFF).to_bytes(1, 'little'))
-            addr = addr.add(1)
+            try:
+                addr = addr.add(1)
+            except RuntimeError: # throws AddressOverflow error in Java
+                break
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
             offset = block.getStart().getOffset() + int(s.offset)
@@ -160,8 +158,8 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in currentProgram.getSymbolTable().getExternalSymbols():
-        if (sym.getSymbolType() == SymbolType.FUNCTION):
+    for sym in currentProgram.getSymbolTable().getAllSymbols(False): # static only
+        if (sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.IMPORTED):
             name = sym.getName()
             addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
             yield FunctionName(name), addr
