@@ -12,8 +12,6 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
     args:
-        start: min virtual address
-        end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
