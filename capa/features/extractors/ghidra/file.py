@@ -9,8 +9,7 @@
 import struct
 from typing import Tuple, Iterator
 
-from ghidra.program.model.symbol import SourceType
-from ghidra.program.model.symbol import SymbolType
+from ghidra.program.model.symbol import SourceType, SymbolType
 
 import capa.features.extractors.common
 import capa.features.extractors.helpers
@@ -38,14 +37,14 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
         )
         for i in range(256)
     ]
- 
+
     todo = []
     for mzx, pex, i in mz_xor:
         # find all segment offsets containing XOR'd "MZ" bytes
         for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(mzx):
             todo.append((off, mzx, pex, i))
 
-    seg_max = currentProgram.getMaxAddress() 
+    seg_max = currentProgram.getMaxAddress()
     while len(todo):
         off, mzx, pex, i = todo.pop()
 
@@ -55,11 +54,11 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
         if seg_max.getOffset() < (e_lfanew.getOffset() + 4):
             continue
 
-        e_lfanew_bytes = b''
+        e_lfanew_bytes = b""
         try:
-            e_lfanew_sbytes = getBytes(e_lfanew, 4) 
+            e_lfanew_sbytes = getBytes(e_lfanew, 4)
             for b in e_lfanew_sbytes:
-                b = (b & 0xFF).to_bytes(1, 'little')
+                b = (b & 0xFF).to_bytes(1, "little")
                 e_lfanew_bytes = e_lfanew_bytes + b
         except RuntimeError:  # no bytes will be returned, so we can bail out here
             return
@@ -74,11 +73,11 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
         if seg_max.getOffset() < (peoff.getOffset() + 2):
             continue
 
-        pe_bytes = b''
+        pe_bytes = b""
         try:
             pe_off_bytes = getBytes(peoff, 2)
             for b in pe_off_bytes:
-                b = (b & 0xFF).to_bytes(1, 'little')
+                b = (b & 0xFF).to_bytes(1, "little")
                 pe_bytes = pe_bytes + b
         except RuntimeError:
             return
@@ -88,19 +87,17 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
 
 
 def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
-    """extract embedded PE features
-    """
+    """extract embedded PE features"""
 
     for ea, _ in check_segment_for_pe():
         yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
-    """extract function exports
-    """
+    """extract function exports"""
     st = currentProgram.getSymbolTable()
     for addr in st.getExternalEntryPointIterator():
-        yield Export(st.getPrimarySymbol(addr).getName()), AbsoluteVirtualAddress(addr.getOffset()) 
+        yield Export(st.getPrimarySymbol(addr).getName()), AbsoluteVirtualAddress(addr.getOffset())
 
 
 def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
@@ -116,13 +113,12 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
     """
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():
-
         for r in f.getSymbol().getReferences():
-            if (r.getReferenceType().isData()):
-                addr = r.getFromAddress().getOffset() # gets pointer to fake external addr
+            if r.getReferenceType().isData():
+                addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
 
-        fstr = f.toString().split('::')  # format: MODULE.dll::import / MODULE::Ordinal_*
-        if 'Ordinal_' in fstr[1]:
+        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
+        if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
         for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
@@ -140,13 +136,13 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
     for block in currentProgram.getMemory().getBlocks():
-        p_bytes = b''
+        p_bytes = b""
         addr = block.getStart()
-        while (block.isInitialized() and addr.getOffset() <= block.getEnd().getOffset()):
-            p_bytes = p_bytes + ((block.getByte(addr) & 0xFF).to_bytes(1, 'little'))
+        while block.isInitialized() and addr.getOffset() <= block.getEnd().getOffset():
+            p_bytes = p_bytes + ((block.getByte(addr) & 0xFF).to_bytes(1, "little"))
             try:
                 addr = addr.add(1)
-            except RuntimeError: # throws AddressOverflow error in Java
+            except RuntimeError:  # throws AddressOverflow error in Java
                 break
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
@@ -163,9 +159,9 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in currentProgram.getSymbolTable().getAllSymbols(True): 
+    for sym in currentProgram.getSymbolTable().getAllSymbols(True):
         # .isExternal() misses more than this config for the function symbols
-        if (sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal()):
+        if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
             addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
             yield FunctionName(name), addr
@@ -176,15 +172,14 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
                 # see: https://stackoverflow.com/a/2628384/87207
                 yield FunctionName(name[1:]), addr
 
- 
-def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
 
+def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
     ef = currentProgram.getExecutableFormat()
-    if 'PE' in ef:
+    if "PE" in ef:
         yield Format(FORMAT_PE), NO_ADDRESS
-    elif 'ELF' in ef:
+    elif "ELF" in ef:
         yield Format(FORMAT_ELF), NO_ADDRESS
-    elif 'Raw' in ef:
+    elif "Raw" in ef:
         # no file type to return when processing a binary file, but we want to continue processing
         return
     else:
@@ -218,4 +213,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

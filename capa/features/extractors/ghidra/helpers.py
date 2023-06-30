@@ -18,6 +18,3 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
     ea = findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)
     for e in ea:
         yield e
-        
-
-
