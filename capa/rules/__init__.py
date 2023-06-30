@@ -252,24 +252,28 @@ class InvalidRuleSet(ValueError):
 def ensure_feature_valid_for_scope(scope: Union[str, Flavor], feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
+    supported_features = set()
     if isinstance(scope, Flavor):
         if scope.static:
-            ensure_feature_valid_for_scope(scope.static, feature)
+            supported_features.update(SUPPORTED_FEATURES[scope.static])
         if scope.dynamic:
-            ensure_feature_valid_for_scope(scope.dynamic, feature)
-        return
+            supported_features.update(SUPPORTED_FEATURES[scope.dynamic])
+    elif isinstance(scope, str):
+        supported_features.update(SUPPORTED_FEATURES[scope])
+    else:
+        raise InvalidRule(f"{scope} is not a valid scope")
 
     if (
         isinstance(feature, capa.features.common.Characteristic)
         and isinstance(feature.value, str)
-        and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
+        and capa.features.common.Characteristic(feature.value) not in supported_features
     ):
         raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
-        types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
+        types_for_scope = filter(lambda t: isinstance(t, type), supported_features)
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
             raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
