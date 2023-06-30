@@ -180,7 +180,6 @@ jobs:
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/ghidraRun
         mkdir ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
         wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
@@ -190,9 +189,7 @@ jobs:
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: | 
-        pip install -e .[dev]
-        python scripts/cache-ruleset.py rules/ cache/
+      run: pip install -e .[dev] 
     - name: Run tests
       run: | # runs main.py for now...
         .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'Practical Malware Analysis Lab 01-01.dll_'
