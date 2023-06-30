@@ -1,6 +1,6 @@
 import logging
 import contextlib
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 
 import capa.features.extractors.ghidra.global_
 from capa.features.common import Feature

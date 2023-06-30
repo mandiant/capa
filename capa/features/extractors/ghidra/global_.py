@@ -3,11 +3,14 @@ import contextlib
 from io import BytesIO
 from typing import Tuple, Iterator
 
+import ghidra
+
 import capa.features.extractors.elf
 from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
+currentProgram: ghidra.program.database.ProgramDB
 
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:

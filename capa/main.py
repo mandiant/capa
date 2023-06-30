@@ -1323,6 +1323,7 @@ def ghidra_main():
     # import capa.render.default
     # import capa.features.extractors.ghidra.extractor
     import capa.features.extractors.ghidra.global_
+    from capa.features.common import Feature
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
