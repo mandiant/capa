@@ -10,6 +10,7 @@ import struct
 from typing import Tuple, Iterator
 
 import ghidra
+from ghidra.program.flatapi import FlatProgramAPI
 from ghidra.program.model.symbol import SourceType, SymbolType
 
 import capa.features.extractors.common
@@ -21,6 +22,7 @@ from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature,
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 currentProgram: ghidra.program.database.ProgramDB
+flatapi = FlatProgramAPI(currentProgram)
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
@@ -44,6 +46,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
     todo = []
     for mzx, pex, i in mz_xor:
         # find all segment offsets containing XOR'd "MZ" bytes
+        off: ghidra.program.model.address.GenericAddress
         for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(mzx):
             todo.append((off, mzx, pex, i))
 
@@ -59,7 +62,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
 
         e_lfanew_bytes = b""
         try:
-            e_lfanew_sbytes = getBytes(e_lfanew, 4)
+            e_lfanew_sbytes = flatapi.getBytes(e_lfanew, 4)
             for b in e_lfanew_sbytes:
                 b = (b & 0xFF).to_bytes(1, "little")
                 e_lfanew_bytes = e_lfanew_bytes + b
@@ -78,7 +81,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
 
         pe_bytes = b""
         try:
-            pe_off_bytes = getBytes(peoff, 2)
+            pe_off_bytes = flatapi.getBytes(peoff, 2)
             for b in pe_off_bytes:
                 b = (b & 0xFF).to_bytes(1, "little")
                 pe_bytes = pe_bytes + b

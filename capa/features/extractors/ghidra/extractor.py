@@ -2,10 +2,14 @@ import logging
 import contextlib
 from typing import List, Tuple, Iterator
 
+import ghidra
+
 import capa.features.extractors.ghidra.global_
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
+
+currentProgram: ghidra.program.database.ProgramDB
 
 
 class GhidraFeatureExtractor(FeatureExtractor):

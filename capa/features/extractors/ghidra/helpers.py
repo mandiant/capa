@@ -8,8 +8,10 @@
 from typing import Any, Dict, Tuple, Iterator, Optional
 
 import ghidra
+from ghidra.program.flatapi import FlatProgramAPI
 
 currentProgram: ghidra.program.database.ProgramDB
+flatapi = FlatProgramAPI(currentProgram)
 
 
 def find_byte_sequence(seq: bytes) -> Iterator[int]:
@@ -19,6 +21,6 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
         seq: bytes to search e.g. b"\x01\x03"
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
-    ea = findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)
+    ea = flatapi.findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)
     for e in ea:
         yield e
