@@ -180,7 +180,7 @@ jobs:
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        mkdir ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
         wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
         workdir=$(pwd)
