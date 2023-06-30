@@ -376,24 +376,46 @@ def test_subscope_rules():
                     """
                 )
             ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test subscopes for scope flavors
+                            scope: 
+                                static: function
+                                dynamic: process
+                        features:
+                            - and:
+                                - string: yo
+                                - instruction:
+                                    - mnemonic: shr
+                                    - number: 5
+                    """
+                )
+            ),
         ]
     )
     # the file rule scope will have two rules:
     #  - `test function subscope` and `test process subscope`
     assert len(rules.file_rules) == 2
 
-    # the function rule scope have one rule:
-    #  - the rule on which `test function subscope` depends
-    assert len(rules.function_rules) == 1
+    # the function rule scope have two rule:
+    # - the rule on which `test function subscope` depends, and
+    # the `test subscopes for scope flavors` rule
+    assert len(rules.function_rules) == 2
 
-    # the process rule scope has one rule:
-    # - the rule on which `test process subscope` and depends
-    # as well as `test thread scope`
-    assert len(rules.process_rules) == 2
+    # the process rule scope has three rules:
+    # - the rule on which `test process subscope` depends,
+    # `test thread scope` , and `test subscopes for scope flavors`
+    assert len(rules.process_rules) == 3
 
     # the thread rule scope has one rule:
     # - the rule on which `test thread subscope` depends
     assert len(rules.thread_rules) == 1
+
+    # the rule on which `test subscopes for scope flavors` depends
+    assert len(rules.instruction_rules) == 1
 
 
 def test_duplicate_rules():
@@ -494,6 +516,66 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                         mbc: Objective::Behavior::Method [Identifier]
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scope:
+                            static: basic block
+                            behavior: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scope:
+                            legacy: basic block
+                            dynamic: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scope:
+                            static: process
+                            dynamic: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        r = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scope:
+                            static: basic block
+                            dynamic: function
                     features:
                         - number: 1
                 """
