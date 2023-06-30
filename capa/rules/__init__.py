@@ -91,6 +91,40 @@ INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
 GLOBAL_SCOPE = "global"
 
 
+# these literals are used to check if the flavor
+# of a rule is correct.
+STATIC_SCOPES = (
+    FILE_SCOPE,
+    GLOBAL_SCOPE,
+    FUNCTION_SCOPE,
+    BASIC_BLOCK_SCOPE,
+    INSTRUCTION_SCOPE,
+)
+DYNAMIC_SCOPES = (
+    FILE_SCOPE,
+    GLOBAL_SCOPE,
+    PROCESS_SCOPE,
+    THREAD_SCOPE,
+)
+
+
+class Flavor:
+    def __init__(self, static: Union[str, bool], dynamic: Union[str, bool], definition=""):
+        self.static = static if static in STATIC_SCOPES else None
+        self.dynamic = dynamic if dynamic in DYNAMIC_SCOPES else None
+        self.definition = definition
+
+        if static != self.static:
+            raise InvalidRule(f"'{static}' is not a valid static scope")
+        if dynamic != self.dynamic:
+            raise InvalidRule(f"'{dynamic}' is not a valid dynamic scope")
+        if (not self.static) and (not self.dynamic):
+            raise InvalidRule("rule must have at least one scope specified")
+
+    def __eq__(self, scope: Scope) -> bool:
+        return (scope == self.static) or (scope == self.dynamic)
+
+
 SUPPORTED_FEATURES: Dict[str, Set] = {
     GLOBAL_SCOPE: {
         # these will be added to other scopes, see below.
@@ -215,9 +249,16 @@ class InvalidRuleSet(ValueError):
         return str(self)
 
 
-def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement]):
+def ensure_feature_valid_for_scope(scope: Union[str, Flavor], feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
+    if isinstance(scope, Flavor):
+        if scope.static:
+            ensure_feature_valid_for_scope(scope.static, feature)
+        if scope.dynamic:
+            ensure_feature_valid_for_scope(scope.dynamic, feature)
+        return
+
     if (
         isinstance(feature, capa.features.common.Characteristic)
         and isinstance(feature.value, str)
@@ -438,7 +479,7 @@ def pop_statement_description_entry(d):
     return description["description"]
 
 
-def build_statements(d, scope: str):
+def build_statements(d, scope: Union[str, Flavor]):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
 
@@ -647,8 +688,29 @@ def second(s: List[Any]) -> Any:
     return s[1]
 
 
+def parse_flavor(scope: Union[str, Dict[str, str]]) -> Flavor:
+    if isinstance(scope, str):
+        if scope in STATIC_SCOPES:
+            return Flavor(scope, None, definition=scope)
+        elif scope in DYNAMIC_SCOPES:
+            return Flavor(None, scope, definition=scope)
+        else:
+            raise InvalidRule(f"{scope} is not a valid scope")
+    elif isinstance(scope, dict):
+        if "static" not in scope:
+            scope.update({"static": None})
+        if "dynamic" not in scope:
+            scope.update({"dynamic": None})
+        if len(scope) != 2:
+            raise InvalidRule("scope flavors can be either static or dynamic")
+        else:
+            return Flavor(scope["static"], scope["dynamic"], definition=scope)
+    else:
+        raise InvalidRule(f"scope field is neither a scope's name or a flavor list")
+
+
 class Rule:
-    def __init__(self, name: str, scope: str, statement: Statement, meta, definition=""):
+    def __init__(self, name: str, scope: Flavor, statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
         self.scope = scope
@@ -788,7 +850,10 @@ class Rule:
         name = meta["name"]
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
+        # each rule has two scopes, a static-flavor scope, and a
+        # dynamic-flavor one. which one is used depends on the analysis type.
         scope = meta.get("scope", FUNCTION_SCOPE)
+        scope = parse_flavor(scope)
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -798,9 +863,6 @@ class Rule:
 
         if isinstance(statements[0], ceng.Subscope):
             raise InvalidRule("top level statement may not be a subscope")
-
-        if scope not in SUPPORTED_FEATURES.keys():
-            raise InvalidRule("{:s} is not a supported scope".format(scope))
 
         meta = d["rule"]["meta"]
         if not isinstance(meta.get("att&ck", []), list):
@@ -910,7 +972,7 @@ class Rule:
 
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scope"] = self.scope
+        meta["scope"] = self.scope.definition
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -1399,22 +1461,22 @@ class RuleSet:
         except that it may be more performant.
         """
         easy_rules_by_feature = {}
-        if scope is Scope.FILE:
+        if scope == Scope.FILE:
             easy_rules_by_feature = self._easy_file_rules_by_feature
             hard_rule_names = self._hard_file_rules
-        elif scope is Scope.PROCESS:
+        elif scope == Scope.PROCESS:
             easy_rules_by_feature = self._easy_process_rules_by_feature
             hard_rule_names = self._hard_process_rules
-        elif scope is Scope.THREAD:
+        elif scope == Scope.THREAD:
             easy_rules_by_feature = self._easy_thread_rules_by_feature
             hard_rule_names = self._hard_thread_rules
-        elif scope is Scope.FUNCTION:
+        elif scope == Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules
-        elif scope is Scope.BASIC_BLOCK:
+        elif scope == Scope.BASIC_BLOCK:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
-        elif scope is Scope.INSTRUCTION:
+        elif scope == Scope.INSTRUCTION:
             easy_rules_by_feature = self._easy_instruction_rules_by_feature
             hard_rule_names = self._hard_instruction_rules
         else:
