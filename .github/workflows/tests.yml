@@ -195,6 +195,6 @@ jobs:
         python scripts/cache-ruleset.py rules/ cache/
     - name: Run tests
       run: | # runs main.py for now...
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import /tests/data/'Practical Malware Analysis Lab 01-01.dll_'
+        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'Practical Malware Analysis Lab 01-01.dll_'
         .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -process 'Practical Malware Analysis Lab 01-01.dll_' -ScriptPath ./capa -PostScript main.py
  
