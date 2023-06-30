@@ -165,7 +165,7 @@ jobs:
         distribution: 'temurin'
         java-version: ${{ matrix.java-version }}
     - name: Set up Gradle ${{ matrix.gradle-version }} 
-      uses: gradle/grade-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
       with:
         gradle-version: ${{ matrix.gradle-version }}
     - name: Install Jep ${{ matrix.jep-version }} 
