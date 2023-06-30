@@ -116,11 +116,16 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
     """
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():
-        addr = f.getEntryPoint().getOffset()
-        fstr = f.toString().split('::')  # format: MODULE::import / MODULE::Ordinal_*
+
+        for r in f.getSymbol().getReferences():
+            if (r.getReferenceType().isData()):
+                addr = r.getFromAddress().getOffset() # gets pointer to fake external addr
+
+        fstr = f.toString().split('::')  # format: MODULE.dll::import / MODULE::Ordinal_*
         if 'Ordinal_' in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
-        for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
+
+        for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
             yield Import(name), AbsoluteVirtualAddress(addr)
 
 
@@ -158,9 +163,10 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
     extract the names of statically-linked library functions.
     """
 
-    for sym in currentProgram.getSymbolTable().getAllSymbols(False): # static only
-        if (sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.IMPORTED):
-            name = sym.getName()
+    for sym in currentProgram.getSymbolTable().getAllSymbols(True): 
+        # .isExternal() misses more than this config for the function symbols
+        if (sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal()):
+            name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
             addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
             yield FunctionName(name), addr
             if name.startswith("_"):
@@ -170,7 +176,7 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
                 # see: https://stackoverflow.com/a/2628384/87207
                 yield FunctionName(name[1:]), addr
 
-    
+ 
 def extract_file_format() -> Iterator[Tuple[Feature, Address]]:
 
     ef = currentProgram.getExecutableFormat()
@@ -193,11 +199,11 @@ def extract_features() -> Iterator[Tuple[Feature, Address]]:
 
 
 FILE_HANDLERS = (
+    extract_file_embedded_pe,
     extract_file_export_names,
     extract_file_import_names,
-    extract_file_strings,
     extract_file_section_names,
-    extract_file_embedded_pe,
+    extract_file_strings,
     extract_file_function_names,
     extract_file_format,
 )
