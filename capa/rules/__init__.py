@@ -109,9 +109,9 @@ DYNAMIC_SCOPES = (
 
 
 class Flavor:
-    def __init__(self, static: Union[str, bool], dynamic: Union[str, bool], definition=""):
-        self.static = static if static in STATIC_SCOPES else None
-        self.dynamic = dynamic if dynamic in DYNAMIC_SCOPES else None
+    def __init__(self, static: str, dynamic: str, definition=""):
+        self.static = static if static in STATIC_SCOPES else ""
+        self.dynamic = dynamic if dynamic in DYNAMIC_SCOPES else ""
         self.definition = definition
 
         if static != self.static:
@@ -121,7 +121,9 @@ class Flavor:
         if (not self.static) and (not self.dynamic):
             raise InvalidRule("rule must have at least one scope specified")
 
-    def __eq__(self, scope: Scope) -> bool:
+    def __eq__(self, scope) -> bool:
+        # Flavors aren't supposed to be compared directly.
+        assert isinstance(scope, Scope)
         return (scope == self.static) or (scope == self.dynamic)
 
 
@@ -695,16 +697,16 @@ def second(s: List[Any]) -> Any:
 def parse_flavor(scope: Union[str, Dict[str, str]]) -> Flavor:
     if isinstance(scope, str):
         if scope in STATIC_SCOPES:
-            return Flavor(scope, None, definition=scope)
+            return Flavor(scope, "", definition=scope)
         elif scope in DYNAMIC_SCOPES:
-            return Flavor(None, scope, definition=scope)
+            return Flavor("", scope, definition=scope)
         else:
             raise InvalidRule(f"{scope} is not a valid scope")
     elif isinstance(scope, dict):
         if "static" not in scope:
-            scope.update({"static": None})
+            scope.update({"static": ""})
         if "dynamic" not in scope:
-            scope.update({"dynamic": None})
+            scope.update({"dynamic": ""})
         if len(scope) != 2:
             raise InvalidRule("scope flavors can be either static or dynamic")
         else:
@@ -714,7 +716,7 @@ def parse_flavor(scope: Union[str, Dict[str, str]]) -> Flavor:
 
 
 class Rule:
-    def __init__(self, name: str, scope: Flavor, statement: Statement, meta, definition=""):
+    def __init__(self, name: str, scope: Union[Flavor, str], statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
         self.scope = scope
@@ -976,7 +978,7 @@ class Rule:
 
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scope"] = self.scope.definition
+        meta["scope"] = self.scope.definition if isinstance(self.scope, Flavor) else self.scope
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
