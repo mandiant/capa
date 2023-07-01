@@ -123,7 +123,7 @@ class Flavor:
 
     def __eq__(self, scope) -> bool:
         # Flavors aren't supposed to be compared directly.
-        assert isinstance(scope, Scope)
+        assert isinstance(scope, Scope) or isinstance(scope, str)
         return (scope == self.static) or (scope == self.dynamic)
 
 
