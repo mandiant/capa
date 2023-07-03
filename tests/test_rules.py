@@ -387,10 +387,12 @@ def test_subscope_rules():
                                 dynamic: process
                         features:
                             - and:
-                                - string: yo
-                                - instruction:
-                                    - mnemonic: shr
-                                    - number: 5
+                                - string: /etc/shadow
+                                - or:
+                                    - api: open
+                                    - instruction:
+                                        - mnemonic: syscall
+                                        - number: 2 = open syscall number
                     """
                 )
             ),
