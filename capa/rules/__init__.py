@@ -858,8 +858,8 @@ class Rule:
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
-        scope = meta.get("scope", FUNCTION_SCOPE)
-        scope = parse_flavor(scope)
+        scopes = meta.get("scopes", FUNCTION_SCOPE)
+        scopes = parse_scopes(scopes)
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -978,7 +978,10 @@ class Rule:
 
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scope"] = self.scope.definition if isinstance(self.scope, Flavor) else self.scope
+        meta["scopes"] = {
+            "static": self.scopes.static,
+            "dynamic": self.scopes.dynamic,
+        }
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
