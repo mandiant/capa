@@ -108,7 +108,7 @@ DYNAMIC_SCOPES = (
 )
 
 
-class Flavor:
+class Scopes:
     def __init__(self, static: str, dynamic: str, definition=""):
         self.static = static if static in STATIC_SCOPES else ""
         self.dynamic = dynamic if dynamic in DYNAMIC_SCOPES else ""
@@ -251,11 +251,11 @@ class InvalidRuleSet(ValueError):
         return str(self)
 
 
-def ensure_feature_valid_for_scope(scope: Union[str, Flavor], feature: Union[Feature, Statement]):
+def ensure_feature_valid_for_scope(scope: Union[str, Scopes], feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
     supported_features = set()
-    if isinstance(scope, Flavor):
+    if isinstance(scope, Scopes):
         if scope.static:
             supported_features.update(SUPPORTED_FEATURES[scope.static])
         if scope.dynamic:
@@ -485,7 +485,7 @@ def pop_statement_description_entry(d):
     return description["description"]
 
 
-def build_statements(d, scope: Union[str, Flavor]):
+def build_statements(d, scope: Union[str, Scopes]):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
 
@@ -694,12 +694,12 @@ def second(s: List[Any]) -> Any:
     return s[1]
 
 
-def parse_flavor(scope: Union[str, Dict[str, str]]) -> Flavor:
+def parse_scopes(scope: Union[str, Dict[str, str]]) -> Scopes:
     if isinstance(scope, str):
         if scope in STATIC_SCOPES:
-            return Flavor(scope, "", definition=scope)
+            return Scopes(scope, "", definition=scope)
         elif scope in DYNAMIC_SCOPES:
-            return Flavor("", scope, definition=scope)
+            return Scopes("", scope, definition=scope)
         else:
             raise InvalidRule(f"{scope} is not a valid scope")
     elif isinstance(scope, dict):
@@ -710,13 +710,13 @@ def parse_flavor(scope: Union[str, Dict[str, str]]) -> Flavor:
         if len(scope) != 2:
             raise InvalidRule("scope flavors can be either static or dynamic")
         else:
-            return Flavor(scope["static"], scope["dynamic"], definition=scope)
+            return Scopes(scope["static"], scope["dynamic"], definition=scope)
     else:
         raise InvalidRule(f"scope field is neither a scope's name or a flavor list")
 
 
 class Rule:
-    def __init__(self, name: str, scope: Union[Flavor, str], statement: Statement, meta, definition=""):
+    def __init__(self, name: str, scope: Union[Scopes, str], statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
         self.scope = scope
@@ -876,7 +876,7 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scope, build_statements(statements[0], scope), meta, definition)
+        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
 
     @staticmethod
     @lru_cache()
