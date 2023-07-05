@@ -1072,8 +1072,8 @@ def handle_common_args(args):
 
 
 def main(argv=None):
-    if sys.version_info < (3, 7):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.7+")
+    if sys.version_info < (3, 8):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
     if argv is None:
         argv = sys.argv[1:]
