@@ -94,8 +94,11 @@ def main():
 
         name = rule["meta"]["name"]
         ns = rule["meta"].get("namespace", "")
-        for va in rule["matches"].keys():
-            va = int(va)
+        for address, match in rule["matches"]:
+            if address["type"] != "absolute":
+                continue
+
+            va = address["value"]
             rows.append((ns, name, va))
 
     # order by (namespace, name) so that like things show up together
