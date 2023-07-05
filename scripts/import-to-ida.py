@@ -28,6 +28,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import binascii
 import json
 import logging
 
@@ -77,7 +78,7 @@ def main():
     #
     # see: https://github.com/idapython/bin/issues/11
     a = doc["meta"]["sample"]["md5"].lower()
-    b = ida_nalt.retrieve_input_file_md5().lower()
+    b = binascii.hexlify(ida_nalt.retrieve_input_file_md5()).decode("ascii").lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2
