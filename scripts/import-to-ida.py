@@ -28,8 +28,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import binascii
 import logging
+import binascii
 
 import ida_nalt
 import ida_funcs
@@ -76,7 +76,7 @@ def main():
     # found: b'84882C9D43E23D63B82004FAE74EBB6\x00'
     #
     # see: https://github.com/idapython/bin/issues/11
-    a = meta["sample"]["md5"].lower()
+    a = meta.sample.md5.lower()
     b = binascii.hexlify(ida_nalt.retrieve_input_file_md5()).decode("ascii").lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
