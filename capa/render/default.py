@@ -190,7 +190,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid")
+            tabulate.tabulate(
+                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+            )
         )
         ostream.write("\n")
 
