@@ -115,16 +115,14 @@ class Scopes:
     dynamic: str
 
     def __eq__(self, scope) -> bool:
-        # Flavors aren't supposed to be compared directly.
         assert isinstance(scope, str) or isinstance(scope, Scope)
-        return (scope == self.static) and (scope == self.dynamic)
+        return (scope == self.static) or (scope == self.dynamic)
 
     @classmethod
     def from_str(self, scope: str) -> "Scopes":
         assert isinstance(scope, str)
         if scope not in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
             InvalidRule(f"{scope} is not a valid scope")
-
         if scope in STATIC_SCOPES:
             return Scopes(scope, "")
         else:
@@ -275,14 +273,14 @@ def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement
         and isinstance(feature.value, str)
         and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        raise InvalidRule(f"feature is not valid for the {scope} scope")
+        raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            raise InvalidRule(f"feature is not valid for the {scope} scope")
+            raise InvalidRule(f"feature {feature} not supported for scope {scope}")
 
 
 def parse_int(s: str) -> int:
@@ -703,7 +701,7 @@ class Rule:
     def __init__(self, name: str, scopes: Scopes, statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
-        self.scope = scopes
+        self.scopes = scopes
         self.statement = statement
         self.meta = meta
         self.definition = definition
@@ -712,7 +710,7 @@ class Rule:
         return f"Rule(name={self.name})"
 
     def __repr__(self):
-        return f"Rule(scope={self.scope}, name={self.name})"
+        return f"Rule(scope={self.scopes}, name={self.name})"
 
     def get_dependencies(self, namespaces):
         """
@@ -776,7 +774,8 @@ class Rule:
                     subscope.child,
                     {
                         "name": name,
-                        "scopes": subscope.scope,
+                        "scopes": Scopes.from_str(subscope.scope),
+                        ""
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
                         # so mark it as such.
@@ -842,7 +841,10 @@ class Rule:
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
-        scopes = Scopes.from_dict(meta.get("scopes"))
+        if "scopes" in meta:
+            scopes = Scopes.from_dict(meta.get("scopes"))
+        else:
+            scopes = Scopes.from_str(meta.get("scope", FUNCTION_SCOPE))
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -859,13 +861,12 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        # if we're able to construct a statement for both the static and dynamic
-        # scopes (with no raised InvalidRule exceptions), then the rule is valid
-        static_statement = build_statements(statements[0], scopes.static)
-        dynamic_statement = build_statements(statements[0], scopes.dynamic)
-        assert static_statement == dynamic_statement
-
-        return cls(name, scopes, static_statement, meta, definition)
+        # if the two statements are not the same, an InvalidRule() exception will be thrown
+        if scopes.static:
+            statement = build_statements(statements[0], scopes.static)
+        if scopes.dynamic:
+            statement = build_statements(statements[0], scopes.dynamic)
+        return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
     @lru_cache()
@@ -967,6 +968,8 @@ class Rule:
 
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
+        if "scope" not in meta:
+            meta["scopes"] = str(self.scopes)
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -1047,7 +1050,7 @@ def get_rules_with_scope(rules, scope) -> List[Rule]:
     from the given collection of rules, select those with the given scope.
     `scope` is one of the capa.rules.*_SCOPE constants.
     """
-    return list(rule for rule in rules if rule.scope == scope)
+    return list(rule for rule in rules if rule.scopes == scope)
 
 
 def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
@@ -1265,6 +1268,7 @@ class RuleSet:
             walk through a rule's logic tree, indexing the easy and hard rules,
             and the features referenced by easy rules.
             """
+            print(f"nodeeeeeeeeeee == {node}")
             if isinstance(
                 node,
                 (
@@ -1334,6 +1338,7 @@ class RuleSet:
             elif isinstance(node, (ceng.Range)):
                 rec(rule_name, node.child)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
+                print(node)
                 for child in node.children:
                     rec(rule_name, child)
             elif isinstance(node, ceng.Statement):

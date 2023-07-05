@@ -737,7 +737,7 @@ def get_rules(
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
     ruleset = capa.rules.RuleSet(rules)
 

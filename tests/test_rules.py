@@ -376,26 +376,6 @@ def test_subscope_rules():
                     """
                 )
             ),
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: test subscopes for scope flavors
-                            scope: 
-                                static: function
-                                dynamic: process
-                        features:
-                            - and:
-                                - string: /etc/shadow
-                                - or:
-                                    - api: open
-                                    - instruction:
-                                        - mnemonic: syscall
-                                        - number: 2 = open syscall number
-                    """
-                )
-            ),
         ]
     )
     # the file rule scope will have two rules:
@@ -403,21 +383,16 @@ def test_subscope_rules():
     assert len(rules.file_rules) == 2
 
     # the function rule scope have two rule:
-    # - the rule on which `test function subscope` depends, and
-    # the `test subscopes for scope flavors` rule
-    assert len(rules.function_rules) == 2
+    # - the rule on which `test function subscope` depends
+    assert len(rules.function_rules) == 1
 
     # the process rule scope has three rules:
     # - the rule on which `test process subscope` depends,
-    # `test thread scope` , and `test subscopes for scope flavors`
-    assert len(rules.process_rules) == 3
+    assert len(rules.process_rules) == 2
 
     # the thread rule scope has one rule:
     # - the rule on which `test thread subscope` depends
     assert len(rules.thread_rules) == 1
-
-    # the rule on which `test subscopes for scope flavors` depends
-    assert len(rules.instruction_rules) == 1
 
 
 def test_duplicate_rules():
@@ -530,7 +505,7 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
-                        scope:
+                        scopes:
                             static: basic block
                             behavior: process
                     features:
@@ -545,7 +520,7 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
-                        scope:
+                        scopes:
                             legacy: basic block
                             dynamic: process
                     features:
@@ -560,7 +535,7 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
-                        scope:
+                        scopes:
                             static: process
                             dynamic: process
                     features:
@@ -575,7 +550,7 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
-                        scope:
+                        scopes:
                             static: basic block
                             dynamic: function
                     features:
