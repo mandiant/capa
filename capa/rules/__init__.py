@@ -25,6 +25,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator
+from dataclasses import dataclass
 
 import yaml
 import pydantic
@@ -108,23 +109,34 @@ DYNAMIC_SCOPES = (
 )
 
 
+@dataclass
 class Scopes:
-    def __init__(self, static: str, dynamic: str, definition=""):
-        self.static = static if static in STATIC_SCOPES else ""
-        self.dynamic = dynamic if dynamic in DYNAMIC_SCOPES else ""
-        self.definition = definition
-
-        if static != self.static:
-            raise InvalidRule(f"'{static}' is not a valid static scope")
-        if dynamic != self.dynamic:
-            raise InvalidRule(f"'{dynamic}' is not a valid dynamic scope")
-        if (not self.static) and (not self.dynamic):
-            raise InvalidRule("rule must have at least one scope specified")
+    static: str
+    dynamic: str
 
     def __eq__(self, scope) -> bool:
         # Flavors aren't supposed to be compared directly.
-        assert isinstance(scope, Scope) or isinstance(scope, str)
-        return (scope == self.static) or (scope == self.dynamic)
+        assert isinstance(scope, str) or isinstance(scope, Scope)
+        return (scope == self.static) and (scope == self.dynamic)
+
+    @classmethod
+    def from_str(self, scope: str) -> "Scopes":
+        assert isinstance(scope, str)
+        if scope in STATIC_SCOPES:
+            return Scopes(scope, "")
+        elif scope in DYNAMIC_SCOPES:
+            return Scopes("", scope)
+
+    @classmethod
+    def from_dict(self, scopes: dict) -> "Scopes":
+        assert isinstance(scopes, dict)
+        if sorted(scopes) != ["dynamic", "static"]:
+            raise InvalidRule("scope flavors can be either static or dynamic")
+        if scopes["static"] not in STATIC_SCOPES:
+            raise InvalidRule(f"{scopes['static']} is not a valid static scope")
+        if scopes["dynamic"] not in DYNAMIC_SCOPES:
+            raise InvalidRule(f"{scopes['dynamic']} is not a valid dynamicscope")
+        return Scopes(scopes["static"], scopes["dynamic"])
 
 
 SUPPORTED_FEATURES: Dict[str, Set] = {
@@ -251,33 +263,35 @@ class InvalidRuleSet(ValueError):
         return str(self)
 
 
-def ensure_feature_valid_for_scope(scope: Union[str, Scopes], feature: Union[Feature, Statement]):
+def ensure_feature_valid_for_scope(scope: Scope, feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
-    supported_features = set()
-    if isinstance(scope, Scopes):
-        if scope.static:
-            supported_features.update(SUPPORTED_FEATURES[scope.static])
-        if scope.dynamic:
-            supported_features.update(SUPPORTED_FEATURES[scope.dynamic])
-    elif isinstance(scope, str):
-        supported_features.update(SUPPORTED_FEATURES[scope])
-    else:
-        raise InvalidRule(f"{scope} is not a valid scope")
-
     if (
         isinstance(feature, capa.features.common.Characteristic)
         and isinstance(feature.value, str)
-        and capa.features.common.Characteristic(feature.value) not in supported_features
+        and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        raise InvalidRule(f"feature {feature} not supported for scope {scope}")
+        return False
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
-        types_for_scope = filter(lambda t: isinstance(t, type), supported_features)
+        types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            raise InvalidRule(f"feature {feature} not supported for scope {scope}")
+            return False
+
+
+def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Statement], valid_func=all):
+    valid_for_static = ensure_feature_valid_for_scope(scopes.static, feature)
+    valid_for_dynamic = ensure_feature_valid_for_scope(scopes.dynamic, feature)
+
+    # by default, this function checks if the feature is valid
+    # for both the static and dynamic scopes
+    if not valid_func([valid_for_static, valid_for_dynamic]):
+        if not valid_for_static:
+            raise InvalidRule(f"feature is not valid for the {scopes.static} scope")
+        if not valid_for_dynamic:
+            raise InvalidRule(f"feature is not valid for the {scopes.dynamic} scope")
 
 
 def parse_int(s: str) -> int:
@@ -602,7 +616,7 @@ def build_statements(d, scope: Union[str, Scopes]):
                 feature = Feature(arg)
         else:
             feature = Feature()
-        ensure_feature_valid_for_scope(scope, feature)
+        ensure_feature_valid_for_scopes(scope, feature)
 
         count = d[key]
         if isinstance(count, int):
@@ -636,7 +650,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.OperandNumber(index, value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scope(scope, feature)
+        ensure_feature_valid_for_scopes(scope, feature)
         return feature
 
     elif key.startswith("operand[") and key.endswith("].offset"):
@@ -652,7 +666,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.OperandOffset(index, value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scope(scope, feature)
+        ensure_feature_valid_for_scopes(scope, feature)
         return feature
 
     elif (
@@ -672,7 +686,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scope(scope, feature)
+        ensure_feature_valid_for_scopes(scope, feature)
         return feature
 
     else:
@@ -682,7 +696,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = Feature(value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scope(scope, feature)
+        ensure_feature_valid_for_scopes(scope, feature)
         return feature
 
 
@@ -694,32 +708,11 @@ def second(s: List[Any]) -> Any:
     return s[1]
 
 
-def parse_scopes(scope: Union[str, Dict[str, str]]) -> Scopes:
-    if isinstance(scope, str):
-        if scope in STATIC_SCOPES:
-            return Scopes(scope, "", definition=scope)
-        elif scope in DYNAMIC_SCOPES:
-            return Scopes("", scope, definition=scope)
-        else:
-            raise InvalidRule(f"{scope} is not a valid scope")
-    elif isinstance(scope, dict):
-        if "static" not in scope:
-            scope.update({"static": ""})
-        if "dynamic" not in scope:
-            scope.update({"dynamic": ""})
-        if len(scope) != 2:
-            raise InvalidRule("scope flavors can be either static or dynamic")
-        else:
-            return Scopes(scope["static"], scope["dynamic"], definition=scope)
-    else:
-        raise InvalidRule(f"scope field is neither a scope's name or a flavor list")
-
-
 class Rule:
-    def __init__(self, name: str, scope: Union[Scopes, str], statement: Statement, meta, definition=""):
+    def __init__(self, name: str, scopes: Scopes, statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
-        self.scope = scope
+        self.scope = scopes
         self.statement = statement
         self.meta = meta
         self.definition = definition
@@ -788,11 +781,11 @@ class Rule:
                 name = self.name + "/" + uuid.uuid4().hex
                 new_rule = Rule(
                     name,
-                    subscope.scope,
+                    Scopes.from_str(subscope.scope),
                     subscope.child,
                     {
                         "name": name,
-                        "scope": subscope.scope,
+                        "scopes": subscope.scope,
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
                         # so mark it as such.
@@ -858,8 +851,7 @@ class Rule:
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
-        scopes = meta.get("scopes", FUNCTION_SCOPE)
-        scopes = parse_scopes(scopes)
+        scopes = Scopes.from_dict(meta.get("scopes"))
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -978,10 +970,6 @@ class Rule:
 
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scopes"] = {
-            "static": self.scopes.static,
-            "dynamic": self.scopes.dynamic,
-        }
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
