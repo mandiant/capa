@@ -1268,7 +1268,6 @@ class RuleSet:
             walk through a rule's logic tree, indexing the easy and hard rules,
             and the features referenced by easy rules.
             """
-            print(f"nodeeeeeeeeeee == {node}")
             if isinstance(
                 node,
                 (
