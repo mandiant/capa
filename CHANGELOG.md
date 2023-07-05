@@ -9,7 +9,7 @@
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
-### New Rules (11)
+### New Rules (20)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -22,6 +22,14 @@
 - host-interaction/hardware/enumerate-devices-by-category @mr-tz
 - host-interaction/service/continue-service @mr-tz
 - host-interaction/service/pause-service @mr-tz
+- persistence/exchange/act-as-exchange-transport-agent jakub.jozwiak@mandiant.com
+- host-interaction/file-system/create-virtual-file-system-in-dotnet jakub.jozwiak@mandiant.com
+- compiler/cx_freeze/compiled-with-cx_freeze @mr-tz jakub.jozwiak@mandiant.com
+- communication/socket/create-vmci-socket jakub.jozwiak@mandiant.com
+- persistence/office/act-as-excel-xll-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-office-com-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-word-wll-add-in jakub.jozwiak@mandiant.com
+- anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
@@ -41,6 +49,7 @@
 ### capa explorer IDA Pro plugin
 
 ### Development
+- update ATT&CK/MBC data for linting #1568 @mr-tz
 
 ### Raw diffs
 - [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
