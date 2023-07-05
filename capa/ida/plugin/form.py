@@ -1193,7 +1193,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         is_match: bool = False
-        if self.rulegen_current_function is not None and rule.scope in (
+        if self.rulegen_current_function is not None and rule.scopes in (
             capa.rules.Scope.FUNCTION,
             capa.rules.Scope.BASIC_BLOCK,
             capa.rules.Scope.INSTRUCTION,
@@ -1206,13 +1206,13 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.set_rulegen_status(f"Failed to create function rule matches from rule set ({e})")
                 return
 
-            if rule.scope == capa.rules.Scope.FUNCTION and rule.name in func_matches.keys():
+            if rule.scopes == capa.rules.Scope.FUNCTION and rule.name in func_matches.keys():
                 is_match = True
-            elif rule.scope == capa.rules.Scope.BASIC_BLOCK and rule.name in bb_matches.keys():
+            elif rule.scopes == capa.rules.Scope.BASIC_BLOCK and rule.name in bb_matches.keys():
                 is_match = True
-            elif rule.scope == capa.rules.Scope.INSTRUCTION and rule.name in insn_matches.keys():
+            elif rule.scopes == capa.rules.Scope.INSTRUCTION and rule.name in insn_matches.keys():
                 is_match = True
-        elif rule.scope == capa.rules.Scope.FILE:
+        elif rule.scopes == capa.rules.Scope.FILE:
             try:
                 _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
             except Exception as e:
