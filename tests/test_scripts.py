@@ -10,27 +10,28 @@ import os
 import sys
 import textwrap
 import subprocess
+from pathlib import Path
 
 import pytest
 from fixtures import *
 
-CD = os.path.dirname(__file__)
+CD = Path(__file__).resolve().parent
 
 
 def get_script_path(s):
-    return os.path.join(CD, "..", "scripts", s)
+    return CD / ".." / "scripts" / s
 
 
 def get_file_path():
-    return os.path.join(CD, "data", "9324d1a8ae37a36ae560c37448c9705a.exe_")
+    return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
 
 
 def get_rules_path():
-    return os.path.join(CD, "..", "rules")
+    return CD / ".." / "rules"
 
 
 def get_rule_path():
-    return os.path.join(get_rules_path(), "lib", "allocate-memory.yml")
+    return get_rules_path() / "lib" / "allocate-memory.yml"
 
 
 @pytest.mark.parametrize(
@@ -52,13 +53,17 @@ def test_scripts(script, args):
     assert p.returncode == 0
 
 
-def test_bulk_process(tmpdir):
+def test_bulk_process(tmp_path):
     # create test directory to recursively analyze
-    t = tmpdir.mkdir("test")
-    with open(os.path.join(CD, "data", "ping_täst.exe_"), "rb") as f:
-        t.join("test.exe_").write_binary(f.read())
+    t = tmp_path / "test"
+    t.mkdir()
 
-    p = run_program(get_script_path("bulk-process.py"), [t.dirname])
+    source_file = Path(__file__).resolve().parent / "data" / "ping_täst.exe_"
+    dest_file = t / "test.exe_"
+
+    dest_file.write_bytes(source_file.read_bytes())
+
+    p = run_program(get_script_path("bulk-process.py"), [t.parent])
     assert p.returncode == 0
 
 
@@ -68,19 +73,18 @@ def run_program(script_path, args):
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
-def test_proto_conversion(tmpdir):
-    t = tmpdir.mkdir("proto-test")
+def test_proto_conversion(tmp_path):
+    t = tmp_path / "proto-test"
+    t.mkdir()
+    json_file = Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
 
-    json = os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json")
-
-    p = run_program(get_script_path("proto-from-results.py"), [json])
+    p = run_program(get_script_path("proto-from-results.py"), [json_file])
     assert p.returncode == 0
 
-    pb = os.path.join(t, "pma.pb")
-    with open(pb, "wb") as f:
-        f.write(p.stdout)
+    pb_file = t / "pma.pb"
+    pb_file.write_bytes(p.stdout)
 
-    p = run_program(get_script_path("proto-to-results.py"), [pb])
+    p = run_program(get_script_path("proto-to-results.py"), [pb_file])
     assert p.returncode == 0
 
     assert p.stdout.startswith(b'{\n  "meta": ') or p.stdout.startswith(b'{\r\n  "meta": ')

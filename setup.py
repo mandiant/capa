@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
+from pathlib import Path
 
 import setuptools
 
@@ -34,14 +35,11 @@ requirements = [
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
 # and: http://stackoverflow.com/a/2073599/87207
-with open(os.path.join("capa", "version.py"), "r") as f:
-    exec(f.read())
+exec(Path("capa/version.py").read_text())
 
 
 # via: https://packaging.python.org/guides/making-a-pypi-friendly-readme/
-this_directory = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(this_directory, "README.md"), "r") as f:
-    long_description = f.read()
+long_description = (Path(__file__).resolve().parent / "README.md").read_text()
 
 
 setuptools.setup(

@@ -11,6 +11,7 @@ import logging
 import itertools
 import collections
 from typing import Any, List, Optional
+from pathlib import Path
 
 import idaapi
 import ida_kernwin
@@ -629,7 +630,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not self.ensure_capa_settings_rule_path():
             return False
 
-        rule_path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+        rule_path: Path = Path(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
         try:
 
             def on_load_rule(_, i, total):
@@ -769,7 +770,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("extracting features")
 
                 try:
-                    meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
+                    meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
                     capabilities, counts = capa.main.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )

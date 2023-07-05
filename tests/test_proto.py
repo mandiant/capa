@@ -144,7 +144,7 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert meta.analysis.arch == dst.analysis.arch
     assert meta.analysis.os == dst.analysis.os
     assert meta.analysis.extractor == dst.analysis.extractor
-    assert list(meta.analysis.rules) == dst.analysis.rules
+    assert list(str(r) for r in meta.analysis.rules) == dst.analysis.rules
     assert capa.render.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
 
     assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)

@@ -10,6 +10,7 @@ import inspect
 import logging
 import contextlib
 from typing import NoReturn
+from pathlib import Path
 
 import tqdm
 
@@ -31,8 +32,8 @@ def hex(n: int) -> str:
         return f"0x{(n):X}"
 
 
-def get_file_taste(sample_path: str) -> bytes:
-    if not os.path.exists(sample_path):
+def get_file_taste(sample_path: Path) -> bytes:
+    if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
     with open(sample_path, "rb") as f:
         taste = f.read(8)

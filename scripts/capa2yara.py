@@ -37,6 +37,7 @@ import logging
 import argparse
 import datetime
 import itertools
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -711,7 +712,7 @@ def main(argv=None):
     logging.getLogger("capa2yara").setLevel(level)
 
     try:
-        rules = capa.main.get_rules([args.rules])
+        rules = capa.main.get_rules([Path(args.rules)])
         namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
         logger.info("successfully loaded %s rules (including subscope rules which will be ignored)", len(rules))
         if args.tag:

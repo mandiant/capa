@@ -3,6 +3,7 @@
 import json
 import collections
 from typing import Any, Dict
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -171,7 +172,7 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, rules_path, extractor)
+    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, [rules_path], extractor)
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
@@ -199,11 +200,11 @@ if __name__ == "__main__":
     import os.path
     import argparse
 
-    RULES_PATH = os.path.join(os.path.dirname(__file__), "..", "rules")
+    RULES_PATH = capa.main.get_default_root() / "rules"
 
     parser = argparse.ArgumentParser(description="Extract capabilities from a file")
     parser.add_argument("file", help="file to extract capabilities from")
-    parser.add_argument("--rules", help="path to rules directory", default=os.path.abspath(RULES_PATH))
+    parser.add_argument("--rules", help="path to rules directory", default=RULES_PATH)
     parser.add_argument(
         "--output", help="output format", choices=["dictionary", "json", "texttable"], default="dictionary"
     )

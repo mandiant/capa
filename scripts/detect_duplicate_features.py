@@ -1,6 +1,7 @@
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -89,7 +90,7 @@ def main():
     args = parser.parse_args()
 
     new_rule_path = args.new_rule
-    rules_path = args.rules
+    rules_path = [Path(rule) for rule in args.rules]
 
     result = find_overlapping_rules(new_rule_path, rules_path)
 

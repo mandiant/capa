@@ -14,6 +14,7 @@ import itertools
 import contextlib
 import collections
 from typing import Set, Dict
+from pathlib import Path
 from functools import lru_cache
 
 import pytest
@@ -44,9 +45,9 @@ from capa.features.address import Address
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
-CD = os.path.dirname(__file__)
-DOTNET_DIR = os.path.join(CD, "data", "dotnet")
-DNFILE_TESTFILES = os.path.join(DOTNET_DIR, "dnfile-testfiles")
+CD = Path(__file__).resolve().parent
+DOTNET_DIR = CD / "data" / "dotnet"
+DNFILE_TESTFILES = DOTNET_DIR / "dnfile-testfiles"
 
 
 @contextlib.contextmanager
@@ -94,11 +95,11 @@ def get_viv_extractor(path):
     import capa.features.extractors.viv.extractor
 
     sigpaths = [
-        os.path.join(CD, "data", "sigs", "test_aulldiv.pat"),
-        os.path.join(CD, "data", "sigs", "test_aullrem.pat.gz"),
-        os.path.join(CD, "..", "sigs", "1_flare_msvc_rtf_32_64.sig"),
-        os.path.join(CD, "..", "sigs", "2_flare_msvc_atlmfc_32_64.sig"),
-        os.path.join(CD, "..", "sigs", "3_flare_common_libs.sig"),
+        CD / "data" / "sigs" / "test_aulldiv.pat",
+        CD / "data" / "sigs" / "test_aullrem.pat.gz",
+        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
+        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
+        CD.parent / "sigs" / "3_flare_common_libs.sig",
     ]
 
     if "raw32" in path:

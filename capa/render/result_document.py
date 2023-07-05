@@ -8,6 +8,7 @@
 import datetime
 import collections
 from typing import Any, Dict, List, Tuple, Union, Optional
+from pathlib import Path
 
 from pydantic import Field, BaseModel
 
@@ -73,7 +74,7 @@ class Analysis(Model):
     arch: str
     os: str
     extractor: str
-    rules: Tuple[str, ...]
+    rules: Tuple[Path, ...]
     base_address: frz.Address
     layout: Layout
     feature_counts: FeatureCounts

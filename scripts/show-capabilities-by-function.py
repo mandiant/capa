@@ -54,6 +54,7 @@ import logging
 import argparse
 import collections
 from typing import Dict
+from pathlib import Path
 
 import colorama
 
@@ -136,7 +137,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = get_file_taste(args.sample)
+        taste = get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
