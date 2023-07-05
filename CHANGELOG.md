@@ -9,7 +9,7 @@
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 
-### New Rules (11)
+### New Rules (12)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -22,6 +22,7 @@
 - host-interaction/hardware/enumerate-devices-by-category @mr-tz
 - host-interaction/service/continue-service @mr-tz
 - host-interaction/service/pause-service @mr-tz
+- persistence/exchange/act-as-exchange-transport-agent jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
