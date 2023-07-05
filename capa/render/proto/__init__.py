@@ -29,6 +29,7 @@ import json
 import argparse
 import datetime
 from typing import Any, Dict, Union
+from pathlib import Path
 
 import google.protobuf.json_format
 from google.protobuf.json_format import MessageToJson
@@ -500,7 +501,7 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             arch=meta.analysis.arch,
             os=meta.analysis.os,
             extractor=meta.analysis.extractor,
-            rules=tuple(meta.analysis.rules),
+            rules=tuple(Path(r) for r in meta.analysis.rules),
             base_address=addr_from_pb2(meta.analysis.base_address),
             layout=rd.Layout(
                 functions=tuple(

@@ -20,6 +20,7 @@ import sys
 import time
 import logging
 import argparse
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -48,8 +49,9 @@ def main(argv=None):
         logging.getLogger("capa").setLevel(logging.ERROR)
 
     try:
-        os.makedirs(args.cache, exist_ok=True)
-        rules = capa.main.get_rules(args.rules, cache_dir=args.cache)
+        cache_dir = Path(args.cache)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        rules = capa.main.get_rules(args.rules, cache_dir)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
