@@ -24,7 +24,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator
+from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
 from dataclasses import dataclass
 
 import yaml
@@ -122,9 +122,13 @@ class Scopes:
     @classmethod
     def from_str(self, scope: str) -> "Scopes":
         assert isinstance(scope, str)
+        if scope not in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
+            InvalidRule(f"{scope} is not a valid scope")
+
         if scope in STATIC_SCOPES:
             return Scopes(scope, "")
-        elif scope in DYNAMIC_SCOPES:
+        else:
+            assert scope in DYNAMIC_SCOPES
             return Scopes("", scope)
 
     @classmethod
@@ -263,7 +267,7 @@ class InvalidRuleSet(ValueError):
         return str(self)
 
 
-def ensure_feature_valid_for_scope(scope: Scope, feature: Union[Feature, Statement]):
+def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement]):
     # if the given feature is a characteristic,
     # check that is a valid characteristic for the given scope.
     if (
@@ -271,27 +275,14 @@ def ensure_feature_valid_for_scope(scope: Scope, feature: Union[Feature, Stateme
         and isinstance(feature.value, str)
         and capa.features.common.Characteristic(feature.value) not in SUPPORTED_FEATURES[scope]
     ):
-        return False
+        raise InvalidRule(f"feature is not valid for the {scope} scope")
 
     if not isinstance(feature, capa.features.common.Characteristic):
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), SUPPORTED_FEATURES[scope])
         if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
-            return False
-
-
-def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Statement], valid_func=all):
-    valid_for_static = ensure_feature_valid_for_scope(scopes.static, feature)
-    valid_for_dynamic = ensure_feature_valid_for_scope(scopes.dynamic, feature)
-
-    # by default, this function checks if the feature is valid
-    # for both the static and dynamic scopes
-    if not valid_func([valid_for_static, valid_for_dynamic]):
-        if not valid_for_static:
-            raise InvalidRule(f"feature is not valid for the {scopes.static} scope")
-        if not valid_for_dynamic:
-            raise InvalidRule(f"feature is not valid for the {scopes.dynamic} scope")
+            raise InvalidRule(f"feature is not valid for the {scope} scope")
 
 
 def parse_int(s: str) -> int:
@@ -499,7 +490,7 @@ def pop_statement_description_entry(d):
     return description["description"]
 
 
-def build_statements(d, scope: Union[str, Scopes]):
+def build_statements(d, scope: str):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
 
@@ -616,7 +607,7 @@ def build_statements(d, scope: Union[str, Scopes]):
                 feature = Feature(arg)
         else:
             feature = Feature()
-        ensure_feature_valid_for_scopes(scope, feature)
+        ensure_feature_valid_for_scope(scope, feature)
 
         count = d[key]
         if isinstance(count, int):
@@ -650,7 +641,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.OperandNumber(index, value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scope, feature)
+        ensure_feature_valid_for_scope(scope, feature)
         return feature
 
     elif key.startswith("operand[") and key.endswith("].offset"):
@@ -666,7 +657,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.OperandOffset(index, value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scope, feature)
+        ensure_feature_valid_for_scope(scope, feature)
         return feature
 
     elif (
@@ -686,7 +677,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = capa.features.insn.Property(value, access=access, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scope, feature)
+        ensure_feature_valid_for_scope(scope, feature)
         return feature
 
     else:
@@ -696,7 +687,7 @@ def build_statements(d, scope: Union[str, Scopes]):
             feature = Feature(value, description=description)
         except ValueError as e:
             raise InvalidRule(str(e)) from e
-        ensure_feature_valid_for_scopes(scope, feature)
+        ensure_feature_valid_for_scope(scope, feature)
         return feature
 
 
@@ -868,7 +859,13 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scopes, build_statements(statements[0], scopes), meta, definition)
+        # if we're able to construct a statement for both the static and dynamic
+        # scopes (with no raised InvalidRule exceptions), then the rule is valid
+        static_statement = build_statements(statements[0], scopes.static)
+        dynamic_statement = build_statements(statements[0], scopes.dynamic)
+        assert static_statement == dynamic_statement
+
+        return cls(name, scopes, static_statement, meta, definition)
 
     @staticmethod
     @lru_cache()
