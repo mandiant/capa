@@ -93,7 +93,7 @@ For more details about creating and using virtual environments, check out the [v
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter
-  - [isort 5](https://pypi.org/project/isort/) code formatter
+  - [isort](https://pypi.org/project/isort/) code formatter
   - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
@@ -101,8 +101,16 @@ To install these development dependencies, run:
 
 `$ pip install -e /local/path/to/src[dev]`
 
-To check the code style, formatting and run the tests you can run the script `scripts/ci.sh`.
-You can run it with the argument `no_tests` to skip the tests and only run the code style and formatting: `scripts/ci.sh no_tests`
+and you can invoke the various linters via [pre-commit](https://pre-commit.com/):
+
+`$ pre-commit run` (all linters) or `$ pre-commit run isort` (only isort).
+We use pre-commit so that its trivial to run the same linters & configuration locally as in CI.
+
+Importantly, you can configure pre-commit to run automatically before every commit by running:
+
+`$ pre-commit install`
+
+This way you can ensure that you don't commit code style or formatting offenses.
 
 ##### Setup hooks [optional]
 
