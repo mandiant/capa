@@ -69,11 +69,12 @@ setuptools.setup(
     install_requires=requirements,
     extras_require={
         "dev": [
+            "pre-commit==3.3.3",
             "pytest==7.4.0",
-            "pytest-sugar==0.9.4",
+            "pytest-sugar==0.9.7",
             "pytest-instafail==0.5.0",
             "pytest-cov==4.1.0",
-            "pycodestyle==2.10.0",
+            "flake8==6.0.0",
             "ruff==0.0.275",
             "black==23.3.0",
             "isort==5.11.4",
