@@ -54,6 +54,12 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(token, int)
         assert isinstance(offset, int)
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
+    elif address.type == frz.AddressType.DYNAMIC:
+        assert isinstance(address.value, tuple)
+        id_, return_address = address.value
+        assert isinstance(id_, int)
+        assert isinstance(return_address, int)
+        return f"eventid: {id_}, retaddr: 0x{return_address:x}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:

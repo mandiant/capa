@@ -36,6 +36,28 @@ class AbsoluteVirtualAddress(int, Address):
         return int.__hash__(self)
 
 
+class DynamicAddress(Address):
+    """an address from a dynamic analysis trace"""
+
+    def __init__(self, id_: int, return_address: int):
+        assert id_ >= 0
+        assert return_address >= 0
+        self.id = id_
+        self.return_address = return_address
+
+    def __repr__(self):
+        return f"dynamic(eventid: {self.id}, returnaddress: 0x{self.return_address:x})"
+
+    def __hash__(self):
+        return hash((self.id, self.return_address))
+
+    def __eq__(self, other):
+        return (self.id, self.return_address) == (other.id, other.return_address)
+
+    def __lt__(self, other):
+        return (self.id, self.return_address) < (other.id, other.return_address)
+
+
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 

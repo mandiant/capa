@@ -35,9 +35,34 @@ def get_processes(static: Dict) -> Iterator[ProcessHandle]:
 
 def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
     """
-    extract the names of imported library files, for example: USER32.dll
+    extract imported function names
     """
-    for library in static["imports"]:
+    imports = static["imports"]
+
+    """
+        2.2-CAPE
+        "imports": [
+            {
+             "dll": "RPCRT4.dll",
+             "imports": [{"address": "0x40504c","name": "NdrSimpleTypeUnmarshall"}, ...]
+            },
+            ...
+        ]
+
+        2.4-CAPE
+        "imports": {
+            "ADVAPI32": {
+                "dll": "ADVAPI32.dll",
+                "imports": [{"address": "0x522000", "name": "OpenSCManagerA"}, ...],
+                ...
+            },
+            ...
+        }
+    """
+    if isinstance(imports, dict):
+        imports = imports.values()
+
+    for library in imports:
         for function in library["imports"]:
             addr = int(function["address"], 16)
             for name in generate_symbols(library["dll"], function["name"]):
@@ -51,9 +76,11 @@ def extract_export_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_section_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+    # be consistent with static extractors and use section VA
+    base = int(static["imagebase"], 16)
     for section in static["sections"]:
         name, address = section["name"], int(section["virtual_address"], 16)
-        yield Section(name), AbsoluteVirtualAddress(address)
+        yield Section(name), AbsoluteVirtualAddress(base + address)
 
 
 def extract_file_strings(static: Dict) -> Iterator[Tuple[Feature, Address]]:
