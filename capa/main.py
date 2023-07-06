@@ -990,13 +990,6 @@ def handle_common_args(args):
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
 
-    # Since Python 3.8 cp65001 is an alias to utf_8, but not for Python < 3.8
-    # TODO: remove this code when only supporting Python 3.8+
-    # https://stackoverflow.com/a/3259271/87207
-    import codecs
-
-    codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
-
     if args.color == "always":
         colorama.init(strip=False)
     elif args.color == "auto":
@@ -1072,8 +1065,8 @@ def handle_common_args(args):
 
 
 def main(argv=None):
-    if sys.version_info < (3, 7):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.7+")
+    if sys.version_info < (3, 8):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
     if argv is None:
         argv = sys.argv[1:]
