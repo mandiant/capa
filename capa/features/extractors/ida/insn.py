@@ -398,7 +398,7 @@ def extract_insn_peb_access_characteristic_features(
     if insn.itype not in (idaapi.NN_push, idaapi.NN_mov):
         return
 
-    if all(map(lambda op: op.type != idaapi.o_mem, insn.ops)):
+    if all(op.type != idaapi.o_mem for op in insn.ops):
         # try to optimize for only memory references
         return
 
@@ -419,7 +419,7 @@ def extract_insn_segment_access_features(
     """
     insn: idaapi.insn_t = ih.inner
 
-    if all(map(lambda op: op.type != idaapi.o_mem, insn.ops)):
+    if all(op.type != idaapi.o_mem for op in insn.ops):
         # try to optimize for only memory references
         return
 

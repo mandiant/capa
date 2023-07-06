@@ -48,7 +48,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
-    matches = set([])
+    matches = set()
 
     def rec(match: rd.Match):
         if not match.success:

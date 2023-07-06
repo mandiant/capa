@@ -426,7 +426,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
 
         # optional statement with no successful children is empty
         if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
-            if not any(map(lambda m: m.success, match.children)):
+            if not any(m.success for m in match.children):
                 return
 
         if isinstance(match.node, rd.StatementNode):

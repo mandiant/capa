@@ -825,7 +825,7 @@ def lint_rule(ctx: Context, rule: Rule):
             print("")
 
     if is_nursery_rule(rule):
-        has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
+        has_examples = not any(v.level == Lint.FAIL and v.name == "missing examples" for v in violations)
         lints_failed = len(
             tuple(
                 filter(

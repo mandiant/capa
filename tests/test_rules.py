@@ -874,12 +874,12 @@ def test_rules_namespace_dependencies():
         ),
     ]
 
-    r3 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 3")))
+    r3 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 3")}
     assert "rule 1" in r3
     assert "rule 2" not in r3
     assert "rule 4" not in r3
 
-    r4 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 4")))
+    r4 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 4")}
     assert "rule 1" in r4
     assert "rule 2" in r4
     assert "rule 3" not in r4

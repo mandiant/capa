@@ -270,7 +270,7 @@ class _MatchedSubstring(Substring):
         self.matches = matches
 
     def __str__(self):
-        matches = ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))
+        matches = ", ".join(f'"{s}"' for s in (self.matches or {}).keys())
         assert isinstance(self.value, str)
         return f'substring("{self.value}", matches = {matches})'
 
@@ -362,7 +362,7 @@ class _MatchedRegex(Regex):
         self.matches = matches
 
     def __str__(self):
-        matches = ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))
+        matches = ", ".join(f'"{s}"' for s in (self.matches or {}).keys())
         assert isinstance(self.value, str)
         return f"regex(string =~ {self.value}, matches = {matches})"
 

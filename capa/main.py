@@ -249,8 +249,8 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
 
-    feature_counts = rdoc.FeatureCounts(file=0, functions=tuple())
-    library_functions: Tuple[rdoc.LibraryFunction, ...] = tuple()
+    feature_counts = rdoc.FeatureCounts(file=0, functions=())
+    library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
 
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
@@ -299,16 +299,15 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     for rule_name, results in itertools.chain(
         all_function_matches.items(), all_bb_matches.items(), all_insn_matches.items()
     ):
-        locations = set(map(lambda p: p[0], results))
+        locations = {p[0] for p in results}
         rule = ruleset[rule_name]
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     feature_counts.file = feature_count
 
-    matches = {
-        rule_name: results
-        for rule_name, results in itertools.chain(
+    matches = dict(
+        itertools.chain(
             # each rule exists in exactly one scope,
             # so there won't be any overlap among these following MatchResults,
             # and we can merge the dictionaries naively.
@@ -317,7 +316,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             all_function_matches.items(),
             all_file_matches.items(),
         )
-    }
+    )
 
     meta = {
         "feature_counts": feature_counts,
@@ -589,7 +588,7 @@ def get_extractor(
 
 
 def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
-    file_extractors: List[FeatureExtractor] = list()
+    file_extractors: List[FeatureExtractor] = []
 
     if format_ == FORMAT_PE:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
@@ -785,14 +784,14 @@ def collect_metadata(
             rules=tuple(rules_path),
             base_address=frz.Address.from_capa(extractor.get_base_address()),
             layout=rdoc.Layout(
-                functions=tuple(),
+                functions=(),
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
-            feature_counts=rdoc.FeatureCounts(file=0, functions=tuple()),
-            library_functions=tuple(),
+            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
+            library_functions=(),
         ),
     )
 

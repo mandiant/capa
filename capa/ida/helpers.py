@@ -159,15 +159,15 @@ def collect_metadata(rules):
             rules=rules,
             base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
             layout=rdoc.Layout(
-                functions=tuple()
+                functions=(),
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
             # ignore these for now - not used by IDA plugin.
-            feature_counts=rdoc.FeatureCounts(file=0, functions=tuple()),
-            library_functions=tuple(),
+            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
+            library_functions=(),
         ),
     )
 

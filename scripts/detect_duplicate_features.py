@@ -73,7 +73,7 @@ def find_overlapping_rules(new_rule_path, rules_path):
             continue
         count += 1
         # Checks if any features match between existing and new rule.
-        if any([feature in rule_features for feature in new_rule_features]):
+        if any(feature in rule_features for feature in new_rule_features):
             overlapping_rules.append(rule_name)
 
     result = {"overlapping_rules": overlapping_rules, "count": count}

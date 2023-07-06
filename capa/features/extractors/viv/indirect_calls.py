@@ -88,7 +88,7 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Union[int
       NotFoundError: when the definition cannot be found.
     """
     q: Deque[int] = collections.deque()
-    seen: Set[int] = set([])
+    seen: Set[int] = set()
 
     q.extend(get_previous_instructions(vw, va))
     while q:

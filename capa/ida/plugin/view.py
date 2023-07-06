@@ -64,7 +64,7 @@ def parse_yaml_line(feature):
         feature, _, comment = feature.partition("#")
         feature, _, description = feature.partition("=")
 
-    return map(lambda o: o.strip(), (feature, description, comment))
+    return (o.strip() for o in (feature, description, comment))
 
 
 def parse_node_for_feature(feature, description, comment, depth):
@@ -499,7 +499,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             rule_text += "\n  features:\n"
 
         for o in iterate_tree(self):
-            feature, description, comment = map(lambda o: o.strip(), tuple(o.text(i) for i in range(3)))
+            feature, description, comment = (o.strip() for o in tuple(o.text(i) for i in range(3)))
             rule_text += parse_node_for_feature(feature, description, comment, calc_item_depth(o))
 
         # FIXME we avoid circular update by disabling signals when updating

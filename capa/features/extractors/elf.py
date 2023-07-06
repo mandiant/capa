@@ -824,7 +824,7 @@ def guess_os_from_abi_versions_needed(elf: ELF) -> Optional[OS]:
     # this will let us guess about linux/hurd in some cases.
 
     versions_needed = elf.versions_needed
-    if any(map(lambda abi: abi.startswith("GLIBC"), itertools.chain(*versions_needed.values()))):
+    if any(abi.startswith("GLIBC") for abi in itertools.chain(*versions_needed.values())):
         # there are any GLIBC versions needed
 
         if elf.e_machine != "i386":
@@ -881,7 +881,7 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
         sym_name = symtab.get_name(symbol)
 
         for os, hints in keywords.items():
-            if any(map(lambda x: x in sym_name, hints)):
+            if any(hint in sym_name for hint in hints):
                 return os
 
     return None
