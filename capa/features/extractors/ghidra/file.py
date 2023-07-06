@@ -124,18 +124,17 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
     for block in currentProgram.getMemory().getBlocks():
-        addr = block.getStart()
         if block.isInitialized():
             p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
             if len(p_bytes) == 0:
                 break
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
-            offset = block.getStart().getOffset() + int(s.offset)
+            offset = block.getStart().getOffset() + s.offset
             yield String(s.s), FileOffsetAddress(offset)
 
         for s in capa.features.extractors.strings.extract_unicode_strings(p_bytes):
-            offset = block.getStart().getOffset() + int(s.offset)
+            offset = block.getStart().getOffset() + s.offset
             yield String(s.s), FileOffsetAddress(offset)
 
 
@@ -148,6 +147,8 @@ def extract_file_function_names() -> Iterator[Tuple[Feature, Address]]:
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
+            if name.startswith("FID_conflict:"):  # format: FID_conflict:<function-name>
+                name = name[13:]
             addr = AbsoluteVirtualAddress(sym.getAddress().getOffset())
             yield FunctionName(name), addr
             if name.startswith("_"):

@@ -33,8 +33,8 @@ def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
     """
 
     bytez = b""
-    signed_ints = getBytes(addr, length)  # type: ignore [name-defined]
     try:
+        signed_ints = getBytes(addr, length)  # type: ignore [name-defined]
         for b in signed_ints:
             bytez = bytez + (b & 0xFF).to_bytes(1, "little")
         return bytez
@@ -50,8 +50,8 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
     """
 
     bytez = b""
-    signed_ints = getBytes(block.getStart(), block.getEnd().getOffset() - block.getStart().getOffset())  # type: ignore [name-defined]
     try:
+        signed_ints = getBytes(block.getStart(), block.getEnd().getOffset() - block.getStart().getOffset())  # type: ignore [name-defined]
         for b in signed_ints:
             bytez = bytez + (b & 0xFF).to_bytes(1, "little")
         return bytez
