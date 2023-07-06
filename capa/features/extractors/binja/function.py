@@ -19,7 +19,6 @@ from capa.features.extractors.base_extractor import FunctionHandle
 def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
     func: Function = fh.inner
-    bv: BinaryView = func.view
 
     for caller in func.caller_sites:
         # Everything that is a code reference to the current function is considered a caller, which actually includes

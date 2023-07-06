@@ -19,11 +19,10 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.elf import Shdr, SymTab
+from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 

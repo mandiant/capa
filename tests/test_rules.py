@@ -344,7 +344,7 @@ def test_subscope_rules():
 
 def test_duplicate_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -374,7 +374,7 @@ def test_duplicate_rules():
 
 def test_missing_dependency():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -393,7 +393,7 @@ def test_missing_dependency():
 
 def test_invalid_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -406,7 +406,7 @@ def test_invalid_rules():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -420,7 +420,7 @@ def test_invalid_rules():
 
     # att&ck and mbc must be lists
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -433,7 +433,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -497,7 +497,7 @@ def test_count_number_symbol():
 
 def test_invalid_number():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -510,7 +510,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -523,7 +523,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -583,7 +583,7 @@ def test_count_offset_symbol():
 
 def test_invalid_offset():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -596,7 +596,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -609,7 +609,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -624,7 +624,7 @@ def test_invalid_offset():
 
 def test_invalid_string_values_int():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -637,7 +637,7 @@ def test_invalid_string_values_int():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:

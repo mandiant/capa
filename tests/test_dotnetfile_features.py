@@ -8,8 +8,9 @@
 
 import pytest
 import fixtures
-from fixtures import *
 from fixtures import parametrize
+
+import capa.features.file
 
 
 @parametrize(

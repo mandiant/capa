@@ -9,7 +9,6 @@ import copy
 
 import pytest
 import fixtures
-from fixtures import *
 
 import capa
 import capa.engine as ceng

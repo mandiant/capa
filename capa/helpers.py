@@ -9,6 +9,7 @@ import os
 import inspect
 import logging
 import contextlib
+import importlib.util
 from typing import NoReturn
 
 import tqdm
@@ -40,12 +41,7 @@ def get_file_taste(sample_path: str) -> bytes:
 
 
 def is_runtime_ida():
-    try:
-        import idc
-    except ImportError:
-        return False
-    else:
-        return True
+    return importlib.util.find_spec("idc") is not None
 
 
 def assert_never(value) -> NoReturn:

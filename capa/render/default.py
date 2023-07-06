@@ -11,7 +11,6 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
-import capa.features.freeze as frz
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet

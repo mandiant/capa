@@ -8,7 +8,7 @@
 import copy
 from typing import Any
 
-from fixtures import *
+import pytest
 
 import capa.rules
 import capa.render

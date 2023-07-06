@@ -8,7 +8,8 @@
 import textwrap
 from typing import List
 
-from fixtures import *
+import pytest
+from fixtures import z9324d_extractor
 
 import capa.main
 import capa.rules
@@ -20,7 +21,8 @@ import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
-from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import FunctionHandle, BBHandle
+from capa.features.address import AbsoluteVirtualAddress, Address
 
 EXTRACTOR = capa.features.extractors.null.NullFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),

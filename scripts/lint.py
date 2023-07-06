@@ -43,7 +43,7 @@ import capa.engine
 import capa.helpers
 import capa.features.insn
 from capa.rules import Rule, RuleSet
-from capa.features.common import OS_AUTO, FORMAT_PE, FORMAT_DOTNET, String, Feature, Substring
+from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")

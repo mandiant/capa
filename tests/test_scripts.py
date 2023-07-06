@@ -12,7 +12,6 @@ import textwrap
 import subprocess
 
 import pytest
-from fixtures import *
 
 CD = os.path.dirname(__file__)
 

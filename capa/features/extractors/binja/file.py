@@ -10,7 +10,7 @@ import sys
 import struct
 from typing import Tuple, Iterator
 
-from binaryninja import Symbol, Segment, BinaryView, SymbolType, SymbolBinding
+from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
 
 import capa.features.extractors.common
 import capa.features.extractors.helpers

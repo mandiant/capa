@@ -34,6 +34,7 @@ import capa.perf
 import capa.rules
 import capa.engine
 import capa.version
+import capa.helpers
 import capa.render.json
 import capa.rules.cache
 import capa.render.default
@@ -1339,17 +1340,8 @@ def ida_main():
     print(capa.render.default.render(meta, rules, capabilities))
 
 
-def is_runtime_ida():
-    try:
-        import idc
-    except ImportError:
-        return False
-    else:
-        return True
-
-
 if __name__ == "__main__":
-    if is_runtime_ida():
+    if capa.helpers.is_runtime_ida():
         ida_main()
     else:
         sys.exit(main())

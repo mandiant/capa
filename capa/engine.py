@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator, cast
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator
 
 import capa.perf
 import capa.features.common

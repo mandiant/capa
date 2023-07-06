@@ -587,7 +587,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rules_message.setText("You must specify a directory containing capa rules before running analysis.")
                 rules_message.setInformativeText(
                     "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
-                    f"rules from the URL listed in the details."
+                    "rules from the URL listed in the details."
                 )
                 rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
                 rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -606,7 +606,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     return False
 
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
-        except UserCancelledError as e:
+        except UserCancelledError:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
                 "You must specify a directory containing capa rules before running analysis.%s",

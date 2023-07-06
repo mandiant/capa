@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import itertools
 import collections
-from typing import Set, Dict, List, Tuple, Union, Optional
+from typing import Set, Dict, Tuple, Union, Optional
 
 import capa.engine
 from capa.rules import Scope, RuleSet

@@ -17,7 +17,6 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
-import time
 import logging
 import argparse
 

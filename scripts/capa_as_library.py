@@ -2,7 +2,7 @@
 
 import json
 import collections
-from typing import Any, Dict
+from typing import Any, Dict, Set
 
 import capa.main
 import capa.rules
@@ -13,7 +13,6 @@ import capa.render.utils as rutils
 import capa.render.default
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
-from capa.engine import *
 from capa.features.common import OS_AUTO, FORMAT_AUTO
 
 

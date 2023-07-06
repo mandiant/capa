@@ -10,7 +10,6 @@
 import os
 import os.path
 import binascii
-import itertools
 import contextlib
 import collections
 from typing import Set, Dict

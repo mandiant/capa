@@ -10,7 +10,6 @@ import json
 import textwrap
 
 import fixtures
-from fixtures import *
 from fixtures import (
     _692f_dotnetfile_extractor,
     _1c444_dotnetfile_extractor,
@@ -22,7 +21,6 @@ import capa.main
 import capa.rules
 import capa.engine
 import capa.features
-from capa.engine import *
 
 
 def test_main(z9324d_extractor):
