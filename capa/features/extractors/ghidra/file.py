@@ -10,7 +10,6 @@ import struct
 from typing import Tuple, Iterator
 
 import ghidra
-from ghidra.program.flatapi import FlatProgramAPI
 from ghidra.program.model.symbol import SourceType, SymbolType
 
 import capa.features.extractors.common
@@ -22,7 +21,6 @@ from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature,
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 currentProgram: ghidra.program.database.ProgramDB
-flatapi = FlatProgramAPI(currentProgram)
 
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
@@ -60,15 +58,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
         if seg_max.getOffset() < (e_lfanew.getOffset() + 4):
             continue
 
-        e_lfanew_bytes = b""
-        try:
-            e_lfanew_sbytes = flatapi.getBytes(e_lfanew, 4)
-            for b in e_lfanew_sbytes:
-                b = (b & 0xFF).to_bytes(1, "little")
-                e_lfanew_bytes = e_lfanew_bytes + b
-        except RuntimeError:  # no bytes will be returned, so we can bail out here
-            return
-
+        e_lfanew_bytes = capa.features.extractors.ghidra.helpers.get_bytes(e_lfanew, 4)
         newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
 
         # assume XOR'd "PE" bytes exist within threshold
@@ -79,15 +69,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
         if seg_max.getOffset() < (peoff.getOffset() + 2):
             continue
 
-        pe_bytes = b""
-        try:
-            pe_off_bytes = flatapi.getBytes(peoff, 2)
-            for b in pe_off_bytes:
-                b = (b & 0xFF).to_bytes(1, "little")
-                pe_bytes = pe_bytes + b
-        except RuntimeError:
-            return
-
+        pe_bytes = capa.features.extractors.ghidra.helpers.get_bytes(peoff, 2)
         if pe_bytes == pex:
             yield off.getOffset(), i
 
@@ -142,13 +124,10 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
     for block in currentProgram.getMemory().getBlocks():
-        p_bytes = b""
         addr = block.getStart()
-        while block.isInitialized() and addr.getOffset() <= block.getEnd().getOffset():
-            p_bytes = p_bytes + ((block.getByte(addr) & 0xFF).to_bytes(1, "little"))
-            try:
-                addr = addr.add(1)
-            except RuntimeError:  # throws AddressOverflow error in Java
+        if block.isInitialized():
+            p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
+            if len(p_bytes) == 0:
                 break
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):

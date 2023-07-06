@@ -8,10 +8,8 @@
 from typing import Any, Dict, Tuple, Iterator, Optional
 
 import ghidra
-from ghidra.program.flatapi import FlatProgramAPI
 
 currentProgram: ghidra.program.database.ProgramDB
-flatapi = FlatProgramAPI(currentProgram)
 
 
 def find_byte_sequence(seq: bytes) -> Iterator[int]:
@@ -21,6 +19,41 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
         seq: bytes to search e.g. b"\x01\x03"
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
-    ea = flatapi.findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)
+    ea = findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)  # type: ignore [name-defined]
     for e in ea:
         yield e
+
+
+def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
+    """yield length bytes at addr
+
+    args:
+        addr: Address to begin pull from
+        length: length of bytes to pull
+    """
+
+    bytez = b""
+    signed_ints = getBytes(addr, length)  # type: ignore [name-defined]
+    try:
+        for b in signed_ints:
+            bytez = bytez + (b & 0xFF).to_bytes(1, "little")
+        return bytez
+    except RuntimeError:
+        return bytez
+
+
+def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
+    """yield all bytes in a given block
+
+    args:
+        block: MemoryBlock to pull from
+    """
+
+    bytez = b""
+    signed_ints = getBytes(block.getStart(), block.getEnd().getOffset() - block.getStart().getOffset())  # type: ignore [name-defined]
+    try:
+        for b in signed_ints:
+            bytez = bytez + (b & 0xFF).to_bytes(1, "little")
+        return bytez
+    except RuntimeError:
+        return bytez
