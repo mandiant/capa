@@ -14,7 +14,7 @@ currentProgram: ghidra.program.database.ProgramDB
 
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:
-    format_name: str = currentProgram.getExecutableFormat()
+    format_name: str = currentProgram.getExecutableFormat()  # currentProgram: static Ghidra variable
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS

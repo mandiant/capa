@@ -19,6 +19,7 @@
 -
 
 
+
 ### Bug Fixes
 - extractor: update vivisect Arch extraction #1334 @mr-tz
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
