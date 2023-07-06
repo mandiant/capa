@@ -47,6 +47,7 @@
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 - tests: refine the IDA test runner script #1513 @williballenthin
+- import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
