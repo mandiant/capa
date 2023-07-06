@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import io
 import os
 import sys
 import time
@@ -38,9 +39,11 @@ import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
 import capa.features.common
-import capa.features.freeze
+import capa.features.freeze as frz
 import capa.render.vverbose
 import capa.features.extractors
+import capa.render.result_document
+import capa.render.result_document as rdoc
 import capa.features.extractors.common
 import capa.features.extractors.pefile
 import capa.features.extractors.dnfile_
@@ -245,13 +248,8 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
 
-    meta = {
-        "feature_counts": {
-            "file": 0,
-            "functions": {},
-        },
-        "library_functions": {},
-    }  # type: Dict[str, Any]
+    feature_counts = rdoc.FeatureCounts(file=0, functions=tuple())
+    library_functions: Tuple[rdoc.LibraryFunction, ...] = tuple()
 
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
@@ -265,13 +263,15 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             functions = list(extractor.get_functions())
             n_funcs = len(functions)
 
-            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
+            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
             for f in pb:
                 if extractor.is_library_function(f.address):
                     function_name = extractor.get_function_name(f.address)
                     logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-                    meta["library_functions"][f.address] = function_name
-                    n_libs = len(meta["library_functions"])
+                    library_functions += (
+                        rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name),
+                    )
+                    n_libs = len(library_functions)
                     percentage = round(100 * (n_libs / n_funcs))
                     if isinstance(pb, tqdm.tqdm):
                         pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
@@ -280,7 +280,9 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
                 function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
                     ruleset, extractor, f
                 )
-                meta["feature_counts"]["functions"][f.address] = feature_count
+                feature_counts.functions += (
+                    rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
+                )
                 logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
 
                 for rule_name, res in function_matches.items():
@@ -301,7 +303,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
-    meta["feature_counts"]["file"] = feature_count
+    feature_counts.file = feature_count
 
     matches = {
         rule_name: results
@@ -314,6 +316,11 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             all_function_matches.items(),
             all_file_matches.items(),
         )
+    }
+
+    meta = {
+        "feature_counts": feature_counts,
+        "library_functions": library_functions,
     }
 
     return matches, meta
@@ -739,7 +746,7 @@ def collect_metadata(
     os_: str,
     rules_path: List[str],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
-):
+) -> rdoc.Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
@@ -758,34 +765,37 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
-    return {
-        "timestamp": datetime.datetime.now().isoformat(),
-        "version": capa.version.__version__,
-        "argv": argv,
-        "sample": {
-            "md5": md5.hexdigest(),
-            "sha1": sha1.hexdigest(),
-            "sha256": sha256.hexdigest(),
-            "path": os.path.normpath(sample_path),
-        },
-        "analysis": {
-            "format": format_,
-            "arch": arch,
-            "os": os_,
-            "extractor": extractor.__class__.__name__,
-            "rules": rules_path,
-            "base_address": extractor.get_base_address(),
-            "layout": {
+    return rdoc.Metadata(
+        timestamp=datetime.datetime.now(),
+        version=capa.version.__version__,
+        argv=tuple(argv) if argv else None,
+        sample=rdoc.Sample(
+            md5=md5.hexdigest(),
+            sha1=sha1.hexdigest(),
+            sha256=sha256.hexdigest(),
+            path=os.path.normpath(sample_path),
+        ),
+        analysis=rdoc.Analysis(
+            format=format_,
+            arch=arch,
+            os=os_,
+            extractor=extractor.__class__.__name__,
+            rules=tuple(rules_path),
+            base_address=frz.Address.from_capa(extractor.get_base_address()),
+            layout=rdoc.Layout(
+                functions=tuple(),
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
-            },
-        },
-    }
+            ),
+            feature_counts=rdoc.FeatureCounts(file=0, functions=tuple()),
+            library_functions=tuple(),
+        ),
+    )
 
 
-def compute_layout(rules, extractor, capabilities):
+def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     """
     compute a metadata structure that links basic blocks
     to the functions in which they're found.
@@ -810,17 +820,19 @@ def compute_layout(rules, extractor, capabilities):
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
 
-    layout = {
-        "functions": {
-            f: {
-                "matched_basic_blocks": [bb for bb in bbs if bb in matched_bbs]
-                # this object is open to extension in the future,
+    layout = rdoc.Layout(
+        functions=tuple(
+            rdoc.FunctionLayout(
+                address=frz.Address.from_capa(f),
+                matched_basic_blocks=tuple(
+                    rdoc.BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in bbs if bb in matched_bbs
+                )  # this object is open to extension in the future,
                 # such as with the function name, etc.
-            }
+            )
             for f, bbs in bbs_by_function.items()
             if len([bb for bb in bbs if bb in matched_bbs]) > 0
-        }
-    }
+        )
+    )
 
     return layout
 
@@ -979,12 +991,20 @@ def handle_common_args(args):
     # disable vivisect-related logging, it's verbose and not relevant for capa users
     set_vivisect_log_level(logging.CRITICAL)
 
-    # Since Python 3.8 cp65001 is an alias to utf_8, but not for Python < 3.8
-    # TODO: remove this code when only supporting Python 3.8+
-    # https://stackoverflow.com/a/3259271/87207
-    import codecs
-
-    codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
+    if isinstance(sys.stdout, io.TextIOWrapper) or hasattr(sys.stdout, "reconfigure"):
+        # from sys.stdout type hint:
+        #
+        # TextIO is used instead of more specific types for the standard streams,
+        # since they are often monkeypatched at runtime. At startup, the objects
+        # are initialized to instances of TextIOWrapper.
+        #
+        # To use methods from TextIOWrapper, use an isinstance check to ensure that
+        # the streams have not been overridden:
+        #
+        # if isinstance(sys.stdout, io.TextIOWrapper):
+        #    sys.stdout.reconfigure(...)
+        sys.stdout.reconfigure(encoding="utf-8")
+    colorama.just_fix_windows_console()  # type: ignore [attr-defined]
 
     if args.color == "always":
         colorama.init(strip=False)
@@ -1061,8 +1081,8 @@ def handle_common_args(args):
 
 
 def main(argv=None):
-    if sys.version_info < (3, 7):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.7+")
+    if sys.version_info < (3, 8):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
     if argv is None:
         argv = sys.argv[1:]
@@ -1197,8 +1217,7 @@ def main(argv=None):
                 logger.debug("file limitation short circuit, won't analyze fully.")
                 return E_FILE_LIMITATION
 
-    # TODO: #1411 use a real type, not a dict here.
-    meta: Dict[str, Any]
+    meta: rdoc.Metadata
     capabilities: MatchResults
     counts: Dict[str, Any]
 
@@ -1214,7 +1233,7 @@ def main(argv=None):
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
             with open(args.sample, "rb") as f:
-                extractor = capa.features.freeze.load(f.read())
+                extractor = frz.load(f.read())
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces
@@ -1255,15 +1274,16 @@ def main(argv=None):
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
-        meta["analysis"].update(counts)
-        meta["analysis"]["layout"] = compute_layout(rules, extractor, capabilities)
+
+        meta.analysis.feature_counts = counts["feature_counts"]
+        meta.analysis.library_functions = counts["library_functions"]
+        meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
         if has_file_limitation(rules, capabilities):
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION
-
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
     elif args.vverbose:
@@ -1308,7 +1328,9 @@ def ida_main():
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
-    meta["analysis"].update(counts)
+
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")

@@ -873,7 +873,7 @@ def lint(ctx: Context):
     ret = {}
 
     source_rules = [rule for rule in ctx.rules.rules.values() if not rule.is_subscope_rule()]
-    with tqdm.contrib.logging.tqdm_logging_redirect(source_rules, unit="rule") as pbar:
+    with tqdm.contrib.logging.tqdm_logging_redirect(source_rules, unit="rule", leave=False) as pbar:
         with capa.helpers.redirecting_print_to_tqdm(False):
             for rule in pbar:
                 name = rule.name
