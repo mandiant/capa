@@ -94,7 +94,9 @@ For more details about creating and using virtual environments, check out the [v
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter
   - [isort](https://pypi.org/project/isort/) code formatter
-  - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
+  - [ruff](https://beta.ruff.rs/docs/) code linter
+  - [flake8](https://flake8.pycqa.org/en/latest/) code linter
+  - [mypy](https://mypy-lang.org/) type checking
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
 To install these development dependencies, run:
