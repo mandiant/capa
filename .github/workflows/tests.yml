@@ -144,7 +144,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.11"]
+        python-version: ["3.8", "3.11"]
         java-version: ["17"]
         gradle-version: ["7.3"]
         ghidra-version: ["10.3"]
