@@ -155,7 +155,7 @@ def log_unsupported_runtime_error():
     logger.error("-" * 80)
     logger.error(" Unsupported runtime or Python interpreter.")
     logger.error(" ")
-    logger.error(" capa supports running under Python 3.7 and higher.")
+    logger.error(" capa supports running under Python 3.8 and higher.")
     logger.error(" ")
     logger.error(
         " If you're seeing this message on the command line, please ensure you're running a supported Python version."

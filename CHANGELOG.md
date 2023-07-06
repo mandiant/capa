@@ -1,13 +1,17 @@
 # Change Log
 
 ## master (unreleased)
+- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
 
 ### New Features
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- use fancy box drawing characters for default output #1586 @williballenthin
 
 ### Breaking Changes
+- Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+- Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 
-### New Rules (7)
+### New Rules (21)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -16,11 +20,26 @@
 - communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
 - nursery/compiled-with-exescript jonathanlepore@google.com
+- nursery/check-for-sandbox-via-mac-address-ouis-in-dotnet jonathanlepore@google.com
+- host-interaction/hardware/enumerate-devices-by-category @mr-tz
+- host-interaction/service/continue-service @mr-tz
+- host-interaction/service/pause-service @mr-tz
+- persistence/exchange/act-as-exchange-transport-agent jakub.jozwiak@mandiant.com
+- host-interaction/file-system/create-virtual-file-system-in-dotnet jakub.jozwiak@mandiant.com
+- compiler/cx_freeze/compiled-with-cx_freeze @mr-tz jakub.jozwiak@mandiant.com
+- communication/socket/create-vmci-socket jakub.jozwiak@mandiant.com
+- persistence/office/act-as-excel-xll-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-office-com-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-word-wll-add-in jakub.jozwiak@mandiant.com
+- anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
 -
 
 
 
 ### Bug Fixes
+- extractor: add a Binary Ninja test that asserts its version #1487 @xusheng6
+- extractor: update Binary Ninja stack string detection after the new constant outlining feature #1473 @xusheng6
 - extractor: update vivisect Arch extraction #1334 @mr-tz
 - extractor: avoid Binary Ninja exception when analyzing certain files #1441 @xusheng6 
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
@@ -30,10 +49,14 @@
 - Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
+- tests: refine the IDA test runner script #1513 @williballenthin
+- output: don't leave behind traces of progress bar @williballenthin
+- import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
 ### Development
+- update ATT&CK/MBC data for linting #1568 @mr-tz
 
 ### Raw diffs
 - [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
@@ -84,12 +107,14 @@ Thanks for all the support, especially to @xusheng6, @captainGeech42, @ggold7046
 - nursery/contain-a-thread-local-storage-tls-section-in-dotnet michael.hunhoff@mandiant.com
 
 ### Bug Fixes
+- extractor: interface of cache modified to prevent extracting file and global features multiple times @stevemk14ebr
 - extractor: removed '.dynsym' as the library name for ELF imports #1318 @stevemk14ebr 
 - extractor: fix vivisect loop detection corner case #1310 @mr-tz
 - match: extend OS characteristic to match OS_ANY to all supported OSes #1324 @mike-hunhoff
 - extractor: fix IDA and vivisect string and bytes features overlap and tests #1327 #1336 @xusheng6
 
 ### capa explorer IDA Pro plugin
+- rule generator plugin now loads faster when jumping between functions @stevemk14ebr
 - fix exception when plugin loaded in IDA hosted under idat #1341 @mike-hunhoff
 - improve embedded PE detection performance and reduce FP potential #1344 @mike-hunhoff
 
