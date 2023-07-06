@@ -64,7 +64,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
             matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for address, match in rule.matches:
+        for _, match in rule.matches:
             rec(match)
 
     return matches

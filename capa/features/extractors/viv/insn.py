@@ -288,16 +288,16 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
         else:
             continue
 
-        for v in derefs(f.vw, v):
+        for vv in derefs(f.vw, v):
             try:
-                buf = read_bytes(f.vw, v)
+                buf = read_bytes(f.vw, vv)
             except envi.exc.SegmentationViolation:
                 continue
 
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
 
-            if f.vw.isProbablyString(v) or f.vw.isProbablyUnicode(v):
+            if f.vw.isProbablyString(vv) or f.vw.isProbablyUnicode(vv):
                 # don't extract byte features for obvious strings
                 continue
 
@@ -700,9 +700,9 @@ def extract_op_string_features(
     else:
         return
 
-    for v in derefs(f.vw, v):
+    for vv in derefs(f.vw, v):
         try:
-            s = read_string(f.vw, v).rstrip("\x00")
+            s = read_string(f.vw, vv).rstrip("\x00")
         except ValueError:
             continue
         else:

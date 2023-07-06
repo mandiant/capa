@@ -411,7 +411,7 @@ class ELF:
                 # there should be vn_cnt of these.
                 # each entry describes an ABI name required by the shared object.
                 vna_offset = vn_offset + vn_aux
-                for i in range(vn_cnt):
+                for _ in range(vn_cnt):
                     # ElfXX_Vernaux layout is the same on 32 and 64 bit
                     _, _, _, vna_name, vna_next = struct.unpack_from(self.endian + "IHHII", shdr.buf, vna_offset)
 

@@ -100,7 +100,10 @@ class Result:
         return self.success
 
 
-class Feature(abc.ABC):
+class Feature(abc.ABC):  # noqa: B024
+    # this is an abstract class, since we don't want anyone to instantiate it directly,
+    # but it doesn't have any abstract methods.
+
     def __init__(
         self,
         value: Union[str, int, float, bytes],

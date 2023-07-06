@@ -92,7 +92,8 @@ repos:
         # F401: `foo` imported but unused  (prefer ruff)
         # F811 Redefinition of unused `foo`  (prefer ruff)
         # E501 line too long  (prefer black)
-        -   "--extend-ignore=E203,F401,F811,E501"
+        # B010 Do not call setattr with a constant attribute value
+        -   "--extend-ignore=E203,F401,F811,E501,B010"
         -   "--extend-exclude"
         -   "capa/render/proto/capa_pb2.py"
         -   "capa/"

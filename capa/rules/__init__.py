@@ -1247,7 +1247,7 @@ class RuleSet:
                 # the set of subtypes of type A is unbounded,
                 # because any user might come along and create a new subtype B,
                 # so mypy can't reason about this set of types.
-                assert False, f"Unhandled value: {node} ({type(node).__name__})"
+                assert_never(node)
             else:
                 # programming error
                 assert_never(node)

@@ -45,7 +45,9 @@ def is_runtime_ida():
 
 
 def assert_never(value) -> NoReturn:
-    assert False, f"Unhandled value: {value} ({type(value).__name__})"
+    # careful: python -O will remove this assertion.
+    # but this is only used for type checking, so it's ok.
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
 def get_format_from_extension(sample: str) -> str:

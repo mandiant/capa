@@ -440,7 +440,8 @@ def get_default_root() -> str:
         # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
-        return getattr(sys, "_MEIPASS")
+        assert hasattr(sys, "_MEIPASS")
+        return sys._MEIPASS
     else:
         return os.path.join(os.path.dirname(__file__), "..")
 

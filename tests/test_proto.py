@@ -20,6 +20,7 @@ import capa.features.address
 import capa.render.proto.capa_pb2 as capa_pb2
 import capa.render.result_document as rd
 import capa.features.freeze.features
+from capa.helpers import assert_never
 
 
 @pytest.mark.parametrize(
@@ -306,7 +307,7 @@ def assert_statement(a: rd.StatementNode, b: capa_pb2.StatementNode):
 
     else:
         # unhandled statement
-        assert False
+        assert_never(sa)
 
 
 def assert_round_trip(doc: rd.ResultDocument):

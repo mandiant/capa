@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
+from typing import Dict, Optional
 from collections import Counter
 
 import idc
@@ -646,7 +647,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         counted = list(zip(Counter(features).keys(), Counter(features).values()))
 
         # single features
-        for k, v in filter(lambda t: t[1] == 1, counted):
+        for k, _ in filter(lambda t: t[1] == 1, counted):
             if isinstance(k, (capa.features.common.String,)):
                 value = f'"{capa.features.common.escape_string(k.get_value_str())}"'
             else:
@@ -682,10 +683,12 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
             # we don't add a new node for description; either set description column of parent's last child
             # or the parent itself
-            if parent.childCount():
-                parent.child(parent.childCount() - 1).setText(1, feature.lstrip("description:").lstrip())
-            else:
-                parent.setText(1, feature.lstrip("description:").lstrip())
+            if feature.startswith("description:"):
+                description = feature[len("description:") :].lstrip()
+                if parent.childCount():
+                    parent.child(parent.childCount() - 1).setText(1, description)
+                else:
+                    parent.setText(1, description)
             return None
         elif feature.startswith("- description:"):
             if not parent:
@@ -693,7 +696,8 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
                 return None
 
             # we don't add a new node for description; set the description column of the parent instead
-            parent.setText(1, feature.lstrip("- description:").lstrip())
+            description = feature[len("- description:") :].lstrip()
+            parent.setText(1, description)
             return None
 
         node = QtWidgets.QTreeWidgetItem(parent)
@@ -1010,7 +1014,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         return o
 
-    def load_features(self, file_features, func_features={}):
+    def load_features(self, file_features, func_features: Optional[Dict] = None):
         """ """
         self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
         if func_features:

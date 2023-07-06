@@ -888,7 +888,7 @@ def collect_samples(path) -> Dict[str, Path]:
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
     samples = {}
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for name in files:
             if name.endswith(".viv"):
                 continue
