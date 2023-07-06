@@ -14,7 +14,7 @@ requirements = [
     "tqdm==4.65.0",
     "pyyaml==6.0",
     "tabulate==0.9.0",
-    "colorama==0.4.5",
+    "colorama==0.4.6",
     "termcolor==2.3.0",
     "wcwidth==0.2.6",
     "ida-settings==2.1.0",
@@ -84,7 +84,7 @@ setuptools.setup(
             "mypy-protobuf==3.4.0",
             # type stubs for mypy
             "types-backports==0.1.3",
-            "types-colorama==0.4.15",
+            "types-colorama==0.4.15.11",
             "types-PyYAML==6.0.8",
             "types-tabulate==0.9.0.1",
             "types-termcolor==1.1.4",
