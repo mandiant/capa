@@ -10,6 +10,7 @@ import logging
 
 import pytest
 import fixtures
+from fixtures import scope, sample
 
 import capa.main
 

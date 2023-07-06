@@ -7,10 +7,10 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import fixtures
-from fixtures import parametrize
+from fixtures import scope, sample, b9f5b_dotnetfile_extractor, mixed_mode_64_dotnetfile_extractor
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
@@ -19,7 +19,7 @@ def test_dnfile_features(sample, scope, feature, expected):
     fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
 
 
-@parametrize(
+@fixtures.parametrize(
     "extractor,function,expected",
     [
         ("b9f5b_dotnetfile_extractor", "is_dotnet_file", True),
