@@ -262,7 +262,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
             functions = list(extractor.get_functions())
             n_funcs = len(functions)
 
-            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
+            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
             for f in pb:
                 if extractor.is_library_function(f.address):
                     function_name = extractor.get_function_name(f.address)
