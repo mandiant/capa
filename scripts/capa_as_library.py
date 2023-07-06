@@ -2,7 +2,7 @@
 
 import json
 import collections
-from typing import Any, Dict, Set
+from typing import Any, Set, Dict
 
 import capa.main
 import capa.rules

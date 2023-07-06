@@ -13,7 +13,7 @@ import capa.engine
 import capa.features.insn
 import capa.features.common
 from capa.rules import Scope
-from capa.features.common import MatchedRule, String, OS, OS_ANY, OS_WINDOWS
+from capa.features.common import OS, OS_ANY, OS_WINDOWS, String, MatchedRule
 
 
 def match(rules, features, va, scope=Scope.FUNCTION):

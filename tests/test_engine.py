@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import capa.features.address
-from capa.engine import And, Or, Not, Some, Range
+from capa.engine import Or, And, Not, Some, Range
 from capa.features.insn import Number
 
 ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)

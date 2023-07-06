@@ -33,8 +33,8 @@ from elftools.common.exceptions import ELFError
 import capa.perf
 import capa.rules
 import capa.engine
-import capa.version
 import capa.helpers
+import capa.version
 import capa.render.json
 import capa.rules.cache
 import capa.render.default

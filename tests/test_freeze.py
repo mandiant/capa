@@ -21,8 +21,8 @@ import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
-from capa.features.extractors.base_extractor import FunctionHandle, BBHandle
-from capa.features.address import AbsoluteVirtualAddress, Address
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 EXTRACTOR = capa.features.extractors.null.NullFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
