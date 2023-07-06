@@ -1319,9 +1319,11 @@ def ida_main():
 
 def ghidra_main():
     import capa.rules
-    #import capa.render.default
-    #import capa.features.extractors.ghidra.extractor
+
+    # import capa.render.default
+    # import capa.features.extractors.ghidra.extractor
     import capa.features.extractors.ghidra.global_
+    from capa.features.common import Feature
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
@@ -1336,7 +1338,7 @@ def ghidra_main():
     rules_path = os.path.join(get_default_root(), "rules")
     logger.debug("rule path: %s", rules_path)
     rules = get_rules([rules_path])
-    
+
     # temp test for OS & ARCH extractions
     globl_features: List[Tuple[Feature, Address]] = []
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
@@ -1369,4 +1371,3 @@ if __name__ == "__main__":
         ghidra_main()
     else:
         sys.exit(main())
-

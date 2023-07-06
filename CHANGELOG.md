@@ -4,7 +4,6 @@
 
 ### New Features
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
-- extractor: Implement Ghidra Backend [@colton-gabertan](https://github.com/colton-gabertan)
 
 ### Breaking Changes
 
@@ -17,6 +16,7 @@
 - communication/mailslot/read-from-mailslot nick.simonian@mandiant.com
 - nursery/hash-data-using-sha512managed-in-dotnet jonathanlepore@google.com
 - nursery/compiled-with-exescript jonathanlepore@google.com
+-
 
 
 ### Bug Fixes

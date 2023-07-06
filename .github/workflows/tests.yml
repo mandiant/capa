@@ -2,9 +2,9 @@ name: CI
 
 on: 
   push:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
 
 # save workspaces to speed up testing
 env:
@@ -140,16 +140,22 @@ jobs:
   ghidra-tests:
     name: Ghidra tests for ${{ matrix.python-version }}
     runs-on: ubuntu-20.04
+    needs: [code_style, rule_linter]
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.7", "3.11"]
         java-version: ["17"]
+        gradle-version: ["7.3"]
+        ghidra-version: ["10.3"]
+        public-version: ["PUBLIC_20230510"] # for ghidra releases
+        jep-version: ["4.1.1"]
+        ghidrathon-version: ["2.1.0"]
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       with:
-        submodules: recursive
+        submodules: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
@@ -159,32 +165,33 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java-version }}
-    - name: Set up Gradle 7.3 # must be done manually due to no gradle build in capa
-      run: |
-        mkdir /opt/gradle
-        wget "https://services.gradle.org/distributions/gradle-7.3-bin.zip" -O /opt/gradle/gradle-7.3.zip
-        unzip /opt/gradle/gradle-7.3.zip -d /opt/gradle
-    - name: Install Ghidra 10.3
+    - name: Set up Gradle ${{ matrix.gradle-version }} 
+      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
+      with:
+        gradle-version: ${{ matrix.gradle-version }}
+    - name: Install Jep ${{ matrix.jep-version }} 
+      run : pip install jep==${{ matrix.jep-version }}
+    - name: Install Ghidra ${{ matrix.ghidra-version }} 
       run: |
         mkdir ./.github/ghidra
-        wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3_build/ghidra_10.3_PUBLIC_20230510.zip" -O ./.github/ghidra/ghidra_10.3_PUBLIC.zip
-        unzip .github/ghidra/ghidra_10.3_PUBLIC.zip -d .github/ghidra/
-    - name: Install Jep 4.1.1
-      run : |
-        mkdir ./.github/jep
-        wget "https://github.com/ninia/jep/archive/refs/tags/v4.1.1.zip" -O ./.github/jep/jep-4.1.1.zip
-        unzip .github/jep/jep-4.1.1.zip -d .github/jep/
-        pip install .github/jep/jep-4.1.1/
+        mkdir ./.github/ghidra/project
+        wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
+        unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v2.1.0.zip" -O ./.github/ghidrathon/ghidrathon-2.1.0.zip
-        unzip .github/ghidrathon/ghidrathon-2.1.0.zip -d .github/ghidrathon/
+        mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
+        unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
         workdir=$(pwd)
-        /opt/gradle/gradle-7.3/bin/gradle -p ./.github/ghidrathon/Ghidrathon-2.1.0/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_10.3_PUBLIC 
-        unzip .github/ghidrathon/Ghidrathon-2.1.0/dist/*.zip -d $workdir/.github/ghidra/ghidra_10.3_PUBLIC/Extensions
+        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
+        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: pip install -e .[dev]
+      run: pip install -e .[dev] 
+    - name: Run tests
+      run: | # runs main.py for now...
+        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'Practical Malware Analysis Lab 01-01.dll_'
+        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -process 'Practical Malware Analysis Lab 01-01.dll_' -ScriptPath ./capa -PostScript main.py
  
