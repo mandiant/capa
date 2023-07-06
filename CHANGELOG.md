@@ -8,6 +8,7 @@
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+- Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 
 ### New Rules (21)
 
