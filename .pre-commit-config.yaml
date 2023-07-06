@@ -1,0 +1,119 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: isort
+        name: isort
+        stages: [commit, push]
+        language: system
+        entry: isort
+        args: 
+        -   "--length-sort"
+        -   "--profile"
+        -   "black"
+        -   "--line-length=120"
+        -   "--skip-glob"
+        -   "*_pb2.py"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: black
+        name: black
+        stages: [commit, push]
+        language: system
+        entry: black
+        args: 
+        -   "--line-length=120"
+        -   "--extend-exclude"
+        -   ".*_pb2.py"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: ruff
+        name: ruff
+        # ruff is fast, so run during commit
+        stages: [commit, push]
+        language: system
+        entry: ruff
+        args: 
+        -   "check"
+        -   "--config"
+        -   ".github/ruff.toml"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+        verbose: true
+
+-   repo: local
+    hooks:
+    -   id: flake8
+        name: flake8
+        # flake8 is kinda slow, so only run upon push
+        stages: [push]
+        language: system
+        entry: flake8
+        args: 
+        -   "--exclude='*_pb2.py'"
+        -   "--max-line-length=120"
+        # E203: whitespace before ':'
+        -   "--ignore=E203"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: mypy
+        name: mypy
+        stages: [push]
+        language: system
+        entry: mypy
+        args: 
+        -   "--check-untyped-defs"
+        -   "--ignore-missing-imports"
+        -   "--config-file=.github/mypy/mypy.ini"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: pytest
+        name: pytest
+        stages: []
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: pytest
+        args:
+        -   "--verbose"
+        -   "--cov=capa"
+        -   "tests/"
+
+-   repo: local
+    hooks:
+    -   id: rule-linter
+        name: rule-linter
+        stages: []
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: python
+        args:
+        -   "scripts/lint.py"
+        -   "rules/"
