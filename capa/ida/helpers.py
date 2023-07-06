@@ -157,7 +157,7 @@ def collect_metadata(rules: List[Path]):
             arch=arch,
             os=os,
             extractor="ida",
-            rules=tuple(rules),
+            rules=tuple(str(r.resolve().absolute()) for r in rules),
             base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
             layout=rdoc.Layout(
                 functions=tuple()

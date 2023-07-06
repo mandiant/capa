@@ -577,10 +577,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ensure_capa_settings_rule_path(self):
         try:
-            path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+            path: Path = Path(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
 
             # resolve rules directory - check self and settings first, then ask user
-            if not os.path.exists(path):
+            if not path.exists():
                 # configure rules selection messagebox
                 rules_message = QtWidgets.QMessageBox()
                 rules_message.setIcon(QtWidgets.QMessageBox.Information)
@@ -598,15 +598,15 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if pressed == QtWidgets.QMessageBox.Cancel:
                     raise UserCancelledError()
 
-                path = self.ask_user_directory()
+                path = Path(self.ask_user_directory())
                 if not path:
                     raise UserCancelledError()
 
-                if not os.path.exists(path):
+                if not path.exists():
                     logger.error("rule path %s does not exist or cannot be accessed" % path)
                     return False
 
-                settings.user[CAPA_SETTINGS_RULE_PATH] = path
+                settings.user[CAPA_SETTINGS_RULE_PATH] = str(path)
         except UserCancelledError as e:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(

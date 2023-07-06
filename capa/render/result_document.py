@@ -74,7 +74,7 @@ class Analysis(Model):
     arch: str
     os: str
     extractor: str
-    rules: Tuple[Path, ...]
+    rules: Tuple[str, ...]
     base_address: frz.Address
     layout: Layout
     feature_counts: FeatureCounts

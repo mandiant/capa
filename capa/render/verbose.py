@@ -91,7 +91,7 @@ def render_meta(ostream, doc: rd.ResultDocument):
         ("arch", doc.meta.analysis.arch),
         ("extractor", doc.meta.analysis.extractor),
         ("base address", format_address(doc.meta.analysis.base_address)),
-        ("rules", "\n".join(tuple(str(rule) for rule in doc.meta.analysis.rules))),
+        ("rules", "\n".join(doc.meta.analysis.rules)),
         ("function count", len(doc.meta.analysis.feature_counts.functions)),
         ("library function count", len(doc.meta.analysis.library_functions)),
         (

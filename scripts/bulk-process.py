@@ -59,10 +59,10 @@ import os
 import sys
 import json
 import logging
-import os.path
 import argparse
 import multiprocessing
 import multiprocessing.pool
+from pathlib import Path
 
 import capa
 import capa.main
@@ -171,7 +171,7 @@ def main(argv=None):
         samples = []
         for base, directories, files in os.walk(args.input):
             for file in files:
-                samples.append(os.path.join(base, file))
+                samples.append(str(Path(base) / file))
 
         def pmap(f, args, parallelism=multiprocessing.cpu_count()):
             """apply the given function f to the given args using subprocesses"""

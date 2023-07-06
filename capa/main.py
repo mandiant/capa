@@ -13,7 +13,6 @@ import sys
 import time
 import hashlib
 import logging
-import os.path
 import argparse
 import datetime
 import textwrap
@@ -544,7 +543,7 @@ def get_extractor(
         # We need to fist find the binja API installation path and add it into sys.path
         if is_running_standalone():
             bn_api = find_binja_path()
-            if os.path.exists(bn_api):
+            if Path(bn_api).exists():
                 sys.path.append(bn_api)
 
         try:
@@ -628,11 +627,17 @@ def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
             logger.debug("reading rules from directory %s", rule_path)
             for root, _, files in os.walk(rule_path):
                 if ".git" in root:
-                    # Skip certain directories within the walk
+                    # the .github directory contains CI config in capa-rules
+                    # this includes some .yml files
+                    # these are not rules
+                    # additionally, .git has files that are not .yml and generate the warning
+                    # skip those too
                     continue
                 for file in files:
                     if not file.endswith(".yml"):
                         if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                            # expect to see .git* files, readme.md, format.md, and maybe a .git directory
+                            # other things maybe are rules, but are mis-named.
                             logger.warning("skipping non-.yml file: %s", file)
                         continue
                     rule_file_paths.append(Path(root) / file)
@@ -740,7 +745,7 @@ def collect_metadata(
     sha1.update(buf)
     sha256.update(buf)
 
-    rules_path = [r.resolve().absolute() for r in rules_path]
+    rules = tuple(str(r.resolve().absolute()) for r in rules_path)
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
@@ -753,14 +758,14 @@ def collect_metadata(
             md5=md5.hexdigest(),
             sha1=sha1.hexdigest(),
             sha256=sha256.hexdigest(),
-            path=os.path.normpath(sample_path),
+            path=str(Path(sample_path).resolve()),
         ),
         analysis=rdoc.Analysis(
             format=format_,
             arch=arch,
             os=os_,
             extractor=extractor.__class__.__name__,
-            rules=tuple(rules_path),
+            rules=rules,
             base_address=frz.Address.from_capa(extractor.get_base_address()),
             layout=rdoc.Layout(
                 functions=tuple(),

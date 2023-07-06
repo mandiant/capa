@@ -197,7 +197,6 @@ def capa_details(rules_path, file_path, output_format="dictionary"):
 
 if __name__ == "__main__":
     import sys
-    import os.path
     import argparse
 
     RULES_PATH = capa.main.get_default_root() / "rules"
@@ -209,6 +208,7 @@ if __name__ == "__main__":
         "--output", help="output format", choices=["dictionary", "json", "texttable"], default="dictionary"
     )
     args = parser.parse_args()
-
+    if args.rules != RULES_PATH:
+        args.rules = Path(args.rules)
     print(capa_details(args.rules, args.file, args.output))
     sys.exit(0)

@@ -61,7 +61,7 @@ def main(argv=None):
     id = capa.rules.cache.compute_cache_identifier(content)
     path = capa.rules.cache.get_cache_path(args.cache, id)
 
-    assert os.path.exists(path)
+    assert path.exists()
     logger.info("cached to: %s", path)
 
 
