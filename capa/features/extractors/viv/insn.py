@@ -116,7 +116,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 # this code everytime the call is made, thus preventing the computational overhead.
                 try:
                     fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
-                except:
+                except Exception:
                     fh.ctx["cache"]["symtab"] = None
 
             symtab = fh.ctx["cache"]["symtab"]

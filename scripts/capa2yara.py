@@ -144,7 +144,7 @@ def convert_description(statement):
             yara_desc = " // " + desc
             logger.info("using desc: " + repr(yara_desc))
             return yara_desc
-    except:
+    except Exception:
         # no description
         pass
 
@@ -347,7 +347,7 @@ def convert_rule(rule, rulename, cround, depth):
         kids = rule.children
         num_kids = len(kids)
         logger.info("kids: " + kids)
-    except:
+    except Exception:
         logger.info("no kids in rule: " + rule.name)
 
         try:
@@ -356,7 +356,7 @@ def convert_rule(rule, rulename, cround, depth):
             kids = [kid]
             num_kids = 1
             logger.info("kid: %s", kids)
-        except:
+        except Exception:
             logger.info("no kid in rule: %s", rule.name)
 
     # just a single statement without 'and' or 'or' before it in this rule

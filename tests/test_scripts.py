@@ -164,7 +164,7 @@ def test_detect_duplicate_features(tmpdir):
     """
         The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
         An overlap includes a rule overlap with itself.
-        The scripts 
+        The scripts
         The overlaps are like:
         - Rule 0 has zero overlaps in RULESET
         - Rule 1 overlaps with 3 other rules in RULESET

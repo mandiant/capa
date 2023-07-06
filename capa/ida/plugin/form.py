@@ -10,6 +10,7 @@ import copy
 import logging
 import itertools
 import collections
+from enum import IntFlag
 from typing import Any, List, Optional
 
 import idaapi
@@ -55,9 +56,6 @@ CAPA_SETTINGS_ANALYZE = "analyze"
 
 CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
-
-
-from enum import IntFlag
 
 
 class Options(IntFlag):

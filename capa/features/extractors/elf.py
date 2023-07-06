@@ -727,7 +727,7 @@ class SymTab:
             return cls(endian, bitness, sh_symtab, sh_strtab)
         except NameError:
             return None
-        except:
+        except Exception:
             # all exceptions that could be encountered by
             # cls._parse() imply a faulty symbol's table.
             raise CorruptElfFile("malformed symbol's table")

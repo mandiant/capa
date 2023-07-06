@@ -27,7 +27,7 @@ example:
     |--------------------------------------|----------------------|-------------|-------------|-------------|
     | 18c30e4 main: remove perf debug msgs | 66,561,622           | 132.13s     | 125.14s     | 139.12s     |
 
-      ^^^ --label or git hash               
+      ^^^ --label or git hash
 """
 import sys
 import timeit

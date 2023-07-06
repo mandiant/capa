@@ -68,7 +68,7 @@ def xfail(condition, reason=None):
     try:
         # do the block
         yield
-    except:
+    except Exception:
         if condition:
             # we expected the test to fail, so raise and register this via pytest
             pytest.xfail(reason)

@@ -236,7 +236,7 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
 
 
 if __name__ == "__main__":
-    if capa.main.is_runtime_ida():
+    if capa.helpers.is_runtime_ida():
         ida_main()
     else:
         sys.exit(main())

@@ -778,7 +778,7 @@ class Rule:
             # on Windows, get WHLs from pyyaml.org/pypi
             logger.debug("using libyaml CLoader.")
             return yaml.CLoader
-        except:
+        except Exception:
             logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
             return yaml.Loader

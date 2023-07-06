@@ -103,7 +103,7 @@ def redirecting_print_to_tqdm(disable_progress):
         else:
             try:
                 tqdm.tqdm.write(*args, **kwargs)
-            except:
+            except Exception:
                 old_print(*args, **kwargs)
 
     try:

@@ -1,3 +1,25 @@
+# install the pre-commit hooks:
+#
+#    ❯ pre-commit install --hook-type pre-commit
+#    pre-commit installed at .git/hooks/pre-commit
+#
+#    ❯ pre-commit install --hook-type pre-push
+#    pre-commit installed at .git/hooks/pre-push
+#
+# run all linters liks:
+#
+#    ❯ pre-commit run --all-files
+#    isort....................................................................Passed
+#    black....................................................................Passed
+#    ruff.....................................................................Passed
+#    flake8...................................................................Passed
+#    mypy.....................................................................Passed
+#
+# run a single linter like:
+#
+#    ❯ pre-commit run --all-files isort
+#    isort....................................................................Passed
+
 repos:
 -   repo: local
     hooks:
@@ -53,21 +75,26 @@ repos:
         -   "tests/"
         always_run: true
         pass_filenames: false
-        verbose: true
 
 -   repo: local
     hooks:
     -   id: flake8
         name: flake8
-        # flake8 is kinda slow, so only run upon push
-        stages: [push]
+        # flake8 is kinda slow, so only run upon push, or like:
+        #
+        #     pre-commit run flake8 --hook-stage push
+        stages: [commit, push]
         language: system
         entry: flake8
         args: 
-        -   "--exclude='*_pb2.py'"
         -   "--max-line-length=120"
-        # E203: whitespace before ':'
-        -   "--ignore=E203"
+        # E203: whitespace before ':'  (black does this)
+        # F401: `foo` imported but unused  (prefer ruff)
+        # F811 Redefinition of unused `foo`  (prefer ruff)
+        # E501 line too long  (prefer black)
+        -   "--extend-ignore=E203,F401,F811,E501"
+        -   "--extend-exclude"
+        -   "capa/render/proto/capa_pb2.py"
         -   "capa/"
         -   "scripts/"
         -   "tests/"
@@ -78,7 +105,7 @@ repos:
     hooks:
     -   id: mypy
         name: mypy
-        stages: [push]
+        stages: [commit, push]
         language: system
         entry: mypy
         args: 
@@ -90,30 +117,3 @@ repos:
         -   "tests/"
         always_run: true
         pass_filenames: false
-
--   repo: local
-    hooks:
-    -   id: pytest
-        name: pytest
-        stages: []
-        language: system
-        pass_filenames: false
-        always_run: true
-        entry: pytest
-        args:
-        -   "--verbose"
-        -   "--cov=capa"
-        -   "tests/"
-
--   repo: local
-    hooks:
-    -   id: rule-linter
-        name: rule-linter
-        stages: []
-        language: system
-        pass_filenames: false
-        always_run: true
-        entry: python
-        args:
-        -   "scripts/lint.py"
-        -   "rules/"
