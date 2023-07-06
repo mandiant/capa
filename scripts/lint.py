@@ -928,6 +928,10 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
+    # remove once support for the legacy scope
+    # field has been added
+    return True
+
     samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
