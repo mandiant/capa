@@ -46,7 +46,7 @@ class DynamicAddress(Address):
         self.return_address = return_address
 
     def __repr__(self):
-        return f"dynamic(eventid: {self.id}, returnaddress: 0x{self.return_address:x})"
+        return f"dynamic(event: {self.id}, returnaddress: 0x{self.return_address:x})"
 
     def __hash__(self):
         return hash((self.id, self.return_address))

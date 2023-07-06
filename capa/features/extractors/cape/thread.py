@@ -42,12 +42,13 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
 
         # TODO this address may vary from the PE header, may read actual base from procdump.pe.imagebase or similar
         caller = DynamicAddress(call["id"], int(call["caller"], 16))
-        yield API(call["api"]), caller
-        for n, arg in enumerate(call["arguments"]):
+        # list similar to disassembly: arguments left-to-right, call
+        for arg in call["arguments"][::-1]:
             try:
-                yield Number(int(arg["value"], 16), description=f"arg{n}"), caller
+                yield Number(int(arg["value"], 16), description=f"{arg['name']}"), caller
             except ValueError:
-                yield String(arg["value"], description=f"arg{n}"), caller
+                yield String(arg["value"], description=f"{arg['name']}"), caller
+        yield API(call["api"]), caller
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:

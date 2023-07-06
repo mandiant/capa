@@ -59,7 +59,7 @@ def format_address(address: frz.Address) -> str:
         id_, return_address = address.value
         assert isinstance(id_, int)
         assert isinstance(return_address, int)
-        return f"eventid: {id_}, retaddr: 0x{return_address:x}"
+        return f"event: {id_}, retaddr: 0x{return_address:x}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
