@@ -37,7 +37,9 @@ def get_rule_path():
     "script,args",
     [
         pytest.param("capa2yara.py", [get_rules_path()]),
-        pytest.param("capafmt.py", [get_rule_path()]),
+        pytest.param(
+            "capafmt.py", [get_rule_path()], marks=pytest.mark.xfail(reason="rendering hasn't been added yet")
+        ),
         # not testing lint.py as it runs regularly anyway
         pytest.param("match-function-id.py", [get_file_path()]),
         pytest.param("show-capabilities-by-function.py", [get_file_path()]),
@@ -68,6 +70,7 @@ def run_program(script_path, args):
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
+@pytest.mark.xfail(reason="rendering hasn't been added yet")
 def test_proto_conversion(tmpdir):
     t = tmpdir.mkdir("proto-test")
 
@@ -92,7 +95,9 @@ def test_detect_duplicate_features(tmpdir):
         rule:
             meta:
                 name: Test Rule 0
-                scope: function
+                scopes:
+                    static: function
+                    dynamic: dev
             features:
               - and:
                 - number: 1

@@ -20,7 +20,9 @@ R1 = capa.rules.Rule.from_yaml(
             name: test rule
             authors:
                 - user@domain.com
-            scope: function
+            scopes: 
+                static: function
+                dynamic: dev
             examples:
                 - foo1234
                 - bar5678
@@ -40,7 +42,9 @@ R2 = capa.rules.Rule.from_yaml(
             name: test rule 2
             authors:
                 - user@domain.com
-            scope: function
+            scopes: 
+                static: function
+                dynamic: dev
             examples:
                 - foo1234
                 - bar5678

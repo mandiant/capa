@@ -81,7 +81,9 @@ def test_null_feature_extractor():
                     rule:
                         meta:
                             name: xor loop
-                            scope: basic block
+                            scopes:
+                                static: basic block
+                                dynamic: dev
                         features:
                             - and:
                                 - characteristic: tight loop

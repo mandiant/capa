@@ -25,7 +25,9 @@ def test_optimizer_order():
         rule:
             meta:
                 name: test rule
-                scope: function
+                scopes:
+                    static: function
+                    dynamic: dev
             features:
                 - and:
                     - substring: "foo"

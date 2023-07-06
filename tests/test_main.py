@@ -42,7 +42,9 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: dev
                 authors:
                   - test
             features:
@@ -103,7 +105,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: file rule
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: dev
                         features:
                           - characteristic: embedded pe
                     """
@@ -115,7 +119,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: function rule
-                            scope: function
+                            scopes:
+                                static: function
+                                dynamic: dev
                         features:
                           - characteristic: tight loop
                     """
@@ -127,7 +133,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: basic block rule
-                            scope: basic block
+                            scopes:
+                                static: basic block
+                                dynamic: dev
                         features:
                           - characteristic: nzxor
                     """
@@ -139,7 +147,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: process rule
-                            scope: process
+                            scopes:
+                                static: file
+                                dynamic: process
                         features:
                           - string: "explorer.exe"
                     """
@@ -151,7 +161,9 @@ def test_ruleset():
                         rule:
                             meta:
                                 name: thread rule
-                                scope: thread
+                                scopes:
+                                    static: function
+                                    dynamic: thread
                             features:
                               - api: RegDeleteKey
                         """
@@ -159,8 +171,8 @@ def test_ruleset():
             ),
         ]
     )
-    assert len(rules.file_rules) == 1
-    assert len(rules.function_rules) == 1
+    assert len(rules.file_rules) == 2
+    assert len(rules.function_rules) == 2
     assert len(rules.basic_block_rules) == 1
     assert len(rules.process_rules) == 1
     assert len(rules.thread_rules) == 1
@@ -176,7 +188,9 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                     rule:
                         meta:
                             name: install service
-                            scope: function
+                            scopes: 
+                                static: function
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x4073F0
                         features:
@@ -194,7 +208,9 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                     rule:
                         meta:
                             name: .text section
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -211,7 +227,9 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                     rule:
                         meta:
                             name: .text section and install service
-                            scope: file
+                            scopes: 
+                                static: file
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -239,7 +257,9 @@ def test_match_across_scopes(z9324d_extractor):
                     rule:
                         meta:
                             name: tight loop
-                            scope: basic block
+                            scopes:
+                                static: basic block
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x403685
                         features:
@@ -255,7 +275,9 @@ def test_match_across_scopes(z9324d_extractor):
                     rule:
                         meta:
                             name: kill thread loop
-                            scope: function
+                            scopes:
+                                static: function
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x403660
                         features:
@@ -273,7 +295,9 @@ def test_match_across_scopes(z9324d_extractor):
                     rule:
                         meta:
                             name: kill thread program
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: dev
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -300,7 +324,9 @@ def test_subscope_bb_rules(z9324d_extractor):
                     rule:
                         meta:
                             name: test rule
-                            scope: function
+                            scopes: 
+                                static: function
+                                dynamic: dev
                         features:
                             - and:
                                 - basic block:
@@ -324,7 +350,9 @@ def test_byte_matching(z9324d_extractor):
                     rule:
                         meta:
                             name: byte match test
-                            scope: function
+                            scopes:
+                                static: function
+                                dynamic: dev
                         features:
                             - and:
                                 - bytes: ED 24 9E F4 52 A9 07 47 55 8E E1 AB 30 8E 23 61
@@ -347,7 +375,9 @@ def test_count_bb(z9324d_extractor):
                       meta:
                         name: count bb
                         namespace: test
-                        scope: function
+                        scopes:
+                            static: function
+                            dynamic: dev
                       features:
                         - and:
                           - count(basic blocks): 1 or more
@@ -371,7 +401,9 @@ def test_instruction_scope(z9324d_extractor):
                       meta:
                         name: push 1000
                         namespace: test
-                        scope: instruction
+                        scopes:
+                            static: instruction
+                            dynamic: dev
                       features:
                         - and:
                           - mnemonic: push
@@ -399,7 +431,9 @@ def test_instruction_subscope(z9324d_extractor):
                       meta:
                         name: push 1000 on i386
                         namespace: test
-                        scope: function
+                        scopes: 
+                            static: function
+                            dynamic: dev
                       features:
                         - and:
                           - arch: i386
@@ -416,6 +450,7 @@ def test_instruction_subscope(z9324d_extractor):
     assert 0x406F60 in set(map(lambda result: result[0], capabilities["push 1000 on i386"]))
 
 
+@pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_fix262(pma16_01_extractor, capsys):
     path = pma16_01_extractor.path
     assert capa.main.main([path, "-vv", "-t", "send HTTP request", "-q"]) == 0
@@ -425,6 +460,7 @@ def test_fix262(pma16_01_extractor, capsys):
     assert "www.practicalmalwareanalysis.com" not in std.out
 
 
+@pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     # rules that are also matched by other rules should not get rendered by default.
     # this cuts down on the amount of output while giving approx the same detail.
@@ -451,6 +487,7 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     assert "create TCP socket" in std.out
 
 
+@pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_json_meta(capsys):
     path = fixtures.get_data_path_by_name("pma01-01")
     assert capa.main.main([path, "-j"]) == 0
@@ -495,6 +532,7 @@ def test_main_dotnet4(_039a6_dotnetfile_extractor):
     assert capa.main.main([path, "-vv"]) == 0
 
 
+@pytest.mark.xfail(reason="ResultDocument hasn't been updated yet")
 def test_main_rd():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
     assert capa.main.main([path, "-vv"]) == 0

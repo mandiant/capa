@@ -59,7 +59,7 @@ META_KEYS = (
     "authors",
     "description",
     "lib",
-    "scope",
+    "scopes",
     "att&ck",
     "mbc",
     "references",
@@ -90,6 +90,7 @@ INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
 # used only to specify supported features per scope.
 # not used to validate rules.
 GLOBAL_SCOPE = "global"
+DEV_SCOPE = "dev"
 
 
 # these literals are used to check if the flavor
@@ -106,6 +107,7 @@ DYNAMIC_SCOPES = (
     GLOBAL_SCOPE,
     PROCESS_SCOPE,
     THREAD_SCOPE,
+    DEV_SCOPE,
 )
 
 
@@ -114,20 +116,12 @@ class Scopes:
     static: str
     dynamic: str
 
+    def __str__(self) -> str:
+        return f'"static": {self.static}, "dynamic": {self.dynamic}'
+
     def __eq__(self, scope) -> bool:
         assert isinstance(scope, str) or isinstance(scope, Scope)
         return (scope == self.static) or (scope == self.dynamic)
-
-    @classmethod
-    def from_str(self, scope: str) -> "Scopes":
-        assert isinstance(scope, str)
-        if scope not in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
-            InvalidRule(f"{scope} is not a valid scope")
-        if scope in STATIC_SCOPES:
-            return Scopes(scope, "")
-        else:
-            assert scope in DYNAMIC_SCOPES
-            return Scopes("", scope)
 
     @classmethod
     def from_dict(self, scopes: dict) -> "Scopes":
@@ -212,6 +206,9 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Class,
         capa.features.common.Namespace,
     },
+    DEV_SCOPE: {
+        capa.features.insn.API,
+    },
 }
 
 # global scope features are available in all other scopes
@@ -228,6 +225,10 @@ SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
 SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
+# dynamic-dev scope contains all features
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[FILE_SCOPE])
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[FUNCTION_SCOPE])
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[PROCESS_SCOPE])
 
 
 class InvalidRule(ValueError):
@@ -521,7 +522,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(PROCESS_SCOPE, build_statements(d[key][0], PROCESS_SCOPE), description=description)
 
     elif key == "thread":
-        if scope != PROCESS_SCOPE:
+        if scope not in (PROCESS_SCOPE, FILE_SCOPE):
             raise InvalidRule("thread subscope supported only for the process scope")
 
         if len(d[key]) != 1:
@@ -530,7 +531,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(THREAD_SCOPE, build_statements(d[key][0], THREAD_SCOPE), description=description)
 
     elif key == "function":
-        if scope != FILE_SCOPE:
+        if scope not in (FILE_SCOPE, DEV_SCOPE):
             raise InvalidRule("function subscope supported only for file scope")
 
         if len(d[key]) != 1:
@@ -539,7 +540,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(FUNCTION_SCOPE, build_statements(d[key][0], FUNCTION_SCOPE), description=description)
 
     elif key == "basic block":
-        if scope != FUNCTION_SCOPE:
+        if scope not in (FUNCTION_SCOPE, DEV_SCOPE):
             raise InvalidRule("basic block subscope supported only for function scope")
 
         if len(d[key]) != 1:
@@ -548,7 +549,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(BASIC_BLOCK_SCOPE, build_statements(d[key][0], BASIC_BLOCK_SCOPE), description=description)
 
     elif key == "instruction":
-        if scope not in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE):
+        if scope not in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE, DEV_SCOPE):
             raise InvalidRule("instruction subscope supported only for function and basic block scope")
 
         if len(d[key]) == 1:
@@ -770,11 +771,11 @@ class Rule:
                 name = self.name + "/" + uuid.uuid4().hex
                 new_rule = Rule(
                     name,
-                    Scopes.from_str(subscope.scope),
+                    Scopes(subscope.scope, FILE_SCOPE),
                     subscope.child,
                     {
                         "name": name,
-                        "scopes": Scopes.from_str(subscope.scope),
+                        "scopes": Scopes(subscope.scope, FILE_SCOPE).__dict__,
                         ""
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
@@ -841,10 +842,7 @@ class Rule:
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
-        if "scopes" in meta:
-            scopes = Scopes.from_dict(meta.get("scopes"))
-        else:
-            scopes = Scopes.from_str(meta.get("scope", FUNCTION_SCOPE))
+        scopes: Scopes = Scopes.from_dict(meta.get("scopes", {"static": "function", "dynamic": "dev"}))
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -865,7 +863,8 @@ class Rule:
         if scopes.static:
             statement = build_statements(statements[0], scopes.static)
         if scopes.dynamic:
-            statement = build_statements(statements[0], scopes.dynamic)
+            # check if the statement is valid for the dynamic scope
+            _ = build_statements(statements[0], scopes.dynamic)
         return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
@@ -965,11 +964,9 @@ class Rule:
                 del meta[k]
         for k, v in self.meta.items():
             meta[k] = v
-
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        if "scope" not in meta:
-            meta["scopes"] = str(self.scopes)
+        meta["scopes"] = self.scopes.__dict__
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -990,7 +987,6 @@ class Rule:
             if key in META_KEYS:
                 continue
             move_to_end(meta, key)
-
         # save off the existing hidden meta values,
         # emit the document,
         # and re-add the hidden meta.
@@ -1337,7 +1333,6 @@ class RuleSet:
             elif isinstance(node, (ceng.Range)):
                 rec(rule_name, node.child)
             elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
-                print(node)
                 for child in node.children:
                     rec(rule_name, child)
             elif isinstance(node, ceng.Statement):

@@ -106,10 +106,10 @@ def render_matches_by_function(doc: rd.ResultDocument):
 
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if rule.meta.scopes == capa.rules.FUNCTION_SCOPE:
+        if rule.meta.scope == capa.rules.FUNCTION_SCOPE:
             for addr, _ in rule.matches:
                 matches_by_function[addr].add(rule.meta.name)
-        elif rule.meta.scopes == capa.rules.BASIC_BLOCK_SCOPE:
+        elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
             for addr, _ in rule.matches:
                 function = functions_by_bb[addr]
                 matches_by_function[function].add(rule.meta.name)
