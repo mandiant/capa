@@ -930,7 +930,7 @@ def main(argv=None):
 
     # remove once support for the legacy scope
     # field has been added
-    return True
+    return 0
 
     samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
 
