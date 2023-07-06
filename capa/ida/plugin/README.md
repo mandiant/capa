@@ -95,7 +95,7 @@ can update using the `Settings` button.
 
 ### Requirements
 
-capa explorer supports Python versions >= 3.7.x and IDA Pro versions >= 7.4. The following IDA Pro versions have been tested:
+capa explorer supports Python versions >= 3.8.x and IDA Pro versions >= 7.4. The following IDA Pro versions have been tested:
 
 * IDA 7.4
 * IDA 7.5
@@ -105,7 +105,7 @@ capa explorer supports Python versions >= 3.7.x and IDA Pro versions >= 7.4. The
 * IDA 8.1
 * IDA 8.2
 
-capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.7.x).
+capa explorer is however limited to the Python versions supported by your IDA installation (which may not include all Python versions >= 3.8.x).
 
 If you encounter issues with your specific setup, please open a new [Issue](https://github.com/mandiant/capa/issues).
 

@@ -9,6 +9,7 @@
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+- Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 
 ### New Rules (21)
 
@@ -47,6 +48,8 @@
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 - tests: refine the IDA test runner script #1513 @williballenthin
+- output: don't leave behind traces of progress bar @williballenthin
+- import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 
 ### capa explorer IDA Pro plugin
 

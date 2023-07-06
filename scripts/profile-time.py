@@ -109,7 +109,7 @@ def main(argv=None):
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
         )
 
-    with tqdm.tqdm(total=args.number * args.repeat) as pbar:
+    with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
 
         def do_iteration():
             capa.perf.reset()
