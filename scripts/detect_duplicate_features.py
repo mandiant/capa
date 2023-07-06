@@ -42,7 +42,7 @@ def get_features(rule_path: str) -> list:
         list: A list of all feature statements contained within the rule file.
     """
     feature_list = []
-    with open(rule_path, "r") as f:
+    with open(rule_path, "r", encoding="utf-8") as f:
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)

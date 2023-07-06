@@ -76,6 +76,7 @@ setuptools.setup(
             "pytest-cov==4.1.0",
             "flake8==6.0.0",
             "flake8-bugbear==23.6.5",
+            "flake8-encodings==0.5.0.post1",
             "ruff==0.0.275",
             "black==23.3.0",
             "isort==5.11.4",
