@@ -8,7 +8,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import os
-import os.path
 import binascii
 import itertools
 import contextlib
@@ -235,83 +234,81 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Ad
 # note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
-        return os.path.join(CD, "data", "mimikatz.exe_")
+        return (CD / "data" / "mimikatz.exe_").as_posix()
     elif name == "kernel32":
-        return os.path.join(CD, "data", "kernel32.dll_")
+        return (CD / "data" / "kernel32.dll_").as_posix()
     elif name == "kernel32-64":
-        return os.path.join(CD, "data", "kernel32-64.dll_")
+        return (CD / "data" / "kernel32-64.dll_").as_posix()
     elif name == "pma01-01":
-        return os.path.join(CD, "data", "Practical Malware Analysis Lab 01-01.dll_")
+        return (CD / "data" / "Practical Malware Analysis Lab 01-01.dll_").as_posix()
     elif name == "pma01-01-rd":
-        return os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json")
+        return (CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json").as_posix()
     elif name == "pma12-04":
-        return os.path.join(CD, "data", "Practical Malware Analysis Lab 12-04.exe_")
+        return (CD / "data" / "Practical Malware Analysis Lab 12-04.exe_").as_posix()
     elif name == "pma16-01":
-        return os.path.join(CD, "data", "Practical Malware Analysis Lab 16-01.exe_")
+        return (CD / "data" / "Practical Malware Analysis Lab 16-01.exe_").as_posix()
     elif name == "pma21-01":
-        return os.path.join(CD, "data", "Practical Malware Analysis Lab 21-01.exe_")
+        return (CD / "data" / "Practical Malware Analysis Lab 21-01.exe_").as_posix()
     elif name == "al-khaser x86":
-        return os.path.join(CD, "data", "al-khaser_x86.exe_")
+        return (CD / "data" / "al-khaser_x86.exe_").as_posix()
     elif name == "al-khaser x64":
-        return os.path.join(CD, "data", "al-khaser_x64.exe_")
+        return (CD / "data" / "al-khaser_x64.exe_").as_posix()
     elif name.startswith("39c05"):
-        return os.path.join(CD, "data", "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_")
+        return (CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_").as_posix()
     elif name.startswith("499c2"):
-        return os.path.join(CD, "data", "499c2a85f6e8142c3f48d4251c9c7cd6.raw32")
+        return (CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32").as_posix()
     elif name.startswith("9324d"):
-        return os.path.join(CD, "data", "9324d1a8ae37a36ae560c37448c9705a.exe_")
+        return (CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_").as_posix()
     elif name.startswith("a1982"):
-        return os.path.join(CD, "data", "a198216798ca38f280dc413f8c57f2c2.exe_")
+        return (CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_").as_posix()
     elif name.startswith("a933a"):
-        return os.path.join(CD, "data", "a933a1a402775cfa94b6bee0963f4b46.dll_")
+        return (CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_").as_posix()
     elif name.startswith("bfb9b"):
-        return os.path.join(CD, "data", "bfb9b5391a13d0afd787e87ab90f14f5.dll_")
+        return (CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_").as_posix()
     elif name.startswith("c9188"):
-        return os.path.join(CD, "data", "c91887d861d9bd4a5872249b641bc9f9.exe_")
+        return (CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_").as_posix()
     elif name.startswith("64d9f"):
-        return os.path.join(CD, "data", "64d9f7d96b99467f36e22fada623c3bb.dll_")
+        return (CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_").as_posix()
     elif name.startswith("82bf6"):
-        return os.path.join(CD, "data", "82BF6347ACF15E5D883715DC289D8A2B.exe_")
+        return (CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_").as_posix()
     elif name.startswith("pingtaest"):
-        return os.path.join(CD, "data", "ping_täst.exe_")
+        return (CD / "data" / "ping_täst.exe_").as_posix()
     elif name.startswith("77329"):
-        return os.path.join(CD, "data", "773290480d5445f11d3dc1b800728966.exe_")
+        return (CD / "data" / "773290480d5445f11d3dc1b800728966.exe_").as_posix()
     elif name.startswith("3b13b"):
-        return os.path.join(CD, "data", "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_")
+        return (CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_").as_posix()
     elif name == "7351f.elf":
-        return os.path.join(CD, "data", "7351f8a40c5450557b24622417fc478d.elf_")
+        return (CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_").as_posix()
     elif name.startswith("79abd"):
-        return os.path.join(CD, "data", "79abd17391adc6251ecdc58d13d76baf.dll_")
+        return (CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_").as_posix()
     elif name.startswith("946a9"):
-        return os.path.join(CD, "data", "946a99f36a46d335dec080d9a4371940.dll_")
+        return (CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_").as_posix()
     elif name.startswith("2f7f5f"):
-        return os.path.join(CD, "data", "2f7f5fb5de175e770d7eae87666f9831.elf_")
+        return (CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_").as_posix()
     elif name.startswith("b9f5b"):
-        return os.path.join(CD, "data", "b9f5bd514485fb06da39beff051b9fdc.exe_")
+        return (CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_").as_posix()
     elif name.startswith("mixed-mode-64"):
-        return os.path.join(DNFILE_TESTFILES, "mixed-mode", "ModuleCode", "bin", "ModuleCode_amd64.exe")
+        return (DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe").as_posix()
     elif name.startswith("hello-world"):
-        return os.path.join(DNFILE_TESTFILES, "hello-world", "hello-world.exe")
+        return (DNFILE_TESTFILES / "hello-world" / "hello-world.exe").as_posix()
     elif name.startswith("_1c444"):
-        return os.path.join(CD, "data", "dotnet", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_")
+        return (DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_").as_posix()
     elif name.startswith("_387f15"):
-        return os.path.join(
-            CD, "data", "dotnet", "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
-        )
+        return (DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_").as_posix()
     elif name.startswith("_692f"):
-        return os.path.join(CD, "data", "dotnet", "692f7fd6d198e804d6af98eb9e390d61.exe_")
+        return (DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_").as_posix()
     elif name.startswith("_0953c"):
-        return os.path.join(CD, "data", "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_")
+        return (CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_").as_posix()
     elif name.startswith("_039a6"):
-        return os.path.join(CD, "data", "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_")
+        return (CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_").as_posix()
     elif name.startswith("b5f052"):
-        return os.path.join(CD, "data", "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_")
+        return (CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_").as_posix()
     elif name.startswith("bf7a9c"):
-        return os.path.join(CD, "data", "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_")
+        return (CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_").as_posix()
     elif name.startswith("294b8d"):
-        return os.path.join(CD, "data", "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_")
+        return (CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_").as_posix()
     elif name.startswith("2bf18d"):
-        return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
+        return (CD / "data" / "2bf18d0403677378adad9001b1243211.elf_").as_posix()
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -1185,29 +1182,29 @@ def get_result_doc(path):
 
 @pytest.fixture
 def pma0101_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "Practical Malware Analysis Lab 01-01.dll_.json"))
+    return get_result_doc((CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json").as_posix())
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json"))
+    return get_result_doc((CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json").as_posix())
 
 
 @pytest.fixture
 def a3f3bbc_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json"))
+    return get_result_doc((CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json").as_posix())
 
 
 @pytest.fixture
 def al_khaserx86_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x86.exe_.json"))
+    return get_result_doc((CD / "data" / "rd" / "al-khaser_x86.exe_.json").as_posix())
 
 
 @pytest.fixture
 def al_khaserx64_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "al-khaser_x64.exe_.json"))
+    return get_result_doc((CD / "data" / "rd" / "al-khaser_x64.exe_.json").as_posix())
 
 
 @pytest.fixture
 def a076114_rd():
-    return get_result_doc(os.path.join(CD, "data", "rd", "0761142efbda6c4b1e801223de723578.dll_.json"))
+    return get_result_doc((CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json").as_posix())

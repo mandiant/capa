@@ -917,7 +917,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
+    samples_path = (Path(__file__).resolve().parent.parent / "tests" / "data").as_posix()
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})

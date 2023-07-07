@@ -497,7 +497,7 @@ def get_workspace(path, format_, sigpaths: List[Path]):
     else:
         raise ValueError("unexpected format: " + format_)
 
-    viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
+    viv_utils.flirt.register_flirt_signature_analyzers(vw, [s.as_posix() for s in sigpaths])
 
     vw.analyze()
 
@@ -688,8 +688,8 @@ def get_rules(
         except capa.rules.InvalidRule:
             raise
         else:
-            rule.meta["capa/path"] = str(path)
-            if is_nursery_rule_path(str(path)):
+            rule.meta["capa/path"] = path.as_posix()
+            if is_nursery_rule_path(path.as_posix()):
                 rule.meta["capa/nursery"] = True
 
             rules.append(rule)
@@ -745,7 +745,7 @@ def collect_metadata(
     sha1.update(buf)
     sha256.update(buf)
 
-    rules = tuple(str(r.resolve().absolute()) for r in rules_path)
+    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
@@ -758,7 +758,7 @@ def collect_metadata(
             md5=md5.hexdigest(),
             sha1=sha1.hexdigest(),
             sha256=sha256.hexdigest(),
-            path=str(Path(sample_path).resolve()),
+            path=Path(sample_path).resolve().as_posix(),
         ),
         analysis=rdoc.Analysis(
             format=format_,
