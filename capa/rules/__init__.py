@@ -204,6 +204,8 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Namespace,
     },
     DEV_SCOPE: {
+        # TODO: this is a temporary scope. remove it after support
+        # for the legacy scope keyword has been added (to rendering).
         capa.features.insn.API,
     },
 }
