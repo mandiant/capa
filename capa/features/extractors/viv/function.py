@@ -84,6 +84,8 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
                 ):
                     edges.append((bb.va, bva))
 
+    import pprint
+    pprint.pprint(edges)
     if edges and loops.has_loop(edges):
         yield Characteristic("loop"), fhandle.address
 

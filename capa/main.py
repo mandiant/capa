@@ -1004,7 +1004,7 @@ def handle_common_args(args):
         # if isinstance(sys.stdout, io.TextIOWrapper):
         #    sys.stdout.reconfigure(...)
         sys.stdout.reconfigure(encoding="utf-8")
-    colorama.just_fix_windows_console()  # type: ignore [attr-defined]
+    #colorama.just_fix_windows_console()  # type: ignore [attr-defined]
 
     if args.color == "always":
         colorama.init(strip=False)
@@ -1294,6 +1294,10 @@ def main(argv=None):
         print(capa.render.default.render(meta, rules, capabilities))
     colorama.deinit()
 
+    for f in extractor.get_functions():
+        for feat in extractor.extract_function_features(f):
+            print(feat)
+
     logger.debug("done.")
 
     return 0
@@ -1342,6 +1346,8 @@ def ida_main():
 def ghidra_main():
     import capa.rules
     import capa.features.extractors.ghidra.file
+    import capa.features.extractors.ghidra.function
+    import capa.features.extractors.ghidra.helpers
 
     # import capa.render.default
     # import capa.features.extractors.ghidra.extractor
@@ -1362,15 +1368,16 @@ def ghidra_main():
     # logger.debug("rule path: %s", rules_path)
     # rules = get_rules([rules_path])
 
-    # temp test for OS & ARCH extractions
-    globl_features: List[Tuple[Feature, Address]] = []
-    globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
-    globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
-    print(globl_features)
+    # temp test for ghidra CI
+    ghidra_features: List[Tuple[Feature, Address]] = []
+    ghidra_features.extend(capa.features.extractors.ghidra.global_.extract_os())
+    ghidra_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
+    ghidra_features.extend(capa.features.extractors.ghidra.file.extract_features())
+    for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
+        ghidra_features.extend(list(capa.features.extractors.ghidra.function.extract_features(fhandle)))
 
-    file_features: List[Tuple[Feature, Address]] = []
-    file_features.extend(capa.features.extractors.ghidra.file.extract_features())
-    print(file_features)
+    import pprint
+    pprint.pprint(ghidra_features)
 
 
 def is_runtime_ida():
