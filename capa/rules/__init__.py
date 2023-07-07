@@ -116,8 +116,8 @@ class Scopes:
     static: str
     dynamic: str
 
-    def __eq__(self, scope) -> bool:
-        assert isinstance(scope, str) or isinstance(scope, Scope)
+    def __contains__(self, scope: Union[Scope, str]) -> bool:
+        assert isinstance(scope, Scope) or isinstance(scope, str)
         return (scope == self.static) or (scope == self.dynamic)
 
     @classmethod
@@ -858,12 +858,12 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        # if the two statements are not the same, an InvalidRule() exception will be thrown
-        if scopes.static:
-            statement = build_statements(statements[0], scopes.static)
-        if scopes.dynamic:
-            # check if the statement is valid for the dynamic scope
-            _ = build_statements(statements[0], scopes.dynamic)
+        # TODO: once we've decided on the desired format for mixed-scope statements,
+        # we should go back and update this accordingly to either:
+        # - generate one englobing statement.
+        # - generate two respective statements and store them approriately
+        statement = build_statements(statements[0], scopes.static)
+        _ = build_statements(statements[0], scopes.dynamic)
         return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
@@ -1045,7 +1045,7 @@ def get_rules_with_scope(rules, scope) -> List[Rule]:
     from the given collection of rules, select those with the given scope.
     `scope` is one of the capa.rules.*_SCOPE constants.
     """
-    return list(rule for rule in rules if rule.scopes == scope)
+    return list(rule for rule in rules if scope in rule.scopes)
 
 
 def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
