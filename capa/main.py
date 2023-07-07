@@ -1004,7 +1004,7 @@ def handle_common_args(args):
         # if isinstance(sys.stdout, io.TextIOWrapper):
         #    sys.stdout.reconfigure(...)
         sys.stdout.reconfigure(encoding="utf-8")
-    colorama.just_fix_windows_console()
+    colorama.just_fix_windows_console()  # type: ignore [attr-defined]
 
     if args.color == "always":
         colorama.init(strip=False)
@@ -1341,6 +1341,7 @@ def ida_main():
 
 def ghidra_main():
     import capa.rules
+    import capa.features.extractors.ghidra.file
 
     # import capa.render.default
     # import capa.features.extractors.ghidra.extractor
@@ -1357,15 +1358,19 @@ def ghidra_main():
     logger.debug("     https://github.com/mandiant/capa-rules")
     logger.debug("-" * 80)
 
-    rules_path = os.path.join(get_default_root(), "rules")
-    logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    # rules_path = os.path.join(get_default_root(), "rules")
+    # logger.debug("rule path: %s", rules_path)
+    # rules = get_rules([rules_path])
 
     # temp test for OS & ARCH extractions
     globl_features: List[Tuple[Feature, Address]] = []
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_os())
     globl_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
     print(globl_features)
+
+    file_features: List[Tuple[Feature, Address]] = []
+    file_features.extend(capa.features.extractors.ghidra.file.extract_features())
+    print(file_features)
 
 
 def is_runtime_ida():
