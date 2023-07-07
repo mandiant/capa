@@ -38,7 +38,7 @@ except ImportError:
 )
 def test_binja_features(sample, scope, feature, expected):
     if feature == capa.features.common.Characteristic("stack string"):
-        pytest.skip("skip failing Binja stack string detection temporarily, see #1473")
+        pytest.xfail("skip failing Binja stack string detection temporarily, see #1473")
     fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 
