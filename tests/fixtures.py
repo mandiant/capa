@@ -659,7 +659,7 @@ DYNAMIC_FEATURE_COUNT_TESTS = sorted(
         ),
         ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), 0),
         # thread/api calls
-        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 5),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 7),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), 0),
         # thread/number call argument
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
