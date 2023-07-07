@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Tuple, Iterator
 import capa.features.extractors.cape.helpers
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address, DynamicAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -40,14 +40,15 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
         if call["thread_id"] != tid:
             continue
 
-        caller = int(call["caller"], 16)
-        caller = AbsoluteVirtualAddress(caller)
-        yield API(call["api"]), caller
-        for arg in call["arguments"]:
+        # TODO this address may vary from the PE header, may read actual base from procdump.pe.imagebase or similar
+        caller = DynamicAddress(call["id"], int(call["caller"], 16))
+        # list similar to disassembly: arguments right-to-left, call
+        for arg in call["arguments"][::-1]:
             try:
-                yield Number(int(arg["value"], 16)), caller
+                yield Number(int(arg["value"], 16), description=f"{arg['name']}"), caller
             except ValueError:
-                yield String(arg["value"]), caller
+                yield String(arg["value"], description=f"{arg['name']}"), caller
+        yield API(call["api"]), caller
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:

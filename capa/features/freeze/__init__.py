@@ -41,6 +41,7 @@ class AddressType(str, Enum):
     FILE = "file"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
+    DYNAMIC = "dynamic"
     NO_ADDRESS = "no address"
 
 
@@ -64,6 +65,9 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
+
+        elif isinstance(a, capa.features.address.DynamicAddress):
+            return cls(type=AddressType.DYNAMIC, value=(a.id, a.return_address))
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
