@@ -116,9 +116,6 @@ class Scopes:
     static: str
     dynamic: str
 
-    def __str__(self) -> str:
-        return f'"static": {self.static}, "dynamic": {self.dynamic}'
-
     def __eq__(self, scope) -> bool:
         assert isinstance(scope, str) or isinstance(scope, Scope)
         return (scope == self.static) or (scope == self.dynamic)
@@ -771,11 +768,11 @@ class Rule:
                 name = self.name + "/" + uuid.uuid4().hex
                 new_rule = Rule(
                     name,
-                    Scopes(subscope.scope, FILE_SCOPE),
+                    Scopes(subscope.scope, DEV_SCOPE),
                     subscope.child,
                     {
                         "name": name,
-                        "scopes": Scopes(subscope.scope, FILE_SCOPE).__dict__,
+                        "scopes": Scopes(subscope.scope, DEV_SCOPE).__dict__,
                         ""
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
