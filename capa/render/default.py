@@ -40,7 +40,7 @@ def render_meta(doc: rd.ResultDocument, ostream: StringIO):
         ("path", doc.meta.sample.path),
     ]
 
-    ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, tablefmt="mixed_outline"))
     ostream.write("\n")
 
 
@@ -102,7 +102,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql")
+            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
         )
         ostream.write("\n")
     else:
@@ -148,7 +148,7 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql"
+                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="mixed_grid"
             )
         )
         ostream.write("\n")
@@ -190,7 +190,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="psql")
+            tabulate.tabulate(
+                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+            )
         )
         ostream.write("\n")
 

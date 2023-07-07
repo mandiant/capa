@@ -112,7 +112,7 @@ def main(argv=None):
         )
 
     assert isinstance(extractor, StaticFeatureExtractor)
-    with tqdm.tqdm(total=args.number * args.repeat) as pbar:
+    with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
 
         def do_iteration():
             capa.perf.reset()
