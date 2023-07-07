@@ -25,7 +25,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import yaml
 import pydantic
@@ -774,7 +774,7 @@ class Rule:
                     subscope.child,
                     {
                         "name": name,
-                        "scopes": dataclasses.asdict(Scopes(subscope.scope, DEV_SCOPE)),
+                        "scopes": asdict(Scopes(subscope.scope, DEV_SCOPE)),
                         ""
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
@@ -965,7 +965,7 @@ class Rule:
             meta[k] = v
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scopes"] = dataclasses.asdict(self.scopes)
+        meta["scopes"] = asdict(self.scopes)
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
