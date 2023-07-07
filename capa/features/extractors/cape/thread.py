@@ -42,7 +42,7 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
 
         # TODO this address may vary from the PE header, may read actual base from procdump.pe.imagebase or similar
         caller = DynamicAddress(call["id"], int(call["caller"], 16))
-        # list similar to disassembly: arguments left-to-right, call
+        # list similar to disassembly: arguments right-to-left, call
         for arg in call["arguments"][::-1]:
             try:
                 yield Number(int(arg["value"], 16), description=f"{arg['name']}"), caller
