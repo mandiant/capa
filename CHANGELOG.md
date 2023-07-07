@@ -5,12 +5,14 @@
 
 ### New Features
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- use fancy box drawing characters for default output #1586 @williballenthin
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
-- Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04]
+- Python 3.8 is now the minimum supported Python version #1578 @williballenthin
+- Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
-### New Rules (20)
+### New Rules (22)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -31,6 +33,8 @@
 - persistence/office/act-as-office-com-add-in jakub.jozwiak@mandiant.com
 - persistence/office/act-as-word-wll-add-in jakub.jozwiak@mandiant.com
 - anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
+- host-interaction/gui/switch-active-desktop jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
@@ -46,6 +50,8 @@
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 - tests: refine the IDA test runner script #1513 @williballenthin
+- output: don't leave behind traces of progress bar @williballenthin
+- import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
