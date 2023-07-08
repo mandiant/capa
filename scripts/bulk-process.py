@@ -169,9 +169,8 @@ def main(argv=None):
             return -1
 
         samples = []
-        for base, directories, files in os.walk(args.input):
-            for file in files:
-                samples.append(str(Path(base) / file))
+        for file in Path(args.input).rglob("*"):
+            samples.append(file.as_posix())
 
         def pmap(f, args, parallelism=multiprocessing.cpu_count()):
             """apply the given function f to the given args using subprocesses"""

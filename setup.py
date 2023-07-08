@@ -35,7 +35,7 @@ requirements = [
 # this sets __version__
 # via: http://stackoverflow.com/a/7071358/87207
 # and: http://stackoverflow.com/a/2073599/87207
-exec(Path("capa/version.py").read_text())
+exec((Path("capa") / "version.py").read_text())
 
 
 # via: https://packaging.python.org/guides/making-a-pypi-friendly-readme/

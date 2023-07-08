@@ -7,8 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
 import collections
-from typing import Any, Dict, List, Tuple, Union, Optional
-from pathlib import Path
+from typing import Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 

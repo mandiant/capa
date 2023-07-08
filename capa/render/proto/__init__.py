@@ -137,7 +137,6 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
             arch=meta.analysis.arch,
             os=meta.analysis.os,
             extractor=meta.analysis.extractor,
-            # TODO convert analysis.rule type to Path in capa_pb2.Metadata
             rules=list(meta.analysis.rules),
             base_address=addr_to_pb2(meta.analysis.base_address),
             layout=capa_pb2.Layout(

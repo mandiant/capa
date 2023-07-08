@@ -102,13 +102,13 @@ def test_ruleset_cache_invalid():
 
     buf = path.read_bytes()
 
-    # Corrupt the magic header
+    # corrupt the magic header
     buf = b"x" + buf[1:]
 
-    # Write the modified contents back to the file
+    # write the modified contents back to the file
     path.write_bytes(buf)
 
-    # Check if the file still exists
+    # check if the file still exists
     assert path.exists()
     assert capa.rules.cache.load_cached_ruleset(cache_dir, content) is None
     # the invalid cache should be deleted

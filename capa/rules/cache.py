@@ -105,23 +105,23 @@ def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdenti
 
 def cache_ruleset(cache_dir: Path, ruleset: capa.rules.RuleSet):
     """
-    Cache the given ruleset to disk, using the given cache directory.
-    This can subsequently be reloaded via `load_cached_ruleset`,
+    cache the given ruleset to disk, using the given cache directory.
+    this can subsequently be reloaded via `load_cached_ruleset`,
     assuming the capa version and rule content does not change.
 
-    Callers should use this function to avoid the performance overhead
+    callers should use this function to avoid the performance overhead
     of validating rules on each run.
     """
     id = compute_ruleset_cache_identifier(ruleset)
     path = get_cache_path(cache_dir, id)
     if path.exists():
-        logger.debug("Rule set already cached to %s", path)
+        logger.debug("rule set already cached to %s", path)
         return
 
     cache = RuleCache(id, ruleset)
     path.write_bytes(cache.dump())
 
-    logger.debug("Rule set cached to %s", path)
+    logger.debug("rule set cached to %s", path)
     return
 
 

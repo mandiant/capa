@@ -886,7 +886,7 @@ def lint(ctx: Context):
 
 def collect_samples(path: Path) -> Dict[str, Path]:
     """
-    Recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
+    recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
     samples = {}
     for path in path.rglob("*"):

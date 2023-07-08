@@ -35,8 +35,7 @@ def hex(n: int) -> str:
 def get_file_taste(sample_path: Path) -> bytes:
     if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    with open(sample_path, "rb") as f:
-        taste = f.read(8)
+    taste = sample_path.open("rb").read(8)
     return taste
 
 

@@ -231,7 +231,7 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Ad
     return features
 
 
-# note: too reduce the testing time it's recommended to reuse already existing test samples, if possible
+# note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
         return (CD / "data" / "mimikatz.exe_").as_posix()

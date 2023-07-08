@@ -431,23 +431,26 @@ def is_running_standalone() -> bool:
 
 def get_default_root() -> Path:
     """
-    Get the file system path to the default resources directory.
-    Under PyInstaller, this comes from _MEIPASS.
-    Under source, this is the root directory of the project.
+    get the file system path to the default resources directory.
+    under PyInstaller, this comes from _MEIPASS.
+    under source, this is the root directory of the project.
     """
     if is_running_standalone():
+        # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
+        # its injected by pyinstaller.
+        # so we'll fetch this attribute dynamically.
         try:
             meipass = Path(getattr(sys, "_MEIPASS"))
             return meipass
         except AttributeError:
             pass
-    # Return the root directory of the project when not running from a PyInstaller'd executable
+    # return the root directory of the project when not running from a PyInstaller'd executable
     return Path(__file__).resolve().parent.parent
 
 
 def get_default_signatures() -> List[Path]:
     """
-    Compute a list of file system paths to the default FLIRT signatures.
+    compute a list of file system paths to the default FLIRT signatures.
     """
     sigs_path = get_default_root() / "sigs"
     logger.debug("signatures path: %s", sigs_path)
@@ -600,7 +603,7 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
     return file_extractors
 
 
-def is_nursery_rule_path(path: str) -> bool:
+def is_nursery_rule_path(path: Path) -> bool:
     """
     The nursery is a spot for rules that have not yet been fully polished.
     For example, they may not have references to public example of a technique.
@@ -610,12 +613,12 @@ def is_nursery_rule_path(path: str) -> bool:
     When nursery rules are loaded, their metadata section should be updated with:
       `nursery=True`.
     """
-    return "nursery" in path
+    return "nursery" in path.parts
 
 
 def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
     """
-    Collect all rule file paths, including those in subdirectories.
+    collect all rule file paths, including those in subdirectories.
     """
     rule_file_paths = []
     for rule_path in rule_paths:
@@ -690,8 +693,7 @@ def get_rules(
             raise
         else:
             rule.meta["capa/path"] = path.as_posix()
-            if is_nursery_rule_path(path.as_posix()):
-                rule.meta["capa/nursery"] = True
+            rule.meta["capa/nursery"] = is_nursery_rule_path(path)
 
             rules.append(rule)
             logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
@@ -719,7 +721,8 @@ def get_signatures(sigs_path: Path) -> List[Path]:
     # Convert paths to their absolute and normalized forms
     paths = [path.resolve().absolute() for path in paths]
 
-    # Sort paths in deterministic order based on filename
+    # load signatures in deterministic order: the alphabetic sorting of filename.
+    # this means that `0_sigs.pat` loads before `1_sigs.pat`.
     paths = sorted(paths, key=lambda path: path.name)
 
     for path in paths:
