@@ -17,6 +17,7 @@ from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
+monitor = getMonitor()  # type: ignore [name-defined]
 
 
 def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
@@ -28,7 +29,6 @@ def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
 
 def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
     edges = []
-    monitor = getMonitor()  # type: ignore [name-defined]
     model = BasicBlockModel(currentProgram)  # does not allow overlap, so we have to iterate ourself
     addr_set = fh.getBody()
 
@@ -45,8 +45,8 @@ def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
 
 
 def extract_recursive_call(fh: ghidra.program.database.function.FunctionDB):
-    for ref in fh.getSymbol().getReferences():
-        if ref.getReferenceType().isCall() and ref.getToAddress().getOffset() == fh.getEntryPoint().getOffset():
+    for f in fh.getCalledFunctions(monitor):
+        if f.getEntryPoint().getOffset() == fh.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
