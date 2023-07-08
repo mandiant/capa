@@ -126,8 +126,6 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     for block in currentProgram.getMemory().getBlocks():
         if block.isInitialized():
             p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
-            if len(p_bytes) == 0:
-                break
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
