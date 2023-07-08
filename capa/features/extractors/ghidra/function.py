@@ -18,43 +18,34 @@ from capa.features.extractors.base_extractor import FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
 
-def extract_function_calls_to(fh: ghidra.program.model.symbol.Symbol):
+def extract_function_calls_to(fh: ghidra.program.model.listing.Function):
     """extract callers to a function"""
-    for ref in fh.getReferences():
+    for ref in fh.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
-def extract_function_loop(fh: ghidra.program.model.symbol.Symbol):
+def extract_function_loop(fh: ghidra.program.model.listing.Function):
 
     edges = []
-    model = BasicBlockModel(currentProgram) # does not allow overlap, so we have to iterate ourself
     monitor = getMonitor()
-    block = model.getCodeBlockAt(fh.getAddress(), monitor)
-    dests = block.getDestinations(monitor)
+    model = BasicBlockModel(currentProgram) # does not allow overlap, so we have to iterate ourself
+    addr_set = fh.getBody()
 
-    # For loop throws an error, must treat as an iterator
-    while dests.hasNext():
-        dest = dests.next()
-        for addr in block.getStartAddresses():
-            edges.append((addr.getOffset(), dest.getDestinationAddress().getOffset()))
+    for block in model.getCodeBlocksContaining(addr_set, monitor):
+        dests = block.getDestinations(monitor)
+        s_addrs = block.getStartAddresses()
 
-        dblock = dest.getDestinationBlock()
-        dblock_dests = dblock.getDestinations(monitor)
-        while dblock_dests.hasNext():
-            ddblock = dblock_dests.next()
-            for addr in dblock.getStartAddresses():
-                edges.append((addr.getOffset(), ddblock.getDestinationAddress().getOffset()))
-
-    import pprint
-    pprint.pprint(edges)
+        while dests.hasNext():
+            for addr in s_addrs:
+                edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
     if loops.has_loop(edges):
-        yield Characteristic("loop"), fh.getAddress().getOffset()
+        yield Characteristic("loop"), hex(fh.getEntryPoint().getOffset())
 
 
 def extract_recursive_call(fh: ghidra.program.model.symbol.Symbol):
-    yield Characteristic("recursive call"), fh.getAddress().getOffset()
+    yield Characteristic("recursive call"), fh.getEntryPoint().getOffset()
 
 
 def extract_features(fh: ghidra.program.model.symbol.Symbol) -> Iterator[Tuple[Feature, Address]]:

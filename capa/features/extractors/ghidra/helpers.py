@@ -74,7 +74,7 @@ def get_function_symbols() -> Iterator[ghidra.program.model.symbol.Symbol]:
     """yield all non-external function symbols"""
 
     for f in currentProgram.getFunctionManager().getFunctionsNoStubs(True):
-        yield f.getSymbol()
+        yield f
 
 
 
