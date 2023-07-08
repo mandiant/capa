@@ -19,14 +19,14 @@ from capa.features.extractors.base_extractor import FunctionHandle
 currentProgram: ghidra.program.database.ProgramDB
 
 
-def extract_function_calls_to(fh: ghidra.program.model.database.FunctionDB):
+def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
     """extract callers to a function"""
     for ref in fh.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
-def extract_function_loop(fh: ghidra.program.model.database.FunctionDB):
+def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
     edges = []
     monitor = getMonitor()  # type: ignore [name-defined]
     model = BasicBlockModel(currentProgram)  # does not allow overlap, so we have to iterate ourself
@@ -44,13 +44,13 @@ def extract_function_loop(fh: ghidra.program.model.database.FunctionDB):
         yield Characteristic("loop"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
-def extract_recursive_call(fh: ghidra.program.model.database.FunctionDB):
+def extract_recursive_call(fh: ghidra.program.database.function.FunctionDB):
     for ref in fh.getSymbol().getReferences():
         if ref.getReferenceType().isCall() and ref.getToAddress().getOffset() == fh.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
-def extract_features(fh: ghidra.program.model.symbol.Symbol) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: ghidra.program.database.function.FunctionDB) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr

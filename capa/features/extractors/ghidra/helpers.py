@@ -70,7 +70,7 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
         return bytez
 
 
-def get_function_symbols() -> Iterator[ghidra.program.model.symbol.Symbol]:
+def get_function_symbols() -> Iterator[ghidra.program.database.function.FunctionDB]:
     """yield all non-external function symbols"""
 
     for f in currentProgram.getFunctionManager().getFunctionsNoStubs(True):
