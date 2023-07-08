@@ -18,14 +18,14 @@ from capa.features.extractors.base_extractor import FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
 
-def extract_function_calls_to(fh: ghidra.program.model.listing.Function):
+def extract_function_calls_to(fh: ghidra.program.model.database.FunctionDB):
     """extract callers to a function"""
     for ref in fh.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
-def extract_function_loop(fh: ghidra.program.model.listing.Function):
+def extract_function_loop(fh: ghidra.program.model.database.FunctionDB):
 
     edges = []
     monitor = getMonitor()
@@ -36,16 +36,19 @@ def extract_function_loop(fh: ghidra.program.model.listing.Function):
         dests = block.getDestinations(monitor)
         s_addrs = block.getStartAddresses()
 
-        while dests.hasNext():
+        while dests.hasNext(): # Python error forces us to use iterator functions
             for addr in s_addrs:
                 edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
     if loops.has_loop(edges):
-        yield Characteristic("loop"), hex(fh.getEntryPoint().getOffset())
+        yield Characteristic("loop"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
-def extract_recursive_call(fh: ghidra.program.model.symbol.Symbol):
-    yield Characteristic("recursive call"), fh.getEntryPoint().getOffset()
+def extract_recursive_call(fh: ghidra.program.model.database.FunctionDB):
+
+    for ref in fh.getSymbol().getReferences():
+        if ref.getReferenceType().isCall() and ref.getToAddress().getOffset() == fh.getEntryPoint().getOffset():
+            yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
 def extract_features(fh: ghidra.program.model.symbol.Symbol) -> Iterator[Tuple[Feature, Address]]:
