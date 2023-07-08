@@ -15,11 +15,11 @@ currentProgram: ghidra.program.database.ProgramDB
 
 def fix_bytes(b: int):
     """Transform signed ints from Java into bytes for Python
-        
-        args:
-            b: signed int returned from Java processing
+
+    args:
+        b: signed int returned from Java processing
     """
-    return (b & 0xFF).to_bytes(1, 'little')
+    return (b & 0xFF).to_bytes(1, "little")
 
 
 def find_byte_sequence(seq: bytes) -> Iterator[int]:
@@ -75,10 +75,3 @@ def get_function_symbols() -> Iterator[ghidra.program.model.symbol.Symbol]:
 
     for f in currentProgram.getFunctionManager().getFunctionsNoStubs(True):
         yield f
-
-
-
-
-
-
-

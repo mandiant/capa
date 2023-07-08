@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-import ghidra 
+import ghidra
 from ghidra.program.model.block import BasicBlockModel
 
 import capa.features.extractors.ghidra.helpers
@@ -18,6 +18,7 @@ from capa.features.extractors.base_extractor import FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
 
+
 def extract_function_calls_to(fh: ghidra.program.model.database.FunctionDB):
     """extract callers to a function"""
     for ref in fh.getSymbol().getReferences():
@@ -26,17 +27,16 @@ def extract_function_calls_to(fh: ghidra.program.model.database.FunctionDB):
 
 
 def extract_function_loop(fh: ghidra.program.model.database.FunctionDB):
-
     edges = []
-    monitor = getMonitor()
-    model = BasicBlockModel(currentProgram) # does not allow overlap, so we have to iterate ourself
+    monitor = getMonitor()  # type: ignore [name-defined]
+    model = BasicBlockModel(currentProgram)  # does not allow overlap, so we have to iterate ourself
     addr_set = fh.getBody()
 
     for block in model.getCodeBlocksContaining(addr_set, monitor):
         dests = block.getDestinations(monitor)
         s_addrs = block.getStartAddresses()
 
-        while dests.hasNext(): # Python error forces us to use iterator functions
+        while dests.hasNext():  # Python error forces us to use iterator functions
             for addr in s_addrs:
                 edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
@@ -45,7 +45,6 @@ def extract_function_loop(fh: ghidra.program.model.database.FunctionDB):
 
 
 def extract_recursive_call(fh: ghidra.program.model.database.FunctionDB):
-
     for ref in fh.getSymbol().getReferences():
         if ref.getReferenceType().isCall() and ref.getToAddress().getOffset() == fh.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())

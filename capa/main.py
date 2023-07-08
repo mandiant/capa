@@ -1004,7 +1004,7 @@ def handle_common_args(args):
         # if isinstance(sys.stdout, io.TextIOWrapper):
         #    sys.stdout.reconfigure(...)
         sys.stdout.reconfigure(encoding="utf-8")
-    #colorama.just_fix_windows_console()  # type: ignore [attr-defined]
+    colorama.just_fix_windows_console()
 
     if args.color == "always":
         colorama.init(strip=False)
@@ -1294,10 +1294,6 @@ def main(argv=None):
         print(capa.render.default.render(meta, rules, capabilities))
     colorama.deinit()
 
-    for f in extractor.get_functions():
-        for feat in extractor.extract_function_features(f):
-            print(feat)
-
     logger.debug("done.")
 
     return 0
@@ -1346,12 +1342,12 @@ def ida_main():
 def ghidra_main():
     import capa.rules
     import capa.features.extractors.ghidra.file
-    import capa.features.extractors.ghidra.function
-    import capa.features.extractors.ghidra.helpers
 
     # import capa.render.default
     # import capa.features.extractors.ghidra.extractor
     import capa.features.extractors.ghidra.global_
+    import capa.features.extractors.ghidra.helpers
+    import capa.features.extractors.ghidra.function
     from capa.features.common import Feature
 
     logging.basicConfig(level=logging.INFO)
@@ -1377,6 +1373,7 @@ def ghidra_main():
         ghidra_features.extend(list(capa.features.extractors.ghidra.function.extract_features(fhandle)))
 
     import pprint
+
     pprint.pprint(ghidra_features)
 
 
