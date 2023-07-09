@@ -126,59 +126,59 @@ def fixup_viv(path: Path, extractor):
 
 
 @lru_cache(maxsize=1)
-def get_pefile_extractor(path):
+def get_pefile_extractor(path: Path):
     import capa.features.extractors.pefile
 
     extractor = capa.features.extractors.pefile.PefileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", str(path))
+    setattr(extractor, "path", path.as_posix())
 
     return extractor
 
 
-def get_dotnetfile_extractor(path):
+def get_dotnetfile_extractor(path: Path):
     import capa.features.extractors.dotnetfile
 
     extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", str(path))
+    setattr(extractor, "path", path.as_posix())
 
     return extractor
 
 
 @lru_cache(maxsize=1)
-def get_dnfile_extractor(path):
+def get_dnfile_extractor(path: Path):
     import capa.features.extractors.dnfile.extractor
 
     extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", str(path))
+    setattr(extractor, "path", path.as_posix())
 
     return extractor
 
 
 @lru_cache(maxsize=1)
-def get_binja_extractor(path):
+def get_binja_extractor(path: Path):
     from binaryninja import Settings, BinaryViewType
 
     import capa.features.extractors.binja.extractor
 
     # Workaround for a BN bug: https://github.com/Vector35/binaryninja-api/issues/4051
     settings = Settings()
-    if path.endswith("kernel32-64.dll_"):
+    if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = BinaryViewType.get_view_of_file(path)
-    if path.endswith("kernel32-64.dll_"):
+    bv = BinaryViewType.get_view_of_file(str(path))
+    if path.name.endswith("kernel32-64.dll_"):
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
 
     extractor = capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path)
+    setattr(extractor, "path", path.as_posix())
 
     return extractor
 
@@ -1068,7 +1068,7 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
 def get_extractor(path: Path):
     extractor = get_viv_extractor(path)
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", str(path))
+    setattr(extractor, "path", path.as_posix())
     return extractor
 
 
