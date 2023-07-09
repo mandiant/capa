@@ -501,20 +501,3 @@ INSTRUCTION_HANDLERS = (
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )
-
-
-def main():
-    """ """
-    features = []
-    for f in capa.features.extractors.ida.helpers.get_functions(skip_thunks=True, skip_libs=True):
-        for bb in idaapi.FlowChart(f, flags=idaapi.FC_PREDS):
-            for insn in capa.features.extractors.ida.helpers.get_instructions_in_range(bb.start_ea, bb.end_ea):
-                features.extend(list(extract_features(f, bb, insn)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()

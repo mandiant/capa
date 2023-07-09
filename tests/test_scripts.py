@@ -8,10 +8,13 @@
 
 import os
 import sys
+import logging
 import textwrap
 import subprocess
 
 import pytest
+
+logger = logging.getLogger(__name__)
 
 CD = os.path.dirname(__file__)
 
@@ -63,7 +66,7 @@ def test_bulk_process(tmpdir):
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
-    print(f"running: '{args}'")
+    logger.debug("running: %r", args)
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 

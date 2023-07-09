@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
 from typing import Any, List, Tuple, Iterator, Optional
 
 from binaryninja import Function
@@ -585,32 +584,3 @@ INSTRUCTION_HANDLERS = (
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )
-
-
-def main():
-    """ """
-    if len(sys.argv) < 2:
-        return
-
-    from binaryninja import BinaryViewType
-
-    from capa.features.extractors.binja.extractor import BinjaFeatureExtractor
-
-    bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
-    if bv is None:
-        return
-
-    features = []
-    extractor = BinjaFeatureExtractor(bv)
-    for fh in extractor.get_functions():
-        for bbh in extractor.get_basic_blocks(fh):
-            for insn in extractor.get_instructions(fh, bbh):
-                features.extend(list(extract_features(fh, bbh, insn)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()

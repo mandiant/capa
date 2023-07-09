@@ -50,18 +50,3 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
 
 
 FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
-
-
-def main():
-    """ """
-    features = []
-    for fhandle in capa.features.extractors.ida.helpers.get_functions(skip_thunks=True, skip_libs=True):
-        features.extend(list(extract_features(fhandle)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()

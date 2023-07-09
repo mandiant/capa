@@ -96,7 +96,7 @@ def redirecting_print_to_tqdm(disable_progress):
     with one that is compatible with tqdm.
     via: https://stackoverflow.com/a/42424890/87207
     """
-    old_print = print
+    old_print = print  # noqa: T202 [reserved word print used]
 
     def new_print(*args, **kwargs):
         # If tqdm.tqdm.write raises error, use builtin print

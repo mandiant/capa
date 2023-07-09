@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
 import string
 import struct
 from typing import Tuple, Iterator
@@ -182,30 +181,3 @@ BASIC_BLOCK_HANDLERS = (
     extract_bb_tight_loop,
     extract_bb_stackstring,
 )
-
-
-def main():
-    if len(sys.argv) < 2:
-        return
-
-    from binaryninja import BinaryViewType
-
-    from capa.features.extractors.binja.extractor import BinjaFeatureExtractor
-
-    bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
-    if bv is None:
-        return
-
-    features = []
-    extractor = BinjaFeatureExtractor(bv)
-    for fh in extractor.get_functions():
-        for bbh in extractor.get_basic_blocks(fh):
-            features.extend(list(extract_features(fh, bbh)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()
