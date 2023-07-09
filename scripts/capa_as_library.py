@@ -161,7 +161,7 @@ def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
 
 
 # ==== render dictionary helpers
-def capa_details(rules_path, file_path, output_format="dictionary"):
+def capa_details(rules_path: Path, file_path: Path, output_format="dictionary"):
     # load rules from disk
     rules = capa.main.get_rules([rules_path])
 
@@ -210,5 +210,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.rules != RULES_PATH:
         args.rules = Path(args.rules)
-    print(capa_details(args.rules, args.file, args.output))
+    print(capa_details(args.rules, Path(args.file), args.output))
     sys.exit(0)

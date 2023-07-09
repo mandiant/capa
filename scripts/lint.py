@@ -296,14 +296,14 @@ DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
 def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
-    nice_path = path.resolve().absolute().as_posix()
+    nice_path = path.resolve().absolute()
     if path in ctx.capabilities_by_sample:
         logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
         return ctx.capabilities_by_sample[path]
 
-    if nice_path.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
+    if nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
         format_ = "sc32"
-    elif nice_path.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
+    elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
         format_ = "sc64"
     else:
         format_ = capa.main.get_auto_format(nice_path)
@@ -356,7 +356,7 @@ class DoesntMatchExample(Lint):
             try:
                 capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.error("failed to extract capabilities: %s %s %s", rule.name, str(path), e, exc_info=True)
+                logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e, exc_info=True)
                 return True
 
             if rule.name not in capabilities:
@@ -917,12 +917,12 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    samples_path = (Path(__file__).resolve().parent.parent / "tests" / "data").as_posix()
+    default_samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
     parser.add_argument("rules", type=str, action="append", help="Path to rules")
-    parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
+    parser.add_argument("--samples", type=str, default=default_samples_path, help="Path to samples")
     parser.add_argument(
         "--thorough",
         action="store_true",
@@ -953,12 +953,12 @@ def main(argv=None):
         return -1
 
     logger.info("collecting potentially referenced samples")
-    samplePath = Path(args.samples)
-    if not samplePath.exists():
-        logger.error("samples path %s does not exist", samplePath)
+    samples_path = Path(args.samples)
+    if not samples_path.exists():
+        logger.error("samples path %s does not exist", Path(samples_path))
         return -1
 
-    samples = collect_samples(samplePath)
+    samples = collect_samples(Path(samples_path))
 
     ctx = Context(samples=samples, rules=rules, is_thorough=args.thorough)
 

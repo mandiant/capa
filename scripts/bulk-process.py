@@ -170,7 +170,7 @@ def main(argv=None):
 
         samples = []
         for file in Path(args.input).rglob("*"):
-            samples.append(file.as_posix())
+            samples.append(file)
 
         def pmap(f, args, parallelism=multiprocessing.cpu_count()):
             """apply the given function f to the given args using subprocesses"""
@@ -205,7 +205,7 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                results[result["path"]] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
+                results[result["path"].as_posix()] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
             else:
                 raise ValueError(f"unexpected status: {result['status']}")
 

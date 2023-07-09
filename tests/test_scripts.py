@@ -19,19 +19,19 @@ CD = Path(__file__).resolve().parent
 
 
 def get_script_path(s: str):
-    return (CD / ".." / "scripts" / s).as_posix()
+    return str(CD / ".." / "scripts" / s)
 
 
 def get_file_path():
-    return (CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_").as_posix()
+    return str(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
 
 def get_rules_path():
-    return (CD / ".." / "rules").as_posix()
+    return str(CD / ".." / "rules")
 
 
 def get_rule_path():
-    return (Path(get_rules_path()) / "lib" / "allocate-memory.yml").as_posix()
+    return str(Path(get_rules_path()) / "lib" / "allocate-memory.yml")
 
 
 @pytest.mark.parametrize(
@@ -63,7 +63,7 @@ def test_bulk_process(tmp_path):
 
     dest_file.write_bytes(source_file.read_bytes())
 
-    p = run_program(get_script_path("bulk-process.py"), [t.parent.as_posix()])
+    p = run_program(get_script_path("bulk-process.py"), [str(t.parent)])
     assert p.returncode == 0
 
 

@@ -24,15 +24,10 @@ $ protoc.exe --python_out=. --mypy_out=. <path_to_proto> (e.g. capa/render/proto
 
 Alternatively, --pyi_out=. can be used to generate a Python Interface file that supports development
 """
-import sys
-import json
-import argparse
 import datetime
 from typing import Any, Dict, Union
-from pathlib import Path
 
 import google.protobuf.json_format
-from google.protobuf.json_format import MessageToJson
 
 import capa.rules
 import capa.features.freeze as frz

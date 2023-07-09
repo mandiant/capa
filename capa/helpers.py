@@ -52,15 +52,15 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"
 
 
-def get_format_from_extension(sample: str) -> str:
-    if sample.endswith(EXTENSIONS_SHELLCODE_32):
+def get_format_from_extension(sample: Path) -> str:
+    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
         return FORMAT_SC32
-    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
+    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
         return FORMAT_SC64
     return FORMAT_UNKNOWN
 
 
-def get_auto_format(path: str) -> str:
+def get_auto_format(path: Path) -> str:
     format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
@@ -69,17 +69,16 @@ def get_auto_format(path: str) -> str:
     return format_
 
 
-def get_format(sample: str) -> str:
+def get_format(sample: Path) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
     from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
 
-    with open(sample, "rb") as f:
-        buf = f.read()
+    buf = sample.read_bytes()
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):
-            dnfile_extractor = DnfileFeatureExtractor(sample)
+            dnfile_extractor = DnfileFeatureExtractor(str(sample))
             if dnfile_extractor.is_dotnet_file():
                 feature = Format(FORMAT_DOTNET)
 

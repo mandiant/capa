@@ -187,7 +187,7 @@ if __name__ == "__main__":
         "--output",
         "-o",
         type=str,
-        default=(Path(__file__).resolve().parent / "linter-data.json").as_posix(),
+        default=str(Path(__file__).resolve().parent / "linter-data.json"),
         help="Path to output file (lint.py will be looking for linter-data.json)",
     )
     main(parser.parse_args(args=argv[1:]))

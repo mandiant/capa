@@ -89,7 +89,7 @@ def xfail(condition, reason=None):
 
 # need to limit cache size so GitHub Actions doesn't run out of memory, see #545
 @lru_cache(maxsize=1)
-def get_viv_extractor(path):
+def get_viv_extractor(path: Path):
     import capa.main
     import capa.features.extractors.viv.extractor
 
@@ -101,9 +101,9 @@ def get_viv_extractor(path):
         CD.parent / "sigs" / "3_flare_common_libs.sig",
     ]
 
-    if "raw32" in path:
+    if "raw32" in path.name:
         vw = capa.main.get_workspace(path, "sc32", sigpaths=sigpaths)
-    elif "raw64" in path:
+    elif "raw64" in path.name:
         vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
         vw = capa.main.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
@@ -113,14 +113,14 @@ def get_viv_extractor(path):
     return extractor
 
 
-def fixup_viv(path, extractor):
+def fixup_viv(path: Path, extractor):
     """
     vivisect fixups to overcome differences between backends
     """
-    if "3b13b" in path:
+    if "3b13b" in path.name:
         # vivisect only recognizes calling thunk function at 0x10001573
         extractor.vw.makeFunction(0x10006860)
-    if "294b8d" in path:
+    if "294b8d" in path.name:
         # see vivisect/#561
         extractor.vw.makeFunction(0x404970)
 
@@ -129,10 +129,10 @@ def fixup_viv(path, extractor):
 def get_pefile_extractor(path):
     import capa.features.extractors.pefile
 
-    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path)
+    setattr(extractor, "path", str(path))
 
     return extractor
 
@@ -140,10 +140,10 @@ def get_pefile_extractor(path):
 def get_dotnetfile_extractor(path):
     import capa.features.extractors.dotnetfile
 
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path)
+    setattr(extractor, "path", str(path))
 
     return extractor
 
@@ -152,10 +152,10 @@ def get_dotnetfile_extractor(path):
 def get_dnfile_extractor(path):
     import capa.features.extractors.dnfile.extractor
 
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(str(path))
 
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path)
+    setattr(extractor, "path", str(path))
 
     return extractor
 
@@ -234,81 +234,81 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Ad
 # note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
 def get_data_path_by_name(name):
     if name == "mimikatz":
-        return (CD / "data" / "mimikatz.exe_").as_posix()
+        return CD / "data" / "mimikatz.exe_"
     elif name == "kernel32":
-        return (CD / "data" / "kernel32.dll_").as_posix()
+        return CD / "data" / "kernel32.dll_"
     elif name == "kernel32-64":
-        return (CD / "data" / "kernel32-64.dll_").as_posix()
+        return CD / "data" / "kernel32-64.dll_"
     elif name == "pma01-01":
-        return (CD / "data" / "Practical Malware Analysis Lab 01-01.dll_").as_posix()
+        return CD / "data" / "Practical Malware Analysis Lab 01-01.dll_"
     elif name == "pma01-01-rd":
-        return (CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json").as_posix()
+        return CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"
     elif name == "pma12-04":
-        return (CD / "data" / "Practical Malware Analysis Lab 12-04.exe_").as_posix()
+        return CD / "data" / "Practical Malware Analysis Lab 12-04.exe_"
     elif name == "pma16-01":
-        return (CD / "data" / "Practical Malware Analysis Lab 16-01.exe_").as_posix()
+        return CD / "data" / "Practical Malware Analysis Lab 16-01.exe_"
     elif name == "pma21-01":
-        return (CD / "data" / "Practical Malware Analysis Lab 21-01.exe_").as_posix()
+        return CD / "data" / "Practical Malware Analysis Lab 21-01.exe_"
     elif name == "al-khaser x86":
-        return (CD / "data" / "al-khaser_x86.exe_").as_posix()
+        return CD / "data" / "al-khaser_x86.exe_"
     elif name == "al-khaser x64":
-        return (CD / "data" / "al-khaser_x64.exe_").as_posix()
+        return CD / "data" / "al-khaser_x64.exe_"
     elif name.startswith("39c05"):
-        return (CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_").as_posix()
+        return CD / "data" / "39c05b15e9834ac93f206bc114d0a00c357c888db567ba8f5345da0529cbed41.dll_"
     elif name.startswith("499c2"):
-        return (CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32").as_posix()
+        return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
-        return (CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_").as_posix()
+        return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
     elif name.startswith("a1982"):
-        return (CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_").as_posix()
+        return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
     elif name.startswith("a933a"):
-        return (CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_").as_posix()
+        return CD / "data" / "a933a1a402775cfa94b6bee0963f4b46.dll_"
     elif name.startswith("bfb9b"):
-        return (CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_").as_posix()
+        return CD / "data" / "bfb9b5391a13d0afd787e87ab90f14f5.dll_"
     elif name.startswith("c9188"):
-        return (CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_").as_posix()
+        return CD / "data" / "c91887d861d9bd4a5872249b641bc9f9.exe_"
     elif name.startswith("64d9f"):
-        return (CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_").as_posix()
+        return CD / "data" / "64d9f7d96b99467f36e22fada623c3bb.dll_"
     elif name.startswith("82bf6"):
-        return (CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_").as_posix()
+        return CD / "data" / "82BF6347ACF15E5D883715DC289D8A2B.exe_"
     elif name.startswith("pingtaest"):
-        return (CD / "data" / "ping_täst.exe_").as_posix()
+        return CD / "data" / "ping_täst.exe_"
     elif name.startswith("77329"):
-        return (CD / "data" / "773290480d5445f11d3dc1b800728966.exe_").as_posix()
+        return CD / "data" / "773290480d5445f11d3dc1b800728966.exe_"
     elif name.startswith("3b13b"):
-        return (CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_").as_posix()
+        return CD / "data" / "3b13b6f1d7cd14dc4a097a12e2e505c0a4cff495262261e2bfc991df238b9b04.dll_"
     elif name == "7351f.elf":
-        return (CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_").as_posix()
+        return CD / "data" / "7351f8a40c5450557b24622417fc478d.elf_"
     elif name.startswith("79abd"):
-        return (CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_").as_posix()
+        return CD / "data" / "79abd17391adc6251ecdc58d13d76baf.dll_"
     elif name.startswith("946a9"):
-        return (CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_").as_posix()
+        return CD / "data" / "946a99f36a46d335dec080d9a4371940.dll_"
     elif name.startswith("2f7f5f"):
-        return (CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_").as_posix()
+        return CD / "data" / "2f7f5fb5de175e770d7eae87666f9831.elf_"
     elif name.startswith("b9f5b"):
-        return (CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_").as_posix()
+        return CD / "data" / "b9f5bd514485fb06da39beff051b9fdc.exe_"
     elif name.startswith("mixed-mode-64"):
-        return (DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe").as_posix()
+        return DNFILE_TESTFILES / "mixed-mode" / "ModuleCode" / "bin" / "ModuleCode_amd64.exe"
     elif name.startswith("hello-world"):
-        return (DNFILE_TESTFILES / "hello-world" / "hello-world.exe").as_posix()
+        return DNFILE_TESTFILES / "hello-world" / "hello-world.exe"
     elif name.startswith("_1c444"):
-        return (DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_").as_posix()
+        return DOTNET_DIR / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_"
     elif name.startswith("_387f15"):
-        return (DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_").as_posix()
+        return DOTNET_DIR / "387f15043f0198fd3a637b0758c2b6dde9ead795c3ed70803426fc355731b173.dll_"
     elif name.startswith("_692f"):
-        return (DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_").as_posix()
+        return DOTNET_DIR / "692f7fd6d198e804d6af98eb9e390d61.exe_"
     elif name.startswith("_0953c"):
-        return (CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_").as_posix()
+        return CD / "data" / "0953cc3b77ed2974b09e3a00708f88de931d681e2d0cb64afbaf714610beabe6.exe_"
     elif name.startswith("_039a6"):
-        return (CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_").as_posix()
+        return CD / "data" / "039a6336d0802a2255669e6867a5679c7eb83313dbc61fb1c7232147379bd304.exe_"
     elif name.startswith("b5f052"):
-        return (CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_").as_posix()
+        return CD / "data" / "b5f0524e69b3a3cf636c7ac366ca57bf5e3a8fdc8a9f01caf196c611a7918a87.elf_"
     elif name.startswith("bf7a9c"):
-        return (CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_").as_posix()
+        return CD / "data" / "bf7a9c8bdfa6d47e01ad2b056264acc3fd90cf43fe0ed8deec93ab46b47d76cb.elf_"
     elif name.startswith("294b8d"):
-        return (CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_").as_posix()
+        return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
-        return (CD / "data" / "2bf18d0403677378adad9001b1243211.elf_").as_posix()
+        return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -1048,6 +1048,7 @@ FEATURE_COUNT_TESTS_DOTNET = [
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
+    print(sample)
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:
@@ -1064,10 +1065,10 @@ def do_test_feature_count(get_extractor, sample, scope, feature, expected):
     assert len(features[feature]) == expected, msg
 
 
-def get_extractor(path):
+def get_extractor(path: Path):
     extractor = get_viv_extractor(path)
     # overload the extractor so that the fixture exposes `extractor.path`
-    setattr(extractor, "path", path)
+    setattr(extractor, "path", str(path))
     return extractor
 
 
@@ -1182,29 +1183,29 @@ def get_result_doc(path):
 
 @pytest.fixture
 def pma0101_rd():
-    return get_result_doc((CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
-    return get_result_doc((CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
 
 
 @pytest.fixture
 def a3f3bbc_rd():
-    return get_result_doc((CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx86_rd():
-    return get_result_doc((CD / "data" / "rd" / "al-khaser_x86.exe_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "al-khaser_x86.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx64_rd():
-    return get_result_doc((CD / "data" / "rd" / "al-khaser_x64.exe_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "al-khaser_x64.exe_.json")
 
 
 @pytest.fixture
 def a076114_rd():
-    return get_result_doc((CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json").as_posix())
+    return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")

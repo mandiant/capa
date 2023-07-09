@@ -51,13 +51,13 @@ def load_analysis(bv):
     binaryninja.log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
     js_path = path = dirname / (shortname + ".js")
     json_path = dirname / (shortname + ".json")
-    if os.access(js_path.as_posix(), os.R_OK):
+    if os.access(str(js_path), os.R_OK):
         path = js_path
-    elif os.access(json_path.as_posix(), os.R_OK):
+    elif os.access(str(json_path), os.R_OK):
         path = json_path
     else:
         path = binaryninja.interaction.get_open_filename_input("capa report:", "JSON (*.js *.json);;All Files (*)")
-    if not path or not os.access(path.as_posix(), os.R_OK):
+    if not path or not os.access(str(path), os.R_OK):
         binaryninja.log_error("Invalid filename.")
         return 0
     binaryninja.log_info(f"Using capa file {path}")

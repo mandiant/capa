@@ -364,26 +364,23 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
     return False
 
 
-def is_supported_format(sample: str) -> bool:
+def is_supported_format(sample: Path) -> bool:
     """
     Return if this is a supported file based on magic header values
     """
-    with open(sample, "rb") as f:
-        taste = f.read(0x100)
+    taste = sample.open("rb").read(0x100)
 
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
 
 
-def is_supported_arch(sample: str) -> bool:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def is_supported_arch(sample: Path) -> bool:
+    buf = sample.read_bytes()
 
     return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
 
 
-def get_arch(sample: str) -> str:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def get_arch(sample: Path) -> str:
+    buf = sample.read_bytes()
 
     for feature, _ in capa.features.extractors.common.extract_arch(buf):
         assert isinstance(feature.value, str)
@@ -392,16 +389,14 @@ def get_arch(sample: str) -> str:
     return "unknown"
 
 
-def is_supported_os(sample: str) -> bool:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def is_supported_os(sample: Path) -> bool:
+    buf = sample.read_bytes()
 
     return len(list(capa.features.extractors.common.extract_os(buf))) == 1
 
 
-def get_os(sample: str) -> str:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def get_os(sample: Path) -> str:
+    buf = sample.read_bytes()
 
     for feature, _ in capa.features.extractors.common.extract_os(buf):
         assert isinstance(feature.value, str)
@@ -463,7 +458,7 @@ def get_default_signatures() -> List[Path]:
     return ret
 
 
-def get_workspace(path, format_, sigpaths: List[Path]):
+def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
     """
     load the program at the given path into a vivisect workspace using the given format.
     also apply the given FLIRT signatures.
@@ -490,18 +485,18 @@ def get_workspace(path, format_, sigpaths: List[Path]):
             raise UnsupportedFormatError()
 
         # don't analyze, so that we can add our Flirt function analyzer first.
-        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
+        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
     elif format_ in {FORMAT_PE, FORMAT_ELF}:
-        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
+        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
     elif format_ == FORMAT_SC32:
         # these are not analyzed nor saved.
-        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="i386", analyze=False)
+        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
     elif format_ == FORMAT_SC64:
-        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="amd64", analyze=False)
+        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
     else:
         raise ValueError("unexpected format: " + format_)
 
-    viv_utils.flirt.register_flirt_signature_analyzers(vw, [s.as_posix() for s in sigpaths])
+    viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 
     vw.analyze()
 
@@ -511,7 +506,7 @@ def get_workspace(path, format_, sigpaths: List[Path]):
 
 # TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
-    path: str,
+    path: Path,
     format_: str,
     os_: str,
     backend: str,
@@ -538,7 +533,7 @@ def get_extractor(
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(str(path))
 
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
@@ -561,7 +556,7 @@ def get_extractor(
         import capa.features.extractors.binja.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = BinaryViewType.get_view_of_file(path)
+            bv: BinaryView = BinaryViewType.get_view_of_file(str(path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
@@ -587,18 +582,18 @@ def get_extractor(
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
-def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
+def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(str(sample)))
 
     elif format_ == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
-        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(str(sample)))
+        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(str(sample)))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(str(sample)))
 
     return file_extractors
 
@@ -733,7 +728,7 @@ def get_signatures(sigs_path: Path) -> List[Path]:
 
 def collect_metadata(
     argv: List[str],
-    sample_path: str,
+    sample_path: Path,
     format_: str,
     os_: str,
     rules_path: List[Path],
@@ -743,7 +738,7 @@ def collect_metadata(
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
-    buf = Path(sample_path).read_bytes()
+    buf = sample_path.read_bytes()
 
     md5.update(buf)
     sha1.update(buf)
@@ -762,7 +757,7 @@ def collect_metadata(
             md5=md5.hexdigest(),
             sha1=sha1.hexdigest(),
             sha256=sha256.hexdigest(),
-            path=Path(sample_path).resolve().as_posix(),
+            path=sample_path.resolve().absolute().as_posix(),
         ),
         analysis=rdoc.Analysis(
             format=format_,
@@ -1008,6 +1003,9 @@ def handle_common_args(args):
     else:
         raise RuntimeError("unexpected --color value: " + args.color)
 
+    if hasattr(args, "sample"):
+        args.sample = Path(args.sample)
+
     if hasattr(args, "rules"):
         rules_paths: List[Path] = []
 
@@ -1116,7 +1114,7 @@ def main(argv=None):
         return ret
 
     try:
-        _ = get_file_taste(Path(args.sample))
+        _ = get_file_taste(args.sample)
     except IOError as e:
         # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
         # handle the IOError separately and reach into the args
