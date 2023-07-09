@@ -555,7 +555,7 @@ def get_extractor(
         except ImportError:
             raise RuntimeError(
                 "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
-                "https://docs.binary.ninja/dev/batch.html#install-the-api)."
+                + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
             )
 
         import capa.features.extractors.binja.extractor
@@ -1069,9 +1069,9 @@ def handle_common_args(args):
             sigs_path = os.path.join(get_default_root(), "sigs")
             if not os.path.exists(sigs_path):
                 logger.error(
-                    "Using default signature path, but it doesn't exist. "
-                    "Please install the signatures first: "
-                    "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
+                    "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
+                    + "Please install the signatures first: "
+                    + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
                 )
                 raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
@@ -1170,8 +1170,8 @@ def main(argv=None):
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
-            "Make sure your file directory contains properly formatted capa rules. You can download the standard "
-            "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
+            "Make sure your file directory contains properly formatted capa rules. You can download the standard "  # noqa: G003 [logging statement uses +]
+            + "collection of capa rules from https://github.com/mandiant/capa-rules/releases."
         )
         logger.error(
             "Please ensure you're using the rules that correspond to your major version of capa (%s)",

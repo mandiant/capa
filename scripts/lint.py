@@ -516,7 +516,7 @@ class FeatureNegativeNumber(Lint):
     recommendation = "specify the number's two's complement representation"
     recommendation_template = (
         "capa treats number features as unsigned values; you may specify the number's two's complement "
-        'representation; will not match on "{:d}"'
+        + 'representation; will not match on "{:d}"'
     )
 
     def check_features(self, ctx: Context, features: List[Feature]):
@@ -534,7 +534,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
     level = Lint.WARN
     recommendation_template = (
         "check if {:s} is exported by both ntdll and ntoskrnl; if true, consider removing {:s} "
-        "module requirement to improve detection"
+        + "module requirement to improve detection"
     )
 
     def check_features(self, ctx: Context, features: List[Feature]):

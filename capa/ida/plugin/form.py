@@ -585,7 +585,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rules_message.setText("You must specify a directory containing capa rules before running analysis.")
                 rules_message.setInformativeText(
                     "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
-                    "rules from the URL listed in the details."
+                    + "rules from the URL listed in the details."
                 )
                 rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
                 rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -646,9 +646,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Make sure your file directory contains properly "
-                "formatted capa rules. You can download and extract the official rules from %s. "
-                "Or, for more details, see the rules documentation here: %s",
+                "Make sure your file directory contains properly "  # noqa: G003 [logging statement uses +]
+                + "formatted capa rules. You can download and extract the official rules from %s. "
+                + "Or, for more details, see the rules documentation here: %s",
                 CAPA_OFFICIAL_RULESET_URL,
                 CAPA_RULESET_DOC_URL,
             )
@@ -948,9 +948,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                         "Reanalyze program",
                         "",
                         ida_kernwin.ASKBTN_YES,
-                        f"This database contains capa results generated on "
-                        f"{results.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')}.\n"
-                        f"Load existing data or analyze program again?",
+                        "This database contains capa results generated on "
+                        + results.meta.timestamp.strftime("%Y-%m-%d at %H:%M:%S")
+                        + ".\nLoad existing data or analyze program again?",
                     )
 
                     if btn_id == ida_kernwin.ASKBTN_CANCEL:
