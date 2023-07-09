@@ -38,12 +38,14 @@ class CapaRuleGenFeatureCacheNode:
 
     def __hash__(self):
         # TODO(mike-hunhoff): confirm this is unique enough
+        # https://github.com/mandiant/capa/issues/1604
         return hash((self.address,))
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented
         # TODO(mike-hunhoff): confirm this is unique enough
+        # https://github.com/mandiant/capa/issues/1604
         return self.address == other.address
 
 

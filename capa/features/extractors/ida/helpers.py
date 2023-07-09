@@ -29,6 +29,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     seqstr = " ".join([f"{b:02x}" for b in seq])
     while True:
         # TODO(mike-hunhoff): find_binary is deprecated. Please use ida_bytes.bin_search() instead.
+        # https://github.com/mandiant/capa/issues/1606
         ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
         if ea == idaapi.BADADDR:
             break

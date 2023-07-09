@@ -504,7 +504,8 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
         # TODO(mike-hunhoff): we avoid circular update by disabling signals when updating
         # the preview. Preferably we would refactor the code to avoid this
-        # in the first place
+        # in the first place.
+        # https://github.com/mandiant/capa/issues/1600
         self.preview.blockSignals(True)
         self.preview.setPlainText(rule_text)
         self.preview.blockSignals(False)

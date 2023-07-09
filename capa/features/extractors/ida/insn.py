@@ -407,6 +407,7 @@ def extract_insn_peb_access_characteristic_features(
     if " fs:30h" in disasm or " gs:60h" in disasm:
         # TODO(mike-hunhoff): use proper IDA API for fetching segment access
         # scanning the disassembly text is a hack.
+        # https://github.com/mandiant/capa/issues/1605
         yield Characteristic("peb access"), ih.address
 
 
@@ -429,11 +430,13 @@ def extract_insn_segment_access_features(
     if " fs:" in disasm:
         # TODO(mike-hunhoff): use proper IDA API for fetching segment access
         # scanning the disassembly text is a hack.
+        # https://github.com/mandiant/capa/issues/1605
         yield Characteristic("fs access"), ih.address
 
     if " gs:" in disasm:
         # TODO(mike-hunhoff): use proper IDA API for fetching segment access
         # scanning the disassembly text is a hack.
+        # https://github.com/mandiant/capa/issues/1605
         yield Characteristic("gs access"), ih.address
 
 

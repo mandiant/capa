@@ -325,6 +325,7 @@ def extract_insn_offset_features(
 def is_nzxor_stack_cookie(f: Function, bb: BinjaBasicBlock, llil: LowLevelILInstruction) -> bool:
     """check if nzxor exists within stack cookie delta"""
     # TODO(xusheng): use LLIL SSA to do more accurate analysis
+    # https://github.com/mandiant/capa/issues/1609
 
     reg_names = []
     if llil.left.operation == LowLevelILOperation.LLIL_REG:

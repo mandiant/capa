@@ -373,6 +373,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 return CapaExplorerDefaultItem(parent, display)
         elif isinstance(statement, rd.CompoundStatement) and statement.type == rd.CompoundStatementType.NOT:
             # TODO(mike-hunhoff): verify that we can display NOT statements
+            # https://github.com/mandiant/capa/issues/1602
             pass
         elif isinstance(statement, rd.SomeStatement):
             display = f"{statement.count} or more"
@@ -422,6 +423,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
         """
         if not match.success:
             # TODO(mike-hunhoff): display failed branches at some point? Help with debugging rules?
+            # https://github.com/mandiant/capa/issues/1601
             return
 
         # optional statement with no successful children is empty

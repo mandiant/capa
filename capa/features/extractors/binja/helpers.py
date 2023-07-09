@@ -44,6 +44,7 @@ def unmangle_c_name(name: str) -> str:
     # this still increases the unit test execution time from 170s to 200s, should be able to accelerate it
     #
     # TODO(xusheng): performance optimizations to improve test execution time
+    # https://github.com/mandiant/capa/issues/1610
     if name[0] in ["@", "_"]:
         match = re.match(r"^[@|_](.*?)(Stub)?(@\d+)?$", name)
         if match:
