@@ -355,7 +355,7 @@ class DoesntMatchExample(Lint):
             try:
                 capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.error("failed to extract capabilities: %s %s %s", rule.name, str(path), e, exc_info=True)
+                logger.exception("failed to extract capabilities: %s %s %s", rule.name, str(path), e)
                 return True
 
             if rule.name not in capabilities:

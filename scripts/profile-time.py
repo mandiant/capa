@@ -118,12 +118,12 @@ def main(argv=None):
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)
 
-    logger.debug("perf: find capabilities: min: %0.2fs" % (min(samples) / float(args.number)))
-    logger.debug("perf: find capabilities: avg: %0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)))
-    logger.debug("perf: find capabilities: max: %0.2fs" % (max(samples) / float(args.number)))
+    logger.debug("perf: find capabilities: min: %0.2fs", (min(samples) / float(args.number)))
+    logger.debug("perf: find capabilities: avg: %0.2fs", (sum(samples) / float(args.repeat) / float(args.number)))
+    logger.debug("perf: find capabilities: max: %0.2fs", (max(samples) / float(args.number)))
 
     for counter, count in capa.perf.counters.most_common():
-        logger.debug("perf: counter: {:}: {:,}".format(counter, count))
+        logger.debug("perf: counter: %s: %s", counter, count)
 
     print(
         tabulate.tabulate(

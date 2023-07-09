@@ -47,7 +47,7 @@ def get_features(rule_path: str) -> list:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)
         except Exception as e:
-            logger.error("Error: New rule " + rule_path + " " + str(type(e)) + " " + str(e))
+            logger.error("Error: New rule %s %s %s", rule_path, str(type(e)), str(e))
             sys.exit(-1)
     return feature_list
 

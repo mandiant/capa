@@ -77,6 +77,8 @@ setuptools.setup(
             "flake8==6.0.0",
             "flake8-bugbear==23.6.5",
             "flake8-encodings==0.5.0.post1",
+            "flake8-comprehensions==3.13.0",
+            "flake8-logging-format==0.9.0",
             "ruff==0.0.275",
             "black==23.3.0",
             "isort==5.11.4",

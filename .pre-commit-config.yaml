@@ -93,7 +93,8 @@ repos:
         # F811 Redefinition of unused `foo`  (prefer ruff)
         # E501 line too long  (prefer black)
         # B010 Do not call setattr with a constant attribute value
-        -   "--extend-ignore=E203,F401,F811,E501,B010"
+        # G200 Logging statement uses exception in arguments
+        -   "--extend-ignore=E203,F401,F811,E501,B010,G200"
         -   "--extend-exclude"
         -   "capa/render/proto/capa_pb2.py"
         -   "capa/"
