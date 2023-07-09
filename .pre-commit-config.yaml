@@ -62,7 +62,6 @@ repos:
     hooks:
     -   id: ruff
         name: ruff
-        # ruff is fast, so run during commit
         stages: [commit, push]
         language: system
         entry: ruff
@@ -80,21 +79,12 @@ repos:
     hooks:
     -   id: flake8
         name: flake8
-        # flake8 is kinda slow, so only run upon push, or like:
-        #
-        #     pre-commit run flake8 --hook-stage push
         stages: [commit, push]
         language: system
         entry: flake8
         args: 
-        -   "--max-line-length=120"
-        # E203: whitespace before ':'  (black does this)
-        # F401: `foo` imported but unused  (prefer ruff)
-        # F811 Redefinition of unused `foo`  (prefer ruff)
-        # E501 line too long  (prefer black)
-        # B010 Do not call setattr with a constant attribute value
-        # G200 Logging statement uses exception in arguments
-        -   "--extend-ignore=E203,F401,F811,E501,B010,G200"
+        -   "--config"
+        -   ".github/flake8.ini"
         -   "--extend-exclude"
         -   "capa/render/proto/capa_pb2.py"
         -   "capa/"
