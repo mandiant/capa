@@ -502,7 +502,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             feature, description, comment = (o.strip() for o in tuple(o.text(i) for i in range(3)))
             rule_text += parse_node_for_feature(feature, description, comment, calc_item_depth(o))
 
-        # FIXME we avoid circular update by disabling signals when updating
+        # TODO(mike-hunhoff): we avoid circular update by disabling signals when updating
         # the preview. Preferably we would refactor the code to avoid this
         # in the first place
         self.preview.blockSignals(True)

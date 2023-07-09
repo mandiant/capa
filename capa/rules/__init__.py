@@ -510,7 +510,9 @@ def build_statements(d, scope: str):
                 # arg is string (which doesn't support inline descriptions), like:
                 #
                 #     count(string(error))
-                # TODO: what about embedded newlines?
+                #
+                # known problem that embedded newlines may not work here?
+                # this may become a problem (or not), so address it when encountered.
                 feature = Feature(arg)
         else:
             feature = Feature()
@@ -1190,7 +1192,6 @@ class RuleSet:
                     # so thats not helpful to decide how to downselect.
                     #
                     # and, a global rule will never be the sole selector in a rule.
-                    # TODO: probably want a lint for this.
                     pass
                 else:
                     # easy feature: hash lookup

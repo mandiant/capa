@@ -791,7 +791,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 try:
                     # support binary files specifically for x86/AMD64 shellcode
                     # warn user binary file is loaded but still allow capa to process it
-                    # TODO: check specific architecture of binary files based on how user configured IDA processors
+                    # TODO(mike-hunhoff): check specific architecture of binary files based on how user configured IDA processors
                     if idaapi.get_file_type_name() == "Binary file":
                         logger.warning("-" * 80)
                         logger.warning(" Input file appears to be a binary file.")

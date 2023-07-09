@@ -142,7 +142,6 @@ def main(argv=None):
 
     if args.function:
         if args.format == "freeze":
-            # TODO fix
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
             function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))

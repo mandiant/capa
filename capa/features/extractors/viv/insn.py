@@ -351,7 +351,6 @@ def is_security_cookie(f, bb, insn) -> bool:
     if oper.isReg() and oper.reg not in [
         envi.archs.i386.regs.REG_ESP,
         envi.archs.i386.regs.REG_EBP,
-        # TODO: do x64 support for real.
         envi.archs.amd64.regs.REG_RBP,
         envi.archs.amd64.regs.REG_RSP,
     ]:
@@ -422,7 +421,6 @@ def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> It
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
-    # TODO handle where fs/gs are loaded into a register or onto the stack and used later
     insn: envi.Opcode = ih.inner
 
     if insn.mnem not in ["push", "mov"]:
@@ -646,7 +644,6 @@ def extract_op_offset_features(
         if oper.reg == envi.archs.i386.regs.REG_EBP:
             return
 
-        # TODO: do x64 support for real.
         if oper.reg == envi.archs.amd64.regs.REG_RBP:
             return
 

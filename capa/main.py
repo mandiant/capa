@@ -326,10 +326,9 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     return matches, meta
 
 
-# TODO move all to helpers?
-def has_rule_with_namespace(rules, capabilities, rule_cat):
+def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
     for rule_name in capabilities.keys():
-        if rules.rules[rule_name].meta.get("namespace", "").startswith(rule_cat):
+        if rules.rules[rule_name].meta.get("namespace", "").startswith(namespace):
             return True
     return False
 
@@ -484,7 +483,6 @@ def get_workspace(path, format_, sigpaths):
     import viv_utils.flirt
 
     logger.debug("generating vivisect workspace for: %s", path)
-    # TODO should not be auto at this point, anymore
     if format_ == FORMAT_AUTO:
         if not is_supported_format(path):
             raise UnsupportedFormatError()
@@ -509,7 +507,6 @@ def get_workspace(path, format_, sigpaths):
     return vw
 
 
-# TODO get_extractors -> List[FeatureExtractor]?
 def get_extractor(
     path: str,
     format_: str,
@@ -1165,8 +1162,8 @@ def main(argv=None):
             rules = rules.filter_rules_by_meta(args.tag)
             logger.debug("selected %d rules", len(rules))
             for i, r in enumerate(rules.rules, 1):
-                # TODO don't display subscope rules?
                 logger.debug(" %d. %s", i, r)
+
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(

@@ -28,7 +28,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     """
     seqstr = " ".join([f"{b:02x}" for b in seq])
     while True:
-        # TODO find_binary: Deprecated. Please use ida_bytes.bin_search() instead.
+        # TODO(mike-hunhoff): find_binary is deprecated. Please use ida_bytes.bin_search() instead.
         ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
         if ea == idaapi.BADADDR:
             break
@@ -106,7 +106,8 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
 
         # IDA uses section names for the library of ELF imports, like ".dynsym".
         # These are not useful to us, we may need to expand this list over time
-        # TODO: exhaust this list, see #1419
+        # TODO(williballenthin): find all section names used by IDA
+        # https://github.com/mandiant/capa/issues/1419
         if library == ".dynsym":
             library = ""
 

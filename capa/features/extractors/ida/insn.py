@@ -405,7 +405,8 @@ def extract_insn_peb_access_characteristic_features(
     disasm = idc.GetDisasm(insn.ea)
 
     if " fs:30h" in disasm or " gs:60h" in disasm:
-        # TODO: replace above with proper IDA
+        # TODO(mike-hunhoff): use proper IDA API for fetching segment access
+        # scanning the disassembly text is a hack.
         yield Characteristic("peb access"), ih.address
 
 
@@ -426,11 +427,13 @@ def extract_insn_segment_access_features(
     disasm = idc.GetDisasm(insn.ea)
 
     if " fs:" in disasm:
-        # TODO: replace above with proper IDA
+        # TODO(mike-hunhoff): use proper IDA API for fetching segment access
+        # scanning the disassembly text is a hack.
         yield Characteristic("fs access"), ih.address
 
     if " gs:" in disasm:
-        # TODO: replace above with proper IDA
+        # TODO(mike-hunhoff): use proper IDA API for fetching segment access
+        # scanning the disassembly text is a hack.
         yield Characteristic("gs access"), ih.address
 
 

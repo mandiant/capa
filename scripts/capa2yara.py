@@ -54,7 +54,7 @@ var_names = ["".join(letters) for letters in itertools.product(string.ascii_lowe
 
 # this have to be the internal names used by capa.py which are sometimes different to the ones written out in the rules, e.g. "2 or more" is "Some", count is Range
 unsupported = ["characteristic", "mnemonic", "offset", "subscope", "Range"]
-# TODO shorten this list, possible stuff:
+# further idea: shorten this list, possible stuff:
 # - 2 or more strings: e.g.
 # -- https://github.com/mandiant/capa-rules/blob/master/collection/file-managers/gather-direct-ftp-information.yml
 # -- https://github.com/mandiant/capa-rules/blob/master/collection/browser/gather-firefox-profile-information.yml
@@ -172,14 +172,16 @@ def convert_rule(rule, rulename, cround, depth):
             yara_strings += "\t$" + var_name + ' = "' + string + '" ascii wide' + convert_description(kid) + "\n"
             yara_condition += "\t$" + var_name + " "
         elif s_type == "api" or s_type == "import":
-            # TODO: is it possible in YARA to make a difference between api & import?
+            # research needed to decide if its possible in YARA to make a difference between api & import?
 
             # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#api
             api = kid.value
             logger.info("doing api: %r", api)
 
             #    e.g. kernel32.CreateNamedPipe => look for kernel32.dll and CreateNamedPipe
-            # TODO: improve .NET API call handling
+            #
+            # note: the handling of .NET API calls could be improved here.
+            # once we have a motivation and some examples, lets do that.
             if "::" in api:
                 mod, api = api.split("::")
 
@@ -204,7 +206,7 @@ def convert_rule(rule, rulename, cround, depth):
                 var_name = "api_" + var_names.pop(0)
 
                 # limit regex with word boundary \b but also search for appended A and W
-                # TODO: better use something like /(\\x00|\\x01|\\x02|\\x03|\\x04)' + api + '(A|W)?\\x00/  ???
+                # alternatively: use something like /(\\x00|\\x01|\\x02|\\x03|\\x04)' + api + '(A|W)?\\x00/  ???
                 yara_strings += "\t$" + var_name + " = /\\b" + api + "(A|W)?\\b/ ascii wide\n"
                 yara_condition += "\t$" + var_name + " "
 
@@ -679,8 +681,6 @@ def convert_rules(rules, namespaces, cround, make_priv):
 
                 yara += "  condition:" + condition_header + yara_condition + "\n}"
 
-                # TODO: now the rule is finished and could be automatically checked with the capa-testfile(s) named in meta
-                # (doing it for all of them using yara-ci upload at the moment)
                 output_yar(yara)
                 converted_rules.append(rule_name)
                 count_incomplete += incomplete

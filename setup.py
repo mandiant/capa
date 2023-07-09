@@ -81,6 +81,7 @@ setuptools.setup(
             "flake8-logging-format==0.9.0",
             "flake8-no-implicit-concat==0.3.4",
             "flake8-print==5.0.0",
+            "flake8-todos==0.3.0",
             "ruff==0.0.275",
             "black==23.3.0",
             "isort==5.11.4",
