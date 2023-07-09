@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 import capa.perf
 import capa.features
 import capa.features.extractors.elf
-import capa.features.freeze.features
 from capa.features.address import Address
 
 logger = logging.getLogger(__name__)
@@ -131,6 +130,11 @@ class Feature(abc.ABC):  # noqa: B024
         # implementing sorting by serializing to JSON is a huge hack.
         # its slow, inelegant, and probably doesn't work intuitively;
         # however, we only use it for deterministic output, so it's good enough for now.
+
+        # circular import
+        # we should fix if this wasn't already a huge hack.
+        import capa.features.freeze.features
+
         return (
             capa.features.freeze.features.feature_from_capa(self).json()
             < capa.features.freeze.features.feature_from_capa(other).json()
