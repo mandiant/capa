@@ -10,7 +10,7 @@
 - Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
 - Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
 - Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
-- Add ProcessesAddress and ThreadAddress @yelhamer
+- Add ProcessesAddress and ThreadAddress #1612 @yelhamer
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
