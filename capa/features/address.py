@@ -36,6 +36,58 @@ class AbsoluteVirtualAddress(int, Address):
         return int.__hash__(self)
 
 
+class ProcessAddress(Address):
+    """addresses a processes in a dynamic execution trace"""
+
+    def __init__(self, pid: int, ppid: int = 0):
+        assert ppid >= 0
+        assert pid > 0
+        self.ppid = ppid
+        self.pid = pid
+
+    def __repr__(self):
+        return "process(%s%s)" % (
+            f"ppid: {self.ppid}, " if self.ppid > 0 else "",
+            f"pid: {self.pid}",
+        )
+
+    def __hash__(self):
+        return hash((self.ppid, self.pid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ProcessAddress)
+        if self.ppid > 0:
+            return (self.ppid, self.pid) == (other.ppid, other.pid)
+        else:
+            return self.pid == other.pid
+
+    def __lt__(self, other):
+        return (self.ppid, self.pid) < (other.ppid, other.pid)
+
+
+class ThreadAddress(Address):
+    """addresses a thread in a dynamic execution trace"""
+
+    def __init__(self, process: ProcessAddress, tid: int):
+        assert tid >= 0
+        self.ppid = process.ppid
+        self.pid = process.pid
+        self.tid = tid
+
+    def __repr__(self):
+        return f"thread(tid: {self.tid})"
+
+    def __hash__(self):
+        return hash((self.ppid, self.pid, self.tid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ThreadAddress)
+        return (self.ppid, self.pid, self.tid) == (other.ppid, other.pid, other.tid)
+
+    def __lt__(self, other):
+        return (self.ppid, self.pid, self.tid) < (other.ppid, other.pid, other.tid)
+
+
 class DynamicAddress(Address):
     """an address from a dynamic analysis trace"""
 

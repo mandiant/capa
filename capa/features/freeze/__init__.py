@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and limitations 
 import zlib
 import logging
 from enum import Enum
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, TypeAlias
 
 from pydantic import Field, BaseModel
 
@@ -23,9 +23,10 @@ import capa.features.insn
 import capa.features.common
 import capa.features.address
 import capa.features.basicblock
+import capa.features.extractors.null as null
 from capa.helpers import assert_never
 from capa.features.freeze.features import Feature, feature_from_capa
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +42,15 @@ class AddressType(str, Enum):
     FILE = "file"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
+    PROCESS = "process"
+    THREAD = "thread"
     DYNAMIC = "dynamic"
     NO_ADDRESS = "no address"
 
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, int], None]
+    value: Union[int, Tuple[int, int], Tuple[int, int, int], None]
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -65,6 +68,12 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
+
+        elif isinstance(a, capa.features.address.ProcessAddress):
+            return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
+
+        elif isinstance(a, capa.features.address.ThreadAddress):
+            return cls(type=AddressType.THREAD, value=(a.ppid, a.pid, a.tid))
 
         elif isinstance(a, capa.features.address.DynamicAddress):
             return cls(type=AddressType.DYNAMIC, value=(a.id, a.return_address))
@@ -104,7 +113,17 @@ class Address(HashableModel):
             assert isinstance(token, int)
             assert isinstance(offset, int)
             return capa.features.address.DNTokenOffsetAddress(token, offset)
-
+        elif self.type is AddressType.PROCESS:
+            assert isinstance(self.value, tuple)
+            ppid, pid = self.value
+            assert isinstance(ppid, int)
+            assert isinstance(pid, int)
+        elif self.type is AddressType.THREAD:
+            assert isinstance(self.value, tuple)
+            ppid, pid, tid = self.value
+            assert isinstance(ppid, int)
+            assert isinstance(pid, int)
+            assert isinstance(tid, int)
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
 
@@ -131,6 +150,36 @@ class GlobalFeature(HashableModel):
 
 
 class FileFeature(HashableModel):
+    address: Address
+    feature: Feature
+
+
+class ProcessFeature(HashableModel):
+    """
+    args:
+        process: the address of the process to which this feature belongs.
+        address: the address at which this feature is found.
+
+    process != address because, e.g., the feature may be found *within* the scope (process).
+    versus right at its starting address.
+    """
+
+    process: Address
+    address: Address
+    feature: Feature
+
+
+class ThreadFeature(HashableModel):
+    """
+    args:
+        thread: the address of the thread to which this feature belongs.
+        address: the address at which this feature is found.
+
+    thread != address because, e.g., the feature may be found *within* the scope (thread).
+    versus right at its starting address.
+    """
+
+    thread: Address
     address: Address
     feature: Feature
 
@@ -203,13 +252,36 @@ class FunctionFeatures(BaseModel):
         allow_population_by_field_name = True
 
 
-class Features(BaseModel):
+class ThreadFeatures(BaseModel):
+    address: Address
+    features: Tuple[ThreadFeature, ...]
+
+
+class ProcessFeatures(BaseModel):
+    address: Address
+    features: Tuple[ProcessFeature, ...]
+    threads: Tuple[ThreadFeatures, ...]
+
+
+class StaticFeatures(BaseModel):
     global_: Tuple[GlobalFeature, ...] = Field(alias="global")
     file: Tuple[FileFeature, ...]
     functions: Tuple[FunctionFeatures, ...]
 
     class Config:
         allow_population_by_field_name = True
+
+
+class DynamicFeatures(BaseModel):
+    global_: Tuple[GlobalFeature, ...] = Field(alias="global")
+    file: Tuple[FileFeature, ...]
+    processes: Tuple[ProcessFeatures, ...]
+
+    class Config:
+        allow_population_by_field_name = True
+
+
+Features: TypeAlias = Union[StaticFeatures, DynamicFeatures]
 
 
 class Extractor(BaseModel):
@@ -230,7 +302,7 @@ class Freeze(BaseModel):
         allow_population_by_field_name = True
 
 
-def dumps(extractor: StaticFeatureExtractor) -> str:
+def dumps_static(extractor: StaticFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
@@ -313,7 +385,7 @@ def dumps(extractor: StaticFeatureExtractor) -> str:
             # Mypy is unable to recognise `basic_blocks` as a argument due to alias
         )
 
-    features = Features(
+    features = StaticFeatures(
         global_=global_features,
         file=tuple(file_features),
         functions=tuple(function_features),
@@ -331,15 +403,94 @@ def dumps(extractor: StaticFeatureExtractor) -> str:
     return freeze.json()
 
 
-def loads(s: str) -> StaticFeatureExtractor:
-    """deserialize a set of features (as a NullFeatureExtractor) from a string."""
-    import capa.features.extractors.null as null
+def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
+    """
+    serialize the given extractor to a string
+    """
 
+    global_features: List[GlobalFeature] = []
+    for feature, _ in extractor.extract_global_features():
+        global_features.append(
+            GlobalFeature(
+                feature=feature_from_capa(feature),
+            )
+        )
+
+    file_features: List[FileFeature] = []
+    for feature, address in extractor.extract_file_features():
+        file_features.append(
+            FileFeature(
+                feature=feature_from_capa(feature),
+                address=Address.from_capa(address),
+            )
+        )
+
+    process_features: List[ProcessFeatures] = []
+    for p in extractor.get_processes():
+        paddr = Address.from_capa(p.address)
+        pfeatures = [
+            ProcessFeature(
+                process=paddr,
+                address=Address.from_capa(addr),
+                feature=feature_from_capa(feature),
+            )
+            for feature, addr in extractor.extract_process_features(p)
+        ]
+
+        threads = []
+        for t in extractor.get_threads(p):
+            taddr = Address.from_capa(t.address)
+            tfeatures = [
+                ThreadFeature(
+                    basic_block=taddr,
+                    address=Address.from_capa(addr),
+                    feature=feature_from_capa(feature),
+                )  # type: ignore
+                # Mypy is unable to recognise `basic_block` as a argument due to alias
+                for feature, addr in extractor.extract_thread_features(p, t)
+            ]
+
+            threads.append(
+                ThreadFeatures(
+                    address=taddr,
+                    features=tuple(tfeatures),
+                )
+            )
+
+        process_features.append(
+            ProcessFeatures(
+                address=paddr,
+                features=tuple(pfeatures),
+                threads=threads,
+            )  # type: ignore
+            # Mypy is unable to recognise `basic_blocks` as a argument due to alias
+        )
+
+    features = DynamicFeatures(
+        global_=global_features,
+        file=tuple(file_features),
+        processes=tuple(process_features),
+    )  # type: ignore
+    # Mypy is unable to recognise `global_` as a argument due to alias
+
+    freeze = Freeze(
+        version=2,
+        base_address=Address.from_capa(extractor.get_base_address()) if hasattr(extractor, "get_base_address") else 0,
+        extractor=Extractor(name=extractor.__class__.__name__),
+        features=features,
+    )  # type: ignore
+    # Mypy is unable to recognise `base_address` as a argument due to alias
+
+    return freeze.json()
+
+
+def loads_static(s: str) -> StaticFeatureExtractor:
+    """deserialize a set of features (as a NullFeatureExtractor) from a string."""
     freeze = Freeze.parse_raw(s)
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
-    return null.NullFeatureExtractor(
+    return null.NullStaticFeatureExtractor(
         base_address=freeze.base_address.to_capa(),
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
         file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
@@ -364,24 +515,68 @@ def loads(s: str) -> StaticFeatureExtractor:
     )
 
 
-MAGIC = "capa0000".encode("ascii")
+def loads_dynamic(s: str) -> DynamicFeatureExtractor:
+    """deserialize a set of features (as a NullFeatureExtractor) from a string."""
+    freeze = Freeze.parse_raw(s)
+    if freeze.version != 2:
+        raise ValueError(f"unsupported freeze format version: {freeze.version}")
+
+    return null.NullDynamicFeatureExtractor(
+        base_address=freeze.base_address.to_capa(),
+        global_features=[f.feature.to_capa() for f in freeze.features.global_],
+        file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
+        processes={
+            p.address.to_capa(): null.ProcessFeatures(
+                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in p.features],
+                threads={
+                    t.address.to_capa(): null.ThreadFeatures(
+                        features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in t.features],
+                    )
+                    for t in p.threads
+                },
+            )
+            for p in freeze.features.processes
+        },
+    )
+
+
+MAGIC = "capa000".encode("ascii")
+STATIC_MAGIC = MAGIC + "0".encode("ascii")
+DYNAMIC_MAGIC = MAGIC + "1".encode("ascii")
 
 
 def dump(extractor: FeatureExtractor) -> bytes:
     """serialize the given extractor to a byte array."""
-    assert isinstance(extractor, StaticFeatureExtractor)
-    return MAGIC + zlib.compress(dumps(extractor).encode("utf-8"))
+    if isinstance(extractor, StaticFeatureExtractor):
+        return STATIC_MAGIC + zlib.compress(dumps_static(extractor).encode("utf-8"))
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return DYNAMIC_MAGIC + zlib.compress(dumps_static(extractor).encode("utf-8"))
+    else:
+        raise ValueError("Invalid feature extractor")
 
 
 def is_freeze(buf: bytes) -> bool:
     return buf[: len(MAGIC)] == MAGIC
 
 
-def load(buf: bytes) -> StaticFeatureExtractor:
+def is_static(buf: bytes) -> bool:
+    return buf[: len(STATIC_MAGIC)] == STATIC_MAGIC
+
+
+def is_dynamic(buf: bytes) -> bool:
+    return buf[: len(DYNAMIC_MAGIC)] == DYNAMIC_MAGIC
+
+
+def load(buf: bytes) -> null.NullFeatureExtractor:
     """deserialize a set of features (as a NullFeatureExtractor) from a byte array."""
     if not is_freeze(buf):
         raise ValueError("missing magic header")
-    return loads(zlib.decompress(buf[len(MAGIC) :]).decode("utf-8"))
+    if is_static(buf):
+        return loads_static(zlib.decompress(buf[len(STATIC_MAGIC) :]).decode("utf-8"))
+    elif is_dynamic(buf):
+        return loads_dynamic(zlib.decompress(buf[len(DYNAMIC_MAGIC) :]).decode("utf-8"))
+    else:
+        raise ValueError("invalid magic header")
 
 
 def main(argv=None):

@@ -11,7 +11,7 @@ from typing import Dict, Tuple, Iterator
 
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
 from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.base_extractor import ProcessHandle
 
@@ -24,8 +24,10 @@ def get_processes(static: Dict) -> Iterator[ProcessHandle]:
     """
 
     def rec(process):
-        inner: Dict[str, str] = {"name": process["name"], "ppid": process["parent_id"]}
-        yield ProcessHandle(pid=process["pid"], inner=inner)
+        address: ProcessAddress = ProcessAddress(pid=process["pid"], ppid=process["parent_id"])
+        inner: Dict[str, str] = {"name": process["name"]}
+        print(address)
+        yield ProcessHandle(address=address, inner=inner)
         for child in process["children"]:
             yield from rec(child)
 
