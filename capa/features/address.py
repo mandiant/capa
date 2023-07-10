@@ -56,10 +56,7 @@ class ProcessAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, ProcessAddress)
-        if self.ppid > 0:
-            return (self.ppid, self.pid) == (other.ppid, other.pid)
-        else:
-            return self.pid == other.pid
+        return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
         return (self.ppid, self.pid) < (other.ppid, other.pid)
@@ -81,10 +78,10 @@ class ThreadAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, ThreadAddress)
-        return (self.ppid, self.pid, self.tid) == (other.ppid, other.pid, other.tid)
+        return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
-        return (self.ppid, self.pid, self.tid) < (other.ppid, other.pid, other.tid)
+        return (self.process, self.tid) < (other.process, other.tid)
 
 
 class DynamicAddress(Address):
