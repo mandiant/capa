@@ -8,7 +8,7 @@
 from typing import Tuple, Iterator
 
 import ghidra
-from ghidra.program.model.block import BasicBlockModel
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
@@ -17,7 +17,7 @@ from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
-monitor = getMonitor()  # type: ignore [name-defined]
+monitor: ghidra.util.task.TaskMonitor
 
 
 def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
@@ -29,14 +29,12 @@ def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
 
 def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
     edges = []
-    model = BasicBlockModel(currentProgram)  # does not allow overlap, so we have to iterate ourself
-    addr_set = fh.getBody()
 
-    for block in model.getCodeBlocksContaining(addr_set, monitor):
+    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):
         dests = block.getDestinations(monitor)
         s_addrs = block.getStartAddresses()
 
-        while dests.hasNext():  # Python error forces us to use iterator functions
+        while dests.hasNext():  # For loop throws Python TypeError
             for addr in s_addrs:
                 edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
