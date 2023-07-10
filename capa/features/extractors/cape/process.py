@@ -45,7 +45,7 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
 
     for variable, value in environ.items():
         if value:
-            yield String(value), NO_ADDRESS
+            yield String(value), ph.address
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:

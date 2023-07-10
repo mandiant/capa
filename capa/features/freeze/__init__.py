@@ -167,7 +167,6 @@ class ProcessFeature(HashableModel):
         address: the address at which this feature is found.
 
     process != address because, e.g., the feature may be found *within* the scope (process).
-    versus right at its starting address.
     """
 
     process: Address
@@ -182,7 +181,6 @@ class ThreadFeature(HashableModel):
         address: the address at which this feature is found.
 
     thread != address because, e.g., the feature may be found *within* the scope (thread).
-    versus right at its starting address.
     """
 
     thread: Address
