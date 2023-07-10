@@ -928,7 +928,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    # remove once support for the legacy scope
+    # TODO(yelhamer): remove once support for the legacy scope
     # field has been added
     return 0
 
