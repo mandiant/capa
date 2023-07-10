@@ -78,7 +78,7 @@ def get_format(sample: Path) -> str:
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):
-            dnfile_extractor = DnfileFeatureExtractor(str(sample))
+            dnfile_extractor = DnfileFeatureExtractor(sample)
             if dnfile_extractor.is_dotnet_file():
                 feature = Format(FORMAT_DOTNET)
 

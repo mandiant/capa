@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
+from pathlib import Path
 
 import viv_utils
 import viv_utils.flirt
@@ -25,12 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
-    def __init__(self, vw, path, os):
+    def __init__(self, vw, path: Path, os):
         super().__init__()
         self.vw = vw
         self.path = path
-        with open(self.path, "rb") as f:
-            self.buf = f.read()
+        self.buf = path.read_bytes()
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []

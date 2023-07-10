@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from typing import Dict, List, Tuple, Union, Iterator, Optional
+from pathlib import Path
 
 import dnfile
 from dncil.cil.opcode import OpCodes
@@ -68,9 +69,9 @@ class DnFileFeatureExtractorCache:
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope

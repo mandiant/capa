@@ -129,7 +129,7 @@ def fixup_viv(path: Path, extractor):
 def get_pefile_extractor(path: Path):
     import capa.features.extractors.pefile
 
-    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(str(path))
+    extractor = capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -140,7 +140,7 @@ def get_pefile_extractor(path: Path):
 def get_dotnetfile_extractor(path: Path):
     import capa.features.extractors.dotnetfile
 
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(str(path))
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -152,7 +152,7 @@ def get_dotnetfile_extractor(path: Path):
 def get_dnfile_extractor(path: Path):
     import capa.features.extractors.dnfile.extractor
 
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(str(path))
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -232,7 +232,7 @@ def extract_instruction_features(extractor, fh, bbh, ih) -> Dict[Feature, Set[Ad
 
 
 # note: to reduce the testing time it's recommended to reuse already existing test samples, if possible
-def get_data_path_by_name(name):
+def get_data_path_by_name(name) -> Path:
     if name == "mimikatz":
         return CD / "data" / "mimikatz.exe_"
     elif name == "kernel32":
@@ -1048,7 +1048,6 @@ FEATURE_COUNT_TESTS_DOTNET = [
 
 
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
-    print(sample)
     extractor = get_extractor(sample)
     features = scope(extractor)
     if expected:

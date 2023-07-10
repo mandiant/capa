@@ -8,6 +8,7 @@
 import io
 import logging
 from typing import Tuple, Iterator
+from pathlib import Path
 
 from elftools.elf.elffile import ELFFile, SymbolTableSection
 
@@ -107,11 +108,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.path = path
-        with open(self.path, "rb") as f:
-            self.elf = ELFFile(io.BytesIO(f.read()))
+        self.path: Path = path
+        self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
     def get_base_address(self):
         # virtual address of the first segment with type LOAD
@@ -120,15 +120,13 @@ class ElfFeatureExtractor(FeatureExtractor):
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
 
     def extract_global_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = self.path.read_bytes()
 
         for feature, addr in extract_global_features(self.elf, buf):
             yield feature, addr
 
     def extract_file_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = self.path.read_bytes()
 
         for feature, addr in extract_file_features(self.elf, buf):
             yield feature, addr

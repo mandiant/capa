@@ -533,7 +533,7 @@ def get_extractor(
     if format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(str(path))
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
@@ -542,8 +542,8 @@ def get_extractor(
         # We need to fist find the binja API installation path and add it into sys.path
         if is_running_standalone():
             bn_api = find_binja_path()
-            if Path(bn_api).exists():
-                sys.path.append(bn_api)
+            if bn_api.exists():
+                sys.path.append(str(bn_api))
 
         try:
             from binaryninja import BinaryView, BinaryViewType
@@ -586,14 +586,14 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(str(sample)))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
 
     elif format_ == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(str(sample)))
-        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(str(sample)))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(str(sample)))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     return file_extractors
 
