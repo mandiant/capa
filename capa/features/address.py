@@ -37,7 +37,7 @@ class AbsoluteVirtualAddress(int, Address):
 
 
 class ProcessAddress(Address):
-    """addresses a processes in a dynamic execution trace"""
+    """an address of a process in a dynamic execution trace"""
 
     def __init__(self, pid: int, ppid: int = 0):
         assert ppid >= 0
