@@ -71,10 +71,9 @@ AnalyzeOptionsText = {
 }
 
 
-def write_file(path, data):
+def write_file(path: Path, data):
     """ """
-    with open(path, "wb") as save_file:
-        save_file.write(data)
+    path.write_bytes(data)
 
 
 def trim_function_name(f, max_length=25):
@@ -600,7 +599,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     raise UserCancelledError()
 
                 if not path.exists():
-                    logger.error("rule path %s does not exist or cannot be accessed" % path)
+                    logger.error("rule path %s does not exist or cannot be accessed", path)
                     return False
 
                 settings.user[CAPA_SETTINGS_RULE_PATH] = str(path)
@@ -1307,8 +1306,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         s = self.resdoc_cache.json().encode("utf-8")
 
-        path = self.ask_user_capa_json_file()
-        if not path:
+        path = Path(self.ask_user_capa_json_file())
+        if not path.exists():
             return
 
         write_file(path, s)
@@ -1320,8 +1319,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No rule to save.")
             return
 
-        path = self.ask_user_capa_rule_file()
-        if not path:
+        path = Path(self.ask_user_capa_rule_file())
+        if not path.exists():
             return
 
         write_file(path, s)

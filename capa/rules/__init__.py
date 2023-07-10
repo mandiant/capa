@@ -14,6 +14,7 @@ import logging
 import binascii
 import collections
 from enum import Enum
+from pathlib import Path
 
 from capa.helpers import assert_never
 
@@ -825,7 +826,7 @@ class Rule:
 
     @classmethod
     def from_yaml_file(cls, path, use_ruamel=False) -> "Rule":
-        with open(path, "rb") as f:
+        with Path(path).open("rb") as f:
             try:
                 rule = cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
                 # import here to avoid circular dependency

@@ -160,8 +160,7 @@ def main(argv=None):
 
     if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         format_ = args.format
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)

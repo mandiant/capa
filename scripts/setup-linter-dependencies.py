@@ -172,7 +172,7 @@ def main(args: argparse.Namespace) -> None:
 
     logging.info("Writing results to %s", args.output)
     try:
-        with open(args.output, "w", encoding="utf-8") as jf:
+        with Path(args.output).open("w", encoding="utf-8") as jf:
             json.dump(data, jf, indent=2)
     except BaseException as e:
         logging.error("Exception encountered when writing results: %s", e)

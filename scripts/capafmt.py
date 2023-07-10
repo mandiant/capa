@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and limitations 
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.rules
 
@@ -70,8 +71,7 @@ def main(argv=None):
             return 1
 
     if args.in_place:
-        with open(args.path, "wb") as f:
-            f.write(reformatted_rule.encode("utf-8"))
+        Path(args.path).write_bytes(reformatted_rule.encode("utf-8"))
     else:
         print(reformatted_rule)
 

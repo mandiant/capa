@@ -434,7 +434,7 @@ def get_default_root() -> Path:
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
         assert hasattr(sys, "_MEIPASS")
-        return Path(getattr(sys, "_MEIPASS"))
+        return Path(sys._MEIPASS)
     else:
         return Path(__file__).resolve().parent.parent
 
@@ -577,7 +577,7 @@ def get_extractor(
 
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
-    file_extractors: List[FeatureExtractor] = list()
+    file_extractors: List[FeatureExtractor] = []
 
     if format_ == FORMAT_PE:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))

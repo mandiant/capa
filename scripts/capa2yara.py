@@ -72,8 +72,8 @@ default_tags = "CAPA "
 # minimum number of rounds to do be able to convert rules which depend on referenced rules in several levels of depth
 min_rounds = 5
 
-unsupported_capa_rules = open("unsupported_capa_rules.yml", "wb")
-unsupported_capa_rules_names = open("unsupported_capa_rules.txt", "wb")
+unsupported_capa_rules = Path("unsupported_capa_rules.yml").open("wb")
+unsupported_capa_rules_names = Path("unsupported_capa_rules.txt").open("wb")
 unsupported_capa_rules_list = []
 
 condition_header = """

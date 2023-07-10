@@ -355,7 +355,7 @@ class DoesntMatchExample(Lint):
             try:
                 capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.error("failed to extract capabilities: %s %s %s", rule.name, path, e, exc_info=True)
+                logger.exception("failed to extract capabilities: %s %s %s", rule.name, path, e)
                 return True
 
             if rule.name not in capabilities:
@@ -883,12 +883,12 @@ def lint(ctx: Context):
     return ret
 
 
-def collect_samples(path: Path) -> Dict[str, Path]:
+def collect_samples(samples_path: Path) -> Dict[str, Path]:
     """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
     samples = {}
-    for path in path.rglob("*"):
+    for path in samples_path.rglob("*"):
         if path.suffix in [".viv", ".idb", ".i64", ".frz", ".fnames"]:
             continue
 
