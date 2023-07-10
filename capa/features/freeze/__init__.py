@@ -113,17 +113,23 @@ class Address(HashableModel):
             assert isinstance(token, int)
             assert isinstance(offset, int)
             return capa.features.address.DNTokenOffsetAddress(token, offset)
+
         elif self.type is AddressType.PROCESS:
             assert isinstance(self.value, tuple)
             ppid, pid = self.value
             assert isinstance(ppid, int)
             assert isinstance(pid, int)
+            return capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+
         elif self.type is AddressType.THREAD:
             assert isinstance(self.value, tuple)
             ppid, pid, tid = self.value
             assert isinstance(ppid, int)
             assert isinstance(pid, int)
             assert isinstance(tid, int)
+            proc_addr = capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
+            return capa.features.address.ThreadAddress(proc_addr, tid=tid)
+
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
 
@@ -306,7 +312,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
-
+    assert isinstance(extractor, StaticFeatureExtractor)
     global_features: List[GlobalFeature] = []
     for feature, _ in extractor.extract_global_features():
         global_features.append(
@@ -407,7 +413,6 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
-
     global_features: List[GlobalFeature] = []
     for feature, _ in extractor.extract_global_features():
         global_features.append(
@@ -521,6 +526,7 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
+    assert isinstance(freeze.features, DynamicFeatures)
     return null.NullDynamicFeatureExtractor(
         base_address=freeze.base_address.to_capa(),
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
@@ -550,7 +556,7 @@ def dump(extractor: FeatureExtractor) -> bytes:
     if isinstance(extractor, StaticFeatureExtractor):
         return STATIC_MAGIC + zlib.compress(dumps_static(extractor).encode("utf-8"))
     elif isinstance(extractor, DynamicFeatureExtractor):
-        return DYNAMIC_MAGIC + zlib.compress(dumps_static(extractor).encode("utf-8"))
+        return DYNAMIC_MAGIC + zlib.compress(dumps_dynamic(extractor).encode("utf-8"))
     else:
         raise ValueError("Invalid feature extractor")
 
