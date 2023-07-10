@@ -14,13 +14,13 @@ requirements = [
     "tqdm==4.65.0",
     "pyyaml==6.0",
     "tabulate==0.9.0",
-    "colorama==0.4.5",
+    "colorama==0.4.6",
     "termcolor==2.3.0",
     "wcwidth==0.2.6",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
-    "networkx==2.5.1",  # newer versions no longer support py3.7.
+    "networkx==3.1",
     "ruamel.yaml==0.17.32",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
@@ -84,7 +84,7 @@ setuptools.setup(
             "mypy-protobuf==3.4.0",
             # type stubs for mypy
             "types-backports==0.1.3",
-            "types-colorama==0.4.15",
+            "types-colorama==0.4.15.11",
             "types-PyYAML==6.0.8",
             "types-tabulate==0.9.0.1",
             "types-termcolor==1.1.4",
@@ -107,5 +107,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Topic :: Security",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
 )
