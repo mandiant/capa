@@ -26,7 +26,6 @@ def get_processes(static: Dict) -> Iterator[ProcessHandle]:
     def rec(process):
         address: ProcessAddress = ProcessAddress(pid=process["pid"], ppid=process["parent_id"])
         inner: Dict[str, str] = {"name": process["name"]}
-        print(address)
         yield ProcessHandle(address=address, inner=inner)
         for child in process["children"]:
             yield from rec(child)
