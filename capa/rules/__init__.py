@@ -858,7 +858,7 @@ class Rule:
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        # TODO: once we've decided on the desired format for mixed-scope statements,
+        # TODO(yelhamer): once we've decided on the desired format for mixed-scope statements,
         # we should go back and update this accordingly to either:
         # - generate one englobing statement.
         # - generate two respective statements and store them approriately
