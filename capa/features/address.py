@@ -74,7 +74,7 @@ class ThreadAddress(Address):
         return f"thread(tid: {self.tid})"
 
     def __hash__(self):
-        return hash((self.ppid, self.pid, self.tid))
+        return hash((self.process, self.tid))
 
     def __eq__(self, other):
         assert isinstance(other, ThreadAddress)

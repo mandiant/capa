@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Union, TypeAlias
 from dataclasses import dataclass
 
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address
+from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
@@ -88,7 +88,7 @@ class ThreadFeatures:
 @dataclass
 class ProcessFeatures:
     features: List[Tuple[Address, Feature]]
-    threads: Dict[Address, ThreadFeatures]
+    threads: Dict[ThreadAddress, ThreadFeatures]
 
 
 @dataclass
@@ -96,7 +96,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     base_address: Address
     global_features: List[Feature]
     file_features: List[Tuple[Address, Feature]]
-    processes: Dict[Address, ProcessFeatures]
+    processes: Dict[ProcessAddress, ProcessFeatures]
 
     def extract_global_features(self):
         for feature in self.global_features:
@@ -108,7 +108,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
 
     def get_processes(self):
         for address in sorted(self.processes.keys()):
-            yield ProcessHandle(address=address, inner={}, pid=address.pid)
+            yield ProcessHandle(address=address, inner={})
 
     def extract_process_features(self, p):
         for addr, feature in self.processes[p.address].features:
@@ -116,7 +116,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
 
     def get_threads(self, p):
         for address in sorted(self.processes[p].threads.keys()):
-            yield ThreadHandle(address=address, inner={}, tid=address.pid)
+            yield ThreadHandle(address=address, inner={})
 
     def extract_thread_features(self, p, t):
         for addr, feature in self.processes[p.address].threads[t.address].features:

@@ -50,7 +50,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, int], Tuple[int, int, int], None]
+    value: Union[int, Tuple[int, ...], None]
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -73,7 +73,7 @@ class Address(HashableModel):
             return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
 
         elif isinstance(a, capa.features.address.ThreadAddress):
-            return cls(type=AddressType.THREAD, value=(a.ppid, a.pid, a.tid))
+            return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
 
         elif isinstance(a, capa.features.address.DynamicAddress):
             return cls(type=AddressType.DYNAMIC, value=(a.id, a.return_address))
