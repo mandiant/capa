@@ -1,6 +1,6 @@
 """
 Create a cache of the given rules.
-This is only really intended to be used by CI to pre-cache rulesets 
+This is only really intended to be used by CI to pre-cache rulesets
 that will be distributed within PyInstaller binaries.
 
 Usage:
@@ -17,7 +17,6 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
-import time
 import logging
 import argparse
 

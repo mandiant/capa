@@ -199,14 +199,3 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_format,
 )
-
-
-def main():
-    """ """
-    import pprint
-
-    pprint.pprint(list(extract_features()))
-
-
-if __name__ == "__main__":
-    main()

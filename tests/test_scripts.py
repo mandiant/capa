@@ -8,11 +8,13 @@
 
 import os
 import sys
+import logging
 import textwrap
 import subprocess
 
 import pytest
-from fixtures import *
+
+logger = logging.getLogger(__name__)
 
 CD = os.path.dirname(__file__)
 
@@ -64,7 +66,7 @@ def test_bulk_process(tmpdir):
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
-    print(f"running: '{args}'")
+    logger.debug("running: %r", args)
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
@@ -165,7 +167,7 @@ def test_detect_duplicate_features(tmpdir):
     """
         The rule_overlaps list represents the number of overlaps between each rule in the RULESET.
         An overlap includes a rule overlap with itself.
-        The scripts 
+        The scripts
         The overlaps are like:
         - Rule 0 has zero overlaps in RULESET
         - Rule 1 overlaps with 3 other rules in RULESET

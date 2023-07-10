@@ -104,19 +104,3 @@ BASIC_BLOCK_HANDLERS = (
     extract_bb_tight_loop,
     extract_bb_stackstring,
 )
-
-
-def main():
-    features = []
-    for fhandle in helpers.get_functions(skip_thunks=True, skip_libs=True):
-        f: idaapi.func_t = fhandle.inner
-        for bb in idaapi.FlowChart(f, flags=idaapi.FC_PREDS):
-            features.extend(list(extract_features(fhandle, bb)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()

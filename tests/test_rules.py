@@ -398,7 +398,7 @@ def test_subscope_rules():
 
 def test_duplicate_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -428,7 +428,7 @@ def test_duplicate_rules():
 
 def test_missing_dependency():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -447,7 +447,7 @@ def test_missing_dependency():
 
 def test_invalid_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -460,7 +460,7 @@ def test_invalid_rules():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -474,7 +474,7 @@ def test_invalid_rules():
 
     # att&ck and mbc must be lists
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -487,7 +487,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -551,7 +551,7 @@ def test_count_number_symbol():
 
 def test_invalid_number():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -564,7 +564,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -577,7 +577,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -637,7 +637,7 @@ def test_count_offset_symbol():
 
 def test_invalid_offset():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -650,7 +650,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -663,7 +663,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -678,7 +678,7 @@ def test_invalid_offset():
 
 def test_invalid_string_values_int():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -691,7 +691,7 @@ def test_invalid_string_values_int():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -928,12 +928,12 @@ def test_rules_namespace_dependencies():
         ),
     ]
 
-    r3 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 3")))
+    r3 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 3")}
     assert "rule 1" in r3
     assert "rule 2" not in r3
     assert "rule 4" not in r3
 
-    r4 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 4")))
+    r4 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 4")}
     assert "rule 1" in r4
     assert "rule 2" in r4
     assert "rule 3" not in r4

@@ -42,12 +42,12 @@ def get_features(rule_path: str) -> list:
         list: A list of all feature statements contained within the rule file.
     """
     feature_list = []
-    with open(rule_path, "r") as f:
+    with open(rule_path, "r", encoding="utf-8") as f:
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)
         except Exception as e:
-            logger.error("Error: New rule " + rule_path + " " + str(type(e)) + " " + str(e))
+            logger.error("Error: New rule %s %s %s", rule_path, str(type(e)), str(e))
             sys.exit(-1)
     return feature_list
 
@@ -73,7 +73,7 @@ def find_overlapping_rules(new_rule_path, rules_path):
             continue
         count += 1
         # Checks if any features match between existing and new rule.
-        if any([feature in rule_features for feature in new_rule_features]):
+        if any(feature in rule_features for feature in new_rule_features):
             overlapping_rules.append(rule_name)
 
     result = {"overlapping_rules": overlapping_rules, "count": count}

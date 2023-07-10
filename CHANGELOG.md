@@ -10,6 +10,10 @@
 - Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
 - Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
 - Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
+- use fancy box drawing characters for default output #1586 @williballenthin
+- use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
+- migrate to pyproject.toml #1301 @williballenthin
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
@@ -17,7 +21,7 @@
 - Change the old FeatureExtractor class' name into StaticFeatureExtractor, and make the former an alias for both the StaticFeatureExtractor and DynamicFeatureExtractor classes @yelhamer [#1567](https://github.com/mandiant/capa/issues/1567)
 - use fancy box drawing characters for default output #1586 @williballenthin
 
-### New Rules (22)
+### New Rules (23)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -40,6 +44,7 @@
 - anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 - host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
 - host-interaction/gui/switch-active-desktop jakub.jozwiak@mandiant.com
+- host-interaction/service/query-service-configuration @mr-tz
 -
 
 ### Bug Fixes

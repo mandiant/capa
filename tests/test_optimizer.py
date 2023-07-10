@@ -8,15 +8,13 @@
 
 import textwrap
 
-import pytest
-
 import capa.rules
 import capa.engine
 import capa.optimizer
 import capa.features.common
 from capa.engine import Or, And
 from capa.features.insn import Mnemonic
-from capa.features.common import Arch, Bytes, Substring
+from capa.features.common import Arch, Substring
 
 
 def test_optimizer_order():

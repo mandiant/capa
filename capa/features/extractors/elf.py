@@ -411,7 +411,7 @@ class ELF:
                 # there should be vn_cnt of these.
                 # each entry describes an ABI name required by the shared object.
                 vna_offset = vn_offset + vn_aux
-                for i in range(vn_cnt):
+                for _ in range(vn_cnt):
                     # ElfXX_Vernaux layout is the same on 32 and 64 bit
                     _, _, _, vna_name, vna_next = struct.unpack_from(self.endian + "IHHII", shdr.buf, vna_offset)
 
@@ -727,7 +727,7 @@ class SymTab:
             return cls(endian, bitness, sh_symtab, sh_strtab)
         except NameError:
             return None
-        except:
+        except Exception:
             # all exceptions that could be encountered by
             # cls._parse() imply a faulty symbol's table.
             raise CorruptElfFile("malformed symbol's table")
@@ -824,7 +824,7 @@ def guess_os_from_abi_versions_needed(elf: ELF) -> Optional[OS]:
     # this will let us guess about linux/hurd in some cases.
 
     versions_needed = elf.versions_needed
-    if any(map(lambda abi: abi.startswith("GLIBC"), itertools.chain(*versions_needed.values()))):
+    if any(abi.startswith("GLIBC") for abi in itertools.chain(*versions_needed.values())):
         # there are any GLIBC versions needed
 
         if elf.e_machine != "i386":
@@ -881,7 +881,7 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
         sym_name = symtab.get_name(symbol)
 
         for os, hints in keywords.items():
-            if any(map(lambda x: x in sym_name, hints)):
+            if any(hint in sym_name for hint in hints):
                 return os
 
     return None

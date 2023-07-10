@@ -2,7 +2,7 @@
 
 import json
 import collections
-from typing import Any, Dict
+from typing import Any, Set, Dict
 
 import capa.main
 import capa.rules
@@ -13,7 +13,6 @@ import capa.render.utils as rutils
 import capa.render.default
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
-from capa.engine import *
 from capa.features.common import OS_AUTO, FORMAT_AUTO
 
 
@@ -30,7 +29,7 @@ def find_subrule_matches(doc: rd.ResultDocument) -> Set[str]:
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
-    matches = set([])
+    matches = set()
 
     def rec(node: rd.Match):
         if not node.success:
@@ -66,7 +65,7 @@ def render_capabilities(doc: rd.ResultDocument, result):
     """
     subrule_matches = find_subrule_matches(doc)
 
-    result["CAPABILITY"] = dict()
+    result["CAPABILITY"] = {}
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
             # rules that are also matched by other rules should not get rendered by default.
@@ -80,7 +79,7 @@ def render_capabilities(doc: rd.ResultDocument, result):
         else:
             capability = f"{rule.meta.name} ({count} matches)"
 
-        result["CAPABILITY"].setdefault(rule.meta.namespace, list())
+        result["CAPABILITY"].setdefault(rule.meta.namespace, [])
         result["CAPABILITY"][rule.meta.namespace].append(capability)
 
 
@@ -97,7 +96,7 @@ def render_attack(doc, result):
             'EXECUTION': ['Shared Modules [T1129]']}
         }
     """
-    result["ATTCK"] = dict()
+    result["ATTCK"] = {}
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         if not rule.meta.attack:
@@ -130,7 +129,7 @@ def render_mbc(doc, result):
                           '[C0021.004]']}
         }
     """
-    result["MBC"] = dict()
+    result["MBC"] = {}
     objectives = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
         if not rule.meta.mbc:
@@ -150,7 +149,7 @@ def render_mbc(doc, result):
 
 
 def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
-    result: Dict[str, Any] = dict()
+    result: Dict[str, Any] = {}
     render_meta(doc, result)
     render_attack(doc, result)
     render_mbc(doc, result)

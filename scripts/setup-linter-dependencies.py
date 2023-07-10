@@ -65,7 +65,7 @@ class MitreExtractor:
         if self.url == "":
             raise ValueError(f"URL not specified in class {self.__class__.__name__}")
 
-        logging.info(f"Downloading STIX data at: {self.url}")
+        logging.info("Downloading STIX data at: %s", self.url)
         stix_json = requests.get(self.url).json()
         self._memory_store = MemoryStore(stix_data=stix_json["objects"])
 
@@ -170,12 +170,12 @@ def main(args: argparse.Namespace) -> None:
         logging.info("Extracting MBC behaviors...")
         data["mbc"] = MbcExtractor().run()
 
-    logging.info(f"Writing results to {args.output}")
+    logging.info("Writing results to %s", args.output)
     try:
-        with open(args.output, "w") as jf:
+        with open(args.output, "w", encoding="utf-8") as jf:
             json.dump(data, jf, indent=2)
     except BaseException as e:
-        logging.error(f"Exception encountered when writing results: {e}")
+        logging.error("Exception encountered when writing results: %s", e)
 
 
 if __name__ == "__main__":
