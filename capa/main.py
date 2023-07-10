@@ -576,7 +576,7 @@ def get_extractor(
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
-def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
+def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = list()
 
     if format_ == FORMAT_PE:

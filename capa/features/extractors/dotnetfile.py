@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Iterator, cast
+from typing import Tuple, Iterator
 from pathlib import Path
 
 import dnfile

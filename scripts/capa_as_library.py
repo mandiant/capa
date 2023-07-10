@@ -2,7 +2,7 @@
 
 import json
 import collections
-from typing import Any, Dict
+from typing import Any, Set, Dict
 from pathlib import Path
 
 import capa.main

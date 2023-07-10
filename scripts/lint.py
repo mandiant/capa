@@ -23,7 +23,6 @@ import string
 import difflib
 import hashlib
 import logging
-import pathlib
 import argparse
 import itertools
 import posixpath
