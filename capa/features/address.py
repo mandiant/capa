@@ -70,8 +70,7 @@ class ThreadAddress(Address):
 
     def __init__(self, process: ProcessAddress, tid: int):
         assert tid >= 0
-        self.ppid = process.ppid
-        self.pid = process.pid
+        self.process = process
         self.tid = tid
 
     def __repr__(self):
