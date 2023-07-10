@@ -12,7 +12,7 @@
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 
-### New Rules (22)
+### New Rules (23)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -35,6 +35,7 @@
 - anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 - host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
 - host-interaction/gui/switch-active-desktop jakub.jozwiak@mandiant.com
+- host-interaction/service/query-service-configuration @mr-tz
 -
 
 ### Bug Fixes
