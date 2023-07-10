@@ -53,6 +53,7 @@ exclude = [
 "tests/test_freeze.py" = ["F401", "F811"]
 "tests/test_function_id.py" = ["F401", "F811"]
 "tests/test_viv_features.py" = ["F401", "F811"]
+"tests/test_cape_features.py" = ["F401", "F811"]
 "tests/test_binja_features.py" = ["F401", "F811"]
 "tests/test_pefile_features.py" = ["F401", "F811"]
 "tests/test_dnfile_features.py" = ["F401", "F811"]

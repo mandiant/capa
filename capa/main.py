@@ -22,7 +22,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Union, Callable, cast
+from typing import Any, Dict, List, Tuple, Callable, cast
 
 import halo
 import tqdm

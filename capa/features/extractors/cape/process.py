@@ -6,14 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Dict, List, Tuple, Iterator
 
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -42,9 +42,10 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
     if not environ:
         return
 
-    for variable, value in environ.items():
-        if value:
-            yield String(value), NO_ADDRESS
+    for value in environ.values():
+        if not value:
+            continue
+        yield String(value), NO_ADDRESS
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:

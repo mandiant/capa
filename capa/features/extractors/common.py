@@ -1,5 +1,4 @@
 import io
-import json
 import logging
 import binascii
 import contextlib
@@ -19,7 +18,6 @@ from capa.features.common import (
     FORMAT_PE,
     FORMAT_ELF,
     OS_WINDOWS,
-    FORMAT_CAPE,
     FORMAT_FREEZE,
     FORMAT_RESULT,
     Arch,

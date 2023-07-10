@@ -77,7 +77,7 @@ def extract_os(static) -> Iterator[Tuple[Feature, Address]]:
         yield from guess_elf_os(file_command)
     else:
         # the sample is shellcode
-        logger.debug(f"unsupported file format, file command output: {file_command}")
+        logger.debug("unsupported file format, file command output: %s", file_command)
         yield OS(OS_ANY), NO_ADDRESS
 
 

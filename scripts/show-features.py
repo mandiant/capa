@@ -69,7 +69,6 @@ import sys
 import logging
 import os.path
 import argparse
-from typing import cast
 
 import capa.main
 import capa.rules
@@ -104,7 +103,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(args.sample)
+        _ = capa.helpers.get_file_taste(args.sample)
     except IOError as e:
         logger.error("%s", str(e))
         return -1
