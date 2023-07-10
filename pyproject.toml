@@ -74,7 +74,7 @@ dev = [
     "flake8-no-implicit-concat==0.3.4",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.0",
-    "ruff==0.0.275",
+    "ruff==0.0.277",
     "black==23.3.0",
     "isort==5.11.4",
     "mypy==1.4.1",
