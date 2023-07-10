@@ -42,7 +42,7 @@ def guess_elf_os(file_output) -> Iterator[Tuple[Feature, Address]]:
     elif "kNetBSD" in file_output:
         yield OS("netbsd"), NO_ADDRESS
     else:
-        logger.warn("unrecognized OS: %s", file_output)
+        logger.warning("unrecognized OS: %s", file_output)
         yield OS(OS_ANY), NO_ADDRESS
 
 
@@ -52,7 +52,7 @@ def extract_arch(static) -> Iterator[Tuple[Feature, Address]]:
     elif "x86-64" in static["file"]["type"]:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        logger.warn("unrecognized Architecture: %s", static["file"]["type"])
+        logger.warning("unrecognized Architecture: %s", static["file"]["type"])
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
@@ -62,7 +62,7 @@ def extract_format(static) -> Iterator[Tuple[Feature, Address]]:
     elif "ELF" in static["file"]["type"]:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.warn("unknown file format, file command output: %s", static["file"]["type"])
+        logger.warning("unknown file format, file command output: %s", static["file"]["type"])
         yield Format(FORMAT_UNKNOWN), NO_ADDRESS
 
 
@@ -70,9 +70,9 @@ def extract_os(static) -> Iterator[Tuple[Feature, Address]]:
     # this variable contains the output of the file command
     file_command = static["file"]["type"]
 
-    if "WINDOWS" in file_command:
+    if "windows" in file_command.lower():
         yield OS(OS_WINDOWS), NO_ADDRESS
-    elif "ELF" in file_command:
+    elif "elf" in file_command.lower():
         # implement os guessing from the cape trace
         yield from guess_elf_os(file_command)
     else:
@@ -88,7 +88,7 @@ def extract_features(static) -> Iterator[Tuple[Feature, Address]]:
 
 
 GLOBAL_HANDLER = (
-    extract_arch,
     extract_format,
     extract_os,
+    extract_arch,
 )
