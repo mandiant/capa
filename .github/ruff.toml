@@ -1,10 +1,61 @@
-# Enable pycodestyle (`E`) codes
-select = ["E"]
+# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E", "F"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
 
 # E402 module level import not at top of file
 # E722 do not use bare 'except'
-ignore = ["E402", "E722"]
-exclude = ["*_pb2.py", "*_pb2.pyi"]
+# E501 line too long
+ignore = ["E402", "E722", "E501"]
 
-# Same as pycodestyle.
-line-length = 180
+line-length = 120
+
+exclude = [
+    # Exclude a variety of commonly ignored directories.
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    # protobuf generated files
+    "*_pb2.py", 
+    "*_pb2.pyi"
+]
+
+[per-file-ignores]
+# until we address #1592 and move test fixtures into conftest.py
+# then we need to ignore imports done to enable pytest fixtures.
+#
+# F401: `foo` imported but unused
+# F811 Redefinition of unused `foo`
+"tests/test_main.py" = ["F401", "F811"]
+"tests/test_proto.py" = ["F401", "F811"]
+"tests/test_freeze.py" = ["F401", "F811"]
+"tests/test_function_id.py" = ["F401", "F811"]
+"tests/test_viv_features.py" = ["F401", "F811"]
+"tests/test_binja_features.py" = ["F401", "F811"]
+"tests/test_pefile_features.py" = ["F401", "F811"]
+"tests/test_dnfile_features.py" = ["F401", "F811"]
+"tests/test_dotnet_features.py" = ["F401", "F811"]
+"tests/test_result_document.py" = ["F401", "F811"]
+"tests/test_dotnetfile_features.py" = ["F401", "F811"]

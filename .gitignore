@@ -108,13 +108,10 @@ venv.bak/
 *.viv
 *.idb
 *.i64
+.vscode
+
 !rules/lib
 
-# hooks/ci.sh output
-isort-output.log
-black-output.log
-rule-linter-output.log
-.vscode
 scripts/perf/*.txt
 scripts/perf/*.svg
 scripts/perf/*.zip

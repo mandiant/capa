@@ -43,7 +43,7 @@ import capa.engine
 import capa.helpers
 import capa.features.insn
 from capa.rules import Rule, RuleSet
-from capa.features.common import OS_AUTO, FORMAT_PE, FORMAT_DOTNET, String, Feature, Substring
+from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
 
 logger = logging.getLogger("lint")
@@ -517,7 +517,7 @@ class FeatureNegativeNumber(Lint):
     recommendation = "specify the number's two's complement representation"
     recommendation_template = (
         "capa treats number features as unsigned values; you may specify the number's two's complement "
-        'representation; will not match on "{:d}"'
+        + 'representation; will not match on "{:d}"'
     )
 
     def check_features(self, ctx: Context, features: List[Feature]):
@@ -535,7 +535,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
     level = Lint.WARN
     recommendation_template = (
         "check if {:s} is exported by both ntdll and ntoskrnl; if true, consider removing {:s} "
-        "module requirement to improve detection"
+        + "module requirement to improve detection"
     )
 
     def check_features(self, ctx: Context, features: List[Feature]):
@@ -826,7 +826,7 @@ def lint_rule(ctx: Context, rule: Rule):
             print("")
 
     if is_nursery_rule(rule):
-        has_examples = not any(map(lambda v: v.level == Lint.FAIL and v.name == "missing examples", violations))
+        has_examples = not any(v.level == Lint.FAIL and v.name == "missing examples" for v in violations)
         lints_failed = len(
             tuple(
                 filter(

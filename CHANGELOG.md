@@ -6,13 +6,16 @@
 ### New Features
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - use fancy box drawing characters for default output #1586 @williballenthin
+- use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
+- migrate to pyproject.toml #1301 @williballenthin
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 - Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
-### New Rules (22)
+### New Rules (24)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -35,6 +38,8 @@
 - anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 - host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
 - host-interaction/gui/switch-active-desktop jakub.jozwiak@mandiant.com
+- host-interaction/service/query-service-configuration @mr-tz
+- anti-analysis/anti-av/patch-event-tracing-for-windows-function jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes

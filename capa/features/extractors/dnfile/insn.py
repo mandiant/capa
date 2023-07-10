@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Tuple, Union, Iterator, Optional
+from typing import TYPE_CHECKING, Tuple, Union, Iterator, Optional
 
 if TYPE_CHECKING:
     from capa.features.extractors.dnfile.extractor import DnFileFeatureExtractorCache

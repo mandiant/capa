@@ -6,11 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
 import struct
 from typing import Tuple, Iterator
 
-from binaryninja import Symbol, Segment, BinaryView, SymbolType, SymbolBinding
+from binaryninja import Segment, BinaryView, SymbolType, SymbolBinding
 
 import capa.features.extractors.common
 import capa.features.extractors.helpers
@@ -166,23 +165,3 @@ FILE_HANDLERS = (
     extract_file_function_names,
     extract_file_format,
 )
-
-
-def main():
-    """ """
-    if len(sys.argv) < 2:
-        return
-
-    from binaryninja import BinaryViewType
-
-    bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
-    if bv is None:
-        return
-
-    import pprint
-
-    pprint.pprint(list(extract_features(bv)))
-
-
-if __name__ == "__main__":
-    main()

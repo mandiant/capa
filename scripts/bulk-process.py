@@ -172,11 +172,13 @@ def main(argv=None):
         for file in Path(args.input).rglob("*"):
             samples.append(file)
 
-        def pmap(f, args, parallelism=multiprocessing.cpu_count()):
+        cpu_count = multiprocessing.cpu_count()
+
+        def pmap(f, args, parallelism=cpu_count):
             """apply the given function f to the given args using subprocesses"""
             return multiprocessing.Pool(parallelism).imap(f, args)
 
-        def tmap(f, args, parallelism=multiprocessing.cpu_count()):
+        def tmap(f, args, parallelism=cpu_count):
             """apply the given function f to the given args using threads"""
             return multiprocessing.pool.ThreadPool(parallelism).imap(f, args)
 

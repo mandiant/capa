@@ -39,7 +39,7 @@ from capa.features.freeze import AddressType
 
 
 def dict_tuple_to_list_values(d: Dict) -> Dict:
-    o = dict()
+    o = {}
     for k, v in d.items():
         if isinstance(v, tuple):
             o[k] = list(v)

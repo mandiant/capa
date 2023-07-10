@@ -510,7 +510,9 @@ def build_statements(d, scope: str):
                 # arg is string (which doesn't support inline descriptions), like:
                 #
                 #     count(string(error))
-                # TODO: what about embedded newlines?
+                #
+                # known problem that embedded newlines may not work here?
+                # this may become a problem (or not), so address it when encountered.
                 feature = Feature(arg)
         else:
             feature = Feature()
@@ -634,7 +636,7 @@ class Rule:
         Returns:
           List[str]: names of rules upon which this rule depends.
         """
-        deps: Set[str] = set([])
+        deps: Set[str] = set()
 
         def rec(statement):
             if isinstance(statement, capa.features.common.MatchedRule):
@@ -648,7 +650,7 @@ class Rule:
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
                 if statement.value in namespaces:
                     # matches a namespace, so take precedence and don't even check rule names.
-                    deps.update(map(lambda r: r.name, namespaces[statement.value]))
+                    deps.update(r.name for r in namespaces[statement.value])
                 else:
                     # not a namespace, assume its a rule name.
                     assert isinstance(statement.value, str)
@@ -778,7 +780,7 @@ class Rule:
             # on Windows, get WHLs from pyyaml.org/pypi
             logger.debug("using libyaml CLoader.")
             return yaml.CLoader
-        except:
+        except Exception:
             logger.debug("unable to import libyaml CLoader, falling back to Python yaml parser.")
             logger.debug("this will be slower to load rules.")
             return yaml.Loader
@@ -950,7 +952,7 @@ def get_rules_with_scope(rules, scope) -> List[Rule]:
     from the given collection of rules, select those with the given scope.
     `scope` is one of the capa.rules.*_SCOPE constants.
     """
-    return list(rule for rule in rules if rule.scope == scope)
+    return [rule for rule in rules if rule.scope == scope]
 
 
 def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
@@ -961,7 +963,7 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
     rules = list(rules)
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
-    wanted = set([rule_name])
+    wanted = {rule_name}
 
     def rec(rule):
         wanted.add(rule.name)
@@ -976,7 +978,7 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
 
 
 def ensure_rules_are_unique(rules: List[Rule]) -> None:
-    seen = set([])
+    seen = set()
     for rule in rules:
         if rule.name in seen:
             raise InvalidRule("duplicate rule name: " + rule.name)
@@ -1041,7 +1043,7 @@ def topologically_order_rules(rules: List[Rule]) -> List[Rule]:
     rules = list(rules)
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
-    seen = set([])
+    seen = set()
     ret = []
 
     def rec(rule):
@@ -1190,7 +1192,6 @@ class RuleSet:
                     # so thats not helpful to decide how to downselect.
                     #
                     # and, a global rule will never be the sole selector in a rule.
-                    # TODO: probably want a lint for this.
                     pass
                 else:
                     # easy feature: hash lookup
@@ -1247,7 +1248,7 @@ class RuleSet:
                 # the set of subtypes of type A is unbounded,
                 # because any user might come along and create a new subtype B,
                 # so mypy can't reason about this set of types.
-                assert False, f"Unhandled value: {node} ({type(node).__name__})"
+                assert_never(node)
             else:
                 # programming error
                 assert_never(node)
@@ -1284,7 +1285,7 @@ class RuleSet:
         don't include auto-generated "subscope" rules.
         we want to include general "lib" rules here - even if they are not dependencies of other rules, see #398
         """
-        scope_rules: Set[Rule] = set([])
+        scope_rules: Set[Rule] = set()
 
         # we need to process all rules, not just rules with the given scope.
         # this is because rules with a higher scope, e.g. file scope, may have subscope rules
@@ -1329,7 +1330,7 @@ class RuleSet:
         TODO support -t=metafield <k>
         """
         rules = list(self.rules.values())
-        rules_filtered = set([])
+        rules_filtered = set()
         for rule in rules:
             for k, v in rule.meta.items():
                 if isinstance(v, str) and tag in v:

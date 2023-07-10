@@ -9,13 +9,12 @@ from pathlib import PosixPath
 
 import pytest
 import fixtures
-from fixtures import *
-from fixtures import parametrize
+from fixtures import scope, sample
 
 import capa.features.file
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],

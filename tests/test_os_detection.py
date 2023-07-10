@@ -9,8 +9,7 @@
 import io
 import zlib
 
-import pytest
-from fixtures import *
+from fixtures import get_data_path_by_name
 
 import capa.features.extractors.elf
 

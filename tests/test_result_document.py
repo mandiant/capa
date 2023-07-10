@@ -9,7 +9,7 @@ import copy
 
 import pytest
 import fixtures
-from fixtures import *
+from fixtures import a3f3bbc_rd, a076114_rd, pma0101_rd, al_khaserx64_rd, al_khaserx86_rd, dotnet_1c444e_rd
 
 import capa
 import capa.engine as ceng

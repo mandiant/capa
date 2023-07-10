@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import re
+from typing import Dict, Optional
 from collections import Counter
 
 import idc
@@ -63,7 +64,7 @@ def parse_yaml_line(feature):
         feature, _, comment = feature.partition("#")
         feature, _, description = feature.partition("=")
 
-    return map(lambda o: o.strip(), (feature, description, comment))
+    return (o.strip() for o in (feature, description, comment))
 
 
 def parse_node_for_feature(feature, description, comment, depth):
@@ -498,12 +499,13 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
             rule_text += "\n  features:\n"
 
         for o in iterate_tree(self):
-            feature, description, comment = map(lambda o: o.strip(), tuple(o.text(i) for i in range(3)))
+            feature, description, comment = (o.strip() for o in tuple(o.text(i) for i in range(3)))
             rule_text += parse_node_for_feature(feature, description, comment, calc_item_depth(o))
 
-        # FIXME we avoid circular update by disabling signals when updating
+        # TODO(mike-hunhoff): we avoid circular update by disabling signals when updating
         # the preview. Preferably we would refactor the code to avoid this
-        # in the first place
+        # in the first place.
+        # https://github.com/mandiant/capa/issues/1600
         self.preview.blockSignals(True)
         self.preview.setPlainText(rule_text)
         self.preview.blockSignals(False)
@@ -646,7 +648,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
         counted = list(zip(Counter(features).keys(), Counter(features).values()))
 
         # single features
-        for k, v in filter(lambda t: t[1] == 1, counted):
+        for k, _ in filter(lambda t: t[1] == 1, counted):
             if isinstance(k, (capa.features.common.String,)):
                 value = f'"{capa.features.common.escape_string(k.get_value_str())}"'
             else:
@@ -682,10 +684,12 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
             # we don't add a new node for description; either set description column of parent's last child
             # or the parent itself
-            if parent.childCount():
-                parent.child(parent.childCount() - 1).setText(1, feature.lstrip("description:").lstrip())
-            else:
-                parent.setText(1, feature.lstrip("description:").lstrip())
+            if feature.startswith("description:"):
+                description = feature[len("description:") :].lstrip()
+                if parent.childCount():
+                    parent.child(parent.childCount() - 1).setText(1, description)
+                else:
+                    parent.setText(1, description)
             return None
         elif feature.startswith("- description:"):
             if not parent:
@@ -693,7 +697,8 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
                 return None
 
             # we don't add a new node for description; set the description column of the parent instead
-            parent.setText(1, feature.lstrip("- description:").lstrip())
+            description = feature[len("- description:") :].lstrip()
+            parent.setText(1, description)
             return None
 
         node = QtWidgets.QTreeWidgetItem(parent)
@@ -1010,7 +1015,7 @@ class CapaExplorerRulegenFeatures(QtWidgets.QTreeWidget):
 
         return o
 
-    def load_features(self, file_features, func_features={}):
+    def load_features(self, file_features, func_features: Optional[Dict] = None):
         """ """
         self.parse_features_for_tree(self.new_parent_node(self, ("File Scope",)), file_features)
         if func_features:
