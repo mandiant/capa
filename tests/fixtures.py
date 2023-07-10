@@ -421,14 +421,14 @@ def sample(request):
 
 def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
     for ph in extractor.get_processes():
-        if ph.inner["ppid"] == ppid and ph.pid == pid:
-            return ProcessHandle(pid, {"ppid": ppid})
+        if ph.address.ppid == ppid and ph.address.pid == pid:
+            return ph
     raise ValueError("process not found")
 
 
 def get_thread(extractor, ph: ProcessHandle, tid: int) -> ThreadHandle:
     for th in extractor.get_threads(ph):
-        if th.tid == tid:
+        if th.address.tid == tid:
             return th
     raise ValueError("thread not found")
 
