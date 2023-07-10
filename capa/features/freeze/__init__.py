@@ -549,9 +549,9 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     )
 
 
-MAGIC = "capa000".encode("ascii")
-STATIC_MAGIC = MAGIC + "0".encode("ascii")
-DYNAMIC_MAGIC = MAGIC + "1".encode("ascii")
+MAGIC = "capa0000".encode("ascii")
+STATIC_MAGIC = MAGIC + "-static".encode("ascii")
+DYNAMIC_MAGIC = MAGIC + "-dynamic".encode("ascii")
 
 
 def dump(extractor: FeatureExtractor) -> bytes:
