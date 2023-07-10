@@ -7,6 +7,7 @@
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - use fancy box drawing characters for default output #1586 @williballenthin
 - use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
 - migrate to pyproject.toml #1301 @williballenthin
 
 ### Breaking Changes
