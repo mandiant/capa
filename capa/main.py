@@ -800,7 +800,7 @@ def collect_metadata(
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
-    base_addr = extractor.get_base_address() if hasattr(extractor, "get_base_address") else None
+    base_addr = extractor.get_base_address() if hasattr(extractor, "get_base_address") else NO_ADDRESS
 
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),

@@ -476,9 +476,13 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     )  # type: ignore
     # Mypy is unable to recognise `global_` as a argument due to alias
 
+    # workaround around mypy issue: https://github.com/python/mypy/issues/1424
+    get_base_addr = getattr(extractor, "get_base_addr", None)
+    base_addr = get_base_addr() if get_base_addr else capa.features.address.NO_ADDRESS
+
     freeze = Freeze(
         version=2,
-        base_address=Address.from_capa(extractor.get_base_address()) if hasattr(extractor, "get_base_address") else 0,
+        base_address=Address.from_capa(base_addr),
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
@@ -493,6 +497,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
+    assert isinstance(freeze.features, StaticFeatures)
     return null.NullStaticFeatureExtractor(
         base_address=freeze.base_address.to_capa(),
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
@@ -571,7 +576,7 @@ def is_dynamic(buf: bytes) -> bool:
     return buf[: len(DYNAMIC_MAGIC)] == DYNAMIC_MAGIC
 
 
-def load(buf: bytes) -> null.NullFeatureExtractor:
+def load(buf: bytes):
     """deserialize a set of features (as a NullFeatureExtractor) from a byte array."""
     if not is_freeze(buf):
         raise ValueError("missing magic header")

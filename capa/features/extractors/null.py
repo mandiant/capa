@@ -88,7 +88,7 @@ class ThreadFeatures:
 @dataclass
 class ProcessFeatures:
     features: List[Tuple[Address, Feature]]
-    threads: Dict[ThreadAddress, ThreadFeatures]
+    threads: Dict[Address, ThreadFeatures]
 
 
 @dataclass
@@ -96,7 +96,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     base_address: Address
     global_features: List[Feature]
     file_features: List[Tuple[Address, Feature]]
-    processes: Dict[ProcessAddress, ProcessFeatures]
+    processes: Dict[Address, ProcessFeatures]
 
     def extract_global_features(self):
         for feature in self.global_features:
@@ -108,6 +108,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
 
     def get_processes(self):
         for address in sorted(self.processes.keys()):
+            assert isinstance(address, ProcessAddress)
             yield ProcessHandle(address=address, inner={})
 
     def extract_process_features(self, p):
@@ -116,6 +117,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
 
     def get_threads(self, p):
         for address in sorted(self.processes[p].threads.keys()):
+            assert isinstance(address, ThreadAddress)
             yield ThreadHandle(address=address, inner={})
 
     def extract_thread_features(self, p, t):
