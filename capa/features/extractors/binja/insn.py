@@ -5,8 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
-from typing import Any, Dict, List, Tuple, Iterator, Optional
+from typing import Any, List, Tuple, Iterator, Optional
 
 from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
@@ -18,12 +17,11 @@ from binaryninja import (
     RegisterValueType,
     LowLevelILOperation,
     LowLevelILInstruction,
-    InstructionTextTokenType,
 )
 
 import capa.features.extractors.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
-from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binja.helpers import DisassemblyInstruction, visit_llil_exprs
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -73,7 +71,6 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
     example:
        call dword [0x00473038]
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
 
@@ -128,12 +125,9 @@ def extract_insn_number_features(
     example:
         push    3136B0h         ; dwControlCode
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
-    bv: BinaryView = func.view
 
     results: List[Tuple[Any[Number, OperandNumber], Address]] = []
-    address_size = func.view.arch.address_size * 8
 
     def llil_checker(il: LowLevelILInstruction, parent: LowLevelILInstruction, index: int) -> bool:
         if il.operation == LowLevelILOperation.LLIL_LOAD:
@@ -171,7 +165,6 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     example:
         push    offset iid_004118d4_IShellLinkA ; riid
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
 
@@ -220,7 +213,6 @@ def extract_insn_string_features(
     example:
         push offset aAcr     ; "ACR  > "
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
 
@@ -278,7 +270,6 @@ def extract_insn_offset_features(
     example:
         .text:0040112F cmp [esi+4], ebx
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
     results: List[Tuple[Any[Offset, OperandOffset], Address]] = []
@@ -333,7 +324,8 @@ def extract_insn_offset_features(
 
 def is_nzxor_stack_cookie(f: Function, bb: BinjaBasicBlock, llil: LowLevelILInstruction) -> bool:
     """check if nzxor exists within stack cookie delta"""
-    # TODO: we can do a much accurate analysi using LLIL SSA
+    # TODO(xusheng): use LLIL SSA to do more accurate analysis
+    # https://github.com/mandiant/capa/issues/1609
 
     reg_names = []
     if llil.left.operation == LowLevelILOperation.LLIL_REG:
@@ -364,7 +356,6 @@ def extract_insn_nzxor_characteristic_features(
     parse instruction non-zeroing XOR instruction
     ignore expected non-zeroing XORs, e.g. security cookies
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
     results = []
@@ -414,7 +405,6 @@ def extract_insn_peb_access_characteristic_features(
 
     fs:[0x30] on x86, gs:[0x60] on x64
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
     results = []
@@ -456,7 +446,6 @@ def extract_insn_segment_access_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
     results = []
@@ -485,7 +474,6 @@ def extract_insn_cross_section_cflow(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
 
@@ -509,7 +497,6 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
     bv: BinaryView = func.view
 
@@ -555,7 +542,6 @@ def extract_function_indirect_call_characteristic_features(
     most relevant at the function or basic block scope;
     however, its most efficient to extract at the instruction scope
     """
-    insn: DisassemblyInstruction = ih.inner
     func: Function = fh.inner
 
     llil = func.get_llil_at(ih.address)
@@ -599,32 +585,3 @@ INSTRUCTION_HANDLERS = (
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
 )
-
-
-def main():
-    """ """
-    if len(sys.argv) < 2:
-        return
-
-    from binaryninja import BinaryViewType
-
-    from capa.features.extractors.binja.extractor import BinjaFeatureExtractor
-
-    bv: BinaryView = BinaryViewType.get_view_of_file(sys.argv[1])
-    if bv is None:
-        return
-
-    features = []
-    extractor = BinjaFeatureExtractor(bv)
-    for fh in extractor.get_functions():
-        for bbh in extractor.get_basic_blocks(fh):
-            for insn in extractor.get_instructions(fh, bbh):
-                features.extend(list(extract_features(fh, bbh, insn)))
-
-    import pprint
-
-    pprint.pprint(features)
-
-
-if __name__ == "__main__":
-    main()

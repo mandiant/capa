@@ -22,7 +22,7 @@ def get_node_cost(node):
         # substring and regex features require a full scan of each string
         # which we anticipate is more expensive then a hash lookup feature (e.g. mnemonic or count).
         #
-        # TODO: compute the average cost of these feature relative to hash feature
+        # fun research: compute the average cost of these feature relative to hash feature
         # and adjust the factor accordingly.
         return 2
 

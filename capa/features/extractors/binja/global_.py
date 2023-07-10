@@ -1,10 +1,8 @@
 import logging
-import contextlib
 from typing import Tuple, Iterator
 
 from binaryninja import BinaryView
 
-import capa.features.extractors.elf
 from capa.features.common import OS, OS_MACOS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
 

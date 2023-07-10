@@ -10,7 +10,6 @@
 import os
 import os.path
 import binascii
-import itertools
 import contextlib
 import collections
 from typing import Set, Dict
@@ -69,7 +68,7 @@ def xfail(condition, reason=None):
     try:
         # do the block
         yield
-    except:
+    except Exception:
         if condition:
             # we expected the test to fail, so raise and register this via pytest
             pytest.xfail(reason)
@@ -654,7 +653,6 @@ FEATURE_PRESENCE_TESTS = sorted(
         # insn/api: call via jmp
         ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
         ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
-        # TODO ignore thunk functions that call via jmp?
         # insn/api: resolve indirect calls
         ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
         ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),

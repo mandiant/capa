@@ -10,6 +10,7 @@ import copy
 import logging
 import itertools
 import collections
+from enum import IntFlag
 from typing import Any, List, Optional
 
 import idaapi
@@ -55,9 +56,6 @@ CAPA_SETTINGS_ANALYZE = "analyze"
 
 CAPA_OFFICIAL_RULESET_URL = f"https://github.com/mandiant/capa-rules/releases/tag/v{capa.version.__version__}"
 CAPA_RULESET_DOC_URL = "https://github.com/mandiant/capa/blob/master/doc/rules.md"
-
-
-from enum import IntFlag
 
 
 class Options(IntFlag):
@@ -587,7 +585,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 rules_message.setText("You must specify a directory containing capa rules before running analysis.")
                 rules_message.setInformativeText(
                     "Click 'Ok' to specify a local directory of rules or you can download and extract the official "
-                    f"rules from the URL listed in the details."
+                    + "rules from the URL listed in the details."
                 )
                 rules_message.setDetailedText(f"{CAPA_OFFICIAL_RULESET_URL}")
                 rules_message.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -602,11 +600,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                     raise UserCancelledError()
 
                 if not os.path.exists(path):
-                    logger.error("rule path %s does not exist or cannot be accessed" % path)
+                    logger.error("rule path %s does not exist or cannot be accessed", path)
                     return False
 
                 settings.user[CAPA_SETTINGS_RULE_PATH] = path
-        except UserCancelledError as e:
+        except UserCancelledError:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
                 "You must specify a directory containing capa rules before running analysis.%s",
@@ -615,7 +613,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             return False
         except Exception as e:
             capa.ida.helpers.inform_user_ida_ui("Failed to load capa rules")
-            logger.error("Failed to load capa rules (error: %s).", e, exc_info=True)
+            logger.exception("Failed to load capa rules (error: %s).", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -648,9 +646,9 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             logger.error("Failed to load capa rules from %s (error: %s).", settings.user[CAPA_SETTINGS_RULE_PATH], e)
             logger.error(
-                "Make sure your file directory contains properly "
-                "formatted capa rules. You can download and extract the official rules from %s. "
-                "Or, for more details, see the rules documentation here: %s",
+                "Make sure your file directory contains properly "  # noqa: G003 [logging statement uses +]
+                + "formatted capa rules. You can download and extract the official rules from %s. "
+                + "Or, for more details, see the rules documentation here: %s",
                 CAPA_OFFICIAL_RULESET_URL,
                 CAPA_RULESET_DOC_URL,
             )
@@ -716,7 +714,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     cached_results_time = self.resdoc_cache.meta.timestamp.strftime("%Y-%m-%d %H:%M:%S")
                     new_view_status = f"capa rules: {view_status_rules}, cached results (created {cached_results_time})"
                 except Exception as e:
-                    logger.error("Failed to load cached capa results (error: %s).", e, exc_info=True)
+                    logger.exception("Failed to load cached capa results (error: %s).", e)
                     return False
             else:
                 # load results from fresh anlaysis
@@ -733,7 +731,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     self.feature_extractor = CapaExplorerFeatureExtractor()
                     self.feature_extractor.indicator.progress.connect(slot_progress_feature_extraction)
                 except Exception as e:
-                    logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+                    logger.exception("Failed to initialize feature extractor (error: %s)", e)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -745,7 +743,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 try:
                     self.process_total += len(tuple(self.feature_extractor.get_functions()))
                 except Exception as e:
-                    logger.error("Failed to calculate analysis (error: %s).", e, exc_info=True)
+                    logger.exception("Failed to calculate analysis (error: %s).", e)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -781,7 +779,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     logger.info("User cancelled analysis.")
                     return False
                 except Exception as e:
-                    logger.error("Failed to extract capabilities from database (error: %s)", e, exc_info=True)
+                    logger.exception("Failed to extract capabilities from database (error: %s)", e)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -793,7 +791,8 @@ class CapaExplorerForm(idaapi.PluginForm):
                 try:
                     # support binary files specifically for x86/AMD64 shellcode
                     # warn user binary file is loaded but still allow capa to process it
-                    # TODO: check specific architecture of binary files based on how user configured IDA processors
+                    # TODO(mike-hunhoff): check specific architecture of binary files based on how user configured IDA processors
+                    # https://github.com/mandiant/capa/issues/1603
                     if idaapi.get_file_type_name() == "Binary file":
                         logger.warning("-" * 80)
                         logger.warning(" Input file appears to be a binary file.")
@@ -814,7 +813,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     if capa.main.has_file_limitation(ruleset, capabilities, is_standalone=False):
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
                 except Exception as e:
-                    logger.error("Failed to check for file limitations (error: %s)", e, exc_info=True)
+                    logger.exception("Failed to check for file limitations (error: %s)", e)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -828,7 +827,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                         meta, ruleset, capabilities
                     )
                 except Exception as e:
-                    logger.error("Failed to collect results (error: %s)", e, exc_info=True)
+                    logger.exception("Failed to collect results (error: %s)", e)
                     return False
 
                 if ida_kernwin.user_cancelled():
@@ -844,7 +843,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     capa.ida.helpers.save_rules_cache_id(ruleset_id)
                     logger.info("Saved cached results to database")
                 except Exception as e:
-                    logger.error("Failed to save results to database (error: %s)", e, exc_info=True)
+                    logger.exception("Failed to save results to database (error: %s)", e)
                     return False
                 user_settings = settings.user[CAPA_SETTINGS_RULE_PATH]
                 count_source_rules = self.program_analysis_ruleset_cache.source_rule_count
@@ -865,7 +864,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.model_data.render_capa_doc(self.resdoc_cache, self.view_show_results_by_function.isChecked())
         except Exception as e:
-            logger.error("Failed to render results (error: %s)", e, exc_info=True)
+            logger.exception("Failed to render results (error: %s)", e)
             return False
 
         self.set_view_status_label(new_view_status)
@@ -917,7 +916,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 has_cache: bool = capa.ida.helpers.idb_contains_cached_results()
             except Exception as e:
                 capa.ida.helpers.inform_user_ida_ui("Failed to check for cached results, reanalyzing program")
-                logger.error("Failed to check for cached results (error: %s)", e, exc_info=True)
+                logger.exception("Failed to check for cached results (error: %s)", e)
                 return False
 
             if ida_kernwin.user_cancelled():
@@ -937,7 +936,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                         ] = capa.ida.helpers.load_and_verify_cached_results()
                     except Exception as e:
                         capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results, reanalyzing program")
-                        logger.error("Failed to verify cached results (error: %s)", e, exc_info=True)
+                        logger.exception("Failed to verify cached results (error: %s)", e)
                         return False
 
                     if results is None:
@@ -950,9 +949,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                         "Reanalyze program",
                         "",
                         ida_kernwin.ASKBTN_YES,
-                        f"This database contains capa results generated on "
-                        f"{results.meta.timestamp.strftime('%Y-%m-%d at %H:%M:%S')}.\n"
-                        f"Load existing data or analyze program again?",
+                        "This database contains capa results generated on "
+                        + results.meta.timestamp.strftime("%Y-%m-%d at %H:%M:%S")
+                        + ".\nLoad existing data or analyze program again?",
                     )
 
                     if btn_id == ida_kernwin.ASKBTN_CANCEL:
@@ -990,7 +989,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.rulegen_feature_extractor = CapaExplorerFeatureExtractor()
                 self.rulegen_feature_cache = CapaRuleGenFeatureCache(self.rulegen_feature_extractor)
             except Exception as e:
-                logger.error("Failed to initialize feature extractor (error: %s)", e, exc_info=True)
+                logger.exception("Failed to initialize feature extractor (error: %s)", e)
                 return False
         else:
             logger.info("Reusing prior rulegen cache")
@@ -1007,7 +1006,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             if f is not None:
                 self.rulegen_current_function = self.rulegen_feature_extractor.get_function(f.start_ea)
         except Exception as e:
-            logger.error("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e, exc_info=True)
+            logger.exception("Failed to resolve function at address 0x%X (error: %s)", f.start_ea, e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1033,7 +1032,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                     for addr, _ in result:
                         all_function_features[capa.features.common.MatchedRule(name)].add(addr)
         except Exception as e:
-            logger.error("Failed to generate rule matches (error: %s)", e, exc_info=True)
+            logger.exception("Failed to generate rule matches (error: %s)", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1054,7 +1053,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 for addr, _ in result:
                     all_file_features[capa.features.common.MatchedRule(name)].add(addr)
         except Exception as e:
-            logger.error("Failed to generate file rule matches (error: %s)", e, exc_info=True)
+            logger.exception("Failed to generate file rule matches (error: %s)", e)
             return False
 
         if ida_kernwin.user_cancelled():
@@ -1077,7 +1076,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]} ({settings.user[CAPA_SETTINGS_RULE_PATH]} rules)"
             )
         except Exception as e:
-            logger.error("Failed to render views (error: %s)", e, exc_info=True)
+            logger.exception("Failed to render views (error: %s)", e)
             return False
 
         return True
@@ -1162,7 +1161,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             assert self.rulegen_ruleset_cache is not None
             assert self.rulegen_feature_cache is not None
         except Exception as e:
-            logger.error("Failed to access cache (error: %s)", e, exc_info=True)
+            logger.exception("Failed to access cache (error: %s)", e)
             self.set_rulegen_status("Error: see console output for more details")
             return
 

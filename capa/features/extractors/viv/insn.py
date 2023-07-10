@@ -19,11 +19,10 @@ import envi.archs.amd64.disasm
 
 import capa.features.extractors.helpers
 import capa.features.extractors.viv.helpers
-from capa.features.file import FunctionName
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.elf import Shdr, SymTab
+from capa.features.extractors.elf import SymTab
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -117,7 +116,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 # this code everytime the call is made, thus preventing the computational overhead.
                 try:
                     fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
-                except:
+                except Exception:
                     fh.ctx["cache"]["symtab"] = None
 
             symtab = fh.ctx["cache"]["symtab"]
@@ -289,16 +288,16 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Itera
         else:
             continue
 
-        for v in derefs(f.vw, v):
+        for vv in derefs(f.vw, v):
             try:
-                buf = read_bytes(f.vw, v)
+                buf = read_bytes(f.vw, vv)
             except envi.exc.SegmentationViolation:
                 continue
 
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
 
-            if f.vw.isProbablyString(v) or f.vw.isProbablyUnicode(v):
+            if f.vw.isProbablyString(vv) or f.vw.isProbablyUnicode(vv):
                 # don't extract byte features for obvious strings
                 continue
 
@@ -352,7 +351,6 @@ def is_security_cookie(f, bb, insn) -> bool:
     if oper.isReg() and oper.reg not in [
         envi.archs.i386.regs.REG_ESP,
         envi.archs.i386.regs.REG_EBP,
-        # TODO: do x64 support for real.
         envi.archs.amd64.regs.REG_RBP,
         envi.archs.amd64.regs.REG_RSP,
     ]:
@@ -423,7 +421,6 @@ def extract_insn_peb_access_characteristic_features(f, bb, ih: InsnHandle) -> It
     """
     parse peb access from the given function. fs:[0x30] on x86, gs:[0x60] on x64
     """
-    # TODO handle where fs/gs are loaded into a register or onto the stack and used later
     insn: envi.Opcode = ih.inner
 
     if insn.mnem not in ["push", "mov"]:
@@ -647,7 +644,6 @@ def extract_op_offset_features(
         if oper.reg == envi.archs.i386.regs.REG_EBP:
             return
 
-        # TODO: do x64 support for real.
         if oper.reg == envi.archs.amd64.regs.REG_RBP:
             return
 
@@ -701,9 +697,9 @@ def extract_op_string_features(
     else:
         return
 
-    for v in derefs(f.vw, v):
+    for vv in derefs(f.vw, v):
         try:
-            s = read_string(f.vw, v).rstrip("\x00")
+            s = read_string(f.vw, vv).rstrip("\x00")
         except ValueError:
             continue
         else:
