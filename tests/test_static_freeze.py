@@ -9,6 +9,7 @@ import textwrap
 from typing import List
 
 import pytest
+from fixtures import z9324d_extractor
 
 import capa.main
 import capa.rules
