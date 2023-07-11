@@ -9,6 +9,7 @@
 import json
 import textwrap
 
+import pytest
 import fixtures
 from fixtures import (
     z499c2_extractor,
