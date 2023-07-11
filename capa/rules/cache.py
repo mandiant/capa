@@ -28,7 +28,7 @@ def compute_cache_identifier(rule_content: List[bytes]) -> CacheIdentifier:
     hash.update(version.encode("utf-8"))
     hash.update(b"\x00")
 
-    rule_hashes = list(sorted([hashlib.sha256(buf).hexdigest() for buf in rule_content]))
+    rule_hashes = sorted([hashlib.sha256(buf).hexdigest() for buf in rule_content])
     for rule_hash in rule_hashes:
         hash.update(rule_hash.encode("ascii"))
         hash.update(b"\x00")

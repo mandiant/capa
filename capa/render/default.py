@@ -11,7 +11,6 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
-import capa.features.freeze as frz
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
@@ -49,7 +48,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
-    matches = set([])
+    matches = set()
 
     def rec(match: rd.Match):
         if not match.success:
@@ -65,7 +64,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
             matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for address, match in rule.matches:
+        for _, match in rule.matches:
             rec(match)
 
     return matches

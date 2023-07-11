@@ -1,0 +1,109 @@
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flare-capa"
+authors = [
+    {name = "Willi Ballenthin", email = "william.ballenthin@mandiant.com"},
+    {name = "Moritz Raabe", email = "moritz.raabe@mandiant.com"},
+    {name = "Mike Hunhoff", email = "michael.hunhoff@mandiant.com"},
+]
+description = "The FLARE team's open-source tool to identify capabilities in executable files."
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8"
+keywords = ["malware analysis", "reverse engineering", "capability detection", "software behaviors", "capa", "FLARE"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = [
+    "tqdm==4.65.0",
+    "pyyaml==6.0",
+    "tabulate==0.9.0",
+    "colorama==0.4.6",
+    "termcolor==2.3.0",
+    "wcwidth==0.2.6",
+    "ida-settings==2.1.0",
+    "viv-utils[flirt]==0.7.9",
+    "halo==0.0.31",
+    "networkx==3.1",
+    "ruamel.yaml==0.17.32",
+    "vivisect==1.1.1",
+    "pefile==2023.2.7",
+    "pyelftools==0.29",
+    "dnfile==0.13.0",
+    "dncil==1.0.2",
+    "pydantic==1.10.9",
+    "protobuf==4.23.2",
+]
+dynamic = ["version", "readme"]
+
+[tool.setuptools.dynamic]
+version = {attr = "capa.version.__version__"}
+readme = {file = "README.md"}
+
+[tool.setuptools]
+packages = ["capa"]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit==3.3.3",
+    "pytest==7.4.0",
+    "pytest-sugar==0.9.7",
+    "pytest-instafail==0.5.0",
+    "pytest-cov==4.1.0",
+    "flake8==6.0.0",
+    "flake8-bugbear==23.6.5",
+    "flake8-encodings==0.5.0.post1",
+    "flake8-comprehensions==3.14.0",
+    "flake8-logging-format==0.9.0",
+    "flake8-no-implicit-concat==0.3.4",
+    "flake8-print==5.0.0",
+    "flake8-todos==0.3.0",
+    "ruff==0.0.275",
+    "black==23.3.0",
+    "isort==5.11.4",
+    "mypy==1.4.1",
+    "psutil==5.9.2",
+    "stix2==3.0.1",
+    "requests==2.31.0",
+    "mypy-protobuf==3.4.0",
+    # type stubs for mypy
+    "types-backports==0.1.3",
+    "types-colorama==0.4.15.11",
+    "types-PyYAML==6.0.8",
+    "types-tabulate==0.9.0.1",
+    "types-termcolor==1.1.4",
+    "types-psutil==5.8.23",
+    "types_requests==2.31.0.1",
+    "types-protobuf==4.23.0.1",
+]
+build = [
+    "pyinstaller==5.10.1",
+    "setuptools==68.0.0",
+    "build==0.10.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/mandiant/capa"
+Repository = "https://github.com/mandiant/capa.git"
+Documentation = "https://github.com/mandiant/capa/tree/master/doc"
+Rules = "https://github.com/mandiant/capa-rules"
+"Rules Documentation" = "https://github.com/mandiant/capa-rules/tree/master/doc"
+
+[project.scripts]
+capa = "capa.main:main"

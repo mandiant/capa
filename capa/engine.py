@@ -8,7 +8,7 @@
 
 import copy
 import collections
-from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator, cast
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator
 
 import capa.perf
 import capa.features.common
@@ -71,7 +71,7 @@ class Statement:
             yield child
 
         if hasattr(self, "children"):
-            for child in getattr(self, "children"):
+            for child in self.children:
                 assert isinstance(child, (Statement, Feature))
                 yield child
 
@@ -83,7 +83,7 @@ class Statement:
                 self.child = new
 
         if hasattr(self, "children"):
-            children = getattr(self, "children")
+            children = self.children
             for i, child in enumerate(children):
                 if child is existing:
                     children[i] = new

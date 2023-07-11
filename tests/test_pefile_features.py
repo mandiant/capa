@@ -7,13 +7,12 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import pytest
 import fixtures
-from fixtures import *
-from fixtures import parametrize
+from fixtures import scope, sample
 
 import capa.features.file
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_PRESENCE_TESTS,
     indirect=["sample", "scope"],

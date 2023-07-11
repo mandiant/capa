@@ -36,8 +36,8 @@ def extract_file_import_names(elf, **kwargs):
 
         for _, symbol in enumerate(section.iter_symbols()):
             if symbol.name and symbol.entry.st_info.type == "STT_FUNC":
-                # TODO symbol address
-                # TODO symbol version info?
+                # TODO(williballenthin): extract symbol address
+                # https://github.com/mandiant/capa/issues/1608
                 yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
@@ -68,7 +68,6 @@ def extract_file_format(**kwargs):
 
 
 def extract_file_arch(elf, **kwargs):
-    # TODO merge with capa.features.extractors.elf.detect_elf_arch()
     arch = elf.get_machine_arch()
     if arch == "x86":
         yield Arch("i386"), NO_ADDRESS
@@ -85,7 +84,8 @@ def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, i
 
 
 FILE_HANDLERS = (
-    # TODO extract_file_export_names,
+    # TODO(williballenthin): implement extract_file_export_names
+    # https://github.com/mandiant/capa/issues/1607
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,

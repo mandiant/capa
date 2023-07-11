@@ -85,20 +85,3 @@ def extract_unicode_strings(buf, n=4):
             yield String(match.group().decode("utf-16"), match.start())
         except UnicodeDecodeError:
             pass
-
-
-def main():
-    import sys
-
-    with open(sys.argv[1], "rb") as f:
-        b = f.read()
-
-    for s in extract_ascii_strings(b):
-        print("0x{:x}: {:s}".format(s.offset, s.s))
-
-    for s in extract_unicode_strings(b):
-        print("0x{:x}: {:s}".format(s.offset, s.s))
-
-
-if __name__ == "__main__":
-    main()

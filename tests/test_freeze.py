@@ -8,7 +8,8 @@
 import textwrap
 from typing import List
 
-from fixtures import *
+import pytest
+from fixtures import z9324d_extractor
 
 import capa.main
 import capa.rules
@@ -20,7 +21,8 @@ import capa.features.freeze
 import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
-from capa.features.address import AbsoluteVirtualAddress
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 EXTRACTOR = capa.features.extractors.null.NullFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
@@ -59,7 +61,7 @@ EXTRACTOR = capa.features.extractors.null.NullFeatureExtractor(
 
 
 def addresses(s) -> List[Address]:
-    return list(sorted(map(lambda i: i.address, s)))
+    return sorted(i.address for i in s)
 
 
 def test_null_feature_extractor():
@@ -102,17 +104,17 @@ def compare_extractors(a, b):
     assert addresses(a.get_functions()) == addresses(b.get_functions())
     for f in a.get_functions():
         assert addresses(a.get_basic_blocks(f)) == addresses(b.get_basic_blocks(f))
-        assert list(sorted(set(a.extract_function_features(f)))) == list(sorted(set(b.extract_function_features(f))))
+        assert sorted(set(a.extract_function_features(f))) == sorted(set(b.extract_function_features(f)))
 
         for bb in a.get_basic_blocks(f):
             assert addresses(a.get_instructions(f, bb)) == addresses(b.get_instructions(f, bb))
-            assert list(sorted(set(a.extract_basic_block_features(f, bb)))) == list(
-                sorted(set(b.extract_basic_block_features(f, bb)))
+            assert sorted(set(a.extract_basic_block_features(f, bb))) == sorted(
+                set(b.extract_basic_block_features(f, bb))
             )
 
             for insn in a.get_instructions(f, bb):
-                assert list(sorted(set(a.extract_insn_features(f, bb, insn)))) == list(
-                    sorted(set(b.extract_insn_features(f, bb, insn)))
+                assert sorted(set(a.extract_insn_features(f, bb, insn))) == sorted(
+                    set(b.extract_insn_features(f, bb, insn))
                 )
 
 
