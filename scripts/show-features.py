@@ -69,7 +69,6 @@ import sys
 import logging
 import os.path
 import argparse
-from typing import cast
 
 import capa.main
 import capa.rules
@@ -104,7 +103,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(args.sample)
+        _ = capa.helpers.get_file_taste(args.sample)
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -156,7 +155,6 @@ def print_static_analysis(extractor: StaticFeatureExtractor, args):
 
     if args.function:
         if args.format == "freeze":
-            # TODO fix
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
             function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
@@ -285,7 +283,7 @@ def ida_main():
 
 
 if __name__ == "__main__":
-    if capa.main.is_runtime_ida():
+    if capa.helpers.is_runtime_ida():
         ida_main()
     else:
         sys.exit(main())

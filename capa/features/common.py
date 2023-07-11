@@ -100,7 +100,10 @@ class Result:
         return self.success
 
 
-class Feature(abc.ABC):
+class Feature(abc.ABC):  # noqa: B024
+    # this is an abstract class, since we don't want anyone to instantiate it directly,
+    # but it doesn't have any abstract methods.
+
     def __init__(
         self,
         value: Union[str, int, float, bytes],
@@ -124,7 +127,12 @@ class Feature(abc.ABC):
         return self.name == other.name and self.value == other.value
 
     def __lt__(self, other):
-        # TODO: this is a huge hack!
+        # implementing sorting by serializing to JSON is a huge hack.
+        # its slow, inelegant, and probably doesn't work intuitively;
+        # however, we only use it for deterministic output, so it's good enough for now.
+
+        # circular import
+        # we should fix if this wasn't already a huge hack.
         import capa.features.freeze.features
 
         return (
@@ -267,7 +275,7 @@ class _MatchedSubstring(Substring):
         self.matches = matches
 
     def __str__(self):
-        matches = ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))
+        matches = ", ".join(f'"{s}"' for s in (self.matches or {}).keys())
         assert isinstance(self.value, str)
         return f'substring("{self.value}", matches = {matches})'
 
@@ -359,7 +367,7 @@ class _MatchedRegex(Regex):
         self.matches = matches
 
     def __str__(self):
-        matches = ", ".join(map(lambda s: '"' + s + '"', (self.matches or {}).keys()))
+        matches = ", ".join(f'"{s}"' for s in (self.matches or {}).keys())
         assert isinstance(self.value, str)
         return f"regex(string =~ {self.value}, matches = {matches})"
 

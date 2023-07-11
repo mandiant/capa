@@ -8,13 +8,20 @@
 
 import pytest
 import fixtures
-from fixtures import *
-from fixtures import parametrize
+from fixtures import (
+    FEATURE_PRESENCE_TESTS_DOTNET,
+    scope,
+    sample,
+    b9f5b_dotnetfile_extractor,
+    mixed_mode_64_dotnetfile_extractor,
+)
+
+import capa.features.file
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
+    FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
 )
 def test_dotnetfile_features(sample, scope, feature, expected):
@@ -27,7 +34,7 @@ def test_dotnetfile_features(sample, scope, feature, expected):
     fixtures.do_test_feature_presence(fixtures.get_dotnetfile_extractor, sample, scope, feature, expected)
 
 
-@parametrize(
+@fixtures.parametrize(
     "extractor,function,expected",
     [
         ("b9f5b_dotnetfile_extractor", "is_dotnet_file", True),

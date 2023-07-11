@@ -11,7 +11,6 @@ import collections
 import tabulate
 
 import capa.render.utils as rutils
-import capa.features.freeze as frz
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
@@ -40,7 +39,7 @@ def render_meta(doc: rd.ResultDocument, ostream: StringIO):
         ("path", doc.meta.sample.path),
     ]
 
-    ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, tablefmt="mixed_outline"))
     ostream.write("\n")
 
 
@@ -49,7 +48,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
-    matches = set([])
+    matches = set()
 
     def rec(match: rd.Match):
         if not match.success:
@@ -65,7 +64,7 @@ def find_subrule_matches(doc: rd.ResultDocument):
             matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for address, match in rule.matches:
+        for _, match in rule.matches:
             rec(match)
 
     return matches
@@ -102,7 +101,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql")
+            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
         )
         ostream.write("\n")
     else:
@@ -148,7 +147,7 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql"
+                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="mixed_grid"
             )
         )
         ostream.write("\n")
@@ -190,7 +189,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="psql")
+            tabulate.tabulate(
+                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+            )
         )
         ostream.write("\n")
 

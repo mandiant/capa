@@ -6,14 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Dict, Tuple, Union, Iterator
+from typing import Dict, Tuple, Iterator
 
 import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)

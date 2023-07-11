@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
 import collections
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
 
@@ -302,7 +302,7 @@ class Match(FrozenModel):
                 # pull matches from the referenced rule into our tree here.
                 rule_name = name
                 rule = rules[rule_name]
-                rule_matches = {address: result for (address, result) in capabilities[rule_name]}
+                rule_matches = dict(capabilities[rule_name])
 
                 if rule.is_subscope_rule():
                     # for a subscope rule, fixup the node to be a scope node, rather than a match feature node.
@@ -347,7 +347,7 @@ class Match(FrozenModel):
                         # we could introduce an intermediate node here.
                         # this would be a breaking change and require updates to the renderers.
                         # in the meantime, the above might be sufficient.
-                        rule_matches = {address: result for (address, result) in capabilities[rule.name]}
+                        rule_matches = dict(capabilities[rule.name])
                         for location in result.locations:
                             # doc[locations] contains all matches for the given namespace.
                             # for example, the feature might be `match: anti-analysis/packer`

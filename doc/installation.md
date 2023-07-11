@@ -93,28 +93,43 @@ For more details about creating and using virtual environments, check out the [v
 
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter
-  - [isort 5](https://pypi.org/project/isort/) code formatter
-  - [dos2unix](https://linux.die.net/man/1/dos2unix) for UNIX-style LF newlines
+  - [isort](https://pypi.org/project/isort/) code formatter
+  - [ruff](https://beta.ruff.rs/docs/) code linter
+  - [flake8](https://flake8.pycqa.org/en/latest/) code linter
+  - [mypy](https://mypy-lang.org/) type checking
   - [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py) rule formatter
 
 To install these development dependencies, run:
 
 `$ pip install -e /local/path/to/src[dev]`
 
-To check the code style, formatting and run the tests you can run the script `scripts/ci.sh`.
-You can run it with the argument `no_tests` to skip the tests and only run the code style and formatting: `scripts/ci.sh no_tests`
+We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same linters & configuration locally as in CI.
 
-##### Setup hooks [optional]
+Run all linters liks:
 
-If you plan to contribute to capa, you may want to setup the provided hooks.
-Run `scripts/setup-hooks.sh` to set the following hooks up:
-- The `pre-commit` hook runs checks before every `git commit`.
-  It runs `scripts/ci.sh no_tests` aborting the commit if there are code style or rule linter offenses you need to fix.
-- The `pre-push` hook runs checks before every `git push`.
-  It runs `scripts/ci.sh` aborting the push if there are code style or rule linter offenses or if the tests fail.
-  This way you can ensure everything is alright before sending a pull request.
+    ❯ pre-commit run --all-files
+    isort....................................................................Passed
+    black....................................................................Passed
+    ruff.....................................................................Passed
+    flake8...................................................................Passed
+    mypy.....................................................................Passed
 
-You can skip the checks by using the `-n`/`--no-verify` git option.
+Or run a single linter like:
+
+    ❯ pre-commit run --all-files isort
+    isort....................................................................Passed
+
+
+Importantly, you can configure pre-commit to run automatically before every commit by running:
+
+    ❯ pre-commit install --hook-type pre-commit
+    pre-commit installed at .git/hooks/pre-commit
+
+    ❯ pre-commit install --hook-type pre-push
+    pre-commit installed at .git/hooks/pre-push
+
+This way you can ensure that you don't commit code style or formatting offenses.
+You can always temporarily skip the checks by using the `-n`/`--no-verify` git option.
 
 ### 3. Compile binary using PyInstaller
 We compile capa standalone binaries using PyInstaller. To reproduce the build process check out the source code as described above and follow the following steps.

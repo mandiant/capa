@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import itertools
 import collections
-from typing import Set, Dict, List, Tuple, Union, Optional
+from typing import Set, Dict, Tuple, Union, Optional
 
 import capa.engine
 from capa.rules import Scope, RuleSet
@@ -37,13 +37,15 @@ class CapaRuleGenFeatureCacheNode:
         self.children: Set[CapaRuleGenFeatureCacheNode] = set()
 
     def __hash__(self):
-        # TODO: unique enough?
+        # TODO(mike-hunhoff): confirm this is unique enough
+        # https://github.com/mandiant/capa/issues/1604
         return hash((self.address,))
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented
-        # TODO: unique enough?
+        # TODO(mike-hunhoff): confirm this is unique enough
+        # https://github.com/mandiant/capa/issues/1604
         return self.address == other.address
 
 

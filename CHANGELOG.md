@@ -11,12 +11,18 @@
 - Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
 - Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
 - Add support for flavor-based rule scopes @yelhamer
+- use fancy box drawing characters for default output #1586 @williballenthin
+- use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
+- migrate to pyproject.toml #1301 @williballenthin
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+- Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 - Change the old FeatureExtractor class' name into StaticFeatureExtractor, and make the former an alias for both the StaticFeatureExtractor and DynamicFeatureExtractor classes @yelhamer [#1567](https://github.com/mandiant/capa/issues/1567)
+- use fancy box drawing characters for default output #1586 @williballenthin
 
-### New Rules (11)
+### New Rules (23)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -29,6 +35,17 @@
 - host-interaction/hardware/enumerate-devices-by-category @mr-tz
 - host-interaction/service/continue-service @mr-tz
 - host-interaction/service/pause-service @mr-tz
+- persistence/exchange/act-as-exchange-transport-agent jakub.jozwiak@mandiant.com
+- host-interaction/file-system/create-virtual-file-system-in-dotnet jakub.jozwiak@mandiant.com
+- compiler/cx_freeze/compiled-with-cx_freeze @mr-tz jakub.jozwiak@mandiant.com
+- communication/socket/create-vmci-socket jakub.jozwiak@mandiant.com
+- persistence/office/act-as-excel-xll-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-office-com-add-in jakub.jozwiak@mandiant.com
+- persistence/office/act-as-word-wll-add-in jakub.jozwiak@mandiant.com
+- anti-analysis/anti-debugging/debugger-evasion/hide-thread-from-debugger michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- host-interaction/memory/create-new-application-domain-in-dotnet jakub.jozwiak@mandiant.com
+- host-interaction/gui/switch-active-desktop jakub.jozwiak@mandiant.com
+- host-interaction/service/query-service-configuration @mr-tz
 -
 
 ### Bug Fixes
@@ -44,10 +61,13 @@
 - Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - extractor: fix binja installation path detection does not work with Python 3.11
 - tests: refine the IDA test runner script #1513 @williballenthin
+- output: don't leave behind traces of progress bar @williballenthin
+- import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
 ### Development
+- update ATT&CK/MBC data for linting #1568 @mr-tz
 
 ### Raw diffs
 - [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)

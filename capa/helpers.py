@@ -10,6 +10,7 @@ import json
 import inspect
 import logging
 import contextlib
+import importlib.util
 from typing import NoReturn
 
 import tqdm
@@ -42,16 +43,13 @@ def get_file_taste(sample_path: str) -> bytes:
 
 
 def is_runtime_ida():
-    try:
-        import idc
-    except ImportError:
-        return False
-    else:
-        return True
+    return importlib.util.find_spec("idc") is not None
 
 
 def assert_never(value) -> NoReturn:
-    assert False, f"Unhandled value: {value} ({type(value).__name__})"
+    # careful: python -O will remove this assertion.
+    # but this is only used for type checking, so it's ok.
+    assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
 def get_format_from_report(sample: str) -> str:
@@ -111,7 +109,7 @@ def redirecting_print_to_tqdm(disable_progress):
     with one that is compatible with tqdm.
     via: https://stackoverflow.com/a/42424890/87207
     """
-    old_print = print
+    old_print = print  # noqa: T202 [reserved word print used]
 
     def new_print(*args, **kwargs):
         # If tqdm.tqdm.write raises error, use builtin print
@@ -120,7 +118,7 @@ def redirecting_print_to_tqdm(disable_progress):
         else:
             try:
                 tqdm.tqdm.write(*args, **kwargs)
-            except:
+            except Exception:
                 old_print(*args, **kwargs)
 
     try:
@@ -168,7 +166,7 @@ def log_unsupported_runtime_error():
     logger.error("-" * 80)
     logger.error(" Unsupported runtime or Python interpreter.")
     logger.error(" ")
-    logger.error(" capa supports running under Python 3.7 and higher.")
+    logger.error(" capa supports running under Python 3.8 and higher.")
     logger.error(" ")
     logger.error(
         " If you're seeing this message on the command line, please ensure you're running a supported Python version."

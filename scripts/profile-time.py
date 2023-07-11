@@ -27,7 +27,7 @@ example:
     |--------------------------------------|----------------------|-------------|-------------|-------------|
     | 18c30e4 main: remove perf debug msgs | 66,561,622           | 132.13s     | 125.14s     | 139.12s     |
 
-      ^^^ --label or git hash               
+      ^^^ --label or git hash
 """
 import sys
 import timeit
@@ -112,7 +112,7 @@ def main(argv=None):
         )
 
     assert isinstance(extractor, StaticFeatureExtractor)
-    with tqdm.tqdm(total=args.number * args.repeat) as pbar:
+    with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
 
         def do_iteration():
             capa.perf.reset()
@@ -121,12 +121,12 @@ def main(argv=None):
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)
 
-    logger.debug("perf: find capabilities: min: %0.2fs" % (min(samples) / float(args.number)))
-    logger.debug("perf: find capabilities: avg: %0.2fs" % (sum(samples) / float(args.repeat) / float(args.number)))
-    logger.debug("perf: find capabilities: max: %0.2fs" % (max(samples) / float(args.number)))
+    logger.debug("perf: find capabilities: min: %0.2fs", (min(samples) / float(args.number)))
+    logger.debug("perf: find capabilities: avg: %0.2fs", (sum(samples) / float(args.repeat) / float(args.number)))
+    logger.debug("perf: find capabilities: max: %0.2fs", (max(samples) / float(args.number)))
 
     for counter, count in capa.perf.counters.most_common():
-        logger.debug("perf: counter: {:}: {:,}".format(counter, count))
+        logger.debug("perf: counter: %s: %s", counter, count)
 
     print(
         tabulate.tabulate(
