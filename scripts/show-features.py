@@ -250,7 +250,7 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                     if is_global_feature(feature):
                         continue
 
-                    print(f"  thread: {t.tid} {format_address(addr)}: {feature}")
+                    print(f"  {t.address} {format_address(addr)}: {feature}")
 
 
 def ida_main():

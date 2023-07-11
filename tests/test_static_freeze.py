@@ -24,7 +24,7 @@ import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
-EXTRACTOR = capa.features.extractors.null.NullFeatureExtractor(
+EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
     global_features=[],
     file_features=[
@@ -119,8 +119,8 @@ def compare_extractors(a, b):
 
 
 def test_freeze_str_roundtrip():
-    load = capa.features.freeze.loads
-    dump = capa.features.freeze.dumps
+    load = capa.features.freeze.loads_static
+    dump = capa.features.freeze.dumps_static
     reanimated = load(dump(EXTRACTOR))
     compare_extractors(EXTRACTOR, reanimated)
 

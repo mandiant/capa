@@ -23,6 +23,6 @@ def find_process(processes: List[Dict[str, Any]], ph: ProcessHandle) -> Dict[str
     """
 
     for process in processes:
-        if ph.pid == process["process_id"] and ph.inner["ppid"] == process["parent_id"]:
+        if ph.address.ppid == process["parent_id"] and ph.address.pid == process["process_id"]:
             return process
     return {}
