@@ -24,7 +24,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
+from typing import Any, Set, Dict, List, Tuple, Union, Iterator
 from dataclasses import asdict, dataclass
 
 import yaml
