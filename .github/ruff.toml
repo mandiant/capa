@@ -60,3 +60,4 @@ exclude = [
 "tests/test_dotnet_features.py" = ["F401", "F811"]
 "tests/test_result_document.py" = ["F401", "F811"]
 "tests/test_dotnetfile_features.py" = ["F401", "F811"]
+"tests/test_static_freeze.py" = ["F401"]

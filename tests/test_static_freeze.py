@@ -155,6 +155,13 @@ def test_serialize_features():
     roundtrip_feature(capa.features.insn.Property("System.IO.FileInfo::Length"))
 
 
+def test_freeze_sample(tmpdir, z9324d_extractor):
+    # tmpdir fixture handles cleanup
+    o = tmpdir.mkdir("capa").join("test.frz").strpath
+    path = z9324d_extractor.path
+    assert capa.features.freeze.main([path, o, "-v"]) == 0
+
+
 @pytest.mark.parametrize(
     "extractor",
     [
@@ -173,10 +180,3 @@ def test_freeze_load_sample(tmpdir, request, extractor):
         null_extractor = capa.features.freeze.load(f.read())
 
     compare_extractors(extractor, null_extractor)
-
-
-def test_freeze_sample(tmpdir, z9324d_extractor):
-    # tmpdir fixture handles cleanup
-    o = tmpdir.mkdir("capa").join("test.frz").strpath
-    path = z9324d_extractor.path
-    assert capa.features.freeze.main([path, o, "-v"]) == 0
