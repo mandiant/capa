@@ -193,7 +193,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                     rule:
                         meta:
                             name: install service
-                            scopes: 
+                            scopes:
                                 static: function
                                 dynamic: dev
                             examples:
@@ -232,7 +232,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                     rule:
                         meta:
                             name: .text section and install service
-                            scopes: 
+                            scopes:
                                 static: file
                                 dynamic: dev
                             examples:
@@ -329,7 +329,7 @@ def test_subscope_bb_rules(z9324d_extractor):
                     rule:
                         meta:
                             name: test rule
-                            scopes: 
+                            scopes:
                                 static: function
                                 dynamic: dev
                         features:
@@ -436,7 +436,7 @@ def test_instruction_subscope(z9324d_extractor):
                       meta:
                         name: push 1000 on i386
                         namespace: test
-                        scopes: 
+                        scopes:
                             static: function
                             dynamic: dev
                       features:

@@ -247,7 +247,7 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
-                        scopes: 
+                        scopes:
                             static: file
                             dynamic: dev
                     features:
@@ -347,7 +347,7 @@ def test_subscope_rules():
                     rule:
                         meta:
                             name: test function subscope
-                            scopes: 
+                            scopes:
                                 static: file
                                 dynamic: dev
                         features:
