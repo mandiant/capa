@@ -43,7 +43,7 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
     if not environ:
         return
 
-    for variable, value in environ.items():
+    for _, value in environ.items():
         if value:
             yield String(value), ph.address
 
