@@ -1,5 +1,7 @@
-from typing import Dict, List, Tuple, Union, TypeAlias
+from typing import Dict, List, Tuple, Union
 from dataclasses import dataclass
+
+from typing_extensions import TypeAlias
 
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress

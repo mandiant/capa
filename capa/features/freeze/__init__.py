@@ -12,9 +12,10 @@ See the License for the specific language governing permissions and limitations 
 import zlib
 import logging
 from enum import Enum
-from typing import List, Tuple, Union, TypeAlias
+from typing import List, Tuple, Union
 
 from pydantic import Field, BaseModel
+from typing_extensions import TypeAlias
 
 import capa.helpers
 import capa.version
