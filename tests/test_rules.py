@@ -127,7 +127,6 @@ def test_rule_descriptions():
 
     def rec(statement):
         if isinstance(statement, capa.engine.Statement):
-            print(statement.description)
             assert statement.description == statement.name.lower() + " description"
             for child in statement.get_children():
                 rec(child)

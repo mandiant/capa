@@ -928,8 +928,8 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    # TODO(yelhamer): remove once support for the legacy scope
-    # field has been added
+    # TODO(yelhamer): remove once support for the legacy scope field has been added
+    # https://github.com/mandiant/capa/pull/1580
     return 0
 
     samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")

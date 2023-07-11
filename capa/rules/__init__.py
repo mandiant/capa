@@ -204,8 +204,9 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Namespace,
     },
     DEV_SCOPE: {
-        # TODO: this is a temporary scope. remove it after support
+        # TODO(yelhamer): this is a temporary scope. remove it after support
         # for the legacy scope keyword has been added (to rendering).
+        # https://github.com/mandiant/capa/pull/1580
         capa.features.insn.API,
     },
 }
@@ -777,7 +778,6 @@ class Rule:
                     {
                         "name": name,
                         "scopes": asdict(Scopes(subscope.scope, DEV_SCOPE)),
-                        ""
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
                         # so mark it as such.
@@ -864,6 +864,7 @@ class Rule:
         # we should go back and update this accordingly to either:
         # - generate one englobing statement.
         # - generate two respective statements and store them approriately
+        # https://github.com/mandiant/capa/pull/1580
         statement = build_statements(statements[0], scopes.static)
         _ = build_statements(statements[0], scopes.dynamic)
         return cls(name, scopes, statement, meta, definition)
@@ -1047,7 +1048,7 @@ def get_rules_with_scope(rules, scope) -> List[Rule]:
     from the given collection of rules, select those with the given scope.
     `scope` is one of the capa.rules.*_SCOPE constants.
     """
-    return list(rule for rule in rules if scope in rule.scopes)
+    return [rule for rule in rules if scope in rule.scopes]
 
 
 def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
