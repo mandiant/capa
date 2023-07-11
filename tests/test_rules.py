@@ -519,7 +519,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -534,7 +534,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -549,7 +549,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -564,7 +564,7 @@ def test_invalid_rules():
             )
         )
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
