@@ -13,7 +13,7 @@ import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress
+from capa.features.address import Address, ThreadAddress
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
