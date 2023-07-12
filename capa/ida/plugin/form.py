@@ -1210,11 +1210,11 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             if capa.rules.Scope.FUNCTION in rule.scopes and rule.name in func_matches.keys():
                 is_match = True
-            elif capa.rules.Scope.BASIC_BLOCK in rules.scopes and rule.name in bb_matches.keys():
+            elif capa.rules.Scope.BASIC_BLOCK in rule.scopes and rule.name in bb_matches.keys():
                 is_match = True
-            elif capa.rules.Scope.INSTRUCTION in rules.scopes and rule.name in insn_matches.keys():
+            elif capa.rules.Scope.INSTRUCTION in rule.scopes and rule.name in insn_matches.keys():
                 is_match = True
-        elif capa.rules.Scope.FILE in rules.scopes:
+        elif capa.rules.Scope.FILE in rule.scopes:
             try:
                 _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
             except Exception as e:
