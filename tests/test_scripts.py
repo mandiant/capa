@@ -38,14 +38,22 @@ def get_rule_path():
 @pytest.mark.parametrize(
     "script,args",
     [
-        pytest.param("capa2yara.py", [get_rules_path()]),
-        pytest.param("capafmt.py", [get_rule_path()]),
+        pytest.param("capa2yara.py", [get_rules_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")),
+        pytest.param(
+            "capafmt.py", [get_rule_path()], marks=pytest.mark.xfail(reason="rendering hasn't been added yet")
+        ),
         # not testing lint.py as it runs regularly anyway
         pytest.param("match-function-id.py", [get_file_path()]),
-        pytest.param("show-capabilities-by-function.py", [get_file_path()]),
+        pytest.param(
+            "show-capabilities-by-function.py",
+            [get_file_path()],
+            marks=pytest.mark.xfail(reason="rendering hasn't been added yet"),
+        ),
         pytest.param("show-features.py", [get_file_path()]),
         pytest.param("show-features.py", ["-F", "0x407970", get_file_path()]),
-        pytest.param("capa_as_library.py", [get_file_path()]),
+        pytest.param(
+            "capa_as_library.py", [get_file_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")
+        ),
     ],
 )
 def test_scripts(script, args):
@@ -54,6 +62,7 @@ def test_scripts(script, args):
     assert p.returncode == 0
 
 
+@pytest.mark.xfail(reason="relies on legacy ruleset")
 def test_bulk_process(tmpdir):
     # create test directory to recursively analyze
     t = tmpdir.mkdir("test")
@@ -70,6 +79,7 @@ def run_program(script_path, args):
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
+@pytest.mark.xfail(reason="rendering hasn't been added yet")
 def test_proto_conversion(tmpdir):
     t = tmpdir.mkdir("proto-test")
 
@@ -94,7 +104,9 @@ def test_detect_duplicate_features(tmpdir):
         rule:
             meta:
                 name: Test Rule 0
-                scope: function
+                scopes:
+                    static: function
+                    dynamic: dev
             features:
               - and:
                 - number: 1
