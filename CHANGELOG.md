@@ -15,7 +15,7 @@
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
 - Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
-### New Rules (25)
+### New Rules (26)
 
 - load-code/shellcode/execute-shellcode-via-windows-callback-function ervin.ocampo@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/execute-shellcode-via-indirect-call ronnie.salomonsen@mandiant.com
@@ -41,6 +41,7 @@
 - host-interaction/service/query-service-configuration @mr-tz
 - anti-analysis/anti-av/patch-event-tracing-for-windows-function jakub.jozwiak@mandiant.com
 - data-manipulation/encoding/xor/covertly-decode-and-write-data-to-windows-directory-using-indirect-calls dan.kelly@mandiant.com
+- linking/runtime-linking/resolve-function-by-brute-ratel-badger-hash jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
