@@ -1193,14 +1193,12 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         is_match: bool = False
         if self.rulegen_current_function is not None and any(
-            [
-                s in rule.scopes
-                for s in (
-                    capa.rules.Scope.FUNCTION,
-                    capa.rules.Scope.BASIC_BLOCK,
-                    capa.rules.Scope.INSTRUCTION,
-                )
-            ]
+            s in rule.scopes
+            for s in (
+                capa.rules.Scope.FUNCTION,
+                capa.rules.Scope.BASIC_BLOCK,
+                capa.rules.Scope.INSTRUCTION,
+            )
         ):
             try:
                 _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
