@@ -130,7 +130,7 @@ def is_mov_imm_to_stack(il: MediumLevelILInstruction) -> bool:
     if il.src.operation != MediumLevelILOperation.MLIL_CONST:
         return False
 
-    if not il.dest.source_type == VariableSourceType.StackVariableSourceType:
+    if il.dest.source_type != VariableSourceType.StackVariableSourceType:
         return False
 
     return True

@@ -397,7 +397,7 @@ def convert_rule(rule, rulename, cround, depth):
                     # this is "x or more". could be coded for strings TODO
                     return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete
 
-            if s_type == "And" or s_type == "Or" or s_type == "Not" and not kid.name == "Some":
+            if s_type == "And" or s_type == "Or" or s_type == "Not" and kid.name != "Some":
                 logger.info("doing bool with recursion: %r", kid)
                 logger.info("kid coming: %r", kid.name)
                 # logger.info("grandchildren: " + repr(kid.children))

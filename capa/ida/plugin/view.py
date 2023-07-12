@@ -1224,8 +1224,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             yield self.new_action(*action)
 
         # add default actions
-        for action in self.load_default_context_menu_actions(data):
-            yield action
+        yield from self.load_default_context_menu_actions(data)
 
     def load_default_context_menu(self, pos, item, model_index):
         """create default custom context menu

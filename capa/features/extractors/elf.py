@@ -706,8 +706,7 @@ class SymTab:
         return a tuple: (name, value, size, info, other, shndx)
         for each symbol contained in the symbol table
         """
-        for symbol in self.symbols:
-            yield symbol
+        yield from self.symbols
 
     @classmethod
     def from_Elf(cls, ElfBinary) -> Optional["SymTab"]:

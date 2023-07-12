@@ -216,7 +216,7 @@ def extract_insn_offset_features(
 
         p_info = capa.features.extractors.ida.helpers.get_op_phrase_info(op)
 
-        op_off = p_info.get("offset", None)
+        op_off = p_info.get("offset")
         if op_off is None:
             continue
 
@@ -447,7 +447,7 @@ def extract_insn_cross_section_cflow(
     insn: idaapi.insn_t = ih.inner
 
     for ref in idautils.CodeRefsFrom(insn.ea, False):
-        if ref in get_imports(fh.ctx).keys():
+        if ref in get_imports(fh.ctx):
             # ignore API calls
             continue
         if not idaapi.getseg(ref):

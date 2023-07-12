@@ -709,8 +709,7 @@ class Rule:
             # note: we cannot recurse into the subscope sub-tree,
             #  because its been replaced by a `match` statement.
             for child in statement.get_children():
-                for new_rule in self._extract_subscope_rules_rec(child):
-                    yield new_rule
+                yield from self._extract_subscope_rules_rec(child)
 
     def is_subscope_rule(self):
         return bool(self.meta.get("capa/subscope-rule", False))
@@ -736,8 +735,7 @@ class Rule:
         #   replace old node with reference to new rule
         #   yield new rule
 
-        for new_rule in self._extract_subscope_rules_rec(self.statement):
-            yield new_rule
+        yield from self._extract_subscope_rules_rec(self.statement)
 
     def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
