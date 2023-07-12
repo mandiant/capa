@@ -799,6 +799,7 @@ def collect_metadata(
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
+    base_addr = extractor.get_base_address() if hasattr(extractor, "get_base_address") else NO_ADDRESS
 
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),
@@ -816,7 +817,7 @@ def collect_metadata(
             os=os_,
             extractor=extractor.__class__.__name__,
             rules=tuple(rules_path),
-            base_address=frz.Address.from_capa(extractor.get_base_address()),
+            base_address=frz.Address.from_capa(base_addr),
             layout=rdoc.Layout(
                 functions=(),
                 # this is updated after capabilities have been collected.
@@ -1270,7 +1271,6 @@ def main(argv=None):
             # freeze format deserializes directly into an extractor
             with open(args.sample, "rb") as f:
                 extractor: FeatureExtractor = frz.load(f.read())
-                assert isinstance(extractor, StaticFeatureExtractor)
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces

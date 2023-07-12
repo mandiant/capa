@@ -35,7 +35,7 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
     process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
     calls: List[Dict[str, Any]] = process["calls"]
 
-    tid = str(th.tid)
+    tid = str(th.address.tid)
     for call in calls:
         if call["thread_id"] != tid:
             continue

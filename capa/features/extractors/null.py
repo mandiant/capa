@@ -1,9 +1,19 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 from dataclasses import dataclass
 
+from typing_extensions import TypeAlias
+
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    ThreadHandle,
+    ProcessHandle,
+    FunctionHandle,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 
 @dataclass
@@ -24,7 +34,7 @@ class FunctionFeatures:
 
 
 @dataclass
-class NullFeatureExtractor(StaticFeatureExtractor):
+class NullStaticFeatureExtractor(StaticFeatureExtractor):
     """
     An extractor that extracts some user-provided features.
 
@@ -70,3 +80,51 @@ class NullFeatureExtractor(StaticFeatureExtractor):
     def extract_insn_features(self, f, bb, insn):
         for address, feature in self.functions[f.address].basic_blocks[bb.address].instructions[insn.address].features:
             yield feature, address
+
+
+@dataclass
+class ThreadFeatures:
+    features: List[Tuple[Address, Feature]]
+
+
+@dataclass
+class ProcessFeatures:
+    features: List[Tuple[Address, Feature]]
+    threads: Dict[Address, ThreadFeatures]
+
+
+@dataclass
+class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
+    base_address: Address
+    global_features: List[Feature]
+    file_features: List[Tuple[Address, Feature]]
+    processes: Dict[Address, ProcessFeatures]
+
+    def extract_global_features(self):
+        for feature in self.global_features:
+            yield feature, NO_ADDRESS
+
+    def extract_file_features(self):
+        for address, feature in self.file_features:
+            yield feature, address
+
+    def get_processes(self):
+        for address in sorted(self.processes.keys()):
+            assert isinstance(address, ProcessAddress)
+            yield ProcessHandle(address=address, inner={})
+
+    def extract_process_features(self, p):
+        for addr, feature in self.processes[p.address].features:
+            yield feature, addr
+
+    def get_threads(self, p):
+        for address in sorted(self.processes[p].threads.keys()):
+            assert isinstance(address, ThreadAddress)
+            yield ThreadHandle(address=address, inner={})
+
+    def extract_thread_features(self, p, t):
+        for addr, feature in self.processes[p.address].threads[t.address].features:
+            yield feature, addr
+
+
+NullFeatureExtractor: TypeAlias = Union[NullStaticFeatureExtractor, NullDynamicFeatureExtractor]

@@ -14,6 +14,7 @@
 - use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
 - publish via PyPI trusted publishing #1491 @williballenthin
 - migrate to pyproject.toml #1301 @williballenthin
+- Add ProcessesAddress and ThreadAddress #1612 @yelhamer
 
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat

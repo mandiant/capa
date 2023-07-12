@@ -13,7 +13,7 @@ import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import String, Feature
-from capa.features.address import NO_ADDRESS, Address
+from capa.features.address import Address, ThreadAddress
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,8 @@ def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[ThreadHandle]:
     threads: List = process["threads"]
 
     for thread in threads:
-        yield ThreadHandle(int(thread), inner={})
+        address: ThreadAddress = ThreadAddress(process=ph.address, tid=int(thread))
+        yield ThreadHandle(address=address, inner={})
 
 
 def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -42,10 +43,9 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
     if not environ:
         return
 
-    for value in environ.values():
-        if not value:
-            continue
-        yield String(value), NO_ADDRESS
+    for _, value in environ.items():
+        if value:
+            yield String(value), ph.address
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
