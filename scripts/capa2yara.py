@@ -37,6 +37,7 @@ import logging
 import argparse
 import datetime
 import itertools
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -71,8 +72,8 @@ default_tags = "CAPA "
 # minimum number of rounds to do be able to convert rules which depend on referenced rules in several levels of depth
 min_rounds = 5
 
-unsupported_capa_rules = open("unsupported_capa_rules.yml", "wb")
-unsupported_capa_rules_names = open("unsupported_capa_rules.txt", "wb")
+unsupported_capa_rules = Path("unsupported_capa_rules.yml").open("wb")
+unsupported_capa_rules_names = Path("unsupported_capa_rules.txt").open("wb")
 unsupported_capa_rules_list = []
 
 condition_header = """
@@ -396,7 +397,7 @@ def convert_rule(rule, rulename, cround, depth):
                     # this is "x or more". could be coded for strings TODO
                     return "BREAK", "Some aka x or more (TODO)", rule_comment, incomplete
 
-            if s_type == "And" or s_type == "Or" or s_type == "Not" and not kid.name == "Some":
+            if s_type == "And" or s_type == "Or" or s_type == "Not" and kid.name != "Some":
                 logger.info("doing bool with recursion: %r", kid)
                 logger.info("kid coming: %r", kid.name)
                 # logger.info("grandchildren: " + repr(kid.children))
@@ -714,7 +715,7 @@ def main(argv=None):
     logging.getLogger("capa2yara").setLevel(level)
 
     try:
-        rules = capa.main.get_rules([args.rules])
+        rules = capa.main.get_rules([Path(args.rules)])
         namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
         logger.info("successfully loaded %d rules (including subscope rules which will be ignored)", len(rules))
         if args.tag:

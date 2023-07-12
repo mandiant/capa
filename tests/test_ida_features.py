@@ -46,14 +46,14 @@ import io
 import sys
 import inspect
 import logging
-import os.path
 import binascii
 import traceback
+from pathlib import Path
 
 import pytest
 
 try:
-    sys.path.append(os.path.dirname(__file__))
+    sys.path.append(str(Path(__file__).parent))
     import fixtures
 finally:
     sys.path.pop()

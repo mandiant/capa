@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from typing import Dict, List, Tuple, Union, Iterator, Optional
+from pathlib import Path
 
 import dnfile
 from dncil.cil.opcode import OpCodes
@@ -52,25 +53,25 @@ class DnFileFeatureExtractorCache:
             self.types[type_.token] = type_
 
     def get_import(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
-        return self.imports.get(token, None)
+        return self.imports.get(token)
 
     def get_native_import(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
-        return self.native_imports.get(token, None)
+        return self.native_imports.get(token)
 
     def get_method(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
-        return self.methods.get(token, None)
+        return self.methods.get(token)
 
     def get_field(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
-        return self.fields.get(token, None)
+        return self.fields.get(token)
 
     def get_type(self, token: int) -> Optional[Union[DnType, DnUnmanagedMethod]]:
-        return self.types.get(token, None)
+        return self.types.get(token)
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
@@ -119,7 +120,7 @@ class DnfileFeatureExtractor(FeatureExtractor):
                 address: DNTokenAddress = DNTokenAddress(insn.operand.value)
 
                 # record call to destination method; note: we only consider MethodDef methods for destinations
-                dest: Optional[FunctionHandle] = methods.get(address, None)
+                dest: Optional[FunctionHandle] = methods.get(address)
                 if dest is not None:
                     dest.ctx["calls_to"].add(fh.address)
 

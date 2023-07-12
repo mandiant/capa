@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
+import contextlib
 from collections import namedtuple
 
 ASCII_BYTE = r" !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t".encode(
@@ -81,7 +82,5 @@ def extract_unicode_strings(buf, n=4):
         reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, n)
         r = re.compile(reg)
     for match in r.finditer(buf):
-        try:
+        with contextlib.suppress(UnicodeDecodeError):
             yield String(match.group().decode("utf-16"), match.start())
-        except UnicodeDecodeError:
-            pass

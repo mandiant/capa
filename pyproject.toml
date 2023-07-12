@@ -48,7 +48,7 @@ dependencies = [
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==1.10.9",
-    "protobuf==4.23.2",
+    "protobuf==4.23.4",
 ]
 dynamic = ["version", "readme"]
 
@@ -67,15 +67,16 @@ dev = [
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
     "flake8==6.0.0",
-    "flake8-bugbear==23.6.5",
+    "flake8-bugbear==23.7.10",
     "flake8-encodings==0.5.0.post1",
     "flake8-comprehensions==3.14.0",
     "flake8-logging-format==0.9.0",
     "flake8-no-implicit-concat==0.3.4",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.0",
-    "ruff==0.0.275",
-    "black==23.3.0",
+    "flake8-simplify==0.20.0",
+    "ruff==0.0.277",
+    "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.4.1",
     "psutil==5.9.2",

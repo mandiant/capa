@@ -1,10 +1,11 @@
+import os
 import sys
 import zlib
 import pickle
 import hashlib
 import logging
-import os.path
 from typing import List, Optional
+from pathlib import Path
 from dataclasses import dataclass
 
 import capa.rules
@@ -36,7 +37,7 @@ def compute_cache_identifier(rule_content: List[bytes]) -> CacheIdentifier:
     return hash.hexdigest()
 
 
-def get_default_cache_directory() -> str:
+def get_default_cache_directory() -> Path:
     # ref: https://github.com/mandiant/capa/issues/1212#issuecomment-1361259813
     #
     # Linux:   $XDG_CACHE_HOME/capa/
@@ -45,22 +46,22 @@ def get_default_cache_directory() -> str:
 
     # ref: https://stackoverflow.com/a/8220141/87207
     if sys.platform == "linux" or sys.platform == "linux2":
-        directory = os.environ.get("XDG_CACHE_HOME", os.path.join(os.environ["HOME"], ".cache", "capa"))
+        directory = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache" / "capa"))
     elif sys.platform == "darwin":
-        directory = os.path.join(os.environ["HOME"], "Library", "Caches", "capa")
+        directory = Path.home() / "Library" / "Caches" / "capa"
     elif sys.platform == "win32":
-        directory = os.path.join(os.environ["LOCALAPPDATA"], "flare", "capa", "cache")
+        directory = Path(os.environ["LOCALAPPDATA"]) / "flare" / "capa" / "cache"
     else:
         raise NotImplementedError(f"unsupported platform: {sys.platform}")
 
-    os.makedirs(directory, exist_ok=True)
+    directory.mkdir(parents=True, exist_ok=True)
 
     return directory
 
 
-def get_cache_path(cache_dir: str, id: CacheIdentifier) -> str:
+def get_cache_path(cache_dir: Path, id: CacheIdentifier) -> Path:
     filename = "capa-" + id[:8] + ".cache"
-    return os.path.join(cache_dir, filename)
+    return cache_dir / filename
 
 
 MAGIC = b"capa"
@@ -102,7 +103,7 @@ def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdenti
     return compute_cache_identifier(rule_contents)
 
 
-def cache_ruleset(cache_dir: str, ruleset: capa.rules.RuleSet):
+def cache_ruleset(cache_dir: Path, ruleset: capa.rules.RuleSet):
     """
     cache the given ruleset to disk, using the given cache directory.
     this can subsequently be reloaded via `load_cached_ruleset`,
@@ -113,19 +114,18 @@ def cache_ruleset(cache_dir: str, ruleset: capa.rules.RuleSet):
     """
     id = compute_ruleset_cache_identifier(ruleset)
     path = get_cache_path(cache_dir, id)
-    if os.path.exists(path):
+    if path.exists():
         logger.debug("rule set already cached to %s", path)
         return
 
     cache = RuleCache(id, ruleset)
-    with open(path, "wb") as f:
-        f.write(cache.dump())
+    path.write_bytes(cache.dump())
 
     logger.debug("rule set cached to %s", path)
     return
 
 
-def load_cached_ruleset(cache_dir: str, rule_contents: List[bytes]) -> Optional[capa.rules.RuleSet]:
+def load_cached_ruleset(cache_dir: Path, rule_contents: List[bytes]) -> Optional[capa.rules.RuleSet]:
     """
     load a cached ruleset from disk, using the given cache directory.
     the raw rule contents are required here to prove that the rules haven't changed
@@ -136,20 +136,19 @@ def load_cached_ruleset(cache_dir: str, rule_contents: List[bytes]) -> Optional[
     """
     id = compute_cache_identifier(rule_contents)
     path = get_cache_path(cache_dir, id)
-    if not os.path.exists(path):
+    if not path.exists():
         logger.debug("rule set cache does not exist: %s", path)
         return None
 
     logger.debug("loading rule set from cache: %s", path)
-    with open(path, "rb") as f:
-        buf = f.read()
+    buf = path.read_bytes()
 
     try:
         cache = RuleCache.load(buf)
     except AssertionError:
         logger.debug("rule set cache is invalid: %s", path)
         # delete the cache that seems to be invalid.
-        os.remove(path)
+        path.unlink()
         return None
     else:
         return cache.ruleset

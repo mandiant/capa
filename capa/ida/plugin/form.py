@@ -5,13 +5,13 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import os
 import copy
 import logging
 import itertools
 import collections
 from enum import IntFlag
 from typing import Any, List, Optional
+from pathlib import Path
 
 import idaapi
 import ida_kernwin
@@ -71,10 +71,9 @@ AnalyzeOptionsText = {
 }
 
 
-def write_file(path, data):
+def write_file(path: Path, data):
     """ """
-    with open(path, "wb") as save_file:
-        save_file.write(data)
+    path.write_bytes(data)
 
 
 def trim_function_name(f, max_length=25):
@@ -574,10 +573,10 @@ class CapaExplorerForm(idaapi.PluginForm):
 
     def ensure_capa_settings_rule_path(self):
         try:
-            path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+            path: Path = Path(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
 
             # resolve rules directory - check self and settings first, then ask user
-            if not os.path.exists(path):
+            if not path.exists():
                 # configure rules selection messagebox
                 rules_message = QtWidgets.QMessageBox()
                 rules_message.setIcon(QtWidgets.QMessageBox.Information)
@@ -595,15 +594,15 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if pressed == QtWidgets.QMessageBox.Cancel:
                     raise UserCancelledError()
 
-                path = self.ask_user_directory()
+                path = Path(self.ask_user_directory())
                 if not path:
                     raise UserCancelledError()
 
-                if not os.path.exists(path):
+                if not path.exists():
                     logger.error("rule path %s does not exist or cannot be accessed", path)
                     return False
 
-                settings.user[CAPA_SETTINGS_RULE_PATH] = path
+                settings.user[CAPA_SETTINGS_RULE_PATH] = str(path)
         except UserCancelledError:
             capa.ida.helpers.inform_user_ida_ui("Analysis requires capa rules")
             logger.warning(
@@ -627,7 +626,7 @@ class CapaExplorerForm(idaapi.PluginForm):
         if not self.ensure_capa_settings_rule_path():
             return False
 
-        rule_path: str = settings.user.get(CAPA_SETTINGS_RULE_PATH, "")
+        rule_path: Path = Path(settings.user.get(CAPA_SETTINGS_RULE_PATH, ""))
         try:
 
             def on_load_rule(_, i, total):
@@ -767,7 +766,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 update_wait_box("extracting features")
 
                 try:
-                    meta = capa.ida.helpers.collect_metadata([settings.user[CAPA_SETTINGS_RULE_PATH]])
+                    meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
                     capabilities, counts = capa.main.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
@@ -1205,11 +1204,11 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.set_rulegen_status(f"Failed to create function rule matches from rule set ({e})")
                 return
 
-            if rule.scope == capa.rules.Scope.FUNCTION and rule.name in func_matches.keys():
+            if rule.scope == capa.rules.Scope.FUNCTION and rule.name in func_matches:
                 is_match = True
-            elif rule.scope == capa.rules.Scope.BASIC_BLOCK and rule.name in bb_matches.keys():
+            elif rule.scope == capa.rules.Scope.BASIC_BLOCK and rule.name in bb_matches:
                 is_match = True
-            elif rule.scope == capa.rules.Scope.INSTRUCTION and rule.name in insn_matches.keys():
+            elif rule.scope == capa.rules.Scope.INSTRUCTION and rule.name in insn_matches:
                 is_match = True
         elif rule.scope == capa.rules.Scope.FILE:
             try:
@@ -1217,7 +1216,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             except Exception as e:
                 self.set_rulegen_status(f"Failed to create file rule matches from rule set ({e})")
                 return
-            if rule.name in file_matches.keys():
+            if rule.name in file_matches:
                 is_match = True
         else:
             is_match = False
@@ -1307,8 +1306,8 @@ class CapaExplorerForm(idaapi.PluginForm):
 
         s = self.resdoc_cache.json().encode("utf-8")
 
-        path = self.ask_user_capa_json_file()
-        if not path:
+        path = Path(self.ask_user_capa_json_file())
+        if not path.exists():
             return
 
         write_file(path, s)
@@ -1320,8 +1319,8 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No rule to save.")
             return
 
-        path = self.ask_user_capa_rule_file()
-        if not path:
+        path = Path(self.ask_user_capa_rule_file())
+        if not path.exists():
             return
 
         write_file(path, s)

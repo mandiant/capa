@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import os
 import logging
+from pathlib import Path
 
 import pytest
 import fixtures
@@ -56,8 +57,8 @@ def test_binja_feature_counts(sample, scope, feature, expected):
 
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
 def test_standalone_binja_backend():
-    CD = os.path.dirname(__file__)
-    test_path = os.path.join(CD, "..", "tests", "data", "Practical Malware Analysis Lab 01-01.exe_")
+    CD = Path(__file__).resolve().parent
+    test_path = CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
     assert capa.main.main([test_path, "-b", capa.main.BACKEND_BINJA]) == 0
 
 

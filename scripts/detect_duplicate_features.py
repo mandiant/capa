@@ -1,6 +1,7 @@
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -42,7 +43,7 @@ def get_features(rule_path: str) -> list:
         list: A list of all feature statements contained within the rule file.
     """
     feature_list = []
-    with open(rule_path, "r", encoding="utf-8") as f:
+    with Path(rule_path).open("r", encoding="utf-8") as f:
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
             feature_list = get_child_features(new_rule.statement)
@@ -89,7 +90,7 @@ def main():
     args = parser.parse_args()
 
     new_rule_path = args.new_rule
-    rules_path = args.rules
+    rules_path = [Path(rule) for rule in args.rules]
 
     result = find_overlapping_rules(new_rule_path, rules_path)
 

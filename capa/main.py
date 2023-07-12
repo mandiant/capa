@@ -14,7 +14,6 @@ import sys
 import time
 import hashlib
 import logging
-import os.path
 import argparse
 import datetime
 import textwrap
@@ -22,6 +21,7 @@ import itertools
 import contextlib
 import collections
 from typing import Any, Dict, List, Tuple, Callable
+from pathlib import Path
 
 import halo
 import tqdm
@@ -327,10 +327,9 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
 
 def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
-    for rule_name in capabilities.keys():
-        if rules.rules[rule_name].meta.get("namespace", "").startswith(namespace):
-            return True
-    return False
+    return any(
+        rules.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
+    )
 
 
 def is_internal_rule(rule: Rule) -> bool:
@@ -363,26 +362,23 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
     return False
 
 
-def is_supported_format(sample: str) -> bool:
+def is_supported_format(sample: Path) -> bool:
     """
     Return if this is a supported file based on magic header values
     """
-    with open(sample, "rb") as f:
-        taste = f.read(0x100)
+    taste = sample.open("rb").read(0x100)
 
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
 
 
-def is_supported_arch(sample: str) -> bool:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def is_supported_arch(sample: Path) -> bool:
+    buf = sample.read_bytes()
 
     return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
 
 
-def get_arch(sample: str) -> str:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def get_arch(sample: Path) -> str:
+    buf = sample.read_bytes()
 
     for feature, _ in capa.features.extractors.common.extract_arch(buf):
         assert isinstance(feature.value, str)
@@ -391,16 +387,14 @@ def get_arch(sample: str) -> str:
     return "unknown"
 
 
-def is_supported_os(sample: str) -> bool:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def is_supported_os(sample: Path) -> bool:
+    buf = sample.read_bytes()
 
     return len(list(capa.features.extractors.common.extract_os(buf))) == 1
 
 
-def get_os(sample: str) -> str:
-    with open(sample, "rb") as f:
-        buf = f.read()
+def get_os(sample: Path) -> str:
+    buf = sample.read_bytes()
 
     for feature, _ in capa.features.extractors.common.extract_os(buf):
         assert isinstance(feature.value, str)
@@ -428,7 +422,7 @@ def is_running_standalone() -> bool:
     return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
 
 
-def get_default_root() -> str:
+def get_default_root() -> Path:
     """
     get the file system path to the default resources directory.
     under PyInstaller, this comes from _MEIPASS.
@@ -439,30 +433,27 @@ def get_default_root() -> str:
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
         assert hasattr(sys, "_MEIPASS")
-        return sys._MEIPASS
+        return Path(sys._MEIPASS)
     else:
-        return os.path.join(os.path.dirname(__file__), "..")
+        return Path(__file__).resolve().parent.parent
 
 
-def get_default_signatures() -> List[str]:
+def get_default_signatures() -> List[Path]:
     """
     compute a list of file system paths to the default FLIRT signatures.
     """
-    sigs_path = os.path.join(get_default_root(), "sigs")
+    sigs_path = get_default_root() / "sigs"
     logger.debug("signatures path: %s", sigs_path)
 
     ret = []
-    for root, _, files in os.walk(sigs_path):
-        for file in files:
-            if not (file.endswith(".pat") or file.endswith(".pat.gz") or file.endswith(".sig")):
-                continue
-
-            ret.append(os.path.join(root, file))
+    for file in sigs_path.rglob("*"):
+        if file.is_file() and file.suffix.lower() in (".pat", ".pat.gz", ".sig"):
+            ret.append(file)
 
     return ret
 
 
-def get_workspace(path, format_, sigpaths):
+def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
     """
     load the program at the given path into a vivisect workspace using the given format.
     also apply the given FLIRT signatures.
@@ -488,18 +479,18 @@ def get_workspace(path, format_, sigpaths):
             raise UnsupportedFormatError()
 
         # don't analyze, so that we can add our Flirt function analyzer first.
-        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
+        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
     elif format_ in {FORMAT_PE, FORMAT_ELF}:
-        vw = viv_utils.getWorkspace(path, analyze=False, should_save=False)
+        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
     elif format_ == FORMAT_SC32:
         # these are not analyzed nor saved.
-        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="i386", analyze=False)
+        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
     elif format_ == FORMAT_SC64:
-        vw = viv_utils.getShellcodeWorkspaceFromFile(path, arch="amd64", analyze=False)
+        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
     else:
         raise ValueError("unexpected format: " + format_)
 
-    viv_utils.flirt.register_flirt_signature_analyzers(vw, sigpaths)
+    viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 
     vw.analyze()
 
@@ -508,11 +499,11 @@ def get_workspace(path, format_, sigpaths):
 
 
 def get_extractor(
-    path: str,
+    path: Path,
     format_: str,
     os_: str,
     backend: str,
-    sigpaths: List[str],
+    sigpaths: List[Path],
     should_save_workspace=False,
     disable_progress=False,
 ) -> FeatureExtractor:
@@ -544,8 +535,8 @@ def get_extractor(
         # We need to fist find the binja API installation path and add it into sys.path
         if is_running_standalone():
             bn_api = find_binja_path()
-            if os.path.exists(bn_api):
-                sys.path.append(bn_api)
+            if bn_api.exists():
+                sys.path.append(str(bn_api))
 
         try:
             from binaryninja import BinaryView, BinaryViewType
@@ -558,7 +549,7 @@ def get_extractor(
         import capa.features.extractors.binja.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = BinaryViewType.get_view_of_file(path)
+            bv: BinaryView = BinaryViewType.get_view_of_file(str(path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
@@ -584,7 +575,7 @@ def get_extractor(
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
-def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
+def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
 
     if format_ == FORMAT_PE:
@@ -600,7 +591,7 @@ def get_file_extractors(sample: str, format_: str) -> List[FeatureExtractor]:
     return file_extractors
 
 
-def is_nursery_rule_path(path: str) -> bool:
+def is_nursery_rule_path(path: Path) -> bool:
     """
     The nursery is a spot for rules that have not yet been fully polished.
     For example, they may not have references to public example of a technique.
@@ -610,21 +601,21 @@ def is_nursery_rule_path(path: str) -> bool:
     When nursery rules are loaded, their metadata section should be updated with:
       `nursery=True`.
     """
-    return "nursery" in path
+    return "nursery" in path.parts
 
 
-def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
+def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
     """
     collect all rule file paths, including those in subdirectories.
     """
     rule_file_paths = []
     for rule_path in rule_paths:
-        if not os.path.exists(rule_path):
+        if not rule_path.exists():
             raise IOError(f"rule path {rule_path} does not exist or cannot be accessed")
 
-        if os.path.isfile(rule_path):
+        if rule_path.is_file():
             rule_file_paths.append(rule_path)
-        elif os.path.isdir(rule_path):
+        elif rule_path.is_dir():
             logger.debug("reading rules from directory %s", rule_path)
             for root, _, files in os.walk(rule_path):
                 if ".git" in root:
@@ -641,14 +632,12 @@ def collect_rule_file_paths(rule_paths: List[str]) -> List[str]:
                             # other things maybe are rules, but are mis-named.
                             logger.warning("skipping non-.yml file: %s", file)
                         continue
-                    rule_path = os.path.join(root, file)
-                    rule_file_paths.append(rule_path)
-
+                    rule_file_paths.append(Path(root) / file)
     return rule_file_paths
 
 
 # TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
-RulePath = str
+RulePath = Path
 
 
 def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
@@ -668,17 +657,13 @@ def get_rules(
     """
     if cache_dir is None:
         cache_dir = capa.rules.cache.get_default_cache_directory()
-
     # rule_paths may contain directory paths,
     # so search for file paths recursively.
     rule_file_paths = collect_rule_file_paths(rule_paths)
 
     # this list is parallel to `rule_file_paths`:
     # rule_file_paths[i] corresponds to rule_contents[i].
-    rule_contents = []
-    for file_path in rule_file_paths:
-        with open(file_path, "rb") as f:
-            rule_contents.append(f.read())
+    rule_contents = [file_path.read_bytes() for file_path in rule_file_paths]
 
     ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
     if ruleset is not None:
@@ -695,9 +680,8 @@ def get_rules(
         except capa.rules.InvalidRule:
             raise
         else:
-            rule.meta["capa/path"] = path
-            if is_nursery_rule_path(path):
-                rule.meta["capa/nursery"] = True
+            rule.meta["capa/path"] = path.as_posix()
+            rule.meta["capa/nursery"] = is_nursery_rule_path(path)
 
             rules.append(rule)
             logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
@@ -709,27 +693,25 @@ def get_rules(
     return ruleset
 
 
-def get_signatures(sigs_path):
-    if not os.path.exists(sigs_path):
+def get_signatures(sigs_path: Path) -> List[Path]:
+    if not sigs_path.exists():
         raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
 
-    paths = []
-    if os.path.isfile(sigs_path):
+    paths: List[Path] = []
+    if sigs_path.is_file():
         paths.append(sigs_path)
-    elif os.path.isdir(sigs_path):
-        logger.debug("reading signatures from directory %s", os.path.abspath(os.path.normpath(sigs_path)))
-        for root, _, files in os.walk(sigs_path):
-            for file in files:
-                if file.endswith((".pat", ".pat.gz", ".sig")):
-                    sig_path = os.path.join(root, file)
-                    paths.append(sig_path)
+    elif sigs_path.is_dir():
+        logger.debug("reading signatures from directory %s", sigs_path.resolve())
+        for file in sigs_path.rglob("*"):
+            if file.is_file() and file.suffix.lower() in (".pat", ".pat.gz", ".sig"):
+                paths.append(file)
 
-    # nicely normalize and format path so that debugging messages are clearer
-    paths = [os.path.abspath(os.path.normpath(path)) for path in paths]
+    # Convert paths to their absolute and normalized forms
+    paths = [path.resolve().absolute() for path in paths]
 
     # load signatures in deterministic order: the alphabetic sorting of filename.
     # this means that `0_sigs.pat` loads before `1_sigs.pat`.
-    paths = sorted(paths, key=os.path.basename)
+    paths = sorted(paths, key=lambda path: path.name)
 
     for path in paths:
         logger.debug("found signature file: %s", path)
@@ -739,26 +721,23 @@ def get_signatures(sigs_path):
 
 def collect_metadata(
     argv: List[str],
-    sample_path: str,
+    sample_path: Path,
     format_: str,
     os_: str,
-    rules_path: List[str],
+    rules_path: List[Path],
     extractor: capa.features.extractors.base_extractor.FeatureExtractor,
 ) -> rdoc.Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
-    with open(sample_path, "rb") as f:
-        buf = f.read()
+    buf = sample_path.read_bytes()
 
     md5.update(buf)
     sha1.update(buf)
     sha256.update(buf)
 
-    if rules_path != [RULES_PATH_DEFAULT_STRING]:
-        rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
-
+    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
@@ -771,14 +750,14 @@ def collect_metadata(
             md5=md5.hexdigest(),
             sha1=sha1.hexdigest(),
             sha256=sha256.hexdigest(),
-            path=os.path.normpath(sample_path),
+            path=sample_path.resolve().absolute().as_posix(),
         ),
         analysis=rdoc.Analysis(
             format=format_,
             arch=arch,
             os=os_,
             extractor=extractor.__class__.__name__,
-            rules=tuple(rules_path),
+            rules=rules,
             base_address=frz.Address.from_capa(extractor.get_base_address()),
             layout=rdoc.Layout(
                 functions=(),
@@ -1017,8 +996,11 @@ def handle_common_args(args):
     else:
         raise RuntimeError("unexpected --color value: " + args.color)
 
+    if hasattr(args, "sample"):
+        args.sample = Path(args.sample)
+
     if hasattr(args, "rules"):
-        rules_paths: List[str] = []
+        rules_paths: List[Path] = []
 
         if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
@@ -1028,9 +1010,9 @@ def handle_common_args(args):
             logger.debug("     https://github.com/mandiant/capa-rules")
             logger.debug("-" * 80)
 
-            default_rule_path = os.path.join(get_default_root(), "rules")
+            default_rule_path = get_default_root() / "rules"
 
-            if not os.path.exists(default_rule_path):
+            if not default_rule_path.exists():
                 # when a users installs capa via pip,
                 # this pulls down just the source code - not the default rules.
                 # i'm not sure the default rules should even be written to the library directory,
@@ -1042,10 +1024,9 @@ def handle_common_args(args):
             rules_paths.append(default_rule_path)
             args.is_default_rules = True
         else:
-            rules_paths = args.rules
-
-            if RULES_PATH_DEFAULT_STRING in rules_paths:
-                rules_paths.remove(RULES_PATH_DEFAULT_STRING)
+            for rule in args.rules:
+                if RULES_PATH_DEFAULT_STRING != rule:
+                    rules_paths.append(Path(rule))
 
             for rule_path in rules_paths:
                 logger.debug("using rules path: %s", rule_path)
@@ -1063,8 +1044,9 @@ def handle_common_args(args):
             )
             logger.debug("-" * 80)
 
-            sigs_path = os.path.join(get_default_root(), "sigs")
-            if not os.path.exists(sigs_path):
+            sigs_path = get_default_root() / "sigs"
+
+            if not sigs_path.exists():
                 logger.error(
                     "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
                     + "Please install the signatures first: "
@@ -1072,7 +1054,7 @@ def handle_common_args(args):
                 )
                 raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
         else:
-            sigs_path = args.signatures
+            sigs_path = Path(args.signatures)
             logger.debug("using signatures path: %s", sigs_path)
 
         args.signatures = sigs_path
@@ -1145,7 +1127,7 @@ def main(argv=None):
 
     try:
         if is_running_standalone() and args.is_default_rules:
-            cache_dir = os.path.join(get_default_root(), "cache")
+            cache_dir = get_default_root() / "cache"
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
@@ -1230,8 +1212,7 @@ def main(argv=None):
 
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
-            with open(args.sample, "rb") as f:
-                extractor = frz.load(f.read())
+            extractor = frz.load(Path(args.sample).read_bytes())
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces
@@ -1319,7 +1300,7 @@ def ida_main():
     logger.debug("     https://github.com/mandiant/capa-rules")
     logger.debug("-" * 80)
 
-    rules_path = os.path.join(get_default_root(), "rules")
+    rules_path = get_default_root() / "rules"
     logger.debug("rule path: %s", rules_path)
     rules = get_rules([rules_path])
 

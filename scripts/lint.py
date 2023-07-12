@@ -23,7 +23,6 @@ import string
 import difflib
 import hashlib
 import logging
-import pathlib
 import argparse
 import itertools
 import posixpath
@@ -114,7 +113,7 @@ class FilenameDoesntMatchRuleName(Lint):
         expected = expected.replace(".", "")
         expected = expected + ".yml"
 
-        found = os.path.basename(rule.meta["capa/path"])
+        found = Path(rule.meta["capa/path"]).name
 
         self.recommendation = self.recommendation_template.format(expected, found)
 
@@ -249,7 +248,8 @@ class InvalidAttckOrMbcTechnique(Lint):
         super().__init__()
 
         try:
-            with open(f"{os.path.dirname(__file__)}/linter-data.json", "rb") as fd:
+            data_path = Path(__file__).resolve().parent / "linter-data.json"
+            with data_path.open("rb") as fd:
                 self.data = json.load(fd)
             self.enabled_frameworks = self.data.keys()
         except BaseException:
@@ -279,7 +279,7 @@ class InvalidAttckOrMbcTechnique(Lint):
 
     def check_rule(self, ctx: Context, rule: Rule):
         for framework in self.enabled_frameworks:
-            if framework in rule.meta.keys():
+            if framework in rule.meta:
                 for r in rule.meta[framework]:
                     m = self.reg.match(r)
                     if m is None:
@@ -295,14 +295,14 @@ DEFAULT_SIGNATURES = capa.main.get_default_signatures()
 
 
 def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
-    nice_path = os.path.abspath(str(path))
+    nice_path = path.resolve().absolute()
     if path in ctx.capabilities_by_sample:
         logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
         return ctx.capabilities_by_sample[path]
 
-    if nice_path.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
+    if nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
         format_ = "sc32"
-    elif nice_path.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
+    elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
         format_ = "sc64"
     else:
         format_ = capa.main.get_auto_format(nice_path)
@@ -355,7 +355,7 @@ class DoesntMatchExample(Lint):
             try:
                 capabilities = get_sample_capabilities(ctx, path)
             except Exception as e:
-                logger.exception("failed to extract capabilities: %s %s %s", rule.name, str(path), e)
+                logger.exception("failed to extract capabilities: %s %s %s", rule.name, path, e)
                 return True
 
             if rule.name not in capabilities:
@@ -543,47 +543,45 @@ class FeatureNtdllNtoskrnlApi(Lint):
                 assert isinstance(feature.value, str)
                 modname, _, impname = feature.value.rpartition(".")
 
-                if modname == "ntdll":
-                    if impname in (
-                        "LdrGetProcedureAddress",
-                        "LdrLoadDll",
-                        "NtCreateThread",
-                        "NtCreatUserProcess",
-                        "NtLoadDriver",
-                        "NtQueryDirectoryObject",
-                        "NtResumeThread",
-                        "NtSuspendThread",
-                        "NtTerminateProcess",
-                        "NtWriteVirtualMemory",
-                        "RtlGetNativeSystemInformation",
-                        "NtCreateThreadEx",
-                        "NtCreateUserProcess",
-                        "NtOpenDirectoryObject",
-                        "NtQueueApcThread",
-                        "ZwResumeThread",
-                        "ZwSuspendThread",
-                        "ZwWriteVirtualMemory",
-                        "NtCreateProcess",
-                        "ZwCreateThread",
-                        "NtCreateProcessEx",
-                        "ZwCreateThreadEx",
-                        "ZwCreateProcess",
-                        "ZwCreateUserProcess",
-                        "RtlCreateUserProcess",
-                    ):
-                        # ntoskrnl.exe does not export these routines
-                        continue
+                if modname == "ntdll" and impname in (
+                    "LdrGetProcedureAddress",
+                    "LdrLoadDll",
+                    "NtCreateThread",
+                    "NtCreatUserProcess",
+                    "NtLoadDriver",
+                    "NtQueryDirectoryObject",
+                    "NtResumeThread",
+                    "NtSuspendThread",
+                    "NtTerminateProcess",
+                    "NtWriteVirtualMemory",
+                    "RtlGetNativeSystemInformation",
+                    "NtCreateThreadEx",
+                    "NtCreateUserProcess",
+                    "NtOpenDirectoryObject",
+                    "NtQueueApcThread",
+                    "ZwResumeThread",
+                    "ZwSuspendThread",
+                    "ZwWriteVirtualMemory",
+                    "NtCreateProcess",
+                    "ZwCreateThread",
+                    "NtCreateProcessEx",
+                    "ZwCreateThreadEx",
+                    "ZwCreateProcess",
+                    "ZwCreateUserProcess",
+                    "RtlCreateUserProcess",
+                ):
+                    # ntoskrnl.exe does not export these routines
+                    continue
 
-                if modname == "ntoskrnl":
-                    if impname in (
-                        "PsGetVersion",
-                        "PsLookupProcessByProcessId",
-                        "KeStackAttachProcess",
-                        "ObfDereferenceObject",
-                        "KeUnstackDetachProcess",
-                    ):
-                        # ntdll.dll does not export these routines
-                        continue
+                if modname == "ntoskrnl" and impname in (
+                    "PsGetVersion",
+                    "PsLookupProcessByProcessId",
+                    "KeStackAttachProcess",
+                    "ObfDereferenceObject",
+                    "KeUnstackDetachProcess",
+                ):
+                    # ntdll.dll does not export these routines
+                    continue
 
                 if modname in ("ntdll", "ntoskrnl"):
                     self.recommendation = self.recommendation_template.format(impname, modname)
@@ -883,43 +881,31 @@ def lint(ctx: Context):
     return ret
 
 
-def collect_samples(path) -> Dict[str, Path]:
+def collect_samples(samples_path: Path) -> Dict[str, Path]:
     """
     recurse through the given path, collecting all file paths, indexed by their content sha256, md5, and filename.
     """
     samples = {}
-    for root, _, files in os.walk(path):
-        for name in files:
-            if name.endswith(".viv"):
-                continue
-            if name.endswith(".idb"):
-                continue
-            if name.endswith(".i64"):
-                continue
-            if name.endswith(".frz"):
-                continue
-            if name.endswith(".fnames"):
-                continue
+    for path in samples_path.rglob("*"):
+        if path.suffix in [".viv", ".idb", ".i64", ".frz", ".fnames"]:
+            continue
 
-            path = pathlib.Path(os.path.join(root, name))
+        try:
+            buf = path.read_bytes()
+        except IOError:
+            continue
 
-            try:
-                with path.open("rb") as f:
-                    buf = f.read()
-            except IOError:
-                continue
+        sha256 = hashlib.sha256()
+        sha256.update(buf)
 
-            sha256 = hashlib.sha256()
-            sha256.update(buf)
+        md5 = hashlib.md5()
+        md5.update(buf)
 
-            md5 = hashlib.md5()
-            md5.update(buf)
-
-            samples[sha256.hexdigest().lower()] = path
-            samples[sha256.hexdigest().upper()] = path
-            samples[md5.hexdigest().lower()] = path
-            samples[md5.hexdigest().upper()] = path
-            samples[name] = path
+        samples[sha256.hexdigest().lower()] = path
+        samples[sha256.hexdigest().upper()] = path
+        samples[md5.hexdigest().lower()] = path
+        samples[md5.hexdigest().upper()] = path
+        samples[path.name] = path
 
     return samples
 
@@ -928,12 +914,12 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    samples_path = os.path.join(os.path.dirname(__file__), "..", "tests", "data")
+    default_samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
     parser.add_argument("rules", type=str, action="append", help="Path to rules")
-    parser.add_argument("--samples", type=str, default=samples_path, help="Path to samples")
+    parser.add_argument("--samples", type=str, default=default_samples_path, help="Path to samples")
     parser.add_argument(
         "--thorough",
         action="store_true",
@@ -964,11 +950,12 @@ def main(argv=None):
         return -1
 
     logger.info("collecting potentially referenced samples")
-    if not os.path.exists(args.samples):
-        logger.error("samples path %s does not exist", args.samples)
+    samples_path = Path(args.samples)
+    if not samples_path.exists():
+        logger.error("samples path %s does not exist", Path(samples_path))
         return -1
 
-    samples = collect_samples(args.samples)
+    samples = collect_samples(Path(samples_path))
 
     ctx = Context(samples=samples, rules=rules, is_thorough=args.thorough)
 
