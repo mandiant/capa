@@ -10,6 +10,7 @@
 - Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
 - Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
 - Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
+- Add support for flavor-based rule scopes @yelhamer
 - use fancy box drawing characters for default output #1586 @williballenthin
 - use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
 - publish via PyPI trusted publishing #1491 @williballenthin

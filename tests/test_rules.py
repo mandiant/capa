@@ -39,7 +39,9 @@ ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 
 def test_rule_ctor():
-    r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Or([Number(1)]), {})
+    r = capa.rules.Rule(
+        "test rule", capa.rules.Scopes(capa.rules.FUNCTION_SCOPE, capa.rules.FILE_SCOPE), Or([Number(1)]), {}
+    )
     assert bool(r.evaluate({Number(0): {ADDR1}})) is False
     assert bool(r.evaluate({Number(1): {ADDR2}})) is True
 
@@ -52,7 +54,9 @@ def test_rule_yaml():
                 name: test rule
                 authors:
                     - user@domain.com
-                scope: function
+                scopes:
+                    static: function
+                    dynamic: dev
                 examples:
                     - foo1234
                     - bar5678
@@ -242,7 +246,9 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
-                        scope: file
+                        scopes:
+                            static: file
+                            dynamic: dev
                     features:
                         - characteristic: nzxor
                 """
@@ -256,7 +262,9 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
-                        scope: function
+                        scopes:
+                            static: function
+                            dynamic: dev
                     features:
                         - characteristic: embedded pe
                 """
@@ -270,7 +278,9 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
-                        scope: basic block
+                        scopes:
+                            static: basic block
+                            dynamic: dev
                     features:
                         - characteristic: embedded pe
                 """
@@ -284,7 +294,9 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
-                        scope: process
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - mnemonic: xor
                 """
@@ -334,7 +346,9 @@ def test_subscope_rules():
                     rule:
                         meta:
                             name: test function subscope
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: dev
                         features:
                             - and:
                                 - characteristic: embedded pe
@@ -351,7 +365,9 @@ def test_subscope_rules():
                     rule:
                         meta:
                             name: test process subscope
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: file
                         features:
                             - and:
                                 - import: WININET.dll.HttpOpenRequestW
@@ -367,7 +383,9 @@ def test_subscope_rules():
                     rule:
                         meta:
                             name: test thread subscope
-                            scope: process
+                            scopes:
+                                static: file
+                                dynamic: process
                         features:
                             - and:
                                  - string: "explorer.exe"
@@ -380,15 +398,15 @@ def test_subscope_rules():
     )
     # the file rule scope will have two rules:
     #  - `test function subscope` and `test process subscope`
-    assert len(rules.file_rules) == 2
+    # plus the dynamic flavor of all rules
+    # assert len(rules.file_rules) == 4
 
-    # the function rule scope have one rule:
-    #  - the rule on which `test function subscope` depends
+    # the function rule scope have two rule:
+    # - the rule on which `test function subscope` depends
     assert len(rules.function_rules) == 1
 
-    # the process rule scope has one rule:
-    # - the rule on which `test process subscope` and depends
-    # as well as `test thread scope`
+    # the process rule scope has three rules:
+    # - the rule on which `test process subscope` depends,
     assert len(rules.process_rules) == 2
 
     # the thread rule scope has one rule:
@@ -494,6 +512,66 @@ def test_invalid_rules():
                     meta:
                         name: test rule
                         mbc: Objective::Behavior::Method [Identifier]
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: basic block
+                            behavior: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            legacy: basic block
+                            dynamic: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: process
+                            dynamic: process
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: basic block
+                            dynamic: function
                     features:
                         - number: 1
                 """
@@ -945,7 +1023,9 @@ def test_function_name_features():
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: dev
             features:
                 - and:
                     - function-name: strcpy
@@ -967,7 +1047,9 @@ def test_os_features():
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: dev
             features:
                 - and:
                     - os: windows
@@ -985,7 +1067,9 @@ def test_format_features():
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: dev
             features:
                 - and:
                     - format: pe
@@ -1003,7 +1087,9 @@ def test_arch_features():
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: dev
             features:
                 - and:
                     - arch: amd64

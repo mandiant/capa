@@ -43,7 +43,9 @@ def test_render_meta_attack():
         rule:
           meta:
             name: test rule
-            scope: function
+            scopes:
+                static: function
+                dynamic: dev
             authors:
               - foo
             att&ck:
@@ -79,7 +81,9 @@ def test_render_meta_mbc():
         rule:
           meta:
             name: test rule
-            scope: function
+            scopes:
+                static: function
+                dynamic: dev
             authors:
               - foo
             mbc:

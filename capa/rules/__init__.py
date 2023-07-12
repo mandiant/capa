@@ -25,6 +25,7 @@ except ImportError:
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
 from typing import Any, Set, Dict, List, Tuple, Union, Iterator
+from dataclasses import asdict, dataclass
 
 import yaml
 import pydantic
@@ -58,7 +59,7 @@ META_KEYS = (
     "authors",
     "description",
     "lib",
-    "scope",
+    "scopes",
     "att&ck",
     "mbc",
     "references",
@@ -89,6 +90,46 @@ INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
 # used only to specify supported features per scope.
 # not used to validate rules.
 GLOBAL_SCOPE = "global"
+DEV_SCOPE = "dev"
+
+
+# these literals are used to check if the flavor
+# of a rule is correct.
+STATIC_SCOPES = (
+    FILE_SCOPE,
+    GLOBAL_SCOPE,
+    FUNCTION_SCOPE,
+    BASIC_BLOCK_SCOPE,
+    INSTRUCTION_SCOPE,
+)
+DYNAMIC_SCOPES = (
+    FILE_SCOPE,
+    GLOBAL_SCOPE,
+    PROCESS_SCOPE,
+    THREAD_SCOPE,
+    DEV_SCOPE,
+)
+
+
+@dataclass
+class Scopes:
+    static: str
+    dynamic: str
+
+    def __contains__(self, scope: Union[Scope, str]) -> bool:
+        assert isinstance(scope, Scope) or isinstance(scope, str)
+        return (scope == self.static) or (scope == self.dynamic)
+
+    @classmethod
+    def from_dict(self, scopes: dict) -> "Scopes":
+        assert isinstance(scopes, dict)
+        if sorted(scopes) != ["dynamic", "static"]:
+            raise InvalidRule("scope flavors can be either static or dynamic")
+        if scopes["static"] not in STATIC_SCOPES:
+            raise InvalidRule(f"{scopes['static']} is not a valid static scope")
+        if scopes["dynamic"] not in DYNAMIC_SCOPES:
+            raise InvalidRule(f"{scopes['dynamic']} is not a valid dynamicscope")
+        return Scopes(scopes["static"], scopes["dynamic"])
 
 
 SUPPORTED_FEATURES: Dict[str, Set] = {
@@ -162,6 +203,12 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Class,
         capa.features.common.Namespace,
     },
+    DEV_SCOPE: {
+        # TODO(yelhamer): this is a temporary scope. remove it after support
+        # for the legacy scope keyword has been added (to rendering).
+        # https://github.com/mandiant/capa/pull/1580
+        capa.features.insn.API,
+    },
 }
 
 # global scope features are available in all other scopes
@@ -178,6 +225,10 @@ SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
 SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE])
+# dynamic-dev scope contains all features
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[FILE_SCOPE])
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[FUNCTION_SCOPE])
+SUPPORTED_FEATURES[DEV_SCOPE].update(SUPPORTED_FEATURES[PROCESS_SCOPE])
 
 
 class InvalidRule(ValueError):
@@ -471,7 +522,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(PROCESS_SCOPE, build_statements(d[key][0], PROCESS_SCOPE), description=description)
 
     elif key == "thread":
-        if scope != PROCESS_SCOPE:
+        if scope not in (PROCESS_SCOPE, FILE_SCOPE):
             raise InvalidRule("thread subscope supported only for the process scope")
 
         if len(d[key]) != 1:
@@ -480,7 +531,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(THREAD_SCOPE, build_statements(d[key][0], THREAD_SCOPE), description=description)
 
     elif key == "function":
-        if scope != FILE_SCOPE:
+        if scope not in (FILE_SCOPE, DEV_SCOPE):
             raise InvalidRule("function subscope supported only for file scope")
 
         if len(d[key]) != 1:
@@ -489,7 +540,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(FUNCTION_SCOPE, build_statements(d[key][0], FUNCTION_SCOPE), description=description)
 
     elif key == "basic block":
-        if scope != FUNCTION_SCOPE:
+        if scope not in (FUNCTION_SCOPE, DEV_SCOPE):
             raise InvalidRule("basic block subscope supported only for function scope")
 
         if len(d[key]) != 1:
@@ -498,7 +549,7 @@ def build_statements(d, scope: str):
         return ceng.Subscope(BASIC_BLOCK_SCOPE, build_statements(d[key][0], BASIC_BLOCK_SCOPE), description=description)
 
     elif key == "instruction":
-        if scope not in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE):
+        if scope not in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE, DEV_SCOPE):
             raise InvalidRule("instruction subscope supported only for function and basic block scope")
 
         if len(d[key]) == 1:
@@ -650,10 +701,10 @@ def second(s: List[Any]) -> Any:
 
 
 class Rule:
-    def __init__(self, name: str, scope: str, statement: Statement, meta, definition=""):
+    def __init__(self, name: str, scopes: Scopes, statement: Statement, meta, definition=""):
         super().__init__()
         self.name = name
-        self.scope = scope
+        self.scopes = scopes
         self.statement = statement
         self.meta = meta
         self.definition = definition
@@ -662,7 +713,7 @@ class Rule:
         return f"Rule(name={self.name})"
 
     def __repr__(self):
-        return f"Rule(scope={self.scope}, name={self.name})"
+        return f"Rule(scope={self.scopes}, name={self.name})"
 
     def get_dependencies(self, namespaces):
         """
@@ -722,11 +773,11 @@ class Rule:
                 name = self.name + "/" + uuid.uuid4().hex
                 new_rule = Rule(
                     name,
-                    subscope.scope,
+                    Scopes(subscope.scope, DEV_SCOPE),
                     subscope.child,
                     {
                         "name": name,
-                        "scope": subscope.scope,
+                        "scopes": asdict(Scopes(subscope.scope, DEV_SCOPE)),
                         # these derived rules are never meant to be inspected separately,
                         # they are dependencies for the parent rule,
                         # so mark it as such.
@@ -790,7 +841,9 @@ class Rule:
         name = meta["name"]
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
-        scope = meta.get("scope", FUNCTION_SCOPE)
+        # each rule has two scopes, a static-flavor scope, and a
+        # dynamic-flavor one. which one is used depends on the analysis type.
+        scopes: Scopes = Scopes.from_dict(meta.get("scopes", {"static": "function", "dynamic": "dev"}))
         statements = d["rule"]["features"]
 
         # the rule must start with a single logic node.
@@ -801,16 +854,20 @@ class Rule:
         if isinstance(statements[0], ceng.Subscope):
             raise InvalidRule("top level statement may not be a subscope")
 
-        if scope not in SUPPORTED_FEATURES.keys():
-            raise InvalidRule("{:s} is not a supported scope".format(scope))
-
         meta = d["rule"]["meta"]
         if not isinstance(meta.get("att&ck", []), list):
             raise InvalidRule("ATT&CK mapping must be a list")
         if not isinstance(meta.get("mbc", []), list):
             raise InvalidRule("MBC mapping must be a list")
 
-        return cls(name, scope, build_statements(statements[0], scope), meta, definition)
+        # TODO(yelhamer): once we've decided on the desired format for mixed-scope statements,
+        # we should go back and update this accordingly to either:
+        # - generate one englobing statement.
+        # - generate two respective statements and store them approriately
+        # https://github.com/mandiant/capa/pull/1580
+        statement = build_statements(statements[0], scopes.static)
+        _ = build_statements(statements[0], scopes.dynamic)
+        return cls(name, scopes, statement, meta, definition)
 
     @staticmethod
     @lru_cache()
@@ -909,10 +966,9 @@ class Rule:
                 del meta[k]
         for k, v in self.meta.items():
             meta[k] = v
-
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scope"] = self.scope
+        meta["scopes"] = asdict(self.scopes)
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
@@ -933,7 +989,6 @@ class Rule:
             if key in META_KEYS:
                 continue
             move_to_end(meta, key)
-
         # save off the existing hidden meta values,
         # emit the document,
         # and re-add the hidden meta.
@@ -993,7 +1048,7 @@ def get_rules_with_scope(rules, scope) -> List[Rule]:
     from the given collection of rules, select those with the given scope.
     `scope` is one of the capa.rules.*_SCOPE constants.
     """
-    return [rule for rule in rules if rule.scope == scope]
+    return [rule for rule in rules if scope in rule.scopes]
 
 
 def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Rule]:
@@ -1400,22 +1455,22 @@ class RuleSet:
         except that it may be more performant.
         """
         easy_rules_by_feature = {}
-        if scope is Scope.FILE:
+        if scope == Scope.FILE:
             easy_rules_by_feature = self._easy_file_rules_by_feature
             hard_rule_names = self._hard_file_rules
-        elif scope is Scope.PROCESS:
+        elif scope == Scope.PROCESS:
             easy_rules_by_feature = self._easy_process_rules_by_feature
             hard_rule_names = self._hard_process_rules
-        elif scope is Scope.THREAD:
+        elif scope == Scope.THREAD:
             easy_rules_by_feature = self._easy_thread_rules_by_feature
             hard_rule_names = self._hard_thread_rules
-        elif scope is Scope.FUNCTION:
+        elif scope == Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules
-        elif scope is Scope.BASIC_BLOCK:
+        elif scope == Scope.BASIC_BLOCK:
             easy_rules_by_feature = self._easy_basic_block_rules_by_feature
             hard_rule_names = self._hard_basic_block_rules
-        elif scope is Scope.INSTRUCTION:
+        elif scope == Scope.INSTRUCTION:
             easy_rules_by_feature = self._easy_instruction_rules_by_feature
             hard_rule_names = self._hard_instruction_rules
         else:
