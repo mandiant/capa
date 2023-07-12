@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
+from pathlib import Path
 
 import pefile
 
@@ -173,23 +174,21 @@ GLOBAL_HANDLERS = (
 
 
 class PefileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.path = path
-        self.pe = pefile.PE(path)
+        self.path: Path = path
+        self.pe = pefile.PE(str(path))
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
 
     def extract_global_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = Path(self.path).read_bytes()
 
         yield from extract_global_features(self.pe, buf)
 
     def extract_file_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = Path(self.path).read_bytes()
 
         yield from extract_file_features(self.pe, buf)
 

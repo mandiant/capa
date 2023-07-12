@@ -1,5 +1,6 @@
 import logging
 from typing import Tuple, Iterator
+from pathlib import Path
 
 import dnfile
 import pefile
@@ -74,10 +75,10 @@ GLOBAL_HANDLERS = (
 
 
 class DnfileFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.path: str = path
-        self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        self.path: Path = path
+        self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
 
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(0x0)

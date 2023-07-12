@@ -34,6 +34,7 @@ import timeit
 import logging
 import argparse
 import subprocess
+from pathlib import Path
 
 import tqdm
 import tabulate
@@ -81,7 +82,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(args.sample)
+        taste = capa.helpers.get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -102,8 +103,7 @@ def main(argv=None):
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         extractor = capa.main.get_extractor(
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False

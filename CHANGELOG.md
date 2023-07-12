@@ -13,6 +13,7 @@
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
+- Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 
 ### New Rules (24)
 

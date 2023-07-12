@@ -59,10 +59,10 @@ import os
 import sys
 import json
 import logging
-import os.path
 import argparse
 import multiprocessing
 import multiprocessing.pool
+from pathlib import Path
 
 import capa
 import capa.main
@@ -169,9 +169,8 @@ def main(argv=None):
             return -1
 
         samples = []
-        for base, _, files in os.walk(args.input):
-            for file in files:
-                samples.append(os.path.join(base, file))
+        for file in Path(args.input).rglob("*"):
+            samples.append(file)
 
         cpu_count = multiprocessing.cpu_count()
 
@@ -208,7 +207,7 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                results[result["path"]] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
+                results[result["path"].as_posix()] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
             else:
                 raise ValueError(f"unexpected status: {result['status']}")
 

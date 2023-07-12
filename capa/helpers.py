@@ -5,12 +5,12 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import os
 import inspect
 import logging
 import contextlib
 import importlib.util
 from typing import NoReturn
+from pathlib import Path
 
 import tqdm
 
@@ -32,11 +32,10 @@ def hex(n: int) -> str:
         return f"0x{(n):X}"
 
 
-def get_file_taste(sample_path: str) -> bytes:
-    if not os.path.exists(sample_path):
+def get_file_taste(sample_path: Path) -> bytes:
+    if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    with open(sample_path, "rb") as f:
-        taste = f.read(8)
+    taste = sample_path.open("rb").read(8)
     return taste
 
 
@@ -50,15 +49,15 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_extension(sample: str) -> str:
-    if sample.endswith(EXTENSIONS_SHELLCODE_32):
+def get_format_from_extension(sample: Path) -> str:
+    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
         return FORMAT_SC32
-    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
+    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
         return FORMAT_SC64
     return FORMAT_UNKNOWN
 
 
-def get_auto_format(path: str) -> str:
+def get_auto_format(path: Path) -> str:
     format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
@@ -67,13 +66,12 @@ def get_auto_format(path: str) -> str:
     return format_
 
 
-def get_format(sample: str) -> str:
+def get_format(sample: Path) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
     from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
 
-    with open(sample, "rb") as f:
-        buf = f.read()
+    buf = sample.read_bytes()
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):

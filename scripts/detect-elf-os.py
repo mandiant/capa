@@ -17,6 +17,7 @@ import logging
 import argparse
 import contextlib
 from typing import BinaryIO
+from pathlib import Path
 
 import capa.helpers
 import capa.features.extractors.elf
@@ -56,7 +57,7 @@ def main(argv=None):
             logging.basicConfig(level=logging.INFO)
             logging.getLogger().setLevel(logging.INFO)
 
-        f = open(args.sample, "rb")
+        f = Path(args.sample).open("rb")
 
     with contextlib.closing(f):
         try:

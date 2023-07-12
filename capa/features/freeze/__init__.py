@@ -382,6 +382,7 @@ def load(buf: bytes) -> capa.features.extractors.base_extractor.FeatureExtractor
 def main(argv=None):
     import sys
     import argparse
+    from pathlib import Path
 
     import capa.main
 
@@ -398,8 +399,7 @@ def main(argv=None):
 
     extractor = capa.main.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
 
-    with open(args.output, "wb") as f:
-        f.write(dump(extractor))
+    Path(args.output).write_bytes(dump(extractor))
 
     return 0
 

@@ -54,6 +54,7 @@ import logging
 import argparse
 import collections
 from typing import Dict
+from pathlib import Path
 
 import colorama
 
@@ -136,7 +137,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = get_file_taste(args.sample)
+        taste = get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -159,8 +160,7 @@ def main(argv=None):
 
     if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         format_ = args.format
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)

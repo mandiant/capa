@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
 from typing import List
+from pathlib import Path
 
 import pytest
 from fixtures import z9324d_extractor
@@ -173,10 +174,8 @@ def test_freeze_load_sample(tmpdir, request, extractor):
 
     extractor = request.getfixturevalue(extractor)
 
-    with open(o.strpath, "wb") as f:
-        f.write(capa.features.freeze.dump(extractor))
+    Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 
-    with open(o.strpath, "rb") as f:
-        null_extractor = capa.features.freeze.load(f.read())
+    null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
 
     compare_extractors(extractor, null_extractor)
