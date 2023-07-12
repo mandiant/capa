@@ -75,7 +75,7 @@ dev = [
     "flake8-print==5.0.0",
     "flake8-todos==0.3.0",
     "ruff==0.0.277",
-    "black==23.3.0",
+    "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.4.1",
     "psutil==5.9.2",
