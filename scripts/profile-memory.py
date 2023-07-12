@@ -50,13 +50,12 @@ def main():
 
     for i in range(count):
         print(f"iteration {i+1}/{count}...")
-        with contextlib.redirect_stdout(io.StringIO()):
-            with contextlib.redirect_stderr(io.StringIO()):
-                t0 = time.time()
-                capa.main.main()
-                t1 = time.time()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            t0 = time.time()
+            capa.main.main()
+            t1 = time.time()
 
-                gc.collect()
+            gc.collect()
 
         process = psutil.Process(os.getpid())
         print(f"  duration: {(t1-t0):.2f}")

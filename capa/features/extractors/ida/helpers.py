@@ -122,7 +122,7 @@ def get_file_externs() -> Dict[int, Tuple[str, str, int]]:
     externs = {}
 
     for seg in get_segments(skip_header_segments=True):
-        if not (seg.type == ida_segment.SEG_XTRN):
+        if seg.type != ida_segment.SEG_XTRN:
             continue
 
         for ea in idautils.Functions(seg.start_ea, seg.end_ea):
@@ -275,20 +275,18 @@ def is_op_offset(insn: idaapi.insn_t, op: idaapi.op_t) -> bool:
 
 def is_sp_modified(insn: idaapi.insn_t) -> bool:
     """determine if instruction modifies SP, ESP, RSP"""
-    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
-        if op.reg == idautils.procregs.sp.reg and is_op_write(insn, op):
-            # register is stack and written
-            return True
-    return False
+    return any(
+        op.reg == idautils.procregs.sp.reg and is_op_write(insn, op)
+        for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,))
+    )
 
 
 def is_bp_modified(insn: idaapi.insn_t) -> bool:
     """check if instruction modifies BP, EBP, RBP"""
-    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
-        if op.reg == idautils.procregs.bp.reg and is_op_write(insn, op):
-            # register is base and written
-            return True
-    return False
+    return any(
+        op.reg == idautils.procregs.bp.reg and is_op_write(insn, op)
+        for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,))
+    )
 
 
 def is_frame_register(reg: int) -> bool:
@@ -334,10 +332,7 @@ def mask_op_val(op: idaapi.op_t) -> int:
 
 def is_function_recursive(f: idaapi.func_t) -> bool:
     """check if function is recursive"""
-    for ref in idautils.CodeRefsTo(f.start_ea, True):
-        if f.contains(ref):
-            return True
-    return False
+    return any(f.contains(ref) for ref in idautils.CodeRefsTo(f.start_ea, True))
 
 
 def is_basic_block_tight_loop(bb: idaapi.BasicBlock) -> bool:
@@ -386,8 +381,7 @@ def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> i
 def get_function_blocks(f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
     """yield basic blocks contained in specified function"""
     # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
-    for block in idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT)):
-        yield block
+    yield from idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))
 
 
 def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:

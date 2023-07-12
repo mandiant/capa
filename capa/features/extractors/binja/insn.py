@@ -155,8 +155,7 @@ def extract_insn_number_features(
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)
 
-    for result in results:
-        yield result
+    yield from results
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -318,8 +317,7 @@ def extract_insn_offset_features(
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)
 
-    for result in results:
-        yield result
+    yield from results
 
 
 def is_nzxor_stack_cookie(f: Function, bb: BinjaBasicBlock, llil: LowLevelILInstruction) -> bool:
@@ -375,8 +373,7 @@ def extract_insn_nzxor_characteristic_features(
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)
 
-    for result in results:
-        yield result
+    yield from results
 
 
 def extract_insn_mnemonic_features(
@@ -438,8 +435,7 @@ def extract_insn_peb_access_characteristic_features(
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)
 
-    for result in results:
-        yield result
+    yield from results
 
 
 def extract_insn_segment_access_features(
@@ -466,8 +462,7 @@ def extract_insn_segment_access_features(
     for llil in func.get_llils_at(ih.address):
         visit_llil_exprs(llil, llil_checker)
 
-    for result in results:
-        yield result
+    yield from results
 
 
 def extract_insn_cross_section_cflow(

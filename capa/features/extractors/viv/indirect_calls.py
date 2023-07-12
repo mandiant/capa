@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
-from typing import Set, List, Deque, Tuple, Union, Optional
+from typing import Set, List, Deque, Tuple, Optional
 
 import envi
 import vivisect.const
@@ -71,7 +71,7 @@ class NotFoundError(Exception):
     pass
 
 
-def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Union[int, None]]:
+def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Optional[int]]:
     """
     scan backwards from the given address looking for assignments to the given register.
     if a constant, return that value.

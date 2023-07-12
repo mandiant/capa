@@ -279,7 +279,7 @@ class InvalidAttckOrMbcTechnique(Lint):
 
     def check_rule(self, ctx: Context, rule: Rule):
         for framework in self.enabled_frameworks:
-            if framework in rule.meta.keys():
+            if framework in rule.meta:
                 for r in rule.meta[framework]:
                     m = self.reg.match(r)
                     if m is None:
@@ -543,47 +543,45 @@ class FeatureNtdllNtoskrnlApi(Lint):
                 assert isinstance(feature.value, str)
                 modname, _, impname = feature.value.rpartition(".")
 
-                if modname == "ntdll":
-                    if impname in (
-                        "LdrGetProcedureAddress",
-                        "LdrLoadDll",
-                        "NtCreateThread",
-                        "NtCreatUserProcess",
-                        "NtLoadDriver",
-                        "NtQueryDirectoryObject",
-                        "NtResumeThread",
-                        "NtSuspendThread",
-                        "NtTerminateProcess",
-                        "NtWriteVirtualMemory",
-                        "RtlGetNativeSystemInformation",
-                        "NtCreateThreadEx",
-                        "NtCreateUserProcess",
-                        "NtOpenDirectoryObject",
-                        "NtQueueApcThread",
-                        "ZwResumeThread",
-                        "ZwSuspendThread",
-                        "ZwWriteVirtualMemory",
-                        "NtCreateProcess",
-                        "ZwCreateThread",
-                        "NtCreateProcessEx",
-                        "ZwCreateThreadEx",
-                        "ZwCreateProcess",
-                        "ZwCreateUserProcess",
-                        "RtlCreateUserProcess",
-                    ):
-                        # ntoskrnl.exe does not export these routines
-                        continue
+                if modname == "ntdll" and impname in (
+                    "LdrGetProcedureAddress",
+                    "LdrLoadDll",
+                    "NtCreateThread",
+                    "NtCreatUserProcess",
+                    "NtLoadDriver",
+                    "NtQueryDirectoryObject",
+                    "NtResumeThread",
+                    "NtSuspendThread",
+                    "NtTerminateProcess",
+                    "NtWriteVirtualMemory",
+                    "RtlGetNativeSystemInformation",
+                    "NtCreateThreadEx",
+                    "NtCreateUserProcess",
+                    "NtOpenDirectoryObject",
+                    "NtQueueApcThread",
+                    "ZwResumeThread",
+                    "ZwSuspendThread",
+                    "ZwWriteVirtualMemory",
+                    "NtCreateProcess",
+                    "ZwCreateThread",
+                    "NtCreateProcessEx",
+                    "ZwCreateThreadEx",
+                    "ZwCreateProcess",
+                    "ZwCreateUserProcess",
+                    "RtlCreateUserProcess",
+                ):
+                    # ntoskrnl.exe does not export these routines
+                    continue
 
-                if modname == "ntoskrnl":
-                    if impname in (
-                        "PsGetVersion",
-                        "PsLookupProcessByProcessId",
-                        "KeStackAttachProcess",
-                        "ObfDereferenceObject",
-                        "KeUnstackDetachProcess",
-                    ):
-                        # ntdll.dll does not export these routines
-                        continue
+                if modname == "ntoskrnl" and impname in (
+                    "PsGetVersion",
+                    "PsLookupProcessByProcessId",
+                    "KeStackAttachProcess",
+                    "ObfDereferenceObject",
+                    "KeUnstackDetachProcess",
+                ):
+                    # ntdll.dll does not export these routines
+                    continue
 
                 if modname in ("ntdll", "ntoskrnl"):
                     self.recommendation = self.recommendation_template.format(impname, modname)

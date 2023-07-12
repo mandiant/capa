@@ -628,7 +628,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             matched_rule_source = ""
 
             # check if match is a matched rule
-            matched_rule = doc.rules.get(feature.match, None)
+            matched_rule = doc.rules.get(feature.match)
             if matched_rule is not None:
                 matched_rule_source = matched_rule.source
 
