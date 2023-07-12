@@ -8,8 +8,18 @@
 from typing import Any, Dict, Tuple, Iterator, Optional
 
 import ghidra
+from ghidra.program.model.symbol import SymbolType
 
 currentProgram: ghidra.program.database.ProgramDB
+
+
+def fix_byte(b: int) -> bytes:
+    """Transform signed ints from Java into bytes for Python
+
+    args:
+        b: signed int returned from Java processing
+    """
+    return (b & 0xFF).to_bytes(1, "little")
 
 
 def find_byte_sequence(seq: bytes) -> Iterator[int]:
@@ -37,7 +47,7 @@ def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
     try:
         signed_ints = getBytes(addr, length)  # type: ignore [name-defined]
         for b in signed_ints:
-            bytez = bytez + (b & 0xFF).to_bytes(1, "little")
+            bytez = bytez + fix_byte(b)
         return bytez
     except RuntimeError:
         return bytez
@@ -54,7 +64,14 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
     try:
         signed_ints = getBytes(block.getStart(), block.getEnd().getOffset() - block.getStart().getOffset())  # type: ignore [name-defined]
         for b in signed_ints:
-            bytez = bytez + (b & 0xFF).to_bytes(1, "little")
+            bytez = bytez + fix_byte(b)
         return bytez
     except RuntimeError:
         return bytez
+
+
+def get_function_symbols() -> Iterator[ghidra.program.database.function.FunctionDB]:
+    """yield all non-external function symbols"""
+
+    for f in currentProgram.getFunctionManager().getFunctionsNoStubs(True):
+        yield f
