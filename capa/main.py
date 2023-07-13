@@ -1368,15 +1368,6 @@ def ghidra_main():
     pprint.pprint(ghidra_features)
 
 
-def is_runtime_ida():
-    try:
-        import idc
-    except ImportError:
-        return False
-    else:
-        return True
-
-
 def is_runtime_ghidra():
     try:
         import ghidra.program.flatapi
