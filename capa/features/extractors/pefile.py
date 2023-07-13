@@ -40,8 +40,23 @@ def extract_file_export_names(pe, **kwargs):
                 name = export.name.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:
                 continue
-            va = base_address + export.address
-            yield Export(name), AbsoluteVirtualAddress(va)
+
+            if export.forwarder is None:
+                va = base_address + export.address
+                yield Export(name), AbsoluteVirtualAddress(va)
+
+            else:
+                try:
+                    forwarded_name = export.forwarder.partition(b"\x00")[0].decode("ascii")
+                except UnicodeDecodeError:
+                    continue
+
+                forwarded_dll, _, forwarded_symbol = forwarded_name.partition(".")
+                forwarded_dll = forwarded_dll.lower()
+
+                va = base_address + export.address
+                yield Export(f"{forwarded_dll}.{forwarded_symbol}"), AbsoluteVirtualAddress(va)
+                yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 
 def extract_file_import_names(pe, **kwargs):
