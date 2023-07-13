@@ -306,6 +306,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
         return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
+    elif name.startswith("ea2876"):
+        return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -366,6 +368,8 @@ def get_sample_md5_by_name(name):
         return "3db3e55b16a7b1b1afb970d5e77c5d98"
     elif name.startswith("2bf18d"):
         return "2bf18d0403677378adad9001b1243211"
+    elif name.startswith("ea2876"):
+        return "76fa734236daa023444dec26863401dc"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -529,6 +533,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("kernel32", "file", capa.features.file.Export("BaseThreadInitThunk"), True),
         ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
         ("kernel32", "file", capa.features.file.Export("nope"), False),
+        # forwarded export
+        ("ea2876", "file", capa.features.file.Export("vresion.GetFileVersionInfoA"), True),
         # file/imports
         ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
@@ -715,6 +721,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), False),
         # function/characteristic(calls to)
         ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("calls to"), True),
+        # function/characteristic(forwarded export)
+        ("ea2876", "file", capa.features.common.Characteristic("forwarded export"), True),
         # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
         ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
         # file/function-name
