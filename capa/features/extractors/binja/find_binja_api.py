@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import subprocess
+from pathlib import Path
 
 # When the script gets executed as a standalone executable (via PyInstaller), `import binaryninja` does not work because
 # we have excluded the binaryninja module in `pyinstaller.spec`. The trick here is to call the system Python and try
@@ -25,9 +26,9 @@ if spec is not None:
 """
 
 
-def find_binja_path() -> str:
+def find_binja_path() -> Path:
     raw_output = subprocess.check_output(["python", "-c", code]).decode("ascii").strip()
-    return bytes.fromhex(raw_output).decode("utf8")
+    return Path(bytes.fromhex(raw_output).decode("utf8"))
 
 
 if __name__ == "__main__":

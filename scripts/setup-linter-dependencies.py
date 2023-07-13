@@ -37,7 +37,7 @@ import logging
 import argparse
 from sys import argv
 from typing import Dict, List
-from os.path import dirname
+from pathlib import Path
 
 import requests
 from stix2 import Filter, MemoryStore, AttackPattern  # type: ignore
@@ -65,7 +65,7 @@ class MitreExtractor:
         if self.url == "":
             raise ValueError(f"URL not specified in class {self.__class__.__name__}")
 
-        logging.info(f"Downloading STIX data at: {self.url}")
+        logging.info("Downloading STIX data at: %s", self.url)
         stix_json = requests.get(self.url).json()
         self._memory_store = MemoryStore(stix_data=stix_json["objects"])
 
@@ -170,12 +170,12 @@ def main(args: argparse.Namespace) -> None:
         logging.info("Extracting MBC behaviors...")
         data["mbc"] = MbcExtractor().run()
 
-    logging.info(f"Writing results to {args.output}")
+    logging.info("Writing results to %s", args.output)
     try:
-        with open(args.output, "w") as jf:
+        with Path(args.output).open("w", encoding="utf-8") as jf:
             json.dump(data, jf, indent=2)
     except BaseException as e:
-        logging.error(f"Exception encountered when writing results: {e}")
+        logging.error("Exception encountered when writing results: %s", e)
 
 
 if __name__ == "__main__":
@@ -187,7 +187,7 @@ if __name__ == "__main__":
         "--output",
         "-o",
         type=str,
-        default=f"{dirname(__file__)}/linter-data.json",
+        default=str(Path(__file__).resolve().parent / "linter-data.json"),
         help="Path to output file (lint.py will be looking for linter-data.json)",
     )
     main(parser.parse_args(args=argv[1:]))

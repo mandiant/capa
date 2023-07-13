@@ -6,13 +6,11 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import pytest
 import fixtures
-from fixtures import *
-from fixtures import parametrize
+from fixtures import scope, sample
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
@@ -21,7 +19,7 @@ def test_dnfile_features(sample, scope, feature, expected):
     fixtures.do_test_feature_presence(fixtures.get_dnfile_extractor, sample, scope, feature, expected)
 
 
-@parametrize(
+@fixtures.parametrize(
     "sample,scope,feature,expected",
     fixtures.FEATURE_COUNT_TESTS_DOTNET,
     indirect=["sample", "scope"],

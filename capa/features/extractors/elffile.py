@@ -8,6 +8,7 @@
 import io
 import logging
 from typing import Tuple, Iterator
+from pathlib import Path
 
 from elftools.elf.elffile import ELFFile, SymbolTableSection
 
@@ -36,8 +37,8 @@ def extract_file_import_names(elf, **kwargs):
 
         for _, symbol in enumerate(section.iter_symbols()):
             if symbol.name and symbol.entry.st_info.type == "STT_FUNC":
-                # TODO symbol address
-                # TODO symbol version info?
+                # TODO(williballenthin): extract symbol address
+                # https://github.com/mandiant/capa/issues/1608
                 yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
@@ -68,7 +69,6 @@ def extract_file_format(**kwargs):
 
 
 def extract_file_arch(elf, **kwargs):
-    # TODO merge with capa.features.extractors.elf.detect_elf_arch()
     arch = elf.get_machine_arch()
     if arch == "x86":
         yield Arch("i386"), NO_ADDRESS
@@ -85,7 +85,8 @@ def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, i
 
 
 FILE_HANDLERS = (
-    # TODO extract_file_export_names,
+    # TODO(williballenthin): implement extract_file_export_names
+    # https://github.com/mandiant/capa/issues/1607
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
@@ -107,11 +108,10 @@ GLOBAL_HANDLERS = (
 
 
 class ElfFeatureExtractor(FeatureExtractor):
-    def __init__(self, path: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.path = path
-        with open(self.path, "rb") as f:
-            self.elf = ELFFile(io.BytesIO(f.read()))
+        self.path: Path = path
+        self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
     def get_base_address(self):
         # virtual address of the first segment with type LOAD
@@ -120,15 +120,13 @@ class ElfFeatureExtractor(FeatureExtractor):
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
 
     def extract_global_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = self.path.read_bytes()
 
         for feature, addr in extract_global_features(self.elf, buf):
             yield feature, addr
 
     def extract_file_features(self):
-        with open(self.path, "rb") as f:
-            buf = f.read()
+        buf = self.path.read_bytes()
 
         for feature, addr in extract_file_features(self.elf, buf):
             yield feature, addr

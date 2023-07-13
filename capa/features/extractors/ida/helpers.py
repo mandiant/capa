@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import functools
 from typing import Any, Dict, Tuple, Iterator, Optional
 
 import idc
@@ -27,7 +28,8 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     """
     seqstr = " ".join([f"{b:02x}" for b in seq])
     while True:
-        # TODO find_binary: Deprecated. Please use ida_bytes.bin_search() instead.
+        # TODO(mike-hunhoff): find_binary is deprecated. Please use ida_bytes.bin_search() instead.
+        # https://github.com/mandiant/capa/issues/1606
         ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
         if ea == idaapi.BADADDR:
             break
@@ -80,9 +82,22 @@ def get_segment_buffer(seg: idaapi.segment_t) -> bytes:
     return buff if buff else b""
 
 
+def inspect_import(imports, library, ea, function, ordinal):
+    if function and function.startswith("__imp_"):
+        # handle mangled PE imports
+        function = function[len("__imp_") :]
+
+    if function and "@@" in function:
+        # handle mangled ELF imports, like "fopen@@glibc_2.2.5"
+        function, _, _ = function.partition("@@")
+
+    imports[ea] = (library.lower(), function, ordinal)
+    return True
+
+
 def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
     """get file imports"""
-    imports = {}
+    imports: Dict[int, Tuple[str, str, int]] = {}
 
     for idx in range(idaapi.get_import_module_qty()):
         library = idaapi.get_import_module_name(idx)
@@ -92,23 +107,13 @@ def get_file_imports() -> Dict[int, Tuple[str, str, int]]:
 
         # IDA uses section names for the library of ELF imports, like ".dynsym".
         # These are not useful to us, we may need to expand this list over time
-        # TODO: exhaust this list, see #1419
+        # TODO(williballenthin): find all section names used by IDA
+        # https://github.com/mandiant/capa/issues/1419
         if library == ".dynsym":
             library = ""
 
-        def inspect_import(ea, function, ordinal):
-            if function and function.startswith("__imp_"):
-                # handle mangled PE imports
-                function = function[len("__imp_") :]
-
-            if function and "@@" in function:
-                # handle mangled ELF imports, like "fopen@@glibc_2.2.5"
-                function, _, _ = function.partition("@@")
-
-            imports[ea] = (library.lower(), function, ordinal)
-            return True
-
-        idaapi.enum_import_names(idx, inspect_import)
+        cb = functools.partial(inspect_import, imports, library)
+        idaapi.enum_import_names(idx, cb)
 
     return imports
 
@@ -117,7 +122,7 @@ def get_file_externs() -> Dict[int, Tuple[str, str, int]]:
     externs = {}
 
     for seg in get_segments(skip_header_segments=True):
-        if not (seg.type == ida_segment.SEG_XTRN):
+        if seg.type != ida_segment.SEG_XTRN:
             continue
 
         for ea in idautils.Functions(seg.start_ea, seg.end_ea):
@@ -270,20 +275,18 @@ def is_op_offset(insn: idaapi.insn_t, op: idaapi.op_t) -> bool:
 
 def is_sp_modified(insn: idaapi.insn_t) -> bool:
     """determine if instruction modifies SP, ESP, RSP"""
-    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
-        if op.reg == idautils.procregs.sp.reg and is_op_write(insn, op):
-            # register is stack and written
-            return True
-    return False
+    return any(
+        op.reg == idautils.procregs.sp.reg and is_op_write(insn, op)
+        for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,))
+    )
 
 
 def is_bp_modified(insn: idaapi.insn_t) -> bool:
     """check if instruction modifies BP, EBP, RBP"""
-    for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,)):
-        if op.reg == idautils.procregs.bp.reg and is_op_write(insn, op):
-            # register is base and written
-            return True
-    return False
+    return any(
+        op.reg == idautils.procregs.bp.reg and is_op_write(insn, op)
+        for op in get_insn_ops(insn, target_ops=(idaapi.o_reg,))
+    )
 
 
 def is_frame_register(reg: int) -> bool:
@@ -329,10 +332,7 @@ def mask_op_val(op: idaapi.op_t) -> int:
 
 def is_function_recursive(f: idaapi.func_t) -> bool:
     """check if function is recursive"""
-    for ref in idautils.CodeRefsTo(f.start_ea, True):
-        if f.contains(ref):
-            return True
-    return False
+    return any(f.contains(ref) for ref in idautils.CodeRefsTo(f.start_ea, True))
 
 
 def is_basic_block_tight_loop(bb: idaapi.BasicBlock) -> bool:
@@ -381,8 +381,7 @@ def find_data_reference_from_insn(insn: idaapi.insn_t, max_depth: int = 10) -> i
 def get_function_blocks(f: idaapi.func_t) -> Iterator[idaapi.BasicBlock]:
     """yield basic blocks contained in specified function"""
     # leverage idaapi.FC_NOEXT flag to ignore useless external blocks referenced by the function
-    for block in idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT)):
-        yield block
+    yield from idaapi.FlowChart(f, flags=(idaapi.FC_PREDS | idaapi.FC_NOEXT))
 
 
 def is_basic_block_return(bb: idaapi.BasicBlock) -> bool:

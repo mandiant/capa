@@ -9,7 +9,8 @@ import json
 import logging
 import datetime
 import contextlib
-from typing import Optional
+from typing import List, Optional
+from pathlib import Path
 
 import idc
 import idaapi
@@ -46,7 +47,8 @@ NETNODE_RULES_CACHE_ID = "rules-cache-id"
 
 
 def inform_user_ida_ui(message):
-    idaapi.info(f"{message}. Please refer to IDA Output window for more information.")
+    # this isn't a logger, this is IDA's logging facility
+    idaapi.info(f"{message}. Please refer to IDA Output window for more information.")  # noqa: G004
 
 
 def is_supported_ida_version():
@@ -54,7 +56,7 @@ def is_supported_ida_version():
     if version < 7.4 or version >= 9:
         warning_msg = "This plugin does not support your IDA Pro version"
         logger.warning(warning_msg)
-        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 9.0." % version)
+        logger.warning("Your IDA Pro version is: %s. Supported versions are: IDA >= 7.4 and IDA < 9.0.", version)
         return False
     return True
 
@@ -119,7 +121,7 @@ def get_file_sha256():
     return sha256
 
 
-def collect_metadata(rules):
+def collect_metadata(rules: List[Path]):
     """ """
     md5 = get_file_md5()
     sha256 = get_file_sha256()
@@ -156,18 +158,18 @@ def collect_metadata(rules):
             arch=arch,
             os=os,
             extractor="ida",
-            rules=rules,
+            rules=tuple(r.resolve().absolute().as_posix() for r in rules),
             base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
             layout=rdoc.Layout(
-                functions=tuple()
+                functions=(),
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
             # ignore these for now - not used by IDA plugin.
-            feature_counts=rdoc.FeatureCounts(file=0, functions=tuple()),
-            library_functions=tuple(),
+            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
+            library_functions=(),
         ),
     )
 
@@ -212,7 +214,7 @@ def idb_contains_cached_results() -> bool:
         n = netnode.Netnode(CAPA_NETNODE)
         return bool(n.get(NETNODE_RESULTS))
     except netnode.NetnodeCorruptError as e:
-        logger.error("%s", e, exc_info=True)
+        logger.exception(str(e))
         return False
 
 

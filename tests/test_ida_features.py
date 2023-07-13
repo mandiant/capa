@@ -46,16 +46,15 @@ import io
 import sys
 import inspect
 import logging
-import os.path
 import binascii
 import traceback
+from pathlib import Path
 
 import pytest
 
 try:
-    sys.path.append(os.path.dirname(__file__))
+    sys.path.append(str(Path(__file__).parent))
     import fixtures
-    from fixtures import *
 finally:
     sys.path.pop()
 
@@ -104,7 +103,7 @@ def test_ida_features():
 
         try:
             fixtures.do_test_feature_presence(get_ida_extractor, sample, scope, feature, expected)
-        except Exception as e:
+        except Exception:
             f = io.StringIO()
             traceback.print_exc(file=f)
             yield this_name, id, "fail", f.getvalue()
@@ -130,7 +129,7 @@ def test_ida_feature_counts():
 
         try:
             fixtures.do_test_feature_count(get_ida_extractor, sample, scope, feature, expected)
-        except Exception as e:
+        except Exception:
             f = io.StringIO()
             traceback.print_exc(file=f)
             yield this_name, id, "fail", f.getvalue()

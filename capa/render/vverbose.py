@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 import tabulate
 
@@ -29,7 +29,7 @@ def render_locations(ostream, locations: Iterable[frz.Address]):
     # its possible to have an empty locations array here,
     # such as when we're in MODE_FAILURE and showing the logic
     # under a `not` statement (which will have no matched locations).
-    locations = list(sorted(locations))
+    locations = sorted(locations)
 
     if len(locations) == 0:
         return
@@ -129,6 +129,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature.type
+    value: Optional[str]
     if isinstance(feature, frzf.BasicBlockFeature):
         # i don't think it makes sense to have standalone basic block features.
         # we don't parse them from rules, only things like: `count(basic block) > 1`
@@ -140,7 +141,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         value = feature.class_
     else:
         # convert attributes to dictionary using aliased names, if applicable
-        value = feature.dict(by_alias=True).get(key, None)
+        value = feature.dict(by_alias=True).get(key)
 
     if value is None:
         raise ValueError(f"{key} contains None")
@@ -222,7 +223,7 @@ def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
 
         # optional statement with no successful children is empty
         if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
-            if not any(map(lambda m: m.success, match.children)):
+            if not any(m.success for m in match.children):
                 return
 
         # not statement, so invert the child mode to show failed evaluations
@@ -236,7 +237,7 @@ def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
 
         # optional statement with successful children is not relevant
         if isinstance(match.node, rd.StatementNode) and match.node.statement.type == rd.CompoundStatementType.OPTIONAL:
-            if any(map(lambda m: m.success, match.children)):
+            if any(m.success for m in match.children):
                 return
 
         # not statement, so invert the child mode to show successful evaluations
@@ -277,7 +278,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
     had_match = False
 
-    for _, _, rule in sorted(map(lambda rule: (rule.meta.namespace or "", rule.meta.name, rule), doc.rules.values())):
+    for _, _, rule in sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()):
         # default scope hides things like lib rules, malware-category rules, etc.
         # but in vverbose mode, we really want to show everything.
         #

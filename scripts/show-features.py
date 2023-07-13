@@ -67,8 +67,8 @@ Example::
 import os
 import sys
 import logging
-import os.path
 import argparse
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -102,7 +102,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(args.sample)
+        taste = capa.helpers.get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -116,8 +116,7 @@ def main(argv=None):
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
@@ -142,7 +141,6 @@ def main(argv=None):
 
     if args.function:
         if args.format == "freeze":
-            # TODO fix
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
             function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
@@ -236,7 +234,7 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
 
 
 if __name__ == "__main__":
-    if capa.main.is_runtime_ida():
+    if capa.helpers.is_runtime_ida():
         ida_main()
     else:
         sys.exit(main())

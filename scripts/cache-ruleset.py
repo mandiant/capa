@@ -1,6 +1,6 @@
 """
 Create a cache of the given rules.
-This is only really intended to be used by CI to pre-cache rulesets 
+This is only really intended to be used by CI to pre-cache rulesets
 that will be distributed within PyInstaller binaries.
 
 Usage:
@@ -15,11 +15,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import os
 import sys
-import time
 import logging
 import argparse
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -48,8 +47,9 @@ def main(argv=None):
         logging.getLogger("capa").setLevel(logging.ERROR)
 
     try:
-        os.makedirs(args.cache, exist_ok=True)
-        rules = capa.main.get_rules(args.rules, cache_dir=args.cache)
+        cache_dir = Path(args.cache)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        rules = capa.main.get_rules(args.rules, cache_dir)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
@@ -57,9 +57,9 @@ def main(argv=None):
 
     content = capa.rules.cache.get_ruleset_content(rules)
     id = capa.rules.cache.compute_cache_identifier(content)
-    path = capa.rules.cache.get_cache_path(args.cache, id)
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
 
-    assert os.path.exists(path)
+    assert path.exists()
     logger.info("cached to: %s", path)
 
 

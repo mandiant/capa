@@ -92,7 +92,6 @@ def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     if not src.isImmed():
         return False
 
-    # TODO what about 64-bit operands?
     if not isinstance(dst, envi.archs.i386.disasm.i386SibOper) and not isinstance(
         dst, envi.archs.i386.disasm.i386RegMemOper
     ):

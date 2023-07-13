@@ -8,9 +8,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import io
 import zlib
+from pathlib import Path
 
-import pytest
-from fixtures import *
+from fixtures import get_data_path_by_name
 
 import capa.features.extractors.elf
 
@@ -24,7 +24,7 @@ def test_elf_sh_notes():
     # guess: symtab: None
     # guess: needed dependencies: None
     path = get_data_path_by_name("2f7f5f")
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
@@ -37,7 +37,7 @@ def test_elf_pt_notes():
     # guess: symtab: None
     # guess: needed dependencies: None
     path = get_data_path_by_name("7351f.elf")
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
@@ -50,7 +50,7 @@ def test_elf_so_needed():
     # guess: symtab: None
     # guess: needed dependencies: OS.HURD
     path = get_data_path_by_name("b5f052")
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "hurd"
 
 
@@ -63,7 +63,7 @@ def test_elf_abi_version_hurd():
     # guess: symtab: None
     # guess: needed dependencies: None
     path = get_data_path_by_name("bf7a9c")
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "hurd"
 
 
@@ -76,7 +76,7 @@ def test_elf_symbol_table():
     # guess: symtab: OS.LINUX
     # guess: needed dependencies: None
     path = get_data_path_by_name("2bf18d")
-    with open(path, "rb") as f:
+    with Path(path).open("rb") as f:
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
