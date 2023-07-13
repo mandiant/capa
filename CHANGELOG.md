@@ -7,9 +7,7 @@
 - Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
 - use fancy box drawing characters for default output #1586 @williballenthin
 - use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
-- publish via PyPI trusted publishing #1491 @williballenthin
-- migrate to pyproject.toml #1301 @williballenthin
-
+- extract forwarded exports from PE files #1624 @williballenthin
 ### Breaking Changes
 - Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
@@ -67,6 +65,9 @@
 - update ATT&CK/MBC data for linting #1568 @mr-tz
 - log time taken to analyze each function #1290 @williballenthin
 - tests: make fixture available via conftest.py #1592 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
+- migrate to pyproject.toml #1301 @williballenthin
+
 
 ### Raw diffs
 - [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
