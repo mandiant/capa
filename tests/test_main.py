@@ -10,16 +10,6 @@ import json
 import textwrap
 
 import fixtures
-from fixtures import (
-    z499c2_extractor,
-    z9324d_extractor,
-    pma16_01_extractor,
-    pingtaest_extractor,
-    _692f_dotnetfile_extractor,
-    _1c444_dotnetfile_extractor,
-    _039a6_dotnetfile_extractor,
-    _0953c_dotnetfile_extractor,
-)
 
 import capa.main
 import capa.rules

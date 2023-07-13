@@ -10,7 +10,6 @@ from typing import List
 from pathlib import Path
 
 import pytest
-from fixtures import z9324d_extractor
 
 import capa.main
 import capa.rules
