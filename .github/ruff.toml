@@ -41,21 +41,3 @@ exclude = [
     "*_pb2.py", 
     "*_pb2.pyi"
 ]
-
-[per-file-ignores]
-# until we address #1592 and move test fixtures into conftest.py
-# then we need to ignore imports done to enable pytest fixtures.
-#
-# F401: `foo` imported but unused
-# F811 Redefinition of unused `foo`
-"tests/test_main.py" = ["F401", "F811"]
-"tests/test_proto.py" = ["F401", "F811"]
-"tests/test_freeze.py" = ["F401", "F811"]
-"tests/test_function_id.py" = ["F401", "F811"]
-"tests/test_viv_features.py" = ["F401", "F811"]
-"tests/test_binja_features.py" = ["F401", "F811"]
-"tests/test_pefile_features.py" = ["F401", "F811"]
-"tests/test_dnfile_features.py" = ["F401", "F811"]
-"tests/test_dotnet_features.py" = ["F401", "F811"]
-"tests/test_result_document.py" = ["F401", "F811"]
-"tests/test_dotnetfile_features.py" = ["F401", "F811"]

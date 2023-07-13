@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from fixtures import get_function, pma16_01_extractor, extract_function_features
+import fixtures
 
 import capa.features.insn
 
@@ -29,6 +29,6 @@ def test_function_id_complex_match(pma16_01_extractor):
 
 
 def test_function_id_api_feature(pma16_01_extractor):
-    f = get_function(pma16_01_extractor, 0x404548)
-    features = extract_function_features(pma16_01_extractor, f)
+    f = fixtures.get_function(pma16_01_extractor, 0x404548)
+    features = fixtures.extract_function_features(pma16_01_extractor, f)
     assert capa.features.insn.API("__aulldiv") in features

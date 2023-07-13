@@ -5,23 +5,15 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import pytest
 import fixtures
-from fixtures import (
-    FEATURE_PRESENCE_TESTS_DOTNET,
-    scope,
-    sample,
-    b9f5b_dotnetfile_extractor,
-    mixed_mode_64_dotnetfile_extractor,
-)
 
 import capa.features.file
 
 
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    FEATURE_PRESENCE_TESTS_DOTNET,
+    fixtures.FEATURE_PRESENCE_TESTS_DOTNET,
     indirect=["sample", "scope"],
 )
 def test_dotnetfile_features(sample, scope, feature, expected):

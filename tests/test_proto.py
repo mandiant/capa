@@ -9,7 +9,6 @@ import copy
 from typing import Any
 
 import pytest
-from fixtures import a3f3bbc_rd, a076114_rd, pma0101_rd, al_khaserx64_rd, al_khaserx86_rd, dotnet_1c444e_rd
 
 import capa.rules
 import capa.render
