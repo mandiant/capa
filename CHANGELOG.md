@@ -66,6 +66,7 @@
 ### Development
 - update ATT&CK/MBC data for linting #1568 @mr-tz
 - log time taken to analyze each function #1290 @williballenthin
+- tests: make fixture available via conftest.py #1592 @williballenthin
 
 ### Raw diffs
 - [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
