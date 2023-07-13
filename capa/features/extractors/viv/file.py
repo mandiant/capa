@@ -8,6 +8,7 @@
 from typing import Tuple, Iterator
 
 import PE.carve as pe_carve  # vivisect PE
+import vivisect
 import viv_utils
 import viv_utils.flirt
 
@@ -25,9 +26,41 @@ def extract_file_embedded_pe(buf, **kwargs) -> Iterator[Tuple[Feature, Address]]
         yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
-def extract_file_export_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+def get_first_vw_filename(vw: vivisect.VivWorkspace):
+    # vivisect associates metadata with each file that its loaded into the workspace.
+    # capa only loads a single file into each workspace.
+    # so to access the metadata for the file in question, we can just take the first one.
+    # otherwise, we'd have to pass around the module name of the file we're analyzing,
+    # which is a pain.
+    #
+    # so this is a simplifying assumption.
+    return next(iter(vw.filemeta.keys()))
+
+
+def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     for va, _, name, _ in vw.getExports():
         yield Export(name), AbsoluteVirtualAddress(va)
+
+    if vw.getMeta("Format") == "pe":
+        pe = vw.parsedbin
+        baseaddr = pe.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
+        for rva, _, forwarded_name in vw.getFileMeta(get_first_vw_filename(vw), "forwarders"):
+            try:
+                forwarded_name = forwarded_name.partition(b"\x00")[0].decode("ascii")
+            except UnicodeDecodeError:
+                continue
+
+            # use rpartition so we can split on separator between dll and name.
+            # the dll name can be a full path, like in the case of
+            # ef64d6d7c34250af8e21a10feb931c9b
+            # which i assume means the path can have embedded periods.
+            # so we don't want the first period, we want the last.
+            forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
+            forwarded_dll = forwarded_dll.lower()
+
+            va = baseaddr + rva
+            yield Export(f"{forwarded_dll}.{forwarded_symbol}"), AbsoluteVirtualAddress(va)
+            yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 
 def extract_file_import_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]:
