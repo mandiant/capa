@@ -11,22 +11,21 @@ import struct
 from typing import Tuple, Iterator
 
 import ghidra
-from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 from ghidra.program.model.lang import OperandType
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
-from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 currentProgram: ghidra.program.database.ProgramDB
 monitor: ghidra.util.task.TaskMonitor
 listing = currentProgram.getListing()
 
 
-def get_printable_len(op) -> int:
+def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
     """Return string length if all operand bytes are ascii or utf16-le printable"""
     op_bit_len = op.bitLength()
     op_val = op.getValue()
@@ -58,7 +57,7 @@ def get_printable_len(op) -> int:
     return 0
 
 
-def is_mov_imm_to_stack(insn) -> bool:
+def is_mov_imm_to_stack(insn: ghidra.program.database.code.InstructionDB) -> bool:
     """verify instruction moves immediate onto stack"""
 
     # Ghidra will Bitwise OR the OperandTypes to assign multiple
@@ -76,7 +75,7 @@ def is_mov_imm_to_stack(insn) -> bool:
     return False
 
 
-def bb_contains_stackstring(bb) -> bool:
+def bb_contains_stackstring(bb: ghidra.program.model.block.CodeBlock) -> bool:
     """check basic block for stackstring indicators
 
     true if basic block contains enough moves of constant bytes to the stack
@@ -90,11 +89,11 @@ def bb_contains_stackstring(bb) -> bool:
     return False
 
 
-def _bb_has_tight_loop(bb):
+def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
     """
-    last_insn = listing.getInstructionAt(bb.getMaxAddress().add(-0x1)) # all last insns are TERMINATOR
+    last_insn = listing.getInstructionAt(bb.getMaxAddress().add(-0x1))  # all last insns are TERMINATOR
 
     if last_insn:
         if last_insn.getFlowType().isJump():
@@ -104,16 +103,16 @@ def _bb_has_tight_loop(bb):
     return False
 
 
-def extract_bb_stackstring(bb) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_stackstring(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
     if bb_contains_stackstring(bb):
         yield Characteristic("stack string"), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
 
 
-def extract_bb_tight_loop(bb) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_tight_loop(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
     if _bb_has_tight_loop(bb):
-        yield Characteristic("tight loop"), AbsoluteVirtualAddress(bb.getMinAddress().getOffset()) 
+        yield Characteristic("tight loop"), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
 
 
 BASIC_BLOCK_HANDLERS = (
@@ -122,12 +121,12 @@ BASIC_BLOCK_HANDLERS = (
 )
 
 
-def extract_features(bb) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
     args:
-      bb (viv_utils.BasicBlock): the basic block to process.
+        bb: the basic block to process.
 
     yields:
       Tuple[Feature, int]: the features and their location found in this basic block.
