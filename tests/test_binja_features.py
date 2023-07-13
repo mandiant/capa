@@ -59,7 +59,7 @@ def test_binja_feature_counts(sample, scope, feature, expected):
 def test_standalone_binja_backend():
     CD = Path(__file__).resolve().parent
     test_path = CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
-    assert capa.main.main([test_path, "-b", capa.main.BACKEND_BINJA]) == 0
+    assert capa.main.main([str(test_path), "-b", capa.main.BACKEND_BINJA]) == 0
 
 
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
