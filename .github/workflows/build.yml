@@ -1,13 +1,13 @@
 name: build
 
-permissions:
-  contents: write
-
 on:
   pull_request:
     branches: [ master ]
   release:
     types: [edited, published]
+
+permissions:
+  contents: write
 
 jobs:
   build:
