@@ -62,15 +62,13 @@ def is_mov_imm_to_stack(insn: ghidra.program.database.code.InstructionDB) -> boo
     # i.e., the first operand is a stackvar (dynamically allocated),
     # and the second is a scalar value (single int/char/float/etc.)
     mov_its_ops = [(OperandType.ADDRESS | OperandType.DYNAMIC), OperandType.SCALAR]
+    found = False
 
     # MOV dword ptr [EBP + local_*], 0x65
     if insn.getMnemonicString() == "MOV":
-        for i in range(2):
-            if insn.getOperandType(i) != mov_its_ops[i]:
-                return False
-        return True
+        found = all(insn.getOperandType(i) == mov_its_ops[i] for i in range(2))
 
-    return False
+    return found
 
 
 def bb_contains_stackstring(bb: ghidra.program.model.block.CodeBlock) -> bool:
@@ -143,7 +141,7 @@ def main():
 
     import pprint
 
-    pprint.pprint(features)
+    pprint.pprint(features)  # noqa: T203
 
 
 if __name__ == "__main__":
