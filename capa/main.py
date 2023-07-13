@@ -1365,22 +1365,13 @@ def ghidra_main():
 
     import pprint
 
-    pprint.pprint(ghidra_features)
-
-
-def is_runtime_ghidra():
-    try:
-        import ghidra.program.flatapi
-    except ImportError:
-        return False
-    else:
-        return True
+    pprint.pprint(ghidra_features)  # noqa: T203
 
 
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
-    elif is_runtime_ghidra():
+    elif capa.helpers.is_runtime_ghidra():
         ghidra_main()
     else:
         sys.exit(main())

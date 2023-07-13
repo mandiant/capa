@@ -1,36 +1,32 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
 import contextlib
 from io import BytesIO
 from typing import Tuple, Iterator
-
-import ghidra
 
 import capa.features.extractors.elf
 from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
-currentProgram: ghidra.program.database.ProgramDB
 
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:
-    format_name: str = currentProgram.getExecutableFormat()  # currentProgram: static Ghidra variable
+    format_name: str = currentProgram.getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS
 
     elif "ELF" in format_name:
-        program_memory = currentProgram.getMemory()  # ghidra.program.database.mem.MemoryMapDB
-        fbytes_list = program_memory.getAllFileBytes()  # java.util.List<FileBytes>
-        fbytes = fbytes_list[0]  # ghidra.program.database.mem.FileBytes
+        program_memory = currentProgram.getMemory()  # type: ignore [name-defined] # noqa: F821
+        fbytes_list = program_memory.getAllFileBytes()
+        fbytes = fbytes_list[0]
 
         # Java likes to return signed ints, so we must convert them
         # back into unsigned bytes manually and write to BytesIO
@@ -61,7 +57,7 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
-    lang_id = currentProgram.getMetadata().get("Language ID")
+    lang_id = currentProgram.getMetadata().get("Language ID")  # type: ignore [name-defined] # noqa: F821
 
     if "x86" in lang_id and "64" in lang_id:
         yield Arch(ARCH_AMD64), NO_ADDRESS
