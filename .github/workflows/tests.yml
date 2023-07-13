@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions: read-all
+
 # save workspaces to speed up testing
 env:
   CAPA_SAVE_WORKSPACE: "True"
