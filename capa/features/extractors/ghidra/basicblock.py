@@ -12,6 +12,7 @@ from typing import Tuple, Iterator
 
 import ghidra
 from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
+from ghidra.program.model.lang import OperandType
 
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
@@ -58,16 +59,19 @@ def get_printable_len(op) -> int:
 
 def is_mov_imm_to_stack(insn) -> bool:
     """verify instruction moves immediate onto stack"""
-    if insn.getMnemonicString() != "MOV":
-        return False
 
-    if not helpers.is_op_stack_var(insn.ea, 0):
-        return False
+    # Ghidra will Bitwise OR the OperandTypes to assign multiple
+    # i.e., the first operand is a stackvar (dynamically allocated),
+    # and the second is a scalar value (single int/char/float/etc.)
+    mov_its_ops = [(OperandType.ADDRESS | OperandType.DYNAMIC), OperandType.SCALAR]
 
-    if not insn.get_canon_mnem().startswith("mov"):
-        return False
+    if insn.getMnemonicString() == "MOV":
+        for i in range(2):
+            if insn.getOperandType(i) != mov_its_ops[i]:
+                return False
+        return True
 
-    return True
+    return False
 
 
 def bb_contains_stackstring(bb) -> bool:
