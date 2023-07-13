@@ -85,6 +85,7 @@ SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
 BACKEND_VIV = "vivisect"
 BACKEND_DOTNET = "dotnet"
 BACKEND_BINJA = "binja"
+BACKEND_PEFILE = "pefile"
 
 E_MISSING_RULES = 10
 E_MISSING_FILE = 11
@@ -567,8 +568,12 @@ def get_extractor(
 
         return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
-    # default to use vivisect backend
-    else:
+    elif backend == BACKEND_PEFILE:
+        import capa.features.extractors.pefile
+
+        return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+    elif backend == BACKEND_VIV:
         import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -585,6 +590,9 @@ def get_extractor(
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
+
+    else:
+        raise ValueError("unexpected backend: " + backend)
 
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
@@ -911,7 +919,7 @@ def install_common_args(parser, wanted=None):
             "--backend",
             type=str,
             help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_BINJA),
+            choices=(BACKEND_VIV, BACKEND_BINJA, BACKEND_PEFILE),
             default=BACKEND_VIV,
         )
 
