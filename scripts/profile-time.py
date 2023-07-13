@@ -58,22 +58,16 @@ import capa.features.freeze
 logger = logging.getLogger("capa.profile")
 
 
+def subshell(cmd):
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    label = subprocess.run(
-        "git show --pretty=oneline --abbrev-commit | head -n 1", shell=True, capture_output=True, text=True
-    ).stdout.strip()
-    is_dirty = (
-        subprocess.run(
-            "git status | grep 'modified: ' | grep -v 'rules' | grep -v 'tests/data'",
-            shell=True,
-            capture_output=True,
-            text=True,
-        ).stdout
-        != ""
-    )
+    label = subshell("git show --pretty=oneline --abbrev-commit | head -n 1").strip()
+    is_dirty = subshell("git status | grep 'modified: ' | grep -v 'rules' | grep -v 'tests/data'") != ""
 
     if is_dirty:
         label += " (dirty)"
