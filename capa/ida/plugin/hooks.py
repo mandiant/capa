@@ -30,7 +30,7 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
 
         @retval must be 0
         """
-        self.process_action_handle = self.process_action_hooks.get(name, None)
+        self.process_action_handle = self.process_action_hooks.get(name)
 
         if self.process_action_handle:
             self.process_action_handle(self.process_action_meta)

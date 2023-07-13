@@ -72,7 +72,7 @@ def load_analysis(bv):
     md5 = binaryninja.Transform["MD5"]
     rawhex = binaryninja.Transform["RawHex"]
     b = rawhex.encode(md5.encode(bv.parent_view.read(bv.parent_view.start, bv.parent_view.end))).decode("utf-8")
-    if not a == b:
+    if a != b:
         binaryninja.log_error("sample mismatch")
         return -2
 

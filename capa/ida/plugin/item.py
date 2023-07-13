@@ -130,8 +130,7 @@ class CapaExplorerDataItem:
 
     def children(self) -> Iterator["CapaExplorerDataItem"]:
         """yield children"""
-        for child in self._children:
-            yield child
+        yield from self._children
 
     def removeChildren(self):
         """remove children"""

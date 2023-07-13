@@ -53,9 +53,7 @@ class BinjaFeatureExtractor(FeatureExtractor):
             mlil_lookup[mlil_bb.source_block.start] = mlil_bb
 
         for bb in f.basic_blocks:
-            mlil_bb = None
-            if bb.start in mlil_lookup:
-                mlil_bb = mlil_lookup[bb.start]
+            mlil_bb = mlil_lookup.get(bb.start)
 
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=(bb, mlil_bb))
 

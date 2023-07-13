@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import textwrap
+import contextlib
 
 import capa.rules
 import capa.rules.cache
@@ -74,10 +75,8 @@ def test_ruleset_cache_save_load():
     cache_dir = capa.rules.cache.get_default_cache_directory()
 
     path = capa.rules.cache.get_cache_path(cache_dir, id)
-    try:
+    with contextlib.suppress(OSError):
         path.unlink()
-    except OSError:
-        pass
 
     capa.rules.cache.cache_ruleset(cache_dir, rs)
     assert path.exists()
@@ -91,10 +90,8 @@ def test_ruleset_cache_invalid():
     id = capa.rules.cache.compute_cache_identifier(content)
     cache_dir = capa.rules.cache.get_default_cache_directory()
     path = capa.rules.cache.get_cache_path(cache_dir, id)
-    try:
+    with contextlib.suppress(OSError):
         path.unlink()
-    except OSError:
-        pass
 
     capa.rules.cache.cache_ruleset(cache_dir, rs)
     assert path.exists()

@@ -327,10 +327,9 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
 
 def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
-    for rule_name in capabilities.keys():
-        if rules.rules[rule_name].meta.get("namespace", "").startswith(namespace):
-            return True
-    return False
+    return any(
+        rules.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
+    )
 
 
 def is_internal_rule(rule: Rule) -> bool:
