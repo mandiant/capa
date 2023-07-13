@@ -2,12 +2,12 @@
 # https://blog.trailofbits.com/2023/05/23/trusted-publishing-a-new-benchmark-for-packaging-security/
 name: publish to pypi
 
-permissions:
-  contents: write
-
 on:
   release:
     types: [published]
+
+permissions:
+  contents: write
 
 jobs:
   pypi-publish:

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -14,10 +14,6 @@ import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
-from capa.features.extractors.base_extractor import FunctionHandle
-
-currentProgram: ghidra.program.database.ProgramDB
-monitor: ghidra.util.task.TaskMonitor
 
 
 def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
@@ -30,8 +26,8 @@ def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
 def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
     edges = []
 
-    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):
-        dests = block.getDestinations(monitor)
+    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
+        dests = block.getDestinations(monitor)  # type: ignore [name-defined] # noqa: F821
         s_addrs = block.getStartAddresses()
 
         while dests.hasNext():  # For loop throws Python TypeError
@@ -43,7 +39,7 @@ def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
 
 
 def extract_recursive_call(fh: ghidra.program.database.function.FunctionDB):
-    for f in fh.getCalledFunctions(monitor):
+    for f in fh.getCalledFunctions(monitor):  # type: ignore [name-defined] # noqa: F821
         if f.getEntryPoint().getOffset() == fh.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
@@ -65,7 +61,7 @@ def main():
 
     import pprint
 
-    pprint.pprint(features)
+    pprint.pprint(features)  # noqa: T203
 
 
 if __name__ == "__main__":

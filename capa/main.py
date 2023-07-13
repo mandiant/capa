@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -266,6 +266,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
             pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
             for f in pb:
+                t0 = time.time()
                 if extractor.is_library_function(f.address):
                     function_name = extractor.get_function_name(f.address)
                     logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
@@ -284,7 +285,18 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
                 feature_counts.functions += (
                     rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
                 )
-                logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
+                t1 = time.time()
+
+                match_count = sum(len(res) for res in function_matches.values())
+                match_count += sum(len(res) for res in bb_matches.values())
+                match_count += sum(len(res) for res in insn_matches.values())
+                logger.debug(
+                    "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
+                    f.address,
+                    feature_count,
+                    match_count,
+                    t1 - t0,
+                )
 
                 for rule_name, res in function_matches.items():
                     all_function_matches[rule_name].extend(res)
@@ -1060,7 +1072,7 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def main(argv=None):
+def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
@@ -1238,7 +1250,7 @@ def main(argv=None):
                     args.backend,
                     sig_paths,
                     should_save_workspace,
-                    disable_progress=args.quiet,
+                    disable_progress=args.quiet or args.debug,
                 )
             except UnsupportedFormatError:
                 log_unsupported_format_error()
@@ -1353,31 +1365,13 @@ def ghidra_main():
 
     import pprint
 
-    pprint.pprint(ghidra_features)
-
-
-def is_runtime_ida():
-    try:
-        import idc
-    except ImportError:
-        return False
-    else:
-        return True
-
-
-def is_runtime_ghidra():
-    try:
-        import ghidra.program.flatapi
-    except ImportError:
-        return False
-    else:
-        return True
+    pprint.pprint(ghidra_features)  # noqa: T203
 
 
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
-    elif is_runtime_ghidra():
+    elif capa.helpers.is_runtime_ghidra():
         ghidra_main()
     else:
         sys.exit(main())

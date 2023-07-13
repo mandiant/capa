@@ -1,17 +1,15 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import os
 import logging
 from pathlib import Path
 
 import pytest
 import fixtures
-from fixtures import scope, sample
 
 import capa.main
 
@@ -59,7 +57,7 @@ def test_binja_feature_counts(sample, scope, feature, expected):
 def test_standalone_binja_backend():
     CD = Path(__file__).resolve().parent
     test_path = CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
-    assert capa.main.main([test_path, "-b", capa.main.BACKEND_BINJA]) == 0
+    assert capa.main.main([str(test_path), "-b", capa.main.BACKEND_BINJA]) == 0
 
 
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")

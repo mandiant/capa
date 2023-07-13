@@ -4,6 +4,8 @@ on:
   release:
     types: [published]
 
+permissions: read-all
+
 jobs:
   tag:
     name: Tag capa rules
