@@ -1250,7 +1250,7 @@ def main(argv: Optional[List[str]] = None):
                     args.backend,
                     sig_paths,
                     should_save_workspace,
-                    disable_progress=args.quiet,
+                    disable_progress=args.quiet or args.debug,
                 )
             except UnsupportedFormatError:
                 log_unsupported_format_error()
