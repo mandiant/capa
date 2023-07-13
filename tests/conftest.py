@@ -14,7 +14,7 @@
 # https://www.revsys.com/tidbits/pytest-fixtures-are-magic/
 # https://lobste.rs/s/j8xgym/pytest_fixtures_are_magic
 from fixtures import *  # noqa: F403 [unable to detect undefined names]
-from fixtures import _039a6_dotnetfile_extractor  # noqa: F403 [unable to detect undefined names]
-from fixtures import _0953c_dotnetfile_extractor  # noqa: F403 [unable to detect undefined names]
-from fixtures import _692f_dotnetfile_extractor  # noqa: F403 [unable to detect undefined names]
-from fixtures import _1c444_dotnetfile_extractor  # noqa: F403 [unable to detect undefined names]
+from fixtures import _039a6_dotnetfile_extractor  # noqa: F401 [imported but unused]
+from fixtures import _0953c_dotnetfile_extractor  # noqa: F401 [imported but unused]
+from fixtures import _692f_dotnetfile_extractor  # noqa: F401 [imported but unused]
+from fixtures import _1c444_dotnetfile_extractor  # noqa: F401 [imported but unused]
