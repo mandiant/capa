@@ -77,7 +77,7 @@ dev = [
     "flake8-simplify==0.20.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.0.277",
+    "ruff==0.0.278",
     "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.4.1",
