@@ -266,6 +266,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
             pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
             for f in pb:
+                t0 = time.time()
                 if extractor.is_library_function(f.address):
                     function_name = extractor.get_function_name(f.address)
                     logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
@@ -284,7 +285,18 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
                 feature_counts.functions += (
                     rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
                 )
-                logger.debug("analyzed function 0x%x and extracted %d features", f.address, feature_count)
+                t1 = time.time()
+
+                match_count = sum(len(res) for res in function_matches.values())
+                match_count += sum(len(res) for res in bb_matches.values())
+                match_count += sum(len(res) for res in insn_matches.values())
+                logger.debug(
+                    "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
+                    f.address,
+                    feature_count,
+                    match_count,
+                    t1 - t0,
+                )
 
                 for rule_name, res in function_matches.items():
                     all_function_matches[rule_name].extend(res)
