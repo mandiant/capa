@@ -26,6 +26,7 @@ listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F82
 def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
     """Return string length if all operand bytes are ascii or utf16-le printable"""
     op_bit_len = op.bitLength()
+    op_byte_len = op_bit_len // 8
     op_val = op.getValue()
 
     if op_bit_len == 8:
@@ -47,10 +48,10 @@ def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
             return is_printable_ascii(chars_[::2])
 
     if is_printable_ascii(chars):
-        return int(op_bit_len / 8)
+        return op_byte_len
 
     if is_printable_utf16le(chars):
-        return int(op_bit_len / 8)
+        return op_byte_len
 
     return 0
 
@@ -65,7 +66,7 @@ def is_mov_imm_to_stack(insn: ghidra.program.database.code.InstructionDB) -> boo
     found = False
 
     # MOV dword ptr [EBP + local_*], 0x65
-    if insn.getMnemonicString() == "MOV":
+    if insn.getMnemonicString().startswith("MOV"):
         found = all(insn.getOperandType(i) == mov_its_ops[i] for i in range(2))
 
     return found
@@ -79,7 +80,7 @@ def bb_contains_stackstring(bb: ghidra.program.model.block.CodeBlock) -> bool:
     count = 0
     for insn in listing.getInstructions(bb, True):
         if is_mov_imm_to_stack(insn):
-            count += get_printable_len(insn.getOpObjects(1)[0])
+            count += get_printable_len(insn.getScalar(1))
         if count > MIN_STACKSTRING_LEN:
             return True
     return False
@@ -89,12 +90,10 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
     """
-    last_insn = listing.getInstructionAt(bb.getMaxAddress().add(-0x1))  # all last insns are TERMINATOR
+    last_insn = listing.getCodeUnits(bb, False).next()  # Reverse Ordered, first InstructionDB
 
-    if last_insn:
-        if last_insn.getFlowType().isJump():
-            if last_insn.getOpObjects(0)[0].getOffset() == bb.getMinAddress().getOffset():
-                return True
+    if last_insn.getFlowType().isJump():
+        return last_insn.getAddress(0) == bb.getMinAddress()
 
     return False
 
