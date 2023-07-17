@@ -89,15 +89,8 @@ def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
         if forwarded_name is None:
             yield Export(name), AbsoluteVirtualAddress(ea)
         else:
-            # use rpartition so we can split on separator between dll and name.
-            # the dll name can be a full path, like in the case of
-            # ef64d6d7c34250af8e21a10feb931c9b
-            # which i assume means the path can have embedded periods.
-            # so we don't want the first period, we want the last.
-            forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
-            forwarded_dll = forwarded_dll.lower()
-
-            yield Export(f"{forwarded_dll}.{forwarded_symbol}"), AbsoluteVirtualAddress(ea)
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
+            yield Export(forwarded_name), AbsoluteVirtualAddress(ea)
             yield Characteristic("forwarded export"), AbsoluteVirtualAddress(ea)
 
 

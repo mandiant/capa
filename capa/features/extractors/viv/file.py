@@ -16,7 +16,7 @@ import capa.features.insn
 import capa.features.extractors.common
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
-from capa.features.file import Export, Import, Section, FunctionName
+from capa.features.file import Export, FunctionName, Import, Section
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
@@ -50,16 +50,9 @@ def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[T
             except UnicodeDecodeError:
                 continue
 
-            # use rpartition so we can split on separator between dll and name.
-            # the dll name can be a full path, like in the case of
-            # ef64d6d7c34250af8e21a10feb931c9b
-            # which i assume means the path can have embedded periods.
-            # so we don't want the first period, we want the last.
-            forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
-            forwarded_dll = forwarded_dll.lower()
-
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
             va = baseaddr + rva
-            yield Export(f"{forwarded_dll}.{forwarded_symbol}"), AbsoluteVirtualAddress(va)
+            yield Export(forwarded_name), AbsoluteVirtualAddress(va)
             yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 

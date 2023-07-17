@@ -50,17 +50,9 @@ def extract_file_export_names(pe, **kwargs):
                     forwarded_name = export.forwarder.partition(b"\x00")[0].decode("ascii")
                 except UnicodeDecodeError:
                     continue
-
-                # use rpartition so we can split on separator between dll and name.
-                # the dll name can be a full path, like in the case of
-                # ef64d6d7c34250af8e21a10feb931c9b
-                # which i assume means the path can have embedded periods.
-                # so we don't want the first period, we want the last.
-                forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
-                forwarded_dll = forwarded_dll.lower()
-
+                forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
                 va = base_address + export.address
-                yield Export(f"{forwarded_dll}.{forwarded_symbol}"), AbsoluteVirtualAddress(va)
+                yield Export(forwarded_name), AbsoluteVirtualAddress(va)
                 yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 
