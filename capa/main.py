@@ -22,7 +22,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, cast
+from typing import Any, Dict, List, Tuple, Callable
 
 import halo
 import tqdm
@@ -84,6 +84,8 @@ from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
+    ThreadHandle,
+    ProcessHandle,
     FunctionHandle,
     FeatureExtractor,
     StaticFeatureExtractor,
@@ -264,6 +266,7 @@ def find_static_capabilities(
     feature_counts = rdoc.FeatureCounts(file=0, functions=())
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
             pbar = tqdm.tqdm
@@ -338,13 +341,131 @@ def find_static_capabilities(
     return matches, meta
 
 
+def find_thread_capabilities(
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle, th: ThreadHandle
+) -> Tuple[FeatureSet, MatchResults]:
+    """
+    find matches for the given rules for the given thread.
+
+    returns: tuple containing (features for thread, match results for thread)
+    """
+    # all features found for the instruction.
+    features = collections.defaultdict(set)  # type: FeatureSet
+
+    for feature, addr in itertools.chain(
+        extractor.extract_thread_features(ph, th), extractor.extract_global_features()
+    ):
+        features[feature].add(addr)
+
+    # matches found at this instruction.
+    _, matches = ruleset.match(Scope.THREAD, features, th.address)
+
+    for rule_name, res in matches.items():
+        rule = ruleset[rule_name]
+        for addr, _ in res:
+            capa.engine.index_rule_matches(features, rule, [addr])
+
+    return features, matches
+
+
+def find_process_capabilities(
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, ph: ProcessHandle
+) -> Tuple[MatchResults, MatchResults, int]:
+    """
+    find matches for the given rules within the given process.
+
+    returns: tuple containing (match results for process, match results for threads, number of features)
+    """
+    # all features found within this process,
+    # includes features found within threads.
+    process_features = collections.defaultdict(set)  # type: FeatureSet
+
+    # matches found at the thread scope.
+    # might be found at different threads, thats ok.
+    thread_matches = collections.defaultdict(list)  # type: MatchResults
+
+    for th in extractor.get_threads(ph):
+        features, tmatches = find_thread_capabilities(ruleset, extractor, ph, th)
+        for feature, vas in features.items():
+            process_features[feature].update(vas)
+
+        for rule_name, res in tmatches.items():
+            thread_matches[rule_name].extend(res)
+
+    for feature, va in itertools.chain(extractor.extract_process_features(ph), extractor.extract_global_features()):
+        process_features[feature].add(va)
+
+    _, process_matches = ruleset.match(Scope.PROCESS, process_features, ph.address)
+    return process_matches, thread_matches, len(process_features)
+
+
+def find_dynamic_capabilities(
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
+) -> Tuple[MatchResults, Any]:
+    all_process_matches = collections.defaultdict(list)  # type: MatchResults
+    all_thread_matches = collections.defaultdict(list)  # type: MatchResults
+
+    feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
+
+    assert isinstance(extractor, DynamicFeatureExtractor)
+    with redirecting_print_to_tqdm(disable_progress):
+        with tqdm.contrib.logging.logging_redirect_tqdm():
+            pbar = tqdm.tqdm
+            if disable_progress:
+                # do not use tqdm to avoid unnecessary side effects when caller intends
+                # to disable progress completely
+                def pbar(s, *args, **kwargs):
+                    return s
+
+            processes = list(extractor.get_processes())
+
+            pb = pbar(processes, desc="matching", unit=" processes", leave=False)
+            for p in pb:
+                process_matches, thread_matches, feature_count = find_process_capabilities(ruleset, extractor, p)
+                feature_counts.processes += (
+                    rdoc.ProcessFeatureCount(address=frz.Address.from_capa(p.address), count=feature_count),
+                )
+                logger.debug("analyzed process 0x%x and extracted %d features", p.address, feature_count)
+
+                for rule_name, res in process_matches.items():
+                    all_process_matches[rule_name].extend(res)
+                for rule_name, res in thread_matches.items():
+                    all_thread_matches[rule_name].extend(res)
+
+    # collection of features that captures the rule matches within process and thread scopes.
+    # mapping from feature (matched rule) to set of addresses at which it matched.
+    process_and_lower_features: FeatureSet = collections.defaultdict(set)
+    for rule_name, results in itertools.chain(all_process_matches.items(), all_thread_matches.items()):
+        locations = {p[0] for p in results}
+        rule = ruleset[rule_name]
+        capa.engine.index_rule_matches(process_and_lower_features, rule, locations)
+
+    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, process_and_lower_features)
+    feature_counts.file = feature_count
+
+    matches = dict(
+        itertools.chain(
+            # each rule exists in exactly one scope,
+            # so there won't be any overlap among these following MatchResults,
+            # and we can merge the dictionaries naively.
+            all_thread_matches.items(),
+            all_process_matches.items(),
+            all_file_matches.items(),
+        )
+    )
+
+    meta = {
+        "feature_counts": feature_counts,
+    }
+
+    return matches, meta
+
+
 def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
     if isinstance(extractor, StaticFeatureExtractor):
-        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
-        return find_static_capabilities(ruleset, extractor_, kwargs)
+        return find_static_capabilities(ruleset, extractor, kwargs)
     elif isinstance(extractor, DynamicFeatureExtractor):
-        # extractor_ = cast(DynamicFeatureExtractor, extractor)
-        raise NotImplementedError()
+        return find_dynamic_capabilities(ruleset, extractor, kwargs)
     else:
         raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
@@ -773,6 +894,72 @@ def get_signatures(sigs_path):
     return paths
 
 
+def get_sample_hashes(sample_path, extractor: FeatureExtractor) -> Tuple[str, str, str]:
+    if isinstance(extractor, StaticFeatureExtractor):
+        md5_ = hashlib.md5()
+        sha1_ = hashlib.sha1()
+        sha256_ = hashlib.sha256()
+
+        with open(sample_path, "rb") as f:
+            buf = f.read()
+
+        md5_.update(buf)
+        sha1_.update(buf)
+        sha256_.update(buf)
+
+        md5, sha1, sha256 = md5_.hexdigest(), sha1_.hexdigest(), sha256_.hexdigest()
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        import json
+
+        if isinstance(extractor, capa.features.extractors.cape.extractor.CapeExtractor):
+            with open(sample_path, "rb") as f:
+                report = json.load(f)
+            md5 = report["target"]["file"]["md5"]
+            sha1 = report["target"]["file"]["sha1"]
+            sha256 = report["target"]["file"]["sha256"]
+        else:
+            md5, sha1, sha256 = "0", "0", "0"
+    else:
+        raise ValueError("invalid extractor")
+
+    return md5, sha1, sha256
+
+
+def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
+    if isinstance(extractor, StaticFeatureExtractor):
+        return rdoc.StaticAnalysis(
+            format=format_,
+            arch=arch,
+            os=os_,
+            extractor=extractor.__class__.__name__,
+            rules=tuple(rules_path),
+            base_address=frz.Address.from_capa(extractor.get_base_address()),
+            layout=rdoc.StaticLayout(
+                functions=(),
+                # this is updated after capabilities have been collected.
+                # will look like:
+                #
+                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
+            ),
+            feature_counts=counts["feature_counts"],
+            library_functions=counts["library_functions"],
+        )
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return rdoc.DynamicAnalysis(
+            format=format_,
+            arch=arch,
+            os=os_,
+            extractor=extractor.__class__.__name__,
+            rules=tuple(rules_path),
+            layout=rdoc.DynamicLayout(
+                processes=(),
+            ),
+            feature_counts=counts["feature_counts"],
+        )
+    else:
+        raise ValueError("invalid extractor type")
+
+
 def collect_metadata(
     argv: List[str],
     sample_path: str,
@@ -780,18 +967,11 @@ def collect_metadata(
     os_: str,
     rules_path: List[str],
     extractor: FeatureExtractor,
+    counts: dict,
 ) -> rdoc.Metadata:
-    md5 = hashlib.md5()
-    sha1 = hashlib.sha1()
-    sha256 = hashlib.sha256()
-
-    assert isinstance(extractor, StaticFeatureExtractor)
-    with open(sample_path, "rb") as f:
-        buf = f.read()
-
-    md5.update(buf)
-    sha1.update(buf)
-    sha256.update(buf)
+    # if it's a binary sample we hash it, if it's a report
+    # we fetch the hashes from the report
+    md5, sha1, sha256 = get_sample_hashes(sample_path, extractor)
 
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]
@@ -799,39 +979,72 @@ def collect_metadata(
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
-    base_addr = extractor.get_base_address() if hasattr(extractor, "get_base_address") else NO_ADDRESS
 
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),
         version=capa.version.__version__,
         argv=tuple(argv) if argv else None,
         sample=rdoc.Sample(
-            md5=md5.hexdigest(),
-            sha1=sha1.hexdigest(),
-            sha256=sha256.hexdigest(),
+            md5=md5,
+            sha1=sha1,
+            sha256=sha256,
             path=os.path.normpath(sample_path),
         ),
-        analysis=rdoc.Analysis(
-            format=format_,
-            arch=arch,
-            os=os_,
-            extractor=extractor.__class__.__name__,
-            rules=tuple(rules_path),
-            base_address=frz.Address.from_capa(base_addr),
-            layout=rdoc.Layout(
-                functions=(),
-                # this is updated after capabilities have been collected.
-                # will look like:
-                #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
-            ),
-            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
-            library_functions=(),
+        analysis=get_sample_analysis(
+            format_,
+            arch,
+            os_,
+            extractor,
+            rules_path,
+            counts,
         ),
     )
 
 
-def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
+def compute_dynamic_layout(rules, extractor, capabilities) -> rdoc.Layout:
+    """
+    compute a metadata structure that links threads
+    to the processes in which they're found.
+
+    only collect the threads at which some rule matched.
+    otherwise, we may pollute the json document with
+    a large amount of un-referenced data.
+    """
+    assert isinstance(extractor, DynamicFeatureExtractor)
+    processes_by_thread: Dict[Address, Address] = {}
+    threads_by_processes: Dict[Address, List[Address]] = {}
+    for p in extractor.get_processes():
+        threads_by_processes[p.address] = []
+        for t in extractor.get_threads(p):
+            processes_by_thread[t.address] = p.address
+            threads_by_processes[p.address].append(t.address)
+
+    matched_threads = set()
+    for rule_name, matches in capabilities.items():
+        rule = rules[rule_name]
+        if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.get("scopes")["dynamic"]:
+            for addr, _ in matches:
+                assert addr in processes_by_thread
+                matched_threads.add(addr)
+
+    layout = rdoc.DynamicLayout(
+        processes=tuple(
+            rdoc.ProcessLayout(
+                address=frz.Address.from_capa(p),
+                matched_threads=tuple(
+                    rdoc.ThreadLayout(address=frz.Address.from_capa(t)) for t in threads if t in matched_threads
+                )  # this object is open to extension in the future,
+                # such as with the function name, etc.
+            )
+            for p, threads in threads_by_processes.items()
+            if len([t for t in threads if t in matched_threads]) > 0
+        )
+    )
+
+    return layout
+
+
+def compute_static_layout(rules, extractor, capabilities) -> rdoc.Layout:
     """
     compute a metadata structure that links basic blocks
     to the functions in which they're found.
@@ -840,6 +1053,7 @@ def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     otherwise, we may pollute the json document with
     a large amount of un-referenced data.
     """
+    assert isinstance(extractor, StaticFeatureExtractor)
     functions_by_bb: Dict[Address, Address] = {}
     bbs_by_function: Dict[Address, List[Address]] = {}
     for f in extractor.get_functions():
@@ -851,12 +1065,12 @@ def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
+        if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.get("scopes")["static"]:
             for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
 
-    layout = rdoc.Layout(
+    layout = rdoc.StaticLayout(
         functions=tuple(
             rdoc.FunctionLayout(
                 address=frz.Address.from_capa(f),
@@ -871,6 +1085,15 @@ def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     )
 
     return layout
+
+
+def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
+    if isinstance(extractor, StaticFeatureExtractor):
+        return compute_static_layout(rules, extractor, capabilities)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return compute_dynamic_layout(rules, extractor, capabilities)
+    else:
+        raise ValueError("extractor must be either a static or dynamic extracotr")
 
 
 def install_common_args(parser, wanted=None):
@@ -1308,12 +1531,9 @@ def main(argv=None):
                 log_unsupported_os_error()
                 return E_INVALID_FILE_OS
 
-        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
-
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta.analysis.feature_counts = counts["feature_counts"]
-        meta.analysis.library_functions = counts["library_functions"]
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
         if has_file_limitation(rules, capabilities):

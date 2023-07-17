@@ -267,6 +267,8 @@ def render_rules(ostream, doc: rd.ResultDocument):
             api: kernel32.GetLastError @ 0x10004A87
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
+
+    assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
     functions_by_bb: Dict[capa.features.address.Address, capa.features.address.Address] = {}
     for finfo in doc.meta.analysis.layout.functions:
         faddress = finfo.address.to_capa()
@@ -322,7 +324,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
-        rows.append(("scope", rule.meta.scope.value))
+        rows.append(("scopes", str(rule.meta.scopes)))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
@@ -338,7 +340,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
-        if rule.meta.scope == capa.rules.FILE_SCOPE:
+        if capa.rules.FILE_SCOPE in rule.meta.scopes:
             matches = doc.rules[rule.meta.name].matches
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
@@ -350,11 +352,11 @@ def render_rules(ostream, doc: rd.ResultDocument):
             render_match(ostream, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
-                ostream.write(rule.meta.scope)
+                ostream.write(rule.meta.scopes)
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
-                if rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+                if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.scopes:
                     ostream.write(
                         " in function "
                         + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))

@@ -10,6 +10,7 @@ import collections
 from typing import Dict, List, Tuple, Union, Optional
 
 from pydantic import Field, BaseModel
+from typing_extensions import TypeAlias
 
 import capa.rules
 import capa.engine
@@ -49,8 +50,24 @@ class FunctionLayout(Model):
     matched_basic_blocks: Tuple[BasicBlockLayout, ...]
 
 
-class Layout(Model):
+class ThreadLayout(Model):
+    address: frz.Address
+
+
+class ProcessLayout(Model):
+    address: frz.Address
+    matched_threads: Tuple[ThreadLayout, ...]
+
+
+class StaticLayout(Model):
     functions: Tuple[FunctionLayout, ...]
+
+
+class DynamicLayout(Model):
+    processes: Tuple[ProcessLayout, ...]
+
+
+Layout: TypeAlias = Union[StaticLayout, DynamicLayout]
 
 
 class LibraryFunction(Model):
@@ -63,21 +80,47 @@ class FunctionFeatureCount(Model):
     count: int
 
 
-class FeatureCounts(Model):
+class ProcessFeatureCount(Model):
+    address: frz.Address
+    count: int
+
+
+class StaticFeatureCounts(Model):
     file: int
     functions: Tuple[FunctionFeatureCount, ...]
 
 
-class Analysis(Model):
+class DynamicFeatureCounts(Model):
+    file: int
+    processes: Tuple[ProcessFeatureCount, ...]
+
+
+FeatureCounts: TypeAlias = Union[StaticFeatureCounts, DynamicFeatureCounts]
+
+
+class StaticAnalysis(Model):
     format: str
     arch: str
     os: str
     extractor: str
     rules: Tuple[str, ...]
     base_address: frz.Address
-    layout: Layout
-    feature_counts: FeatureCounts
+    layout: StaticLayout
+    feature_counts: StaticFeatureCounts
     library_functions: Tuple[LibraryFunction, ...]
+
+
+class DynamicAnalysis(Model):
+    format: str
+    arch: str
+    os: str
+    extractor: str
+    rules: Tuple[str, ...]
+    layout: DynamicLayout
+    feature_counts: DynamicFeatureCounts
+
+
+Analysis: TypeAlias = Union[StaticAnalysis, DynamicAnalysis]
 
 
 class Metadata(Model):
@@ -510,7 +553,7 @@ class RuleMetadata(FrozenModel):
     name: str
     namespace: Optional[str]
     authors: Tuple[str, ...]
-    scope: capa.rules.Scope
+    scopes: capa.rules.Scopes
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
     mbc: Tuple[MBCSpec, ...]
     references: Tuple[str, ...]
@@ -527,7 +570,7 @@ class RuleMetadata(FrozenModel):
             name=rule.meta.get("name"),
             namespace=rule.meta.get("namespace"),
             authors=rule.meta.get("authors"),
-            scope=capa.rules.Scope(rule.meta.get("scope")),
+            scopes=capa.rules.Scopes.from_dict(rule.meta.get("scopes")),
             attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
             mbc=tuple(map(MBCSpec.from_str, rule.meta.get("mbc", []))),
             references=rule.meta.get("references", []),
