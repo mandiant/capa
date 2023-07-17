@@ -349,7 +349,7 @@ def find_thread_capabilities(
 
     returns: tuple containing (features for thread, match results for thread)
     """
-    # all features found for the instruction.
+    # all features found for the thread.
     features = collections.defaultdict(set)  # type: FeatureSet
 
     for feature, addr in itertools.chain(
@@ -357,7 +357,7 @@ def find_thread_capabilities(
     ):
         features[feature].add(addr)
 
-    # matches found at this instruction.
+    # matches found at this thread.
     _, matches = ruleset.match(Scope.THREAD, features, th.address)
 
     for rule_name, res in matches.items():
