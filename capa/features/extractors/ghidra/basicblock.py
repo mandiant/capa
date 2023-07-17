@@ -90,7 +90,7 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
     """
-    last_insn = listing.getCodeUnits(bb, False).next()  # Reverse Ordered, first InstructionDB
+    last_insn = listing.getInstructions(bb, False).next()  # Reverse Ordered, first InstructionDB
 
     if last_insn.getFlowType().isJump():
         return last_insn.getAddress(0) == bb.getMinAddress()
