@@ -9,8 +9,8 @@ on:
   release:
     types: [published]
 
-#permissions:
-#  contents: write
+permissions:
+  contents: write
 
 jobs:
   pypi-publish:
@@ -36,14 +36,6 @@ jobs:
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           path: dist/*
-      #- name: upload package to GitHub release
-      #  uses: svenstaro/upload-release-action@2728235f7dc9ff598bd86ce3c274b74f802d2208 # v2
-      #  with:
-      #    repo_token: ${{ secrets.GITHUB_TOKEN}}
-      #    file: dist/*
-      #    tag: ${{ github.ref }}
-      #    overwrite: true
-      #    file_glob: true
       - name: publish package
         uses: pypa/gh-action-pypi-publish@f5622bde02b04381239da3573277701ceca8f6a0  # release/v1
         with:
