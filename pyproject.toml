@@ -18,6 +18,7 @@ authors = [
     {name = "Mike Hunhoff", email = "michael.hunhoff@mandiant.com"},
 ]
 description = "The FLARE team's open-source tool to identify capabilities in executable files."
+readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 keywords = ["malware analysis", "reverse engineering", "capability detection", "software behaviors", "capa", "FLARE"]
@@ -50,11 +51,10 @@ dependencies = [
     "pydantic==1.10.9",
     "protobuf==4.23.4",
 ]
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = {attr = "capa.version.__version__"}
-readme = {file = "README.md"}
 
 [tool.setuptools]
 packages = ["capa"]
