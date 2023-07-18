@@ -6,8 +6,8 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
+#permissions:
+#  contents: write
 
 jobs:
   pypi-publish:
