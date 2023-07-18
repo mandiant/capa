@@ -21,7 +21,13 @@ import capa.features.extractors.dnfile.function
 from capa.features.common import Feature
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress, DNTokenOffsetAddress
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 from capa.features.extractors.dnfile.helpers import (
     get_dotnet_types,
     get_dotnet_fields,
@@ -71,6 +77,8 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: str):
         super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(path)
+        with open(path, "rb") as f:
+            self.sample_hashes = SampleHashes.from_sample(f.read())
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
@@ -84,6 +92,9 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
     def get_base_address(self):
         return NO_ADDRESS
+
+    def get_sample_hashes(self):
+        return tuple(self.sample_hashes)
 
     def extract_global_features(self):
         yield from self.global_features

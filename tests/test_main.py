@@ -541,7 +541,7 @@ def test_main_dotnet4(_039a6_dotnetfile_extractor):
     assert capa.main.main([path, "-vv"]) == 0
 
 
-@pytest.mark.xfail(reason="ResultDocument hasn't been updated yet")
+@pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_main_rd():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
     assert capa.main.main([path, "-vv"]) == 0

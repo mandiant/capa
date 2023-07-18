@@ -13,7 +13,6 @@ import os
 import sys
 import json
 import time
-import hashlib
 import logging
 import os.path
 import argparse
@@ -263,7 +262,7 @@ def find_static_capabilities(
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
 
-    feature_counts = rdoc.FeatureCounts(file=0, functions=())
+    feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
 
     assert isinstance(extractor, StaticFeatureExtractor)
@@ -894,37 +893,6 @@ def get_signatures(sigs_path):
     return paths
 
 
-def get_sample_hashes(sample_path, extractor: FeatureExtractor) -> Tuple[str, str, str]:
-    if isinstance(extractor, StaticFeatureExtractor):
-        md5_ = hashlib.md5()
-        sha1_ = hashlib.sha1()
-        sha256_ = hashlib.sha256()
-
-        with open(sample_path, "rb") as f:
-            buf = f.read()
-
-        md5_.update(buf)
-        sha1_.update(buf)
-        sha256_.update(buf)
-
-        md5, sha1, sha256 = md5_.hexdigest(), sha1_.hexdigest(), sha256_.hexdigest()
-    elif isinstance(extractor, DynamicFeatureExtractor):
-        import json
-
-        if isinstance(extractor, capa.features.extractors.cape.extractor.CapeExtractor):
-            with open(sample_path, "rb") as f:
-                report = json.load(f)
-            md5 = report["target"]["file"]["md5"]
-            sha1 = report["target"]["file"]["sha1"]
-            sha256 = report["target"]["file"]["sha256"]
-        else:
-            md5, sha1, sha256 = "0", "0", "0"
-    else:
-        raise ValueError("invalid extractor")
-
-    return md5, sha1, sha256
-
-
 def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
     if isinstance(extractor, StaticFeatureExtractor):
         return rdoc.StaticAnalysis(
@@ -971,7 +939,7 @@ def collect_metadata(
 ) -> rdoc.Metadata:
     # if it's a binary sample we hash it, if it's a report
     # we fetch the hashes from the report
-    md5, sha1, sha256 = get_sample_hashes(sample_path, extractor)
+    md5, sha1, sha256 = extractor.get_sample_hashes()
 
     if rules_path != [RULES_PATH_DEFAULT_STRING]:
         rules_path = [os.path.abspath(os.path.normpath(r)) for r in rules_path]

@@ -130,6 +130,7 @@ def cmp_optional(a: Any, b: Any) -> bool:
 
 
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
+    assert isinstance(rd.Metadata.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     if meta.argv is None:

@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import hashlib
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
@@ -20,24 +19,25 @@ import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class VivisectFeatureExtractor(FeatureExtractor):
+class VivisectFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, vw, path, os):
         super().__init__()
         self.vw = vw
         self.path = path
-        with open(self.path, "rb") as f:
+        with open(path, "rb") as f:
             self.buf = f.read()
-
-        self.sample_hashes = (
-            hashlib.md5().update(self.buf).hexdigest(),
-            hashlib.sha1().update(self.buf).hexdigest(),
-            hashlib.sha256().update(self.buf).hexdigest(),
-        )
+            self.sample_hashes = SampleHashes.from_sample(self.buf)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
@@ -49,8 +49,8 @@ class VivisectFeatureExtractor(FeatureExtractor):
         # assume there is only one file loaded into the vw
         return AbsoluteVirtualAddress(list(self.vw.filemeta.values())[0]["imagebase"])
 
-    def get_sample_hashes(self) -> Tuple[str, str, str]:
-        return self.sample_hashes
+    def get_sample_hashes(self):
+        return tuple(self.sample_hashes)
 
     def extract_global_features(self):
         yield from self.global_features
