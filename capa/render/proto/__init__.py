@@ -122,6 +122,7 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
 
 
 def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
+    assert isinstance(meta.analysis, rd.StaticAnalysis)
     return capa_pb2.Metadata(
         timestamp=str(meta.timestamp),
         version=meta.version,
