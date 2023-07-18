@@ -68,6 +68,7 @@ import os
 import sys
 import logging
 import argparse
+from typing import Tuple
 from pathlib import Path
 
 import capa.main
@@ -80,8 +81,10 @@ import capa.render.verbose as v
 import capa.features.common
 import capa.features.freeze
 import capa.features.address
+import capa.features.extractors.pefile
 import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
+from capa.features.extractors.base_extractor import FunctionHandle
 
 logger = logging.getLogger("capa.show-features")
 
@@ -100,6 +103,10 @@ def main(argv=None):
     parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
+
+    if args.function and args.backend == "pefile":
+        print("pefile backend does not support extracting function features")
+        return -1
 
     try:
         taste = capa.helpers.get_file_taste(Path(args.sample))
@@ -137,7 +144,12 @@ def main(argv=None):
         for feature, addr in extractor.extract_file_features():
             print(f"file: {format_address(addr)}: {feature}")
 
-    function_handles = tuple(extractor.get_functions())
+    function_handles: Tuple[FunctionHandle, ...]
+    if isinstance(extractor, capa.features.extractors.pefile.PefileFeatureExtractor):
+        # pefile extractor doesn't extract function features
+        function_handles = ()
+    else:
+        function_handles = tuple(extractor.get_functions())
 
     if args.function:
         if args.format == "freeze":

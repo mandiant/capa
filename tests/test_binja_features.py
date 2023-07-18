@@ -12,6 +12,8 @@ import pytest
 import fixtures
 
 import capa.main
+import capa.features.file
+import capa.features.common
 
 logger = logging.getLogger(__file__)
 
@@ -40,6 +42,13 @@ except ImportError:
 def test_binja_features(sample, scope, feature, expected):
     if feature == capa.features.common.Characteristic("stack string"):
         pytest.xfail("skip failing Binja stack string detection temporarily, see #1473")
+
+    if isinstance(feature, capa.features.file.Export) and "." in str(feature.value):
+        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
+
+    if feature == capa.features.common.Characteristic("forwarded export"):
+        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
+
     fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 

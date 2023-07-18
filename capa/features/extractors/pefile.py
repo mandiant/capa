@@ -40,8 +40,20 @@ def extract_file_export_names(pe, **kwargs):
                 name = export.name.partition(b"\x00")[0].decode("ascii")
             except UnicodeDecodeError:
                 continue
-            va = base_address + export.address
-            yield Export(name), AbsoluteVirtualAddress(va)
+
+            if export.forwarder is None:
+                va = base_address + export.address
+                yield Export(name), AbsoluteVirtualAddress(va)
+
+            else:
+                try:
+                    forwarded_name = export.forwarder.partition(b"\x00")[0].decode("ascii")
+                except UnicodeDecodeError:
+                    continue
+                forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
+                va = base_address + export.address
+                yield Export(forwarded_name), AbsoluteVirtualAddress(va)
+                yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 
 def extract_file_import_names(pe, **kwargs):
