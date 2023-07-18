@@ -20,7 +20,7 @@
 - [capa v6.0...master](https://github.com/mandiant/capa/compare/v6.0...master)
 - [capa-rules v6.0...master](https://github.com/mandiant/capa-rules/compare/v6.0...master)
 
-## v6.0
+## v6.0.0
 
 capa v6.0 brings many bug fixes and quality improvements, including 64 rule updates and 26 new rules. We're now publishing to PyPI via [Trusted Publishing](https://blog.pypi.org/posts/2023-04-20-introducing-trusted-publishers/) and have migrated to using a `pyproject.toml` file. @Aayush-Goel-04 contributed a lot of new code across many files, so please welcome them to the project, along with @anders-v @crowface28 @dkelly2e @RonnieSalomonsen and @ejfocampo as first-time rule contributors!
 
@@ -95,8 +95,8 @@ For those that use capa as a library, we've introduced some limited breaking cha
 
 
 ### Raw diffs
-- [capa v5.1.0...v6.0](https://github.com/mandiant/capa/compare/v5.1.0...v6.0)
-- [capa-rules v5.1.0...v6.0](https://github.com/mandiant/capa-rules/compare/v5.1.0...v6.0)
+- [capa v5.1.0...v6.0.0](https://github.com/mandiant/capa/compare/v5.1.0...v6.0.0a1)
+- [capa-rules v5.1.0...v6.0.0](https://github.com/mandiant/capa-rules/compare/v5.1.0...v6.0.0a1)
 
 ## v5.1.0
 capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and a output color format that's easier to read.
