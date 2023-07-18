@@ -64,7 +64,6 @@ For those that use capa as a library, we've introduced some limited breaking cha
 - anti-analysis/anti-av/patch-event-tracing-for-windows-function jakub.jozwiak@mandiant.com
 - data-manipulation/encoding/xor/covertly-decode-and-write-data-to-windows-directory-using-indirect-calls dan.kelly@mandiant.com
 - linking/runtime-linking/resolve-function-by-brute-ratel-badger-hash jakub.jozwiak@mandiant.com
--
 
 ### Bug Fixes
 - extractor: add a Binary Ninja test that asserts its version #1487 @xusheng6
