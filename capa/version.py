@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-__version__ = "6.0.0a3"
+__version__ = "6.0.0a4"
 
 
 def get_major_version():
