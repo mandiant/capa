@@ -150,6 +150,7 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert list(meta.analysis.rules) == dst.analysis.rules
     assert capa.render.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
 
+    assert isinstance(rd.Metadata.analysis.layout, rd.StaticLayout)
     assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)
     for rd_f, proto_f in zip(meta.analysis.layout.functions, dst.analysis.layout.functions):
         assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
