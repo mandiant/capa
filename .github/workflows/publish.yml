@@ -3,6 +3,9 @@
 name: publish to pypi
 
 on:
+  push:
+    branches:
+      - 'williballenthin-patch-1'
   release:
     types: [published]
 
