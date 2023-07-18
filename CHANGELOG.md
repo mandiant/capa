@@ -36,6 +36,7 @@ For those that use capa as a library, we've introduced some limited breaking cha
 - use a class to represent Metadata (not dict) #1411 @Aayush-Goel-04 @manasghandat
 - use pathlib.Path to represent file paths #1534 @Aayush-Goel-04
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
+- Require a Contributor License Agreement (CLA) for PRs going forward #1642 @williballenthin
 
 ### New Rules (26)
 
