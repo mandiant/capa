@@ -14,6 +14,7 @@ import logging
 import pathlib
 import argparse
 import textwrap
+from enum import Enum
 from typing import Literal, Optional, assert_never
 
 import vstruct
@@ -239,6 +240,28 @@ def resolve_register(buf: bytes, mdmp: minidump.MiniDump, v: int) -> Optional[st
     return None
 
 
+class MemoryState(Enum):
+    MEM_COMMIT = 0x01000
+    MEM_RESERVE = 0x02000
+    MEM_FREE = 0x10000
+
+
+class MemoryProtection(Enum):
+    PAGE_NONE = 0x00
+    PAGE_NOACCESS = 0x01
+    PAGE_READONLY = 0x02
+    PAGE_READWRITE = 0x04
+    PAGE_WRITECOPY = 0x08
+    PAGE_EXECUTE = 0x10
+    PAGE_EXECUTE_READ = 0x20
+    PAGE_EXECUTE_READWRITE = 0x40
+    PAGE_EXECUTE_WRITECOPY = 0x80
+    ACCESS_MASK = 0xFF
+    PAGE_GUARD = 0x100
+    PAGE_NOCACHE = 0x200
+    PAGE_WRITECOMBINE = 0x400
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -276,27 +299,8 @@ def main(argv=None):
     mdmp = minidump.parseFromBytes(buf)
     print(mdmp.tree())
 
-    # https://github.com/rust-minidump/rust-minidump/blob/87a29fba5e19cfae5ebf73a57ba31504a3872545/minidump-common/src/format.rs#L1476C1-L1498C45
-    PROCESSOR_ARCHITECTURE_INTEL = 0
-    PROCESSOR_ARCHITECTURE_AMD64 = 9
-
-    if mdmp.MiniDumpSystemInfoStream.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64:
-        arch = "amd64"
-    elif mdmp.MiniDumpSystemInfoStream.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL:
-        arch = "intel"
-    else:
-        raise NotImplementedError(f"unknown processor architecture: {mdmp.SystemInfo.ProcessorArchitecture}")
+    arch = get_arch(mdmp)
     print(f"arch: {arch}")
-    print()
-
-    print("memory map:")
-    try:
-        print(mdmp.getMemoryMaps())
-    except Exception as e:
-        if "MiniDumpMemoryInfoListStream does not exist" in str(e):
-            print("  [no memory map]")
-        else:
-            raise
     print()
 
     print("modules:")
@@ -387,17 +391,33 @@ def main(argv=None):
         for mem in memory_ranges(mdmp):
             if start <= memory_range_start(mem) < end:
                 print(f"    [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}]")
-
     print()
 
-    print("memory ranges:")
-    for mem in sorted(memory_ranges(mdmp), key=lambda mem: mem.StartOfMemoryRange):
-        name = find_name(buf, mdmp, memory_range_start(mem))
+    # these are all the memory ranges in the process virtual memory.
+    # not all of these ranges will be available in the memory dump.
+    # this metadata is also not available in all memory dumps.
+    if hasattr(mdmp, "MiniDumpMemoryInfoListStream"):
+        print("memory regions:")
+        for _, entry in mdmp.MiniDumpMemoryInfoListStream.Entries:
+            name = find_name(buf, mdmp, entry.BaseAddress) or ""
 
-        print(f"  [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}] {name or ''}")
+            state = MemoryState(entry.State).name
+            access = MemoryProtection(entry.Protect & MemoryProtection.ACCESS_MASK.value).name
+
+            start, end = entry.BaseAddress, entry.BaseAddress + entry.RegionSize
+            print(f"  [{start:#016x}-{end:#016x}] {state:<12s} {access:<20s} {name}")
+        print()
+
+    # these are the ranges that are stored within the memory dump
+    print("memory dump ranges:")
+    for mem in sorted(memory_ranges(mdmp), key=lambda mem: mem.StartOfMemoryRange):
+        name = find_name(buf, mdmp, memory_range_start(mem)) or ""
+
+        print(f"  [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}] {name}")
 
         # mbuf = buf[mem.Memory.RVA:mem.Memory.RVA + mem.Memory.DataSize]
         # print(hexdump(mbuf, off=mem.StartOfMemoryRange))
+    print()
 
 
 if __name__ == "__main__":
