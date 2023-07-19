@@ -34,7 +34,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
-        with open(idaapi.get_input_file_path, "rb") as f:
+        with open(idaapi.get_input_file_path(), "rb") as f:
             self.sample_hashes = SampleHashes(f.read())
 
     def get_base_address(self):
