@@ -17,7 +17,13 @@ import capa.features.extractors.binja.function
 import capa.features.extractors.binja.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
@@ -28,9 +34,14 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_os(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_arch(self.bv))
+        with open(self.bv, "rb") as f:
+            self.sample_hashes = SampleHashes.from_sample(f.read())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.bv.start)
+
+    def get_sample_hashes(self):
+        return tuple(self.sample_hashes)
 
     def extract_global_features(self):
         yield from self.global_features

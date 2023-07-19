@@ -71,6 +71,7 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
     )
 
 
+@pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
     # here we print a string with unicode characters in it
     # (specifically, a byte string with utf-8 bytes in it, see file encoding)

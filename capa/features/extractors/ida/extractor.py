@@ -18,7 +18,13 @@ import capa.features.extractors.ida.function
 import capa.features.extractors.ida.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
 class IdaFeatureExtractor(StaticFeatureExtractor):
@@ -28,9 +34,14 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
+        with open(idaapi.get_input_file_path, "rb") as f:
+            self.sample_hashes = SampleHashes(f.read())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
+
+    def get_sample_hashes(self):
+        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features
