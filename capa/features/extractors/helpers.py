@@ -70,6 +70,23 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
             yield symbol[:-1]
 
 
+def reformat_forwarded_export_name(forwarded_name: str) -> str:
+    """
+    a forwarded export has a DLL name/path an symbol name.
+    we want the former to be lowercase, and the latter to be verbatim.
+    """
+
+    # use rpartition so we can split on separator between dll and name.
+    # the dll name can be a full path, like in the case of
+    # ef64d6d7c34250af8e21a10feb931c9b
+    # which i assume means the path can have embedded periods.
+    # so we don't want the first period, we want the last.
+    forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
+    forwarded_dll = forwarded_dll.lower()
+
+    return f"{forwarded_dll}.{forwarded_symbol}"
+
+
 def all_zeros(bytez: bytes) -> bool:
     return all(b == 0 for b in builtins.bytes(bytez))
 

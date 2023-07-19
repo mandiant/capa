@@ -12,6 +12,7 @@ from typing import Tuple, Iterator
 import idc
 import idaapi
 import idautils
+import ida_entry
 
 import capa.features.extractors.common
 import capa.features.extractors.helpers
@@ -83,8 +84,14 @@ def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
-    for _, _, ea, name in idautils.Entries():
-        yield Export(name), AbsoluteVirtualAddress(ea)
+    for _, ordinal, ea, name in idautils.Entries():
+        forwarded_name = ida_entry.get_entry_forwarder(ordinal)
+        if forwarded_name is None:
+            yield Export(name), AbsoluteVirtualAddress(ea)
+        else:
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
+            yield Export(forwarded_name), AbsoluteVirtualAddress(ea)
+            yield Characteristic("forwarded export"), AbsoluteVirtualAddress(ea)
 
 
 def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:

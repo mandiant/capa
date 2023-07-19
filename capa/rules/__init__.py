@@ -106,6 +106,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Class,
         capa.features.common.Namespace,
         capa.features.common.Characteristic("mixed mode"),
+        capa.features.common.Characteristic("forwarded export"),
     },
     FUNCTION_SCOPE: {
         capa.features.common.MatchedRule,

@@ -1,19 +1,43 @@
 # Change Log
 
 ## master (unreleased)
-- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
 
 ### New Features
-- Utility script to detect feature overlap between new and existing CAPA rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
-- use fancy box drawing characters for default output #1586 @williballenthin
-- use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
-- publish via PyPI trusted publishing #1491 @williballenthin
-- migrate to pyproject.toml #1301 @williballenthin
 
 ### Breaking Changes
-- Update Metadata type in capa main [#1411](https://github.com/mandiant/capa/issues/1411) [@Aayush-Goel-04](https://github.com/aayush-goel-04) @manasghandat
+
+### New Rules (1)
+
+- executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v6.0.0...master](https://github.com/mandiant/capa/compare/v6.0.0...master)
+- [capa-rules v6.0.0...master](https://github.com/mandiant/capa-rules/compare/v6.0.0...master)
+
+## v6.0.0
+
+capa v6.0 brings many bug fixes and quality improvements, including 64 rule updates and 26 new rules. We're now publishing to PyPI via [Trusted Publishing](https://blog.pypi.org/posts/2023-04-20-introducing-trusted-publishers/) and have migrated to using a `pyproject.toml` file. @Aayush-Goel-04 contributed a lot of new code across many files, so please welcome them to the project, along with @anders-v @crowface28 @dkelly2e @RonnieSalomonsen and @ejfocampo as first-time rule contributors!
+
+For those that use capa as a library, we've introduced some limited breaking changes that better represent data types (versus less-structured data like dictionaries and strings). With the recent deprecation, we've also dropped support for Python 3.7.
+
+### New Features
+- add script to detect feature overlap between new and existing capa rules [#1451](https://github.com/mandiant/capa/issues/1451) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- extract forwarded exports from PE files #1624 @williballenthin
+- extract function and API names from ELF symtab entries @yelhamer https://github.com/mandiant/capa-rules/issues/736
+- use fancy box drawing characters for default output #1586 @williballenthin
+
+### Breaking Changes
+- use a class to represent Metadata (not dict) #1411 @Aayush-Goel-04 @manasghandat
+- use pathlib.Path to represent file paths #1534 @Aayush-Goel-04
 - Python 3.8 is now the minimum supported Python version #1578 @williballenthin
-- Updated file paths to use pathlib.Path for improved path handling and compatibility [#1534](https://github.com/mandiant/capa/issues/1534) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- Require a Contributor License Agreement (CLA) for PRs going forward #1642 @williballenthin
 
 ### New Rules (26)
 
@@ -42,7 +66,6 @@
 - anti-analysis/anti-av/patch-event-tracing-for-windows-function jakub.jozwiak@mandiant.com
 - data-manipulation/encoding/xor/covertly-decode-and-write-data-to-windows-directory-using-indirect-calls dan.kelly@mandiant.com
 - linking/runtime-linking/resolve-function-by-brute-ratel-badger-hash jakub.jozwiak@mandiant.com
--
 
 
 
@@ -54,14 +77,15 @@
 - symtab: fix struct.unpack() format for 64-bit ELF files @yelhamer
 - symtab: safeguard against ZeroDivisionError for files containing a symtab with a null entry size @yelhamer
 - improve ELF strtab and needed parsing @mr-tz
-- better handle exceptional cases when parsing ELF files [#1458](https://github.com/mandiant/capa/issues/1458) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
-- Improved testing coverage for Binary Ninja Backend [#1446](https://github.com/mandiant/capa/issues/1446) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
-- Add logging and print redirect to tqdm for capa main [#749](https://github.com/mandiant/capa/issues/749) [@Aayush-Goel-04](https://github.com/aayush-goel-04)
+- better handle exceptional cases when parsing ELF files #1458 @Aayush-Goel-04
+- improved testing coverage for Binary Ninja backend #1446 @Aayush-Goel-04
+- add logging and print redirect to tqdm for capa main #749 @Aayush-Goel-04
 - extractor: fix binja installation path detection does not work with Python 3.11
 - tests: refine the IDA test runner script #1513 @williballenthin
 - output: don't leave behind traces of progress bar @williballenthin
 - import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 - main: don't show spinner when emitting debug messages #1636 @williballenthin
+- rules: add forwarded export characteristics to rule syntax file scope #1653 @RonnieSalomonsen
 
 ### capa explorer IDA Pro plugin
 
@@ -69,10 +93,14 @@
 - update ATT&CK/MBC data for linting #1568 @mr-tz
 - log time taken to analyze each function #1290 @williballenthin
 - tests: make fixture available via conftest.py #1592 @williballenthin
+- publish via PyPI trusted publishing #1491 @williballenthin
+- migrate to pyproject.toml #1301 @williballenthin
+- use [pre-commit](https://pre-commit.com/) to invoke linters #1579 @williballenthin
+
 
 ### Raw diffs
-- [capa v5.1.0...master](https://github.com/mandiant/capa/compare/v5.1.0...master)
-- [capa-rules v5.1.0...master](https://github.com/mandiant/capa-rules/compare/v5.1.0...master)
+- [capa v5.1.0...v6.0.0](https://github.com/mandiant/capa/compare/v5.1.0...v6.0.0)
+- [capa-rules v5.1.0...v6.0.0](https://github.com/mandiant/capa-rules/compare/v5.1.0...v6.0.0)
 
 ## v5.1.0
 capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and a output color format that's easier to read.
