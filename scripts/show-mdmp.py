@@ -14,7 +14,7 @@ import logging
 import pathlib
 import argparse
 import textwrap
-from typing import Optional
+from typing import Literal, Optional, assert_never
 
 import vstruct
 import vstruct.defs.minidump as minidump
@@ -167,7 +167,7 @@ def find_name(buf: bytes, mdmp: minidump.MiniDump, va: int) -> Optional[str]:
             return mname.Buffer
 
     for _, thread in mdmp.MiniDumpThreadListStream.Threads:
-        if thread.Stack.StartOfMemoryPage <= va < thread.Stack.StartOfMemoryPage + thread.Stack.Memory.DataSize:
+        if thread.Stack.StartOfMemoryRange <= va < thread.Stack.StartOfMemoryRange + thread.Stack.Memory.DataSize:
             return f"stack for thread {thread.ThreadId}"
 
     for _, thread in mdmp.MiniDumpThreadListStream.Threads:
@@ -177,14 +177,64 @@ def find_name(buf: bytes, mdmp: minidump.MiniDump, va: int) -> Optional[str]:
     return None
 
 
+def get_arch(mdmp: minidump.MiniDump) -> Literal["amd64", "intel"]:
+    # https://github.com/rust-minidump/rust-minidump/blob/87a29fba5e19cfae5ebf73a57ba31504a3872545/minidump-common/src/format.rs#L1476C1-L1498C45
+    PROCESSOR_ARCHITECTURE_INTEL = 0
+    PROCESSOR_ARCHITECTURE_AMD64 = 9
+
+    if mdmp.MiniDumpSystemInfoStream.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64:
+        return "amd64"
+    elif mdmp.MiniDumpSystemInfoStream.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL:
+        return "intel"
+    else:
+        raise NotImplementedError(f"unknown processor architecture: {mdmp.SystemInfo.ProcessorArchitecture}")
+
+
+def memory_ranges(mdmp: minidump.MiniDump) -> minidump.MiniDumpMemoryDescriptor | minidump.MiniDumpMemoryDescriptor64:
+    arch = get_arch(mdmp)
+
+    if arch == "amd64":
+        for _, mem in mdmp.MiniDumpMemory64ListStream.MemoryRanges:
+            yield mem
+    elif arch == "intel":
+        for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges:
+            yield mem
+    else:
+        assert_never(arch)
+
+
+def memory_range_start(mem: minidump.MiniDumpMemoryDescriptor | minidump.MiniDumpMemoryDescriptor64) -> int:
+    if isinstance(mem, minidump.MiniDumpMemoryDescriptor):
+        # needs fix here: https://github.com/vivisect/vivisect/pull/626
+        # for correct name of this field.
+        return mem.StartOfMemoryRange
+    elif isinstance(mem, minidump.MiniDumpMemoryDescriptor64):
+        return mem.StartOfMemoryRange
+    else:
+        assert_never(mem)
+
+
+def memory_range_size(mem: minidump.MiniDumpMemoryDescriptor | minidump.MiniDumpMemoryDescriptor64) -> int:
+    if isinstance(mem, minidump.MiniDumpMemoryDescriptor):
+        return mem.Memory.DataSize
+    elif isinstance(mem, minidump.MiniDumpMemoryDescriptor64):
+        return mem.DataSize
+    else:
+        assert_never(mem)
+
+
+def memory_range_end(mem: minidump.MiniDumpMemoryDescriptor | minidump.MiniDumpMemoryDescriptor64) -> int:
+    return memory_range_start(mem) + memory_range_size(mem)
+
+
 def resolve_register(buf: bytes, mdmp: minidump.MiniDump, v: int) -> Optional[str]:
     name = find_name(buf, mdmp, v)
     if name:
         return f"-> {name}"
 
-    for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges:
-        if mem.StartOfMemoryPage <= v < mem.StartOfMemoryPage + mem.Memory.DataSize:
-            return f"-> range [{mem.StartOfMemoryPage:#016x}-{mem.StartOfMemoryPage+mem.Memory.DataSize:#016x}]"
+    for mem in memory_ranges(mdmp):
+        if memory_range_start(mem) <= v < memory_range_end(mem):
+            return f"-> range [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}]"
 
     return None
 
@@ -258,9 +308,9 @@ def main(argv=None):
         print(f"  [{start:#016x}-{end:#016x}] {mname.Buffer}")
 
         # danger: O(n**2)
-        for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges:
-            if start <= mem.StartOfMemoryPage < end:
-                print(f"    [{mem.StartOfMemoryPage:#016x}-{mem.StartOfMemoryPage+mem.Memory.DataSize:#016x}]")
+        for mem in memory_ranges(mdmp):
+            if start <= memory_range_start(mem) < end:
+                print(f"    [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}]")
 
     print()
 
@@ -325,31 +375,29 @@ def main(argv=None):
         print(f"  teb:  [{thread.Teb:#08x}-???]")
 
         # danger: O(n**2)
-        for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges:
-            if thread.Teb == mem.StartOfMemoryPage:
-                print(f"    [{mem.StartOfMemoryPage:#016x}-{mem.StartOfMemoryPage+mem.Memory.DataSize:#016x}]")
+        for mem in memory_ranges(mdmp):
+            if thread.Teb == memory_range_start(mem):
+                print(f"    [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}]")
         print()
 
-        start, end = thread.Stack.StartOfMemoryPage, thread.Stack.StartOfMemoryPage + thread.Stack.Memory.DataSize
+        start, end = thread.Stack.StartOfMemoryRange, thread.Stack.StartOfMemoryRange + thread.Stack.Memory.DataSize
         print(f"  stack: [{start:#016x}-{end:#016x}]")
 
         # danger: O(n**2)
-        for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges:
-            if start <= mem.StartOfMemoryPage < end:
-                print(f"    [{mem.StartOfMemoryPage:#016x}-{mem.StartOfMemoryPage+mem.Memory.DataSize:#016x}]")
+        for mem in memory_ranges(mdmp):
+            if start <= memory_range_start(mem) < end:
+                print(f"    [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}]")
 
     print()
 
     print("memory ranges:")
-    for mem in sorted(
-        (mem for _, mem in mdmp.MiniDumpMemoryListStream.MemoryRanges), key=lambda mem: mem.StartOfMemoryPage
-    ):
-        name = find_name(buf, mdmp, mem.StartOfMemoryPage)
+    for mem in sorted(memory_ranges(mdmp), key=lambda mem: mem.StartOfMemoryRange):
+        name = find_name(buf, mdmp, memory_range_start(mem))
 
-        print(f"  [{mem.StartOfMemoryPage:#016x}-{mem.StartOfMemoryPage+mem.Memory.DataSize:#016x}] {name or ''}")
+        print(f"  [{memory_range_start(mem):#016x}-{memory_range_end(mem):#016x}] {name or ''}")
 
         # mbuf = buf[mem.Memory.RVA:mem.Memory.RVA + mem.Memory.DataSize]
-        # print(hexdump(mbuf, off=mem.StartOfMemoryPage))
+        # print(hexdump(mbuf, off=mem.StartOfMemoryRange))
 
 
 if __name__ == "__main__":
