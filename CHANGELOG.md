@@ -82,6 +82,7 @@ For those that use capa as a library, we've introduced some limited breaking cha
 - output: don't leave behind traces of progress bar @williballenthin
 - import-to-ida: fix bug introduced with JSON report changes in v5 #1584 @williballenthin
 - main: don't show spinner when emitting debug messages #1636 @williballenthin
+- rules: add forwarded export characteristics to rule syntax file scope #1653 @RonnieSalomonsen
 
 ### capa explorer IDA Pro plugin
 
