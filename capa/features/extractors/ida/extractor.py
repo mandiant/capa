@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import List, Tuple, Iterator
+from pathlib import Path
 
 import idaapi
 
@@ -34,8 +35,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
-        with open(idaapi.get_input_file_path(), "rb") as f:
-            self.sample_hashes = SampleHashes.from_sample(f.read())
+        self.sample_hashes = SampleHashes.from_sample(Path(idaapi.get_input_file_path()).read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
