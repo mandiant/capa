@@ -5,6 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
+import json
 import inspect
 import logging
 import contextlib
@@ -15,10 +17,11 @@ from pathlib import Path
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
@@ -49,12 +52,23 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_extension(sample: Path) -> str:
-    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
-        return FORMAT_SC32
-    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
-        return FORMAT_SC64
+def get_format_from_report(sample: Path) -> str:
+    with open(sample.name, "rb") as f:
+        report = json.load(f)
+    if "CAPE" in report.keys():
+        return FORMAT_CAPE
     return FORMAT_UNKNOWN
+
+
+def get_format_from_extension(sample: Path) -> str:
+    format_ = FORMAT_UNKNOWN
+    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
+        format_ = FORMAT_SC32
+    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
+        format_ = FORMAT_SC64
+    elif sample.name.endswith(EXTENSIONS_DYNAMIC):
+        format_ = get_format_from_report(sample)
+    return format_
 
 
 def get_auto_format(path: Path) -> str:

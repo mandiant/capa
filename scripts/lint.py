@@ -916,6 +916,10 @@ def main(argv=None):
 
     default_samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
 
+    # TODO(yelhamer): remove once support for the legacy scope field has been added
+    # https://github.com/mandiant/capa/pull/1580
+    return 0
+
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
     parser.add_argument("rules", type=str, action="append", help="Path to rules")

@@ -43,6 +43,76 @@ class AbsoluteVirtualAddress(int, Address):
         return int.__hash__(self)
 
 
+class ProcessAddress(Address):
+    """an address of a process in a dynamic execution trace"""
+
+    def __init__(self, pid: int, ppid: int = 0):
+        assert ppid >= 0
+        assert pid > 0
+        self.ppid = ppid
+        self.pid = pid
+
+    def __repr__(self):
+        return "process(%s%s)" % (
+            f"ppid: {self.ppid}, " if self.ppid > 0 else "",
+            f"pid: {self.pid}",
+        )
+
+    def __hash__(self):
+        return hash((self.ppid, self.pid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ProcessAddress)
+        return (self.ppid, self.pid) == (other.ppid, other.pid)
+
+    def __lt__(self, other):
+        return (self.ppid, self.pid) < (other.ppid, other.pid)
+
+
+class ThreadAddress(Address):
+    """addresses a thread in a dynamic execution trace"""
+
+    def __init__(self, process: ProcessAddress, tid: int):
+        assert tid >= 0
+        self.process = process
+        self.tid = tid
+
+    def __repr__(self):
+        return f"thread(tid: {self.tid})"
+
+    def __hash__(self):
+        return hash((self.process, self.tid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ThreadAddress)
+        return (self.process, self.tid) == (other.process, other.tid)
+
+    def __lt__(self, other):
+        return (self.process, self.tid) < (other.process, other.tid)
+
+
+class DynamicAddress(Address):
+    """an address from a dynamic analysis trace"""
+
+    def __init__(self, id_: int, return_address: int):
+        assert id_ >= 0
+        assert return_address >= 0
+        self.id = id_
+        self.return_address = return_address
+
+    def __repr__(self):
+        return f"dynamic(event: {self.id}, returnaddress: 0x{self.return_address:x})"
+
+    def __hash__(self):
+        return hash((self.id, self.return_address))
+
+    def __eq__(self, other):
+        return (self.id, self.return_address) == (other.id, other.return_address)
+
+    def __lt__(self, other):
+        return (self.id, self.return_address) < (other.id, other.return_address)
+
+
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 

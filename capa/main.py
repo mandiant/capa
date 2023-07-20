@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and limitations 
 import io
 import os
 import sys
+import json
 import time
 import hashlib
 import logging
@@ -20,7 +21,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, Optional
+from typing import Any, Dict, List, Tuple, Callable, Optional, cast
 from pathlib import Path
 
 import halo
@@ -51,6 +52,7 @@ import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
+import capa.features.extractors.cape.extractor
 from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import (
@@ -71,6 +73,7 @@ from capa.features.common import (
     FORMAT_ELF,
     OS_WINDOWS,
     FORMAT_AUTO,
+    FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_DOTNET,
@@ -78,7 +81,14 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    FunctionHandle,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -120,7 +130,7 @@ def set_vivisect_log_level(level):
 
 
 def find_instruction_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
 ) -> Tuple[FeatureSet, MatchResults]:
     """
     find matches for the given rules for the given instruction.
@@ -147,7 +157,7 @@ def find_instruction_capabilities(
 
 
 def find_basic_block_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, f: FunctionHandle, bb: BBHandle
 ) -> Tuple[FeatureSet, MatchResults, MatchResults]:
     """
     find matches for the given rules within the given basic block.
@@ -187,7 +197,7 @@ def find_basic_block_capabilities(
 
 
 def find_code_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, fh: FunctionHandle
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
 ) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
     """
     find matches for the given rules within the given function.
@@ -245,7 +255,9 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, len(file_features)
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None) -> Tuple[MatchResults, Any]:
+def find_static_capabilities(
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
+) -> Tuple[MatchResults, Any]:
     all_function_matches = collections.defaultdict(list)  # type: MatchResults
     all_bb_matches = collections.defaultdict(list)  # type: MatchResults
     all_insn_matches = collections.defaultdict(list)  # type: MatchResults
@@ -337,6 +349,17 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     }
 
     return matches, meta
+
+
+def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
+    if isinstance(extractor, StaticFeatureExtractor):
+        extractor_: StaticFeatureExtractor = cast(StaticFeatureExtractor, extractor)
+        return find_static_capabilities(ruleset, extractor_, kwargs)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        # extractor_ = cast(DynamicFeatureExtractor, extractor)
+        raise NotImplementedError()
+    else:
+        raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
 
 def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
@@ -526,7 +549,8 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
-    if format_ not in (FORMAT_SC32, FORMAT_SC64):
+
+    if format_ not in (FORMAT_SC32, FORMAT_SC64, FORMAT_CAPE):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
 
@@ -536,7 +560,14 @@ def get_extractor(
         if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
-    if format_ == FORMAT_DOTNET:
+    if format_ == FORMAT_CAPE:
+        import capa.features.extractors.cape.extractor
+
+        with open(path, "rb") as f:
+            report = json.load(f)
+        return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
+
+    elif format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
@@ -607,6 +638,11 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
 
     elif format_ == capa.features.extractors.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
+
+    elif format_ == FORMAT_CAPE:
+        with open(sample, "rb") as f:
+            report = json.load(f)
+        file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors
 
@@ -704,7 +740,7 @@ def get_rules(
             rule.meta["capa/nursery"] = is_nursery_rule_path(path)
 
             rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
     ruleset = capa.rules.RuleSet(rules)
 
@@ -745,12 +781,13 @@ def collect_metadata(
     format_: str,
     os_: str,
     rules_path: List[Path],
-    extractor: capa.features.extractors.base_extractor.FeatureExtractor,
+    extractor: FeatureExtractor,
 ) -> rdoc.Metadata:
     md5 = hashlib.md5()
     sha1 = hashlib.sha1()
     sha256 = hashlib.sha256()
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     buf = sample_path.read_bytes()
 
     md5.update(buf)
@@ -761,6 +798,7 @@ def collect_metadata(
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
+    base_addr = extractor.get_base_address() if hasattr(extractor, "get_base_address") else NO_ADDRESS
 
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),
@@ -778,7 +816,7 @@ def collect_metadata(
             os=os_,
             extractor=extractor.__class__.__name__,
             rules=rules,
-            base_address=frz.Address.from_capa(extractor.get_base_address()),
+            base_address=frz.Address.from_capa(base_addr),
             layout=rdoc.Layout(
                 functions=(),
                 # this is updated after capabilities have been collected.
@@ -902,6 +940,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_ELF, "Executable and Linkable Format"),
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
+            (FORMAT_CAPE, "CAPE sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
@@ -1232,7 +1271,7 @@ def main(argv: Optional[List[str]] = None):
 
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
-            extractor = frz.load(Path(args.sample).read_bytes())
+            extractor: FeatureExtractor = frz.load(Path(args.sample).read_bytes())
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces

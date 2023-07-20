@@ -31,7 +31,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     DnType,
     iter_dotnet_table,
@@ -165,7 +165,7 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DotnetFileFeatureExtractor(FeatureExtractor):
+class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
         super().__init__()
         self.path: Path = path

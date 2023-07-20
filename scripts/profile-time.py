@@ -54,6 +54,7 @@ import capa.helpers
 import capa.features
 import capa.features.common
 import capa.features.freeze
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.profile")
 
@@ -104,12 +105,14 @@ def main(argv=None):
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
-        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
+        extractor: FeatureExtractor = capa.features.freeze.load(Path(args.sample).read_bytes())
+        assert isinstance(extractor, StaticFeatureExtractor)
     else:
         extractor = capa.main.get_extractor(
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
         )
 
+    assert isinstance(extractor, StaticFeatureExtractor)
     with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
 
         def do_iteration():

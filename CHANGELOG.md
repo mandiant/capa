@@ -3,8 +3,16 @@
 ## master (unreleased)
 
 ### New Features
+- Add a dynamic feature extractor for the CAPE sandbox @yelhamer [#1535](https://github.com/mandiant/capa/issues/1535)
+- Add unit tests for the new CAPE extractor #1563 @yelhamer
+- Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
+- Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
+- Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
+- Add support for flavor-based rule scopes @yelhamer
+- Add ProcessesAddress and ThreadAddress #1612 @yelhamer
 
 ### Breaking Changes
+
 
 ### New Rules (1)
 
