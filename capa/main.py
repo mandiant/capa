@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable
+from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -961,7 +961,7 @@ def collect_metadata(
             arch,
             os_,
             extractor,
-            rules_path,
+            rules,
             counts,
         ),
     )
