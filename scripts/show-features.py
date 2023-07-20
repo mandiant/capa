@@ -83,7 +83,7 @@ import capa.features.address
 import capa.features.extractors.pefile
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
 from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor, FunctionHandle
+from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
 
@@ -109,7 +109,7 @@ def main(argv=None):
         return -1
 
     try:
-        taste = capa.helpers.get_file_taste(Path(args.sample))
+        _ = capa.helpers.get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
