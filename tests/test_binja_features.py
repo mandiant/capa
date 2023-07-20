@@ -62,7 +62,7 @@ def test_binja_feature_counts(sample, scope, feature, expected):
     fixtures.do_test_feature_count(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 
-@pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
+@pytest.mark.xfail(reason="relies on the legacy ruleset which hasn't been updated yet")
 def test_standalone_binja_backend():
     CD = Path(__file__).resolve().parent
     test_path = CD / ".." / "tests" / "data" / "Practical Malware Analysis Lab 01-01.exe_"
