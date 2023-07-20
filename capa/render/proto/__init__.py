@@ -491,14 +491,14 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             sha256=meta.sample.sha256,
             path=meta.sample.path,
         ),
-        analysis=rd.Analysis(
+        analysis=rd.StaticAnalysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,
             os=meta.analysis.os,
             extractor=meta.analysis.extractor,
             rules=tuple(meta.analysis.rules),
             base_address=addr_from_pb2(meta.analysis.base_address),
-            layout=rd.Layout(
+            layout=rd.StaticLayout(
                 functions=tuple(
                     [
                         rd.FunctionLayout(
@@ -514,7 +514,7 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
                     ]
                 )
             ),
-            feature_counts=rd.FeatureCounts(
+            feature_counts=rd.StaticFeatureCounts(
                 file=meta.analysis.feature_counts.file,
                 functions=tuple(
                     [

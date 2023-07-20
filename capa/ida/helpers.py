@@ -153,14 +153,14 @@ def collect_metadata(rules: List[Path]):
             sha256=sha256,
             path=idaapi.get_input_file_path(),
         ),
-        analysis=rdoc.Analysis(
+        analysis=rdoc.StaticAnalysis(
             format=idaapi.get_file_type_name(),
             arch=arch,
             os=os,
             extractor="ida",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
             base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
-            layout=rdoc.Layout(
+            layout=rdoc.StaticLayout(
                 functions=(),
                 # this is updated after capabilities have been collected.
                 # will look like:
@@ -168,7 +168,7 @@ def collect_metadata(rules: List[Path]):
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
             # ignore these for now - not used by IDA plugin.
-            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
+            feature_counts=rdoc.StaticFeatureCounts(file=0, functions=()),
             library_functions=(),
         ),
     )
