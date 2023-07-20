@@ -1,7 +1,7 @@
 """
 capa freeze file format: `| capa0000 | + zlib(utf-8(json(...)))`
 
-Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -592,6 +592,7 @@ def load(buf: bytes):
 def main(argv=None):
     import sys
     import argparse
+    from pathlib import Path
 
     import capa.main
 
@@ -608,8 +609,7 @@ def main(argv=None):
 
     extractor = capa.main.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
 
-    with open(args.output, "wb") as f:
-        f.write(dump(extractor))
+    Path(args.output).write_bytes(dump(extractor))
 
     return 0
 

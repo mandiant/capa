@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -9,7 +9,8 @@ import json
 import logging
 import datetime
 import contextlib
-from typing import Optional
+from typing import List, Optional
+from pathlib import Path
 
 import idc
 import idaapi
@@ -120,7 +121,7 @@ def get_file_sha256():
     return sha256
 
 
-def collect_metadata(rules):
+def collect_metadata(rules: List[Path]):
     """ """
     md5 = get_file_md5()
     sha256 = get_file_sha256()
@@ -157,7 +158,7 @@ def collect_metadata(rules):
             arch=arch,
             os=os,
             extractor="ida",
-            rules=rules,
+            rules=tuple(r.resolve().absolute().as_posix() for r in rules),
             base_address=capa.features.freeze.Address.from_capa(idaapi.get_imagebase()),
             layout=rdoc.Layout(
                 functions=(),

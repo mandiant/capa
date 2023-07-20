@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -52,7 +52,7 @@ def resolve_dotnet_token(pe: dnfile.dnPE, token: Token) -> Union[dnfile.base.MDT
             return InvalidToken(token.value)
         return user_string
 
-    table: Optional[dnfile.base.ClrMetaDataTable] = pe.net.mdtables.tables.get(token.table, None)
+    table: Optional[dnfile.base.ClrMetaDataTable] = pe.net.mdtables.tables.get(token.table)
     if table is None:
         # table index is not valid
         return InvalidToken(token.value)
@@ -204,7 +204,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
                 continue
 
             token: int = calculate_dotnet_token_value(method.table.number, method.row_index)
-            access: Optional[str] = accessor_map.get(token, None)
+            access: Optional[str] = accessor_map.get(token)
 
             method_name: str = method.row.Name
             if method_name.startswith(("get_", "set_")):

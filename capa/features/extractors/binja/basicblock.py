@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -130,7 +130,7 @@ def is_mov_imm_to_stack(il: MediumLevelILInstruction) -> bool:
     if il.src.operation != MediumLevelILOperation.MLIL_CONST:
         return False
 
-    if not il.dest.source_type == VariableSourceType.StackVariableSourceType:
+    if il.dest.source_type != VariableSourceType.StackVariableSourceType:
         return False
 
     return True

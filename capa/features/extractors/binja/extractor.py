@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -53,9 +53,7 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
             mlil_lookup[mlil_bb.source_block.start] = mlil_bb
 
         for bb in f.basic_blocks:
-            mlil_bb = None
-            if bb.start in mlil_lookup:
-                mlil_bb = mlil_lookup[bb.start]
+            mlil_bb = mlil_lookup.get(bb.start)
 
             yield BBHandle(address=AbsoluteVirtualAddress(bb.start), inner=(bb, mlil_bb))
 

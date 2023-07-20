@@ -1,6 +1,6 @@
 # strings code from FLOSS, https://github.com/mandiant/flare-floss
 #
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -9,6 +9,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import re
+import contextlib
 from collections import namedtuple
 
 ASCII_BYTE = r" !\"#\$%&\'\(\)\*\+,-\./0123456789:;<=>\?@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_`abcdefghijklmnopqrstuvwxyz\{\|\}\\\~\t".encode(
@@ -81,7 +82,5 @@ def extract_unicode_strings(buf, n=4):
         reg = b"((?:[%s]\x00){%d,})" % (ASCII_BYTE, n)
         r = re.compile(reg)
     for match in r.finditer(buf):
-        try:
+        with contextlib.suppress(UnicodeDecodeError):
             yield String(match.group().decode("utf-16"), match.start())
-        except UnicodeDecodeError:
-            pass

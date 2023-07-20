@@ -6,6 +6,9 @@ on:
   release:
     types: [edited, published]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: PyInstaller for ${{ matrix.os }}

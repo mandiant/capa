@@ -1,17 +1,17 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import os
 import json
 import inspect
 import logging
 import contextlib
 import importlib.util
 from typing import NoReturn
+from pathlib import Path
 
 import tqdm
 
@@ -34,11 +34,10 @@ def hex(n: int) -> str:
         return f"0x{(n):X}"
 
 
-def get_file_taste(sample_path: str) -> bytes:
-    if not os.path.exists(sample_path):
+def get_file_taste(sample_path: Path) -> bytes:
+    if not sample_path.exists():
         raise IOError(f"sample path {sample_path} does not exist or cannot be accessed")
-    with open(sample_path, "rb") as f:
-        taste = f.read(8)
+    taste = sample_path.open("rb").read(8)
     return taste
 
 
@@ -52,26 +51,25 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_report(sample: str) -> str:
-    with open(sample, "rb") as f:
-        report = json.load(f)
-    if "CAPE" in report.keys():
+def get_format_from_report(sample: Path) -> str:
+    report = json.load(sample.open())
+    if "CAPE" in report:
         return FORMAT_CAPE
     return FORMAT_UNKNOWN
 
 
-def get_format_from_extension(sample: str) -> str:
+def get_format_from_extension(sample: Path) -> str:
     format_ = FORMAT_UNKNOWN
-    if sample.endswith(EXTENSIONS_SHELLCODE_32):
+    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
         format_ = FORMAT_SC32
-    elif sample.endswith(EXTENSIONS_SHELLCODE_64):
+    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
         format_ = FORMAT_SC64
-    elif sample.endswith(EXTENSIONS_DYNAMIC):
+    elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
     return format_
 
 
-def get_auto_format(path: str) -> str:
+def get_auto_format(path: Path) -> str:
     format_ = get_format(path)
     if format_ == FORMAT_UNKNOWN:
         format_ = get_format_from_extension(path)
@@ -80,13 +78,12 @@ def get_auto_format(path: str) -> str:
     return format_
 
 
-def get_format(sample: str) -> str:
+def get_format(sample: Path) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
     from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
 
-    with open(sample, "rb") as f:
-        buf = f.read()
+    buf = sample.read_bytes()
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):

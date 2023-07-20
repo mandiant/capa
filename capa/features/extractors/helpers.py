@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -72,6 +72,23 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
         if not is_ordinal(symbol):
             # CreateFile
             yield symbol[:-1]
+
+
+def reformat_forwarded_export_name(forwarded_name: str) -> str:
+    """
+    a forwarded export has a DLL name/path an symbol name.
+    we want the former to be lowercase, and the latter to be verbatim.
+    """
+
+    # use rpartition so we can split on separator between dll and name.
+    # the dll name can be a full path, like in the case of
+    # ef64d6d7c34250af8e21a10feb931c9b
+    # which i assume means the path can have embedded periods.
+    # so we don't want the first period, we want the last.
+    forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
+    forwarded_dll = forwarded_dll.lower()
+
+    return f"{forwarded_dll}.{forwarded_symbol}"
 
 
 def all_zeros(bytez: bytes) -> bool:

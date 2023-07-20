@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -8,6 +8,7 @@
 from typing import Tuple, Iterator
 
 import PE.carve as pe_carve  # vivisect PE
+import vivisect
 import viv_utils
 import viv_utils.flirt
 
@@ -25,9 +26,34 @@ def extract_file_embedded_pe(buf, **kwargs) -> Iterator[Tuple[Feature, Address]]
         yield Characteristic("embedded pe"), FileOffsetAddress(offset)
 
 
-def extract_file_export_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]:
+def get_first_vw_filename(vw: vivisect.VivWorkspace):
+    # vivisect associates metadata with each file that its loaded into the workspace.
+    # capa only loads a single file into each workspace.
+    # so to access the metadata for the file in question, we can just take the first one.
+    # otherwise, we'd have to pass around the module name of the file we're analyzing,
+    # which is a pain.
+    #
+    # so this is a simplifying assumption.
+    return next(iter(vw.filemeta.keys()))
+
+
+def extract_file_export_names(vw: vivisect.VivWorkspace, **kwargs) -> Iterator[Tuple[Feature, Address]]:
     for va, _, name, _ in vw.getExports():
         yield Export(name), AbsoluteVirtualAddress(va)
+
+    if vw.getMeta("Format") == "pe":
+        pe = vw.parsedbin
+        baseaddr = pe.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
+        for rva, _, forwarded_name in vw.getFileMeta(get_first_vw_filename(vw), "forwarders"):
+            try:
+                forwarded_name = forwarded_name.partition(b"\x00")[0].decode("ascii")
+            except UnicodeDecodeError:
+                continue
+
+            forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(forwarded_name)
+            va = baseaddr + rva
+            yield Export(forwarded_name), AbsoluteVirtualAddress(va)
+            yield Characteristic("forwarded export"), AbsoluteVirtualAddress(va)
 
 
 def extract_file_import_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]:

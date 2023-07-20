@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -7,9 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
 from typing import List
+from pathlib import Path
 
 import pytest
-from fixtures import z9324d_extractor
 
 import capa.main
 import capa.rules
@@ -175,10 +175,8 @@ def test_freeze_load_sample(tmpdir, request, extractor):
 
     extractor = request.getfixturevalue(extractor)
 
-    with open(o.strpath, "wb") as f:
-        f.write(capa.features.freeze.dump(extractor))
+    Path(o.strpath).write_bytes(capa.features.freeze.dump(extractor))
 
-    with open(o.strpath, "rb") as f:
-        null_extractor = capa.features.freeze.load(f.read())
+    null_extractor = capa.features.freeze.load(Path(o.strpath).read_bytes())
 
     compare_extractors(extractor, null_extractor)

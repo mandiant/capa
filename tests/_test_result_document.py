@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -9,7 +9,6 @@ import copy
 
 import pytest
 import fixtures
-from fixtures import a3f3bbc_rd, a076114_rd, pma0101_rd, al_khaserx64_rd, al_khaserx86_rd, dotnet_1c444e_rd
 
 import capa
 import capa.engine as ceng

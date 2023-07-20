@@ -34,6 +34,7 @@ Example:
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.render.json
 import capa.render.proto
@@ -71,8 +72,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    with open(args.pb, "rb") as f:
-        pb = f.read()
+    pb = Path(args.pb).read_bytes()
 
     rdpb = capa.render.proto.capa_pb2.ResultDocument()
     rdpb.ParseFromString(pb)

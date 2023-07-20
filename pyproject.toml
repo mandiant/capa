@@ -18,6 +18,7 @@ authors = [
     {name = "Mike Hunhoff", email = "michael.hunhoff@mandiant.com"},
 ]
 description = "The FLARE team's open-source tool to identify capabilities in executable files."
+readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 keywords = ["malware analysis", "reverse engineering", "capability detection", "software behaviors", "capa", "FLARE"]
@@ -48,13 +49,12 @@ dependencies = [
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==1.10.9",
-    "protobuf==4.23.2",
+    "protobuf==4.23.4",
 ]
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = {attr = "capa.version.__version__"}
-readme = {file = "README.md"}
 
 [tool.setuptools]
 packages = ["capa"]
@@ -67,15 +67,18 @@ dev = [
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
     "flake8==6.0.0",
-    "flake8-bugbear==23.6.5",
+    "flake8-bugbear==23.7.10",
     "flake8-encodings==0.5.0.post1",
-    "flake8-comprehensions==3.13.0",
+    "flake8-comprehensions==3.14.0",
     "flake8-logging-format==0.9.0",
     "flake8-no-implicit-concat==0.3.4",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.0",
-    "ruff==0.0.275",
-    "black==23.3.0",
+    "flake8-simplify==0.20.0",
+    "flake8-use-pathlib==0.3.0",
+    "flake8-copyright==0.2.4",
+    "ruff==0.0.278",
+    "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.4.1",
     "psutil==5.9.2",

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -197,11 +197,11 @@ class CapaRuleGenFeatureCache:
         return features, matches
 
     def _get_cached_func_node(self, fh: FunctionHandle) -> Optional[CapaRuleGenFeatureCacheNode]:
-        f_node: Optional[CapaRuleGenFeatureCacheNode] = self.func_nodes.get(fh.address, None)
+        f_node: Optional[CapaRuleGenFeatureCacheNode] = self.func_nodes.get(fh.address)
         if f_node is None:
             # function is not in our cache, do extraction now
             self._find_function_and_below_features(fh)
-            f_node = self.func_nodes.get(fh.address, None)
+            f_node = self.func_nodes.get(fh.address)
         return f_node
 
     def get_all_function_features(self, fh: FunctionHandle) -> FeatureSet:

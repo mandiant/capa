@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -706,8 +706,7 @@ class SymTab:
         return a tuple: (name, value, size, info, other, shndx)
         for each symbol contained in the symbol table
         """
-        for symbol in self.symbols:
-            yield symbol
+        yield from self.symbols
 
     @classmethod
     def from_Elf(cls, ElfBinary) -> Optional["SymTab"]:

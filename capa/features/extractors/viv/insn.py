@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -410,9 +410,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(f, bb, ih: InsnHandle)
         if insn.va + 5 == insn.opers[0].getOperValue(insn):
             yield Characteristic("call $+5"), ih.address
 
-    if isinstance(insn.opers[0], envi.archs.i386.disasm.i386ImmMemOper) or isinstance(
-        insn.opers[0], envi.archs.amd64.disasm.Amd64RipRelOper
-    ):
+    if isinstance(insn.opers[0], (envi.archs.i386.disasm.i386ImmMemOper, envi.archs.amd64.disasm.Amd64RipRelOper)):
         if insn.va + 5 == insn.opers[0].getOperAddr(insn):
             yield Characteristic("call $+5"), ih.address
 

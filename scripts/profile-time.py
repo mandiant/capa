@@ -1,3 +1,10 @@
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
 """
 Invoke capa multiple times and record profiling informations.
 Use the --number and --repeat options to change the number of iterations.
@@ -34,6 +41,7 @@ import timeit
 import logging
 import argparse
 import subprocess
+from pathlib import Path
 
 import tqdm
 import tabulate
@@ -51,22 +59,16 @@ from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeat
 logger = logging.getLogger("capa.profile")
 
 
+def subshell(cmd):
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    label = subprocess.run(
-        "git show --pretty=oneline --abbrev-commit | head -n 1", shell=True, capture_output=True, text=True
-    ).stdout.strip()
-    is_dirty = (
-        subprocess.run(
-            "git status | grep 'modified: ' | grep -v 'rules' | grep -v 'tests/data'",
-            shell=True,
-            capture_output=True,
-            text=True,
-        ).stdout
-        != ""
-    )
+    label = subshell("git show --pretty=oneline --abbrev-commit | head -n 1").strip()
+    is_dirty = subshell("git status | grep 'modified: ' | grep -v 'rules' | grep -v 'tests/data'") != ""
 
     if is_dirty:
         label += " (dirty)"
@@ -82,7 +84,7 @@ def main(argv=None):
     capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(args.sample)
+        taste = capa.helpers.get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -103,9 +105,8 @@ def main(argv=None):
     if (args.format == "freeze") or (
         args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
     ):
-        with open(args.sample, "rb") as f:
-            extractor: FeatureExtractor = capa.features.freeze.load(f.read())
-            assert isinstance(extractor, StaticFeatureExtractor)
+        extractor: FeatureExtractor = capa.features.freeze.load(Path(args.sample).read_bytes())
+        assert isinstance(extractor, StaticFeatureExtractor)
     else:
         extractor = capa.main.get_extractor(
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
