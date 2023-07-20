@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
 from typing import Any, Dict, List, Tuple, Iterator
+from pathlib import Path
 
 import viv_utils
 import viv_utils.flirt
@@ -31,13 +32,12 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, vw, path, os):
+    def __init__(self, vw, path: Path, os):
         super().__init__()
         self.vw = vw
         self.path = path
-        with open(path, "rb") as f:
-            self.buf = f.read()
-            self.sample_hashes = SampleHashes.from_sample(self.buf)
+        self.buf = path.read_bytes()
+        self.sample_hashes = SampleHashes.from_sample(self.buf)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []

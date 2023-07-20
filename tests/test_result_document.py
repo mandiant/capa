@@ -258,12 +258,27 @@ def assert_round_trip(rd: rdoc.ResultDocument):
 @pytest.mark.parametrize(
     "rd_file",
     [
-        pytest.param("a3f3bbc_rd", marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added")),
-        pytest.param("al_khaserx86_rd", marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added")),
-        pytest.param("al_khaserx64_rd", marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added")),
-        pytest.param("a076114_rd", marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added")),
+        pytest.param(
+            "a3f3bbc_rd",
+            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
+        ),
+        pytest.param(
+            "al_khaserx86_rd",
+            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
+        ),
+        pytest.param(
+            "al_khaserx64_rd",
+            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
+        ),
+        pytest.param(
+            "a076114_rd",
+            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
+        ),
         pytest.param("pma0101_rd"),
-        pytest.param("dotnet_1c444e_rd", marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added")),
+        pytest.param(
+            "dotnet_1c444e_rd",
+            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
+        ),
     ],
 )
 def test_round_trip(request, rd_file):

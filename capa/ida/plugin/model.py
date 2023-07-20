@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -628,7 +628,7 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
             matched_rule_source = ""
 
             # check if match is a matched rule
-            matched_rule = doc.rules.get(feature.match, None)
+            matched_rule = doc.rules.get(feature.match)
             if matched_rule is not None:
                 matched_rule_source = matched_rule.source
 

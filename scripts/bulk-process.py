@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
 """
 bulk-process
 
@@ -47,7 +54,7 @@ usage:
                             parallelism factor
       --no-mp               disable subprocesses
 
-Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -59,10 +66,10 @@ import os
 import sys
 import json
 import logging
-import os.path
 import argparse
 import multiprocessing
 import multiprocessing.pool
+from pathlib import Path
 
 import capa
 import capa.main
@@ -167,9 +174,8 @@ def main(argv=None):
             return -1
 
         samples = []
-        for base, _, files in os.walk(args.input):
-            for file in files:
-                samples.append(os.path.join(base, file))
+        for file in Path(args.input).rglob("*"):
+            samples.append(file)
 
         cpu_count = multiprocessing.cpu_count()
 
@@ -206,7 +212,7 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                results[result["path"]] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
+                results[result["path"].as_posix()] = rd.ResultDocument.parse_obj(result["ok"]).json(exclude_none=True)
             else:
                 raise ValueError(f"unexpected status: {result['status']}")
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -1224,8 +1224,7 @@ class CapaExplorerQtreeView(QtWidgets.QTreeView):
             yield self.new_action(*action)
 
         # add default actions
-        for action in self.load_default_context_menu_actions(data):
-            yield action
+        yield from self.load_default_context_menu_actions(data)
 
     def load_default_context_menu(self, pos, item, model_index):
         """create default custom context menu

@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -14,6 +14,7 @@ import logging
 import binascii
 import collections
 from enum import Enum
+from pathlib import Path
 
 from capa.helpers import assert_never
 
@@ -117,7 +118,7 @@ class Scopes:
     dynamic: str
 
     def __contains__(self, scope: Union[Scope, str]) -> bool:
-        assert isinstance(scope, Scope) or isinstance(scope, str)
+        assert isinstance(scope, (Scope, str))
         return (scope == self.static) or (scope == self.dynamic)
 
     @classmethod
@@ -150,6 +151,7 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Class,
         capa.features.common.Namespace,
         capa.features.common.Characteristic("mixed mode"),
+        capa.features.common.Characteristic("forwarded export"),
     },
     PROCESS_SCOPE: {
         capa.features.common.MatchedRule,
@@ -800,8 +802,7 @@ class Rule:
             # note: we cannot recurse into the subscope sub-tree,
             #  because its been replaced by a `match` statement.
             for child in statement.get_children():
-                for new_rule in self._extract_subscope_rules_rec(child):
-                    yield new_rule
+                yield from self._extract_subscope_rules_rec(child)
 
     def is_subscope_rule(self):
         return bool(self.meta.get("capa/subscope-rule", False))
@@ -827,8 +828,7 @@ class Rule:
         #   replace old node with reference to new rule
         #   yield new rule
 
-        for new_rule in self._extract_subscope_rules_rec(self.statement):
-            yield new_rule
+        yield from self._extract_subscope_rules_rec(self.statement)
 
     def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
@@ -923,7 +923,7 @@ class Rule:
 
     @classmethod
     def from_yaml_file(cls, path, use_ruamel=False) -> "Rule":
-        with open(path, "rb") as f:
+        with Path(path).open("rb") as f:
             try:
                 rule = cls.from_yaml(f.read().decode("utf-8"), use_ruamel=use_ruamel)
                 # import here to avoid circular dependency

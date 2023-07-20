@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -67,8 +67,9 @@ Example::
 import os
 import sys
 import logging
-import os.path
 import argparse
+from typing import Tuple
+from pathlib import Path
 
 import capa.main
 import capa.rules
@@ -79,9 +80,10 @@ import capa.exceptions
 import capa.render.verbose as v
 import capa.features.freeze
 import capa.features.address
+import capa.features.extractors.pefile
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
 from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
 
@@ -102,8 +104,12 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
+    if args.function and args.backend == "pefile":
+        print("pefile backend does not support extracting function features")
+        return -1
+
     try:
-        _ = capa.helpers.get_file_taste(args.sample)
+        _ = capa.helpers.get_file_taste(Path(args.sample))
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -118,8 +124,7 @@ def main(argv=None):
     if format_ == FORMAT_FREEZE:
         # this should be moved above the previous if clause after implementing
         # feature freeze for the dynamic analysis flavor
-        with open(args.sample, "rb") as f:
-            extractor: FeatureExtractor = capa.features.freeze.load(f.read())
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
         try:
@@ -151,7 +156,12 @@ def print_static_analysis(extractor: StaticFeatureExtractor, args):
         for feature, addr in extractor.extract_file_features():
             print(f"file: {format_address(addr)}: {feature}")
 
-    function_handles = tuple(extractor.get_functions())
+    function_handles: Tuple[FunctionHandle, ...]
+    if isinstance(extractor, capa.features.extractors.pefile.PefileFeatureExtractor):
+        # pefile extractor doesn't extract function features
+        function_handles = ()
+    else:
+        function_handles = tuple(extractor.get_functions())
 
     if args.function:
         if args.format == "freeze":

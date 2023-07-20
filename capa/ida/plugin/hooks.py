@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -30,7 +30,7 @@ class CapaExplorerIdaHooks(idaapi.UI_Hooks):
 
         @retval must be 0
         """
-        self.process_action_handle = self.process_action_hooks.get(name, None)
+        self.process_action_handle = self.process_action_hooks.get(name)
 
         if self.process_action_handle:
             self.process_action_handle(self.process_action_meta)

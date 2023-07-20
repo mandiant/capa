@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -11,16 +11,6 @@ import textwrap
 
 import pytest
 import fixtures
-from fixtures import (
-    z499c2_extractor,
-    z9324d_extractor,
-    pma16_01_extractor,
-    pingtaest_extractor,
-    _692f_dotnetfile_extractor,
-    _1c444_dotnetfile_extractor,
-    _039a6_dotnetfile_extractor,
-    _0953c_dotnetfile_extractor,
-)
 
 import capa.main
 import capa.rules
@@ -495,7 +485,7 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
 
 @pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_json_meta(capsys):
-    path = fixtures.get_data_path_by_name("pma01-01")
+    path = str(fixtures.get_data_path_by_name("pma01-01"))
     assert capa.main.main([path, "-j"]) == 0
     std = capsys.readouterr()
     std_json = json.loads(std.out)
@@ -544,7 +534,7 @@ def test_main_dotnet4(_039a6_dotnetfile_extractor):
 
 @pytest.mark.xfail(reason="relies on the legeacy ruleset. scopes keyword hasn't been added there")
 def test_main_rd():
-    path = fixtures.get_data_path_by_name("pma01-01-rd")
+    path = str(fixtures.get_data_path_by_name("pma01-01-rd"))
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0
