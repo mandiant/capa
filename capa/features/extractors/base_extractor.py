@@ -37,7 +37,7 @@ class SampleHashes:
         yield self.sha256
 
     @classmethod
-    def from_sample(cls, buf) -> "SampleHashes":
+    def from_bytes(cls, buf: bytes) -> "SampleHashes":
         md5 = hashlib.md5()
         sha1 = hashlib.sha1()
         sha256 = hashlib.sha256()
