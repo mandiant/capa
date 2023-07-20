@@ -37,7 +37,7 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         self.vw = vw
         self.path = path
         self.buf = path.read_bytes()
-        self.sample_hashes = SampleHashes.from_sample(self.buf)
+        self.sample_hashes = SampleHashes.from_bytes(self.buf)
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
