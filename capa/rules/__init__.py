@@ -118,7 +118,7 @@ class Scopes:
     dynamic: str
 
     def __contains__(self, scope: Union[Scope, str]) -> bool:
-        assert isinstance(scope, Scope) or isinstance(scope, str)
+        assert isinstance(scope, (Scope, str))
         return (scope == self.static) or (scope == self.dynamic)
 
     @classmethod

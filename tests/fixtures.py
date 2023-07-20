@@ -337,10 +337,14 @@ def get_data_path_by_name(name) -> Path:
     elif name.startswith("294b8d"):
         return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
-        return os.path.join(CD, "data", "2bf18d0403677378adad9001b1243211.elf_")
+        return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
     elif name.startswith("0000a657"):
-        return os.path.join(
-            CD, "data", "dynamic", "cape", "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
