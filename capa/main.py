@@ -83,6 +83,7 @@ from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
+    SampleHashes,
     ThreadHandle,
     ProcessHandle,
     FunctionHandle,
@@ -939,7 +940,8 @@ def collect_metadata(
 ) -> rdoc.Metadata:
     # if it's a binary sample we hash it, if it's a report
     # we fetch the hashes from the report
-    md5, sha1, sha256 = extractor.get_sample_hashes()
+    sample_hashes: SampleHashes = extractor.get_sample_hashes()
+    md5, sha1, sha256 = sample_hashes.md5, sample_hashes.sha1, sample_hashes.sha256
 
     rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
     format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
