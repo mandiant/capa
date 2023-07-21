@@ -190,7 +190,7 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
         super().__init__()
         self.path: Path = path
         self.pe = pefile.PE(str(path))
-        self.hashes = SampleHashes.from_bytes(self.path.read_bytes())
+        self.sample_hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)

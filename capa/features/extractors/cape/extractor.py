@@ -28,7 +28,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.cape_version = cape_version
         self.static = static
         self.behavior = behavior
-        self.hashes = SampleHashes(
+        self.sample_hashes = SampleHashes(
             md5=static["file"]["md5"],
             sha1=static["file"]["sha1"],
             sha256=static["file"]["sha256"],

@@ -38,7 +38,14 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, ThreadHandle, ProcessHandle, FunctionHandle
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    ThreadHandle,
+    ProcessHandle,
+    FunctionHandle,
+)
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 CD = Path(__file__).resolve().parent
@@ -601,6 +608,54 @@ def parametrize(params, values, **kwargs):
     ids = list(map(make_test_id, values))
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
+
+EXTRACTOR_HASHING_TESTS = [
+    # viv extractor
+    (
+        get_viv_extractor(get_data_path_by_name("mimikatz")),
+        SampleHashes(
+            md5="5f66b82558ca92e54e77f216ef4c066c",
+            sha1="e4f82e4d7f22938dc0a0ff8a4a7ad2a763643d38",
+            sha256="131314a6f6d1d263c75b9909586b3e1bd837036329ace5e69241749e861ac01d",
+        ),
+    ),
+    # PE extractor
+    (
+        get_pefile_extractor(get_data_path_by_name("mimikatz")),
+        SampleHashes(
+            md5="5f66b82558ca92e54e77f216ef4c066c",
+            sha1="e4f82e4d7f22938dc0a0ff8a4a7ad2a763643d38",
+            sha256="131314a6f6d1d263c75b9909586b3e1bd837036329ace5e69241749e861ac01d",
+        ),
+    ),
+    # dnFile extractor
+    (
+        get_dnfile_extractor(get_data_path_by_name("b9f5b")),
+        SampleHashes(
+            md5="b9f5bd514485fb06da39beff051b9fdc",
+            sha1="c72a2e50410475a51d897d29ffbbaf2103754d53",
+            sha256="34acc4c0b61b5ce0b37c3589f97d1f23e6d84011a241e6f85683ee517ce786f1",
+        ),
+    ),
+    # dotnet File
+    (
+        get_dotnetfile_extractor(get_data_path_by_name("b9f5b")),
+        SampleHashes(
+            md5="b9f5bd514485fb06da39beff051b9fdc",
+            sha1="c72a2e50410475a51d897d29ffbbaf2103754d53",
+            sha256="34acc4c0b61b5ce0b37c3589f97d1f23e6d84011a241e6f85683ee517ce786f1",
+        ),
+    ),
+    # cape extractor
+    (
+        get_cape_extractor(get_data_path_by_name("0000a657")),
+        SampleHashes(
+            md5="e2147b5333879f98d515cd9aa905d489",
+            sha1="ad4d520fb7792b4a5701df973d6bd8a6cbfbb57f",
+            sha256="0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82",
+        ),
+    ),
+]
 
 DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
     [

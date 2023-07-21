@@ -25,7 +25,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import StaticFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,7 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
         super().__init__()
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.sample_hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(0x0)
