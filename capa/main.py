@@ -1010,7 +1010,7 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
     return layout
 
 
-def compute_static_layout(rules, extractor, capabilities) -> rdoc.Layout:
+def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities) -> rdoc.StaticLayout:
     """
     compute a metadata structure that links basic blocks
     to the functions in which they're found.
