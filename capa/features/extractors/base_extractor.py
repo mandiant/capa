@@ -116,7 +116,7 @@ class StaticFeatureExtractor:
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
-        # all extractors must be able to provide a samples hashes
+        # all extractors must be able to provide a sample's hashes
         self.sample_hashes: SampleHashes
 
     @abc.abstractmethod
