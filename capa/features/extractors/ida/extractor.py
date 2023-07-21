@@ -40,9 +40,6 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
 
-    def get_sample_hashes(self):
-        return self.sample_hashes
-
     def extract_global_features(self):
         yield from self.global_features
 

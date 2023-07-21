@@ -19,7 +19,7 @@ import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, ARCH_I386, FORMAT_PE, ARCH_AMD64, OS_WINDOWS, Arch, Format, Characteristic
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import StaticFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +190,7 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
         super().__init__()
         self.path: Path = path
         self.pe = pefile.PE(str(path))
+        self.hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)

@@ -27,7 +27,12 @@ import capa.features.basicblock
 import capa.features.extractors.null as null
 from capa.helpers import assert_never
 from capa.features.freeze.features import Feature, feature_from_capa
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    SampleHashes,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +305,7 @@ class Extractor(BaseModel):
 class Freeze(BaseModel):
     version: int = 2
     base_address: Address = Field(alias="base address")
+    sample_hashes: SampleHashes
     extractor: Extractor
     features: Features
 
@@ -400,6 +406,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     freeze = Freeze(
         version=2,
         base_address=Address.from_capa(extractor.get_base_address()),
+        sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
@@ -484,6 +491,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     freeze = Freeze(
         version=2,
         base_address=Address.from_capa(base_addr),
+        sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
@@ -501,6 +509,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
     assert isinstance(freeze.features, StaticFeatures)
     return null.NullStaticFeatureExtractor(
         base_address=freeze.base_address.to_capa(),
+        sample_hashes=freeze.sample_hashes,
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
         file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
         functions={
@@ -533,6 +542,7 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     assert isinstance(freeze.features, DynamicFeatures)
     return null.NullDynamicFeatureExtractor(
         base_address=freeze.base_address.to_capa(),
+        sample_hashes=freeze.sample_hashes,
         global_features=[f.feature.to_capa() for f in freeze.features.global_],
         file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
         processes={

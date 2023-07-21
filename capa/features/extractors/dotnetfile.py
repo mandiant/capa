@@ -31,7 +31,7 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
-from capa.features.extractors.base_extractor import StaticFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
     DnType,
     iter_dotnet_table,
@@ -170,6 +170,7 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
         super().__init__()
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
+        self.hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         return NO_ADDRESS

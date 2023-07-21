@@ -15,6 +15,7 @@ from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAdd
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
+    SampleHashes,
     ThreadHandle,
     ProcessHandle,
     FunctionHandle,
@@ -49,6 +50,7 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
     """
 
     base_address: Address
+    sample_hashes: SampleHashes
     global_features: List[Feature]
     file_features: List[Tuple[Address, Feature]]
     functions: Dict[Address, FunctionFeatures]
@@ -103,6 +105,7 @@ class ProcessFeatures:
 @dataclass
 class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     base_address: Address
+    sample_hashes: SampleHashes
     global_features: List[Feature]
     file_features: List[Tuple[Address, Feature]]
     processes: Dict[Address, ProcessFeatures]
