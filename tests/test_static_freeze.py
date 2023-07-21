@@ -22,10 +22,15 @@ import capa.features.basicblock
 import capa.features.extractors.null
 import capa.features.extractors.base_extractor
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
+from capa.features.extractors.base_extractor import BBHandle, SampleHashes, FunctionHandle
 
 EXTRACTOR = capa.features.extractors.null.NullStaticFeatureExtractor(
     base_address=AbsoluteVirtualAddress(0x401000),
+    sample_hashes=SampleHashes(
+        md5="6eb7ee7babf913d75df3f86c229df9e7",
+        sha1="2a082494519acd5130d5120fa48786df7275fdd7",
+        sha256="0c7d1a34eb9fd55bedbf37ba16e3d5dd8c1dd1d002479cc4af27ef0f82bb4792",
+    ),
     global_features=[],
     file_features=[
         (AbsoluteVirtualAddress(0x402345), capa.features.common.Characteristic("embedded pe")),
