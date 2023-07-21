@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import abc
+import hashlib
 import dataclasses
 from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
@@ -22,6 +23,24 @@ from capa.features.address import Address, ThreadAddress, ProcessAddress, Absolu
 #
 # these handles are only consumed by routines on
 # the feature extractor from which they were created.
+
+
+@dataclass
+class SampleHashes:
+    md5: str
+    sha1: str
+    sha256: str
+
+    @classmethod
+    def from_bytes(cls, buf: bytes) -> "SampleHashes":
+        md5 = hashlib.md5()
+        sha1 = hashlib.sha1()
+        sha256 = hashlib.sha256()
+        md5.update(buf)
+        sha1.update(buf)
+        sha256.update(buf)
+
+        return cls(md5=md5.hexdigest(), sha1=sha1.hexdigest(), sha256=sha256.hexdigest())
 
 
 @dataclass
@@ -101,6 +120,13 @@ class StaticFeatureExtractor:
         when the base address is `NO_ADDRESS`, then the loader has no concept of a preferred load address.
         such as: shellcode, .NET modules, etc.
         in these scenarios, RelativeVirtualAddresses aren't used.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_sample_hashes(self) -> SampleHashes:
+        """
+        fetch the hashes for the sample contained within the extractor.
         """
         raise NotImplementedError()
 
@@ -308,6 +334,23 @@ class DynamicFeatureExtractor:
 
     This class is not instantiated directly; it is the base class for other implementations.
     """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        #
+        # note: a subclass should define ctor parameters for its own use.
+        #  for example, the Vivisect feature extract might require the vw and/or path.
+        # this base class doesn't know what to do with that info, though.
+        #
+        super().__init__()
+
+    @abc.abstractmethod
+    def get_sample_hashes(self) -> SampleHashes:
+        """
+        fetch the hashes for the sample contained within the extractor.
+        """
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:

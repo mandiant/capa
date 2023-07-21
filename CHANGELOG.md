@@ -10,6 +10,7 @@
 - Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
 - Add support for flavor-based rule scopes @yelhamer
 - Add ProcessesAddress and ThreadAddress #1612 @yelhamer
+- Add dynamic capability extraction @yelhamer
 
 ### Breaking Changes
 

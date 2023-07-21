@@ -136,11 +136,9 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta = capa.main.collect_metadata([], path, format, os_, [], extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)

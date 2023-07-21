@@ -15,7 +15,7 @@ import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
-from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +28,20 @@ class CapeExtractor(DynamicFeatureExtractor):
         self.cape_version = cape_version
         self.static = static
         self.behavior = behavior
+        self.sample_hashes = SampleHashes(
+            md5=static["file"]["md5"].lower(),
+            sha1=static["file"]["sha1"].lower(),
+            sha256=static["file"]["sha256"].lower(),
+        )
 
         self.global_features = capa.features.extractors.cape.global_.extract_features(self.static)
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
         return AbsoluteVirtualAddress(self.static["pe"]["imagebase"])
+
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features

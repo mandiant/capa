@@ -60,13 +60,26 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(id_, int)
         assert isinstance(return_address, int)
         return f"event: {id_}, retaddr: 0x{return_address:x}"
+    elif address.type == frz.AddressType.PROCESS:
+        assert isinstance(address.value, tuple)
+        ppid, pid = address.value
+        assert isinstance(ppid, int)
+        assert isinstance(pid, int)
+        return f"process ppid: {ppid}, process pid: {pid}"
+    elif address.type == frz.AddressType.THREAD:
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid = address.value
+        assert isinstance(ppid, int)
+        assert isinstance(pid, int)
+        assert isinstance(tid, int)
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
         raise ValueError("unexpected address type")
 
 
-def render_meta(ostream, doc: rd.ResultDocument):
+def render_static_meta(ostream, doc: rd.ResultDocument):
     """
     like:
 
@@ -85,6 +98,8 @@ def render_meta(ostream, doc: rd.ResultDocument):
         function count       42
         total feature count  1918
     """
+
+    assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
     rows = [
         ("md5", doc.meta.sample.md5),
         ("sha1", doc.meta.sample.sha1),
@@ -107,6 +122,57 @@ def render_meta(ostream, doc: rd.ResultDocument):
     ]
 
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+
+
+def render_dynamic_meta(ostream, doc: rd.ResultDocument):
+    """
+    like:
+
+        md5                  84882c9d43e23d63b82004fae74ebb61
+        sha1                 c6fb3b50d946bec6f391aefa4e54478cf8607211
+        sha256               5eced7367ed63354b4ed5c556e2363514293f614c2c2eb187273381b2ef5f0f9
+        path                 /tmp/packed-report,jspn
+        timestamp            2023-07-17T10:17:05.796933
+        capa version         0.0.0
+        os                   windows
+        format               pe
+        arch                 amd64
+        extractor            CAPEFeatureExtractor
+        rules                (embedded rules)
+        process count        42
+        total feature count  1918
+    """
+
+    assert isinstance(doc.meta.analysis, rd.DynamicAnalysis)
+    rows = [
+        ("md5", doc.meta.sample.md5),
+        ("sha1", doc.meta.sample.sha1),
+        ("sha256", doc.meta.sample.sha256),
+        ("path", doc.meta.sample.path),
+        ("timestamp", doc.meta.timestamp),
+        ("capa version", doc.meta.version),
+        ("os", doc.meta.analysis.os),
+        ("format", doc.meta.analysis.format),
+        ("arch", doc.meta.analysis.arch),
+        ("extractor", doc.meta.analysis.extractor),
+        ("rules", "\n".join(doc.meta.analysis.rules)),
+        ("process count", len(doc.meta.analysis.feature_counts.processes)),
+        (
+            "total feature count",
+            doc.meta.analysis.feature_counts.file + sum(p.count for p in doc.meta.analysis.feature_counts.processes),
+        ),
+    ]
+
+    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+
+
+def render_meta(osstream, doc: rd.ResultDocument):
+    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
+        render_static_meta(osstream, doc)
+    elif isinstance(doc.meta.analysis, rd.DynamicAnalysis):
+        render_dynamic_meta(osstream, doc)
+    else:
+        raise ValueError("invalid meta analysis")
 
 
 def render_rules(ostream, doc: rd.ResultDocument):
@@ -132,7 +198,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         had_match = True
 
         rows = []
-        for key in ("namespace", "description", "scope"):
+        for key in ("namespace", "description", "scopes"):
             v = getattr(rule.meta, key)
             if not v:
                 continue
@@ -145,7 +211,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
             rows.append((key, v))
 
-        if rule.meta.scope != capa.rules.FILE_SCOPE:
+        if capa.rules.FILE_SCOPE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
             rows.append(("matches", "\n".join(map(format_address, locations))))
 

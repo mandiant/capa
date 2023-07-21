@@ -122,6 +122,7 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
 
 
 def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
+    assert isinstance(meta.analysis, rd.StaticAnalysis)
     return capa_pb2.Metadata(
         timestamp=str(meta.timestamp),
         version=meta.version,
@@ -490,14 +491,14 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             sha256=meta.sample.sha256,
             path=meta.sample.path,
         ),
-        analysis=rd.Analysis(
+        analysis=rd.StaticAnalysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,
             os=meta.analysis.os,
             extractor=meta.analysis.extractor,
             rules=tuple(meta.analysis.rules),
             base_address=addr_from_pb2(meta.analysis.base_address),
-            layout=rd.Layout(
+            layout=rd.StaticLayout(
                 functions=tuple(
                     [
                         rd.FunctionLayout(
@@ -513,7 +514,7 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
                     ]
                 )
             ),
-            feature_counts=rd.FeatureCounts(
+            feature_counts=rd.StaticFeatureCounts(
                 file=meta.analysis.feature_counts.file,
                 functions=tuple(
                     [

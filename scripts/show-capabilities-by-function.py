@@ -102,6 +102,7 @@ def render_matches_by_function(doc: rd.ResultDocument):
           - send HTTP request
           - connect to HTTP server
     """
+    assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
     functions_by_bb: Dict[Address, Address] = {}
     for finfo in doc.meta.analysis.layout.functions:
         faddress = finfo.address
@@ -114,10 +115,10 @@ def render_matches_by_function(doc: rd.ResultDocument):
 
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if rule.meta.scope == capa.rules.FUNCTION_SCOPE:
+        if capa.rules.FUNCTION_SCOPE in rule.meta.scopes:
             for addr, _ in rule.matches:
                 matches_by_function[addr].add(rule.meta.name)
-        elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+        elif capa.rules.BASIC_BLOCK_SCOPE in rule.meta.scopes:
             for addr, _ in rule.matches:
                 function = functions_by_bb[addr]
                 matches_by_function[function].add(rule.meta.name)
@@ -185,11 +186,9 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
     if capa.main.has_file_limitation(rules, capabilities):

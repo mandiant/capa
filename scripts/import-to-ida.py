@@ -89,7 +89,7 @@ def main():
             continue
         if rule.meta.is_subscope_rule:
             continue
-        if rule.meta.scope != capa.rules.Scope.FUNCTION:
+        if capa.rules.Scope.FUNCTION in rule.meta.scopes:
             continue
 
         ns = rule.meta.namespace

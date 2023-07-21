@@ -260,7 +260,8 @@ def render_rules(ostream, doc: rd.ResultDocument):
         check for OutputDebugString error
         namespace  anti-analysis/anti-debugging/debugger-detection
         author     michael.hunhoff@mandiant.com
-        scope      function
+        static scope:   function
+        dynamic scope:  process
         mbc        Anti-Behavioral Analysis::Detect Debugger::OutputDebugString
         function @ 0x10004706
           and:
@@ -268,13 +269,25 @@ def render_rules(ostream, doc: rd.ResultDocument):
             api: kernel32.GetLastError @ 0x10004A87
             api: kernel32.OutputDebugString @ 0x10004767, 0x10004787, 0x10004816, 0x10004895
     """
-    functions_by_bb: Dict[capa.features.address.Address, capa.features.address.Address] = {}
-    for finfo in doc.meta.analysis.layout.functions:
-        faddress = finfo.address.to_capa()
 
-        for bb in finfo.matched_basic_blocks:
-            bbaddress = bb.address.to_capa()
-            functions_by_bb[bbaddress] = faddress
+    functions_by_bb: Dict[capa.features.address.Address, capa.features.address.Address] = {}
+    processes_by_thread: Dict[capa.features.address.Address, capa.features.address.Address] = {}
+    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
+        for finfo in doc.meta.analysis.layout.functions:
+            faddress = finfo.address.to_capa()
+
+            for bb in finfo.matched_basic_blocks:
+                bbaddress = bb.address.to_capa()
+                functions_by_bb[bbaddress] = faddress
+    elif isinstance(doc.meta.analysis, rd.DynamicAnalysis):
+        for pinfo in doc.meta.analysis.layout.processes:
+            paddress = pinfo.address.to_capa()
+
+            for thread in pinfo.matched_threads:
+                taddress = thread.address.to_capa()
+                processes_by_thread[taddress] = paddress
+    else:
+        raise ValueError("invalid analysis field in the document's meta")
 
     had_match = False
 
@@ -323,7 +336,11 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
-        rows.append(("scope", rule.meta.scope.value))
+        if rule.meta.scopes.static:
+            rows.append(("static scope:", str(rule.meta.scopes.static)))
+
+        if rule.meta.scopes.dynamic:
+            rows.append(("dynamic scope:", str(rule.meta.scopes.dynamic)))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
@@ -339,7 +356,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
-        if rule.meta.scope == capa.rules.FILE_SCOPE:
+        if capa.rules.FILE_SCOPE in rule.meta.scopes:
             matches = doc.rules[rule.meta.name].matches
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
@@ -351,14 +368,23 @@ def render_rules(ostream, doc: rd.ResultDocument):
             render_match(ostream, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
-                ostream.write(rule.meta.scope)
+                ostream.write(f"static scope: {rule.meta.scopes.static}")
+                ostream.write(f"dynamic scope: {rule.meta.scopes.dynamic}")
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
-                if rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+                if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.scopes:
                     ostream.write(
                         " in function "
                         + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))
+                    )
+
+                if capa.rules.THREAD_SCOPE in rule.meta.scopes:
+                    ostream.write(
+                        " in process "
+                        + capa.render.verbose.format_address(
+                            frz.Address.from_capa(processes_by_thread[location.to_capa()])
+                        )
                     )
 
                 ostream.write("\n")

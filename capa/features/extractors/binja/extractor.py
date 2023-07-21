@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import List, Tuple, Iterator
+from pathlib import Path
 
 import binaryninja as binja
 
@@ -17,7 +18,13 @@ import capa.features.extractors.binja.function
 import capa.features.extractors.binja.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
@@ -28,9 +35,13 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_os(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_arch(self.bv))
+        self.sample_hashes = SampleHashes.from_bytes(Path(bv.file.original_filename).read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.bv.start)
+
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features
