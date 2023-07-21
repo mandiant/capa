@@ -345,6 +345,7 @@ class DynamicFeatureExtractor:
         #
         super().__init__()
 
+    @abc.abstractmethod
     def get_sample_hashes(self) -> SampleHashes:
         """
         fetch the hashes for the sample contained within the extractor.
