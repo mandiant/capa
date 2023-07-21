@@ -16,7 +16,7 @@ import capa.features.extractors.common
 from capa.features.file import Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import StaticFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -112,12 +112,16 @@ class ElfFeatureExtractor(StaticFeatureExtractor):
         super().__init__()
         self.path: Path = path
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
+        self.sample_hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         # virtual address of the first segment with type LOAD
         for segment in self.elf.iter_segments():
             if segment.header.p_type == "PT_LOAD":
                 return AbsoluteVirtualAddress(segment.header.p_vaddr)
+
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
 
     def extract_global_features(self):
         buf = self.path.read_bytes()
