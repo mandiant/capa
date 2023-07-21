@@ -31,11 +31,6 @@ class SampleHashes:
     sha1: str
     sha256: str
 
-    def __iter__(self) -> Iterator[str]:
-        yield self.md5
-        yield self.sha1
-        yield self.sha256
-
     @classmethod
     def from_bytes(cls, buf: bytes) -> "SampleHashes":
         md5 = hashlib.md5()
