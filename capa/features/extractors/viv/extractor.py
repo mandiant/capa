@@ -49,6 +49,9 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
         # assume there is only one file loaded into the vw
         return AbsoluteVirtualAddress(list(self.vw.filemeta.values())[0]["imagebase"])
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def extract_global_features(self):
         yield from self.global_features
 

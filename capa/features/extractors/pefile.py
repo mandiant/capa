@@ -195,6 +195,9 @@ class PefileFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def extract_global_features(self):
         buf = Path(self.path).read_bytes()
 

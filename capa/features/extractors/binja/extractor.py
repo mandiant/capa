@@ -40,6 +40,9 @@ class BinjaFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.bv.start)
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def extract_global_features(self):
         yield from self.global_features
 

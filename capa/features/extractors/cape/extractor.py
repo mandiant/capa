@@ -40,6 +40,9 @@ class CapeExtractor(DynamicFeatureExtractor):
         # value according to the PE header, the actual trace may use a different imagebase
         return AbsoluteVirtualAddress(self.static["pe"]["imagebase"])
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
