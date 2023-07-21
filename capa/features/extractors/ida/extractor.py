@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import List, Tuple, Iterator
-from pathlib import Path
 
 import idaapi
 
@@ -41,9 +40,6 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def get_sample_hashes(self) -> SampleHashes:
         return self.sample_hashes
