@@ -175,6 +175,9 @@ class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         return NO_ADDRESS
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT
         #  True: native EP: Token
