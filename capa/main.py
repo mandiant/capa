@@ -967,7 +967,7 @@ def collect_metadata(
     )
 
 
-def compute_dynamic_layout(rules, extractor, capabilities) -> rdoc.Layout:
+def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabilities) -> rdoc.DynamicLayout:
     """
     compute a metadata structure that links threads
     to the processes in which they're found.
