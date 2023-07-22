@@ -13,7 +13,7 @@ from pathlib import Path
 from elftools.elf.elffile import ELFFile, SymbolTableSection
 
 import capa.features.extractors.common
-from capa.features.file import Import, Section
+from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FeatureExtractor
@@ -21,11 +21,8 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_import_names(elf, **kwargs):
-    # see https://github.com/eliben/pyelftools/blob/0664de05ed2db3d39041e2d51d19622a8ef4fb0f/scripts/readelf.py#L372
-    symbol_tables = [(idx, s) for idx, s in enumerate(elf.iter_sections()) if isinstance(s, SymbolTableSection)]
-
-    for _, section in symbol_tables:
+def extract_file_export_names(elf, **kwargs):
+    for _, section in enumerate(elf.iter_sections()):
         if not isinstance(section, SymbolTableSection):
             continue
 
@@ -36,10 +33,33 @@ def extract_file_import_names(elf, **kwargs):
         logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
 
         for _, symbol in enumerate(section.iter_symbols()):
-            if symbol.name and symbol.entry.st_info.type == "STT_FUNC":
-                # TODO(williballenthin): extract symbol address
-                # https://github.com/mandiant/capa/issues/1608
-                yield Import(symbol.name), FileOffsetAddress(0x0)
+            # The following conditions are based on the following article
+            # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
+            if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
+                if symbol.entry.st_value != 0 and symbol.entry.st_shndx != "SHN_UNDEF":
+                    # Export symbol
+                    yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
+
+
+def extract_file_import_names(elf, **kwargs):
+    for _, section in enumerate(elf.iter_sections()):
+        if not isinstance(section, SymbolTableSection):
+            continue
+
+        if section["sh_entsize"] == 0:
+            logger.debug("Symbol table '%s' has a sh_entsize of zero!", section.name)
+            continue
+
+        logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
+
+        for _, symbol in enumerate(section.iter_symbols()):
+            # The following conditions are based on the following article
+            # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
+            if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
+                if symbol.entry.st_value == 0 and symbol.entry.st_shndx == "SHN_UNDEF" and symbol.entry.st_name != 0:
+                    # TODO(williballenthin): extract symbol address
+                    # https://github.com/mandiant/capa/issues/1608
+                    yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
 def extract_file_section_names(elf, **kwargs):
@@ -85,8 +105,7 @@ def extract_file_features(elf: ELFFile, buf: bytes) -> Iterator[Tuple[Feature, i
 
 
 FILE_HANDLERS = (
-    # TODO(williballenthin): implement extract_file_export_names
-    # https://github.com/mandiant/capa/issues/1607
+    extract_file_export_names,
     extract_file_import_names,
     extract_file_section_names,
     extract_file_strings,
