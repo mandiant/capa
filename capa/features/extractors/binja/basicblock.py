@@ -75,10 +75,11 @@ def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
         return 0
 
     dest = il.params[0]
-    if dest.operation != MediumLevelILOperation.MLIL_ADDRESS_OF:
+    if dest.operation in [MediumLevelILOperation.MLIL_ADDRESS_OF, MediumLevelILOperation.MLIL_VAR]:
+        var = dest.src
+    else:
         return 0
 
-    var = dest.src
     if var.source_type != VariableSourceType.StackVariableSourceType:
         return 0
 
