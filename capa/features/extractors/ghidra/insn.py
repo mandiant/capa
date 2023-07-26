@@ -28,7 +28,7 @@ imports = capa.features.extractors.ghidra.helpers.get_file_imports()
 externs = capa.features.extractors.ghidra.helpers.get_file_externs()
 
 
-def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:  # type: ignore [assignment]
+def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     """check instruction for API call"""
     info = ()
     code_ref = OperandType.ADDRESS | OperandType.CODE
@@ -41,7 +41,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:  # type: i
             return
 
     ref = insn.getAddress(0).getOffset()
-    info = funcs.get(ref)
+    info = funcs.get(ref)  # type: ignore
 
     if info:
         yield info
