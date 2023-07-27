@@ -25,7 +25,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator
+from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -112,8 +112,8 @@ DYNAMIC_SCOPES = (
 
 @dataclass
 class Scopes:
-    static: Union[str, None] = None
-    dynamic: Union[str, None] = None
+    static: Optional[str] = None
+    dynamic: Optional[str] = None
 
     @lru_cache()  # type: ignore
     def __new__(cls, *args, **kwargs):
@@ -586,7 +586,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "instruction":
-        if all(map(lambda s: s not in scopes, (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE))):
+        if all(s not in scopes for s in (FUNCTION_SCOPE, BASIC_BLOCK_SCOPE)):
             raise InvalidRule("instruction subscope supported only for function and basic block scope")
 
         if len(d[key]) == 1:
