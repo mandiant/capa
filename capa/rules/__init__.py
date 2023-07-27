@@ -16,7 +16,7 @@ import collections
 from enum import Enum
 from pathlib import Path
 
-from capa.helpers import assert_never
+from capa.helpers import weak_lru, assert_never
 
 try:
     from functools import lru_cache
@@ -115,7 +115,7 @@ class Scopes:
     static: Optional[str] = None
     dynamic: Optional[str] = None
 
-    @lru_cache()  # type: ignore
+    @weak_lru()
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls)
 

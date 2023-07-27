@@ -8,6 +8,8 @@
 import json
 import inspect
 import logging
+import weakref
+import functools
 import contextlib
 import importlib.util
 from typing import NoReturn
@@ -128,6 +130,25 @@ def redirecting_print_to_tqdm(disable_progress):
         yield
     finally:
         inspect.builtins.print = old_print  # type: ignore
+
+
+def weak_lru(maxsize=128, typed=False):
+    """
+    LRU Cache decorator that keeps a weak reference to 'self'
+    """
+
+    def wrapper(func):
+        @functools.lru_cache(maxsize, typed)
+        def _func(_self, *args, **kwargs):
+            return func(_self(), *args, **kwargs)
+
+        @functools.wraps(func)
+        def inner(self, *args, **kwargs):
+            return _func(weakref.ref(self), *args, **kwargs)
+
+        return inner
+
+    return wrapper
 
 
 def log_unsupported_format_error():
