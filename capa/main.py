@@ -835,7 +835,7 @@ def get_rules(
     rule_paths: List[RulePath],
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
-    analysis_context: ExecutionContext | None = None,
+    analysis_context: Optional[ExecutionContext] = None,
 ) -> RuleSet:
     """
     args:
