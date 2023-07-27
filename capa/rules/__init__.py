@@ -1218,11 +1218,6 @@ class RuleSet:
     ):
         super().__init__()
 
-        if rules_filter_func:
-            # this allows for filtering the ruleset based on
-            # the execution context (static or dynamic)
-            rules = list(filter(rules_filter_func, rules))
-
         ensure_rules_are_unique(rules)
 
         # in the next step we extract subscope rules,
@@ -1236,6 +1231,11 @@ class RuleSet:
         rules = self._extract_subscope_rules(rules)
 
         ensure_rule_dependencies_are_met(rules)
+
+        if rules_filter_func:
+            # this allows for filtering the ruleset based on
+            # the execution context (static or dynamic)
+            rules = list(filter(rules_filter_func, rules))
 
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")
