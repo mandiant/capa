@@ -22,9 +22,8 @@ def test_rule_scope_instruction():
                     name: test rule
                     scopes:
                         static: instruction
-                        dynamic: dev
                 features:
-                  - and:
+                - and:
                     - mnemonic: mov
                     - arch: i386
                     - os: windows
@@ -41,7 +40,6 @@ def test_rule_scope_instruction():
                         name: test rule
                         scopes:
                             static: instruction
-                            dynamic: dev
                     features:
                         - characteristic: embedded pe
                 """
@@ -60,7 +58,7 @@ def test_rule_subscope_instruction():
                             name: test rule
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                         features:
                         - and:
                             - instruction:
@@ -91,7 +89,7 @@ def test_scope_instruction_implied_and():
                     name: test rule
                     scopes:
                         static: function
-                        dynamic: dev
+                        dynamic: process
                 features:
                   - and:
                     - instruction:
@@ -112,7 +110,7 @@ def test_scope_instruction_description():
                     name: test rule
                     scopes:
                         static: function
-                        dynamic: dev
+                        dynamic: process
                 features:
                   - and:
                     - instruction:
@@ -132,7 +130,7 @@ def test_scope_instruction_description():
                     name: test rule
                     scopes:
                         static: function
-                        dynamic: dev
+                        dynamic: process
                 features:
                   - and:
                     - instruction:

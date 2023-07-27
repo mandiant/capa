@@ -52,7 +52,7 @@ def test_render_meta_attack():
             name: test rule
             scopes:
                 static: function
-                dynamic: dev
+                dynamic: process
             authors:
               - foo
             att&ck:
@@ -90,7 +90,7 @@ def test_render_meta_mbc():
             name: test rule
             scopes:
                 static: function
-                dynamic: dev
+                dynamic: process
             authors:
               - foo
             mbc:

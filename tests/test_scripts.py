@@ -109,7 +109,7 @@ def test_detect_duplicate_features(tmpdir):
                 name: Test Rule 0
                 scopes:
                     static: function
-                    dynamic: dev
+                    dynamic: process
             features:
               - and:
                 - number: 1

@@ -19,7 +19,7 @@ EXPECTED = textwrap.dedent(
           - user@domain.com
         scopes:
           static: function
-          dynamic: dev
+          dynamic: process
         examples:
           - foo1234
           - bar5678
@@ -45,7 +45,7 @@ def test_rule_reformat_top_level_elements():
               - user@domain.com
             scopes:
               static: function
-              dynamic: dev
+              dynamic: process
             examples:
               - foo1234
               - bar5678
@@ -65,7 +65,7 @@ def test_rule_reformat_indentation():
               - user@domain.com
             scopes:
               static: function
-              dynamic: dev
+              dynamic: process
             examples:
             - foo1234
             - bar5678
@@ -91,7 +91,7 @@ def test_rule_reformat_order():
               - bar5678
             scopes:
               static: function
-              dynamic: dev
+              dynamic: process
             name: test rule
           features:
             - and:
@@ -117,7 +117,7 @@ def test_rule_reformat_meta_update():
               - bar5678
             scopes:
               static: function
-              dynamic: dev
+              dynamic: process
             name: AAAA
           features:
             - and:
@@ -143,7 +143,7 @@ def test_rule_reformat_string_description():
               - user@domain.com
             scopes:
               static: function
-              dynamic: dev
+              dynamic: process
           features:
             - and:
               - string: foo

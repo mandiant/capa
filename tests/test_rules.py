@@ -56,7 +56,7 @@ def test_rule_yaml():
                     - user@domain.com
                 scopes:
                     static: function
-                    dynamic: dev
+                    dynamic: process
                 examples:
                     - foo1234
                     - bar5678
@@ -248,7 +248,7 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: file
-                            dynamic: dev
+                            dynamic: process
                     features:
                         - characteristic: nzxor
                 """
@@ -264,7 +264,7 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: function
-                            dynamic: dev
+                            dynamic: thread
                     features:
                         - characteristic: embedded pe
                 """
@@ -280,28 +280,90 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: basic block
-                            dynamic: dev
+                            dynamic: thread
                     features:
                         - characteristic: embedded pe
                 """
             )
         )
 
-    with pytest.raises(capa.rules.InvalidRule):
+
+def test_multi_scope_rules_features():
+    _ = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - or:
+                        - api: write
+                        - and:
+                            - os: linux
+                            - mnemonic: syscall
+                            - number: 1 = write
+            """
+        )
+    )
+
+    _ = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - or:
+                        - api: read
+                        - and:
+                            - os: linux
+                            - mnemonic: syscall
+                            - number: 0 = read
+            """
+        )
+    )
+
+
+def test_rules_flavor_filtering():
+    rules = [
         capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
                     meta:
-                        name: test rule
+                        name: static rule
                         scopes:
                             static: function
-                            dynamic: process
                     features:
-                        - mnemonic: xor
+                        - api: CreateFileA
                 """
             )
-        )
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: dynamic rule
+                        scopes:
+                            dynamic: thread
+                    features:
+                        - api: CreateFileA
+                """
+            )
+        ),
+    ]
+
+    static_rules = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.static)
+    dynamic_rules = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.dynamic)
+
+    # only static rule
+    assert len(static_rules) == 1
+    # only dynamic rule
+    assert len(dynamic_rules) == 1
 
 
 def test_lib_rules():
@@ -348,7 +410,7 @@ def test_subscope_rules():
                             name: test function subscope
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                         features:
                             - and:
                                 - characteristic: embedded pe
@@ -407,7 +469,7 @@ def test_subscope_rules():
 
     # the process rule scope has three rules:
     # - the rule on which `test process subscope` depends,
-    assert len(rules.process_rules) == 2
+    assert len(rules.process_rules) == 3
 
     # the thread rule scope has one rule:
     # - the rule on which `test thread subscope` depends
@@ -1025,7 +1087,7 @@ def test_function_name_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - function-name: strcpy
@@ -1049,7 +1111,7 @@ def test_os_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - os: windows
@@ -1069,7 +1131,7 @@ def test_format_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - format: pe
@@ -1089,7 +1151,7 @@ def test_arch_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - arch: amd64
