@@ -14,6 +14,8 @@
 
 ### Bug Fixes
 
+- Fix binja backend stack string detection. [#1473](https://github.com/mandiant/capa/issues/1473) [@xusheng6](https://github.com/xusheng6)
+
 ### capa explorer IDA Pro plugin
 
 ### Development
