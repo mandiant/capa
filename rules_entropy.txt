@@ -1,0 +1,21 @@
+contain obfuscated stackstrings
+resolve DNS
+initialize Winsock library
+act as TCP client
+encode data using XOR
+create process on Windows
+terminate process
+terminate process
+link many functions at runtime
+[36mcopy file[0m
+[36menumerate files recursively[0m
+read file via mapping
+read file via mapping
+[36menumerate PE sections[0m
+[36mresolve function by parsing PE exports[0m
+[36mcopy file[0m
+[36menumerate files recursively[0m
+read file via mapping
+read file via mapping
+[36menumerate PE sections[0m
+[36mresolve function by parsing PE exports[0m

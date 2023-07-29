@@ -85,6 +85,12 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     subrule_matches = find_subrule_matches(doc)
 
     rows = []
+
+    entropy_dict: dict = {}
+    import pickle
+    with open("./all_rules_entropy.pickle", 'rb') as pickle_file:
+        entropy_dict = pickle.load(pickle_file)
+    
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
             # rules that are also matched by other rules should not get rendered by default.
@@ -97,7 +103,16 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
             capability = rutils.bold(rule.meta.name)
         else:
             capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
-        rows.append((capability, rule.meta.namespace))
+
+        # Get the entropy value or use zero as the default value if not available
+        # entropy = float(getattr(rule.meta, 'entropy', 0.0))
+        entropy = entropy_dict.get(rule.meta.name+"\n", 0)
+
+        rows.append((capability, rule.meta.namespace, entropy))
+
+    # Sort the rows based on entropy values in descending order (highest to lowest)
+    rows.sort(key=lambda x: x[2])
+    rows = [(capability, namespace) for capability, namespace, _ in rows]
 
     if rows:
         ostream.write(
