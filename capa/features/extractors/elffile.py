@@ -35,10 +35,16 @@ def extract_file_export_names(elf: ELFFile, **kwargs):
         for symbol in section.iter_symbols():
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
-            if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
-                if symbol.entry.st_value != 0 and symbol.entry.st_shndx != "SHN_UNDEF":
-                    # Export symbol
-                    yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
+            if not symbol.name:
+                continue
+            if symbol.entry.st_info.type not in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
+                continue
+            if symbol.entry.st_value == 0:
+                continue
+            if symbol.entry.st_shndx == "SHN_UNDEF":
+                continue
+
+            yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
 
 
 def extract_file_import_names(elf: ELFFile, **kwargs):
@@ -55,11 +61,20 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
         for symbol in section.iter_symbols():
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
-            if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
-                if symbol.entry.st_value == 0 and symbol.entry.st_shndx == "SHN_UNDEF" and symbol.entry.st_name != 0:
-                    # TODO(williballenthin): extract symbol address
-                    # https://github.com/mandiant/capa/issues/1608
-                    yield Import(symbol.name), FileOffsetAddress(0x0)
+            if not symbol.name:
+                continue
+            if symbol.entry.st_info.type not in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
+                continue
+            if symbol.entry.st_value != 0:
+                continue
+            if symbol.entry.st_shndx != "SHN_UNDEF":
+                continue
+            if symbol.entry.st_name == 0:
+                continue
+
+            # TODO(williballenthin): extract symbol address
+            # https://github.com/mandiant/capa/issues/1608
+            yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
 def extract_file_section_names(elf, **kwargs):
