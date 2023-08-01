@@ -38,7 +38,7 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
                 authors:
                   - test
             features:
@@ -103,7 +103,7 @@ def test_ruleset():
                             name: file rule
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                         features:
                           - characteristic: embedded pe
                     """
@@ -117,7 +117,7 @@ def test_ruleset():
                             name: function rule
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                         features:
                           - characteristic: tight loop
                     """
@@ -131,7 +131,7 @@ def test_ruleset():
                             name: basic block rule
                             scopes:
                                 static: basic block
-                                dynamic: dev
+                                dynamic: process
                         features:
                           - characteristic: nzxor
                     """
@@ -170,7 +170,7 @@ def test_ruleset():
     assert len(rules.file_rules) == 2
     assert len(rules.function_rules) == 2
     assert len(rules.basic_block_rules) == 1
-    assert len(rules.process_rules) == 1
+    assert len(rules.process_rules) == 4
     assert len(rules.thread_rules) == 1
 
 
@@ -186,7 +186,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                             name: install service
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x4073F0
                         features:
@@ -206,7 +206,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                             name: .text section
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -225,7 +225,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
                             name: .text section and install service
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -255,7 +255,7 @@ def test_match_across_scopes(z9324d_extractor):
                             name: tight loop
                             scopes:
                                 static: basic block
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x403685
                         features:
@@ -273,7 +273,7 @@ def test_match_across_scopes(z9324d_extractor):
                             name: kill thread loop
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a:0x403660
                         features:
@@ -293,7 +293,7 @@ def test_match_across_scopes(z9324d_extractor):
                             name: kill thread program
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                             examples:
                               - 9324d1a8ae37a36ae560c37448c9705a
                         features:
@@ -322,7 +322,7 @@ def test_subscope_bb_rules(z9324d_extractor):
                             name: test rule
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                         features:
                             - and:
                                 - basic block:
@@ -348,7 +348,7 @@ def test_byte_matching(z9324d_extractor):
                             name: byte match test
                             scopes:
                                 static: function
-                                dynamic: dev
+                                dynamic: process
                         features:
                             - and:
                                 - bytes: ED 24 9E F4 52 A9 07 47 55 8E E1 AB 30 8E 23 61
@@ -373,7 +373,7 @@ def test_count_bb(z9324d_extractor):
                         namespace: test
                         scopes:
                             static: function
-                            dynamic: dev
+                            dynamic: process
                       features:
                         - and:
                           - count(basic blocks): 1 or more
@@ -399,7 +399,7 @@ def test_instruction_scope(z9324d_extractor):
                         namespace: test
                         scopes:
                             static: instruction
-                            dynamic: dev
+                            dynamic: process
                       features:
                         - and:
                           - mnemonic: push
@@ -429,7 +429,7 @@ def test_instruction_subscope(z9324d_extractor):
                         namespace: test
                         scopes:
                             static: function
-                            dynamic: dev
+                            dynamic: process
                       features:
                         - and:
                           - arch: i386

@@ -56,7 +56,7 @@ def test_rule_yaml():
                     - user@domain.com
                 scopes:
                     static: function
-                    dynamic: dev
+                    dynamic: process
                 examples:
                     - foo1234
                     - bar5678
@@ -79,6 +79,9 @@ def test_rule_yaml_complex():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - and:
@@ -103,6 +106,9 @@ def test_rule_descriptions():
         rule:
           meta:
             name: test rule
+            scopes:
+                static: function
+                dynamic: process
           features:
             - and:
               - description: and description
@@ -147,6 +153,9 @@ def test_invalid_rule_statement_descriptions():
                 rule:
                   meta:
                     name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
                   features:
                     - or:
                       - number: 1 = This is the number 1
@@ -163,6 +172,9 @@ def test_rule_yaml_not():
         rule:
             meta:
                 name: test rule
+                scopes:
+                        static: function
+                        dynamic: process
             features:
                 - and:
                     - number: 1
@@ -181,6 +193,9 @@ def test_rule_yaml_count():
         rule:
             meta:
                 name: test rule
+                scopes:
+                        static: function
+                        dynamic: process
             features:
                 - count(number(100)): 1
         """
@@ -197,6 +212,9 @@ def test_rule_yaml_count_range():
         rule:
             meta:
                 name: test rule
+                scopes:
+                        static: function
+                        dynamic: process
             features:
                 - count(number(100)): (1, 2)
         """
@@ -214,6 +232,9 @@ def test_rule_yaml_count_string():
         rule:
             meta:
                 name: test rule
+                scopes:
+                        static: function
+                        dynamic: process
             features:
                 - count(string(foo)): 2
         """
@@ -233,6 +254,9 @@ def test_invalid_rule_feature():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - foo: true
                 """
@@ -248,7 +272,7 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: file
-                            dynamic: dev
+                            dynamic: process
                     features:
                         - characteristic: nzxor
                 """
@@ -264,7 +288,7 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: function
-                            dynamic: dev
+                            dynamic: thread
                     features:
                         - characteristic: embedded pe
                 """
@@ -280,28 +304,93 @@ def test_invalid_rule_feature():
                         name: test rule
                         scopes:
                             static: basic block
-                            dynamic: dev
+                            dynamic: thread
                     features:
                         - characteristic: embedded pe
                 """
             )
         )
 
-    with pytest.raises(capa.rules.InvalidRule):
+
+def test_multi_scope_rules_features():
+    _ = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - or:
+                        - api: write
+                        - and:
+                            - os: linux
+                            - mnemonic: syscall
+                            - number: 1 = write
+            """
+        )
+    )
+
+    _ = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
+                features:
+                    - or:
+                        - api: read
+                        - and:
+                            - os: linux
+                            - mnemonic: syscall
+                            - number: 0 = read
+            """
+        )
+    )
+
+
+def test_rules_flavor_filtering():
+    rules = [
         capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
                     meta:
-                        name: test rule
+                        name: static rule
                         scopes:
                             static: function
-                            dynamic: process
                     features:
-                        - mnemonic: xor
+                        - api: CreateFileA
                 """
             )
-        )
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: dynamic rule
+                        scopes:
+                            dynamic: thread
+                    features:
+                        - api: CreateFileA
+                """
+            )
+        ),
+    ]
+
+    static_rules = capa.rules.RuleSet(rules.copy(), rules_filter_func=lambda rule: rule.scopes.static)
+    dynamic_rules = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.dynamic)
+
+    # only static rule
+    assert len(static_rules) == 1
+    # only dynamic rule
+    assert len(dynamic_rules) == 1
 
 
 def test_lib_rules():
@@ -313,6 +402,9 @@ def test_lib_rules():
                     rule:
                         meta:
                             name: a lib rule
+                            scopes:
+                                static: function
+                                dynamic: process
                             lib: true
                         features:
                             - api: CreateFileA
@@ -325,6 +417,9 @@ def test_lib_rules():
                     rule:
                         meta:
                             name: a standard rule
+                            scopes:
+                                static: function
+                                dynamic: process
                             lib: false
                         features:
                             - api: CreateFileW
@@ -348,7 +443,7 @@ def test_subscope_rules():
                             name: test function subscope
                             scopes:
                                 static: file
-                                dynamic: dev
+                                dynamic: process
                         features:
                             - and:
                                 - characteristic: embedded pe
@@ -407,7 +502,7 @@ def test_subscope_rules():
 
     # the process rule scope has three rules:
     # - the rule on which `test process subscope` depends,
-    assert len(rules.process_rules) == 2
+    assert len(rules.process_rules) == 3
 
     # the thread rule scope has one rule:
     # - the rule on which `test thread subscope` depends
@@ -424,6 +519,9 @@ def test_duplicate_rules():
                         rule:
                             meta:
                                 name: rule-name
+                                scopes:
+                                    static: function
+                                    dynamic: process
                             features:
                                 - api: CreateFileA
                         """
@@ -435,6 +533,9 @@ def test_duplicate_rules():
                         rule:
                             meta:
                                 name: rule-name
+                                scopes:
+                                    static: function
+                                    dynamic: process
                             features:
                                 - api: CreateFileW
                         """
@@ -454,6 +555,9 @@ def test_missing_dependency():
                         rule:
                             meta:
                                 name: dependent rule
+                                scopes:
+                                    static: function
+                                    dynamic: process
                             features:
                                 - match: missing rule
                         """
@@ -471,6 +575,9 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - characteristic: number(1)
                 """
@@ -484,6 +591,9 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - characteristic: count(number(100))
                 """
@@ -498,6 +608,9 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                         att&ck: Tactic::Technique::Subtechnique [Identifier]
                     features:
                         - number: 1
@@ -511,6 +624,9 @@ def test_invalid_rules():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                         mbc: Objective::Behavior::Method [Identifier]
                     features:
                         - number: 1
@@ -585,6 +701,9 @@ def test_number_symbol():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - and:
                     - number: 1
@@ -612,6 +731,9 @@ def test_count_number_symbol():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - count(number(2 = symbol name)): 1
@@ -635,6 +757,9 @@ def test_invalid_number():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - number: "this is a string"
                 """
@@ -648,6 +773,9 @@ def test_invalid_number():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - number: 2=
                 """
@@ -661,6 +789,9 @@ def test_invalid_number():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - number: symbol name = 2
                 """
@@ -674,6 +805,9 @@ def test_offset_symbol():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - and:
                     - offset: 1
@@ -698,6 +832,9 @@ def test_count_offset_symbol():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - count(offset(2 = symbol name)): 1
@@ -721,6 +858,9 @@ def test_invalid_offset():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - offset: "this is a string"
                 """
@@ -734,6 +874,9 @@ def test_invalid_offset():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - offset: 2=
                 """
@@ -747,6 +890,9 @@ def test_invalid_offset():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - offset: symbol name = 2
                 """
@@ -762,6 +908,9 @@ def test_invalid_string_values_int():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - string: 123
                 """
@@ -775,6 +924,9 @@ def test_invalid_string_values_int():
                 rule:
                     meta:
                         name: test rule
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - string: 0x123
                 """
@@ -788,6 +940,9 @@ def test_explicit_string_values_int():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - string: "123"
@@ -806,6 +961,9 @@ def test_string_values_special_characters():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - string: "hello\\r\\nworld"
@@ -825,6 +983,9 @@ def test_substring_feature():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - substring: abc
@@ -845,6 +1006,9 @@ def test_substring_description():
         rule:
             meta:
                 name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
             features:
                 - or:
                     - substring: abc
@@ -865,6 +1029,9 @@ def test_filter_rules():
                     rule:
                         meta:
                             name: rule 1
+                            scopes:
+                                static: function
+                                dynamic: process
                             authors:
                               - joe
                         features:
@@ -878,6 +1045,9 @@ def test_filter_rules():
                     rule:
                         meta:
                             name: rule 2
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                             - string: joe
                     """
@@ -899,6 +1069,9 @@ def test_filter_rules_dependencies():
                     rule:
                         meta:
                             name: rule 1
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                             - match: rule 2
                     """
@@ -910,6 +1083,9 @@ def test_filter_rules_dependencies():
                     rule:
                         meta:
                             name: rule 2
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                             - match: rule 3
                     """
@@ -921,6 +1097,9 @@ def test_filter_rules_dependencies():
                     rule:
                         meta:
                             name: rule 3
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                             - api: CreateFile
                     """
@@ -945,6 +1124,9 @@ def test_filter_rules_missing_dependency():
                         rule:
                             meta:
                                 name: rule 1
+                                scopes:
+                                    static: function
+                                    dynamic: process
                                 authors:
                                   - joe
                             features:
@@ -964,6 +1146,9 @@ def test_rules_namespace_dependencies():
                 rule:
                     meta:
                         name: rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
                         namespace: ns1/nsA
                     features:
                         - api: CreateFile
@@ -976,6 +1161,9 @@ def test_rules_namespace_dependencies():
                 rule:
                     meta:
                         name: rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
                         namespace: ns1/nsB
                     features:
                         - api: CreateFile
@@ -988,6 +1176,9 @@ def test_rules_namespace_dependencies():
                 rule:
                     meta:
                         name: rule 3
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - match: ns1/nsA
                 """
@@ -999,6 +1190,9 @@ def test_rules_namespace_dependencies():
                 rule:
                     meta:
                         name: rule 4
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                         - match: ns1
                 """
@@ -1025,7 +1219,7 @@ def test_function_name_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - function-name: strcpy
@@ -1049,7 +1243,7 @@ def test_os_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - os: windows
@@ -1069,7 +1263,7 @@ def test_format_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - format: pe
@@ -1089,7 +1283,7 @@ def test_arch_features():
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: dev
+                    dynamic: process
             features:
                 - and:
                     - arch: amd64
@@ -1108,6 +1302,9 @@ def test_property_access():
             rule:
                 meta:
                     name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
                 features:
                     - property/read: System.IO.FileInfo::Length
             """
@@ -1126,6 +1323,9 @@ def test_property_access_symbol():
             rule:
                 meta:
                     name: test rule
+                    scopes:
+                        static: function
+                        dynamic: process
                 features:
                     - property/read: System.IO.FileInfo::Length = some property
             """

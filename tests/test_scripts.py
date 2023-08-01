@@ -109,7 +109,7 @@ def test_detect_duplicate_features(tmpdir):
                 name: Test Rule 0
                 scopes:
                     static: function
-                    dynamic: dev
+                    dynamic: process
             features:
               - and:
                 - number: 1
@@ -124,6 +124,9 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                       - or:
                         - string: unique
@@ -143,6 +146,9 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                       - and:
                         - string: "sites.ini"
@@ -157,6 +163,9 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 3
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                       - or:
                         - not:
@@ -172,6 +181,9 @@ def test_detect_duplicate_features(tmpdir):
                 rule:
                     meta:
                         name: Test Rule 4
+                        scopes:
+                            static: function
+                            dynamic: process
                     features:
                       - not:
                         - string: "expa"

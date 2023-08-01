@@ -90,7 +90,7 @@ def test_null_feature_extractor():
                             name: xor loop
                             scopes:
                                 static: basic block
-                                dynamic: dev
+                                dynamic: process
                         features:
                             - and:
                                 - characteristic: tight loop

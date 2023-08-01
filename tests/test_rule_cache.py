@@ -22,7 +22,7 @@ R1 = capa.rules.Rule.from_yaml(
                 - user@domain.com
             scopes:
                 static: function
-                dynamic: dev
+                dynamic: process
             examples:
                 - foo1234
                 - bar5678
@@ -44,7 +44,7 @@ R2 = capa.rules.Rule.from_yaml(
                 - user@domain.com
             scopes:
                 static: function
-                dynamic: dev
+                dynamic: process
             examples:
                 - foo1234
                 - bar5678
