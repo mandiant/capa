@@ -21,8 +21,8 @@ from capa.features.extractors.base_extractor import FeatureExtractor
 logger = logging.getLogger(__name__)
 
 
-def extract_file_export_names(elf, **kwargs):
-    for _, section in enumerate(elf.iter_sections()):
+def extract_file_export_names(elf: ELFFile, **kwargs):
+    for section in elf.iter_sections():
         if not isinstance(section, SymbolTableSection):
             continue
 
@@ -32,7 +32,7 @@ def extract_file_export_names(elf, **kwargs):
 
         logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
 
-        for _, symbol in enumerate(section.iter_symbols()):
+        for symbol in section.iter_symbols():
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
@@ -41,8 +41,8 @@ def extract_file_export_names(elf, **kwargs):
                     yield Export(symbol.name), AbsoluteVirtualAddress(symbol.entry.st_value)
 
 
-def extract_file_import_names(elf, **kwargs):
-    for _, section in enumerate(elf.iter_sections()):
+def extract_file_import_names(elf: ELFFile, **kwargs):
+    for section in elf.iter_sections():
         if not isinstance(section, SymbolTableSection):
             continue
 
@@ -52,7 +52,7 @@ def extract_file_import_names(elf, **kwargs):
 
         logger.debug("Symbol table '%s' contains %s entries:", section.name, section.num_symbols())
 
-        for _, symbol in enumerate(section.iter_symbols()):
+        for symbol in section.iter_symbols():
             # The following conditions are based on the following article
             # http://www.m4b.io/elf/export/binary/analysis/2015/05/25/what-is-an-elf-export.html
             if symbol.name and symbol.entry.st_info.type in ["STT_FUNC", "STT_OBJECT", "STT_IFUNC"]:
