@@ -8,8 +8,6 @@
 import json
 import inspect
 import logging
-import weakref
-import functools
 import contextlib
 import importlib.util
 from typing import NoReturn
