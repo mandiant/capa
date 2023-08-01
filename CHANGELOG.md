@@ -7,7 +7,7 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 -
