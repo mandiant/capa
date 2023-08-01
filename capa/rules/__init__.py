@@ -884,7 +884,12 @@ class Rule:
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
-        scopes_ = meta.get("scopes", {"static": "function", "dynamic": "process"})
+        if "scope" in meta:
+            raise InvalidRule("rule is in legacy mode (has scope meta field). please update to the new syntax.")
+        elif "scopes" in meta:
+            scopes_ = meta.get("scopes")
+        else:
+            raise InvalidRule("please specify at least one of this rule's (static/dynamic) scopes")
         if not isinstance(scopes_, dict):
             raise InvalidRule("the scopes field must contain a dictionary specifying the scopes")
 
