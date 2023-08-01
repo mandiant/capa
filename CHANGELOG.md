@@ -6,12 +6,14 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 -
 
 ### Bug Fixes
+
+- Fix binja backend stack string detection. [#1473](https://github.com/mandiant/capa/issues/1473) [@xusheng6](https://github.com/xusheng6)
 
 ### capa explorer IDA Pro plugin
 
