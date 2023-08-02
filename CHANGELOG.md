@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
 
 ### Breaking Changes
 
