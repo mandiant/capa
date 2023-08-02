@@ -569,6 +569,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
                     "ZwCreateProcess",
                     "ZwCreateUserProcess",
                     "RtlCreateUserProcess",
+                    "NtProtectVirtualMemory",
                 ):
                     # ntoskrnl.exe does not export these routines
                     continue
