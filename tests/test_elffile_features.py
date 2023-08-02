@@ -23,11 +23,6 @@ def test_elffile_import_features():
         "__libc_start_main",
         "malloc",
         "__cxa_finalize",
-        "memfrob@@GLIBC_2.2.5",
-        "puts@@GLIBC_2.2.5",
-        "__libc_start_main@@GLIBC_2.2.5",
-        "malloc@@GLIBC_2.2.5",
-        "__cxa_finalize@@GLIBC_2.2.5",
     ]
     path = Path(SAMPLE_PATH)
     elf = ELFFile(io.BytesIO(path.read_bytes()))
