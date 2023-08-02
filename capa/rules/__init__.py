@@ -77,6 +77,7 @@ class Scope(str, Enum):
     FILE = "file"
     PROCESS = "process"
     THREAD = "thread"
+    CALL = "call"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
     INSTRUCTION = "instruction"
@@ -85,6 +86,7 @@ class Scope(str, Enum):
 FILE_SCOPE = Scope.FILE.value
 PROCESS_SCOPE = Scope.PROCESS.value
 THREAD_SCOPE = Scope.THREAD.value
+CALL_SCOPE = Scope.CALL.value
 FUNCTION_SCOPE = Scope.FUNCTION.value
 BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
@@ -107,6 +109,7 @@ DYNAMIC_SCOPES = (
     GLOBAL_SCOPE,
     PROCESS_SCOPE,
     THREAD_SCOPE,
+    CALL_SCOPE,
 )
 
 
@@ -188,9 +191,11 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
     },
     THREAD_SCOPE: {
         capa.features.common.MatchedRule,
-        capa.features.common.String,
         capa.features.common.Substring,
         capa.features.common.Regex,
+    },
+    CALL_SCOPE: {
+        capa.features.common.String,
         capa.features.insn.API,
         capa.features.insn.Number,
     },
@@ -240,9 +245,14 @@ SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[FILE_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+SUPPORTED_FEATURES[CALL_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 
+
+# all call scope features are also thread features
+SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[CALL_SCOPE])
 # all thread scope features are also process features
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
+
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
@@ -549,7 +559,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "thread":
-        if (PROCESS_SCOPE not in scopes) and (FILE_SCOPE not in scopes):
+        if all(s not in scopes for s in (FILE_SCOPE, PROCESS_SCOPE)):
             raise InvalidRule("thread subscope supported only for the process scope")
 
         if len(d[key]) != 1:
@@ -557,6 +567,17 @@ def build_statements(d, scopes: Scopes):
 
         return ceng.Subscope(
             THREAD_SCOPE, build_statements(d[key][0], Scopes(dynamic=THREAD_SCOPE)), description=description
+        )
+
+    elif key == "call":
+        if all(s not in scopes for s in (FILE_SCOPE, PROCESS_SCOPE, THREAD_SCOPE)):
+            raise InvalidRule("thread subscope supported only for the process scope")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        return ceng.Subscope(
+            CALL_SCOPE, build_statements(d[key][0], Scopes(dynamic=CALL_SCOPE)), description=description
         )
 
     elif key == "function":

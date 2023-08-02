@@ -11,9 +11,10 @@ from dataclasses import dataclass
 from typing_extensions import TypeAlias
 
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress
+from capa.features.address import NO_ADDRESS, Address, CallAddress, ThreadAddress, ProcessAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
+    CallHandle,
     InsnHandle,
     SampleHashes,
     ThreadHandle,
@@ -95,8 +96,14 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
 
 
 @dataclass
+class CallFeatures:
+    features: List[Tuple[Address, Feature]]
+
+
+@dataclass
 class ThreadFeatures:
     features: List[Tuple[Address, Feature]]
+    calls: Dict[Address, CallFeatures]
 
 
 @dataclass
@@ -141,6 +148,15 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     def extract_thread_features(self, p, t):
         for addr, feature in self.processes[p.address].threads[t.address].features:
             yield feature, addr
+
+    def get_calls(self, p, t):
+        for address in sorted(self.processes[p.address].threads[t.address].calls.keys()):
+            assert isinstance(address, CallAddress)
+            yield CallHandle(address=address, inner={})
+
+    def extract_call_features(self, p, t, call):
+        for address, feature in self.processes[p.address].threads[t.address].calls[call.address].features:
+            yield feature, address
 
 
 NullFeatureExtractor: TypeAlias = Union[NullStaticFeatureExtractor, NullDynamicFeatureExtractor]

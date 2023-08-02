@@ -50,6 +50,7 @@ class AddressType(str, Enum):
     DN_TOKEN_OFFSET = "dn token offset"
     PROCESS = "process"
     THREAD = "thread"
+    CALL = "call"
     DYNAMIC = "dynamic"
     NO_ADDRESS = "no address"
 
@@ -81,8 +82,20 @@ class Address(HashableModel):
         elif isinstance(a, capa.features.address.ThreadAddress):
             return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
 
-        elif isinstance(a, capa.features.address.DynamicAddress):
-            return cls(type=AddressType.DYNAMIC, value=(a.id, a.return_address))
+        elif isinstance(a, capa.features.address.CallAddress):
+            return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
+
+        elif isinstance(a, capa.features.address.DynamicReturnAddress):
+            return cls(
+                type=AddressType.DYNAMIC,
+                value=(
+                    a.call.thread.process.ppid,
+                    a.call.thread.process.pid,
+                    a.call.thread.tid,
+                    a.call.id,
+                    a.return_address,
+                ),
+            )
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -133,8 +146,32 @@ class Address(HashableModel):
             assert isinstance(ppid, int)
             assert isinstance(pid, int)
             assert isinstance(tid, int)
-            proc_addr = capa.features.address.ProcessAddress(ppid=ppid, pid=pid)
-            return capa.features.address.ThreadAddress(proc_addr, tid=tid)
+            return capa.features.address.ThreadAddress(
+                process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+            )
+
+        elif self.type is AddressType.CALL:
+            assert isinstance(self.value, tuple)
+            ppid, pid, tid, id_ = self.value
+            return capa.features.address.CallAddress(
+                thread=capa.features.address.ThreadAddress(
+                    process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                ),
+                id=id_,
+            )
+
+        elif self.type is AddressType.DYNAMIC:
+            assert isinstance(self.value, tuple)
+            ppid, pid, tid, id_, return_address = self.value
+            return capa.features.address.DynamicReturnAddress(
+                call=capa.features.address.CallAddress(
+                    thread=capa.features.address.ThreadAddress(
+                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
+                    ),
+                    id=id_,
+                ),
+                return_address=return_address,
+            )
 
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
@@ -190,6 +227,18 @@ class ThreadFeature(HashableModel):
     """
 
     thread: Address
+    address: Address
+    feature: Feature
+
+
+class CallFeature(HashableModel):
+    """
+    args:
+        call: the call id to which this feature belongs.
+        address: the address at which this feature is found (it's dynamic return address).
+    """
+
+    call: Address
     address: Address
     feature: Feature
 
@@ -262,9 +311,15 @@ class FunctionFeatures(BaseModel):
         allow_population_by_field_name = True
 
 
+class CallFeatures(BaseModel):
+    address: Address
+    features: Tuple[CallFeature, ...]
+
+
 class ThreadFeatures(BaseModel):
     address: Address
     features: Tuple[ThreadFeature, ...]
+    calls: Tuple[CallFeatures, ...]
 
 
 class ProcessFeatures(BaseModel):
@@ -461,10 +516,30 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                 for feature, addr in extractor.extract_thread_features(p, t)
             ]
 
+            calls = []
+            for call in extractor.get_calls(p, t):
+                caddr = Address.from_capa(call.address)
+                cfeatures = [
+                    CallFeature(
+                        call=caddr,
+                        address=Address.from_capa(addr),
+                        feature=feature_from_capa(feature),
+                    )
+                    for feature, addr in extractor.extract_call_features(p, t, call)
+                ]
+
+                calls.append(
+                    CallFeatures(
+                        address=caddr,
+                        features=tuple(cfeatures),
+                    )
+                )
+
             threads.append(
                 ThreadFeatures(
                     address=taddr,
                     features=tuple(tfeatures),
+                    calls=tuple(calls),
                 )
             )
 
@@ -501,7 +576,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
 
 
 def loads_static(s: str) -> StaticFeatureExtractor:
-    """deserialize a set of features (as a NullFeatureExtractor) from a string."""
+    """deserialize a set of features (as a NullStaticFeatureExtractor) from a string."""
     freeze = Freeze.parse_raw(s)
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
@@ -534,7 +609,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
 
 
 def loads_dynamic(s: str) -> DynamicFeatureExtractor:
-    """deserialize a set of features (as a NullFeatureExtractor) from a string."""
+    """deserialize a set of features (as a NullDynamicFeatureExtractor) from a string."""
     freeze = Freeze.parse_raw(s)
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
@@ -551,6 +626,12 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
                 threads={
                     t.address.to_capa(): null.ThreadFeatures(
                         features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in t.features],
+                        calls={
+                            c.address.to_capa(): null.CallFeatures(
+                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features]
+                            )
+                            for c in t.calls
+                        },
                     )
                     for t in p.threads
                 },

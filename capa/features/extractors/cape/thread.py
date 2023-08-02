@@ -10,28 +10,14 @@ import logging
 from typing import Any, Dict, List, Tuple, Iterator
 
 import capa.features.extractors.cape.helpers
-from capa.features.insn import API, Number
-from capa.features.common import String, Feature
-from capa.features.address import Address, DynamicAddress
-from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
+from capa.features.common import Feature
+from capa.features.address import NO_ADDRESS, Address, CallAddress
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-    """
-    this method goes through the specified thread's call trace, and extracts all possible
-    features such as: API, Number (for arguments), String (for arguments).
-
-    args:
-      behavior: a dictionary of behavioral artifacts extracted by the sandbox
-      ph: process handle (for defining the extraction scope)
-      th: thread handle (for defining the extraction scope)
-
-    yields:
-      Feature, address; where Feature is either: API, Number, or String.
-    """
-
+def get_calls(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
     process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
     calls: List[Dict[str, Any]] = process["calls"]
 
@@ -40,17 +26,13 @@ def extract_call_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -
         if call["thread_id"] != tid:
             continue
 
-        # TODO(yelhamer): find correct base address used at runtime.
-        # this address may vary from the PE header, may read actual base from procdump.pe.imagebase or similar.
-        # https://github.com/mandiant/capa/issues/1618
-        caller = DynamicAddress(call["id"], int(call["caller"], 16))
-        # list similar to disassembly: arguments right-to-left, call
-        for arg in call["arguments"][::-1]:
-            try:
-                yield Number(int(arg["value"], 16), description=f"{arg['name']}"), caller
-            except ValueError:
-                yield String(arg["value"], description=f"{arg['name']}"), caller
-        yield API(call["api"]), caller
+        addr = CallAddress(thread=th.address, id=call["id"])
+        ch = CallHandle(address=addr, inner={})
+        yield ch
+
+
+def extract_thread_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+    yield from ((Feature(0), NO_ADDRESS),)
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -59,4 +41,4 @@ def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Ite
             yield feature, addr
 
 
-THREAD_HANDLERS = (extract_call_features,)
+THREAD_HANDLERS = (extract_thread_features,)

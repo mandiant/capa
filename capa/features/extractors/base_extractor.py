@@ -16,7 +16,7 @@ from typing_extensions import TypeAlias
 
 import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import Address, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress
+from capa.features.address import Address, CallAddress, ThreadAddress, ProcessAddress, AbsoluteVirtualAddress
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
@@ -300,7 +300,7 @@ class ProcessHandle:
     reference to a process extracted by the sandbox.
 
     Attributes:
-        pid: process id
+        address: process' address (pid and pid)
         inner: sandbox-specific data
     """
 
@@ -314,11 +314,25 @@ class ThreadHandle:
     reference to a thread extracted by the sandbox.
 
     Attributes:
-        tid: thread id
+        address: thread's address (tid)
         inner: sandbox-specific data
     """
 
     address: ThreadAddress
+    inner: Any
+
+
+@dataclass
+class CallHandle:
+    """
+    reference to an api call extracted by the sandbox.
+
+    Attributes:
+        address: call's id address
+        inner: sandbox-specific data
+    """
+
+    address: CallAddress
     inner: Any
 
 
@@ -415,6 +429,24 @@ class DynamicFeatureExtractor:
         - sequenced api traces
         - file/registry interactions
         - network activity
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
+        """
+        Enumerate calls in the given thread
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_call_features(
+        self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all features of a call. These include:
+        - api's
+        - arguments
         """
         raise NotImplementedError()
 

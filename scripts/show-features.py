@@ -82,7 +82,8 @@ import capa.features.freeze
 import capa.features.address
 import capa.features.extractors.pefile
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
-from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, is_global_feature
+from capa.features.insn import API, Number
+from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, String, Feature, is_global_feature
 from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
@@ -247,7 +248,7 @@ def print_static_features(functions, extractor: StaticFeatureExtractor):
 
 def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
-        print(f"proc: {p.inner['name']} (ppid={p.inner['ppid']}, pid={p.pid})")
+        print(f"proc: {p.inner['name']} (ppid={p.address.ppid}, pid={p.address.pid})")
 
         for feature, addr in extractor.extract_process_features(p):
             if is_global_feature(feature):
@@ -256,11 +257,32 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
             print(f" proc: {p.inner['name']}: {feature}")
 
             for t in extractor.get_threads(p):
+                print(f"  {t.address}")
                 for feature, addr in extractor.extract_thread_features(p, t):
                     if is_global_feature(feature):
                         continue
 
-                    print(f"  {t.address} {format_address(addr)}: {feature}")
+                    if feature != Feature(0):
+                        print(f"   {format_address(addr)}: {feature}")
+
+                for call in extractor.get_calls(p, t):
+                    apis = []
+                    arguments = []
+                    for feature, addr in extractor.extract_call_features(p, t, call):
+                        if is_global_feature(feature):
+                            continue
+
+                        if isinstance(feature, API):
+                            apis.append(str(feature.value))
+
+                        if isinstance(feature, (Number, String)):
+                            arguments.append(str(feature.value))
+
+                    if not apis:
+                        print(f"    arguments=[{', '.join(arguments)}]")
+
+                    for api in apis:
+                        print(f"{api}({', '.join(arguments)})")
 
 
 def ida_main():

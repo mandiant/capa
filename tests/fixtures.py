@@ -40,6 +40,7 @@ from capa.features.common import (
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
     BBHandle,
+    CallHandle,
     InsnHandle,
     SampleHashes,
     ThreadHandle,
@@ -218,8 +219,11 @@ def extract_file_features(extractor):
 
 def extract_process_features(extractor, ph):
     features = collections.defaultdict(set)
-    for thread in extractor.get_threads(ph):
-        for feature, va in extractor.extract_thread_features(ph, thread):
+    for th in extractor.get_threads(ph):
+        for ch in extractor.get_calls(ph, th):
+            for feature, va in extractor.extract_call_features(ph, th, ch):
+                features[feature].add(va)
+        for feature, va in extractor.extract_thread_features(ph, th):
             features[feature].add(va)
     for feature, va in extractor.extract_process_features(ph):
         features[feature].add(va)
@@ -228,8 +232,18 @@ def extract_process_features(extractor, ph):
 
 def extract_thread_features(extractor, ph, th):
     features = collections.defaultdict(set)
+    for ch in extractor.get_calls(ph, th):
+        for feature, va in extractor.extract_call_features(ph, th, ch):
+            features[feature].add(va)
     for feature, va in extractor.extract_thread_features(ph, th):
         features[feature].add(va)
+    return features
+
+
+def extract_call_features(extractor, ph, th, ch):
+    features = collections.defaultdict(set)
+    for feature, addr in extractor.extract_call_features(ph, th, ch):
+        features[feature].add(addr)
     return features
 
 
@@ -443,6 +457,13 @@ def get_thread(extractor, ph: ProcessHandle, tid: int) -> ThreadHandle:
     raise ValueError("thread not found")
 
 
+def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHandle:
+    for ch in extractor.get_calls(ph, th):
+        if ch.address.id == cid:
+            return ch
+    raise ValueError("call not found")
+
+
 def get_function(extractor, fva: int) -> FunctionHandle:
     for fh in extractor.get_functions():
         if isinstance(extractor, DnfileFeatureExtractor):
@@ -550,8 +571,31 @@ def resolve_scope(scope):
 
         inner_function.__name__ = scope
         return inner_function
+    elif "call=" in scope:
+        # like `process=(pid:ppid),thread=tid,call=id`
+        assert "process=" in scope
+        assert "thread=" in scope
+        pspec, _, spec = scope.partition(",")
+        tspec, _, cspec = spec.partition(",")
+        pspec = pspec.partition("=")[2][1:-1].split(":")
+        assert len(pspec) == 2
+        pid, ppid = map(int, pspec)
+        tid = int(tspec.partition("=")[2])
+        cid = int(cspec.partition("=")[2])
+
+        def inner_call(extractor):
+            ph = get_process(extractor, ppid, pid)
+            th = get_thread(extractor, ph, tid)
+            ch = get_call(extractor, ph, th, cid)
+            features = extract_call_features(extractor, ph, th, ch)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_call.__name__ = scope
+        return inner_call
     elif "thread=" in scope:
-        # like `process=(pid:ppid),thread=1002`
+        # like `process=(pid:ppid),thread=tid`
         assert "process=" in scope
         pspec, _, tspec = scope.partition(",")
         pspec = pspec.partition("=")[2][1:-1].split(":")
@@ -688,6 +732,8 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
         # thread/string call argument
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), True),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), False),
+        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), True),
+        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), False),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
@@ -725,6 +771,8 @@ DYNAMIC_FEATURE_COUNT_TESTS = sorted(
         # thread/string call argument
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), 1),
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), 0),
+        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), 1),
+        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), 0),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
