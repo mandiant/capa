@@ -10,6 +10,7 @@ from typing import Any, Dict, Tuple, Iterator
 import ghidra
 from ghidra.program.model.lang import OperandType
 from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator, SimpleBlockModel
+from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ghidra.helpers
@@ -287,9 +288,22 @@ def extract_function_calls_from(fh, bb, insn) -> Iterator[Tuple[Feature, Address
     """
 
     if insn.getMnemonicString().startswith("CALL"):
-        ref = insn.getAddress(0)
-        if ref:
-            yield Characteristic("calls from"), AbsoluteVirtualAddress(ref.getOffset())
+
+        # This method of "dereferencing" addresses/ pointers
+        # is not as robust as methods in other functions,
+        # but works just fine for this one
+        for ref in insn.getReferencesFrom():
+            reference = ref.getToAddress().getOffset()
+
+            # avoid returning fake addrs
+            check = mapped_fake_addrs.get(reference)
+            if check:
+                reference = check
+
+            # if a reference is < 0, then ghidra pulled an offset from a DYNAMIC | ADDR (usually a stackvar)
+            # these cannot be resolved to actual addrs
+            if reference >= 0:
+                yield Characteristic("calls from"), AbsoluteVirtualAddress(reference)
 
 
 def extract_function_indirect_call_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
@@ -333,6 +347,8 @@ def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[F
         return
     if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
         return
+    if capa.features.extractors.ghidra.helpers.is_sp_modified(insn):
+        return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
         return
     if check_nzxor_security_cookie_delta(fh, insn):
@@ -350,17 +366,17 @@ def extract_features(fh, bb, insn: ghidra.program.database.code.InstructionDB) -
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
-    extract_insn_offset_features,
-    extract_insn_mnemonic_features,
     extract_insn_bytes_features,
     extract_insn_string_features,
+    extract_insn_offset_features,
+    extract_insn_nzxor_characteristic_features,
+    extract_insn_mnemonic_features,
     extract_insn_obfs_call_plus_5_characteristic_features,
-    extract_insn_segment_access_features,
     extract_insn_peb_access_characteristic_features,
     extract_insn_cross_section_cflow,
+    extract_insn_segment_access_features,
     extract_function_calls_from,
-    extract_function_indirect_call_characteristic_features,
-    extract_insn_nzxor_characteristic_features
+    extract_function_indirect_call_characteristic_features
 )
 
 

@@ -190,12 +190,16 @@ def is_zxor(insn) -> bool:
     # assume XOR insn
     # XOR's against the same operand zero out
     ops = []
-    op_types = []
+    operands = []
     for i in range(insn.getNumOperands()):
-        op_types.append(insn.getOperandType(i))
         ops.append(insn.getOpObjects(i))
 
-    return all(n == op_types[0] for n in op_types) and all(j == ops[0] for j in ops)
+    # Operands stored in a 2D array
+    for j in range(len(ops)):
+        for k in range(len(ops[j])):
+            operands.append(ops[j][k])
+
+    return all(n == operands[0] for n in operands) 
 
 
 def dereference_ptr(insn):
