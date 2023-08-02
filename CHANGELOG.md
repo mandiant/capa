@@ -3,12 +3,15 @@
 ## master (unreleased)
 
 ### New Features
+- ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (4)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
+- host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
+- host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
