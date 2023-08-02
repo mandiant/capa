@@ -178,8 +178,20 @@ def is_sp_modified(insn) -> bool:
     return False
 
 
+def is_xor_on_stack(insn) -> bool:
+
+    is_true = False
+    for i in range(insn.getNumOperands()):
+        if insn.getOperandType(i) == OperandType.REGISTER:
+            if any(mnem in insn.getRegister(i).getName() for mnem in ["SP", "BP"]):
+                is_true = True 
+
+    return is_true
+
+
 def is_stack_referenced(insn) -> bool:
 
+    # does not work for non-branching insn
     for ref in insn.getReferencesFrom():
         if ref.isStackReference():
             return True

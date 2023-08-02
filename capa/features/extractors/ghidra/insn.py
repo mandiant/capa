@@ -345,13 +345,14 @@ def check_nzxor_security_cookie_delta(fh, insn):
 def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     if "XOR" not in insn.getMnemonicString():
         return
-    if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
-        return
-    if capa.features.extractors.ghidra.helpers.is_sp_modified(insn):
+    if capa.features.extractors.ghidra.helpers.is_xor_on_stack(insn):
+        print("here1", hex(insn.getAddress().getOffset()))
         return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
+        print("here2", hex(insn.getAddress().getOffset()))
         return
     if check_nzxor_security_cookie_delta(fh, insn):
+        print("here3", hex(insn.getAddress().getOffset()))
         return
     yield Characteristic("nzxor"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
