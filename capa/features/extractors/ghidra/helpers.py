@@ -10,6 +10,7 @@ from typing import Any, Dict, Iterator
 import ghidra
 from ghidra.program.model.lang import OperandType
 from ghidra.program.model.symbol import SourceType, SymbolType
+from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
 
@@ -120,20 +121,68 @@ def get_file_externs() -> Dict[int, Any]:
     return dict(zip(addrs, names))
 
 
+def map_fake_import_addrs() -> Dict[int, int]:
+
+    real_addrs = []
+    fake_addrs = []
+
+    for f in currentProgram.getFunctionManager().getExternalFunctions():
+        fake_addrs.append(f.getEntryPoint().getOffset())
+        for r in f.getSymbol().getReferences():
+            if r.getReferenceType().isData():
+                real_addrs.append(r.getFromAddress().getOffset())
+
+    return dict(zip(fake_addrs, real_addrs))
+
+def get_external_locs():
+
+    locs = []
+    for fh in currentProgram.getFunctionManager().getExternalFunctions():
+        external_loc = fh.getExternalLocation().getAddress()
+        if external_loc:
+            locs.append(external_loc)
+    return locs
+
+
+def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
+
+    offset = addr.getOffset()
+
+    fake = fakes.get(offset)
+    if fake:
+        return True
+
+    imp = imports.get(offset)
+    if imp:
+        return True
+
+    extern =  externs.get(offset)
+    if extern:
+        return True
+
+    if addr in ex_locs:
+        return True
+
+    return False
+
+
+def is_call_or_jmp(insn) -> bool:
+
+    return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"]) # JMP, JNE, JNZ, etc
+
+
 def is_sp_modified(insn) -> bool:
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
-            if "SP" in insn.getOpObjects(i)[0].toString():
-                return True
+            return "SP" in insn.getRegister(i).getName() and insn.getOperandRefType(i).isWrite()
     return False
 
 
 def is_stack_referenced(insn) -> bool:
-    for i in range(insn.getNumOperands()):
-        if insn.getOperandType(i) == OperandType.REGISTER:
-            reg = insn.getOpObjects(i)[0].toString()
-            if "SP" in reg or "BP" in reg:
-                return True
+
+    for ref in insn.getReferencesFrom():
+        if ref.isStackReference():
+            return True
     return False
 
 
@@ -147,3 +196,22 @@ def is_zxor(insn) -> bool:
         ops.append(insn.getOpObjects(i))
 
     return all(n == op_types[0] for n in op_types) and all(j == ops[0] for j in ops)
+
+
+def dereference_ptr(insn):
+
+    to_deref = insn.getAddress(0)
+    dat = getDataContaining(to_deref)
+    if not dat:
+        return to_deref
+    if dat.isDefined() and dat.isPointer():
+        addr = dat.getValue()
+        # now we need to check the addr space to see if it is truly resolvable
+        # ghidra sometimes likes to hand us direct RAM addrs, which typically point
+        # to api calls that we can't actually resolve as such
+        if addr.getAddressSpace().getType() == AddressSpace.TYPE_RAM:
+            return to_deref
+        else:
+            return addr
+    else:
+        return to_deref

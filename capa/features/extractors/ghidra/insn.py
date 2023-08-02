@@ -9,7 +9,7 @@ from typing import Any, Dict, Tuple, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
-from ghidra.program.model.block import SimpleBlockModel
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator, SimpleBlockModel
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ghidra.helpers
@@ -21,35 +21,62 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
-listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
+#listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
 
-# significantly cut down on runtime
+# significantly cut down on runtime by caching api info
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
 externs = capa.features.extractors.ghidra.helpers.get_file_externs()
+mapped_fake_addrs = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
+external_locs = capa.features.extractors.ghidra.helpers.get_external_locs()
 
 
 def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     """check instruction for API call"""
     info = ()
-    code_ref = OperandType.ADDRESS | OperandType.CODE
-    data_ref = OperandType.ADDRESS | OperandType.DATA
 
     # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
-    if ref_type != code_ref:
-        if ref_type != data_ref:
+    addr_data = OperandType.ADDRESS | OperandType.DATA # needs dereferencing
+
+    if OperandType.isRegister(ref_type):
+        if OperandType.isAddress(ref_type):
+            # If it's an address in a register, check the mapped fake addrs
+            # since they're dereferenced to their fake addrs
+            op_ref = insn.getAddress(0).getOffset()
+            ref = mapped_fake_addrs.get(op_ref) # obtain the real addr
+            if not ref:
+                return
+        else:
             return
+    elif ref_type == addr_data:
+        # we must dereference and check if the addr is a pointer to an api function
+        addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
+        if addr_ref != insn.getAddress(0):
+            if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, mapped_fake_addrs, imports, externs, external_locs):
+                return
+            ref = addr_ref.getOffset()
+        else:
+            # could not dereference
+            return
+    elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
+        return # cannot resolve dynamics statically
+    elif OperandType.isIndirect(ref_type):
+        return # cannot resolve the indirection statically
+    else:
+        # pure address does not need to get dereferenced/ handled
+        addr_ref = insn.getAddress(0)
+        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, mapped_fake_addrs, imports, externs, external_locs):
+            return
+        ref = addr_ref.getOffset()
 
-    ref = insn.getAddress(0).getOffset()
     info = funcs.get(ref)  # type: ignore
-
     if info:
         yield info
 
 
-def extract_insn_api_features(insn) -> Iterator[Tuple[Feature, Address]]:
-    insn_str = insn.getMnemonicString()
-    if not (insn_str.startswith("CALL") or insn_str.startswith("J")):
+def extract_insn_api_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+
+    if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
     # check calls to imported functions
@@ -61,7 +88,7 @@ def extract_insn_api_features(insn) -> Iterator[Tuple[Feature, Address]]:
         yield API(api), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_number_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_number_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction number features
     example:
@@ -99,7 +126,7 @@ def extract_insn_number_features(insn) -> Iterator[Tuple[Feature, Address]]:
             yield OperandOffset(i, const), addr
 
 
-def extract_insn_offset_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_offset_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction structure offset features
 
@@ -114,49 +141,46 @@ def extract_insn_offset_features(insn) -> Iterator[Tuple[Feature, Address]]:
             if insn.getOperandType(i) == OperandType.DYNAMIC:  # e.g. [esi + 4]
                 # manual extraction, since the default api calls only work on the 1st dimension of the array
                 op_objs = insn.getOpObjects(i)
-                for j in range(len(op_objs)):
-                    if isinstance(op_objs[j], ghidra.program.model.scalar.Scalar):
-                        op_off = op_objs[j].getValue()
-                        yield Offset(op_off), AbsoluteVirtualAddress(insn.getAddress().getOffset())
-                        yield OperandOffset(i, op_off), AbsoluteVirtualAddress(insn.getAddress().getOffset())
+                if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
+                    op_off = op_objs[-1].getValue()
+                    yield Offset(op_off), AbsoluteVirtualAddress(insn.getAddress().getOffset())
+                    yield OperandOffset(i, op_off), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_bytes_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
         push    offset iid_004118d4_IShellLinkA ; riid
     """
 
-    if insn.getMnemonicString().startswith("CALL"):
+    if capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
-    data_ref = OperandType.ADDRESS | OperandType.SCALAR  # DAT_* or s_*
-    ref = insn.getAddress()
+    ref = insn.getAddress() # init to insn addr
     for i in range(insn.getNumOperands()):
-        if insn.getOperandType(i) == data_ref:
-            ref = insn.getAddress(i)
+        if OperandType.isScalarAsAddress(insn.getOperandType(i)):
+            ref = insn.getAddress(i) # pulls pointer if there is one
 
-    if ref != insn.getAddress():
-        extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(ref, MAX_BYTES_FEATURE_SIZE)
-        if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-            ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
-            if ghidra_dat and not ghidra_dat.hasStringValue():
+    if ref != insn.getAddress(): # bail out if there's no pointer
+        ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
+        if ghidra_dat and not ghidra_dat.hasStringValue():
+            extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(ref, MAX_BYTES_FEATURE_SIZE)
+            if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
                 # don't extract byte features for obvious strings
                 yield Bytes(extracted_bytes), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_string_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_string_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction string features
 
     example:
         push offset aAcr     ; "ACR  > "
     """
-    data_ref = OperandType.ADDRESS | OperandType.SCALAR  # DAT_* or s_*
     ref = insn.getAddress()
     for i in range(insn.getNumOperands()):
-        if insn.getOperandType(i) == data_ref:
+        if OperandType.isScalarAsAddress(insn.getOperandType(i)):
             ref = insn.getAddress(i)
 
     if ref != insn.getAddress():
@@ -165,17 +189,17 @@ def extract_insn_string_features(insn) -> Iterator[Tuple[Feature, Address]]:
             yield String(ghidra_dat.getValue()), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_mnemonic_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_mnemonic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
     yield Mnemonic(insn.getMnemonicString().lower()), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_obfs_call_plus_5_characteristic_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_obfs_call_plus_5_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
 
-    if not insn.getMnemonicString().startswith("CALL"):
+    if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
     code_ref = OperandType.ADDRESS | OperandType.CODE
@@ -188,7 +212,7 @@ def extract_insn_obfs_call_plus_5_characteristic_features(insn) -> Iterator[Tupl
         yield Characteristic("call $+5"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_segment_access_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_segment_access_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
     insn_str = insn.toString()
 
@@ -199,62 +223,76 @@ def extract_insn_segment_access_features(insn) -> Iterator[Tuple[Feature, Addres
         yield Characteristic("gs access"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_peb_access_characteristic_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_peb_access_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction peb access
 
     fs:[0x30] on x86, gs:[0x60] on x64
 
     """
     insn_str = insn.toString()
-    if insn_str.startswith("PUSH") or insn_str.startswith("MOV"):
+    if insn_str.startswith(("PUSH", "MOV")):
         if "FS:[0x30]" in insn_str or "GS:[0x60]" in insn_str:
             yield Characteristic("peb access"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_cross_section_cflow(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_cross_section_cflow(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
 
-    code_ref = OperandType.ADDRESS | OperandType.CODE
-    data_ref = OperandType.ADDRESS | OperandType.DATA
-
-    insn_str = insn.getMnemonicString()
-    if not (insn_str.startswith("CALL") or insn_str.startswith("J")):
+    if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
-    this_mem_block = getMemoryBlock(insn.getAddress()).getName()  # type: ignore [name-defined] # noqa: F821
+    # OperandType to dereference
+    addr_data = OperandType.ADDRESS | OperandType.DATA
 
-    # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
-    if ref_type != code_ref:
-        if ref_type != data_ref:
+
+    # both OperandType flags must be present
+    # bail on REGISTER alone
+    if OperandType.isRegister(ref_type):
+        if OperandType.isAddress(ref_type):
+            ref = insn.getAddress(0) # Ghidra dereferences REG | ADDR
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
+                return
+        else:
+            return
+    elif ref_type == addr_data:
+        # we must dereference and check if the addr is a pointer to an api function
+        ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
+        if ref != insn.getAddress(0):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
+                return
+        else:
+            # could not dereference
+            return
+    elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
+        return # cannot resolve dynamics statically
+    elif OperandType.isIndirect(ref_type):
+        return # cannot resolve the indirection statically
+    else:
+        # pure address does not need to get dereferenced/ handled
+        ref = insn.getAddress(0)
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
             return
 
-    ref_block = getMemoryBlock(insn.getAddress(0)).getName()  # type: ignore [name-defined] # noqa: F821
+    this_mem_block = getMemoryBlock(insn.getAddress()) # type: ignore [name-defined] # noqa: F821
+    ref_block = getMemoryBlock(ref) # type: ignore [name-defined] # noqa: F821
     if ref_block != this_mem_block:
         yield Characteristic("cross section flow"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_function_calls_from(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
     """
 
     if insn.getMnemonicString().startswith("CALL"):
-        code_ref = OperandType.ADDRESS | OperandType.CODE
-        data_ref = OperandType.ADDRESS | OperandType.DATA
-
-        ref_type = insn.getOperandType(0)
-        if ref_type != code_ref:
-            if ref_type != data_ref:
-                return
-
-        ref = insn.getAddress(0).getOffset()
-
-        yield Characteristic("calls from"), AbsoluteVirtualAddress(ref)
+        ref = insn.getAddress(0)
+        if ref:
+            yield Characteristic("calls from"), AbsoluteVirtualAddress(ref.getOffset())
 
 
-def extract_function_indirect_call_characteristic_features(insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_indirect_call_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
 
@@ -262,54 +300,50 @@ def extract_function_indirect_call_characteristic_features(insn) -> Iterator[Tup
     however, its most efficient to extract at the instruction scope
     """
     if insn.getMnemonicString().startswith("CALL"):
-        code_ref = OperandType.ADDRESS | OperandType.CODE
-        data_ref = OperandType.ADDRESS | OperandType.DATA
 
-        ref_type = insn.getOperandType(0)
-        if ref_type != code_ref:
-            if ref_type != data_ref:
-                yield Characteristic("indirect call"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
+        if OperandType.isIndirect(insn.getOperandType(0)):
+            yield Characteristic("indirect call"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def check_nzxor_security_cookie_delta(insn):
+def check_nzxor_security_cookie_delta(fh, insn):
     """Get the function containing the insn
     Get the last block of the function that contains the insn
 
     Check the bb containing the insn
     Check the last bb of the function containing the insn
     """
-    model = SimpleBlockModel(currentProgram)  # type: ignore [name-defined] # noqa: F821
-    insn_addr = insn.getAddress()
 
-    func = currentProgram.getFunctionManager().getFunctionContaining(insn_addr)  # type: ignore [name-defined] # noqa: F821
-    if func:
-        first_addr = func.getBody().getMinAddress()
-        last_addr = func.getBody().getMaxAddress()
-    else:
-        return False
+    model = SimpleBlockModel(currentProgram)
+    insn_addr = insn.getAddress()
+    func_asv = fh.getBody()
+    first_addr = func_asv.getMinAddress()
+    last_addr = func_asv.getMaxAddress()
 
     if model.getFirstCodeBlockContaining(first_addr, monitor) == model.getFirstCodeBlockContaining(last_addr, monitor):  # type: ignore [name-defined] # noqa: F821
         if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
             return True
         else:
             return insn_addr > last_addr.add(SECURITY_COOKIE_BYTES_DELTA * -1)
+    else:
+        return False
 
 
-def extract_insn_nzxor_characteristic_features(insn) -> Iterator[Tuple[Feature, Address]]:
-    if not insn.getMnemonicString().startswith("XOR"):
+def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+    if "XOR" not in insn.getMnemonicString():
         return
     if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
         return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
         return
-    if check_nzxor_security_cookie_delta(insn):
+    if check_nzxor_security_cookie_delta(fh, insn):
         return
     yield Characteristic("nzxor"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_features(insn: ghidra.program.database.code.InstructionDB) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh, bb, insn: ghidra.program.database.code.InstructionDB) -> Iterator[Tuple[Feature, Address]]:
+
     for insn_handler in INSTRUCTION_HANDLERS:
-        for feature, addr in insn_handler(insn):
+        for feature, addr in insn_handler(fh, bb, insn):
             yield feature, addr
 
 
@@ -326,15 +360,18 @@ INSTRUCTION_HANDLERS = (
     extract_insn_cross_section_cflow,
     extract_function_calls_from,
     extract_function_indirect_call_characteristic_features,
-    extract_insn_nzxor_characteristic_features,
+    extract_insn_nzxor_characteristic_features
 )
 
 
 def main():
     """ """
+    listing = currentProgram.getListing()
     features = []
-    for insn in listing.getInstructions(True):
-        features.extend(list(extract_features(insn)))
+    for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
+        for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):
+            for insn in listing.getInstructions(bb, True):
+                features.extend(list(extract_features(fh, bb, insn)))
 
     import pprint
 
