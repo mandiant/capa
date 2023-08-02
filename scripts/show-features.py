@@ -257,7 +257,7 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
             print(f" proc: {p.inner['name']}: {feature}")
 
             for t in extractor.get_threads(p):
-                print(f"  {t.address}")
+                print(f"  thread: {t.address.tid}")
                 for feature, addr in extractor.extract_thread_features(p, t):
                     if is_global_feature(feature):
                         continue
@@ -273,7 +273,8 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                             continue
 
                         if isinstance(feature, API):
-                            apis.append(str(feature.value))
+                            assert isinstance(addr, capa.features.address.DynamicReturnAddress)
+                            apis.append((addr.call.id, str(feature.value)))
 
                         if isinstance(feature, (Number, String)):
                             arguments.append(str(feature.value))
@@ -281,8 +282,8 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                     if not apis:
                         print(f"    arguments=[{', '.join(arguments)}]")
 
-                    for api in apis:
-                        print(f"{api}({', '.join(arguments)})")
+                    for cid, api in apis:
+                        print(f"call {cid}: {api}({', '.join(arguments)})")
 
 
 def ida_main():
