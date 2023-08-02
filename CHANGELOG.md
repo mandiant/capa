@@ -6,9 +6,11 @@
 
 ### Breaking Changes
 
-### New Rules (2)
+### New Rules (4)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
+- host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
+- host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
