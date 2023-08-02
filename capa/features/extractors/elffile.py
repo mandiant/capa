@@ -77,7 +77,7 @@ def extract_file_import_names(elf: ELFFile, **kwargs):
             yield Import(symbol.name), FileOffsetAddress(0x0)
 
 
-def extract_file_section_names(elf, **kwargs):
+def extract_file_section_names(elf: ELFFile, **kwargs):
     for section in elf.iter_sections():
         if section.name:
             yield Section(section.name), AbsoluteVirtualAddress(section.header.sh_addr)
@@ -89,7 +89,7 @@ def extract_file_strings(buf, **kwargs):
     yield from capa.features.extractors.common.extract_file_strings(buf)
 
 
-def extract_file_os(elf, buf, **kwargs):
+def extract_file_os(elf: ELFFile, buf, **kwargs):
     # our current approach does not always get an OS value, e.g. for packed samples
     # for file limitation purposes, we're more lax here
     try:
@@ -103,7 +103,7 @@ def extract_file_format(**kwargs):
     yield Format(FORMAT_ELF), NO_ADDRESS
 
 
-def extract_file_arch(elf, **kwargs):
+def extract_file_arch(elf: ELFFile, **kwargs):
     arch = elf.get_machine_arch()
     if arch == "x86":
         yield Arch("i386"), NO_ADDRESS
