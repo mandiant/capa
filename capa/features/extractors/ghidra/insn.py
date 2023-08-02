@@ -9,8 +9,7 @@ from typing import Any, Dict, Tuple, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
-from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator, SimpleBlockModel
-from ghidra.program.model.address import AddressSpace
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.helpers
 import capa.features.extractors.ghidra.helpers
@@ -22,7 +21,7 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
-#listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
+# listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
 
 # significantly cut down on runtime by caching api info
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
@@ -37,14 +36,14 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
 
     # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
-    addr_data = OperandType.ADDRESS | OperandType.DATA # needs dereferencing
+    addr_data = OperandType.ADDRESS | OperandType.DATA  # needs dereferencing
 
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
             # If it's an address in a register, check the mapped fake addrs
             # since they're dereferenced to their fake addrs
             op_ref = insn.getAddress(0).getOffset()
-            ref = mapped_fake_addrs.get(op_ref) # obtain the real addr
+            ref = mapped_fake_addrs.get(op_ref)  # obtain the real addr
             if not ref:
                 return
         else:
@@ -53,20 +52,24 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if addr_ref != insn.getAddress(0):
-            if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, mapped_fake_addrs, imports, externs, external_locs):
+            if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
+                addr_ref, mapped_fake_addrs, imports, externs, external_locs
+            ):
                 return
             ref = addr_ref.getOffset()
         else:
             # could not dereference
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
-        return # cannot resolve dynamics statically
+        return  # cannot resolve dynamics statically
     elif OperandType.isIndirect(ref_type):
-        return # cannot resolve the indirection statically
+        return  # cannot resolve the indirection statically
     else:
         # pure address does not need to get dereferenced/ handled
         addr_ref = insn.getAddress(0)
-        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, mapped_fake_addrs, imports, externs, external_locs):
+        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+        ):
             return
         ref = addr_ref.getOffset()
 
@@ -76,7 +79,6 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
 
 
 def extract_insn_api_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
-
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
@@ -158,12 +160,12 @@ def extract_insn_bytes_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address
     if capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
-    ref = insn.getAddress() # init to insn addr
+    ref = insn.getAddress()  # init to insn addr
     for i in range(insn.getNumOperands()):
         if OperandType.isScalarAsAddress(insn.getOperandType(i)):
-            ref = insn.getAddress(i) # pulls pointer if there is one
+            ref = insn.getAddress(i)  # pulls pointer if there is one
 
-    if ref != insn.getAddress(): # bail out if there's no pointer
+    if ref != insn.getAddress():  # bail out if there's no pointer
         ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
         if ghidra_dat and not ghidra_dat.hasStringValue():
             extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(ref, MAX_BYTES_FEATURE_SIZE)
@@ -251,8 +253,10 @@ def extract_insn_cross_section_cflow(fh, bb, insn) -> Iterator[Tuple[Feature, Ad
     # bail on REGISTER alone
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
-            ref = insn.getAddress(0) # Ghidra dereferences REG | ADDR
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
+            ref = insn.getAddress(0)  # Ghidra dereferences REG | ADDR
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+                ref, mapped_fake_addrs, imports, externs, external_locs
+            ):
                 return
         else:
             return
@@ -260,23 +264,27 @@ def extract_insn_cross_section_cflow(fh, bb, insn) -> Iterator[Tuple[Feature, Ad
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if ref != insn.getAddress(0):
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+                ref, mapped_fake_addrs, imports, externs, external_locs
+            ):
                 return
         else:
             # could not dereference
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
-        return # cannot resolve dynamics statically
+        return  # cannot resolve dynamics statically
     elif OperandType.isIndirect(ref_type):
-        return # cannot resolve the indirection statically
+        return  # cannot resolve the indirection statically
     else:
         # pure address does not need to get dereferenced/ handled
         ref = insn.getAddress(0)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs, external_locs):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            ref, mapped_fake_addrs, imports, externs, external_locs
+        ):
             return
 
-    this_mem_block = getMemoryBlock(insn.getAddress()) # type: ignore [name-defined] # noqa: F821
-    ref_block = getMemoryBlock(ref) # type: ignore [name-defined] # noqa: F821
+    this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821
+    ref_block = getMemoryBlock(ref)  # type: ignore [name-defined] # noqa: F821
     if ref_block != this_mem_block:
         yield Characteristic("cross section flow"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
@@ -288,7 +296,6 @@ def extract_function_calls_from(fh, bb, insn) -> Iterator[Tuple[Feature, Address
     """
 
     if insn.getMnemonicString().startswith("CALL"):
-
         # This method of "dereferencing" addresses/ pointers
         # is not as robust as methods in other functions,
         # but works just fine for this one
@@ -314,7 +321,6 @@ def extract_function_indirect_call_characteristic_features(fh, bb, insn) -> Iter
     however, its most efficient to extract at the instruction scope
     """
     if insn.getMnemonicString().startswith("CALL"):
-
         if OperandType.isIndirect(insn.getOperandType(0)):
             yield Characteristic("indirect call"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
@@ -327,7 +333,7 @@ def check_nzxor_security_cookie_delta(fh, insn):
     Check the last bb of the function containing the insn
     """
 
-    model = SimpleBlockModel(currentProgram)
+    model = SimpleBlockModel(currentProgram)  # type: ignore [name-defined] # noqa: F821
     insn_addr = insn.getAddress()
     func_asv = fh.getBody()
     first_addr = func_asv.getMinAddress()
@@ -346,19 +352,15 @@ def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[F
     if "XOR" not in insn.getMnemonicString():
         return
     if capa.features.extractors.ghidra.helpers.is_xor_on_stack(insn):
-        print("here1", hex(insn.getAddress().getOffset()))
         return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
-        print("here2", hex(insn.getAddress().getOffset()))
         return
     if check_nzxor_security_cookie_delta(fh, insn):
-        print("here3", hex(insn.getAddress().getOffset()))
         return
     yield Characteristic("nzxor"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
 def extract_features(fh, bb, insn: ghidra.program.database.code.InstructionDB) -> Iterator[Tuple[Feature, Address]]:
-
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, addr in insn_handler(fh, bb, insn):
             yield feature, addr
@@ -377,16 +379,16 @@ INSTRUCTION_HANDLERS = (
     extract_insn_cross_section_cflow,
     extract_insn_segment_access_features,
     extract_function_calls_from,
-    extract_function_indirect_call_characteristic_features
+    extract_function_indirect_call_characteristic_features,
 )
 
 
 def main():
     """ """
-    listing = currentProgram.getListing()
+    listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
     features = []
     for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):
+        for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
             for insn in listing.getInstructions(bb, True):
                 features.extend(list(extract_features(fh, bb, insn)))
 

@@ -122,11 +122,10 @@ def get_file_externs() -> Dict[int, Any]:
 
 
 def map_fake_import_addrs() -> Dict[int, int]:
-
     real_addrs = []
     fake_addrs = []
 
-    for f in currentProgram.getFunctionManager().getExternalFunctions():
+    for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         fake_addrs.append(f.getEntryPoint().getOffset())
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
@@ -134,10 +133,10 @@ def map_fake_import_addrs() -> Dict[int, int]:
 
     return dict(zip(fake_addrs, real_addrs))
 
-def get_external_locs():
 
+def get_external_locs():
     locs = []
-    for fh in currentProgram.getFunctionManager().getExternalFunctions():
+    for fh in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         external_loc = fh.getExternalLocation().getAddress()
         if external_loc:
             locs.append(external_loc)
@@ -145,7 +144,6 @@ def get_external_locs():
 
 
 def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
-
     offset = addr.getOffset()
 
     fake = fakes.get(offset)
@@ -156,7 +154,7 @@ def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
     if imp:
         return True
 
-    extern =  externs.get(offset)
+    extern = externs.get(offset)
     if extern:
         return True
 
@@ -167,8 +165,7 @@ def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
 
 
 def is_call_or_jmp(insn) -> bool:
-
-    return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"]) # JMP, JNE, JNZ, etc
+    return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"])  # JMP, JNE, JNZ, etc
 
 
 def is_sp_modified(insn) -> bool:
@@ -179,23 +176,18 @@ def is_sp_modified(insn) -> bool:
 
 
 def is_xor_on_stack(insn) -> bool:
-
     is_true = False
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
             if any(mnem in insn.getRegister(i).getName() for mnem in ["SP", "BP"]):
-                is_true = True 
+                is_true = True
 
     return is_true
 
 
 def is_stack_referenced(insn) -> bool:
-
     # does not work for non-branching insn
-    for ref in insn.getReferencesFrom():
-        if ref.isStackReference():
-            return True
-    return False
+    return any(ref.isStackReference() for ref in insn.getReferencesFrom())
 
 
 def is_zxor(insn) -> bool:
@@ -211,13 +203,12 @@ def is_zxor(insn) -> bool:
         for k in range(len(ops[j])):
             operands.append(ops[j][k])
 
-    return all(n == operands[0] for n in operands) 
+    return all(n == operands[0] for n in operands)
 
 
 def dereference_ptr(insn):
-
     to_deref = insn.getAddress(0)
-    dat = getDataContaining(to_deref)
+    dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
     if not dat:
         return to_deref
     if dat.isDefined() and dat.isPointer():
