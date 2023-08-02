@@ -183,7 +183,9 @@ def extract_insn_bytes_features(
 
     if ref != insn.getAddress():  # bail out if there's no pointer
         ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
-        if ghidra_dat and not ghidra_dat.hasStringValue():
+        if (
+            ghidra_dat and not ghidra_dat.hasStringValue() and not ghidra_dat.isPointer()
+        ):  # avoid if the data itself is a pointer
             extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(ref, MAX_BYTES_FEATURE_SIZE)
             if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
                 # don't extract byte features for obvious strings
