@@ -78,7 +78,11 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
         yield info
 
 
-def extract_insn_api_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_api_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
@@ -91,7 +95,11 @@ def extract_insn_api_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]
         yield API(api), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_number_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_number_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction number features
     example:
@@ -129,7 +137,11 @@ def extract_insn_number_features(fh, bb, insn) -> Iterator[Tuple[Feature, Addres
             yield OperandOffset(i, const), addr
 
 
-def extract_insn_offset_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_offset_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction structure offset features
 
@@ -150,7 +162,11 @@ def extract_insn_offset_features(fh, bb, insn) -> Iterator[Tuple[Feature, Addres
                     yield OperandOffset(i, op_off), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_bytes_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse referenced byte sequences
     example:
@@ -174,7 +190,11 @@ def extract_insn_bytes_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address
                 yield Bytes(extracted_bytes), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_string_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_string_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse instruction string features
 
@@ -192,12 +212,20 @@ def extract_insn_string_features(fh, bb, insn) -> Iterator[Tuple[Feature, Addres
             yield String(ghidra_dat.getValue()), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_mnemonic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_mnemonic_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction mnemonic features"""
     yield Mnemonic(insn.getMnemonicString().lower()), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_obfs_call_plus_5_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_obfs_call_plus_5_characteristic_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """
     parse call $+5 instruction from the given instruction.
     """
@@ -215,7 +243,11 @@ def extract_insn_obfs_call_plus_5_characteristic_features(fh, bb, insn) -> Itera
         yield Characteristic("call $+5"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_segment_access_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_segment_access_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction fs or gs access"""
     insn_str = insn.toString()
 
@@ -226,7 +258,11 @@ def extract_insn_segment_access_features(fh, bb, insn) -> Iterator[Tuple[Feature
         yield Characteristic("gs access"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_peb_access_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_peb_access_characteristic_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """parse instruction peb access
 
     fs:[0x30] on x86, gs:[0x60] on x64
@@ -238,7 +274,11 @@ def extract_insn_peb_access_characteristic_features(fh, bb, insn) -> Iterator[Tu
             yield Characteristic("peb access"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_insn_cross_section_cflow(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_cross_section_cflow(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """inspect the instruction for a CALL or JMP that crosses section boundaries"""
 
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
@@ -289,7 +329,11 @@ def extract_insn_cross_section_cflow(fh, bb, insn) -> Iterator[Tuple[Feature, Ad
         yield Characteristic("cross section flow"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_function_calls_from(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls_from(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """extract functions calls from features
 
     most relevant at the function scope, however, its most efficient to extract at the instruction scope
@@ -313,7 +357,11 @@ def extract_function_calls_from(fh, bb, insn) -> Iterator[Tuple[Feature, Address
                 yield Characteristic("calls from"), AbsoluteVirtualAddress(reference)
 
 
-def extract_function_indirect_call_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_indirect_call_characteristic_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     """extract indirect function calls (e.g., call eax or call dword ptr [edx+4])
     does not include calls like => call ds:dword_ABD4974
 
@@ -325,7 +373,9 @@ def extract_function_indirect_call_characteristic_features(fh, bb, insn) -> Iter
             yield Characteristic("indirect call"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def check_nzxor_security_cookie_delta(fh, insn):
+def check_nzxor_security_cookie_delta(
+    fh: ghidra.program.database.function.FunctionDB, insn: ghidra.program.database.code.InstructionDB
+):
     """Get the function containing the insn
     Get the last block of the function that contains the insn
 
@@ -348,7 +398,11 @@ def check_nzxor_security_cookie_delta(fh, insn):
         return False
 
 
-def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_nzxor_characteristic_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     if "XOR" not in insn.getMnemonicString():
         return
     if capa.features.extractors.ghidra.helpers.is_xor_on_stack(insn):
@@ -360,7 +414,11 @@ def extract_insn_nzxor_characteristic_features(fh, bb, insn) -> Iterator[Tuple[F
     yield Characteristic("nzxor"), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
-def extract_features(fh, bb, insn: ghidra.program.database.code.InstructionDB) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(
+    fh: ghidra.program.database.function.FunctionDB,
+    bb: ghidra.program.model.block.CodeBlock,
+    insn: ghidra.program.database.code.InstructionDB,
+) -> Iterator[Tuple[Feature, Address]]:
     for insn_handler in INSTRUCTION_HANDLERS:
         for feature, addr in insn_handler(fh, bb, insn):
             yield feature, addr

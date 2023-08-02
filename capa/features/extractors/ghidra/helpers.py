@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, List, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
@@ -134,7 +134,7 @@ def map_fake_import_addrs() -> Dict[int, int]:
     return dict(zip(fake_addrs, real_addrs))
 
 
-def get_external_locs():
+def get_external_locs() -> List[int]:
     locs = []
     for fh in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         external_loc = fh.getExternalLocation().getAddress()
@@ -143,7 +143,13 @@ def get_external_locs():
     return locs
 
 
-def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
+def check_addr_for_api(
+    addr: ghidra.program.model.address.Address,
+    fakes: Dict[int, int],
+    imports: Dict[int, int],
+    externs: Dict[int, int],
+    ex_locs: List[int],
+) -> bool:
     offset = addr.getOffset()
 
     fake = fakes.get(offset)
@@ -164,18 +170,18 @@ def check_addr_for_api(addr, fakes, imports, externs, ex_locs) -> bool:
     return False
 
 
-def is_call_or_jmp(insn) -> bool:
+def is_call_or_jmp(insn: ghidra.program.database.code.InstructionDB) -> bool:
     return any(mnem in insn.getMnemonicString() for mnem in ["CALL", "J"])  # JMP, JNE, JNZ, etc
 
 
-def is_sp_modified(insn) -> bool:
+def is_sp_modified(insn: ghidra.program.database.code.InstructionDB) -> bool:
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
             return "SP" in insn.getRegister(i).getName() and insn.getOperandRefType(i).isWrite()
     return False
 
 
-def is_xor_on_stack(insn) -> bool:
+def is_xor_on_stack(insn: ghidra.program.database.code.InstructionDB) -> bool:
     is_true = False
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.REGISTER:
@@ -185,12 +191,12 @@ def is_xor_on_stack(insn) -> bool:
     return is_true
 
 
-def is_stack_referenced(insn) -> bool:
+def is_stack_referenced(insn: ghidra.program.database.code.InstructionDB) -> bool:
     # does not work for non-branching insn
     return any(ref.isStackReference() for ref in insn.getReferencesFrom())
 
 
-def is_zxor(insn) -> bool:
+def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
     # assume XOR insn
     # XOR's against the same operand zero out
     ops = []
@@ -206,7 +212,7 @@ def is_zxor(insn) -> bool:
     return all(n == operands[0] for n in operands)
 
 
-def dereference_ptr(insn):
+def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
     to_deref = insn.getAddress(0)
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
     if not dat:
