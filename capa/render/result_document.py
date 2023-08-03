@@ -80,7 +80,7 @@ class Analysis(Model):
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
-    argv: Optional[Tuple[str, ...]] = None
+    argv: Optional[Tuple[str, ...]]
     sample: Sample
     analysis: Analysis
 
@@ -502,7 +502,7 @@ class MaecMetadata(FrozenModel):
 
 class RuleMetadata(FrozenModel):
     name: str
-    namespace: Optional[str] = None
+    namespace: Optional[str]
     authors: Tuple[str, ...]
     scope: capa.rules.Scope
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
