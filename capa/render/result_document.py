@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
 import collections
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Literal, Optional
 
 from pydantic import Field, BaseModel, ConfigDict
 
@@ -80,7 +80,7 @@ class Analysis(Model):
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
-    argv: Optional[Tuple[str, ...]]
+    argv: Optional[Tuple[str, ...]] = None
     sample: Sample
     analysis: Analysis
 
@@ -102,13 +102,13 @@ class CompoundStatement(StatementModel):
 
 
 class SomeStatement(StatementModel):
-    type: str = "some"
+    type: Literal["some"] = "some"
     description: Optional[str] = None
     count: int
 
 
 class RangeStatement(StatementModel):
-    type: str = "range"
+    type: Literal["range"] = "range"
     description: Optional[str] = None
     min: int
     max: int
@@ -116,7 +116,7 @@ class RangeStatement(StatementModel):
 
 
 class SubscopeStatement(StatementModel):
-    type: str = "subscope"
+    type: Literal["subscope"] = "subscope"
     description: Optional[str] = None
     scope: capa.rules.Scope
 
@@ -131,7 +131,7 @@ Statement = Union[
 
 
 class StatementNode(FrozenModel):
-    type: str = "statement"
+    type: Literal["statement"] = "statement"
     statement: Statement
 
 
@@ -168,7 +168,7 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
 
 
 class FeatureNode(FrozenModel):
-    type: str = "feature"
+    type: Literal["feature"] = "feature"
     feature: frz.Feature
 
 
@@ -502,7 +502,7 @@ class MaecMetadata(FrozenModel):
 
 class RuleMetadata(FrozenModel):
     name: str
-    namespace: Optional[str]
+    namespace: Optional[str] = None
     authors: Tuple[str, ...]
     scope: capa.rules.Scope
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
