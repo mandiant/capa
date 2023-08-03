@@ -25,13 +25,14 @@ def extract_call_features(
     behavior: Dict, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
 ) -> Iterator[Tuple[Feature, Address]]:
     """
-    this method goes through the specified thread's call trace, and extracts all possible
-    features such as: API, Number (for arguments), String (for arguments).
+    this method extrcts the given call's features (api name and arguments),
+    and returns them as API, Number, and String features.
 
     args:
       behavior: a dictionary of behavioral artifacts extracted by the sandbox
       ph: process handle (for defining the extraction scope)
       th: thread handle (for defining the extraction scope)
+      ch: call handle (for defining the extraction scope)
 
     yields:
       Feature, address; where Feature is either: API, Number, or String.
