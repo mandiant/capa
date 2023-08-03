@@ -66,6 +66,7 @@ class ProcessAddress(Address):
         return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
+        assert isinstance(other, ProcessAddress)
         return (self.ppid, self.pid) < (other.ppid, other.pid)
 
 
@@ -85,11 +86,11 @@ class ThreadAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, ThreadAddress)
-        return self.tid == other.tid
+        return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
         assert isinstance(other, ThreadAddress)
-        return self.tid < other.tid
+        return (self.process, self.tid) < (other.process, other.tid)
 
 
 class CallAddress(Address):
@@ -108,11 +109,11 @@ class CallAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, CallAddress)
-        return self.id == other.id
+        return (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
         assert isinstance(other, CallAddress)
-        return self.id < other.id
+        return (self.thread, self.id) < (other.thread, other.id)
 
 
 class DynamicReturnAddress(Address):
@@ -131,11 +132,11 @@ class DynamicReturnAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, DynamicReturnAddress)
-        return self.return_address == other.return_address
+        return (self.call, self.return_address) == other.call, other.return_address)
 
     def __lt__(self, other):
         assert isinstance(other, DynamicReturnAddress)
-        return self.return_address < other.return_address
+        return (self.call, self.return_address) < (other.call, other.return_address)
 
 
 class RelativeVirtualAddress(int, Address):
