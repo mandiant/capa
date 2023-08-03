@@ -132,7 +132,7 @@ class DynamicReturnAddress(Address):
 
     def __eq__(self, other):
         assert isinstance(other, DynamicReturnAddress)
-        return (self.call, self.return_address) == other.call, other.return_address)
+        return (self.call, self.return_address) == (other.call, other.return_address)
 
     def __lt__(self, other):
         assert isinstance(other, DynamicReturnAddress)
