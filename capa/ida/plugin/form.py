@@ -1304,7 +1304,7 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No program analysis to save.")
             return
 
-        s = self.resdoc_cache.json().encode("utf-8")
+        s = self.resdoc_cache.model_dump_json().encode("utf-8")
 
         path = Path(self.ask_user_capa_json_file())
         if not path.exists():

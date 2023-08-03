@@ -78,7 +78,7 @@ def main(argv=None):
     rdpb.ParseFromString(pb)
 
     rd = capa.render.proto.doc_from_pb2(rdpb)
-    print(rd.json(exclude_none=True, indent=2, sort_keys=True))
+    print(rd.model_dump_json(exclude_none=True, indent=2))
 
 
 if __name__ == "__main__":

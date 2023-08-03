@@ -8,7 +8,7 @@
 import binascii
 from typing import Union, Optional
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, ConfigDict
 
 import capa.features.file
 import capa.features.insn
@@ -17,9 +17,7 @@ import capa.features.basicblock
 
 
 class FeatureModel(BaseModel):
-    class Config:
-        frozen = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
     def to_capa(self) -> capa.features.common.Feature:
         if isinstance(self, OSFeature):
@@ -213,141 +211,141 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
 class OSFeature(FeatureModel):
     type: str = "os"
     os: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class ArchFeature(FeatureModel):
     type: str = "arch"
     arch: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class FormatFeature(FeatureModel):
     type: str = "format"
     format: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class MatchFeature(FeatureModel):
     type: str = "match"
     match: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class CharacteristicFeature(FeatureModel):
     type: str = "characteristic"
     characteristic: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class ExportFeature(FeatureModel):
     type: str = "export"
     export: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class ImportFeature(FeatureModel):
     type: str = "import"
     import_: str = Field(alias="import")
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class SectionFeature(FeatureModel):
     type: str = "section"
     section: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class FunctionNameFeature(FeatureModel):
     type: str = "function name"
     function_name: str = Field(alias="function name")
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class SubstringFeature(FeatureModel):
     type: str = "substring"
     substring: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class RegexFeature(FeatureModel):
     type: str = "regex"
     regex: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class StringFeature(FeatureModel):
     type: str = "string"
     string: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class ClassFeature(FeatureModel):
     type: str = "class"
     class_: str = Field(alias="class")
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class NamespaceFeature(FeatureModel):
     type: str = "namespace"
     namespace: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class BasicBlockFeature(FeatureModel):
     type: str = "basic block"
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class APIFeature(FeatureModel):
     type: str = "api"
     api: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class PropertyFeature(FeatureModel):
     type: str = "property"
-    access: Optional[str]
+    access: Optional[str] = None
     property: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class NumberFeature(FeatureModel):
     type: str = "number"
     number: Union[int, float]
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class BytesFeature(FeatureModel):
     type: str = "bytes"
     bytes: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class OffsetFeature(FeatureModel):
     type: str = "offset"
     offset: int
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class MnemonicFeature(FeatureModel):
     type: str = "mnemonic"
     mnemonic: str
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class OperandNumberFeature(FeatureModel):
     type: str = "operand number"
     index: int
     operand_number: int = Field(alias="operand number")
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 class OperandOffsetFeature(FeatureModel):
     type: str = "operand offset"
     index: int
     operand_offset: int = Field(alias="operand offset")
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 Feature = Union[

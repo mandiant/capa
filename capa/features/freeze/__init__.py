@@ -14,7 +14,7 @@ import logging
 from enum import Enum
 from typing import List, Tuple, Union
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, ConfigDict
 
 import capa.helpers
 import capa.version
@@ -31,8 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class HashableModel(BaseModel):
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class AddressType(str, Enum):
@@ -46,7 +45,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, int], None]
+    value: Union[int, Tuple[int, int], None] = None
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -159,9 +158,7 @@ class BasicBlockFeature(HashableModel):
     basic_block: Address = Field(alias="basic block")
     address: Address
     feature: Feature
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class InstructionFeature(HashableModel):
@@ -194,26 +191,20 @@ class FunctionFeatures(BaseModel):
     address: Address
     features: Tuple[FunctionFeature, ...]
     basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic blocks")
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class Features(BaseModel):
     global_: Tuple[GlobalFeature, ...] = Field(alias="global")
     file: Tuple[FileFeature, ...]
     functions: Tuple[FunctionFeatures, ...]
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class Extractor(BaseModel):
     name: str
     version: str = capa.version.__version__
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class Freeze(BaseModel):
@@ -221,9 +212,7 @@ class Freeze(BaseModel):
     base_address: Address = Field(alias="base address")
     extractor: Extractor
     features: Features
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -> str:
@@ -324,7 +313,7 @@ def dumps(extractor: capa.features.extractors.base_extractor.FeatureExtractor) -
     )  # type: ignore
     # Mypy is unable to recognise `base_address` as a argument due to alias
 
-    return freeze.json()
+    return freeze.model_dump_json()
 
 
 def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:

@@ -3,7 +3,8 @@
 ## master (unreleased)
 
 ### New Features
-- ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
+- ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
+- bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 
 ### Breaking Changes
 

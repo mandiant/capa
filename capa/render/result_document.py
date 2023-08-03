@@ -9,7 +9,7 @@ import datetime
 import collections
 from typing import Dict, List, Tuple, Union, Optional
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, ConfigDict
 
 import capa.rules
 import capa.engine
@@ -23,14 +23,11 @@ from capa.helpers import assert_never
 
 
 class FrozenModel(BaseModel):
-    class Config:
-        frozen = True
-        extra = "forbid"
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
 
 class Model(BaseModel):
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class Sample(Model):
@@ -83,7 +80,7 @@ class Analysis(Model):
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
-    argv: Optional[Tuple[str, ...]]
+    argv: Optional[Tuple[str, ...]] = None
     sample: Sample
     analysis: Analysis
 
@@ -105,13 +102,13 @@ class CompoundStatement(StatementModel):
 
 
 class SomeStatement(StatementModel):
-    type = "some"
+    type: str = "some"
     description: Optional[str] = None
     count: int
 
 
 class RangeStatement(StatementModel):
-    type = "range"
+    type: str = "range"
     description: Optional[str] = None
     min: int
     max: int
@@ -119,7 +116,7 @@ class RangeStatement(StatementModel):
 
 
 class SubscopeStatement(StatementModel):
-    type = "subscope"
+    type: str = "subscope"
     description: Optional[str] = None
     scope: capa.rules.Scope
 
@@ -134,7 +131,7 @@ Statement = Union[
 
 
 class StatementNode(FrozenModel):
-    type = "statement"
+    type: str = "statement"
     statement: Statement
 
 
@@ -171,7 +168,7 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
 
 
 class FeatureNode(FrozenModel):
-    type = "feature"
+    type: str = "feature"
     feature: frz.Feature
 
 
@@ -500,15 +497,12 @@ class MaecMetadata(FrozenModel):
     malware_family: Optional[str] = Field(None, alias="malware-family")
     malware_category: Optional[str] = Field(None, alias="malware-category")
     malware_category_ov: Optional[str] = Field(None, alias="malware-category-ov")
-
-    class Config:
-        frozen = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
 class RuleMetadata(FrozenModel):
     name: str
-    namespace: Optional[str]
+    namespace: Optional[str] = None
     authors: Tuple[str, ...]
     scope: capa.rules.Scope
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
@@ -546,9 +540,7 @@ class RuleMetadata(FrozenModel):
         )  # type: ignore
         # Mypy is unable to recognise arguments due to alias
 
-    class Config:
-        frozen = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
 class RuleMatches(FrozenModel):
