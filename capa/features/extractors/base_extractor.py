@@ -300,7 +300,7 @@ class ProcessHandle:
     reference to a process extracted by the sandbox.
 
     Attributes:
-        address: process' address (pid and pid)
+        address: process's address (pid)
         inner: sandbox-specific data
     """
 
