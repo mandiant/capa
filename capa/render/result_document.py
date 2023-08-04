@@ -80,7 +80,7 @@ class Analysis(Model):
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
-    argv: Optional[Tuple[str, ...]] = None
+    argv: Optional[Tuple[str, ...]]
     sample: Sample
     analysis: Analysis
 
