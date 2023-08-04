@@ -11,9 +11,11 @@ import ghidra
 from ghidra.program.model.lang import OperandType
 from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.address import AddressSpace
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.helpers
-
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import FeatureExtractor, BBHandle, InsnHandle, FunctionHandle
 
 def fix_byte(b: int) -> bytes:
     """Transform signed ints from Java into bytes for Python
@@ -75,6 +77,24 @@ def get_function_symbols() -> Iterator[ghidra.program.database.function.Function
     """yield all non-external function symbols"""
 
     yield from currentProgram.getFunctionManager().getFunctionsNoStubs(True)  # type: ignore [name-defined] # noqa: F821
+
+
+def get_function_blocks(fh: ghidra.program.database.function.FunctionDB) -> Iterator[BBHandle]:
+    """yield BBHandle for each bb in a given function"""
+
+    func = fh.inner
+    for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), func.getBody(), monitor): # type: ignore [name-defined] # noqa: F821
+        yield BBHandle(address=AbsoluteVirtualAddress(bb.getMinAddress().getOffset()), inner=bb)
+
+
+def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
+    """yield InshHandle for each insn in a given basicblock"""
+
+    bb = bbh.inner
+    for addr in bb.getAddresses(True):
+        insn = getInstructionAt(addr) # type: ignore [name-defined] # noqa: F821
+        if insn:
+            yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
 def get_file_imports() -> Dict[int, Any]:

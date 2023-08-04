@@ -19,6 +19,7 @@ from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
+from capa.features.extractors.base_extractor import FunctionHandle, BBHandle
 
 listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
 
@@ -116,7 +117,7 @@ BASIC_BLOCK_HANDLERS = (
 )
 
 
-def extract_features(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -126,6 +127,7 @@ def extract_features(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple
     yields:
       Tuple[Feature, int]: the features and their location found in this basic block.
     """
+    bb = bbh.inner
     yield BasicBlock(), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
     for bb_handler in BASIC_BLOCK_HANDLERS:
         for feature, addr in bb_handler(bb):

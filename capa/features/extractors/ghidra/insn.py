@@ -16,6 +16,7 @@ import capa.features.extractors.ghidra.helpers
 from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic, OperandNumber, OperandOffset
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import FunctionHandle, BBHandle, InsnHandle
 
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
@@ -417,12 +418,16 @@ def extract_insn_nzxor_characteristic_features(
 
 
 def extract_features(
-    fh: ghidra.program.database.function.FunctionDB,
-    bb: ghidra.program.model.block.CodeBlock,
-    insn: ghidra.program.database.code.InstructionDB,
+    fh: FunctionHandle,
+    bbh: BBHandle,
+    insnh: InsnHandle,
 ) -> Iterator[Tuple[Feature, Address]]:
+
+    f = fh.inner
+    bb = bbh.inner
+    insn = insnh.inner
     for insn_handler in INSTRUCTION_HANDLERS:
-        for feature, addr in insn_handler(fh, bb, insn):
+        for feature, addr in insn_handler(f, bb, insn):
             yield feature, addr
 
 

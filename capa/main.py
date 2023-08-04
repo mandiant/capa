@@ -1340,14 +1340,9 @@ def ida_main():
 
 def ghidra_main():
     import capa.rules
-    import capa.features.extractors.ghidra.file
-
-    # import capa.render.default
-    # import capa.features.extractors.ghidra.extractor
-    import capa.features.extractors.ghidra.global_
-    import capa.features.extractors.ghidra.helpers
-    import capa.features.extractors.ghidra.function
-    from capa.features.common import Feature
+    import capa.ghidra.helpers
+    import capa.render.default
+    import capa.features.extractors.ghidra.extractor
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
@@ -1359,21 +1354,22 @@ def ghidra_main():
     logger.debug("     https://github.com/mandiant/capa-rules")
     logger.debug("-" * 80)
 
-    # rules_path = os.path.join(get_default_root(), "rules")
-    # logger.debug("rule path: %s", rules_path)
-    # rules = get_rules([rules_path])
+    rules_path = get_default_root() / "rules"
+    logger.debug("rule path: %s", rules_path)
+    rules = get_rules([rules_path])
 
-    # temp test for ghidra CI
-    ghidra_features: List[Tuple[Feature, Address]] = []
-    ghidra_features.extend(capa.features.extractors.ghidra.global_.extract_os())
-    ghidra_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
-    ghidra_features.extend(capa.features.extractors.ghidra.file.extract_features())
-    for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        ghidra_features.extend(list(capa.features.extractors.ghidra.function.extract_features(fhandle)))
+    meta = capa.ghidra.helpers.collect_metadata([rules_path])
 
-    import pprint
+    capabilities, counts = find_capabilities(rules, capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor())
 
-    pprint.pprint(ghidra_features)  # noqa: T203
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
+
+    if has_file_limitation(rules, capabilities, is_standalone=False):
+        logger.info("capa encountered warnings during analysis")
+
+    colorama.init(strip=True)
+    print(capa.render.default.render(meta, rules, capabilities))
 
 
 if __name__ == "__main__":

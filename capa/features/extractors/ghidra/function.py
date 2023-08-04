@@ -13,7 +13,8 @@ from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors import loops
+from capa.features.extractors import loops 
+from capa.features.extractors.base_extractor import FunctionHandle 
 
 
 def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
@@ -44,9 +45,9 @@ def extract_recursive_call(fh: ghidra.program.database.function.FunctionDB):
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
 
 
-def extract_features(fh: ghidra.program.database.function.FunctionDB) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
-        for feature, addr in func_handler(fh):
+        for feature, addr in func_handler(fh.inner):
             yield feature, addr
 
 
