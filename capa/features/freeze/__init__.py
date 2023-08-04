@@ -45,7 +45,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, int], None] = None
+    value: Union[int, Tuple[int, int], None] = None  # None default value to support deserialization of NO_ADDRESS
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
