@@ -124,7 +124,7 @@ class Scopes:
 
     def __repr__(self) -> str:
         if self.static and self.dynamic:
-            return f"static-scope: {self.static}, dyanamic-scope: {self.dynamic}"
+            return f"static-scope: {self.static}, dynamic-scope: {self.dynamic}"
         elif self.static:
             return f"static-scope: {self.static}"
         elif self.dynamic:
@@ -1267,6 +1267,7 @@ class RuleSet:
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.process_rules = self._get_rules_for_scope(rules, PROCESS_SCOPE)
         self.thread_rules = self._get_rules_for_scope(rules, THREAD_SCOPE)
+        self.call_rules = self._get_rules_for_scope(rules, CALL_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
         self.instruction_rules = self._get_rules_for_scope(rules, INSTRUCTION_SCOPE)
@@ -1279,6 +1280,7 @@ class RuleSet:
             self.process_rules
         )
         (self._easy_thread_rules_by_feature, self._hard_thread_rules) = self._index_rules_by_feature(self.thread_rules)
+        (self._easy_call_rules_by_feature, self._hard_call_rules) = self._index_rules_by_feature(self.call_rules)
         (self._easy_function_rules_by_feature, self._hard_function_rules) = self._index_rules_by_feature(
             self.function_rules
         )
@@ -1533,6 +1535,9 @@ class RuleSet:
         elif scope == Scope.THREAD:
             easy_rules_by_feature = self._easy_thread_rules_by_feature
             hard_rule_names = self._hard_thread_rules
+        elif scope == Scope.CALL:
+            easy_rules_by_feature = self._easy_call_rules_by_feature
+            hard_rule_names = self._hard_call_rules
         elif scope == Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules

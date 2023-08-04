@@ -165,13 +165,55 @@ def test_ruleset():
                         """
                 )
             ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test call subscope
+                            scopes:
+                                static: basic block
+                                dynamic: thread
+                        features:
+                          - and:
+                            - string: "explorer.exe"
+                            - call:
+                              - api: HttpOpenRequestW
+                    """
+                )
+            ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: test rule
+                            scopes:
+                                static: instruction
+                                dynamic: call
+                        features:
+                          - and:
+                            - or:
+                              - api: socket
+                              - and:
+                                - os: linux
+                                - mnemonic: syscall
+                                - number: 41 = socket()
+                            - number: 6 = IPPROTO_TCP
+                            - number: 1 = SOCK_STREAM
+                            - number: 2 = AF_INET
+                    """
+                )
+            ),
         ]
     )
     assert len(rules.file_rules) == 2
     assert len(rules.function_rules) == 2
-    assert len(rules.basic_block_rules) == 1
+    assert len(rules.basic_block_rules) == 2
+    assert len(rules.instruction_rules) == 1
     assert len(rules.process_rules) == 4
-    assert len(rules.thread_rules) == 1
+    assert len(rules.thread_rules) == 2
+    assert len(rules.call_rules) == 2
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
