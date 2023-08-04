@@ -19,7 +19,7 @@ from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
-from capa.features.extractors.base_extractor import FunctionHandle, BBHandle
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
 
@@ -137,8 +137,10 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Featur
 def main():
     features = []
     for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
+        fh = FunctionHandle(address=fhandle.getBody().getMinAddress().getOffset(), inner=fhandle)
         for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fhandle.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
-            features.extend(list(extract_features(bb)))
+            bbh = BBHandle(address=bb.getMinAddress(), inner=bb)
+            features.extend(list(extract_features(fh, bbh)))
 
     import pprint
 

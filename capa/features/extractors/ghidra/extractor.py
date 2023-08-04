@@ -7,16 +7,14 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import List, Tuple, Iterator
 
-import ghidra
-
-import capa.features.extractors.ghidra.global_
 import capa.features.extractors.ghidra.file
+import capa.features.extractors.ghidra.insn
+import capa.features.extractors.ghidra.global_
 import capa.features.extractors.ghidra.function
 import capa.features.extractors.ghidra.basicblock
-import capa.features.extractors.ghidra.insn
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor, BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 
 class GhidraFeatureExtractor(FeatureExtractor):
@@ -45,8 +43,8 @@ class GhidraFeatureExtractor(FeatureExtractor):
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
-        get_addr = currentAddress.getAddress(hex(addr))
-        func = getFunctionContaining(get_addr) # type: ignore [name-defined] # noqa: F821
+        get_addr = currentAddress.getAddress(hex(addr))  # type: ignore [name-defined] # noqa: F821
+        func = getFunctionContaining(get_addr)  # type: ignore [name-defined] # noqa: F821
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getAddress().getOffset()), inner=func)
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

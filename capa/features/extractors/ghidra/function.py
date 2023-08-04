@@ -13,8 +13,8 @@ from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors import loops 
-from capa.features.extractors.base_extractor import FunctionHandle 
+from capa.features.extractors import loops
+from capa.features.extractors.base_extractor import FunctionHandle
 
 
 def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
