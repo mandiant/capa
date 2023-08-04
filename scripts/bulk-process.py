@@ -213,7 +213,9 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                results[result["path"].as_posix()] = rd.ResultDocument.model_validate(result["ok"]).model_dump_json()
+                results[result["path"].as_posix()] = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(
+                    exclude_none=True
+                )
             else:
                 raise ValueError(f"unexpected status: {result['status']}")
 
