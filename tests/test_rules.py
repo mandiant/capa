@@ -363,10 +363,10 @@ def test_multi_scope_rules_features():
                         static: instruction
                         dynamic: call
                 features:
-                    - and:
+                  - and:
                     - or:
-                        - api: socket
-                        - and:
+                      - api: socket
+                      - and:
                         - os: linux
                         - mnemonic: syscall
                         - number: 41 = socket()
