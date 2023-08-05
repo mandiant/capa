@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import pickle
 import collections
 
 import tabulate
@@ -82,46 +83,51 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         | ...                                                   | ...                                             |
         +-------------------------------------------------------+-------------------------------------------------+
     """
-    subrule_matches = find_subrule_matches(doc)
 
+    subrule_matches = find_subrule_matches(doc)
     rows = []
 
-    entropy_dict: dict = {}
-    import pickle
+    # Step 1: Load entropy_dict from the pickle file
     with open("./all_rules_entropy.pickle", 'rb') as pickle_file:
         entropy_dict = pickle.load(pickle_file)
-    
+
+    # Step 2: Combine the loop and categorization
+    common = []
+    uncommon = []
+    rare = []
+    very_rare = []
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
-            # rules that are also matched by other rules should not get rendered by default.
-            # this cuts down on the amount of output while giving approx the same detail.
-            # see #224
             continue
 
         count = len(rule.matches)
-        if count == 1:
-            capability = rutils.bold(rule.meta.name)
+        entropy = float(entropy_dict.get(rule.meta.name+"\n", 0) / 593)
+        capability = rutils.bold1(rule.meta.name, entropy)
+        matches = f"({count} matches)" if count > 1 else ""
+
+        if entropy > 0.3:
+            common.append((capability, rule.meta.namespace, matches))
+        elif 0.1 <= entropy <= 0.3:
+            uncommon.append((capability, rule.meta.namespace, matches))
+        elif 0.034 < entropy <= 0.1:
+            rare.append((capability, rule.meta.namespace, matches))
         else:
-            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
+            very_rare.append((capability + "*", rule.meta.namespace, matches))
 
-        # Get the entropy value or use zero as the default value if not available
-        # entropy = float(getattr(rule.meta, 'entropy', 0.0))
-        entropy = entropy_dict.get(rule.meta.name+"\n", 0)
-
-        rows.append((capability, rule.meta.namespace, entropy))
-
-    # Sort the rows based on entropy values in descending order (highest to lowest)
-    rows.sort(key=lambda x: x[2])
-    rows = [(capability, namespace) for capability, namespace, _ in rows]
+    # Step 3: Combine the four separate loops into a single list comprehension
+    rows = [(f"{c} {i}", ns, rutils.bold1("very rare", 0.0334)) for c, ns, i in sorted(very_rare, key=lambda x: (x[0], x[1]))] + \
+        [(f"{c} {i}", ns, rutils.bold1("rare", 0.1)) for c, ns, i in sorted(rare, key=lambda x: (x[0], x[1]))] + \
+        [(f"{c} {i}", ns, rutils.bold1("uncommon", 0.3)) for c, ns, i in sorted(uncommon, key=lambda x: (x[0], x[1]))] + \
+        [(f"{c} {i}", ns, rutils.bold1("common", 1)) for c, ns, i in sorted(common, key=lambda x: (x[0], x[1]))]
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
+            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50), width("Prevalence", 10)], tablefmt="mixed_outline")
         )
         ostream.write("\n")
     else:
         ostream.writeln(rutils.bold("no capabilities found"))
-
+  
 
 def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     """
