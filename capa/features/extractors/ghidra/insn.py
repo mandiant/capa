@@ -21,8 +21,6 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
-# listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
-
 # significantly cut down on runtime by caching api info
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
 externs = capa.features.extractors.ghidra.helpers.get_file_externs()
@@ -407,7 +405,7 @@ def extract_insn_nzxor_characteristic_features(
 ) -> Iterator[Tuple[Feature, Address]]:
     if "XOR" not in insn.getMnemonicString():
         return
-    if capa.features.extractors.ghidra.helpers.is_xor_on_stack(insn):
+    if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
         return
     if capa.features.extractors.ghidra.helpers.is_zxor(insn):
         return
