@@ -4,6 +4,7 @@
 
 ### New Features
 - ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
+- develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 
 ### Breaking Changes
 
