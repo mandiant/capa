@@ -131,7 +131,7 @@ def get_file_externs() -> Dict[int, Any]:
     return dict(zip(addrs, names))
 
 
-def map_fake_import_addrs() -> Dict[int, int]:
+def map_fake_import_addrs() -> Dict[int, List[int]]:
     """
     Map ghidra's fake import entrypoints to their
     real addresses
@@ -150,7 +150,7 @@ def map_fake_import_addrs() -> Dict[int, int]:
     - 0x473090 -> PTR_CreateServiceW_00473090
     - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
     """
-    fake_dict: Dict[int, int] = {}
+    fake_dict: Dict[int, List[int]] = {}
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
@@ -185,7 +185,7 @@ def get_external_locs() -> List[int]:
 
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
-    fakes: Dict[int, int],
+    fakes: Dict[int, List[int]],
     imports: Dict[int, List[str]],
     externs: Dict[int, int],
     ex_locs: List[int],

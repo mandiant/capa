@@ -71,9 +71,9 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
             return
         ref = addr_ref.getOffset()
 
-    if isinstance(ref, list):
+    if isinstance(ref, list):  # ref from REG | ADDR
         for r in ref:
-            info = funcs.get(r)
+            info = funcs.get(r)  # type: ignore
             if info:
                 yield info
     else:
@@ -453,12 +453,9 @@ def main():
     listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
     features = []
     for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        fh = FunctionHandle(address=fhandle.getBody().getMinAddress().getOffset(), inner=fhandle)
         for bab in SimpleBlockIterator(BasicBlockModel(currentProgram), fhandle.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
-            bb = BBHandle(address=bab.getMinAddress().getOffset(), inner=bab)
             for insnh in listing.getInstructions(bab, True):
-                insn = InsnHandle(address=insnh.getAddress().getOffset(), inner = insnh)
-                features.extend(list(extract_features(fh, bb, insn)))
+                features.extend(list(extract_features(fhandle, bab, insnh)))
 
     import pprint
 
