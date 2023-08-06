@@ -71,6 +71,64 @@ def find_subrule_matches(doc: rd.ResultDocument):
     return matches
 
 
+# def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
+#     """
+#     example::
+
+#         +-------------------------------------------------------+-------------------------------------------------+
+#         | CAPABILITY                                            | NAMESPACE                                       |
+#         |-------------------------------------------------------+-------------------------------------------------|
+#         | check for OutputDebugString error (2 matches)         | anti-analysis/anti-debugging/debugger-detection |
+#         | read and send data from client to server              | c2/file-transfer                                |
+#         | ...                                                   | ...                                             |
+#         +-------------------------------------------------------+-------------------------------------------------+
+#     """
+
+#     subrule_matches = find_subrule_matches(doc)
+#     rows = []
+
+#     # Step 1: Load entropy_dict from the pickle file
+#     with open("./all_rules_entropy.pickle", 'rb') as pickle_file:
+#         entropy_dict = pickle.load(pickle_file)
+
+#     # Step 2: Combine the loop and categorization
+#     common = []
+#     uncommon = []
+#     rare = []
+#     very_rare = []
+#     for rule in rutils.capability_rules(doc):
+#         if rule.meta.name in subrule_matches:
+#             continue
+
+#         count = len(rule.matches)
+#         entropy = float(entropy_dict.get(rule.meta.name+"\n", 0) / 593)
+#         capability = rutils.bold1(rule.meta.name, entropy)
+#         matches = f"({count} matches)" if count > 1 else ""
+
+#         if entropy > 0.3:
+#             common.append((capability, rule.meta.namespace, matches))
+#         elif 0.1 <= entropy <= 0.3:
+#             uncommon.append((capability, rule.meta.namespace, matches))
+#         elif 0.034 < entropy <= 0.1:
+#             rare.append((capability, rule.meta.namespace, matches))
+#         else:
+#             very_rare.append((capability + "*", rule.meta.namespace, matches))
+
+#     # Step 3: Combine the four separate loops into a single list comprehension
+#     rows = [(f"{c} {i}", ns, rutils.bold1("very rare", 0.0334)) for c, ns, i in sorted(very_rare, key=lambda x: (x[0], x[1]))] + \
+#         [(f"{c} {i}", ns, rutils.bold1("rare", 0.1)) for c, ns, i in sorted(rare, key=lambda x: (x[0], x[1]))] + \
+#         [(f"{c} {i}", ns, rutils.bold1("uncommon", 0.3)) for c, ns, i in sorted(uncommon, key=lambda x: (x[0], x[1]))] + \
+#         [(f"{c} {i}", ns, rutils.bold1("common", 1)) for c, ns, i in sorted(common, key=lambda x: (x[0], x[1]))]
+
+#     if rows:
+#         ostream.write(
+#             tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50), width("Prevalence", 10)], tablefmt="mixed_outline")
+#         )
+#         ostream.write("\n")
+#     else:
+#         ostream.writeln(rutils.bold("no capabilities found"))
+
+
 def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
@@ -93,32 +151,23 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
     # Step 2: Combine the loop and categorization
     common = []
-    uncommon = []
     rare = []
-    very_rare = []
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
             continue
 
         count = len(rule.matches)
         entropy = float(entropy_dict.get(rule.meta.name+"\n", 0) / 593)
-        capability = rutils.bold1(rule.meta.name, entropy)
         matches = f"({count} matches)" if count > 1 else ""
 
-        if entropy > 0.3:
-            common.append((capability, rule.meta.namespace, matches))
-        elif 0.1 <= entropy <= 0.3:
-            uncommon.append((capability, rule.meta.namespace, matches))
-        elif 0.034 < entropy <= 0.1:
-            rare.append((capability, rule.meta.namespace, matches))
+        if entropy > 0.05:
+            common.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold1("common", 1)))
         else:
-            very_rare.append((capability + "*", rule.meta.namespace, matches))
+            rare.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold1("rare", 0)))
 
     # Step 3: Combine the four separate loops into a single list comprehension
-    rows = [(f"{c} {i}", ns, rutils.bold1("very rare", 0.0334)) for c, ns, i in sorted(very_rare, key=lambda x: (x[0], x[1]))] + \
-        [(f"{c} {i}", ns, rutils.bold1("rare", 0.1)) for c, ns, i in sorted(rare, key=lambda x: (x[0], x[1]))] + \
-        [(f"{c} {i}", ns, rutils.bold1("uncommon", 0.3)) for c, ns, i in sorted(uncommon, key=lambda x: (x[0], x[1]))] + \
-        [(f"{c} {i}", ns, rutils.bold1("common", 1)) for c, ns, i in sorted(common, key=lambda x: (x[0], x[1]))]
+    rows = [(f"{rutils.bold1(c, 0)} {i}*", ns, p) for ns, c, i, p in sorted(rare, key=lambda x: (x[0], x[1]))] + \
+        [(f"{rutils.bold1(c, 1)} {i}", ns, p) for ns, c, i, p in sorted(common, key=lambda x: (x[0], x[1]))]
 
     if rows:
         ostream.write(
@@ -127,7 +176,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         ostream.write("\n")
     else:
         ostream.writeln(rutils.bold("no capabilities found"))
-  
+
 
 def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     """
