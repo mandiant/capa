@@ -88,6 +88,22 @@ class Statement:
                 if child is existing:
                     children[i] = new
 
+    def get_all_features(self) -> Set[Feature]:
+        """
+        recursively extracts all feature statements from a given rule statement.
+
+        returns:
+            set: A set of all feature statements contained within the given feature statement.
+        """
+        feature_set: set = set()
+
+        for child in self.get_children():
+            if isinstance(child, Statement):
+                feature_set.update(child.get_all_features())
+            else:
+                feature_set.add(child)
+        return feature_set
+
 
 class And(Statement):
     """
