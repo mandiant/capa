@@ -77,11 +77,10 @@ def get_function_symbols() -> Iterator[ghidra.program.database.function.Function
     yield from currentProgram.getFunctionManager().getFunctionsNoStubs(True)  # type: ignore [name-defined] # noqa: F821
 
 
-def get_file_imports() -> Dict[int, Any]:
+def get_file_imports() -> Dict[int, List[str]]:
     """get all import names & addrs"""
 
-    addrs = []
-    names = []
+    import_dict: Dict[int, List[str]] = {}
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
@@ -93,10 +92,9 @@ def get_file_imports() -> Dict[int, Any]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
         for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
-            addrs.append(addr)
-            names.append(name)
+            import_dict.setdefault(addr, []).append(name)
 
-    return dict(zip(addrs, names))
+    return import_dict
 
 
 def get_file_externs() -> Dict[int, Any]:
@@ -190,7 +188,7 @@ def get_external_locs() -> List[int]:
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
     fakes: Dict[int, int],
-    imports: Dict[int, int],
+    imports: Dict[int, List[str]],
     externs: Dict[int, int],
     ex_locs: List[int],
 ) -> bool:

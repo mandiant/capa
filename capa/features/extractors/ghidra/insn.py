@@ -86,7 +86,8 @@ def extract_insn_api_features(
 
     # check calls to imported functions
     for api in check_for_api_call(insn, imports):
-        yield API(api), AbsoluteVirtualAddress(insn.getAddress().getOffset())
+        for imp in api:
+            yield API(imp), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
     # check calls to extern functions
     for api in check_for_api_call(insn, externs):
