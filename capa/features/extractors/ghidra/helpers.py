@@ -122,16 +122,16 @@ def get_file_imports() -> Dict[int, Any]:
 
 def get_file_externs() -> Dict[int, Any]:
     """
-        Gets function names & addresses of statically-linked library functions
+    Gets function names & addresses of statically-linked library functions
 
-        Ghidra's external namespace is mostly reserved for dynamically-linked
-        imports. Statically-linked functions are part of the global namespace.
-        Filtering on the type, source, and namespace of the symbols yield more
-        statically-linked library functions.
+    Ghidra's external namespace is mostly reserved for dynamically-linked
+    imports. Statically-linked functions are part of the global namespace.
+    Filtering on the type, source, and namespace of the symbols yield more
+    statically-linked library functions.
 
-        Example: (PMA Lab 16-01.exe_) 7faafc7e4a5c736ebfee6abbbc812d80:0x407490
-        - __aulldiv
-        - Note: See Symbol Table labels
+    Example: (PMA Lab 16-01.exe_) 7faafc7e4a5c736ebfee6abbbc812d80:0x407490
+    - __aulldiv
+    - Note: See Symbol Table labels
     """
     addrs = []
     names = []
@@ -156,22 +156,22 @@ def get_file_externs() -> Dict[int, Any]:
 
 def map_fake_import_addrs() -> Dict[int, int]:
     """
-       Map ghidra's fake import entrypoints to their
-       real addresses
+    Map ghidra's fake import entrypoints to their
+    real addresses
 
-       Helps as many Ghidra Scripting API calls end up returning
-       these external (fake) addresses.
+    Helps as many Ghidra Scripting API calls end up returning
+    these external (fake) addresses.
 
-       Undocumented but intended Ghidra behavior:
-        - Import entryPoint fields are stored in the 'EXTERNAL:' AddressSpace.
-          'getEntryPoint()' returns the entryPoint field, which is an offset
-          from the beginning of the assigned AddressSpace. In the case of externals,
-          they start from 1 and increment.
-       https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Features/Base/src/test.slow/java/ghidra/program/database/function/ExternalFunctionDBTest.java#L90
+    Undocumented but intended Ghidra behavior:
+     - Import entryPoint fields are stored in the 'EXTERNAL:' AddressSpace.
+       'getEntryPoint()' returns the entryPoint field, which is an offset
+       from the beginning of the assigned AddressSpace. In the case of externals,
+       they start from 1 and increment.
+    https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Features/Base/src/test.slow/java/ghidra/program/database/function/ExternalFunctionDBTest.java#L90
 
-       Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
-       - 0x473090 -> PTR_CreateServiceW_00473090
-       - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
+    Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
+    - 0x473090 -> PTR_CreateServiceW_00473090
+    - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
     """
     real_addrs = []
     fake_addrs = []
@@ -187,18 +187,18 @@ def map_fake_import_addrs() -> Dict[int, int]:
 
 def get_external_locs() -> List[int]:
     """
-        Helps to discern external offsets from regular bytes when extracting
-        data.
+     Helps to discern external offsets from regular bytes when extracting
+     data.
 
-       Ghidra behavior:
-        - Offsets that point to specific sections of external programs
-         i.e. library code.
-        - Stored in data, and pointed to by an absolute address
-        https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/program/model/symbol/ExternalLocation.java#L25-30
+    Ghidra behavior:
+     - Offsets that point to specific sections of external programs
+      i.e. library code.
+     - Stored in data, and pointed to by an absolute address
+     https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/program/model/symbol/ExternalLocation.java#L25-30
 
-       Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
-       - 0x473090 -> PTR_CreateServiceW_00473090
-       - 0x000b34EC -> External Location 
+    Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
+    - 0x473090 -> PTR_CreateServiceW_00473090
+    - 0x000b34EC -> External Location
     """
     locs = []
     for fh in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
