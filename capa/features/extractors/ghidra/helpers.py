@@ -98,11 +98,10 @@ def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
             yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
-def get_file_imports() -> Dict[int, Any]:
+def get_file_imports() -> Dict[int, List[str]]:
     """get all import names & addrs"""
 
-    addrs = []
-    names = []
+    import_dict: Dict[int, List[str]] = {}
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
@@ -114,10 +113,9 @@ def get_file_imports() -> Dict[int, Any]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
         for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
-            addrs.append(addr)
-            names.append(name)
+            import_dict.setdefault(addr, []).append(name)
 
-    return dict(zip(addrs, names))
+    return import_dict
 
 
 def get_file_externs() -> Dict[int, Any]:
@@ -154,7 +152,7 @@ def get_file_externs() -> Dict[int, Any]:
     return dict(zip(addrs, names))
 
 
-def map_fake_import_addrs() -> Dict[int, int]:
+def map_fake_import_addrs() -> Dict[int, List[int]]:
     """
     Map ghidra's fake import entrypoints to their
     real addresses
@@ -173,16 +171,14 @@ def map_fake_import_addrs() -> Dict[int, int]:
     - 0x473090 -> PTR_CreateServiceW_00473090
     - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
     """
-    real_addrs = []
-    fake_addrs = []
+    fake_dict: Dict[int, List[int]] = {}
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
-        fake_addrs.append(f.getEntryPoint().getOffset())
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                real_addrs.append(r.getFromAddress().getOffset())
+                fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(r.getFromAddress().getOffset())
 
-    return dict(zip(fake_addrs, real_addrs))
+    return fake_dict
 
 
 def get_external_locs() -> List[int]:
@@ -210,8 +206,8 @@ def get_external_locs() -> List[int]:
 
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
-    fakes: Dict[int, int],
-    imports: Dict[int, int],
+    fakes: Dict[int, List[int]],
+    imports: Dict[int, List[str]],
     externs: Dict[int, int],
     ex_locs: List[int],
 ) -> bool:
