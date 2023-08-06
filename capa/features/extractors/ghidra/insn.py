@@ -71,9 +71,15 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
             return
         ref = addr_ref.getOffset()
 
-    info = funcs.get(ref)  # type: ignore
-    if info:
-        yield info
+    if isinstance(ref, list):
+        for r in ref:
+            info = funcs.get(r)
+            if info:
+                yield info
+    else:
+        info = funcs.get(ref)  # type: ignore
+        if info:
+            yield info
 
 
 def extract_insn_api_features(
@@ -344,17 +350,17 @@ def extract_function_calls_from(
         # This method of "dereferencing" addresses/ pointers
         # is not as robust as methods in other functions,
         # but works just fine for this one
+        reference = 0
         for ref in insn.getReferencesFrom():
-            reference = ref.getToAddress().getOffset()
+            addr = ref.getToAddress()
 
             # avoid returning fake addrs
-            check = mapped_fake_addrs.get(reference)
-            if check:
-                reference = check
+            if not addr.isExternalAddress():
+                reference = addr.getOffset()
 
             # if a reference is < 0, then ghidra pulled an offset from a DYNAMIC | ADDR (usually a stackvar)
             # these cannot be resolved to actual addrs
-            if reference >= 0:
+            if reference > 0:
                 yield Characteristic("calls from"), AbsoluteVirtualAddress(reference)
 
 
@@ -446,9 +452,12 @@ def main():
     """ """
     listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
     features = []
-    for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
-            for insn in listing.getInstructions(bb, True):
+    for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
+        fh = FunctionHandle(address=fhandle.getBody().getMinAddress().getOffset(), inner=fhandle)
+        for bab in SimpleBlockIterator(BasicBlockModel(currentProgram), fhandle.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
+            bb = BBHandle(address=bab.getMinAddress().getOffset(), inner=bab)
+            for insnh in listing.getInstructions(bab, True):
+                insn = InsnHandle(address=insnh.getAddress().getOffset(), inner = insnh)
                 features.extend(list(extract_features(fh, bb, insn)))
 
     import pprint

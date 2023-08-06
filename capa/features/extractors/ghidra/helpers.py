@@ -150,16 +150,14 @@ def map_fake_import_addrs() -> Dict[int, int]:
     - 0x473090 -> PTR_CreateServiceW_00473090
     - 'EXTERNAL:00000025' -> External Address (ghidra.program.model.address.SpecialAddress)
     """
-    real_addrs = []
-    fake_addrs = []
+    fake_dict: Dict[int, int] = {}
 
     for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
-        fake_addrs.append(f.getEntryPoint().getOffset())
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
-                real_addrs.append(r.getFromAddress().getOffset())
+                fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(r.getFromAddress().getOffset())
 
-    return dict(zip(fake_addrs, real_addrs))
+    return fake_dict
 
 
 def get_external_locs() -> List[int]:
