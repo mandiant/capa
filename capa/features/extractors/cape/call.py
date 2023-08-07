@@ -48,9 +48,9 @@ def extract_call_features(
     # list similar to disassembly: arguments right-to-left, call
     for arg in call["arguments"][::-1]:
         try:
-            yield Number(int(arg["value"], 16), description=f"{arg['name']}"), caller
+            yield Number(int(arg["value"], 16)), caller
         except ValueError:
-            yield String(arg["value"], description=f"{arg['name']}"), caller
+            yield String(arg["value"]), caller
     yield API(call["api"]), caller
 
 
