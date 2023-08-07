@@ -67,12 +67,10 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(pid, int)
         return f"process ppid: {ppid}, process pid: {pid}"
     elif address.type == frz.AddressType.THREAD:
-        assert isinstance(address.value, tuple)
-        ppid, pid, tid = address.value
-        assert isinstance(ppid, int)
-        assert isinstance(pid, int)
+        assert isinstance(address.value, int)
+        tid = address.value
         assert isinstance(tid, int)
-        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}"
+        return f"thread id: {tid}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:

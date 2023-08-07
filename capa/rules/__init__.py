@@ -77,6 +77,7 @@ class Scope(str, Enum):
     FILE = "file"
     PROCESS = "process"
     THREAD = "thread"
+    CALL = "call"
     FUNCTION = "function"
     BASIC_BLOCK = "basic block"
     INSTRUCTION = "instruction"
@@ -85,6 +86,7 @@ class Scope(str, Enum):
 FILE_SCOPE = Scope.FILE.value
 PROCESS_SCOPE = Scope.PROCESS.value
 THREAD_SCOPE = Scope.THREAD.value
+CALL_SCOPE = Scope.CALL.value
 FUNCTION_SCOPE = Scope.FUNCTION.value
 BASIC_BLOCK_SCOPE = Scope.BASIC_BLOCK.value
 INSTRUCTION_SCOPE = Scope.INSTRUCTION.value
@@ -107,6 +109,7 @@ DYNAMIC_SCOPES = (
     GLOBAL_SCOPE,
     PROCESS_SCOPE,
     THREAD_SCOPE,
+    CALL_SCOPE,
 )
 
 
@@ -121,7 +124,7 @@ class Scopes:
 
     def __repr__(self) -> str:
         if self.static and self.dynamic:
-            return f"static-scope: {self.static}, dyanamic-scope: {self.dynamic}"
+            return f"static-scope: {self.static}, dynamic-scope: {self.dynamic}"
         elif self.static:
             return f"static-scope: {self.static}"
         elif self.dynamic:
@@ -186,11 +189,12 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
         capa.features.common.Regex,
         capa.features.common.Characteristic("embedded pe"),
     },
-    THREAD_SCOPE: {
+    THREAD_SCOPE: set(),
+    CALL_SCOPE: {
         capa.features.common.MatchedRule,
+        capa.features.common.Regex,
         capa.features.common.String,
         capa.features.common.Substring,
-        capa.features.common.Regex,
         capa.features.insn.API,
         capa.features.insn.Number,
     },
@@ -240,9 +244,14 @@ SUPPORTED_FEATURES[FUNCTION_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[FILE_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
+SUPPORTED_FEATURES[CALL_SCOPE].update(SUPPORTED_FEATURES[GLOBAL_SCOPE])
 
+
+# all call scope features are also thread features
+SUPPORTED_FEATURES[THREAD_SCOPE].update(SUPPORTED_FEATURES[CALL_SCOPE])
 # all thread scope features are also process features
 SUPPORTED_FEATURES[PROCESS_SCOPE].update(SUPPORTED_FEATURES[THREAD_SCOPE])
+
 # all instruction scope features are also basic block features
 SUPPORTED_FEATURES[BASIC_BLOCK_SCOPE].update(SUPPORTED_FEATURES[INSTRUCTION_SCOPE])
 # all basic block scope features are also function scope features
@@ -549,7 +558,7 @@ def build_statements(d, scopes: Scopes):
         )
 
     elif key == "thread":
-        if (PROCESS_SCOPE not in scopes) and (FILE_SCOPE not in scopes):
+        if all(s not in scopes for s in (FILE_SCOPE, PROCESS_SCOPE)):
             raise InvalidRule("thread subscope supported only for the process scope")
 
         if len(d[key]) != 1:
@@ -557,6 +566,17 @@ def build_statements(d, scopes: Scopes):
 
         return ceng.Subscope(
             THREAD_SCOPE, build_statements(d[key][0], Scopes(dynamic=THREAD_SCOPE)), description=description
+        )
+
+    elif key == "call":
+        if all(s not in scopes for s in (FILE_SCOPE, PROCESS_SCOPE, THREAD_SCOPE)):
+            raise InvalidRule("call subscope supported only for the process and thread scopes")
+
+        if len(d[key]) != 1:
+            raise InvalidRule("subscope must have exactly one child statement")
+
+        return ceng.Subscope(
+            CALL_SCOPE, build_statements(d[key][0], Scopes(dynamic=CALL_SCOPE)), description=description
         )
 
     elif key == "function":
@@ -1246,6 +1266,7 @@ class RuleSet:
         self.file_rules = self._get_rules_for_scope(rules, FILE_SCOPE)
         self.process_rules = self._get_rules_for_scope(rules, PROCESS_SCOPE)
         self.thread_rules = self._get_rules_for_scope(rules, THREAD_SCOPE)
+        self.call_rules = self._get_rules_for_scope(rules, CALL_SCOPE)
         self.function_rules = self._get_rules_for_scope(rules, FUNCTION_SCOPE)
         self.basic_block_rules = self._get_rules_for_scope(rules, BASIC_BLOCK_SCOPE)
         self.instruction_rules = self._get_rules_for_scope(rules, INSTRUCTION_SCOPE)
@@ -1258,6 +1279,7 @@ class RuleSet:
             self.process_rules
         )
         (self._easy_thread_rules_by_feature, self._hard_thread_rules) = self._index_rules_by_feature(self.thread_rules)
+        (self._easy_call_rules_by_feature, self._hard_call_rules) = self._index_rules_by_feature(self.call_rules)
         (self._easy_function_rules_by_feature, self._hard_function_rules) = self._index_rules_by_feature(
             self.function_rules
         )
@@ -1512,6 +1534,9 @@ class RuleSet:
         elif scope == Scope.THREAD:
             easy_rules_by_feature = self._easy_thread_rules_by_feature
             hard_rule_names = self._hard_thread_rules
+        elif scope == Scope.CALL:
+            easy_rules_by_feature = self._easy_call_rules_by_feature
+            hard_rule_names = self._hard_call_rules
         elif scope == Scope.FUNCTION:
             easy_rules_by_feature = self._easy_function_rules_by_feature
             hard_rule_names = self._hard_function_rules

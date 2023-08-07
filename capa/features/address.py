@@ -66,6 +66,7 @@ class ProcessAddress(Address):
         return (self.ppid, self.pid) == (other.ppid, other.pid)
 
     def __lt__(self, other):
+        assert isinstance(other, ProcessAddress)
         return (self.ppid, self.pid) < (other.ppid, other.pid)
 
 
@@ -78,7 +79,7 @@ class ThreadAddress(Address):
         self.tid = tid
 
     def __repr__(self):
-        return f"thread(tid: {self.tid})"
+        return f"{self.process}, thread(tid: {self.tid})"
 
     def __hash__(self):
         return hash((self.process, self.tid))
@@ -88,29 +89,54 @@ class ThreadAddress(Address):
         return (self.process, self.tid) == (other.process, other.tid)
 
     def __lt__(self, other):
+        assert isinstance(other, ThreadAddress)
         return (self.process, self.tid) < (other.process, other.tid)
 
 
-class DynamicAddress(Address):
+class DynamicCallAddress(Address):
+    """addesses a call in a dynamic execution trace"""
+
+    def __init__(self, thread: ThreadAddress, id: int):
+        assert id >= 0
+        self.thread = thread
+        self.id = id
+
+    def __repr__(self):
+        return f"{self.thread}, call(id: {self.id})"
+
+    def __hash__(self):
+        return hash((self.thread, self.id))
+
+    def __eq__(self, other):
+        assert isinstance(other, DynamicCallAddress)
+        return (self.thread, self.id) == (other.thread, other.id)
+
+    def __lt__(self, other):
+        assert isinstance(other, DynamicCallAddress)
+        return (self.thread, self.id) < (other.thread, other.id)
+
+
+class DynamicReturnAddress(Address):
     """an address from a dynamic analysis trace"""
 
-    def __init__(self, id_: int, return_address: int):
-        assert id_ >= 0
+    def __init__(self, call: DynamicCallAddress, return_address: int):
         assert return_address >= 0
-        self.id = id_
+        self.call = call
         self.return_address = return_address
 
     def __repr__(self):
-        return f"dynamic(event: {self.id}, returnaddress: 0x{self.return_address:x})"
+        return f"{self.call}, dynamic-call(return-address: 0x{self.return_address:x})"
 
     def __hash__(self):
-        return hash((self.id, self.return_address))
+        return hash((self.call, self.return_address))
 
     def __eq__(self, other):
-        return (self.id, self.return_address) == (other.id, other.return_address)
+        assert isinstance(other, DynamicReturnAddress)
+        return (self.call, self.return_address) == (other.call, other.return_address)
 
     def __lt__(self, other):
-        return (self.id, self.return_address) < (other.id, other.return_address)
+        assert isinstance(other, DynamicReturnAddress)
+        return (self.call, self.return_address) < (other.call, other.return_address)
 
 
 class RelativeVirtualAddress(int, Address):

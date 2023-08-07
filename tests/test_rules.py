@@ -353,6 +353,30 @@ def test_multi_scope_rules_features():
         )
     )
 
+    _ = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+              meta:
+                name: test rule
+                scopes:
+                  static: instruction
+                  dynamic: call
+              features:
+                - and:
+                  - or:
+                    - api: socket
+                    - and:
+                      - os: linux
+                      - mnemonic: syscall
+                      - number: 41 = socket()
+                  - number: 6 = IPPROTO_TCP
+                  - number: 1 = SOCK_STREAM
+                  - number: 2 = AF_INET
+            """
+        )
+    )
+
 
 def test_rules_flavor_filtering():
     rules = [
@@ -489,12 +513,30 @@ def test_subscope_rules():
                     """
                 )
             ),
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: test call subscope
+                        scopes:
+                          static: basic block
+                          dynamic: thread
+                      features:
+                        - and:
+                          - string: "explorer.exe"
+                          - call:
+                            - api: HttpOpenRequestW
+                    """
+                )
+            ),
         ]
     )
-    # the file rule scope will have two rules:
-    #  - `test function subscope` and `test process subscope`
-    # plus the dynamic flavor of all rules
-    # assert len(rules.file_rules) == 4
+    # the file rule scope will have four rules:
+    # - `test function subscope`, `test process subscope` and
+    # `test thread subscope` for the static scope
+    # - and `test process subscope` for both scopes
+    assert len(rules.file_rules) == 3
 
     # the function rule scope have two rule:
     # - the rule on which `test function subscope` depends
@@ -504,9 +546,14 @@ def test_subscope_rules():
     # - the rule on which `test process subscope` depends,
     assert len(rules.process_rules) == 3
 
-    # the thread rule scope has one rule:
+    # the thread rule scope has two rule:
     # - the rule on which `test thread subscope` depends
-    assert len(rules.thread_rules) == 1
+    # - the `test call subscope` rule
+    assert len(rules.thread_rules) == 2
+
+    # the call rule scope has one rule:
+    # - the rule on which `test call subcsope` depends
+    assert len(rules.call_rules) == 1
 
 
 def test_duplicate_rules():

@@ -13,6 +13,7 @@
 - Add ProcessesAddress and ThreadAddress #1612 @yelhamer
 - Add dynamic capability extraction @yelhamer
 - Add support for mixed-scopes rules @yelhamer
+- Add a call scope @yelhamer
 
 ### Breaking Changes
 
