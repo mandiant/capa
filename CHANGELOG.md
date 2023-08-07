@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
 - Add a dynamic feature extractor for the CAPE sandbox @yelhamer [#1535](https://github.com/mandiant/capa/issues/1535)
 - Add unit tests for the new CAPE extractor #1563 @yelhamer
 - Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
@@ -16,13 +17,16 @@
 
 ### Breaking Changes
 
-
-### New Rules (1)
-
+### New Rules (4)
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
+- host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
+- host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
+
+- Fix binja backend stack string detection. #1473 @xusheng6
+- linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
 
