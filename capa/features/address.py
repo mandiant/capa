@@ -93,7 +93,7 @@ class ThreadAddress(Address):
         return (self.process, self.tid) < (other.process, other.tid)
 
 
-class CallAddress(Address):
+class DynamicCallAddress(Address):
     """addesses a call in a dynamic execution trace"""
 
     def __init__(self, thread: ThreadAddress, id: int):
@@ -108,18 +108,18 @@ class CallAddress(Address):
         return hash((self.thread, self.id))
 
     def __eq__(self, other):
-        assert isinstance(other, CallAddress)
+        assert isinstance(other, DynamicCallAddress)
         return (self.thread, self.id) == (other.thread, other.id)
 
     def __lt__(self, other):
-        assert isinstance(other, CallAddress)
+        assert isinstance(other, DynamicCallAddress)
         return (self.thread, self.id) < (other.thread, other.id)
 
 
 class DynamicReturnAddress(Address):
     """an address from a dynamic analysis trace"""
 
-    def __init__(self, call: CallAddress, return_address: int):
+    def __init__(self, call: DynamicCallAddress, return_address: int):
         assert return_address >= 0
         self.call = call
         self.return_address = return_address

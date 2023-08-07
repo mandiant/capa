@@ -82,7 +82,7 @@ class Address(HashableModel):
         elif isinstance(a, capa.features.address.ThreadAddress):
             return cls(type=AddressType.THREAD, value=(a.process.ppid, a.process.pid, a.tid))
 
-        elif isinstance(a, capa.features.address.CallAddress):
+        elif isinstance(a, capa.features.address.DynamicCallAddress):
             return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
 
         elif isinstance(a, capa.features.address.DynamicReturnAddress):
@@ -153,7 +153,7 @@ class Address(HashableModel):
         elif self.type is AddressType.CALL:
             assert isinstance(self.value, tuple)
             ppid, pid, tid, id_ = self.value
-            return capa.features.address.CallAddress(
+            return capa.features.address.DynamicCallAddress(
                 thread=capa.features.address.ThreadAddress(
                     process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
                 ),
@@ -164,7 +164,7 @@ class Address(HashableModel):
             assert isinstance(self.value, tuple)
             ppid, pid, tid, id_, return_address = self.value
             return capa.features.address.DynamicReturnAddress(
-                call=capa.features.address.CallAddress(
+                call=capa.features.address.DynamicCallAddress(
                     thread=capa.features.address.ThreadAddress(
                         process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
                     ),

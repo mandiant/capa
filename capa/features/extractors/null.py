@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing_extensions import TypeAlias
 
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, CallAddress, ThreadAddress, ProcessAddress
+from capa.features.address import NO_ADDRESS, Address, ThreadAddress, ProcessAddress, DynamicCallAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
@@ -151,7 +151,7 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
 
     def get_calls(self, p, t):
         for address in sorted(self.processes[p.address].threads[t.address].calls.keys()):
-            assert isinstance(address, CallAddress)
+            assert isinstance(address, DynamicCallAddress)
             yield CallHandle(address=address, inner={})
 
     def extract_call_features(self, p, t, call):

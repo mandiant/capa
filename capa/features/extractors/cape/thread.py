@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple, Iterator
 
 import capa.features.extractors.cape.helpers
 from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, CallAddress
+from capa.features.address import NO_ADDRESS, Address, DynamicCallAddress
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def get_calls(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[C
         if call["thread_id"] != tid:
             continue
 
-        addr = CallAddress(thread=th.address, id=call["id"])
+        addr = DynamicCallAddress(thread=th.address, id=call["id"])
         ch = CallHandle(address=addr, inner={})
         yield ch
 
