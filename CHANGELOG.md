@@ -3,21 +3,24 @@
 ## master (unreleased)
 
 ### New Features
-- ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
+- ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
+- bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 - develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (5)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
+- nursery/enumerate-device-drivers-on-linux @mr-tz
 -
 
 ### Bug Fixes
 
-- Fix binja backend stack string detection. [#1473](https://github.com/mandiant/capa/issues/1473) [@xusheng6](https://github.com/xusheng6)
+- Fix binja backend stack string detection. #1473 @xusheng6
+- linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
 
