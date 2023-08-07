@@ -13,7 +13,6 @@ from pathlib import Path
 
 import capa.main
 import capa.rules
-import capa.engine as ceng
 from capa.features.common import Feature
 
 logger = logging.getLogger("detect_duplicate_features")
@@ -32,10 +31,7 @@ def get_features(rule_path: str) -> Set[Feature]:
     with Path(rule_path).open("r", encoding="utf-8") as f:
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
-            if isinstance(new_rule.statement, ceng.Statement):
-                return new_rule.statement.get_all_features()
-            else:
-                return (new_rule.statement,)
+            return new_rule.extract_all_features()
         except Exception as e:
             logger.error("Error: New rule %s %s %s", rule_path, str(type(e)), str(e))
             sys.exit(-1)
@@ -55,11 +51,7 @@ def find_overlapping_rules(new_rule_path, rules_path):
     ruleset = capa.main.get_rules(rules_path)
 
     for rule_name, rule in ruleset.rules.items():
-        rule_features = set()
-        if isinstance(rule.statement, ceng.Statement):
-            rule_features = rule.statement.get_all_features()
-        else:
-            rule_features.add(rule.statement)
+        rule_features = rule.extract_all_features()
 
         if not len(rule_features):
             continue

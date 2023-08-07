@@ -12,7 +12,7 @@ import os
 import sys
 import logging
 import argparse
-from typing import Set, Tuple
+from typing import Set, Dict, Tuple
 from pathlib import Path
 
 import tabulate
@@ -20,11 +20,11 @@ from termcolor import colored
 
 import capa.main
 import capa.rules
-import capa.engine as ceng
 import capa.helpers
 import capa.features
 import capa.exceptions
 import capa.render.verbose as v
+import capa.features.common
 import capa.features.freeze
 import capa.features.address
 import capa.features.extractors.pefile
@@ -42,20 +42,17 @@ def format_address(addr: capa.features.address.Address) -> str:
 
 def get_rules_feature_set(rules_path) -> Set[Feature]:
     ruleset = capa.main.get_rules(rules_path)
-    rules_feature_set = set()
+    rules_feature_set: Set[Feature] = set()
     for _, rule in ruleset.rules.items():
-        rule_features: set = set()
-        if isinstance(rule.statement, ceng.Statement):
-            rule_features.update(rule.statement.get_all_features())
-        else:
-            rule_features.add(rule.statement)
+        rules_feature_set.update(rule.extract_all_features())
 
-        rules_feature_set.update(rule_features)
     return rules_feature_set
 
 
-def get_file_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
-    feature_map: dict = {}
+def get_file_features(
+    functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.FeatureExtractor
+) -> Dict[Feature, int]:
+    feature_map: Dict[Feature, int] = {}
 
     for f in functions:
         if extractor.is_library_function(f.address):
@@ -82,11 +79,32 @@ def get_file_features(functions, extractor: capa.features.extractors.base_extrac
     return feature_map
 
 
+def get_colored(s: str):
+    if "(" in s and ")" in s:
+        s_split = s.split("(", 1)
+        s_color = colored(s_split[1][:-1], "cyan")
+        return f"{s_split[0]}({s_color})"
+    else:
+        return colored(s, "cyan")
+
+
+def highlight_unused_features(feature_map: Dict[Feature, int], rules_feature_set: Set[Feature]):
+    unused_features = []
+    for feature, count in feature_map.items():
+        if feature in rules_feature_set:
+            continue
+        unused_features.append((get_colored(str(count)), get_colored(str(feature))))
+    unused_features = sorted(unused_features, key=lambda x: x[0])
+    print("\n")
+    print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
+    print("\n")
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
+    parser = argparse.ArgumentParser(description="Show the features that capa doesn't have rules for yet")
     capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "backend", "rules"})
 
     parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
@@ -194,26 +212,6 @@ def ida_main():
     highlight_unused_features(feature_map, rules_feature_set)
 
     return 0
-
-
-def highlight_unused_features(feature_map: dict, rules_feature_set: set):
-    unused_features = []
-    for feature, count in feature_map.items():
-        if feature in rules_feature_set:
-            continue
-        unused_features.append((get_colored(str(count)), get_colored(feature.__str__())))
-    print("\n")
-    print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
-    print("\n")
-
-
-def get_colored(s: str):
-    if "(" in s:
-        s_split = s.split("(")
-        s_split[0] = colored(s_split[0], "cyan")
-        return "(".join(s_split)
-    else:
-        return colored(s, "cyan")
 
 
 if __name__ == "__main__":
