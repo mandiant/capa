@@ -517,16 +517,16 @@ def test_subscope_rules():
                 textwrap.dedent(
                     """
                     rule:
-                        meta:
-                            name: test call subscope
-                            scopes:
-                                static: basic block
-                                dynamic: thread
-                        features:
-                            - and:
-                                 - string: "explorer.exe"
-                                 - call:
-                                    - api: HttpOpenRequestW
+                      meta:
+                        name: test call subscope
+                        scopes:
+                          static: basic block
+                          dynamic: thread
+                      features:
+                        - and:
+                          - string: "explorer.exe"
+                          - call:
+                            - api: HttpOpenRequestW
                     """
                 )
             ),
