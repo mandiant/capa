@@ -569,6 +569,10 @@ class FeatureNtdllNtoskrnlApi(Lint):
                     "ZwCreateProcess",
                     "ZwCreateUserProcess",
                     "RtlCreateUserProcess",
+                    "NtProtectVirtualMemory",
+                    "NtEnumerateSystemEnvironmentValuesEx",
+                    "NtQuerySystemEnvironmentValueEx",
+                    "NtQuerySystemEnvironmentValue",
                 ):
                     # ntoskrnl.exe does not export these routines
                     continue
@@ -579,6 +583,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
                     "KeStackAttachProcess",
                     "ObfDereferenceObject",
                     "KeUnstackDetachProcess",
+                    "ExGetFirmwareEnvironmentVariable",
                 ):
                     # ntdll.dll does not export these routines
                     continue
