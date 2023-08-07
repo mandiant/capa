@@ -357,22 +357,22 @@ def test_multi_scope_rules_features():
         textwrap.dedent(
             """
             rule:
-                meta:
-                    name: test rule
-                    scopes:
-                        static: instruction
-                        dynamic: call
-                features:
-                  - and:
-                    - or:
-                      - api: socket
-                      - and:
-                        - os: linux
-                        - mnemonic: syscall
-                        - number: 41 = socket()
-                    - number: 6 = IPPROTO_TCP
-                    - number: 1 = SOCK_STREAM
-                    - number: 2 = AF_INET
+              meta:
+                name: test rule
+                scopes:
+                  static: instruction
+                  dynamic: call
+              features:
+                - and:
+                  - or:
+                    - api: socket
+                    - and:
+                      - os: linux
+                      - mnemonic: syscall
+                      - number: 41 = socket()
+                  - number: 6 = IPPROTO_TCP
+                  - number: 1 = SOCK_STREAM
+                  - number: 2 = AF_INET
             """
         )
     )
