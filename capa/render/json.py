@@ -11,4 +11,4 @@ from capa.engine import MatchResults
 
 
 def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    return rd.ResultDocument.from_capa(meta, rules, capabilities).json(exclude_none=True)
+    return rd.ResultDocument.from_capa(meta, rules, capabilities).model_dump_json(exclude_none=True)

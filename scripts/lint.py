@@ -309,7 +309,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
 
     logger.debug("analyzing sample: %s", nice_path)
     extractor = capa.main.get_extractor(
-        nice_path, format_, OS_AUTO, "", DEFAULT_SIGNATURES, False, disable_progress=True
+        nice_path, format_, OS_AUTO, capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
 
     capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
@@ -569,6 +569,10 @@ class FeatureNtdllNtoskrnlApi(Lint):
                     "ZwCreateProcess",
                     "ZwCreateUserProcess",
                     "RtlCreateUserProcess",
+                    "NtProtectVirtualMemory",
+                    "NtEnumerateSystemEnvironmentValuesEx",
+                    "NtQuerySystemEnvironmentValueEx",
+                    "NtQuerySystemEnvironmentValue",
                 ):
                     # ntoskrnl.exe does not export these routines
                     continue
@@ -579,6 +583,7 @@ class FeatureNtdllNtoskrnlApi(Lint):
                     "KeStackAttachProcess",
                     "ObfDereferenceObject",
                     "KeUnstackDetachProcess",
+                    "ExGetFirmwareEnvironmentVariable",
                 ):
                     # ntdll.dll does not export these routines
                     continue
