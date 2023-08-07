@@ -8,11 +8,12 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (5)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
+- nursery/enumerate-device-drivers-on-linux @mr-tz
 -
 
 ### Bug Fixes
