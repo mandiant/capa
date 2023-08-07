@@ -93,8 +93,10 @@ def highlight_unused_features(feature_map: Dict[Feature, int], rules_feature_set
     for feature, count in feature_map.items():
         if feature in rules_feature_set:
             continue
-        unused_features.append((get_colored(str(count)), get_colored(str(feature))))
-    unused_features = sorted(unused_features, key=lambda x: x[0])
+        unused_features.append((count, get_colored(str(feature))))
+    unused_features = [
+        (get_colored(str(count)), feature) for count, feature in sorted(unused_features, key=lambda x: x[0])
+    ]
     print("\n")
     print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
     print("\n")
