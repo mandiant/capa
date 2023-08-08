@@ -24,6 +24,7 @@ logger = logging.getLogger("capa")
 # file type as returned by Ghidra
 SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
 
+
 class GHIDRAIO:
     """
     An object that acts as a file-like object,
@@ -62,7 +63,7 @@ def is_supported_ghidra_version():
     if version < 10.2:
         warning_msg = "capa does not support this Ghidra version"
         logger.warning(warning_msg)
-        logger.warning(f"Your Ghidra version is: %s. Supported versions are: Ghidra >= 10.2", version)
+        logger.warning("Your Ghidra version is: %s. Supported versions are: Ghidra >= 10.2", version)
         return False
     return True
 
