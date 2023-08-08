@@ -50,15 +50,11 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     elif ref_type == addr_data:
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if addr_ref != insn.getAddress(0):
-            if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-                addr_ref, mapped_fake_addrs, imports, externs, external_locs
-            ):
-                return
-            ref = addr_ref.getOffset()
-        else:
-            # could not dereference
+        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+        ):
             return
+        ref = addr_ref.getOffset()
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
     elif OperandType.isIndirect(ref_type):
@@ -298,13 +294,9 @@ def extract_insn_cross_section_cflow(
     elif ref_type == addr_data:
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if ref != insn.getAddress(0):
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-                ref, mapped_fake_addrs, imports, externs, external_locs
-            ):
-                return
-        else:
-            # could not dereference
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            ref, mapped_fake_addrs, imports, externs, external_locs
+        ):
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
