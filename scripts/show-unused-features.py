@@ -12,8 +12,9 @@ import os
 import sys
 import logging
 import argparse
-from typing import Set, Dict, Tuple
+from typing import Set, Tuple
 from pathlib import Path
+from collections import Counter
 
 import tabulate
 from termcolor import colored
@@ -33,7 +34,7 @@ from capa.helpers import log_unsupported_runtime_error
 from capa.features.common import Feature
 from capa.features.extractors.base_extractor import FunctionHandle
 
-logger = logging.getLogger("capa.show-features")
+logger = logging.getLogger("show-unused-feature")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
@@ -51,8 +52,8 @@ def get_rules_feature_set(rules_path) -> Set[Feature]:
 
 def get_file_features(
     functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.FeatureExtractor
-) -> Dict[Feature, int]:
-    feature_map: Dict[Feature, int] = {}
+) -> Counter[Feature]:
+    feature_map: Counter[Feature] = Counter()
 
     for f in functions:
         if extractor.is_library_function(f.address):
@@ -63,19 +64,19 @@ def get_file_features(
         for feature, _ in extractor.extract_function_features(f):
             if capa.features.common.is_global_feature(feature):
                 continue
-            feature_map[feature] = feature_map.get(feature, 0) + 1
+            feature_map.update([feature])
 
         for bb in extractor.get_basic_blocks(f):
             for feature, _ in extractor.extract_basic_block_features(f, bb):
                 if capa.features.common.is_global_feature(feature):
                     continue
-                feature_map[feature] = feature_map.get(feature, 0) + 1
+                feature_map.update([feature])
 
             for insn in extractor.get_instructions(f, bb):
                 for feature, _ in extractor.extract_insn_features(f, bb, insn):
                     if capa.features.common.is_global_feature(feature):
                         continue
-                    feature_map[feature] = feature_map.get(feature, 0) + 1
+                    feature_map.update([feature])
     return feature_map
 
 
@@ -88,7 +89,7 @@ def get_colored(s: str):
         return colored(s, "cyan")
 
 
-def highlight_unused_features(feature_map: Dict[Feature, int], rules_feature_set: Set[Feature]):
+def print_unused_features(feature_map: Counter[Feature], rules_feature_set: Set[Feature]):
     unused_features = []
     for feature, count in feature_map.items():
         if feature in rules_feature_set:
@@ -146,10 +147,9 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
-    feature_map: dict = {}
+    feature_map: Counter[Feature] = Counter()
 
-    for feature, _ in extractor.extract_global_features():
-        feature_map[feature] = feature_map.get(feature, 0) + 1
+    feature_map.update([feature for feature, _ in extractor.extract_global_features()])
 
     function_handles: Tuple[FunctionHandle, ...]
     if isinstance(extractor, capa.features.extractors.pefile.PefileFeatureExtractor):
@@ -176,7 +176,7 @@ def main(argv=None):
 
     rules_feature_set = get_rules_feature_set(args.rules)
 
-    highlight_unused_features(feature_map, rules_feature_set)
+    print_unused_features(feature_map, rules_feature_set)
     return 0
 
 
@@ -190,12 +190,9 @@ def ida_main():
     print(f"getting features for current function {hex(function)}")
 
     extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-    feature_map: dict = {}
+    feature_map: Counter[Feature] = Counter()
 
-    if not function:
-        for feature, _ in extractor.extract_file_features():
-            feature_map[feature] = feature_map.get(feature, 0) + 1
-        return
+    feature_map.update([feature for feature, _ in extractor.extract_file_features()])
 
     function_handles = tuple(extractor.get_functions())
 
@@ -211,7 +208,7 @@ def ida_main():
     rules_path = capa.main.get_default_root() / "rules"
     rules_feature_set = get_rules_feature_set([rules_path])
 
-    highlight_unused_features(feature_map, rules_feature_set)
+    print_unused_features(feature_map, rules_feature_set)
 
     return 0
 
