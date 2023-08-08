@@ -1360,7 +1360,9 @@ def ghidra_main():
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
 
-    capabilities, counts = find_capabilities(rules, capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor())
+    capabilities, counts = find_capabilities(
+        rules, capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(), True
+    )
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
@@ -1368,7 +1370,6 @@ def ghidra_main():
     if has_file_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
-    colorama.init(strip=True)
     print(capa.render.default.render(meta, rules, capabilities))
 
 
