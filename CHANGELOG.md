@@ -22,6 +22,7 @@
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
+- fix unhandled exception when resolving rule path #1693 @mike-hunhoff
 
 ### Development
 
