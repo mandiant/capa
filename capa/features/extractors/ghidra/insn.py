@@ -97,7 +97,8 @@ def extract_insn_api_features(
 
     # check calls to extern functions
     for api in check_for_api_call(insn, externs):
-        yield API(api), AbsoluteVirtualAddress(insn.getAddress().getOffset())
+        for ext in api:
+            yield API(ext), AbsoluteVirtualAddress(insn.getAddress().getOffset())
 
 
 def extract_insn_number_features(
