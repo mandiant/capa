@@ -34,7 +34,7 @@ from capa.helpers import log_unsupported_runtime_error
 from capa.features.common import Feature
 from capa.features.extractors.base_extractor import FunctionHandle
 
-logger = logging.getLogger("show-unused-feature")
+logger = logging.getLogger("show-unused-features")
 
 
 def format_address(addr: capa.features.address.Address) -> str:
