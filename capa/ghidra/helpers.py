@@ -24,11 +24,6 @@ logger = logging.getLogger("capa")
 # file type as returned by Ghidra
 SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
 
-# CAPA_NETNODE = f"$ com.mandiant.capa.v{capa.version.__version__}"
-# NETNODE_RESULTS = "results"
-# NETNODE_RULES_CACHE_ID = "rules-cache-id"
-
-
 class GHIDRAIO:
     """
     An object that acts as a file-like object,
@@ -45,7 +40,9 @@ class GHIDRAIO:
 
     def read(self, size):
         try:
-            # Indirection since we cannot import the ghidra Address object properly
+            # ghidra.program.model.address.Address has no public constructor,
+            # so we have to use the exposed currentAddress object for its
+            # member function .getAddress()
             ea = currentAddress.getAddress(hex(self.offset))  # type: ignore [name-defined] # noqa: F821
         except RuntimeError:  # AddressFormatException to Ghidra
             logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
@@ -65,7 +62,7 @@ def is_supported_ghidra_version():
     if version < 10.2:
         warning_msg = "capa does not support this Ghidra version"
         logger.warning(warning_msg)
-        logger.warning("Your Ghidra version is: %s. Supported versions are: Ghidra >= 10.2")
+        logger.warning(f"Your Ghidra version is: %s. Supported versions are: Ghidra >= 10.2", version)
         return False
     return True
 
