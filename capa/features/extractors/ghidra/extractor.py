@@ -37,9 +37,7 @@ class GhidraFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
-        for f in ghidra_helpers.get_function_symbols():
-            addr = f.getBody().getMinAddress().getOffset()
-            yield FunctionHandle(address=AbsoluteVirtualAddress(addr), inner=f)
+        yield from ghidra_helpers.get_function_symbols()
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
