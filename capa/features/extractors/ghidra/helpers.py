@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, List, Iterator
+from typing import Dict, List, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
@@ -118,7 +118,7 @@ def get_file_imports() -> Dict[int, List[str]]:
     return import_dict
 
 
-def get_file_externs() -> Dict[int, Any]:
+def get_file_externs() -> Dict[int, List[str]]:
     """
     Gets function names & addresses of statically-linked library functions
 
@@ -131,8 +131,8 @@ def get_file_externs() -> Dict[int, Any]:
     - __aulldiv
     - Note: See Symbol Table labels
     """
-    addrs = []
-    names = []
+
+    extern_dict: Dict[int, List[str]] = {}
 
     for sym in currentProgram.getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
         # .isExternal() misses more than this config for the function symbols
@@ -140,16 +140,15 @@ def get_file_externs() -> Dict[int, Any]:
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
             if name.startswith("FID_conflict:"):  # format: FID_conflict:<function-name>
                 name = name[13:]
-            addrs.append(sym.getAddress().getOffset())
-            names.append(name)
+            extern_dict.setdefault(sym.getAddress().getOffset(), []).append(name)
             if name.startswith("_"):
                 # some linkers may prefix linked routines with a `_` to avoid name collisions.
                 # extract features for both the mangled and un-mangled representations.
                 # e.g. `_fwrite` -> `fwrite`
                 # see: https://stackoverflow.com/a/2628384/87207
-                names.append(name[1:])
+                extern_dict.setdefault(sym.getAddress().getOffset(), []).append(name[1:])
 
-    return dict(zip(addrs, names))
+    return extern_dict
 
 
 def map_fake_import_addrs() -> Dict[int, List[int]]:
@@ -208,7 +207,7 @@ def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
     fakes: Dict[int, List[int]],
     imports: Dict[int, List[str]],
-    externs: Dict[int, int],
+    externs: Dict[int, List[str]],
     ex_locs: List[int],
 ) -> bool:
     offset = addr.getOffset()
