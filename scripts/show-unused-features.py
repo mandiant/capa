@@ -92,13 +92,10 @@ def get_colored(s: str):
 
 def print_unused_features(feature_map: typing.Counter[Feature], rules_feature_set: Set[Feature]):
     unused_features = []
-    for feature, count in feature_map.items():
+    for feature, count in reversed(feature_map.most_common()):
         if feature in rules_feature_set:
             continue
-        unused_features.append((count, get_colored(str(feature))))
-    unused_features = [
-        (str(count), feature) for count, feature in sorted(unused_features, key=lambda x: x[0])
-    ]
+        unused_features.append((str(count), get_colored(str(feature))))
     print("\n")
     print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
     print("\n")
