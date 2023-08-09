@@ -738,23 +738,23 @@ class Rule:
 
         yield from self._extract_subscope_rules_rec(self.statement)
 
-    def extract_all_features_rec(self, statement) -> Set[Feature]:
-        """
-        recursively extracts all feature statements from a given rule statement.
-
-        returns:
-            set: A set of all feature statements contained within the given feature statement.
-        """
+    def _extract_all_features_rec(self, statement) -> Set[Feature]:
         feature_set: Set[Feature] = set()
 
         for child in statement.get_children():
             if isinstance(child, Statement):
-                feature_set.update(self.extract_all_features_rec(child))
+                feature_set.update(self._extract_all_features_rec(child))
             else:
                 feature_set.add(child)
         return feature_set
 
     def extract_all_features(self) -> Set[Feature]:
+        """
+        recursively extracts all feature statements in this rule.
+
+        returns:
+            set: A set of all feature statements contained within this rule.
+        """
         if not isinstance(self.statement, ceng.Statement):
             # For rules with single feature like
             # anti-analysis\obfuscation\obfuscated-with-advobfuscator.yml
@@ -763,7 +763,7 @@ class Rule:
                 self.statement,
             }
 
-        return self.extract_all_features_rec(self.statement)
+        return self._extract_all_features_rec(self.statement)
 
     def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
