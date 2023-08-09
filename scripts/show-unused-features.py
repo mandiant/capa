@@ -10,6 +10,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import os
 import sys
+import typing
 import logging
 import argparse
 from typing import Set, Tuple
@@ -52,8 +53,8 @@ def get_rules_feature_set(rules_path) -> Set[Feature]:
 
 def get_file_features(
     functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.FeatureExtractor
-) -> Counter[Feature]:
-    feature_map: Counter[Feature] = Counter()
+) -> typing.Counter[Feature]:
+    feature_map: typing.Counter[Feature] = Counter()
 
     for f in functions:
         if extractor.is_library_function(f.address):
@@ -89,7 +90,7 @@ def get_colored(s: str):
         return colored(s, "cyan")
 
 
-def print_unused_features(feature_map: Counter[Feature], rules_feature_set: Set[Feature]):
+def print_unused_features(feature_map: typing.Counter[Feature], rules_feature_set: Set[Feature]):
     unused_features = []
     for feature, count in feature_map.items():
         if feature in rules_feature_set:
@@ -147,7 +148,7 @@ def main(argv=None):
             log_unsupported_runtime_error()
             return -1
 
-    feature_map: Counter[Feature] = Counter()
+    feature_map: typing.Counter[Feature] = Counter()
 
     feature_map.update([feature for feature, _ in extractor.extract_global_features()])
 
@@ -190,7 +191,7 @@ def ida_main():
     print(f"getting features for current function {hex(function)}")
 
     extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
-    feature_map: Counter[Feature] = Counter()
+    feature_map: typing.Counter[Feature] = Counter()
 
     feature_map.update([feature for feature, _ in extractor.extract_file_features()])
 
