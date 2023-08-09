@@ -11,22 +11,32 @@
 import sys
 import argparse
 import textwrap
-from typing import List, Optional
+from typing import List, Union, Literal, Optional
 from pathlib import Path
 
 import yaml
+from typing_extensions import TypeAlias
 
 from capa.main import collect_rule_file_paths
-from capa.rules import Rule
 from capa.features.address import NO_ADDRESS
 
-DYNAMIC_FEATURES  = ("api", "string", "substring", "number", "description", "regex", "match", "os")
+DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os")
+DYNAMIC_CHARACTERISTICS = ("embedded-pe",)
 ENGINE_STATEMENTS = ("and", "or", "optional", "not")
 STATIC_SCOPES = ("function", "basic block", "instruction")
 DYNAMIC_SCOPES = ("thread",)
 
+GET_DYNAMIC_EQUIV = {
+    "instruction": "call",
+    "basic block": "thread",
+    "function": "process",
+    "file": "file",
+}
 
-def rec_features_list(static, context=False):
+context: TypeAlias = Union[Literal["static"], Literal["dynamic"]]
+
+
+def rec_features_list(static: List[dict], context=False):
     """
     takes in a list of static features, and returns it alongside a list of dynamic-only features
     """
@@ -36,14 +46,14 @@ def rec_features_list(static, context=False):
             pass
         if isinstance(value, list):
             # is either subscope or ceng
-            if key in (*static_scopes, *dynamic_scopes):
+            if key in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
                 # is subscope
-                stat, dyn = rec_scope(key, value, context)
+                stat, dyn = rec_scope(key, value)
                 if not context and dyn:
                     dynamic.append({"or": [stat, dyn]})
-                elif context == "d" and dyn:
+                elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
-            elif key in engine_words or key.endswith("or more"):
+            elif key in ENGINE_STATEMENTS or key.endswith("or more"):
                 # is ceng
                 stat, dyn = rec_bool(key, value, context)
                 if dyn:
@@ -52,22 +62,25 @@ def rec_features_list(static, context=False):
                 raise ValueError(f"key: {key}, value: {value}")
         if key.startswith("count"):
             key = key.split("(")[1].split(")")[0]
-        if key in dynamic_features:
+        if key.startswith("characteristic"):
+            if value in DYNAMIC_CHARACTERISTICS:
+                dynamic.append(node)
+        if key in DYNAMIC_FEATURES:
             dynamic.append(node)
     return static, dynamic
 
 
-def rec_scope(key, value, context=False):
+def rec_scope(key, value):
     """
     takes in a static subscope, and returns it alongside its dynamic counterpart.
     """
-    if len(value) > 1 or (key == "instruction" and key not in engine_words):
-        static, _ = rec_bool("and", value, "s")
-        _, dynamic = rec_bool("and", value, "d")
+    if len(value) > 1 or (key == "instruction" and key not in ENGINE_STATEMENTS):
+        _, dynamic = rec_features_list([{"and": value}], context="dynamic")
     else:
-        static, _ = rec_features_list(value, "s")
-        _, dynamic = rec_features_list(value, "d")
-    return {key: static}, {"thread": dynamic}
+        _, dynamic = rec_features_list(value, context="dynamic")
+    if dynamic:
+        return {key: value}, {GET_DYNAMIC_EQUIV[key]: dynamic}
+    return {key: value}, {}
 
 
 def rec_bool(key, value, context=False):
@@ -76,26 +89,54 @@ def rec_bool(key, value, context=False):
     """
     stat, dyn = rec_features_list(value, context)
     if key == "and" and len(stat) != len(dyn):
-        print(sorted(map(lambda s: s.keys(), dyn)))
         return {key: value}, {}
     if dyn:
         return {key: value}, {key: dyn}
     return {key: value}, {}
 
 
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
+    def increase_indent(self, flow=False, indentless=False):
+        return super(NoAliasDumper, self).increase_indent(flow, indentless)
+
+
+def update_meta(meta, has_dyn=True):
+    new_meta = {}
+    for key, value in meta.items():
+        if key != "scope":
+            if isinstance(value, list):
+                new_meta[key] = {"~": value}
+            else:
+                new_meta[key] = value
+            continue
+        if has_dyn:
+            new_meta["scopes"] = {"static": value, "dynamic": GET_DYNAMIC_EQUIV[value]}
+        else:
+            new_meta["scopes"] = {"static": value}
+    return new_meta
+
+
 def upgrade_rule(content):
     features = content["rule"]["features"]
-    print(f"original: {features[0]}\n")
+
     for key, value in features[0].items():
         pass
-    if key in static_scopes:
-        print(f"modified: {rec_scope(key, value)[1]}")
-    elif key in engine_words:
-        print(f"modified: {rec_bool(key, value)[1]}")
-    else:
-        print(f"modified: {rec_features_list([{key: value}])[1]}")
+    stat, dyn = rec_features_list([{key: value}])
 
-    print("\n\n")
+    meta = update_meta(content["rule"]["meta"], has_dyn=dyn)
+    if dyn:
+        features = dyn
+    else:
+        features = stat
+
+    content["rule"] = {"meta": meta, "features": {"~": features}}
+
+    upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False).split("\n")
+    upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
+    print(upgraded_rule)
 
 
 def main(argv: Optional[List[str]] = None):
@@ -103,19 +144,26 @@ def main(argv: Optional[List[str]] = None):
         "Upgrade legacy-format rulesets into the new rules format which supports static and dynamic analysis flavors."
     )
     parser = argparse.ArgumentParser(description=desc, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--old-rules-path", default="../rules", help="path to the legacy ruleset")
-    parser.add_argument("--new-rules-save-path", default="../upgraded-rules/", help="where to save the upgraded rules")
+    parser.add_argument(
+        "--old-rules-path", default=Path(__file__).parents[1].joinpath("rules"), help="path to the legacy ruleset"
+    )
+    parser.add_argument(
+        "--save-path",
+        default=Path(__file__).parents[1].joinpath("upgraded-rules"),
+        help="where to save the upgraded rules",
+    )
     args = parser.parse_args(args=argv)
 
     # check args
     old_rules_path = Path(args.old_rules_path)
-    new_rules_save_path = Path(args.new_rules_save_path)
+    new_rules_save_path = Path(args.save_path)
+
     if old_rules_path == new_rules_save_path:
         print(
             textwrap.dedent(
                 """
-                WARNING: you've specified the same directory as the old-rules' path and the new rules' save path,
-                which will cause this script to overwrite your old rules with the new upgraded ones.
+                WARNING: you've specified the same directory for the old-rules' path and the new rules' save path. 
+                This will cause this script to overwrite your old rules with the new upgraded ones. 
                 Are you sure you want proceed with overwritting the old rules [O]verwrite/[E]xit: 
                 """
             )
@@ -135,11 +183,15 @@ def main(argv: Optional[List[str]] = None):
     rule_file_paths: List[Path] = collect_rule_file_paths([old_rules_path])
     rule_contents = [rule_path.read_bytes() for rule_path in rule_file_paths]
 
-    rules = []  # type: List[Rule]
     for path, content in zip(rule_file_paths, rule_contents):
         content = content.decode("utf-8")
         content = yaml.load(content, Loader=yaml.Loader)
-        upgrade_rule(content)
+        new_rule = upgrade_rule(content)
+        save_path = Path(new_rules_save_path)
+        save_path = save_path.joinpath(path.relative_to(old_rules_path))
+        save_path.parents[0].mkdir(parents=True, exist_ok=True)
+        with save_path.open("w", encoding="utf-8") as f:
+            f.write(new_rule)
 
 
 if __name__ == "__main__":
