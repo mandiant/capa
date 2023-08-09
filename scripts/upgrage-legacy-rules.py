@@ -20,10 +20,10 @@ from capa.main import collect_rule_file_paths
 from capa.rules import Rule
 from capa.features.address import NO_ADDRESS
 
-dynamic_features = ("api", "string", "substring", "number", "description", "regex", "match", "os")
-engine_words = ("and", "or", "optional", "not")
-static_scopes = ("function", "basic block", "instruction")
-dynamic_scopes = ("thread",)
+DYNAMIC_FEATURES  = ("api", "string", "substring", "number", "description", "regex", "match", "os")
+ENGINE_STATEMENTS = ("and", "or", "optional", "not")
+STATIC_SCOPES = ("function", "basic block", "instruction")
+DYNAMIC_SCOPES = ("thread",)
 
 
 def rec_features_list(static, context=False):
