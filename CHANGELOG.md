@@ -14,6 +14,7 @@
 - Add dynamic capability extraction @yelhamer
 - Add support for mixed-scopes rules @yelhamer
 - Add a call scope @yelhamer
+- Add a rule migration script @yelhamer
 
 ### Breaking Changes
 
