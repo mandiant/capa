@@ -97,7 +97,7 @@ def print_unused_features(feature_map: typing.Counter[Feature], rules_feature_se
             continue
         unused_features.append((count, get_colored(str(feature))))
     unused_features = [
-        (get_colored(str(count)), feature) for count, feature in sorted(unused_features, key=lambda x: x[0])
+        (str(count), feature) for count, feature in sorted(unused_features, key=lambda x: x[0])
     ]
     print("\n")
     print(tabulate.tabulate(unused_features, headers=["Count", "Feature"], tablefmt="plain"))
