@@ -336,11 +336,12 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
+        rows.append(("scopes", ""))
         if rule.meta.scopes.static:
-            rows.append(("static scope:", str(rule.meta.scopes.static)))
+            rows.append(("  static:", str(rule.meta.scopes.static)))
 
         if rule.meta.scopes.dynamic:
-            rows.append(("dynamic scope:", str(rule.meta.scopes.dynamic)))
+            rows.append(("  dynamic:", str(rule.meta.scopes.dynamic)))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
