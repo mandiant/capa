@@ -68,6 +68,10 @@ def is_supported_ghidra_version():
     return True
 
 
+def is_running_headless():
+    return isRunningHeadless()  # type: ignore [name-defined] # noqa: F821
+
+
 def is_supported_file_type():
     file_info = currentProgram.getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
     if file_info.filetype not in SUPPORTED_FILE_TYPES:

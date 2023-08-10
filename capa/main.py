@@ -256,6 +256,11 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
             pbar = tqdm.tqdm
+            if capa.helpers.is_runtime_ghidra():
+                # Ghidrathon interpreter cannot properly handle
+                # the TMonitor thread that is created via a monitor_interval
+                # > 0
+                pbar.monitor_interval = 0
             if disable_progress:
                 # do not use tqdm to avoid unnecessary side effects when caller intends
                 # to disable progress completely
@@ -1361,7 +1366,9 @@ def ghidra_main():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
 
     capabilities, counts = find_capabilities(
-        rules, capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(), True
+        rules,
+        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
+        not capa.ghidra.helpers.is_running_headless(),
     )
 
     meta.analysis.feature_counts = counts["feature_counts"]
