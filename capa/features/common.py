@@ -136,8 +136,8 @@ class Feature(abc.ABC):  # noqa: B024
         import capa.features.freeze.features
 
         return (
-            capa.features.freeze.features.feature_from_capa(self).json()
-            < capa.features.freeze.features.feature_from_capa(other).json()
+            capa.features.freeze.features.feature_from_capa(self).model_dump_json()
+            < capa.features.freeze.features.feature_from_capa(other).model_dump_json()
         )
 
     def get_name_str(self) -> str:

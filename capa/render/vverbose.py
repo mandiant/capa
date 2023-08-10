@@ -88,7 +88,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
         # so, we have to inline some of the feature rendering here.
 
         child = statement.child
-        value = child.dict(by_alias=True).get(child.type)
+        value = child.model_dump(by_alias=True).get(child.type)
 
         if value:
             if isinstance(child, frzf.StringFeature):
@@ -141,7 +141,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         value = feature.class_
     else:
         # convert attributes to dictionary using aliased names, if applicable
-        value = feature.dict(by_alias=True).get(key)
+        value = feature.model_dump(by_alias=True).get(key)
 
     if value is None:
         raise ValueError(f"{key} contains None")

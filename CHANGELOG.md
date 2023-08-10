@@ -4,23 +4,21 @@
 
 ### New Features
 - ELF: implement file import and export name extractor #1607 @Aayush-Goel-04
-- Add a dynamic feature extractor for the CAPE sandbox @yelhamer [#1535](https://github.com/mandiant/capa/issues/1535)
-- Add unit tests for the new CAPE extractor #1563 @yelhamer
-- Add a CAPE file format and CAPE-based dynamic feature extraction to scripts/show-features.py #1566 @yelhamer
-- Add a new process scope for the dynamic analysis flavor #1517 @yelhamer
-- Add a new thread scope for the dynamic analysis flavor #1517 @yelhamer
-- Add support for flavor-based rule scopes @yelhamer
-- Add ProcessesAddress and ThreadAddress #1612 @yelhamer
-- Add dynamic capability extraction @yelhamer
-- Add support for mixed-scopes rules @yelhamer
-- Add a call scope @yelhamer
+- bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
+- develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
+- implement dynamic analysis via CAPE sandbox #48 #1535 @yelhamer
+- add call scope #771 @yelhamer
+- add process scope for the dynamic analysis flavor #1517 @yelhamer
+- Add thread scope for the dynamic analysis flavor #1517 @yelhamer
 
 ### Breaking Changes
 
 ### New Rules (4)
+
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
+- nursery/enumerate-device-drivers-on-linux @mr-tz
 -
 
 ### Bug Fixes
@@ -29,6 +27,7 @@
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
+- fix unhandled exception when resolving rule path #1693 @mike-hunhoff
 
 ### Development
 

@@ -8,38 +8,17 @@
 import sys
 import logging
 import argparse
+from typing import Set
 from pathlib import Path
 
 import capa.main
 import capa.rules
-import capa.engine as ceng
+from capa.features.common import Feature
 
 logger = logging.getLogger("detect_duplicate_features")
 
 
-def get_child_features(feature: ceng.Statement) -> list:
-    """
-    Recursively extracts all feature statements from a given rule statement.
-
-    Args:
-        feature (capa.engine.Statement): The feature statement to extract features from.
-
-    Returns:
-        list: A list of all feature statements contained within the given feature statement.
-    """
-    children = []
-
-    if isinstance(feature, (ceng.And, ceng.Or, ceng.Some)):
-        for child in feature.children:
-            children.extend(get_child_features(child))
-    elif isinstance(feature, (ceng.Subscope, ceng.Range, ceng.Not)):
-        children.extend(get_child_features(feature.child))
-    else:
-        children.append(feature)
-    return children
-
-
-def get_features(rule_path: str) -> list:
+def get_features(rule_path: str) -> Set[Feature]:
     """
     Extracts all features from a given rule file.
 
@@ -47,17 +26,15 @@ def get_features(rule_path: str) -> list:
         rule_path (str): The path to the rule file to extract features from.
 
     Returns:
-        list: A list of all feature statements contained within the rule file.
+        set: A set of all feature statements contained within the rule file.
     """
-    feature_list = []
     with Path(rule_path).open("r", encoding="utf-8") as f:
         try:
             new_rule = capa.rules.Rule.from_yaml(f.read())
-            feature_list = get_child_features(new_rule.statement)
+            return new_rule.extract_all_features()
         except Exception as e:
             logger.error("Error: New rule %s %s %s", rule_path, str(type(e)), str(e))
             sys.exit(-1)
-    return feature_list
 
 
 def find_overlapping_rules(new_rule_path, rules_path):
@@ -67,7 +44,6 @@ def find_overlapping_rules(new_rule_path, rules_path):
 
     # Loads features of new rule in a list.
     new_rule_features = get_features(new_rule_path)
-
     count = 0
     overlapping_rules = []
 
@@ -75,7 +51,7 @@ def find_overlapping_rules(new_rule_path, rules_path):
     ruleset = capa.main.get_rules(rules_path)
 
     for rule_name, rule in ruleset.rules.items():
-        rule_features = get_child_features(rule.statement)
+        rule_features = rule.extract_all_features()
 
         if not len(rule_features):
             continue

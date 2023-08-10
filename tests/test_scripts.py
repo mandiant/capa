@@ -51,6 +51,7 @@ def get_rule_path():
         ),
         pytest.param("show-features.py", [get_file_path()]),
         pytest.param("show-features.py", ["-F", "0x407970", get_file_path()]),
+        pytest.param("show-unused-features.py", [get_file_path()]),
         pytest.param(
             "capa_as_library.py", [get_file_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")
         ),

@@ -127,7 +127,7 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
         timestamp=str(meta.timestamp),
         version=meta.version,
         argv=meta.argv,
-        sample=google.protobuf.json_format.ParseDict(meta.sample.dict(), capa_pb2.Sample()),
+        sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
         analysis=capa_pb2.Analysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,
@@ -394,7 +394,7 @@ def match_to_pb2(match: rd.Match) -> capa_pb2.Match:
 def rule_metadata_to_pb2(rule_metadata: rd.RuleMetadata) -> capa_pb2.RuleMetadata:
     # after manual type conversions to the RuleMetadata, we can rely on the protobuf json parser
     # conversions include tuple -> list and rd.Enum -> proto.enum
-    meta = dict_tuple_to_list_values(rule_metadata.dict())
+    meta = dict_tuple_to_list_values(rule_metadata.model_dump())
     meta["scope"] = scope_to_pb2(meta["scope"])
     meta["attack"] = list(map(dict_tuple_to_list_values, meta.get("attack", [])))
     meta["mbc"] = list(map(dict_tuple_to_list_values, meta.get("mbc", [])))

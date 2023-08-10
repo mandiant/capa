@@ -13,6 +13,7 @@ from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 # TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
+# https://github.com/mandiant/capa/issues/1699
 from typing_extensions import TypeAlias
 
 import capa.features.address
