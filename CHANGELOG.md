@@ -5,6 +5,7 @@
 ### New Features
 - ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
+- develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 
 ### Breaking Changes
 
@@ -22,6 +23,7 @@
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
+- fix unhandled exception when resolving rule path #1693 @mike-hunhoff
 
 ### Development
 
