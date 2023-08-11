@@ -6,8 +6,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import gzip
 import json
 import textwrap
+from pathlib import Path
 
 import pytest
 import fixtures
@@ -582,3 +584,59 @@ def test_main_rd():
     assert capa.main.main([path, "-j"]) == 0
     assert capa.main.main([path, "-q"]) == 0
     assert capa.main.main([path]) == 0
+
+
+def extract_cape_report(tmp_path: Path, gz: Path) -> Path:
+    report = tmp_path / "report.json"
+    report.write_bytes(gzip.decompress(gz.read_bytes()))
+    return report
+
+
+def test_main_cape1(tmp_path):
+    path = extract_cape_report(tmp_path, fixtures.get_data_path_by_name("0000a657"))
+
+    # TODO(williballenthin): use default rules set
+    # https://github.com/mandiant/capa/pull/1696
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "create-or-open-registry-key.yml").write_text(
+        textwrap.dedent(
+            """
+        rule:
+          meta:
+            name: create or open registry key
+            authors:
+              - testing
+            scopes:
+              static: instruction
+              dynamic: call
+          features:
+            - or:
+              - api: advapi32.RegOpenKey
+              - api: advapi32.RegOpenKeyEx
+              - api: advapi32.RegCreateKey
+              - api: advapi32.RegCreateKeyEx
+              - api: advapi32.RegOpenCurrentUser
+              - api: advapi32.RegOpenKeyTransacted
+              - api: advapi32.RegOpenUserClassesRoot
+              - api: advapi32.RegCreateKeyTransacted
+              - api: ZwOpenKey
+              - api: ZwOpenKeyEx
+              - api: ZwCreateKey
+              - api: ZwOpenKeyTransacted
+              - api: ZwOpenKeyTransactedEx
+              - api: ZwCreateKeyTransacted
+              - api: NtOpenKey
+              - api: NtCreateKey
+              - api: SHRegOpenUSKey
+              - api: SHRegCreateUSKey
+              - api: RtlCreateRegistryKey
+    """
+        )
+    )
+
+    assert capa.main.main([str(path), "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-q", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-j", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-v", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-vv", "-r", str(rules)]) == 0

@@ -363,7 +363,17 @@ def get_data_path_by_name(name) -> Path:
             / "data"
             / "dynamic"
             / "cape"
+            / "v2.2"
             / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        )
+    elif name.startswith("d46900"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
