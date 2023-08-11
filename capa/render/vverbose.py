@@ -369,8 +369,13 @@ def render_rules(ostream, doc: rd.ResultDocument):
             render_match(ostream, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
-                ostream.write(f"static scope: {rule.meta.scopes.static}")
-                ostream.write(f"dynamic scope: {rule.meta.scopes.dynamic}")
+                if doc.meta.flavor == rd.Flavor.STATIC:
+                    ostream.write(f"{rule.meta.scopes.static}")
+                elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+                    ostream.write(f"{rule.meta.scopes.dynamic}")
+                else:
+                    capa.helpers.assert_never(doc.meta.flavor)
+
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
