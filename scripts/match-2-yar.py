@@ -273,8 +273,12 @@ def format_operand(pe, op):
         return f"[{', '.join(['({:04X})'.format(x) for x in op])}]"
     elif isinstance(op, dnfile.mdtable.MemberRefRow) and not isinstance(op.Class.row, dnfile.mdtable.TypeSpecRow):
         return f"{str(op.Class.row.TypeNamespace)}.{op.Class.row.TypeName}::{op.Name}"
-    elif isinstance(op, (dnfile.mdtable.FieldRow, dnfile.mdtable.MethodDefRow)):
+    elif isinstance(op, (dnfile.mdtable.FieldRow, dnfile.mdtable.MethodDefRow, dnfile.mdtable.MemberRefRow)):
         return f"{op.Name}"
+    elif isinstance(op, (dnfile.mdtable.TypeDefRow, dnfile.mdtable.TypeRefRow)):
+        return f"{op.TypeNamespace}.{op.TypeName}" 
+    elif isinstance(op, (dnfile.mdtable.TypeSpecRow, dnfile.mdtable.MethodSpecRow)):
+        return f"{str(op.struct)}"
     else:
         return "" if op is None else str(op)
 
@@ -522,21 +526,27 @@ def run_capa_and_get_features(args):
     if capa.main.has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
-        if not (args.verbose or args.vverbose or args.json):
             return {
                 "path": path,
                 "status": "error",
                 "error": f"Encountered file limitation",
             }
 
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
-    logger.info(f"Building code features for {path}")
-    if type(extractor) == DnfileFeatureExtractor:
-        # Handle .NET files
-        features = get_code_features_for_dotnet_doc(doc, extractor)
-    else:
-        # Handle other files
-        features = get_code_features_for_capa_doc(doc, extractor)
+    try:
+        doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+        logger.info(f"Building code features for {path}")
+        if type(extractor) == DnfileFeatureExtractor:
+            # Handle .NET files
+            features = get_code_features_for_dotnet_doc(doc, extractor)
+        else:
+            # Handle other files
+            features = get_code_features_for_capa_doc(doc, extractor)
+    except Exception as e:
+        return {
+            "path": path,
+            "status": "error",
+            "error": f"unexpected error: {e}",
+        }
     return {"path": path, "status": "ok", "ok": features}
 
 
@@ -582,7 +592,7 @@ def multi_process_capa(argv=None):
     for p in args.input:
         path = Path(p)
         if not path.exists():
-            raise ValueError("Invalid path {p}")
+            raise ValueError(f"Invalid path {p}")
         if path.is_dir():
             samples.extend([x for x in path.rglob("*")])
         elif path.is_file():
