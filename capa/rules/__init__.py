@@ -97,25 +97,27 @@ GLOBAL_SCOPE = "global"
 
 # these literals are used to check if the flavor
 # of a rule is correct.
-STATIC_SCOPES = (
+STATIC_SCOPES = {
     FILE_SCOPE,
     GLOBAL_SCOPE,
     FUNCTION_SCOPE,
     BASIC_BLOCK_SCOPE,
     INSTRUCTION_SCOPE,
-)
-DYNAMIC_SCOPES = (
+}
+DYNAMIC_SCOPES = {
     FILE_SCOPE,
     GLOBAL_SCOPE,
     PROCESS_SCOPE,
     THREAD_SCOPE,
     CALL_SCOPE,
-)
+}
 
 
 @dataclass
 class Scopes:
+    # when None, the scope is not supported by a rule
     static: Optional[str] = None
+    # when None, the scope is not supported by a rule
     dynamic: Optional[str] = None
 
     def __contains__(self, scope: Union[Scope, str]) -> bool:
@@ -148,15 +150,10 @@ class Scopes:
             raise InvalidRule("invalid scopes value. At least one scope must be specified")
 
         # check that all the specified scopes are valid
-        if scopes["static"] not in (
-            *STATIC_SCOPES,
-            None,
-        ):
+        if scopes["static"] and scopes["static"] not in STATIC_SCOPES:
             raise InvalidRule(f"{scopes['static']} is not a valid static scope")
-        if scopes["dynamic"] not in (
-            *DYNAMIC_SCOPES,
-            None,
-        ):
+
+        if scopes["dynamic"] and scopes["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes['dynamic']} is not a valid dynamic scope")
 
         return Scopes(static=scopes["static"], dynamic=scopes["dynamic"])
