@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -8,27 +8,30 @@
 
 import string
 import struct
+from typing import Tuple, Iterator
 
 import envi
-import vivisect.const
+import envi.archs.i386.disasm
 
-from capa.features import Characteristic
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
 
-def interface_extract_basic_block_XXX(f, bb):
+def interface_extract_basic_block_XXX(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse features from the given basic block.
 
     args:
-      f (viv_utils.Function): the function to process.
-      bb (viv_utils.BasicBlock): the basic block to process.
+      f: the function to process.
+      bb: the basic block to process.
 
     yields:
-      (Feature, int): the feature and the address at which its found.
+      (Feature, Address): the feature and the address at which its found.
     """
-    yield NotImplementedError("feature"), NotImplementedError("virtual address")
+    raise NotImplementedError
 
 
 def _bb_has_tight_loop(f, bb):
@@ -37,17 +40,17 @@ def _bb_has_tight_loop(f, bb):
     """
     if len(bb.instructions) > 0:
         for bva, bflags in bb.instructions[-1].getBranches():
-            if bflags & vivisect.envi.BR_COND:
+            if bflags & envi.BR_COND:
                 if bva == bb.va:
                     return True
 
     return False
 
 
-def extract_bb_tight_loop(f, bb):
-    """ check basic block for tight loop indicators """
-    if _bb_has_tight_loop(f, bb):
-        yield Characteristic("tight loop"), bb.va
+def extract_bb_tight_loop(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    """check basic block for tight loop indicators"""
+    if _bb_has_tight_loop(f, bb.inner):
+        yield Characteristic("tight loop"), bb.address
 
 
 def _bb_has_stackstring(f, bb):
@@ -67,13 +70,13 @@ def _bb_has_stackstring(f, bb):
     return False
 
 
-def extract_stackstring(f, bb):
-    """ check basic block for stackstring indicators """
-    if _bb_has_stackstring(f, bb):
-        yield Characteristic("stack string"), bb.va
+def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+    """check basic block for stackstring indicators"""
+    if _bb_has_stackstring(f, bb.inner):
+        yield Characteristic("stack string"), bb.address
 
 
-def is_mov_imm_to_stack(instr):
+def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     """
     Return if instruction moves immediate onto stack
     """
@@ -89,7 +92,6 @@ def is_mov_imm_to_stack(instr):
     if not src.isImmed():
         return False
 
-    # TODO what about 64-bit operands?
     if not isinstance(dst, envi.archs.i386.disasm.i386SibOper) and not isinstance(
         dst, envi.archs.i386.disasm.i386RegMemOper
     ):
@@ -105,7 +107,7 @@ def is_mov_imm_to_stack(instr):
     return True
 
 
-def get_printable_len(oper):
+def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
     """
     Return string length if all operand bytes are ascii or utf16-le printable
     """
@@ -117,23 +119,33 @@ def get_printable_len(oper):
         chars = struct.pack("<I", oper.imm)
     elif oper.tsize == 8:
         chars = struct.pack("<Q", oper.imm)
+    else:
+        raise ValueError(f"unexpected oper.tsize: {oper.tsize}")
+
     if is_printable_ascii(chars):
         return oper.tsize
-    if is_printable_utf16le(chars):
+    elif is_printable_utf16le(chars):
         return oper.tsize / 2
-    return 0
+    else:
+        return 0
 
 
-def is_printable_ascii(chars):
-    return all(ord(c) < 127 and c in string.printable for c in chars)
+def is_printable_ascii(chars: bytes) -> bool:
+    try:
+        chars_str = chars.decode("ascii")
+    except UnicodeDecodeError:
+        return False
+    else:
+        return all(c in string.printable for c in chars_str)
 
 
-def is_printable_utf16le(chars):
-    if all(c == "\x00" for c in chars[1::2]):
+def is_printable_utf16le(chars: bytes) -> bool:
+    if all(c == b"\x00" for c in chars[1::2]):
         return is_printable_ascii(chars[::2])
+    return False
 
 
-def extract_features(f, bb):
+def extract_features(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -142,12 +154,12 @@ def extract_features(f, bb):
       bb (viv_utils.BasicBlock): the basic block to process.
 
     yields:
-      Feature, set[VA]: the features and their location found in this basic block.
+      Tuple[Feature, int]: the features and their location found in this basic block.
     """
-    yield BasicBlock(), bb.va
+    yield BasicBlock(), AbsoluteVirtualAddress(bb.inner.va)
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, va in bb_handler(f, bb):
-            yield feature, va
+        for feature, addr in bb_handler(f, bb):
+            yield feature, addr
 
 
 BASIC_BLOCK_HANDLERS = (

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -64,127 +64,189 @@ Example::
     insn: 0x10001027: mnemonic(shl)
     ...
 """
+import os
 import sys
 import logging
 import argparse
+from typing import Tuple
+from pathlib import Path
 
 import capa.main
 import capa.rules
 import capa.engine
+import capa.helpers
 import capa.features
+import capa.exceptions
+import capa.render.verbose as v
+import capa.features.common
 import capa.features.freeze
-import capa.features.extractors.viv
+import capa.features.address
+import capa.features.extractors.pefile
+import capa.features.extractors.base_extractor
+from capa.helpers import log_unsupported_runtime_error
+from capa.features.extractors.base_extractor import FunctionHandle
+
+logger = logging.getLogger("capa.show-features")
+
+
+def format_address(addr: capa.features.address.Address) -> str:
+    return v.format_address(capa.features.freeze.Address.from_capa((addr)))
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    formats = [
-        ("auto", "(default) detect file type automatically"),
-        ("pe", "Windows PE file"),
-        ("sc32", "32-bit shellcode"),
-        ("sc64", "64-bit shellcode"),
-        ("freeze", "features previously frozen by capa"),
-    ]
-    format_help = ", ".join(["%s: %s" % (f[0], f[1]) for f in formats])
-
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    parser.add_argument("sample", type=str, help="Path to sample to analyze")
-    parser.add_argument(
-        "-f", "--format", choices=[f[0] for f in formats], default="auto", help="Select sample format, %s" % format_help
-    )
-    parser.add_argument("-F", "--function", type=lambda x: int(x, 0x10), help="Show features for specific function")
+    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "backend"})
+
+    parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
     args = parser.parse_args(args=argv)
+    capa.main.handle_common_args(args)
 
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger().setLevel(logging.INFO)
+    if args.function and args.backend == "pefile":
+        print("pefile backend does not support extracting function features")
+        return -1
 
-    if args.format == "freeze":
-        with open(args.sample, "rb") as f:
-            extractor = capa.features.freeze.load(f.read())
+    try:
+        taste = capa.helpers.get_file_taste(Path(args.sample))
+    except IOError as e:
+        logger.error("%s", str(e))
+        return -1
+
+    try:
+        sig_paths = capa.main.get_signatures(args.signatures)
+    except IOError as e:
+        logger.error("%s", str(e))
+        return -1
+
+    if (args.format == "freeze") or (
+        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
+    ):
+        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
-        vw = capa.main.get_workspace(args.sample, args.format)
-        extractor = capa.features.extractors.viv.VivisectFeatureExtractor(vw, args.sample)
+        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+        try:
+            extractor = capa.main.get_extractor(
+                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
+            )
+        except capa.exceptions.UnsupportedFormatError:
+            capa.helpers.log_unsupported_format_error()
+            return -1
+        except capa.exceptions.UnsupportedRuntimeError:
+            log_unsupported_runtime_error()
+            return -1
+
+    for feature, addr in extractor.extract_global_features():
+        print(f"global: {format_address(addr)}: {feature}")
 
     if not args.function:
-        for feature, va in extractor.extract_file_features():
-            if va:
-                print("file: 0x%08x: %s" % (va, feature))
-            else:
-                print("file: 0x00000000: %s" % (feature))
+        for feature, addr in extractor.extract_file_features():
+            print(f"file: {format_address(addr)}: {feature}")
 
-    functions = extractor.get_functions()
+    function_handles: Tuple[FunctionHandle, ...]
+    if isinstance(extractor, capa.features.extractors.pefile.PefileFeatureExtractor):
+        # pefile extractor doesn't extract function features
+        function_handles = ()
+    else:
+        function_handles = tuple(extractor.get_functions())
 
     if args.function:
         if args.format == "freeze":
-            functions = filter(lambda f: f == args.function, functions)
+            function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
-            functions = filter(lambda f: f.va == args.function, functions)
+            function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
 
-            if args.function not in [f.va for f in functions]:
-                print("0x%X not a function, creating it" % args.function)
-                vw.makeFunction(args.function)
-                functions = extractor.get_functions()
-                functions = filter(lambda f: f.va == args.function, functions)
+            if args.function not in [format_address(fh.address) for fh in function_handles]:
+                print(f"{args.function} not a function")
+                return -1
 
-        if len(functions) == 0:
-            print("0x%X not a function")
+        if len(function_handles) == 0:
+            print(f"{args.function} not a function")
             return -1
 
-    print_features(functions, extractor)
+    print_features(function_handles, extractor)
 
     return 0
 
 
 def ida_main():
-    function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
-    print("getting features for current function 0x%X" % function)
+    import idc
 
-    extractor = capa.features.extractors.ida.IdaFeatureExtractor()
+    import capa.features.extractors.ida.extractor
+
+    function = idc.get_func_attr(idc.here(), idc.FUNCATTR_START)
+    print(f"getting features for current function {hex(function)}")
+
+    extractor = capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
     if not function:
-        for feature, va in extractor.extract_file_features():
-            if va:
-                print("file: 0x%08x: %s" % (va, feature))
-            else:
-                print("file: 0x00000000: %s" % (feature))
+        for feature, addr in extractor.extract_file_features():
+            print(f"file: {format_address(addr)}: {feature}")
         return
 
-    functions = extractor.get_functions()
+    function_handles = tuple(extractor.get_functions())
 
     if function:
-        functions = filter(lambda f: f.start_ea == function, functions)
+        function_handles = tuple(filter(lambda fh: fh.inner.start_ea == function, function_handles))
 
-        if len(functions) == 0:
-            print("0x%X not a function" % function)
+        if len(function_handles) == 0:
+            print(f"{hex(function)} not a function")
             return -1
 
-    print_features(functions, extractor)
+    print_features(function_handles, extractor)
 
     return 0
 
 
-def print_features(functions, extractor):
+def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
     for f in functions:
-        for feature, va in extractor.extract_function_features(f):
-            print("func: 0x%08x: %s" % (va, feature))
+        if extractor.is_library_function(f.address):
+            function_name = extractor.get_function_name(f.address)
+            logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
+            continue
+
+        print(f"func: {format_address(f.address)}")
+
+        for feature, addr in extractor.extract_function_features(f):
+            if capa.features.common.is_global_feature(feature):
+                continue
+
+            if f.address != addr:
+                print(f" func: {format_address(f.address)}: {feature} -> {format_address(addr)}")
+            else:
+                print(f" func: {format_address(f.address)}: {feature}")
 
         for bb in extractor.get_basic_blocks(f):
-            for feature, va in extractor.extract_basic_block_features(f, bb):
-                print("bb  : 0x%08x: %s" % (va, feature))
+            for feature, addr in extractor.extract_basic_block_features(f, bb):
+                if capa.features.common.is_global_feature(feature):
+                    continue
+
+                if bb.address != addr:
+                    print(f" bb: {format_address(bb.address)}: {feature} -> {format_address(addr)}")
+                else:
+                    print(f" bb: {format_address(bb.address)}: {feature}")
 
             for insn in extractor.get_instructions(f, bb):
-                for feature, va in extractor.extract_insn_features(f, bb, insn):
+                for feature, addr in extractor.extract_insn_features(f, bb, insn):
+                    if capa.features.common.is_global_feature(feature):
+                        continue
+
                     try:
-                        print("insn: 0x%08x: %s" % (va, feature))
+                        if insn.address != addr:
+                            print(
+                                f"  insn: {format_address(f.address)}: {format_address(insn.address)}: {feature} -> {format_address(addr)}"
+                            )
+                        else:
+                            print(f"  insn: {format_address(insn.address)}: {feature}")
+
                     except UnicodeEncodeError:
                         # may be an issue while piping to less and encountering non-ascii characters
                         continue
 
 
 if __name__ == "__main__":
-    if capa.main.is_runtime_ida():
+    if capa.helpers.is_runtime_ida():
         ida_main()
     else:
         sys.exit(main())

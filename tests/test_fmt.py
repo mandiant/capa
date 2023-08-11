@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -15,7 +15,8 @@ EXPECTED = textwrap.dedent(
     rule:
       meta:
         name: test rule
-        author: user@domain.com
+        authors:
+          - user@domain.com
         scope: function
         examples:
           - foo1234
@@ -38,7 +39,8 @@ def test_rule_reformat_top_level_elements():
               - number: 2
           meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
             examples:
               - foo1234
@@ -55,7 +57,8 @@ def test_rule_reformat_indentation():
         rule:
          meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
             examples:
             - foo1234
@@ -75,7 +78,8 @@ def test_rule_reformat_order():
         """
         rule:
           meta:
-            author: user@domain.com
+            authors:
+              - user@domain.com
             examples:
               - foo1234
               - bar5678
@@ -94,11 +98,12 @@ def test_rule_reformat_order():
 def test_rule_reformat_meta_update():
     # test updating the rule content after parsing
 
-    rule = textwrap.dedent(
+    src = textwrap.dedent(
         """
         rule:
           meta:
-            author: user@domain.com
+            authors:
+              - user@domain.com
             examples:
               - foo1234
               - bar5678
@@ -111,7 +116,7 @@ def test_rule_reformat_meta_update():
         """
     )
 
-    rule = capa.rules.Rule.from_yaml(rule)
+    rule = capa.rules.Rule.from_yaml(src)
     rule.name = "test rule"
     assert rule.to_yaml() == EXPECTED
 
@@ -124,7 +129,8 @@ def test_rule_reformat_string_description():
         rule:
           meta:
             name: test rule
-            author: user@domain.com
+            authors:
+              - user@domain.com
             scope: function
           features:
             - and:

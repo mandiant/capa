@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -12,12 +12,10 @@ from capa.features.extractors import helpers
 
 
 def test_all_zeros():
-    # Python 2: <str>
-    # Python 3: <bytes>
     a = b"\x00\x00\x00\x00"
-    b = codecs.decode("00000000", "hex")
+    b = codecs.decode(b"00000000", "hex")
     c = b"\x01\x00\x00\x00"
-    d = codecs.decode("01000000", "hex")
+    d = codecs.decode(b"01000000", "hex")
     assert helpers.all_zeros(a) is True
     assert helpers.all_zeros(b) is True
     assert helpers.all_zeros(c) is False

@@ -1,0 +1,111 @@
+# install the pre-commit hooks:
+#
+#    ❯ pre-commit install --hook-type pre-commit
+#    pre-commit installed at .git/hooks/pre-commit
+#
+#    ❯ pre-commit install --hook-type pre-push
+#    pre-commit installed at .git/hooks/pre-push
+#
+# run all linters liks:
+#
+#    ❯ pre-commit run --all-files
+#    isort....................................................................Passed
+#    black....................................................................Passed
+#    ruff.....................................................................Passed
+#    flake8...................................................................Passed
+#    mypy.....................................................................Passed
+#
+# run a single linter like:
+#
+#    ❯ pre-commit run --all-files isort
+#    isort....................................................................Passed
+
+repos:
+-   repo: local
+    hooks:
+    -   id: isort
+        name: isort
+        stages: [commit, push]
+        language: system
+        entry: isort
+        args: 
+        -   "--length-sort"
+        -   "--profile"
+        -   "black"
+        -   "--line-length=120"
+        -   "--skip-glob"
+        -   "*_pb2.py"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: black
+        name: black
+        stages: [commit, push]
+        language: system
+        entry: black
+        args: 
+        -   "--line-length=120"
+        -   "--extend-exclude"
+        -   ".*_pb2.py"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: ruff
+        name: ruff
+        stages: [commit, push]
+        language: system
+        entry: ruff
+        args: 
+        -   "check"
+        -   "--config"
+        -   ".github/ruff.toml"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: flake8
+        name: flake8
+        stages: [commit, push]
+        language: system
+        entry: flake8
+        args: 
+        -   "--config"
+        -   ".github/flake8.ini"
+        -   "--extend-exclude"
+        -   "capa/render/proto/capa_pb2.py"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: mypy
+        name: mypy
+        stages: [commit, push]
+        language: system
+        entry: mypy
+        args: 
+        -   "--check-untyped-defs"
+        -   "--ignore-missing-imports"
+        -   "--config-file=.github/mypy/mypy.ini"
+        -   "capa/"
+        -   "scripts/"
+        -   "tests/"
+        always_run: true
+        pass_filenames: false

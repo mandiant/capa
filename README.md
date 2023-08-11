@@ -1,14 +1,21 @@
-![capa](.github/logo.png)
+![capa](https://github.com/mandiant/capa/blob/master/.github/logo.png)
 
-[![CI status](https://github.com/fireeye/capa/workflows/CI/badge.svg)](https://github.com/fireeye/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
-[![Number of rules](https://img.shields.io/badge/rules-433-blue.svg)](https://github.com/fireeye/capa-rules)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
+[![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
+[![Number of rules](https://img.shields.io/badge/rules-828-blue.svg)](https://github.com/mandiant/capa-rules)
+[![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
+[![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
-You run it against a PE file or shellcode and it tells you what it thinks the program can do.
+You run it against a PE, ELF, .NET module, or shellcode file and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
-Check out the overview in our first [capa blog post](https://www.fireeye.com/blog/threat-research/2020/07/capa-automatically-identify-malware-capabilities.html).
+Check out:
+- the overview in our first [capa blog post](https://www.mandiant.com/resources/capa-automatically-identify-malware-capabilities)
+- the major version 2.0 updates described in our [second blog post](https://www.mandiant.com/resources/capa-2-better-stronger-faster)
+- the major version 3.0 (ELF support) described in the [third blog post](https://www.mandiant.com/resources/elfant-in-the-room-capa-v3)
+- the major version 4.0 (.NET support) described in the [fourth blog post](https://www.mandiant.com/resources/blog/capa-v4-casting-wider-net)
 
 ```
 $ capa.exe suspicious.exe
@@ -60,18 +67,11 @@ $ capa.exe suspicious.exe
 
 # download and usage
 
-Download stable releases of the standalone capa binaries [here](https://github.com/fireeye/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
+Download stable releases of the standalone capa binaries [here](https://github.com/mandiant/capa/releases). You can run the standalone binaries without installation. capa is a command line tool that should be run from the terminal.
 
-<!--
-Alternatively, you can fetch a nightly build of a standalone binary from one of the following links. These are built using the latest development branch.
-- Windows 64bit: TODO
-- Linux: TODO
-- OSX: TODO
--->
+To use capa as a library or integrate with another tool, see [doc/installation.md](https://github.com/mandiant/capa/blob/master/doc/installation.md) for further setup instructions.
 
-To use capa as a library or integrate with another tool, see [doc/installation.md](doc/installation.md) for further setup instructions.
-
-For more information about how to use capa, see [doc/usage.md](doc/usage.md).
+For more information about how to use capa, see [doc/usage.md](https://github.com/mandiant/capa/blob/master/doc/usage.md).
 
 # example
 
@@ -88,31 +88,40 @@ This is useful for at least two reasons:
   - it shows where within the binary an experienced analyst might study with IDA Pro
 
 ```
-λ capa.exe suspicious.exe -vv
+$ capa.exe suspicious.exe -vv
 ...
 execute shell command and capture output
 namespace   c2/shell
-author      matthew.williams@fireeye.com
+author      matthew.williams@mandiant.com
 scope       function
 att&ck      Execution::Command and Scripting Interpreter::Windows Command Shell [T1059.003]
 references  https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/ns-processthreadsapi-startupinfoa
-examples    Practical Malware Analysis Lab 14-02.exe_:0x4011C0
-function @ 0x10003A13
+function @ 0x4011C0
   and:
-    match: create a process with modified I/O handles and window @ 0x10003A13
+    match: create a process with modified I/O handles and window @ 0x4011C0
       and:
+        number: 257 = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW @ 0x4012B8
         or:
-          api: kernel32.CreateProcess @ 0x10003D6D
-        number: 0x101 @ 0x10003B03
-        or:
-          number: 0x44 @ 0x10003ADC
-        optional:
-          api: kernel32.GetStartupInfo @ 0x10003AE4
-    match: create pipe @ 0x10003A13
+          number: 68 = StartupInfo.cb (size) @ 0x401282
+        or: = API functions that accept a pointer to a STARTUPINFO structure
+          api: kernel32.CreateProcess @ 0x401343
+    match: create pipe @ 0x4011C0
       or:
-        api: kernel32.CreatePipe @ 0x10003ACB
+        api: kernel32.CreatePipe @ 0x40126F, 0x401280
+    optional:
+      match: create thread @ 0x40136A, 0x4013BA
+        or:
+          and:
+            os: windows
+            or:
+              api: kernel32.CreateThread @ 0x4013D7
+        or:
+          and:
+            os: windows
+            or:
+              api: kernel32.CreateThread @ 0x401395
     or:
-      string: cmd.exe /c  @ 0x10003AED
+      string: "cmd.exe" @ 0x4012FD
 ...
 ```
 
@@ -128,37 +137,49 @@ rule:
   meta:
     name: hash data with CRC32
     namespace: data-manipulation/checksum/crc32
-    author: moritz.raabe@fireeye.com
+    authors:
+      - moritz.raabe@mandiant.com
     scope: function
+    mbc:
+      - Data::Checksum::CRC32 [C0032.001]
     examples:
       - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
       - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
+      - 7EFF498DE13CC734262F87E6B3EF38AB:0x100084A6
   features:
     - or:
       - and:
         - mnemonic: shr
-        - number: 0xEDB88320
+        - or:
+          - number: 0xEDB88320
+          - bytes: 00 00 00 00 96 30 07 77 2C 61 0E EE BA 51 09 99 19 C4 6D 07 8F F4 6A 70 35 A5 63 E9 A3 95 64 9E = crc32_tab
         - number: 8
+        - characteristic: nzxor
+      - and:
+        - number: 0x8320
+        - number: 0xEDB8
         - characteristic: nzxor
       - api: RtlComputeCrc32
 ```
 
-The [github.com/fireeye/capa-rules](https://github.com/fireeye/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
+The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
 Please learn to write rules and contribute new entries as you find interesting techniques in malware.
 
-If you use IDA Pro, then you use can use the [capa explorer IDA plugin](capa/ida/plugin/).
-capa explorer lets you quickly identify and navigate to interesting areas of a program and dissect capa rule matches at
-the assembly level.
+If you use IDA Pro, then you can use the [capa explorer](https://github.com/mandiant/capa/tree/master/capa/ida/plugin) plugin.
+capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
-![capa + IDA Pro integration](doc/img/ida_plugin_intro.gif)
+![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
 # further information
 ## capa
-- [doc/installation](doc/installation.md)
-- [doc/usage](doc/usage.md)
-- [doc/limitations](doc/limitations.md)
-- [Contributing Guide](.github/CONTRIBUTING.md)
+- [Installation](https://github.com/mandiant/capa/blob/master/doc/installation.md)
+- [Usage](https://github.com/mandiant/capa/blob/master/doc/usage.md)
+- [Limitations](https://github.com/mandiant/capa/blob/master/doc/limitations.md)
+- [Contributing Guide](https://github.com/mandiant/capa/blob/master/.github/CONTRIBUTING.md)
 
 ## capa rules
-- [capa-rules repository](https://github.com/fireeye/capa-rules)
-- [capa-rules rule format](https://github.com/fireeye/capa-rules/blob/master/doc/format.md)
+- [capa-rules repository](https://github.com/mandiant/capa-rules)
+- [capa-rules rule format](https://github.com/mandiant/capa-rules/blob/master/doc/format.md)
+
+## capa testfiles
+The [capa-testfiles repository](https://github.com/mandiant/capa-testfiles) contains the data we use to test capa's code and rules

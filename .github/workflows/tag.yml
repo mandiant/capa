@@ -1,0 +1,32 @@
+name: tag
+
+on:
+  release:
+    types: [published]
+
+permissions: read-all
+
+jobs:
+  tag:
+    name: Tag capa rules
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout capa-rules
+      uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      with:
+        repository: mandiant/capa-rules
+        token: ${{ secrets.CAPA_TOKEN }}
+    - name: Tag capa-rules
+      run: |
+        # user information is needed to create annotated tags (with a message)
+        git config user.email 'capa-dev@mandiant.com'
+        git config user.name 'Capa Bot'
+        name=${{ github.event.release.tag_name }}
+        git tag $name -m "https://github.com/mandiant/capa/releases/$name"
+        # TODO update branch name-major=${name%%.*}
+    - name: Push tag to capa-rules
+      uses: ad-m/github-push-action@0fafdd62b84042d49ec0cb92d9cac7f7ce4ec79e # master
+      with:
+        repository: mandiant/capa-rules
+        github_token: ${{ secrets.CAPA_TOKEN }}
+        tags: true

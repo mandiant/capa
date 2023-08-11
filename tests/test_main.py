@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
+import json
 import textwrap
 
-import pytest
-from fixtures import *
+import fixtures
 
 import capa.main
 import capa.rules
 import capa.engine
 import capa.features
-from capa.engine import *
 
 
 def test_main(z9324d_extractor):
@@ -25,6 +23,7 @@ def test_main(z9324d_extractor):
     assert capa.main.main([path, "-vv"]) == 0
     assert capa.main.main([path, "-v"]) == 0
     assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
     assert capa.main.main([path]) == 0
 
 
@@ -36,6 +35,8 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
             meta:
                 name: test rule
                 scope: file
+                authors:
+                  - test
             features:
               - string: test
         """
@@ -57,31 +58,22 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
 
 
 def test_main_non_ascii_filename(pingtaest_extractor, tmpdir, capsys):
-    # on py2.7, need to be careful about str (which can hold bytes)
-    #  vs unicode (which is only unicode characters).
-    # on py3, this should not be needed.
-    #
     # here we print a string with unicode characters in it
     # (specifically, a byte string with utf-8 bytes in it, see file encoding)
-    assert capa.main.main(["-q", pingtaest_extractor.path]) == 0
+    # only use one rule to speed up analysis
+    assert capa.main.main(["-q", pingtaest_extractor.path, "-r", "rules/communication/icmp"]) == 0
 
     std = capsys.readouterr()
     # but here, we have to use a unicode instance,
     # because capsys has decoded the output for us.
-    if sys.version_info >= (3, 0):
-        assert pingtaest_extractor.path in std.out
-    else:
-        assert pingtaest_extractor.path.decode("utf-8") in std.out
+    assert pingtaest_extractor.path in std.out
 
 
 def test_main_non_ascii_filename_nonexistent(tmpdir, caplog):
     NON_ASCII_FILENAME = "täst_not_there.exe"
-    assert capa.main.main(["-q", NON_ASCII_FILENAME]) == -1
+    assert capa.main.main(["-q", NON_ASCII_FILENAME]) == capa.main.E_MISSING_FILE
 
-    if sys.version_info >= (3, 0):
-        assert NON_ASCII_FILENAME in caplog.text
-    else:
-        assert NON_ASCII_FILENAME.decode("utf-8") in caplog.text
+    assert NON_ASCII_FILENAME in caplog.text
 
 
 def test_main_shellcode(z499c2_extractor):
@@ -89,7 +81,9 @@ def test_main_shellcode(z499c2_extractor):
     assert capa.main.main([path, "-vv", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-v", "-f", "sc32"]) == 0
     assert capa.main.main([path, "-j", "-f", "sc32"]) == 0
-    assert capa.main.main([path, "-f", "sc32"]) == 0
+    assert capa.main.main([path, "-q", "-f", "sc32"]) == 0
+    # auto detect shellcode based on file extension, same as -f sc32
+    assert capa.main.main([path]) == 0
 
 
 def test_ruleset():
@@ -332,8 +326,63 @@ def test_count_bb(z9324d_extractor):
     assert "count bb" in capabilities
 
 
+def test_instruction_scope(z9324d_extractor):
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: push 1000
+                        namespace: test
+                        scope: instruction
+                      features:
+                        - and:
+                          - mnemonic: push
+                          - number: 1000
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    assert "push 1000" in capabilities
+    assert 0x4071A4 in {result[0] for result in capabilities["push 1000"]}
+
+
+def test_instruction_subscope(z9324d_extractor):
+    # .text:00406F60                         sub_406F60 proc near
+    # [...]
+    # .text:004071A4 68 E8 03 00 00          push    3E8h
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                      meta:
+                        name: push 1000 on i386
+                        namespace: test
+                        scope: function
+                      features:
+                        - and:
+                          - arch: i386
+                          - instruction:
+                            - mnemonic: push
+                            - number: 1000
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    assert "push 1000 on i386" in capabilities
+    assert 0x406F60 in {result[0] for result in capabilities["push 1000 on i386"]}
+
+
 def test_fix262(pma16_01_extractor, capsys):
-    # tests rules can be loaded successfully and all output modes
     path = pma16_01_extractor.path
     assert capa.main.main([path, "-vv", "-t", "send HTTP request", "-q"]) == 0
 
@@ -353,7 +402,8 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     # `create TCP socket`
     #
     # so only `act as TCP client` should be displayed
-    assert capa.main.main([path]) == 0
+    # filter rules to speed up matching
+    assert capa.main.main([path, "-t", "act as TCP client"]) == 0
     std = capsys.readouterr()
     assert "act as TCP client" in std.out
     assert "connect TCP socket" not in std.out
@@ -365,3 +415,56 @@ def test_not_render_rules_also_matched(z9324d_extractor, capsys):
     assert "act as TCP client" in std.out
     assert "connect TCP socket" in std.out
     assert "create TCP socket" in std.out
+
+
+def test_json_meta(capsys):
+    path = str(fixtures.get_data_path_by_name("pma01-01"))
+    assert capa.main.main([path, "-j"]) == 0
+    std = capsys.readouterr()
+    std_json = json.loads(std.out)
+
+    assert {"type": "absolute", "value": 0x10001010} in [
+        f["address"] for f in std_json["meta"]["analysis"]["layout"]["functions"]
+    ]
+
+    for addr, info in std_json["meta"]["analysis"]["layout"]["functions"]:
+        if addr == ["absolute", 0x10001010]:
+            assert {"address": ["absolute", 0x10001179]} in info["matched_basic_blocks"]
+
+
+def test_main_dotnet(_1c444_dotnetfile_extractor):
+    # tests successful execution and all output modes
+    path = _1c444_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0
+
+
+def test_main_dotnet2(_692f_dotnetfile_extractor):
+    # tests successful execution and one rendering
+    # above covers all output modes
+    path = _692f_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+
+
+def test_main_dotnet3(_0953c_dotnetfile_extractor):
+    # tests successful execution and one rendering
+    path = _0953c_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+
+
+def test_main_dotnet4(_039a6_dotnetfile_extractor):
+    # tests successful execution and one rendering
+    path = _039a6_dotnetfile_extractor.path
+    assert capa.main.main([path, "-vv"]) == 0
+
+
+def test_main_rd():
+    path = str(fixtures.get_data_path_by_name("pma01-01-rd"))
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0

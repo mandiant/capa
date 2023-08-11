@@ -6,7 +6,7 @@ Usage:
 
    $ python capafmt.py -i foo.yml
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and limitations 
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.rules
 
@@ -38,6 +39,12 @@ def main(argv=None):
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
+    parser.add_argument(
+        "-c",
+        "--check",
+        action="store_true",
+        help="Don't output (reformatted) rule, only return status. 0 = no changes, 1 = would reformat",
+    )
     args = parser.parse_args(args=argv)
 
     if args.verbose:
@@ -50,12 +57,23 @@ def main(argv=None):
     logging.basicConfig(level=level)
     logging.getLogger("capafmt").setLevel(level)
 
-    rule = capa.rules.Rule.from_yaml_file(args.path)
+    rule = capa.rules.Rule.from_yaml_file(args.path, use_ruamel=True)
+    reformatted_rule = rule.to_yaml()
+
+    if args.check:
+        if rule.definition == reformatted_rule:
+            logger.info("rule is formatted correctly, nice! (%s)", rule.name)
+            return 0
+        else:
+            logger.info("rule requires reformatting (%s)", rule.name)
+            if "\r\n" in rule.definition:
+                logger.info("please make sure that the file uses LF (\\n) line endings only")
+            return 1
+
     if args.in_place:
-        with open(args.path, "wb") as f:
-            f.write(rule.to_yaml().encode("utf-8"))
+        Path(args.path).write_bytes(reformatted_rule.encode("utf-8"))
     else:
-        print(rule.to_yaml().rstrip("\n"))
+        print(reformatted_rule)
 
     return 0
 

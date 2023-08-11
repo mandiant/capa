@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
 """
 bulk-process
 
@@ -47,7 +54,7 @@ usage:
                             parallelism factor
       --no-mp               disable subprocesses
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -55,17 +62,21 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import os
 import sys
 import json
 import logging
-import os.path
 import argparse
 import multiprocessing
 import multiprocessing.pool
+from pathlib import Path
 
 import capa
 import capa.main
-import capa.render
+import capa.rules
+import capa.render.json
+import capa.render.result_document as rd
+from capa.features.common import OS_AUTO
 
 logger = logging.getLogger("capa")
 
@@ -76,7 +87,9 @@ def get_capa_results(args):
 
     args is a tuple, containing:
       rules (capa.rules.RuleSet): the rules to match
+      signatures (List[str]): list of file system paths to signature files
       format (str): the name of the sample file format
+      os (str): the name of the operating system
       path (str): the file system path to the sample to process
 
     args is a tuple because i'm not quite sure how to unpack multiple arguments using `map`.
@@ -92,10 +105,13 @@ def get_capa_results(args):
       meta (dict): the meta analysis results
       capabilities (dict): the matched capabilities and their result objects
     """
-    rules, format, path = args
+    rules, sigpaths, format, os_, path = args
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(path, format, disable_progress=True)
+        extractor = capa.main.get_extractor(
+            path, format, os_, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
+        )
     except capa.main.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
@@ -105,7 +121,7 @@ def get_capa_results(args):
         return {
             "path": path,
             "status": "error",
-            "error": "input file does not appear to be a PE file: %s" % path,
+            "error": f"input file does not appear to be a PE file: {path}",
         }
     except capa.main.UnsupportedRuntimeError:
         return {
@@ -117,21 +133,18 @@ def get_capa_results(args):
         return {
             "path": path,
             "status": "error",
-            "error": "unexpected error: %s" % (e),
+            "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata("", path, "", format, extractor)
+    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
     capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
-    meta["analysis"].update(counts)
 
-    return {
-        "path": path,
-        "status": "ok",
-        "ok": {
-            "meta": meta,
-            "capabilities": capabilities,
-        },
-    }
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    return {"path": path, "status": "ok", "ok": doc.model_dump()}
 
 
 def main(argv=None):
@@ -139,69 +152,39 @@ def main(argv=None):
         argv = sys.argv[1:]
 
         parser = argparse.ArgumentParser(description="detect capabilities in programs.")
+        capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os"})
         parser.add_argument("input", type=str, help="Path to directory of files to recursively analyze")
-        parser.add_argument(
-            "-r",
-            "--rules",
-            type=str,
-            default="(embedded rules)",
-            help="Path to rule file or directory, use embedded rules by default",
-        )
-        parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
-        parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
         parser.add_argument(
             "-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor"
         )
         parser.add_argument("--no-mp", action="store_true", help="disable subprocesses")
         args = parser.parse_args(args=argv)
-
-        if args.quiet:
-            logging.basicConfig(level=logging.ERROR)
-            logging.getLogger().setLevel(logging.ERROR)
-        elif args.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.getLogger().setLevel(logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-            logging.getLogger().setLevel(logging.INFO)
-
-        # disable vivisect-related logging, it's verbose and not relevant for capa users
-        capa.main.set_vivisect_log_level(logging.CRITICAL)
-
-        # py2 doesn't know about cp65001, which is a variant of utf-8 on windows
-        # tqdm bails when trying to render the progress bar in this setup.
-        # because cp65001 is utf-8, we just map that codepage to the utf-8 codec.
-        # see #380 and: https://stackoverflow.com/a/3259271/87207
-        import codecs
-
-        codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
-
-        if args.rules == "(embedded rules)":
-            logger.info("using default embedded rules")
-            logger.debug("detected running from source")
-            args.rules = os.path.join(os.path.dirname(__file__), "..", "rules")
-            logger.debug("default rule path (source method): %s", args.rules)
-        else:
-            logger.info("using rules path: %s", args.rules)
+        capa.main.handle_common_args(args)
 
         try:
             rules = capa.main.get_rules(args.rules)
-            rules = capa.rules.RuleSet(rules)
             logger.info("successfully loaded %s rules", len(rules))
         except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
             logger.error("%s", str(e))
             return -1
 
-        samples = []
-        for (base, directories, files) in os.walk(args.input):
-            for file in files:
-                samples.append(os.path.join(base, file))
+        try:
+            sig_paths = capa.main.get_signatures(args.signatures)
+        except IOError as e:
+            logger.error("%s", str(e))
+            return -1
 
-        def pmap(f, args, parallelism=multiprocessing.cpu_count()):
+        samples = []
+        for file in Path(args.input).rglob("*"):
+            samples.append(file)
+
+        cpu_count = multiprocessing.cpu_count()
+
+        def pmap(f, args, parallelism=cpu_count):
             """apply the given function f to the given args using subprocesses"""
             return multiprocessing.Pool(parallelism).imap(f, args)
 
-        def tmap(f, args, parallelism=multiprocessing.cpu_count()):
+        def tmap(f, args, parallelism=cpu_count):
             """apply the given function f to the given args using threads"""
             return multiprocessing.pool.ThreadPool(parallelism).imap(f, args)
 
@@ -223,18 +206,18 @@ def main(argv=None):
 
         results = {}
         for result in mapper(
-            get_capa_results, [(rules, "pe", sample) for sample in samples], parallelism=args.parallelism
+            get_capa_results,
+            [(rules, sig_paths, "pe", OS_AUTO, sample) for sample in samples],
+            parallelism=args.parallelism,
         ):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                meta = result["ok"]["meta"]
-                capabilities = result["ok"]["capabilities"]
-                # our renderer expects to emit a json document for a single sample
-                # so we deserialize the json document, store it in a larger dict, and we'll subsequently re-encode.
-                results[result["path"]] = json.loads(capa.render.render_json(meta, rules, capabilities))
+                results[result["path"].as_posix()] = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(
+                    exclude_none=True
+                )
             else:
-                raise ValueError("unexpected status: %s" % (result["status"]))
+                raise ValueError(f"unexpected status: {result['status']}")
 
         print(json.dumps(results))
 

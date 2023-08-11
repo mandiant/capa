@@ -108,9 +108,21 @@ venv.bak/
 *.viv
 *.idb
 *.i64
+.vscode
+
 !rules/lib
 
-# hooks/ci.sh output
-isort-output.log
-black-output.log
-rule-linter-output.log
+scripts/perf/*.txt
+scripts/perf/*.svg
+scripts/perf/*.zip
+
+.direnv
+.envrc
+.DS_Store
+*/.DS_Store
+Pipfile
+Pipfile.lock
+/cache/
+.github/binja/binaryninja
+.github/binja/download_headless.py
+.github/binja/BinaryNinja-headless.zip

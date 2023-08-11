@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -11,14 +11,37 @@ import textwrap
 import pytest
 
 import capa.rules
-from capa.features import ARCH_X32, ARCH_X64, String
-from capa.features.insn import Number, Offset
+import capa.engine
+import capa.features.common
+import capa.features.address
+from capa.engine import Or
+from capa.features.file import FunctionName
+from capa.features.insn import Number, Offset, Property
+from capa.features.common import (
+    OS,
+    OS_LINUX,
+    ARCH_I386,
+    FORMAT_PE,
+    ARCH_AMD64,
+    FORMAT_ELF,
+    OS_WINDOWS,
+    Arch,
+    Format,
+    String,
+    Substring,
+    FeatureAccess,
+)
+
+ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
+ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
+ADDR3 = capa.features.address.AbsoluteVirtualAddress(0x401003)
+ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 
 def test_rule_ctor():
-    r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Number(1), {})
-    assert r.evaluate({Number(0): {1}}) == False
-    assert r.evaluate({Number(1): {1}}) == True
+    r = capa.rules.Rule("test rule", capa.rules.FUNCTION_SCOPE, Or([Number(1)]), {})
+    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(1): {ADDR2}})) is True
 
 
 def test_rule_yaml():
@@ -27,7 +50,8 @@ def test_rule_yaml():
         rule:
             meta:
                 name: test rule
-                author: user@domain.com
+                authors:
+                    - user@domain.com
                 scope: function
                 examples:
                     - foo1234
@@ -39,10 +63,10 @@ def test_rule_yaml():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(0): {1}}) == False
-    assert r.evaluate({Number(0): {1}, Number(1): {1}}) == False
-    assert r.evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
-    assert r.evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}) == True
+    assert bool(r.evaluate({Number(0): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}})) is True
 
 
 def test_rule_yaml_complex():
@@ -65,8 +89,8 @@ def test_rule_yaml_complex():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}) == True
-    assert r.evaluate({Number(6): {1}, Number(7): {1}, Number(8): {1}}) == False
+    assert bool(r.evaluate({Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}})) is False
 
 
 def test_rule_descriptions():
@@ -83,6 +107,7 @@ def test_rule_descriptions():
                 description: string description
               - string: '/myregex/'
                 description: regex description
+              - mnemonic: inc = mnemonic description
               # TODO - count(number(2 = number description)): 2
               - or:
                 - description: or description
@@ -92,8 +117,6 @@ def test_rule_descriptions():
                   - description: and description
                 - and:
                   - description: and description
-                  - offset/x64: 0x50 = offset/x64 description
-                  - offset/x64: 0x30 = offset/x64 description
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
@@ -104,6 +127,8 @@ def test_rule_descriptions():
             for child in statement.get_children():
                 rec(child)
         else:
+            if isinstance(statement.value, str):
+                assert "description" not in statement.value
             assert statement.description == statement.name + " description"
 
     rec(r.statement)
@@ -142,8 +167,8 @@ def test_rule_yaml_not():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(1): {1}}) == True
-    assert r.evaluate({Number(1): {1}, Number(2): {1}}) == False
+    assert bool(r.evaluate({Number(1): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}})) is False
 
 
 def test_rule_yaml_count():
@@ -157,9 +182,9 @@ def test_rule_yaml_count():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(100): {}}) == False
-    assert r.evaluate({Number(100): {1}}) == True
-    assert r.evaluate({Number(100): {1, 2}}) == False
+    assert bool(r.evaluate({Number(100): set()})) is False
+    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is False
 
 
 def test_rule_yaml_count_range():
@@ -173,10 +198,10 @@ def test_rule_yaml_count_range():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(100): {}}) == False
-    assert r.evaluate({Number(100): {1}}) == True
-    assert r.evaluate({Number(100): {1, 2}}) == True
-    assert r.evaluate({Number(100): {1, 2, 3}}) == False
+    assert bool(r.evaluate({Number(100): set()})) is False
+    assert bool(r.evaluate({Number(100): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2}})) is True
+    assert bool(r.evaluate({Number(100): {ADDR1, ADDR2, ADDR3}})) is False
 
 
 def test_rule_yaml_count_string():
@@ -190,10 +215,10 @@ def test_rule_yaml_count_string():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({String("foo"): {}}) == False
-    assert r.evaluate({String("foo"): {1}}) == False
-    assert r.evaluate({String("foo"): {1, 2}}) == True
-    assert r.evaluate({String("foo"): {1, 2, 3}}) == False
+    assert bool(r.evaluate({String("foo"): set()})) is False
+    assert bool(r.evaluate({String("foo"): {ADDR1}})) is False
+    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2}})) is True
+    assert bool(r.evaluate({String("foo"): {ADDR1, ADDR2, ADDR3}})) is False
 
 
 def test_invalid_rule_feature():
@@ -282,7 +307,8 @@ def test_lib_rules():
             ),
         ]
     )
-    assert len(rules.function_rules) == 1
+    # lib rules are added to the rule set
+    assert len(rules.function_rules) == 2
 
 
 def test_subscope_rules():
@@ -318,7 +344,7 @@ def test_subscope_rules():
 
 def test_duplicate_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -348,7 +374,7 @@ def test_duplicate_rules():
 
 def test_missing_dependency():
     with pytest.raises(capa.rules.InvalidRule):
-        rules = capa.rules.RuleSet(
+        _ = capa.rules.RuleSet(
             [
                 capa.rules.Rule.from_yaml(
                     textwrap.dedent(
@@ -367,7 +393,7 @@ def test_missing_dependency():
 
 def test_invalid_rules():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -380,7 +406,7 @@ def test_invalid_rules():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -388,6 +414,34 @@ def test_invalid_rules():
                         name: test rule
                     features:
                         - characteristic: count(number(100))
+                """
+            )
+        )
+
+    # att&ck and mbc must be lists
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        att&ck: Tactic::Technique::Subtechnique [Identifier]
+                    features:
+                        - number: 1
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        mbc: Objective::Behavior::Method [Identifier]
+                    features:
+                        - number: 1
                 """
             )
         )
@@ -412,12 +466,12 @@ def test_number_symbol():
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
-    assert (Number(1) in children) == True
-    assert (Number(0xFFFFFFFF) in children) == True
-    assert (Number(2, description="symbol name") in children) == True
-    assert (Number(3, description="symbol name") in children) == True
-    assert (Number(4, description="symbol name = another name") in children) == True
-    assert (Number(0x100, description="symbol name") in children) == True
+    assert (Number(1) in children) is True
+    assert (Number(0xFFFFFFFF) in children) is True
+    assert (Number(2, description="symbol name") in children) is True
+    assert (Number(3, description="symbol name") in children) is True
+    assert (Number(4, description="symbol name = another name") in children) is True
+    assert (Number(0x100, description="symbol name") in children) is True
 
 
 def test_count_number_symbol():
@@ -434,16 +488,16 @@ def test_count_number_symbol():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Number(2): {}}) == False
-    assert r.evaluate({Number(2): {1}}) == True
-    assert r.evaluate({Number(2): {1, 2}}) == False
-    assert r.evaluate({Number(0x100, description="symbol name"): {1}}) == False
-    assert r.evaluate({Number(0x100, description="symbol name"): {1, 2, 3}}) == True
+    assert bool(r.evaluate({Number(2): set()})) is False
+    assert bool(r.evaluate({Number(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Number(2): {ADDR1, ADDR2}})) is False
+    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1}})) is False
+    assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
 
 
 def test_invalid_number():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -456,7 +510,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -469,7 +523,7 @@ def test_invalid_number():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -480,39 +534,6 @@ def test_invalid_number():
                 """
             )
         )
-
-
-def test_number_arch():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - number/x32: 2
-            """
-        )
-    )
-    assert r.evaluate({Number(2, arch=ARCH_X32): {1}}) == True
-
-    assert r.evaluate({Number(2): {1}}) == False
-    assert r.evaluate({Number(2, arch=ARCH_X64): {1}}) == False
-
-
-def test_number_arch_symbol():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - number/x32: 2 = some constant
-            """
-        )
-    )
-    assert r.evaluate({Number(2, arch=ARCH_X32, description="some constant"): {1}}) == True
 
 
 def test_offset_symbol():
@@ -532,11 +553,11 @@ def test_offset_symbol():
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
-    assert (Offset(1) in children) == True
-    assert (Offset(2, description="symbol name") in children) == True
-    assert (Offset(3, description="symbol name") in children) == True
-    assert (Offset(4, description="symbol name = another name") in children) == True
-    assert (Offset(0x100, description="symbol name") in children) == True
+    assert (Offset(1) in children) is True
+    assert (Offset(2, description="symbol name") in children) is True
+    assert (Offset(3, description="symbol name") in children) is True
+    assert (Offset(4, description="symbol name = another name") in children) is True
+    assert (Offset(0x100, description="symbol name") in children) is True
 
 
 def test_count_offset_symbol():
@@ -553,49 +574,16 @@ def test_count_offset_symbol():
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
-    assert r.evaluate({Offset(2): {}}) == False
-    assert r.evaluate({Offset(2): {1}}) == True
-    assert r.evaluate({Offset(2): {1, 2}}) == False
-    assert r.evaluate({Offset(0x100, description="symbol name"): {1}}) == False
-    assert r.evaluate({Offset(0x100, description="symbol name"): {1, 2, 3}}) == True
-
-
-def test_offset_arch():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - offset/x32: 2
-            """
-        )
-    )
-    assert r.evaluate({Offset(2, arch=ARCH_X32): {1}}) == True
-
-    assert r.evaluate({Offset(2): {1}}) == False
-    assert r.evaluate({Offset(2, arch=ARCH_X64): {1}}) == False
-
-
-def test_offset_arch_symbol():
-    r = capa.rules.Rule.from_yaml(
-        textwrap.dedent(
-            """
-            rule:
-                meta:
-                    name: test rule
-                features:
-                    - offset/x32: 2 = some constant
-            """
-        )
-    )
-    assert r.evaluate({Offset(2, arch=ARCH_X32, description="some constant"): {1}}) == True
+    assert bool(r.evaluate({Offset(2): set()})) is False
+    assert bool(r.evaluate({Offset(2): {ADDR1}})) is True
+    assert bool(r.evaluate({Offset(2): {ADDR1, ADDR2}})) is False
+    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1}})) is False
+    assert bool(r.evaluate({Offset(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
 
 
 def test_invalid_offset():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -608,7 +596,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -621,7 +609,7 @@ def test_invalid_offset():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -636,7 +624,7 @@ def test_invalid_offset():
 
 def test_invalid_string_values_int():
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -649,7 +637,7 @@ def test_invalid_string_values_int():
         )
 
     with pytest.raises(capa.rules.InvalidRule):
-        r = capa.rules.Rule.from_yaml(
+        _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 """
                 rule:
@@ -676,39 +664,64 @@ def test_explicit_string_values_int():
     )
     r = capa.rules.Rule.from_yaml(rule)
     children = list(r.statement.get_children())
-    assert (String("123") in children) == True
-    assert (String("0x123") in children) == True
+    assert (String("123") in children) is True
+    assert (String("0x123") in children) is True
 
 
-def test_regex_values_always_string():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - or:
-                            - string: /123/
-                            - string: /0x123/
-                """
-            )
-        ),
-    ]
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("123"): {1}},
-        0x0,
+def test_string_values_special_characters():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - string: "hello\\r\\nworld"
+                    - string: "bye\\nbye"
+                      description: "test description"
+        """
     )
-    assert capa.features.MatchedRule("test rule") in features
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (String("hello\r\nworld") in children) is True
+    assert (String("bye\nbye") in children) is True
 
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("0x123"): {1}},
-        0x0,
+
+def test_substring_feature():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - substring: abc
+                    - substring: "def"
+                    - substring: "gh\\ni"
+        """
     )
-    assert capa.features.MatchedRule("test rule") in features
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Substring("abc") in children) is True
+    assert (Substring("def") in children) is True
+    assert (Substring("gh\ni") in children) is True
+
+
+def test_substring_description():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+            features:
+                - or:
+                    - substring: abc
+                      description: the start of the alphabet
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Substring("abc") in children) is True
 
 
 def test_filter_rules():
@@ -720,7 +733,8 @@ def test_filter_rules():
                     rule:
                         meta:
                             name: rule 1
-                            author: joe
+                            authors:
+                              - joe
                         features:
                             - api: CreateFile
                     """
@@ -799,7 +813,8 @@ def test_filter_rules_missing_dependency():
                         rule:
                             meta:
                                 name: rule 1
-                                author: joe
+                                authors:
+                                  - joe
                             features:
                                 - match: rule 2
                         """
@@ -859,12 +874,132 @@ def test_rules_namespace_dependencies():
         ),
     ]
 
-    r3 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 3")))
+    r3 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 3")}
     assert "rule 1" in r3
     assert "rule 2" not in r3
     assert "rule 4" not in r3
 
-    r4 = set(map(lambda r: r.name, capa.rules.get_rules_and_dependencies(rules, "rule 4")))
+    r4 = {r.name for r in capa.rules.get_rules_and_dependencies(rules, "rule 4")}
     assert "rule 1" in r4
     assert "rule 2" in r4
     assert "rule 3" not in r4
+
+
+def test_function_name_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - function-name: strcpy
+                    - function-name: strcmp = copy from here to there
+                    - function-name: strdup
+                      description: duplicate a string
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (FunctionName("strcpy") in children) is True
+    assert (FunctionName("strcmp", description="copy from here to there") in children) is True
+    assert (FunctionName("strdup", description="duplicate a string") in children) is True
+
+
+def test_os_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - os: windows
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (OS(OS_WINDOWS) in children) is True
+    assert (OS(OS_LINUX) not in children) is True
+
+
+def test_format_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - format: pe
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Format(FORMAT_PE) in children) is True
+    assert (Format(FORMAT_ELF) not in children) is True
+
+
+def test_arch_features():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scope: file
+            features:
+                - and:
+                    - arch: amd64
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    children = list(r.statement.get_children())
+    assert (Arch(ARCH_AMD64) in children) is True
+    assert (Arch(ARCH_I386) not in children) is True
+
+
+def test_property_access():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - property/read: System.IO.FileInfo::Length
+            """
+        )
+    )
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.READ): {ADDR1}})) is True
+
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length"): {ADDR1}})) is False
+    assert bool(r.evaluate({Property("System.IO.FileInfo::Length", access=FeatureAccess.WRITE): {ADDR1}})) is False
+
+
+def test_property_access_symbol():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - property/read: System.IO.FileInfo::Length = some property
+            """
+        )
+    )
+    assert (
+        bool(
+            r.evaluate(
+                {
+                    Property("System.IO.FileInfo::Length", access=FeatureAccess.READ, description="some property"): {
+                        ADDR1
+                    }
+                }
+            )
+        )
+        is True
+    )

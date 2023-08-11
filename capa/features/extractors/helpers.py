@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,23 +6,18 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
+import struct
 import builtins
-
-from capa.features.file import Import
-from capa.features.insn import API
+from typing import Tuple, Iterator
 
 MIN_STACKSTRING_LEN = 8
 
 
-def xor_static(data, i):
-    if sys.version_info >= (3, 0):
-        return bytes(c ^ i for c in data)
-    else:
-        return "".join(chr(ord(c) ^ i) for c in data)
+def xor_static(data: bytes, i: int) -> bytes:
+    return bytes(c ^ i for c in data)
 
 
-def is_aw_function(symbol):
+def is_aw_function(symbol: str) -> bool:
     """
     is the given function name an A/W function?
     these are variants of functions that, on Windows, accept either a narrow or wide string.
@@ -34,11 +29,10 @@ def is_aw_function(symbol):
     if symbol[-1] not in ("A", "W"):
         return False
 
-    # second to last character should be lowercase letter
-    return "a" <= symbol[-2] <= "z" or "0" <= symbol[-2] <= "9"
+    return True
 
 
-def is_ordinal(symbol):
+def is_ordinal(symbol: str) -> bool:
     """
     is the given symbol an ordinal that is prefixed by "#"?
     """
@@ -47,7 +41,7 @@ def is_ordinal(symbol):
     return False
 
 
-def generate_symbols(dll, symbol):
+def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
     """
     for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
@@ -57,8 +51,11 @@ def generate_symbols(dll, symbol):
       - CreateFileA
       - CreateFile
     """
+    # normalize dll name
+    dll = dll.lower()
+
     # kernel32.CreateFileA
-    yield "%s.%s" % (dll, symbol)
+    yield f"{dll}.{symbol}"
 
     if not is_ordinal(symbol):
         # CreateFileA
@@ -66,18 +63,35 @@ def generate_symbols(dll, symbol):
 
     if is_aw_function(symbol):
         # kernel32.CreateFile
-        yield "%s.%s" % (dll, symbol[:-1])
+        yield f"{dll}.{symbol[:-1]}"
 
         if not is_ordinal(symbol):
             # CreateFile
             yield symbol[:-1]
 
 
-def all_zeros(bytez):
+def reformat_forwarded_export_name(forwarded_name: str) -> str:
+    """
+    a forwarded export has a DLL name/path an symbol name.
+    we want the former to be lowercase, and the latter to be verbatim.
+    """
+
+    # use rpartition so we can split on separator between dll and name.
+    # the dll name can be a full path, like in the case of
+    # ef64d6d7c34250af8e21a10feb931c9b
+    # which i assume means the path can have embedded periods.
+    # so we don't want the first period, we want the last.
+    forwarded_dll, _, forwarded_symbol = forwarded_name.rpartition(".")
+    forwarded_dll = forwarded_dll.lower()
+
+    return f"{forwarded_dll}.{forwarded_symbol}"
+
+
+def all_zeros(bytez: bytes) -> bool:
     return all(b == 0 for b in builtins.bytes(bytez))
 
 
-def twos_complement(val, bits):
+def twos_complement(val: int, bits: int) -> int:
     """
     compute the 2's complement of int value val
 
@@ -90,3 +104,48 @@ def twos_complement(val, bits):
     else:
         # return positive value as is
         return val
+
+
+def carve_pe(pbytes: bytes, offset: int = 0) -> Iterator[Tuple[int, int]]:
+    """
+    Generate (offset, key) tuples of embedded PEs
+
+    Based on the version from vivisect:
+      https://github.com/vivisect/vivisect/blob/7be4037b1cecc4551b397f840405a1fc606f9b53/PE/carve.py#L19
+    And its IDA adaptation:
+      capa/features/extractors/ida/file.py
+    """
+    mz_xor = [
+        (
+            xor_static(b"MZ", key),
+            xor_static(b"PE", key),
+            key,
+        )
+        for key in range(256)
+    ]
+
+    pblen = len(pbytes)
+    todo = [(pbytes.find(mzx, offset), mzx, pex, key) for mzx, pex, key in mz_xor]
+    todo = [(off, mzx, pex, key) for (off, mzx, pex, key) in todo if off != -1]
+
+    while len(todo):
+        off, mzx, pex, key = todo.pop()
+
+        # The MZ header has one field we will check
+        # e_lfanew is at 0x3c
+        e_lfanew = off + 0x3C
+        if pblen < (e_lfanew + 4):
+            continue
+
+        newoff = struct.unpack("<I", xor_static(pbytes[e_lfanew : e_lfanew + 4], key))[0]
+
+        nextres = pbytes.find(mzx, off + 1)
+        if nextres != -1:
+            todo.append((nextres, mzx, pex, key))
+
+        peoff = off + newoff
+        if pblen < (peoff + 2):
+            continue
+
+        if pbytes[peoff : peoff + 2] == pex:
+            yield (off, key)

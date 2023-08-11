@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -7,11 +7,13 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import Set, List, Deque, Tuple, Optional
 
 import envi
 import vivisect.const
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
+from vivisect import VivWorkspace
 
 # pull out consts for lookup performance
 i386RegOper = envi.archs.i386.disasm.i386RegOper
@@ -26,7 +28,7 @@ FAR_BRANCH_MASK = envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH
 DESTRUCTIVE_MNEMONICS = ("mov", "lea", "pop", "xor")
 
 
-def get_previous_instructions(vw, va):
+def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
     """
     collect the instructions that flow to the given address, local to the current function.
 
@@ -40,22 +42,24 @@ def get_previous_instructions(vw, va):
     ret = []
 
     # find the immediate prior instruction.
-    # ensure that it fallsthrough to this one.
+    # ensure that it falls through to this one.
     loc = vw.getPrevLocation(va, adjacent=True)
     if loc is not None:
-        # from vivisect.const:
-        # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
-        (pva, _, ptype, pinfo) = vw.getPrevLocation(va, adjacent=True)
+        ploc = vw.getPrevLocation(va, adjacent=True)
+        if ploc is not None:
+            # from vivisect.const:
+            # location: (L_VA, L_SIZE, L_LTYPE, L_TINFO)
+            (pva, _, ptype, pinfo) = ploc
 
-        if ptype == LOC_OP and not (pinfo & IF_NOFALL):
-            ret.append(pva)
+            if ptype == LOC_OP and not (pinfo & IF_NOFALL):
+                ret.append(pva)
 
     # find any code refs, e.g. jmp, to this location.
     # ignore any calls.
     #
     # from vivisect.const:
     # xref: (XR_FROM, XR_TO, XR_RTYPE, XR_RFLAG)
-    for (xfrom, _, _, xflag) in vw.getXrefsTo(va, REF_CODE):
+    for xfrom, _, _, xflag in vw.getXrefsTo(va, REF_CODE):
         if (xflag & FAR_BRANCH_MASK) != 0:
             continue
         ret.append(xfrom)
@@ -67,7 +71,7 @@ class NotFoundError(Exception):
     pass
 
 
-def find_definition(vw, va, reg):
+def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Optional[int]]:
     """
     scan backwards from the given address looking for assignments to the given register.
     if a constant, return that value.
@@ -83,8 +87,8 @@ def find_definition(vw, va, reg):
     raises:
       NotFoundError: when the definition cannot be found.
     """
-    q = collections.deque()
-    seen = set([])
+    q: Deque[int] = collections.deque()
+    seen: Set[int] = set()
 
     q.extend(get_previous_instructions(vw, va))
     while q:
@@ -128,14 +132,14 @@ def find_definition(vw, va, reg):
     raise NotFoundError()
 
 
-def is_indirect_call(vw, va, insn=None):
+def is_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
     return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
 
 
-def resolve_indirect_call(vw, va, insn=None):
+def resolve_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> Tuple[int, Optional[int]]:
     """
     inspect the given indirect call instruction and attempt to resolve the target address.
 

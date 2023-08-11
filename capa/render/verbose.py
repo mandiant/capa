@@ -3,7 +3,7 @@ example::
 
     send data
     namespace    communication
-    author       william.ballenthin@fireeye.com
+    author       william.ballenthin@mandiant.com
     description  all known techniques for sending data to a potential C2 server
     scope        function
     examples     BFB9B5391A13D0AFD787E87AB90F14F5:0x13145D60
@@ -14,7 +14,7 @@ example::
                  0x10003415
                  0x10003797
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -22,13 +22,45 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+import enum
+
 import tabulate
 
 import capa.rules
+import capa.helpers
 import capa.render.utils as rutils
+import capa.features.freeze as frz
+import capa.render.result_document as rd
+from capa.rules import RuleSet
+from capa.engine import MatchResults
 
 
-def render_meta(ostream, doc):
+def format_address(address: frz.Address) -> str:
+    if address.type == frz.AddressType.ABSOLUTE:
+        assert isinstance(address.value, int)
+        return capa.helpers.hex(address.value)
+    elif address.type == frz.AddressType.RELATIVE:
+        assert isinstance(address.value, int)
+        return f"base address+{capa.helpers.hex(address.value)}"
+    elif address.type == frz.AddressType.FILE:
+        assert isinstance(address.value, int)
+        return f"file+{capa.helpers.hex(address.value)}"
+    elif address.type == frz.AddressType.DN_TOKEN:
+        assert isinstance(address.value, int)
+        return f"token({capa.helpers.hex(address.value)})"
+    elif address.type == frz.AddressType.DN_TOKEN_OFFSET:
+        assert isinstance(address.value, tuple)
+        token, offset = address.value
+        assert isinstance(token, int)
+        assert isinstance(offset, int)
+        return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
+    elif address.type == frz.AddressType.NO_ADDRESS:
+        return "global"
+    else:
+        raise ValueError("unexpected address type")
+
+
+def render_meta(ostream, doc: rd.ResultDocument):
     """
     like:
 
@@ -38,7 +70,9 @@ def render_meta(ostream, doc):
         path                 /tmp/suspicious.dll_
         timestamp            2020-07-03T10:17:05.796933
         capa version         0.0.0
-        format               auto
+        os                   windows
+        format               pe
+        arch                 amd64
         extractor            VivisectFeatureExtractor
         base address         0x10000000
         rules                (embedded rules)
@@ -46,27 +80,30 @@ def render_meta(ostream, doc):
         total feature count  1918
     """
     rows = [
-        ("md5", doc["meta"]["sample"]["md5"]),
-        ("sha1", doc["meta"]["sample"]["sha1"]),
-        ("sha256", doc["meta"]["sample"]["sha256"]),
-        ("path", doc["meta"]["sample"]["path"]),
-        ("timestamp", doc["meta"]["timestamp"]),
-        ("capa version", doc["meta"]["version"]),
-        ("format", doc["meta"]["analysis"]["format"]),
-        ("extractor", doc["meta"]["analysis"]["extractor"]),
-        ("base address", hex(doc["meta"]["analysis"]["base_address"])),
-        ("rules", doc["meta"]["analysis"]["rules"]),
-        ("function count", len(doc["meta"]["analysis"]["feature_counts"]["functions"])),
+        ("md5", doc.meta.sample.md5),
+        ("sha1", doc.meta.sample.sha1),
+        ("sha256", doc.meta.sample.sha256),
+        ("path", doc.meta.sample.path),
+        ("timestamp", doc.meta.timestamp),
+        ("capa version", doc.meta.version),
+        ("os", doc.meta.analysis.os),
+        ("format", doc.meta.analysis.format),
+        ("arch", doc.meta.analysis.arch),
+        ("extractor", doc.meta.analysis.extractor),
+        ("base address", format_address(doc.meta.analysis.base_address)),
+        ("rules", "\n".join(doc.meta.analysis.rules)),
+        ("function count", len(doc.meta.analysis.feature_counts.functions)),
+        ("library function count", len(doc.meta.analysis.library_functions)),
         (
             "total feature count",
-            doc["meta"]["analysis"]["feature_counts"]["file"]
-            + sum(doc["meta"]["analysis"]["feature_counts"]["functions"].values()),
+            doc.meta.analysis.feature_counts.file + sum(f.count for f in doc.meta.analysis.feature_counts.functions),
         ),
     ]
+
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
 
-def render_rules(ostream, doc):
+def render_rules(ostream, doc: rd.ResultDocument):
     """
     like:
 
@@ -79,28 +116,32 @@ def render_rules(ostream, doc):
     """
     had_match = False
     for rule in rutils.capability_rules(doc):
-        count = len(rule["matches"])
+        count = len(rule.matches)
         if count == 1:
-            capability = rutils.bold(rule["meta"]["name"])
+            capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
 
         ostream.writeln(capability)
         had_match = True
 
         rows = []
         for key in ("namespace", "description", "scope"):
-            if key == "name" or key not in rule["meta"]:
+            v = getattr(rule.meta, key)
+            if not v:
                 continue
 
-            v = rule["meta"][key]
             if isinstance(v, list) and len(v) == 1:
                 v = v[0]
+
+            if isinstance(v, enum.Enum):
+                v = v.value
+
             rows.append((key, v))
 
-        if rule["meta"]["scope"] != capa.rules.FILE_SCOPE:
-            locations = doc["rules"][rule["meta"]["name"]]["matches"].keys()
-            rows.append(("matches", "\n".join(map(rutils.hex, locations))))
+        if rule.meta.scope != capa.rules.FILE_SCOPE:
+            locations = [m[0] for m in doc.rules[rule.meta.name].matches]
+            rows.append(("matches", "\n".join(map(format_address, locations))))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
@@ -109,7 +150,7 @@ def render_rules(ostream, doc):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_verbose(doc):
+def render_verbose(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
     render_meta(ostream, doc)
@@ -119,3 +160,7 @@ def render_verbose(doc):
     ostream.write("\n")
 
     return ostream.getvalue()
+
+
+def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
+    return render_verbose(rd.ResultDocument.from_capa(meta, rules, capabilities))

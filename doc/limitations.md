@@ -5,7 +5,7 @@ If capa detects that a program may be packed using its rules it warns the user.
 
 
 # Installers, run-time programs, etc.
-capa cannot handle installers, run-time programs like .NET applications, or other packaged applications like AutoIt well. This means that the results may be misleading or incomplete.
+capa cannot handle installers, run-time programs, or other packaged applications like AutoIt well. This means that the results may be misleading or incomplete.
 
 If capa detects an installer, run-time program, etc. it warns the user.
 
@@ -46,6 +46,6 @@ We need more practical use cases and test samples to justify the additional work
 
 
 # ATT&CK, MAEC, MBC, and other capability tagging
-capa uses namespaces to group capabilities (see https://github.com/fireeye/capa-rules/tree/master#namespace-organization).
+capa uses namespaces to group capabilities (see https://github.com/mandiant/capa-rules/tree/master#namespace-organization).
 
-The `rule.meta` field also supports `att&ck`, `mbc`, and `maec` fields to associate rules with the respective taxonomy (see https://github.com/fireeye/capa-rules/blob/master/doc/format.md#meta-block).
+The `rule.meta` field also supports `att&ck`, `mbc`, and `maec` fields to associate rules with the respective taxonomy (see https://github.com/mandiant/capa-rules/blob/master/doc/format.md#meta-block).

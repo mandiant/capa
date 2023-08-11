@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -8,15 +8,19 @@
 
 import collections
 
-import six
 import tabulate
 
 import capa.render.utils as rutils
+import capa.render.result_document as rd
+import capa.features.freeze.features as frzf
+from capa.rules import RuleSet
+from capa.engine import MatchResults
+from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
 
 
-def width(s, character_count):
+def width(s: str, character_count: int) -> str:
     """pad the given string to at least `character_count`"""
     if len(s) < character_count:
         return s + " " * (character_count - len(s))
@@ -24,47 +28,49 @@ def width(s, character_count):
         return s
 
 
-def render_meta(doc, ostream):
+def render_meta(doc: rd.ResultDocument, ostream: StringIO):
     rows = [
-        (width("md5", 22), width(doc["meta"]["sample"]["md5"], 82)),
-        ("sha1", doc["meta"]["sample"]["sha1"]),
-        ("sha256", doc["meta"]["sample"]["sha256"]),
-        ("path", doc["meta"]["sample"]["path"]),
+        (width("md5", 22), width(doc.meta.sample.md5, 82)),
+        ("sha1", doc.meta.sample.sha1),
+        ("sha256", doc.meta.sample.sha256),
+        ("os", doc.meta.analysis.os),
+        ("format", doc.meta.analysis.format),
+        ("arch", doc.meta.analysis.arch),
+        ("path", doc.meta.sample.path),
     ]
 
-    ostream.write(tabulate.tabulate(rows, tablefmt="psql"))
+    ostream.write(tabulate.tabulate(rows, tablefmt="mixed_outline"))
     ostream.write("\n")
 
 
-def find_subrule_matches(doc):
+def find_subrule_matches(doc: rd.ResultDocument):
     """
     collect the rule names that have been matched as a subrule match.
     this way we can avoid displaying entries for things that are too specific.
     """
-    matches = set([])
+    matches = set()
 
-    def rec(node):
-        if not node["success"]:
+    def rec(match: rd.Match):
+        if not match.success:
             # there's probably a bug here for rules that do `not: match: ...`
             # but we don't have any examples of this yet
             return
 
-        elif node["node"]["type"] == "statement":
-            for child in node["children"]:
+        elif isinstance(match.node, rd.StatementNode):
+            for child in match.children:
                 rec(child)
 
-        elif node["node"]["type"] == "feature":
-            if node["node"]["feature"]["type"] == "match":
-                matches.add(node["node"]["feature"]["match"])
+        elif isinstance(match.node, rd.FeatureNode) and isinstance(match.node.feature, frzf.MatchFeature):
+            matches.add(match.node.feature.match)
 
     for rule in rutils.capability_rules(doc):
-        for node in rule["matches"].values():
-            rec(node)
+        for _, match in rule.matches:
+            rec(match)
 
     return matches
 
 
-def render_capabilities(doc, ostream):
+def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -80,29 +86,29 @@ def render_capabilities(doc, ostream):
 
     rows = []
     for rule in rutils.capability_rules(doc):
-        if rule["meta"]["name"] in subrule_matches:
+        if rule.meta.name in subrule_matches:
             # rules that are also matched by other rules should not get rendered by default.
             # this cuts down on the amount of output while giving approx the same detail.
             # see #224
             continue
 
-        count = len(rule["matches"])
+        count = len(rule.matches)
         if count == 1:
-            capability = rutils.bold(rule["meta"]["name"])
+            capability = rutils.bold(rule.meta.name)
         else:
-            capability = "%s (%d matches)" % (rutils.bold(rule["meta"]["name"]), count)
-        rows.append((capability, rule["meta"]["namespace"]))
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
+        rows.append((capability, rule.meta.namespace))
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("CAPABILITY", 50), width("NAMESPACE", 50)], tablefmt="psql")
+            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
         )
         ostream.write("\n")
     else:
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_attack(doc, ostream):
+def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -120,31 +126,17 @@ def render_attack(doc, ostream):
     """
     tactics = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if not rule["meta"].get("att&ck"):
-            continue
-
-        for attack in rule["meta"]["att&ck"]:
-            tactic, _, rest = attack.partition("::")
-            if "::" in rest:
-                technique, _, rest = rest.partition("::")
-                subtechnique, _, id = rest.rpartition(" ")
-                tactics[tactic].add((technique, subtechnique, id))
-            else:
-                technique, _, id = rest.rpartition(" ")
-                tactics[tactic].add((technique, id))
+        for attack in rule.meta.attack:
+            tactics[attack.tactic].add((attack.technique, attack.subtechnique, attack.id))
 
     rows = []
     for tactic, techniques in sorted(tactics.items()):
         inner_rows = []
-        for spec in sorted(techniques):
-            if len(spec) == 2:
-                technique, id = spec
-                inner_rows.append("%s %s" % (rutils.bold(technique), id))
-            elif len(spec) == 3:
-                technique, subtechnique, id = spec
-                inner_rows.append("%s::%s %s" % (rutils.bold(technique), subtechnique, id))
+        for technique, subtechnique, id in sorted(techniques):
+            if not subtechnique:
+                inner_rows.append(f"{rutils.bold(technique)} {id}")
             else:
-                raise RuntimeError("unexpected ATT&CK spec format")
+                inner_rows.append(f"{rutils.bold(technique)}::{subtechnique} {id}")
         rows.append(
             (
                 rutils.bold(tactic.upper()),
@@ -155,13 +147,13 @@ def render_attack(doc, ostream):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="psql"
+                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="mixed_grid"
             )
         )
         ostream.write("\n")
 
 
-def render_mbc(doc, ostream):
+def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
@@ -177,35 +169,17 @@ def render_mbc(doc, ostream):
     """
     objectives = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if not rule["meta"].get("mbc"):
-            continue
-
-        mbcs = rule["meta"]["mbc"]
-        if not isinstance(mbcs, list):
-            raise ValueError("invalid rule: MBC mapping is not a list")
-
-        for mbc in mbcs:
-            objective, _, rest = mbc.partition("::")
-            if "::" in rest:
-                behavior, _, rest = rest.partition("::")
-                method, _, id = rest.rpartition(" ")
-                objectives[objective].add((behavior, method, id))
-            else:
-                behavior, _, id = rest.rpartition(" ")
-                objectives[objective].add((behavior, id))
+        for mbc in rule.meta.mbc:
+            objectives[mbc.objective].add((mbc.behavior, mbc.method, mbc.id))
 
     rows = []
     for objective, behaviors in sorted(objectives.items()):
         inner_rows = []
-        for spec in sorted(behaviors):
-            if len(spec) == 2:
-                behavior, id = spec
-                inner_rows.append("%s %s" % (rutils.bold(behavior), id))
-            elif len(spec) == 3:
-                behavior, method, id = spec
-                inner_rows.append("%s::%s %s" % (rutils.bold(behavior), method, id))
+        for behavior, method, id in sorted(behaviors):
+            if not method:
+                inner_rows.append(f"{rutils.bold(behavior)} [{id}]")
             else:
-                raise RuntimeError("unexpected MBC spec format")
+                inner_rows.append(f"{rutils.bold(behavior)}::{method} [{id}]")
         rows.append(
             (
                 rutils.bold(objective.upper()),
@@ -215,12 +189,14 @@ def render_mbc(doc, ostream):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="psql")
+            tabulate.tabulate(
+                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+            )
         )
         ostream.write("\n")
 
 
-def render_default(doc):
+def render_default(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
     render_meta(doc, ostream)
@@ -232,3 +208,8 @@ def render_default(doc):
     render_capabilities(doc, ostream)
 
     return ostream.getvalue()
+
+
+def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    return render_default(doc)

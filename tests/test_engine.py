@@ -1,482 +1,150 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import capa.features.address
+from capa.engine import Or, And, Not, Some, Range
+from capa.features.insn import Number
 
-import textwrap
-
-import capa.rules
-import capa.engine
-from capa.engine import *
-from capa.features import *
-from capa.features.insn import *
+ADDR1 = capa.features.address.AbsoluteVirtualAddress(0x401001)
+ADDR2 = capa.features.address.AbsoluteVirtualAddress(0x401002)
+ADDR3 = capa.features.address.AbsoluteVirtualAddress(0x401003)
+ADDR4 = capa.features.address.AbsoluteVirtualAddress(0x401004)
 
 
 def test_number():
-    assert Number(1).evaluate({Number(0): {1}}) == False
-    assert Number(1).evaluate({Number(1): {1}}) == True
-    assert Number(1).evaluate({Number(2): {1, 2}}) == False
+    assert bool(Number(1).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(Number(1).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Number(1).evaluate({Number(2): {ADDR1, ADDR2}})) is False
 
 
 def test_and():
-    assert And([Number(1)]).evaluate({Number(0): {1}}) == False
-    assert And([Number(1)]).evaluate({Number(1): {1}}) == True
-    assert And([Number(1), Number(2)]).evaluate({Number(0): {1}}) == False
-    assert And([Number(1), Number(2)]).evaluate({Number(1): {1}}) == False
-    assert And([Number(1), Number(2)]).evaluate({Number(2): {1}}) == False
-    assert And([Number(1), Number(2)]).evaluate({Number(1): {1}, Number(2): {2}}) == True
+    assert bool(And([Number(1)]).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(And([Number(1)]).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(And([Number(1), Number(2)]).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(And([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is False
+    assert bool(And([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}})) is False
+    assert bool(And([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR2}})) is True
 
 
 def test_or():
-    assert Or([Number(1)]).evaluate({Number(0): {1}}) == False
-    assert Or([Number(1)]).evaluate({Number(1): {1}}) == True
-    assert Or([Number(1), Number(2)]).evaluate({Number(0): {1}}) == False
-    assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}}) == True
-    assert Or([Number(1), Number(2)]).evaluate({Number(2): {1}}) == True
-    assert Or([Number(1), Number(2)]).evaluate({Number(1): {1}, Number(2): {2}}) == True
+    assert bool(Or([Number(1)]).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(Or([Number(1)]).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}})) is True
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR2}})) is True
 
 
 def test_not():
-    assert Not(Number(1)).evaluate({Number(0): {1}}) == True
-    assert Not(Number(1)).evaluate({Number(1): {1}}) == False
+    assert bool(Not(Number(1)).evaluate({Number(0): {ADDR1}})) is True
+    assert bool(Not(Number(1)).evaluate({Number(1): {ADDR1}})) is False
 
 
 def test_some():
-    assert Some(0, [Number(1)]).evaluate({Number(0): {1}}) == True
-    assert Some(1, [Number(1)]).evaluate({Number(0): {1}}) == False
+    assert bool(Some(0, [Number(1)]).evaluate({Number(0): {ADDR1}})) is True
+    assert bool(Some(1, [Number(1)]).evaluate({Number(0): {ADDR1}})) is False
 
-    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}}) == False
-    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}, Number(1): {1}}) == False
-    assert Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {1}, Number(1): {1}, Number(2): {1}}) == True
+    assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}})) is False
+    assert bool(Some(2, [Number(1), Number(2), Number(3)]).evaluate({Number(0): {ADDR1}, Number(1): {ADDR1}})) is False
     assert (
-        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
-            {Number(0): {1}, Number(1): {1}, Number(2): {1}, Number(3): {1}}
+        bool(
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}}
+            )
         )
-        == True
+        is True
     )
     assert (
-        Some(2, [Number(1), Number(2), Number(3)]).evaluate(
-            {
-                Number(0): {1},
-                Number(1): {1},
-                Number(2): {1},
-                Number(3): {1},
-                Number(4): {1},
-            }
+        bool(
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}}
+            )
         )
-        == True
+        is True
+    )
+    assert (
+        bool(
+            Some(2, [Number(1), Number(2), Number(3)]).evaluate(
+                {Number(0): {ADDR1}, Number(1): {ADDR1}, Number(2): {ADDR1}, Number(3): {ADDR1}, Number(4): {ADDR1}}
+            )
+        )
+        is True
     )
 
 
 def test_complex():
-    assert True == Or(
-        [And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]
-    ).evaluate({Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}})
+    assert True is bool(
+        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5), Number(6)])])]).evaluate(
+            {Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}}
+        )
+    )
 
-    assert False == Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate(
-        {Number(5): {1}, Number(6): {1}, Number(7): {1}, Number(8): {1}}
+    assert False is bool(
+        Or([And([Number(1), Number(2)]), Or([Number(3), Some(2, [Number(4), Number(5)])])]).evaluate(
+            {Number(5): {ADDR1}, Number(6): {ADDR1}, Number(7): {ADDR1}, Number(8): {ADDR1}}
+        )
     )
 
 
 def test_range():
     # unbounded range, but no matching feature
     # since the lower bound is zero, and there are zero matches, ok
-    assert Range(Number(1)).evaluate({Number(2): {}}) == True
+    assert bool(Range(Number(1)).evaluate({Number(2): {}})) is True
 
     # unbounded range with matching feature should always match
-    assert Range(Number(1)).evaluate({Number(1): {}}) == True
-    assert Range(Number(1)).evaluate({Number(1): {0}}) == True
+    assert bool(Range(Number(1)).evaluate({Number(1): {}})) is True
+    assert bool(Range(Number(1)).evaluate({Number(1): {ADDR1}})) is True
 
     # unbounded max
-    assert Range(Number(1), min=1).evaluate({Number(1): {0}}) == True
-    assert Range(Number(1), min=2).evaluate({Number(1): {0}}) == False
-    assert Range(Number(1), min=2).evaluate({Number(1): {0, 1}}) == True
+    assert bool(Range(Number(1), min=1).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Range(Number(1), min=2).evaluate({Number(1): {ADDR1}})) is False
+    assert bool(Range(Number(1), min=2).evaluate({Number(1): {ADDR1, ADDR2}})) is True
 
     # unbounded min
-    assert Range(Number(1), max=0).evaluate({Number(1): {0}}) == False
-    assert Range(Number(1), max=1).evaluate({Number(1): {0}}) == True
-    assert Range(Number(1), max=2).evaluate({Number(1): {0}}) == True
-    assert Range(Number(1), max=2).evaluate({Number(1): {0, 1}}) == True
-    assert Range(Number(1), max=2).evaluate({Number(1): {0, 1, 3}}) == False
+    assert bool(Range(Number(1), max=0).evaluate({Number(1): {ADDR1}})) is False
+    assert bool(Range(Number(1), max=1).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2}})) is True
+    assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is False
 
     # we can do an exact match by setting min==max
-    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {}}) == False
-    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {1}}) == True
-    assert Range(Number(1), min=1, max=1).evaluate({Number(1): {1, 2}}) == False
+    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {}})) is False
+    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1, ADDR2}})) is False
 
     # bounded range
-    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {}}) == False
-    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1}}) == True
-    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2}}) == True
-    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3}}) == True
-    assert Range(Number(1), min=1, max=3).evaluate({Number(1): {1, 2, 3, 4}}) == False
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {}})) is False
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2}})) is True
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is True
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3, ADDR4}})) is False
 
 
-def test_range_exact():
-    rule = textwrap.dedent(
-        """
-        rule:
-            meta:
-                name: test rule
-            features:
-                - count(number(100)): 2
-        """
-    )
-    r = capa.rules.Rule.from_yaml(rule)
+def test_short_circuit():
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is True
 
-    # just enough matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" in matches
-
-    # not enough matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert "test rule" not in matches
-
-    # too many matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
-    assert "test rule" not in matches
+    # with short circuiting, only the children up until the first satisfied child are captured.
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}, short_circuit=True).children) == 1
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}, short_circuit=False).children) == 2
 
 
-def test_range_range():
-    rule = textwrap.dedent(
-        """
-         rule:
-             meta:
-                 name: test rule
-             features:
-                 - count(number(100)): (2, 3)
-         """
-    )
-    r = capa.rules.Rule.from_yaml(rule)
+def test_eval_order():
+    # base cases.
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}})) is True
+    assert bool(Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}})) is True
 
-    # just enough matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" in matches
+    # with short circuiting, only the children up until the first satisfied child are captured.
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children) == 1
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children) == 2
+    assert len(Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}, Number(2): {ADDR1}}).children) == 1
 
-    # enough matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3}}, 0x0)
-    assert "test rule" in matches
+    # and its guaranteed that children are evaluated in order.
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[0].statement == Number(1)
+    assert Or([Number(1), Number(2)]).evaluate({Number(1): {ADDR1}}).children[0].statement != Number(2)
 
-    # not enough matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert "test rule" not in matches
-
-    # too many matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2, 3, 4}}, 0x0)
-    assert "test rule" not in matches
-
-
-def test_range_exact_zero():
-    rule = textwrap.dedent(
-        """
-        rule:
-            meta:
-                name: test rule
-            features:
-                - count(number(100)): 0
-        """
-    )
-    r = capa.rules.Rule.from_yaml(rule)
-
-    # feature isn't indexed - good.
-    features, matches = capa.engine.match([r], {}, 0x0)
-    assert "test rule" in matches
-
-    # feature is indexed, but no matches.
-    # i don't think we should ever really have this case, but good to check anyways.
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
-    assert "test rule" in matches
-
-    # too many matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert "test rule" not in matches
-
-
-def test_range_with_zero():
-    rule = textwrap.dedent(
-        """
-         rule:
-             meta:
-                 name: test rule
-             features:
-                 - count(number(100)): (0, 1)
-         """
-    )
-    r = capa.rules.Rule.from_yaml(rule)
-
-    # ok
-    features, matches = capa.engine.match([r], {}, 0x0)
-    assert "test rule" in matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {}}, 0x0)
-    assert "test rule" in matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert "test rule" in matches
-
-    # too many matches
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
-    assert "test rule" not in matches
-
-
-def test_match_adds_matched_rule_feature():
-    """show that using `match` adds a feature for matched rules."""
-    rule = textwrap.dedent(
-        """
-        rule:
-            meta:
-                name: test rule
-            features:
-                - number: 100
-        """
-    )
-    r = capa.rules.Rule.from_yaml(rule)
-    features, matches = capa.engine.match([r], {capa.features.insn.Number(100): {1}}, 0x0)
-    assert capa.features.MatchedRule("test rule") in features
-
-
-def test_match_matched_rules():
-    """show that using `match` adds a feature for matched rules."""
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule1
-                    features:
-                        - number: 100
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule2
-                    features:
-                        - match: test rule1
-                """
-            )
-        ),
-    ]
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule1") in features
-    assert capa.features.MatchedRule("test rule2") in features
-
-    # the ordering of the rules must not matter,
-    # the engine should match rules in an appropriate order.
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(reversed(rules)),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule1") in features
-    assert capa.features.MatchedRule("test rule2") in features
-
-
-def test_regex():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - and:
-                            - string: /.*bbbb.*/
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: rule with implied wildcards
-                    features:
-                        - and:
-                            - string: /bbbb/
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: rule with anchor
-                    features:
-                        - and:
-                            - string: /^bbbb/
-                """
-            )
-        ),
-    ]
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.Number(100): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") not in features
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aaaa"): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") not in features
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") not in features
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("abbbba"): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") in features
-    assert capa.features.MatchedRule("rule with implied wildcards") in features
-    assert capa.features.MatchedRule("rule with anchor") not in features
-
-
-def test_regex_ignorecase():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - and:
-                            - string: /.*bbbb.*/i
-                """
-            )
-        ),
-    ]
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String("aBBBBa"): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") in features
-
-
-def test_regex_complex():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                r"""
-                rule:
-                    meta:
-                        name: test rule
-                    features:
-                        - or:
-                            - string: /.*HARDWARE\\Key\\key with spaces\\.*/i
-                """
-            )
-        ),
-    ]
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.String(r"Hardware\Key\key with spaces\some value"): {1}},
-        0x0,
-    )
-    assert capa.features.MatchedRule("test rule") in features
-
-
-def test_match_namespace():
-    rules = [
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: CreateFile API
-                        namespace: file/create/CreateFile
-                    features:
-                        - api: CreateFile
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: WriteFile API
-                        namespace: file/write
-                    features:
-                        - api: WriteFile
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: file-create
-                    features:
-                        - match: file/create
-                """
-            )
-        ),
-        capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: filesystem-any
-                    features:
-                        - match: file
-                """
-            )
-        ),
-    ]
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.API("CreateFile"): {1}},
-        0x0,
-    )
-    assert "CreateFile API" in matches
-    assert "file-create" in matches
-    assert "filesystem-any" in matches
-    assert capa.features.MatchedRule("file") in features
-    assert capa.features.MatchedRule("file/create") in features
-    assert capa.features.MatchedRule("file/create/CreateFile") in features
-
-    features, matches = capa.engine.match(
-        capa.engine.topologically_order_rules(rules),
-        {capa.features.insn.API("WriteFile"): {1}},
-        0x0,
-    )
-    assert "WriteFile API" in matches
-    assert "file-create" not in matches
-    assert "filesystem-any" in matches
-
-
-def test_render_number():
-    assert str(capa.features.insn.Number(1)) == "number(0x1)"
-    assert str(capa.features.insn.Number(1, arch=ARCH_X32)) == "number/x32(0x1)"
-    assert str(capa.features.insn.Number(1, arch=ARCH_X64)) == "number/x64(0x1)"
-
-
-def test_render_offset():
-    assert str(capa.features.insn.Offset(1)) == "offset(0x1)"
-    assert str(capa.features.insn.Offset(1, arch=ARCH_X32)) == "offset/x32(0x1)"
-    assert str(capa.features.insn.Offset(1, arch=ARCH_X64)) == "offset/x64(0x1)"
+    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement == Number(2)
+    assert Or([Number(1), Number(2)]).evaluate({Number(2): {ADDR1}}).children[1].statement != Number(1)

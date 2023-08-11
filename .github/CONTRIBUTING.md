@@ -2,7 +2,7 @@
 
 First off, thanks for taking the time to contribute!
 
-The following is a set of guidelines for contributing to capa and its packages, which are hosted in the [FireEye Organization](https://github.com/fireeye) on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+The following is a set of guidelines for contributing to capa and its packages, which are hosted in the [Mandiant Organization](https://github.com/mandiant) on GitHub. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
 #### Table Of Contents
 
@@ -31,10 +31,10 @@ This project and everyone participating in it is governed by the [Capa Code of C
 
 ### Capa and its repositories
 
-We host the capa project as three Github repositories:
-  - [capa](https://github.com/fireeye/capa)
-  - [capa-rules](https://github.com/fireeye/capa-rules)
-  - [capa-testfiles](https://github.com/fireeye/capa-testfiles)
+We host the capa project as three GitHub repositories:
+  - [capa](https://github.com/mandiant/capa)
+  - [capa-rules](https://github.com/mandiant/capa-rules)
+  - [capa-testfiles](https://github.com/mandiant/capa-testfiles)
   
 The command line tools, logic engine, and other Python source code are found in the `capa` repository.
 This is the repository to fork when you want to enhance the features, performance, or user interface of capa.
@@ -54,7 +54,7 @@ These are files you'll need in order to run the linter (in `--thorough` mode) an
 ### Design Decisions
 
 When we make a significant decision in how we maintain the project and what we can or cannot support,
- we will document it in the [capa issues tracker](https://github.com/fireeye/capa/issues).
+ we will document it in the [capa issues tracker](https://github.com/mandiant/capa/issues).
 This is the best place review our discussions about what/how/why we do things in the project.
 If you have a question, check to see if it is documented there.
 If it is *not* documented there, or you can't find an answer, please open a issue.
@@ -78,7 +78,7 @@ Fill out [the required template](./ISSUE_TEMPLATE/bug_report.md),
 #### Before Submitting A Bug Report
 
 * **Determine [which repository the problem should be reported in](#capa-and-its-repositories)**.
-* **Perform a [cursory search](https://github.com/fireeye/capa/issues?q=is%3Aissue)** to see if the problem has already been reported. If it has **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
+* **Perform a [cursory search](https://github.com/mandiant/capa/issues?q=is%3Aissue)** to see if the problem has already been reported. If it has **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Bug Report?
 
@@ -101,7 +101,7 @@ Explain the problem and include additional details to help maintainers reproduce
 Provide more context by answering these questions:
 
 * **Did the problem start happening recently** (e.g. after updating to a new version of capa) or was this always a problem?
-* If the problem started happening recently, **can you reproduce the problem in an older version of capa?** What's the most recent version in which the problem doesn't happen? You can download older versions of capa from [the releases page](https://github.com/fireeye/capa/releases).
+* If the problem started happening recently, **can you reproduce the problem in an older version of capa?** What's the most recent version in which the problem doesn't happen? You can download older versions of capa from [the releases page](https://github.com/mandiant/capa/releases).
 * **Can you reliably reproduce the issue?** If not, provide details about how often the problem happens and under which conditions it normally happens.
 * If the problem is related to working with files (e.g. opening and editing files), **does the problem happen for all files and projects or only some?** Does the problem happen only when working with local or remote files (e.g. on network drives), with files of a specific type (e.g. only JavaScript or Python files), with large files or files with very long lines, or with files in a specific encoding? Is there anything else special about the files you are using?
 
@@ -119,7 +119,7 @@ Before creating enhancement suggestions, please check [this list](#before-submit
 #### Before Submitting An Enhancement Suggestion
 
 * **Determine [which repository the enhancement should be suggested in](#capa-and-its-repositories).**
-* **Perform a [cursory search](https://github.com/fireeye/capa/issues?q=is%3Aissue)** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
+* **Perform a [cursory search](https://github.com/mandiant/capa/issues?q=is%3Aissue)** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
 
 #### How Do I Submit A (Good) Enhancement Suggestion?
 
@@ -138,15 +138,15 @@ Enhancement suggestions are tracked as [GitHub issues](https://guides.github.com
 
 Unsure where to begin contributing to capa? You can start by looking through these `good-first-issue` and `rule-idea` issues:
 
-* [good-first-issue](https://github.com/fireeye/capa/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - issues which should only require a few lines of code, and a test or two.
-* [rule-idea](https://github.com/fireeye/capa-rules/issues?q=is%3Aissue+is%3Aopen+label%3A%22rule+idea%22) - issues that describe potential new rule ideas.
+* [good-first-issue](https://github.com/mandiant/capa/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) - issues which should only require a few lines of code, and a test or two.
+* [rule-idea](https://github.com/mandiant/capa-rules/issues?q=is%3Aissue+is%3Aopen+label%3A%22rule+idea%22) - issues that describe potential new rule ideas.
 
 Both issue lists are sorted by total number of comments. While not perfect, number of comments is a reasonable proxy for impact a given change will have.
 
 #### Local development
 
 capa and all its resources can be developed locally. 
-For instructions on how to do this, see the "Method 3" section of the [installation guide](https://github.com/fireeye/capa/blob/master/doc/installation.md).
+For instructions on how to do this, see the "Method 3" section of the [installation guide](https://github.com/mandiant/capa/blob/master/doc/installation.md).
 
 ### Pull Requests
 
@@ -159,11 +159,24 @@ The process described here has several goals:
 
 Please follow these steps to have your contribution considered by the maintainers:
 
-1. Follow all instructions in [the template](PULL_REQUEST_TEMPLATE.md)
-2. Follow the [styleguides](#styleguides)
+0. Sign the [Contributor License Agreement](#contributor-license-agreement)
+1. Follow the [styleguides](#styleguides)
+2. Update the CHANGELOG and add tests and documentation. In case they are not needed, indicate it in [the PR template](pull_request_template.md).
 3. After you submit your pull request, verify that all [status checks](https://help.github.com/articles/about-status-checks/) are passing <details><summary>What if the status checks are failing? </summary>If a status check is failing, and you believe that the failure is unrelated to your change, please leave a comment on the pull request explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. If we conclude that the failure was a false positive, then we will open an issue to track that problem with our status check suite.</details>
 
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.
+
+### Contributor License Agreement
+
+Contributions to this project must be accompanied by a Contributor License
+Agreement. You (or your employer) retain the copyright to your contribution,
+this simply gives us permission to use and redistribute your contributions as
+part of the project. Head over to <https://cla.developers.google.com/> to see
+your current agreements on file or to sign a new one.
+
+You generally only need to submit a CLA once, so if you've already submitted one
+(even if it was for a different project), you probably don't need to do it
+again.
 
 ## Styleguides
 
@@ -190,8 +203,8 @@ Our CI pipeline will reformat and enforce the Python styleguide.
 
 All (non-nursery) capa rules must:
 
-  1. pass the [linter](https://github.com/fireeye/capa/blob/master/scripts/lint.py), and
-  2. be formatted with [capafmt](https://github.com/fireeye/capa/blob/master/scripts/capafmt.py)
+  1. pass the [linter](https://github.com/mandiant/capa/blob/master/scripts/lint.py), and
+  2. be formatted with [capafmt](https://github.com/mandiant/capa/blob/master/scripts/capafmt.py)
   
 This ensures that all rules meet the same minimum level of quality and are structured in a consistent way.
 Our CI pipeline will reformat and enforce the capa rules styleguide.

@@ -1,0 +1,43 @@
+name: changelog
+
+on:
+  # We need pull_request_target instead of pull_request because a write
+  # repository token is needed to add a review to a PR. DO NOT BUILD
+  # OR RUN UNTRUSTED CODE FROM PRs IN THIS ACTION
+  pull_request_target:
+    types: [opened, edited, synchronize]
+
+permissions: read-all
+
+jobs:
+  check_changelog:
+    # no need to check for dependency updates via dependabot
+    if: github.actor != 'dependabot[bot]' && github.actor != 'dependabot-preview[bot]'
+    runs-on: ubuntu-20.04
+    env:
+      NO_CHANGELOG: '[x] No CHANGELOG update needed'
+    steps:
+    - name: Get changed files
+      id: files
+      uses: Ana06/get-changed-files@e0c398b7065a8d84700c471b6afc4116d1ba4e96 # v2.2.0
+    - name: check changelog updated
+      id: changelog_updated
+      env:
+        PR_BODY: ${{ github.event.pull_request.body }}
+        FILES: ${{ steps.files.outputs.modified }}
+      run: |
+        echo $FILES | grep -qF 'CHANGELOG.md' || echo $PR_BODY | grep -qiF "$NO_CHANGELOG"
+    - name: Reject pull request if no CHANGELOG update
+      if: ${{ always() && steps.changelog_updated.outcome == 'failure' }}
+      uses: Ana06/automatic-pull-request-review@0cf4e8a17ba79344ed3fdd7fed6dd0311d08a9d4 # v0.1.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        event: REQUEST_CHANGES
+        body: "Please add bug fixes, new features, breaking changes and anything else you think is worthwhile mentioning to the `master (unreleased)` section of CHANGELOG.md. If no CHANGELOG update is needed add the following to the PR description: `${{ env.NO_CHANGELOG }}`"
+        allow_duplicate: false
+    - name: Dismiss previous review if CHANGELOG update
+      uses: Ana06/automatic-pull-request-review@0cf4e8a17ba79344ed3fdd7fed6dd0311d08a9d4 # v0.1.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        event: DISMISS
+        body: "CHANGELOG updated or no update needed, thanks! :smile:"

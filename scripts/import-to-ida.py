@@ -20,7 +20,7 @@ and then select the existing capa report from the file system.
 This script will verify that the report matches the workspace.
 Check the output window for any errors, and/or the summary of changes.
 
-Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -28,14 +28,16 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import json
 import logging
+import binascii
 
-import idc
-import idautils
+import ida_nalt
 import ida_funcs
-import ida_idaapi
 import ida_kernwin
+
+import capa.rules
+import capa.features.freeze
+import capa.render.result_document
 
 logger = logging.getLogger("capa")
 
@@ -53,7 +55,11 @@ def append_func_cmt(va, cmt, repeatable=False):
     if cmt in existing:
         return
 
-    new = existing + "\n" + cmt
+    if len(existing) > 0:
+        new = existing + "\n" + cmt
+    else:
+        new = cmt
+
     ida_funcs.set_func_cmt(func, new, repeatable)
 
 
@@ -62,46 +68,46 @@ def main():
     if not path:
         return 0
 
-    with open(path, "rb") as f:
-        doc = json.loads(f.read().decode("utf-8"))
-
-    if "meta" not in doc or "rules" not in doc:
-        logger.error("doesn't appear to be a capa report")
-        return -1
+    result_doc = capa.render.result_document.ResultDocument.parse_file(path)
+    meta, capabilities = result_doc.to_capa()
 
     # in IDA 7.4, the MD5 hash may be truncated, for example:
     # wanted: 84882c9d43e23d63b82004fae74ebb61
     # found: b'84882C9D43E23D63B82004FAE74EBB6\x00'
     #
     # see: https://github.com/idapython/bin/issues/11
-    a = doc["meta"]["sample"]["md5"].lower()
-    b = idautils.GetInputFileMD5().decode("ascii").lower().rstrip("\x00")
+    a = meta.sample.md5.lower()
+    b = binascii.hexlify(ida_nalt.retrieve_input_file_md5()).decode("ascii").lower()
     if not a.startswith(b):
         logger.error("sample mismatch")
         return -2
 
     rows = []
-    for rule in doc["rules"].values():
-        if rule["meta"].get("lib"):
+    for name in capabilities.keys():
+        rule = result_doc.rules[name]
+        if rule.meta.lib:
             continue
-        if rule["meta"].get("capa/subscope"):
+        if rule.meta.is_subscope_rule:
             continue
-        if rule["meta"]["scope"] != "function":
+        if rule.meta.scope != capa.rules.Scope.FUNCTION:
             continue
 
-        name = rule["meta"]["name"]
-        ns = rule["meta"].get("namespace", "")
-        for va in rule["matches"].keys():
-            va = int(va)
+        ns = rule.meta.namespace
+
+        for address, _ in rule.matches:
+            if address.type != capa.features.freeze.AddressType.ABSOLUTE:
+                continue
+
+            va = address.value
             rows.append((ns, name, va))
 
     # order by (namespace, name) so that like things show up together
     rows = sorted(rows)
     for ns, name, va in rows:
         if ns:
-            cmt = "%s (%s)" % (name, ns)
+            cmt = name + f"({ns})"
         else:
-            cmt = "%s" % (name,)
+            cmt = name
 
         logger.info("0x%x: %s", va, cmt)
         try:

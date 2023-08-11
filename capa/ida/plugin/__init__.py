@@ -1,17 +1,15 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
 
 import idaapi
 import ida_kernwin
 
-from capa.ida.helpers import is_supported_file_type, is_supported_ida_version
 from capa.ida.plugin.form import CapaExplorerForm
 from capa.ida.plugin.icon import ICON
 
@@ -19,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class CapaExplorerPlugin(idaapi.plugin_t):
-
     # Mandatory definitions
     PLUGIN_NAME = "FLARE capa explorer"
     PLUGIN_VERSION = "1.0.0"
@@ -28,8 +25,8 @@ class CapaExplorerPlugin(idaapi.plugin_t):
     wanted_name = PLUGIN_NAME
     wanted_hotkey = "ALT-F5"
     comment = "IDA Pro plugin for the FLARE team's capa tool to identify capabilities in executable files."
-    website = "https://github.com/fireeye/capa"
-    help = "See https://github.com/fireeye/capa/blob/master/doc/usage.md"
+    website = "https://github.com/mandiant/capa"
+    help = "See https://github.com/mandiant/capa/blob/master/doc/usage.md"
     version = ""
     flags = 0
 
@@ -41,10 +38,20 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         """called when IDA is loading the plugin"""
         logging.basicConfig(level=logging.INFO)
 
-        # do not load plugin if IDA version/file type not supported
-        if not is_supported_ida_version():
+        # do not load plugin unless hosted in idaq (IDA Qt)
+        if not idaapi.is_idaq():
+            # note: it does not appear that IDA calls "init" by default when hosted in idat; we keep this
+            # check here for good measure
             return idaapi.PLUGIN_SKIP
-        if not is_supported_file_type():
+
+        import capa.ida.helpers
+
+        # do not load plugin if IDA version/file type not supported
+        if not capa.ida.helpers.is_supported_ida_version():
+            return idaapi.PLUGIN_SKIP
+        if not capa.ida.helpers.is_supported_file_type():
+            return idaapi.PLUGIN_SKIP
+        if not capa.ida.helpers.is_supported_arch_type():
             return idaapi.PLUGIN_SKIP
         return idaapi.PLUGIN_OK
 
@@ -53,8 +60,23 @@ class CapaExplorerPlugin(idaapi.plugin_t):
         pass
 
     def run(self, arg):
-        """called when IDA is running the plugin as a script"""
-        self.form = CapaExplorerForm(self.PLUGIN_NAME)
+        """
+        called when IDA is running the plugin as a script
+
+        args:
+          arg (int): bitflag. Setting LSB enables automatic analysis upon
+          loading. The other bits are currently undefined. See `form.Options`.
+        """
+        if not self.form:
+            self.form = CapaExplorerForm(self.PLUGIN_NAME, arg)
+        else:
+            widget = idaapi.find_widget(self.form.form_title)
+            if widget:
+                idaapi.activate_widget(widget, True)
+            else:
+                self.form.Show()
+                self.form.load_capa_results(False, True)
+
         return True
 
 
@@ -77,7 +99,7 @@ class CapaExplorerPlugin(idaapi.plugin_t):
 # so we need to register a callback that's invoked from the main thread after the plugin is registered.
 #
 # after a lot of guess-and-check, we can use `UI_Hooks.updated_actions` to
-#  receive notications after IDA has created an action for each plugin.
+#  receive notifications after IDA has created an action for each plugin.
 # so, create this hook, wait for capa plugin to load, set the icon, and unhook.
 
 
@@ -85,7 +107,7 @@ class OnUpdatedActionsHook(ida_kernwin.UI_Hooks):
     """register a callback to be invoked each time the UI actions are updated"""
 
     def __init__(self, cb):
-        super(OnUpdatedActionsHook, self).__init__()
+        super().__init__()
         self.cb = cb
 
     def updated_actions(self):

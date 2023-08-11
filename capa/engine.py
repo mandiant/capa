@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -8,11 +8,29 @@
 
 import copy
 import collections
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, Union, Mapping, Iterable, Iterator
 
-import capa.features
+import capa.perf
+import capa.features.common
+from capa.features.common import Result, Feature
+from capa.features.address import Address
+
+if TYPE_CHECKING:
+    # circular import, otherwise
+    import capa.rules
 
 
-class Statement(object):
+# a collection of features and the locations at which they are found.
+#
+# used throughout matching as the context in which features are searched:
+# to check if a feature exists, do: `Number(0x10) in features`.
+# to collect the locations of a feature, do: `features[Number(0x10)]`
+#
+# aliased here so that the type can be documented and xref'd.
+FeatureSet = Dict[Feature, Set[Address]]
+
+
+class Statement:
     """
     superclass for structural nodes, such as and/or/not.
     this exists to provide a default impl for `__str__` and `__repr__`,
@@ -20,157 +38,194 @@ class Statement(object):
     """
 
     def __init__(self, description=None):
-        super(Statement, self).__init__()
+        super().__init__()
         self.name = self.__class__.__name__
         self.description = description
 
     def __str__(self):
+        name = self.name.lower()
+        children = ",".join(map(str, self.get_children()))
         if self.description:
-            return "%s(%s = %s)" % (self.name.lower(), ",".join(map(str, self.get_children())), self.description)
+            return f"{name}({children} = {self.description})"
         else:
-            return "%s(%s)" % (self.name.lower(), ",".join(map(str, self.get_children())))
+            return f"{name}({children})"
 
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx):
+    def evaluate(self, features: FeatureSet, short_circuit=True) -> Result:
         """
         classes that inherit `Statement` must implement `evaluate`
 
         args:
-          ctx (defaultdict[Feature, set[VA]])
-
-        returns:
-          Result
+            short_circuit (bool): if true, then statements like and/or/some may short circuit.
         """
         raise NotImplementedError()
 
-    def get_children(self):
+    def get_children(self) -> Iterator[Union["Statement", Feature]]:
         if hasattr(self, "child"):
-            yield self.child
+            # this really confuses mypy because the property may not exist
+            # since its defined in the subclasses.
+            child = self.child  # type: ignore
+            assert isinstance(child, (Statement, Feature))
+            yield child
 
         if hasattr(self, "children"):
             for child in self.children:
+                assert isinstance(child, (Statement, Feature))
                 yield child
 
     def replace_child(self, existing, new):
         if hasattr(self, "child"):
-            if self.child is existing:
+            # this really confuses mypy because the property may not exist
+            # since its defined in the subclasses.
+            if self.child is existing:  # type: ignore
                 self.child = new
 
         if hasattr(self, "children"):
-            for i, child in enumerate(self.children):
+            children = self.children
+            for i, child in enumerate(children):
                 if child is existing:
-                    self.children[i] = new
-
-
-class Result(object):
-    """
-    represents the results of an evaluation of statements against features.
-
-    instances of this class should behave like a bool,
-    e.g. `assert Result(True, ...) == True`
-
-    instances track additional metadata about evaluation results.
-    they contain references to the statement node (e.g. an And statement),
-     as well as the children Result instances.
-
-    we need this so that we can render the tree of expressions and their results.
-    """
-
-    def __init__(self, success, statement, children, locations=None):
-        """
-        args:
-          success (bool)
-          statement (capa.engine.Statement or capa.features.Feature)
-          children (list[Result])
-          locations (iterable[VA])
-        """
-        super(Result, self).__init__()
-        self.success = success
-        self.statement = statement
-        self.children = children
-        self.locations = locations if locations is not None else ()
-
-    def __eq__(self, other):
-        if isinstance(other, bool):
-            return self.success == other
-        return False
-
-    def __bool__(self):
-        return self.success
-
-    def __nonzero__(self):
-        return self.success
+                    children[i] = new
 
 
 class And(Statement):
-    """match if all of the children evaluate to True."""
+    """
+    match if all of the children evaluate to True.
+
+    the order of evaluation is dictated by the property
+    `And.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, children, description=None):
-        super(And, self).__init__(description=description)
+        super().__init__(description=description)
         self.children = children
 
-    def evaluate(self, ctx):
-        results = [child.evaluate(ctx) for child in self.children]
-        success = all(results)
-        return Result(success, self, results)
+    def evaluate(self, ctx, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.and"] += 1
+
+        if short_circuit:
+            results = []
+            for child in self.children:
+                result = child.evaluate(ctx, short_circuit=short_circuit)
+                results.append(result)
+                if not result:
+                    # short circuit
+                    return Result(False, self, results)
+
+            return Result(True, self, results)
+        else:
+            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            success = all(results)
+            return Result(success, self, results)
 
 
 class Or(Statement):
-    """match if any of the children evaluate to True."""
+    """
+    match if any of the children evaluate to True.
+
+    the order of evaluation is dictated by the property
+    `Or.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, children, description=None):
-        super(Or, self).__init__(description=description)
+        super().__init__(description=description)
         self.children = children
 
-    def evaluate(self, ctx):
-        results = [child.evaluate(ctx) for child in self.children]
-        success = any(results)
-        return Result(success, self, results)
+    def evaluate(self, ctx, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.or"] += 1
+
+        if short_circuit:
+            results = []
+            for child in self.children:
+                result = child.evaluate(ctx, short_circuit=short_circuit)
+                results.append(result)
+                if result:
+                    # short circuit as soon as we hit one match
+                    return Result(True, self, results)
+
+            return Result(False, self, results)
+        else:
+            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            success = any(results)
+            return Result(success, self, results)
 
 
 class Not(Statement):
     """match only if the child evaluates to False."""
 
     def __init__(self, child, description=None):
-        super(Not, self).__init__(description=description)
+        super().__init__(description=description)
         self.child = child
 
-    def evaluate(self, ctx):
-        results = [self.child.evaluate(ctx)]
+    def evaluate(self, ctx, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.not"] += 1
+
+        results = [self.child.evaluate(ctx, short_circuit=short_circuit)]
         success = not results[0]
         return Result(success, self, results)
 
 
 class Some(Statement):
-    """match if at least N of the children evaluate to True."""
+    """
+    match if at least N of the children evaluate to True.
+
+    the order of evaluation is dictated by the property
+    `Some.children` (type: List[Statement|Feature]).
+    a query optimizer may safely manipulate the order of these children.
+    """
 
     def __init__(self, count, children, description=None):
-        super(Some, self).__init__(description=description)
+        super().__init__(description=description)
         self.count = count
         self.children = children
 
-    def evaluate(self, ctx):
-        results = [child.evaluate(ctx) for child in self.children]
-        # note that here we cast the child result as a bool
-        # because we've overridden `__bool__` above.
-        #
-        # we can't use `if child is True` because the instance is not True.
-        success = sum([1 for child in results if bool(child) is True]) >= self.count
-        return Result(success, self, results)
+    def evaluate(self, ctx, short_circuit=True):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.some"] += 1
+
+        if short_circuit:
+            results = []
+            satisfied_children_count = 0
+            for child in self.children:
+                result = child.evaluate(ctx, short_circuit=short_circuit)
+                results.append(result)
+                if result:
+                    satisfied_children_count += 1
+
+                if satisfied_children_count >= self.count:
+                    # short circuit as soon as we hit the threshold
+                    return Result(True, self, results)
+
+            return Result(False, self, results)
+        else:
+            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            # note that here we cast the child result as a bool
+            # because we've overridden `__bool__` above.
+            #
+            # we can't use `if child is True` because the instance is not True.
+            success = sum([1 for child in results if bool(child) is True]) >= self.count
+            return Result(success, self, results)
 
 
 class Range(Statement):
     """match if the child is contained in the ctx set with a count in the given range."""
 
     def __init__(self, child, min=None, max=None, description=None):
-        super(Range, self).__init__(description=description)
+        super().__init__(description=description)
         self.child = child
         self.min = min if min is not None else 0
         self.max = max if max is not None else (1 << 64 - 1)
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx, **kwargs):
+        capa.perf.counters["evaluate.feature"] += 1
+        capa.perf.counters["evaluate.feature.range"] += 1
+
         count = len(ctx.get(self.child, []))
         if self.min == 0 and count == 0:
             return Result(True, self, [])
@@ -179,9 +234,9 @@ class Range(Statement):
 
     def __str__(self):
         if self.max == (1 << 64 - 1):
-            return "range(%s, min=%d, max=infinity)" % (str(self.child), self.min)
+            return f"range({str(self.child)}, min={self.min}, max=infinity)"
         else:
-            return "range(%s, min=%d, max=%d)" % (str(self.child), self.min, self.max)
+            return f"range({str(self.child)}, min={self.min}, max={self.max})"
 
 
 class Subscope(Statement):
@@ -190,59 +245,66 @@ class Subscope(Statement):
     the engine should preprocess rules to extract subscope statements into their own rules.
     """
 
-    def __init__(self, scope, child):
-        super(Subscope, self).__init__()
+    def __init__(self, scope, child, description=None):
+        super().__init__(description=description)
         self.scope = scope
         self.child = child
 
-    def evaluate(self, ctx):
+    def evaluate(self, ctx, **kwargs):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
-def topologically_order_rules(rules):
+# mapping from rule name to list of: (location of match, result object)
+#
+# used throughout matching and rendering to collection the results
+#  of statement evaluation and their locations.
+#
+# to check if a rule matched, do: `"TCP client" in matches`.
+# to find where a rule matched, do: `map(first, matches["TCP client"])`
+# to see how a rule matched, do:
+#
+#     for address, match_details in matches["TCP client"]:
+#         inspect(match_details)
+#
+# aliased here so that the type can be documented and xref'd.
+MatchResults = Mapping[str, List[Tuple[Address, Result]]]
+
+
+def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[Address]):
     """
-    order the given rules such that dependencies show up before dependents.
-    this means that as we match rules, we can add features for the matches, and these
-     will be matched by subsequent rules if they follow this order.
+    record into the given featureset that the given rule matched at the given locations.
 
-    assumes that the rule dependency graph is a DAG.
+    naively, this is just adding a MatchedRule feature;
+    however, we also want to record matches for the rule's namespaces.
+
+    updates `features` in-place. doesn't modify the remaining arguments.
     """
-    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
-    rules = list(rules)
-    namespaces = capa.rules.index_rules_by_namespace(rules)
-    rules = {rule.name: rule for rule in rules}
-    seen = set([])
-    ret = []
-
-    def rec(rule):
-        if rule.name in seen:
-            return
-
-        for dep in rule.get_dependencies(namespaces):
-            rec(rules[dep])
-
-        ret.append(rule)
-        seen.add(rule.name)
-
-    for rule in rules.values():
-        rec(rule)
-
-    return ret
+    features[capa.features.common.MatchedRule(rule.name)].update(locations)
+    namespace = rule.meta.get("namespace")
+    if namespace:
+        while namespace:
+            features[capa.features.common.MatchedRule(namespace)].update(locations)
+            namespace, _, _ = namespace.rpartition("/")
 
 
-def match(rules, features, va):
+def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -> Tuple[FeatureSet, MatchResults]:
     """
-    Args:
-      rules (List[capa.rules.Rule]): these must already be ordered topologically by dependency.
-      features (Mapping[capa.features.Feature, int]):
-      va (int): location of the features
+    match the given rules against the given features,
+    returning an updated set of features and the matches.
 
-    Returns:
-      Tuple[List[capa.features.Feature], Dict[str, Tuple[int, capa.engine.Result]]]: two-tuple with entries:
-        - list of features used for matching (which may be greater than argument, due to rule match features), and
-        - mapping from rule name to (location of match, result object)
+    the updated features are just like the input,
+    but extended to include the match features (e.g. names of rules that matched).
+    the given feature set is not modified; an updated copy is returned.
+
+    the given list of rules must be ordered topologically by dependency,
+    or else `match` statements will not be handled correctly.
+
+    this routine should be fairly optimized, but is not guaranteed to be the fastest matcher possible.
+    it has a particularly convenient signature: (rules, features) -> matches
+    other strategies can be imagined that match differently; implement these elsewhere.
+    specifically, this routine does "top down" matching of the given rules against the feature set.
     """
-    results = collections.defaultdict(list)
+    results = collections.defaultdict(list)  # type: MatchResults
 
     # copy features so that we can modify it
     # without affecting the caller (keep this function pure)
@@ -251,15 +313,22 @@ def match(rules, features, va):
     features = collections.defaultdict(set, copy.copy(features))
 
     for rule in rules:
-        res = rule.evaluate(features)
+        res = rule.evaluate(features, short_circuit=True)
         if res:
-            results[rule.name].append((va, res))
-            features[capa.features.MatchedRule(rule.name)].add(va)
+            # we first matched the rule with short circuiting enabled.
+            # this is much faster than without short circuiting.
+            # however, we want to collect all results thoroughly,
+            # so once we've found a match quickly,
+            # go back and capture results without short circuiting.
+            res = rule.evaluate(features, short_circuit=False)
 
-            namespace = rule.meta.get("namespace")
-            if namespace:
-                while namespace:
-                    features[capa.features.MatchedRule(namespace)].add(va)
-                    namespace, _, _ = namespace.rpartition("/")
+            # sanity check
+            assert bool(res) is True
+
+            results[rule.name].append((addr, res))
+            # we need to update the current `features`
+            # because subsequent iterations of this loop may use newly added features,
+            # such as rule or namespace matches.
+            index_rule_matches(features, rule, [addr])
 
     return (features, results)

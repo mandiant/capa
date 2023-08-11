@@ -1,3 +1,10 @@
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at: [package root]/LICENSE.txt
+# Unless required by applicable law or agreed to in writing, software distributed under the License
+#  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
 """
 Binary Ninja plugin that imports a capa report,
 produced via `capa --json /path/to/sample`,
@@ -20,12 +27,14 @@ Adapted for Binary Ninja by @psifertex
 This script will verify that the report matches the workspace.
 Check the log window for any errors, and/or the summary of changes.
 
-Derived from: https://github.com/fireeye/capa/blob/master/scripts/import-to-ida.py
+Derived from: https://github.com/mandiant/capa/blob/master/scripts/import-to-ida.py
 """
 import os
 import json
+from pathlib import Path
 
-from binaryninja import *
+import binaryninja
+import binaryninja.interaction
 
 
 def append_func_cmt(bv, va, cmt):
@@ -44,33 +53,34 @@ def append_func_cmt(bv, va, cmt):
 
 
 def load_analysis(bv):
-    shortname = os.path.splitext(os.path.basename(bv.file.filename))[0]
-    dirname = os.path.dirname(bv.file.filename)
-    log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
-    if os.access(os.path.join(dirname, shortname + ".js"), os.R_OK):
-        path = os.path.join(dirname, shortname + ".js")
-    elif os.access(os.path.join(dirname, shortname + ".json"), os.R_OK):
-        path = os.path.join(dirname, shortname + ".json")
+    shortname = Path(bv.file.filename).resolve().stem
+    dirname = Path(bv.file.filename).resolve().parent
+    binaryninja.log_info(f"dirname: {dirname}\nshortname: {shortname}\n")
+    js_path = path = dirname / (shortname + ".js")
+    json_path = dirname / (shortname + ".json")
+    if os.access(str(js_path), os.R_OK):
+        path = js_path
+    elif os.access(str(json_path), os.R_OK):
+        path = json_path
     else:
-        path = interaction.get_open_filename_input("capa report:", "JSON (*.js *.json);;All Files (*)")
-    if not path or not os.access(path, os.R_OK):
-        log_error("Invalid filename.")
+        path = binaryninja.interaction.get_open_filename_input("capa report:", "JSON (*.js *.json);;All Files (*)")
+    if not path or not os.access(str(path), os.R_OK):
+        binaryninja.log_error("Invalid filename.")
         return 0
-    log_info("Using capa file %s" % path)
+    binaryninja.log_info(f"Using capa file {path}")
 
-    with open(path, "rb") as f:
-        doc = json.loads(f.read().decode("utf-8"))
+    doc = json.loads(path.read_bytes().decode("utf-8"))
 
     if "meta" not in doc or "rules" not in doc:
-        log_error("doesn't appear to be a capa report")
+        binaryninja.log_error("doesn't appear to be a capa report")
         return -1
 
     a = doc["meta"]["sample"]["md5"].lower()
-    md5 = Transform["MD5"]
-    rawhex = Transform["RawHex"]
+    md5 = binaryninja.Transform["MD5"]
+    rawhex = binaryninja.Transform["RawHex"]
     b = rawhex.encode(md5.encode(bv.parent_view.read(bv.parent_view.start, bv.parent_view.end))).decode("utf-8")
-    if not a == b:
-        log_error("sample mismatch")
+    if a != b:
+        binaryninja.log_error("sample mismatch")
         return -2
 
     rows = []
@@ -92,11 +102,11 @@ def load_analysis(bv):
     rows = sorted(rows)
     for ns, name, va in rows:
         if ns:
-            cmt = "%s (%s)" % (name, ns)
+            cmt = f"{name} ({ns})"
         else:
-            cmt = "%s" % (name,)
+            cmt = f"{name}"
 
-        log_info("0x%x: %s" % (va, cmt))
+        binaryninja.log_info(f"{hex(va)}: {cmt}")
         try:
             # message will look something like:
             #
@@ -105,7 +115,7 @@ def load_analysis(bv):
         except ValueError:
             continue
 
-    log_info("ok")
+    binaryninja.log_info("ok")
 
 
-PluginCommand.register("Load capa file", "Loads an analysis file from capa", load_analysis)
+binaryninja.PluginCommand.register("Load capa file", "Loads an analysis file from capa", load_analysis)

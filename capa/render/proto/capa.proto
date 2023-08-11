@@ -1,0 +1,364 @@
+syntax = "proto3";
+
+message APIFeature {
+  string type = 1;
+  string api = 2;
+  optional string description = 3;
+}
+
+message Address {
+  AddressType type = 1;
+  oneof value {
+    Integer v = 2;
+    Token_Offset token_offset = 3;
+  };
+}
+
+enum AddressType {
+  ADDRESSTYPE_UNSPECIFIED = 0;
+  ADDRESSTYPE_ABSOLUTE = 1;
+  ADDRESSTYPE_RELATIVE = 2;
+  ADDRESSTYPE_FILE = 3;
+  ADDRESSTYPE_DN_TOKEN = 4;
+  ADDRESSTYPE_DN_TOKEN_OFFSET = 5;
+  ADDRESSTYPE_NO_ADDRESS = 6;
+}
+
+message Analysis {
+  string format = 1;
+  string arch = 2;
+  string os = 3;
+  string extractor = 4;
+  repeated string rules = 5;
+  Address base_address = 6;
+  Layout layout = 7;
+  FeatureCounts feature_counts = 8;
+  repeated LibraryFunction library_functions = 9;
+}
+
+message ArchFeature {
+  string type = 1;
+  string arch = 2;
+  optional string description = 3;
+}
+
+message AttackSpec {
+  repeated string parts = 1;
+  string tactic = 2;
+  string technique = 3;
+  string subtechnique = 4;
+  string id = 5;
+}
+
+message BasicBlockFeature {
+  string type = 1;
+  optional string description = 2;
+}
+
+message BasicBlockLayout {
+  Address address = 1;
+}
+
+message BytesFeature {
+  string type = 1;
+  string bytes = 2;
+  optional string description = 3;
+}
+
+message CharacteristicFeature {
+  string type = 1;
+  string characteristic = 2;
+  optional string description = 3;
+}
+
+message ClassFeature {
+  string type = 1;
+  string class_ = 2;  // class is protected Python keyword
+  optional string description = 3;
+}
+
+message CompoundStatement {
+  string type = 1;
+  optional string description = 2;
+}
+
+message ExportFeature {
+  string type = 1;
+  string export = 2;
+  optional string description = 3;
+}
+
+message FeatureCounts {
+  uint64 file = 1;
+  repeated FunctionFeatureCount functions = 2;
+}
+
+message FeatureNode {
+  string type = 1;
+  oneof feature {
+    OSFeature os = 2;
+    ArchFeature arch = 3;
+    FormatFeature format = 4;
+    MatchFeature match = 5;
+    CharacteristicFeature characteristic = 6;
+    ExportFeature export = 7;
+    ImportFeature import_ = 8;  // import is Python keyword
+    SectionFeature section = 9;
+    FunctionNameFeature function_name = 10;
+    SubstringFeature substring = 11;
+    RegexFeature regex = 12;
+    StringFeature string = 13;
+    ClassFeature class_ = 14;
+    NamespaceFeature namespace = 15;
+    APIFeature api = 16;
+    PropertyFeature property_ = 17;  // property is a Python top-level decorator name
+    NumberFeature number = 18;
+    BytesFeature bytes = 19;
+    OffsetFeature offset = 20;
+    MnemonicFeature mnemonic = 21;
+    OperandNumberFeature operand_number = 22;
+    OperandOffsetFeature operand_offset = 23;
+    BasicBlockFeature basic_block = 24;
+  };
+}
+
+message FormatFeature {
+  string type = 1;
+  string format = 2;
+  optional string description = 3;
+}
+
+message FunctionFeatureCount {
+  Address address = 1;
+  uint64 count = 2;
+}
+
+message FunctionLayout {
+  Address address = 1;
+  repeated BasicBlockLayout matched_basic_blocks = 2;
+}
+
+message FunctionNameFeature {
+  string type = 1;
+  string function_name = 2;
+  optional string description = 3;
+}
+
+message ImportFeature {
+  string type = 1;
+  string import_ = 2;
+  optional string description = 3;
+}
+
+message Layout {
+  repeated FunctionLayout functions = 1;
+}
+
+message LibraryFunction {
+  Address address = 1;
+  string name = 2;
+}
+
+message MBCSpec {
+  repeated string parts = 1;
+  string objective = 2;
+  string behavior = 3;
+  string method = 4;
+  string id = 5;
+}
+
+message MaecMetadata {
+  string analysis_conclusion = 1;
+  string analysis_conclusion_ov = 2;
+  string malware_family = 3;
+  string malware_category = 4;
+  string malware_category_ov = 5;
+}
+
+message Match {
+  bool success = 1;
+  oneof node {
+    StatementNode statement = 2;
+    FeatureNode feature = 3;
+  };
+  repeated Match children = 5;
+  repeated Address locations = 6;
+  map <string, Addresses> captures = 7;
+}
+
+message MatchFeature {
+  string type = 1;
+  string match = 2;
+  optional string description = 3;
+}
+
+message Metadata {
+  string timestamp = 1;  // iso8601 format, like: 2019-01-01T00:00:00Z 
+  string version = 2;
+  repeated string argv = 3;
+  Sample sample = 4;
+  Analysis analysis = 5;
+}
+
+message MnemonicFeature {
+  string type = 1;
+  string mnemonic = 2;
+  optional string description = 3;
+}
+
+message NamespaceFeature {
+  string type = 1;
+  string namespace = 2;
+  optional string description = 3;
+}
+
+message NumberFeature {
+  string type = 1;
+  Number number = 2;  // this can be positive (range: u64), negative (range: i64), or a double.
+  optional string description = 5;
+}
+
+message OSFeature {
+  string type = 1;
+  string os = 2;
+  optional string description = 3;
+}
+
+message OffsetFeature {
+  string type = 1;
+  Integer offset = 2;  // offset can be negative
+  optional string description = 3;
+}
+
+message OperandNumberFeature {
+  string type = 1;
+  uint32 index = 2;
+  Integer operand_number = 3;  // this can be positive (range: u64), negative (range: i64), or a double.
+  optional string description = 4;
+}
+
+message OperandOffsetFeature {
+  string type = 1;
+  uint32 index = 2;
+  Integer operand_offset = 3;
+  optional string description = 4;
+}
+
+message PropertyFeature {
+  string type = 1;
+  string property_ = 2;  // property is a Python top-level decorator name
+  optional string access = 3;
+  optional string description = 4;
+}
+
+message RangeStatement {
+  string type = 1;
+  uint64 min = 2;
+  uint64 max = 3;
+  // reusing FeatureNode here to avoid duplication and list all features OSFeature, ArchFeature, ... again.
+  FeatureNode child = 4;
+  optional string description = 5;
+}
+
+message RegexFeature {
+  string type = 1;
+  string regex = 2;
+  optional string description = 3;
+}
+
+message ResultDocument {
+  Metadata meta = 1;
+  map <string, RuleMatches> rules = 2;
+}
+
+message RuleMatches {
+  RuleMetadata meta = 1;
+  string source = 2;
+  repeated Pair_Address_Match matches = 3;
+}
+
+message RuleMetadata {
+  string name = 1;
+  string namespace = 2;
+  repeated string authors = 3;
+  Scope scope = 4;
+  repeated AttackSpec attack = 5;
+  repeated MBCSpec mbc = 6;
+  repeated string references = 7;
+  repeated string examples = 8;
+  string description = 9;
+  bool lib = 10;
+  MaecMetadata maec = 11;
+  bool is_subscope_rule = 12;
+}
+
+message Sample {
+  string md5 = 1;
+  string sha1 = 2;
+  string sha256 = 3;
+  string path = 4;
+}
+
+enum Scope {
+  SCOPE_UNSPECIFIED = 0;
+  SCOPE_FILE = 1;
+  SCOPE_FUNCTION = 2;
+  SCOPE_BASIC_BLOCK = 3;
+  SCOPE_INSTRUCTION = 4;
+}
+
+message SectionFeature {
+  string type = 1;
+  string section = 2;
+  optional string description = 3;
+}
+
+message SomeStatement {
+  string type = 1;
+  uint32 count = 2;
+  optional string description = 3;
+}
+
+message StatementNode {
+  string type = 1;
+  oneof statement {
+    RangeStatement range = 2;
+    SomeStatement some = 3;
+    SubscopeStatement subscope = 4;
+    CompoundStatement compound = 5;
+  };
+}
+
+message StringFeature {
+  string type = 1;
+  string string = 2;
+  optional string description = 3;
+}
+
+message SubscopeStatement {
+  string type = 1;
+  Scope scope = 2;
+  optional string description = 3;
+}
+
+message SubstringFeature {
+  string type = 1;
+  string substring = 2;
+  optional string description = 3;
+}
+
+message Addresses { repeated Address address = 1; }
+
+message Pair_Address_Match {
+  Address address = 1;
+  Match match = 2;
+}
+
+message Token_Offset {
+  Integer token = 1;
+  uint64 offset = 2;  // offset is always >= 0
+}
+
+message Integer { oneof value { uint64 u = 1; sint64 i = 2; } }  // unsigned or signed int
+
+message Number { oneof value { uint64 u = 1; sint64 i = 2; double f = 3; } }

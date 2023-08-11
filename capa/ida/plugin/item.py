@@ -1,4 +1,4 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,14 +6,15 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import sys
 import codecs
+from typing import List, Iterator, Optional
 
 import idc
 import idaapi
 from PyQt5 import QtCore
 
 import capa.ida.helpers
+from capa.features.address import Address, FileOffsetAddress, AbsoluteVirtualAddress
 
 
 def info_to_name(display):
@@ -27,28 +28,27 @@ def info_to_name(display):
         return ""
 
 
-def location_to_hex(location):
-    """convert location to hex for display"""
-    return "%08X" % location
+def ea_to_hex(ea):
+    """convert effective address (ea) to hex for display"""
+    return f"{hex(ea)}"
 
 
-class CapaExplorerDataItem(object):
+class CapaExplorerDataItem:
     """store data for CapaExplorerDataModel"""
 
-    def __init__(self, parent, data):
+    def __init__(self, parent: Optional["CapaExplorerDataItem"], data: List[str], can_check=True):
         """initialize item"""
         self.pred = parent
         self._data = data
-        self.children = []
+        self._children: List["CapaExplorerDataItem"] = []
         self._checked = False
+        self._can_check = can_check
 
         # default state for item
-        self.flags = (
-            QtCore.Qt.ItemIsEnabled
-            | QtCore.Qt.ItemIsSelectable
-            | QtCore.Qt.ItemIsTristate
-            | QtCore.Qt.ItemIsUserCheckable
-        )
+        self.flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+        if self._can_check:
+            self.flags = self.flags | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
 
         if self.pred:
             self.pred.appendChild(self)
@@ -70,33 +70,37 @@ class CapaExplorerDataItem(object):
         """
         self._checked = checked
 
+    def canCheck(self):
+        """ """
+        return self._can_check
+
     def isChecked(self):
         """get item is checked"""
         return self._checked
 
-    def appendChild(self, item):
+    def appendChild(self, item: "CapaExplorerDataItem"):
         """add a new child to specified item
 
         @param item: CapaExplorerDataItem
         """
-        self.children.append(item)
+        self._children.append(item)
 
-    def child(self, row):
+    def child(self, row: int) -> "CapaExplorerDataItem":
         """get child row
 
         @param row: row number
         """
-        return self.children[row]
+        return self._children[row]
 
-    def childCount(self):
+    def childCount(self) -> int:
         """get child count"""
-        return len(self.children)
+        return len(self._children)
 
-    def columnCount(self):
+    def columnCount(self) -> int:
         """get column count"""
         return len(self._data)
 
-    def data(self, column):
+    def data(self, column: int) -> Optional[str]:
         """get data at column
 
         @param: column number
@@ -106,17 +110,17 @@ class CapaExplorerDataItem(object):
         except IndexError:
             return None
 
-    def parent(self):
+    def parent(self) -> Optional["CapaExplorerDataItem"]:
         """get parent"""
         return self.pred
 
-    def row(self):
+    def row(self) -> int:
         """get row location"""
         if self.pred:
-            return self.pred.children.index(self)
+            return self.pred._children.index(self)
         return 0
 
-    def setData(self, column, value):
+    def setData(self, column: int, value: str):
         """set data in column
 
         @param column: column number
@@ -124,14 +128,13 @@ class CapaExplorerDataItem(object):
         """
         self._data[column] = value
 
-    def children(self):
+    def children(self) -> Iterator["CapaExplorerDataItem"]:
         """yield children"""
-        for child in self.children:
-            yield child
+        yield from self._children
 
     def removeChildren(self):
         """remove children"""
-        del self.children[:]
+        del self._children[:]
 
     def __str__(self):
         """get string representation of columns
@@ -146,7 +149,7 @@ class CapaExplorerDataItem(object):
         return self._data[0]
 
     @property
-    def location(self):
+    def location(self) -> Optional[int]:
         """return data stored in location column"""
         try:
             # address stored as str, convert to int before return
@@ -165,7 +168,9 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
 
     fmt = "%s (%d matches)"
 
-    def __init__(self, parent, name, namespace, count, source):
+    def __init__(
+        self, parent: CapaExplorerDataItem, name: str, namespace: str, count: int, source: str, can_check=True
+    ):
         """initialize item
 
         @param parent: parent node
@@ -175,7 +180,7 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
         @param source: rule source (tooltip)
         """
         display = self.fmt % (name, count) if count > 1 else name
-        super(CapaExplorerRuleItem, self).__init__(parent, [display, "", namespace])
+        super().__init__(parent, [display, "", namespace], can_check)
         self._source = source
 
     @property
@@ -187,19 +192,19 @@ class CapaExplorerRuleItem(CapaExplorerDataItem):
 class CapaExplorerRuleMatchItem(CapaExplorerDataItem):
     """store data for rule match"""
 
-    def __init__(self, parent, display, source=""):
+    def __init__(self, parent: CapaExplorerDataItem, display: str, source=""):
         """initialize item
 
         @param parent: parent node
         @param display: text to display in UI
         @param source: rule match source to display (tooltip)
         """
-        super(CapaExplorerRuleMatchItem, self).__init__(parent, [display, "", ""])
+        super().__init__(parent, [display, "", ""])
         self._source = source
 
     @property
     def source(self):
-        """ return rule contents for display """
+        """return rule contents for display"""
         return self._source
 
 
@@ -208,20 +213,20 @@ class CapaExplorerFunctionItem(CapaExplorerDataItem):
 
     fmt = "function(%s)"
 
-    def __init__(self, parent, location):
+    def __init__(self, parent: CapaExplorerDataItem, location: Address, can_check=True):
         """initialize item
 
         @param parent: parent node
         @param location: virtual address of function as seen by IDA
         """
-        super(CapaExplorerFunctionItem, self).__init__(
-            parent, [self.fmt % idaapi.get_name(location), location_to_hex(location), ""]
-        )
+        assert isinstance(location, AbsoluteVirtualAddress)
+        ea = int(location)
+        super().__init__(parent, [self.fmt % idaapi.get_name(ea), ea_to_hex(ea), ""], can_check)
 
     @property
     def info(self):
         """return function name"""
-        info = super(CapaExplorerFunctionItem, self).info
+        info = super().info
         display = info_to_name(info)
         return display if display else info
 
@@ -241,13 +246,13 @@ class CapaExplorerSubscopeItem(CapaExplorerDataItem):
 
     fmt = "subscope(%s)"
 
-    def __init__(self, parent, scope):
+    def __init__(self, parent: CapaExplorerDataItem, scope):
         """initialize item
 
         @param parent: parent node
         @param scope: subscope name
         """
-        super(CapaExplorerSubscopeItem, self).__init__(parent, [self.fmt % scope, "", ""])
+        super().__init__(parent, [self.fmt % scope, "", ""])
 
 
 class CapaExplorerBlockItem(CapaExplorerDataItem):
@@ -255,19 +260,29 @@ class CapaExplorerBlockItem(CapaExplorerDataItem):
 
     fmt = "basic block(loc_%08X)"
 
-    def __init__(self, parent, location):
+    def __init__(self, parent: CapaExplorerDataItem, location: Address):
         """initialize item
 
         @param parent: parent node
         @param location: virtual address of basic block as seen by IDA
         """
-        super(CapaExplorerBlockItem, self).__init__(parent, [self.fmt % location, location_to_hex(location), ""])
+        assert isinstance(location, AbsoluteVirtualAddress)
+        ea = int(location)
+        super().__init__(parent, [self.fmt % ea, ea_to_hex(ea), ""])
+
+
+class CapaExplorerInstructionItem(CapaExplorerBlockItem):
+    """store data for instruction match"""
+
+    fmt = "instruction(loc_%08X)"
 
 
 class CapaExplorerDefaultItem(CapaExplorerDataItem):
     """store data for default match e.g. statement (and, or)"""
 
-    def __init__(self, parent, display, details="", location=None):
+    def __init__(
+        self, parent: CapaExplorerDataItem, display: str, details: str = "", location: Optional[Address] = None
+    ):
         """initialize item
 
         @param parent: parent node
@@ -275,14 +290,20 @@ class CapaExplorerDefaultItem(CapaExplorerDataItem):
         @param details: text to display in details section of UI
         @param location: virtual address as seen by IDA
         """
-        location = location_to_hex(location) if location else ""
-        super(CapaExplorerDefaultItem, self).__init__(parent, [display, location, details])
+        ea = None
+        if location:
+            assert isinstance(location, AbsoluteVirtualAddress)
+            ea = int(location)
+
+        super().__init__(parent, [display, ea_to_hex(ea) if ea is not None else "", details])
 
 
 class CapaExplorerFeatureItem(CapaExplorerDataItem):
     """store data for feature match"""
 
-    def __init__(self, parent, display, location="", details=""):
+    def __init__(
+        self, parent: CapaExplorerDataItem, display: str, location: Optional[Address] = None, details: str = ""
+    ):
         """initialize item
 
         @param parent: parent node
@@ -290,14 +311,18 @@ class CapaExplorerFeatureItem(CapaExplorerDataItem):
         @param details: text to display in details section of UI
         @param location: virtual address as seen by IDA
         """
-        location = location_to_hex(location) if location else ""
-        super(CapaExplorerFeatureItem, self).__init__(parent, [display, location, details])
+        if location:
+            assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
+            ea = int(location)
+            super().__init__(parent, [display, ea_to_hex(ea), details])
+        else:
+            super().__init__(parent, [display, "", details])
 
 
 class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
     """store data for instruction match"""
 
-    def __init__(self, parent, display, location):
+    def __init__(self, parent: CapaExplorerDataItem, display: str, location: Address):
         """initialize item
 
         details section shows disassembly view for match
@@ -306,15 +331,17 @@ class CapaExplorerInstructionViewItem(CapaExplorerFeatureItem):
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        details = capa.ida.helpers.get_disasm_line(location)
-        super(CapaExplorerInstructionViewItem, self).__init__(parent, display, location=location, details=details)
-        self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
+        assert isinstance(location, AbsoluteVirtualAddress)
+        ea = int(location)
+        details = capa.ida.helpers.get_disasm_line(ea)
+        super().__init__(parent, display, location=location, details=details)
+        self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)
 
 
 class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
     """store data for byte match"""
 
-    def __init__(self, parent, display, location):
+    def __init__(self, parent: CapaExplorerDataItem, display: str, location: Address):
         """initialize item
 
         details section shows byte preview for match
@@ -323,30 +350,32 @@ class CapaExplorerByteViewItem(CapaExplorerFeatureItem):
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        byte_snap = idaapi.get_bytes(location, 32)
+        assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
+        ea = int(location)
 
+        byte_snap = idaapi.get_bytes(ea, 32)
+
+        details = ""
         if byte_snap:
             byte_snap = codecs.encode(byte_snap, "hex").upper()
-            if sys.version_info >= (3, 0):
-                details = " ".join([byte_snap[i : i + 2].decode() for i in range(0, len(byte_snap), 2)])
-            else:
-                details = " ".join([byte_snap[i : i + 2] for i in range(0, len(byte_snap), 2)])
-        else:
-            details = ""
+            details = " ".join([byte_snap[i : i + 2].decode() for i in range(0, len(byte_snap), 2)])
 
-        super(CapaExplorerByteViewItem, self).__init__(parent, display, location=location, details=details)
-        self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
+        super().__init__(parent, display, location=location, details=details)
+        self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)
 
 
 class CapaExplorerStringViewItem(CapaExplorerFeatureItem):
     """store data for string match"""
 
-    def __init__(self, parent, display, location, value):
+    def __init__(self, parent: CapaExplorerDataItem, display: str, location: Address, value: str):
         """initialize item
 
         @param parent: parent node
         @param display: text to display in UI
         @param location: virtual address as seen by IDA
         """
-        super(CapaExplorerStringViewItem, self).__init__(parent, display, location=location, details=value)
-        self.ida_highlight = idc.get_color(location, idc.CIC_ITEM)
+        assert isinstance(location, (AbsoluteVirtualAddress, FileOffsetAddress))
+        ea = int(location)
+
+        super().__init__(parent, display, location=location, details=value)
+        self.ida_highlight = idc.get_color(ea, idc.CIC_ITEM)

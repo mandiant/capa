@@ -1,11 +1,10 @@
-# Copyright (C) 2020 FireEye, Inc. All Rights Reserved.
+# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import six
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 
@@ -23,7 +22,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         """initialize proxy filter"""
-        super(CapaExplorerRangeProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self.min_ea = None
         self.max_ea = None
 
@@ -93,7 +92,7 @@ class CapaExplorerRangeProxyModel(QtCore.QSortFilterProxyModel):
         @param parent: QModelIndex of parent
         """
         # filter not set
-        if self.min_ea is None and self.max_ea is None:
+        if self.min_ea is None or self.max_ea is None:
             return True
 
         index = self.sourceModel().index(row, 0, parent)
@@ -146,7 +145,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         """ """
-        super(CapaExplorerSearchProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self.query = ""
         self.setFilterKeyColumn(-1)  # all columns
 
@@ -208,7 +207,7 @@ class CapaExplorerSearchProxyModel(QtCore.QSortFilterProxyModel):
             if not data:
                 continue
 
-            if not isinstance(data, six.string_types):
+            if not isinstance(data, str):
                 # sanity check: should already be a string, but double check
                 continue
 
