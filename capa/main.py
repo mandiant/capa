@@ -21,7 +21,7 @@ import itertools
 import contextlib
 import collections
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Literal, Callable, Optional
+from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -1023,11 +1023,10 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
-    flavor: Literal["static", "dynamic"]
     if isinstance(extractor, StaticFeatureExtractor):
-        flavor = "static"
+        flavor = rdoc.Flavor.STATIC
     elif isinstance(extractor, DynamicFeatureExtractor):
-        flavor = "dynamic"
+        flavor = rdoc.Flavor.DYNAMIC
     else:
         assert_never(extractor)
 

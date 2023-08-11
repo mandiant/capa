@@ -43,6 +43,23 @@ ADDRESSTYPE_DN_TOKEN_OFFSET: AddressType.ValueType  # 5
 ADDRESSTYPE_NO_ADDRESS: AddressType.ValueType  # 6
 global___AddressType = AddressType
 
+class _Flavor:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _FlavorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Flavor.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    FLAVOR_UNSPECIFIED: _Flavor.ValueType  # 0
+    FLAVOR_STATIC: _Flavor.ValueType  # 1
+    FLAVOR_DYNAMIC: _Flavor.ValueType  # 2
+
+class Flavor(_Flavor, metaclass=_FlavorEnumTypeWrapper): ...
+
+FLAVOR_UNSPECIFIED: Flavor.ValueType  # 0
+FLAVOR_STATIC: Flavor.ValueType  # 1
+FLAVOR_DYNAMIC: Flavor.ValueType  # 2
+global___Flavor = Flavor
+
 class _Scope:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
@@ -786,7 +803,7 @@ class Metadata(google.protobuf.message.Message):
     def sample(self) -> global___Sample: ...
     @property
     def analysis(self) -> global___Analysis: ...
-    flavor: builtins.str
+    flavor: global___Flavor.ValueType
     def __init__(
         self,
         *,
@@ -795,7 +812,7 @@ class Metadata(google.protobuf.message.Message):
         argv: collections.abc.Iterable[builtins.str] | None = ...,
         sample: global___Sample | None = ...,
         analysis: global___Analysis | None = ...,
-        flavor: builtins.str = ...,
+        flavor: global___Flavor.ValueType = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "sample", b"sample"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "argv", b"argv", "flavor", b"flavor", "sample", b"sample", "timestamp", b"timestamp", "version", b"version"]) -> None: ...

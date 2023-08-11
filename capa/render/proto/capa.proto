@@ -192,13 +192,19 @@ message MatchFeature {
   optional string description = 3;
 }
 
+enum Flavor {
+  FLAVOR_UNSPECIFIED = 0;
+  FLAVOR_STATIC = 1;
+  FLAVOR_DYNAMIC = 2;
+}
+
 message Metadata {
   string timestamp = 1;  // iso8601 format, like: 2019-01-01T00:00:00Z 
   string version = 2;
   repeated string argv = 3;
   Sample sample = 4;
   Analysis analysis = 5;
-  string flavor = 6;
+  Flavor flavor = 6;
 }
 
 message MnemonicFeature {
