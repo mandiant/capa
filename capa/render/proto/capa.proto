@@ -198,6 +198,7 @@ message Metadata {
   repeated string argv = 3;
   Sample sample = 4;
   Analysis analysis = 5;
+  string flavor = 6;
 }
 
 message MnemonicFeature {

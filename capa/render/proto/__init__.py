@@ -25,7 +25,7 @@ $ protoc.exe --python_out=. --mypy_out=. <path_to_proto> (e.g. capa/render/proto
 Alternatively, --pyi_out=. can be used to generate a Python Interface file that supports development
 """
 import datetime
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Literal
 
 import google.protobuf.json_format
 
@@ -128,6 +128,7 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
         version=meta.version,
         argv=meta.argv,
         sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+        flavor=meta.flavor,
         analysis=capa_pb2.Analysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,
@@ -480,6 +481,11 @@ def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
         assert_never(scope)
 
 
+def flavor_from_pb2(flavor: str) -> Literal["static", "dynamic"]:
+    assert flavor in ("static", "dynamic")
+    return flavor  # type: ignore
+
+
 def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
     return rd.Metadata(
         timestamp=datetime.datetime.fromisoformat(meta.timestamp),
@@ -491,6 +497,7 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             sha256=meta.sample.sha256,
             path=meta.sample.path,
         ),
+        flavor=flavor_from_pb2(meta.flavor),
         analysis=rd.StaticAnalysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,

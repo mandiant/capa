@@ -776,6 +776,7 @@ class Metadata(google.protobuf.message.Message):
     ARGV_FIELD_NUMBER: builtins.int
     SAMPLE_FIELD_NUMBER: builtins.int
     ANALYSIS_FIELD_NUMBER: builtins.int
+    FLAVOR_FIELD_NUMBER: builtins.int
     timestamp: builtins.str
     """iso8601 format, like: 2019-01-01T00:00:00Z"""
     version: builtins.str
@@ -785,6 +786,7 @@ class Metadata(google.protobuf.message.Message):
     def sample(self) -> global___Sample: ...
     @property
     def analysis(self) -> global___Analysis: ...
+    flavor: builtins.str
     def __init__(
         self,
         *,
@@ -793,9 +795,10 @@ class Metadata(google.protobuf.message.Message):
         argv: collections.abc.Iterable[builtins.str] | None = ...,
         sample: global___Sample | None = ...,
         analysis: global___Analysis | None = ...,
+        flavor: builtins.str = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "sample", b"sample"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "argv", b"argv", "sample", b"sample", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "argv", b"argv", "flavor", b"flavor", "sample", b"sample", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
 
 global___Metadata = Metadata
 

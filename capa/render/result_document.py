@@ -125,6 +125,7 @@ class Metadata(Model):
     version: str
     argv: Optional[Tuple[str, ...]]
     sample: Sample
+    flavor: Literal["static", "dynamic"]
     analysis: Analysis
 
 

@@ -21,7 +21,7 @@ import itertools
 import contextlib
 import collections
 from enum import Enum
-from typing import Any, Dict, List, Tuple, Callable, Optional
+from typing import Any, Dict, List, Tuple, Literal, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -29,6 +29,7 @@ import tqdm
 import colorama
 import tqdm.contrib.logging
 from pefile import PEFormatError
+from typing_extensions import assert_never
 from elftools.common.exceptions import ELFError
 
 import capa.perf
@@ -1022,6 +1023,14 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
+    flavor: Literal["static", "dynamic"]
+    if isinstance(extractor, StaticFeatureExtractor):
+        flavor = "static"
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        flavor = "dynamic"
+    else:
+        assert_never(extractor)
+
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),
         version=capa.version.__version__,
@@ -1032,6 +1041,7 @@ def collect_metadata(
             sha256=sha256,
             path=str(Path(sample_path).resolve()),
         ),
+        flavor=flavor,
         analysis=get_sample_analysis(
             format_,
             arch,
