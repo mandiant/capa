@@ -137,6 +137,10 @@ class Scopes:
     @classmethod
     def from_dict(self, scopes: dict) -> "Scopes":
         assert isinstance(scopes, dict)
+
+        # make local copy so we don't make changes outside of this routine
+        scopes = dict(scopes)
+
         # mark non-specified scopes as invalid
         if "static" not in scopes:
             scopes["static"] = None
