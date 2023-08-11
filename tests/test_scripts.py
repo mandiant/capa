@@ -118,7 +118,7 @@ def test_bulk_process(tmp_path):
                 get_data_path("Practical Malware Analysis Lab 01-01.exe_"),
                 get_data_path("Practical Malware Analysis Lab 01-02.exe_")
             ], 
-            "yara/expected_pma_01-01.exe_01-01.exe"
+            "yara/expected_pma_01-01.exe_01-02.exe"
         ),
         
         # Test match-2-yar multiple x86 .NET PE
