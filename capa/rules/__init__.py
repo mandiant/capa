@@ -1263,7 +1263,6 @@ class RuleSet:
     def __init__(
         self,
         rules: List[Rule],
-        rules_filter_func=None,
     ):
         super().__init__()
 
@@ -1280,11 +1279,6 @@ class RuleSet:
         rules = self._extract_subscope_rules(rules)
 
         ensure_rule_dependencies_are_met(rules)
-
-        if rules_filter_func:
-            # this allows for filtering the ruleset based on
-            # the execution context (static or dynamic)
-            rules = list(filter(rules_filter_func, rules))
 
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")

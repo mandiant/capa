@@ -20,7 +20,6 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from enum import Enum
 from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
@@ -80,8 +79,6 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
-    STATIC_FORMATS,
-    DYNAMIC_FORMATS,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import (
@@ -116,15 +113,6 @@ E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
 
 logger = logging.getLogger("capa")
-
-
-class ExecutionContext(str, Enum):
-    STATIC = "static"
-    DYNAMIC = "dynamic"
-
-
-STATIC_CONTEXT = ExecutionContext.STATIC
-DYNAMIC_CONTEXT = ExecutionContext.DYNAMIC
 
 
 @contextlib.contextmanager
@@ -890,7 +878,6 @@ def get_rules(
     rule_paths: List[RulePath],
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
-    analysis_context: Optional[ExecutionContext] = None,
 ) -> RuleSet:
     """
     args:
@@ -929,14 +916,7 @@ def get_rules(
             rules.append(rule)
             logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
-    # filter rules according to the execution context
-    if analysis_context is STATIC_CONTEXT:
-        ruleset = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.static)
-    elif analysis_context is DYNAMIC_CONTEXT:
-        ruleset = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.dynamic)
-    else:
-        # default: load all rules
-        ruleset = capa.rules.RuleSet(rules)
+    ruleset = capa.rules.RuleSet(rules)
 
     capa.rules.cache.cache_ruleset(cache_dir, ruleset)
 
@@ -1465,15 +1445,7 @@ def main(argv: Optional[List[str]] = None):
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        if format_ in STATIC_FORMATS:
-            analysis_context = STATIC_CONTEXT
-        elif format_ in DYNAMIC_FORMATS:
-            analysis_context = DYNAMIC_CONTEXT
-        else:
-            # freeze or result formats
-            analysis_context = None
-
-        rules = get_rules(args.rules, cache_dir=cache_dir, analysis_context=analysis_context)
+        rules = get_rules(args.rules, cache_dir=cache_dir)
 
         logger.debug(
             "successfully loaded %s rules",
