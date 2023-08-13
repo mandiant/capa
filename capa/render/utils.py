@@ -19,12 +19,9 @@ def bold(s: str) -> str:
     return termcolor.colored(s, "cyan")
 
 
-def bold1(s: str, entropy: float) -> str:
-    """draw attention to the given string, set color based on entropy"""
-    if entropy > 0.05:
-        return termcolor.colored(s, "cyan")
-    else:
-        return termcolor.colored(s, "blue")
+def bold1(s: str) -> str:
+    """draw attention to the given string, set color to blue"""
+    return termcolor.colored(s, "blue")
 
 
 def bold2(s: str) -> str:
