@@ -9,16 +9,16 @@
 
 
 import sys
+import logging
 import argparse
 import textwrap
-from typing import List, Union, Literal, Optional
+from typing import Any, Dict, List, Tuple, Union, Literal, Optional  # noqa: F401
 from pathlib import Path
 
 import yaml
 from typing_extensions import TypeAlias
 
 from capa.main import collect_rule_file_paths
-from capa.features.address import NO_ADDRESS
 
 DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os")
 DYNAMIC_CHARACTERISTICS = ("embedded-pe",)
@@ -35,12 +35,14 @@ GET_DYNAMIC_EQUIV = {
 
 context: TypeAlias = Union[Literal["static"], Literal["dynamic"]]
 
+logger = logging.getLogger("capa.show-features")
 
-def rec_features_list(static: List[dict], context=False):
+
+def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], List[Dict]]:
     """
     takes in a list of static features, and returns it alongside a list of dynamic-only features
     """
-    dynamic = []
+    dynamic = []  # type: List[Dict]
     for node in static:
         for key, value in node.items():
             pass
@@ -70,7 +72,7 @@ def rec_features_list(static: List[dict], context=False):
     return static, dynamic
 
 
-def rec_scope(key, value):
+def rec_scope(key: str, value: List) -> Tuple[Dict[str, List], Dict[str, Optional[List]]]:
     """
     takes in a static subscope, and returns it alongside its dynamic counterpart.
     """
@@ -83,7 +85,7 @@ def rec_scope(key, value):
     return {key: value}, {}
 
 
-def rec_bool(key, value, context=False):
+def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Optional[List]]]:
     """
     takes in a capa logical statement and returns a static and dynamic variation of it.
     """
@@ -96,6 +98,7 @@ def rec_bool(key, value, context=False):
 
 
 class NoAliasDumper(yaml.SafeDumper):
+    # This is used to get rid of aliases in yaml.dump()'s output
     def ignore_aliases(self, data):
         return True
 
@@ -103,8 +106,12 @@ class NoAliasDumper(yaml.SafeDumper):
         return super(NoAliasDumper, self).increase_indent(flow, indentless)
 
 
-def update_meta(meta, has_dyn=True):
-    new_meta = {}
+def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
+    """
+    Takes in a meta field with the old `scope` keyword,
+    and replaces it with the `scopes` keyword while maintaining meta's keys order.
+    """
+    new_meta = {}  # type: Dict[str, Union[List, Dict, str]]
     for key, value in meta.items():
         if key != "scope":
             if isinstance(value, list):
@@ -119,7 +126,10 @@ def update_meta(meta, has_dyn=True):
     return new_meta
 
 
-def upgrade_rule(content):
+def upgrade_rule(content) -> str:
+    """
+    Takes in an old rule and returns its equivalent in the new rule format.
+    """
     features = content["rule"]["features"]
 
     for key, value in features[0].items():
@@ -136,10 +146,10 @@ def upgrade_rule(content):
 
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
-    print(upgraded_rule)
+    return upgraded_rule
 
 
-def main(argv: Optional[List[str]] = None):
+def main(argv: Optional[List[str]] = None) -> int:
     desc = (
         "Upgrade legacy-format rulesets into the new rules format which supports static and dynamic analysis flavors."
     )
@@ -162,9 +172,9 @@ def main(argv: Optional[List[str]] = None):
         print(
             textwrap.dedent(
                 """
-                WARNING: you've specified the same directory for the old-rules' path and the new rules' save path. 
-                This will cause this script to overwrite your old rules with the new upgraded ones. 
-                Are you sure you want proceed with overwritting the old rules [O]verwrite/[E]xit: 
+                WARNING: you've specified the same directory for the old-rules' path and the new rules' save path.
+                This will cause this script to overwrite your old rules with the new upgraded ones.
+                Are you sure you want proceed with overwritting the old rules [O]verwrite/[E]xit:
                 """
             )
         )
@@ -175,7 +185,7 @@ def main(argv: Optional[List[str]] = None):
                 print("Old rules' folder will be overwritten.")
             elif response == "e":
                 print("The ruleset will not been upgraded.")
-                sys.exit(0)
+                return 0
             else:
                 print("Please provide a valid answer [O]verwrite/[E]xit: ")
 
@@ -184,14 +194,27 @@ def main(argv: Optional[List[str]] = None):
     rule_contents = [rule_path.read_bytes() for rule_path in rule_file_paths]
 
     for path, content in zip(rule_file_paths, rule_contents):
-        content = content.decode("utf-8")
-        content = yaml.load(content, Loader=yaml.Loader)
+        """
+        This loop goes through the list of rules and does the following:
+        1. Get the current rule's content.
+        2. Get its dynamic-format equivalent.
+        3. Compute its save path and save it there.
+        """
+        content = yaml.load(content.decode("utf-8"), Loader=yaml.Loader)
         new_rule = upgrade_rule(content)
-        save_path = Path(new_rules_save_path)
-        save_path = save_path.joinpath(path.relative_to(old_rules_path))
+        save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
-        with save_path.open("w", encoding="utf-8") as f:
-            f.write(new_rule)
+        try:
+            with save_path.open("w", encoding="utf-8") as f:
+                f.write(new_rule)
+        except IOError as e:
+            logger.error(f"{e}")
+            return -1
+        else:
+            logger.error(f"updated rule: {path}")
+
+    print(f"Successfully updated {len(rule_file_paths)} rules.")
+    return 0
 
 
 if __name__ == "__main__":
