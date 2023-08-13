@@ -5,15 +5,17 @@
 ### New Features
 - ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
+- develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (6)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 - nursery/enumerate-device-drivers-on-linux @mr-tz
+- anti-analysis/anti-vm/vm-detection/check-for-foreground-window-switch ervin.ocampo@mandiant.com
 -
 
 ### Bug Fixes
@@ -22,6 +24,7 @@
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 
 ### capa explorer IDA Pro plugin
+- fix unhandled exception when resolving rule path #1693 @mike-hunhoff
 
 ### Development
 
