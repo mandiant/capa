@@ -363,6 +363,7 @@ def get_data_path_by_name(name) -> Path:
             / "data"
             / "dynamic"
             / "cape"
+            / "v2.2"
             / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
         )
     elif name.startswith("ea2876"):
