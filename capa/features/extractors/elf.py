@@ -718,7 +718,7 @@ class SymTab:
 
         SHT_SYMTAB = 0x2
         for section in elf.sections:
-            if section.sh_type & SHT_SYMTAB:
+            if section.sh_type == SHT_SYMTAB:
                 strtab_section = elf.sections[section.sh_link]
                 sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(
