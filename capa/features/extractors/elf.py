@@ -54,6 +54,7 @@ class OS(str, Enum):
     CLOUD = "cloud"
     SYLLABLE = "syllable"
     NACL = "nacl"
+    ANDROID = "android"
 
 
 # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
@@ -764,6 +765,11 @@ def guess_os_from_ph_notes(elf: ELF) -> Optional[OS]:
         elif note.name == "FreeBSD":
             logger.debug("note owner: %s", "FREEBSD")
             return OS.FREEBSD
+        elif note.name == "Android":
+            logger.debug("note owner: %s", "Android")
+            # see the following for parsing the structure:
+            # https://android.googlesource.com/platform/ndk/+/master/parse_elfnote.py
+            return OS.ANDROID
         elif note.name == "GNU":
             abi_tag = note.abi_tag
             if abi_tag:
