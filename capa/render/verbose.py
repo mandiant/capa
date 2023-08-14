@@ -56,10 +56,8 @@ def format_address(address: frz.Address) -> str:
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.DYNAMIC:
         assert isinstance(address.value, tuple)
-        id_, return_address = address.value
-        assert isinstance(id_, int)
-        assert isinstance(return_address, int)
-        return f"event: {id_}, retaddr: 0x{return_address:x}"
+        ppid, pid, tid, id_, return_address = address.value
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}, return address: {capa.helpers.hex(return_address)}"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
         ppid, pid = address.value
@@ -71,6 +69,10 @@ def format_address(address: frz.Address) -> str:
         tid = address.value
         assert isinstance(tid, int)
         return f"thread id: {tid}"
+    elif address.type == frz.AddressType.CALL:
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid, id_ = address.value
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
