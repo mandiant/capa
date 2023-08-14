@@ -35,7 +35,7 @@ GET_DYNAMIC_EQUIV = {
 
 context: TypeAlias = Union[Literal["static"], Literal["dynamic"]]
 
-logger = logging.getLogger("capa.show-features")
+logger = logging.getLogger(__name__)
 
 
 def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], List[Dict]]:
