@@ -355,7 +355,7 @@ def get_sample_md5_by_name(name):
     elif name.startswith("3b13b"):
         # file name is SHA256 hash
         return "56a6ffe6a02941028cc8235204eef31d"
-    elif name == "7351f.elf":
+    elif name.startswith("7351f"):
         return "7351f8a40c5450557b24622417fc478d"
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"

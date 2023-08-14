@@ -10,6 +10,7 @@ Must invoke this script from within the Ghidra Runtime Enviornment
 """
 import sys
 import logging
+from pathlib import Path
 
 import pytest
 import fixtures
@@ -18,38 +19,82 @@ logger = logging.getLogger("test_ghidra_features")
 
 ghidra_present: bool = False
 try:
-    import ghidra.program.flatapi  # noqa: F401
+    import ghidra.program.flatapi # noqa: F401
 
     ghidra_present = True
 except ImportError:
     pass
 
 
+def standardize_posix_str(psx_str):
+    """ fixture test passes the PosixPath to the test data 
+
+        params: psx_str - PosixPath() to the test data
+        return: string that matches test-id sample name
+    """
+
+    if "Practical Malware Analysis Lab" in str(psx_str):
+        # <PosixPath>/'Practical Malware Analysis Lab 16-01.exe_' -> 'pma16-01'
+        wanted_str = "pma" + str(psx_str).split('/')[-1][len("Practical Malware Analysis Lab "):-5]
+    else:
+        # <PosixPath>/mimikatz.exe_ -> mimikatz
+        wanted_str = str(psx_str).split('/')[-1][:-5]
+
+    if '_' in wanted_str:
+        # al-khaser_x86 -> al-khaser x86
+        wanted_str = wanted_str.replace('_', ' ')
+
+    return wanted_str
+
+
 def check_input_file(wanted):
+    """check that test is running on the loaded sample
+
+        params: wanted - PosixPath() passed from test arg
+    """
+
     import capa.ghidra.helpers as ghidra_helpers
 
     found = ghidra_helpers.get_file_md5()
-    if not wanted.startswith(found):
-        raise RuntimeError(f"please run the tests against sample with MD5: `{wanted}`")
+    sample_name = standardize_posix_str(wanted)
+
+    if not found.startswith(fixtures.get_sample_md5_by_name(sample_name)):
+        raise RuntimeError(f"please run the tests against sample with MD5: `{found}`")
 
 
-def get_ghidra_extractor(_path):
+def get_ghidra_extractor(path):
     import capa.features.extractors.ghidra.extractor
 
-    return capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+    setattr(extractor, "path", path.as_posix())
+
+    return extractor
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
 @fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"])
 def test_ghidra_features(sample, scope, feature, expected):
+
+    try:
+        check_input_file(sample)
+    except RuntimeError:
+        pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
+        
+
     fixtures.do_test_feature_presence(get_ghidra_extractor, sample, scope, feature, expected)
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
 @fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_COUNT_TESTS, indirect=["sample", "scope"])
 def test_ghidra_feature_counts(sample, scope, feature, expected):
-    fixtures.do_test_feature_presence(get_ghidra_extractor, sample, scope, feature, expected)
+
+    try:
+        check_input_file(sample)
+    except RuntimeError:
+        pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
+
+    fixtures.do_test_feature_count(get_ghidra_extractor, sample, scope, feature, expected)
 
 
 if __name__ == "__main__":
-    sys.exit(pytest.main(["--pyargs", "test_ghidra_features"]))
+    sys.exit(pytest.main(["--pyargs", "-s", "test_ghidra_features"]))
