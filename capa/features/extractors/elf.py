@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Set, Dict, List, Tuple, BinaryIO, Iterator, Optional
 from dataclasses import dataclass
 
+import Elf  # from vivisect
+
 logger = logging.getLogger(__name__)
 
 
@@ -710,17 +712,17 @@ class SymTab:
         yield from self.symbols
 
     @classmethod
-    def from_Elf(cls, ElfBinary) -> Optional["SymTab"]:
-        endian = "<" if ElfBinary.getEndian() == 0 else ">"
-        bitness = ElfBinary.bits
+    def from_viv(cls, elf: Elf.Elf) -> Optional["SymTab"]:
+        endian = "<" if elf.getEndian() == 0 else ">"
+        bitness = elf.bits
 
         SHT_SYMTAB = 0x2
-        for section in ElfBinary.sections:
-            if section.sh_info & SHT_SYMTAB:
-                strtab_section = ElfBinary.sections[section.sh_link]
-                sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
+        for section in elf.sections:
+            if section.sh_type == SHT_SYMTAB:
+                strtab_section = elf.sections[section.sh_link]
+                sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(
-                    strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
+                    strtab_section, elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
                 )
 
         try:
