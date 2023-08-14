@@ -861,6 +861,8 @@ def guess_os_from_needed_dependencies(elf: ELF) -> Optional[OS]:
             return OS.HURD
         if needed.startswith("libhurduser.so"):
             return OS.HURD
+        if needed.startswith("libandroid.so"):
+            return OS.ANDROID
 
     return None
 
