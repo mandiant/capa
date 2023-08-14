@@ -92,6 +92,7 @@ def render_static_meta(ostream, doc: rd.ResultDocument):
         os                   windows
         format               pe
         arch                 amd64
+        analysis             static
         extractor            VivisectFeatureExtractor
         base address         0x10000000
         rules                (embedded rules)
@@ -110,6 +111,7 @@ def render_static_meta(ostream, doc: rd.ResultDocument):
         ("os", doc.meta.analysis.os),
         ("format", doc.meta.analysis.format),
         ("arch", doc.meta.analysis.arch),
+        ("analysis", doc.meta.flavor),
         ("extractor", doc.meta.analysis.extractor),
         ("base address", format_address(doc.meta.analysis.base_address)),
         ("rules", "\n".join(doc.meta.analysis.rules)),
@@ -154,6 +156,7 @@ def render_dynamic_meta(ostream, doc: rd.ResultDocument):
         ("os", doc.meta.analysis.os),
         ("format", doc.meta.analysis.format),
         ("arch", doc.meta.analysis.arch),
+        ("analysis", doc.meta.flavor),
         ("extractor", doc.meta.analysis.extractor),
         ("rules", "\n".join(doc.meta.analysis.rules)),
         ("process count", len(doc.meta.analysis.feature_counts.processes)),

@@ -153,6 +153,7 @@ def collect_metadata(rules: List[Path]):
             sha256=sha256,
             path=idaapi.get_input_file_path(),
         ),
+        flavor=rdoc.Flavor.STATIC,
         analysis=rdoc.StaticAnalysis(
             format=idaapi.get_file_type_name(),
             arch=arch,

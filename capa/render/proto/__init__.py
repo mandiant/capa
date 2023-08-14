@@ -121,6 +121,15 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
         assert_never(scope)
 
 
+def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor.ValueType:
+    if flavor == rd.Flavor.STATIC:
+        return capa_pb2.Flavor.FLAVOR_STATIC
+    elif flavor == rd.Flavor.DYNAMIC:
+        return capa_pb2.Flavor.FLAVOR_DYNAMIC
+    else:
+        assert_never(flavor)
+
+
 def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
     assert isinstance(meta.analysis, rd.StaticAnalysis)
     return capa_pb2.Metadata(
@@ -128,6 +137,7 @@ def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
         version=meta.version,
         argv=meta.argv,
         sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+        flavor=flavor_to_pb2(meta.flavor),
         analysis=capa_pb2.Analysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,
@@ -480,6 +490,15 @@ def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
         assert_never(scope)
 
 
+def flavor_from_pb2(flavor: capa_pb2.Flavor.ValueType) -> rd.Flavor:
+    if flavor == capa_pb2.Flavor.FLAVOR_STATIC:
+        return rd.Flavor.STATIC
+    elif flavor == capa_pb2.Flavor.FLAVOR_DYNAMIC:
+        return rd.Flavor.DYNAMIC
+    else:
+        assert_never(flavor)
+
+
 def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
     return rd.Metadata(
         timestamp=datetime.datetime.fromisoformat(meta.timestamp),
@@ -491,6 +510,7 @@ def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
             sha256=meta.sample.sha256,
             path=meta.sample.path,
         ),
+        flavor=flavor_from_pb2(meta.flavor),
         analysis=rd.StaticAnalysis(
             format=meta.analysis.format,
             arch=meta.analysis.arch,

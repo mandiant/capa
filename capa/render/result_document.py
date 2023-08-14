@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import datetime
 import collections
+from enum import Enum
 from typing import Dict, List, Tuple, Union, Literal, Optional
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -120,11 +121,17 @@ class DynamicAnalysis(Model):
 Analysis: TypeAlias = Union[StaticAnalysis, DynamicAnalysis]
 
 
+class Flavor(str, Enum):
+    STATIC = "static"
+    DYNAMIC = "dynamic"
+
+
 class Metadata(Model):
     timestamp: datetime.datetime
     version: str
     argv: Optional[Tuple[str, ...]]
     sample: Sample
+    flavor: Flavor
     analysis: Analysis
 
 
