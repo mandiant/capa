@@ -408,8 +408,8 @@ def test_rules_flavor_filtering():
         ),
     ]
 
-    static_rules = capa.rules.RuleSet([r for r in rules if r.meta.scopes.static is not None])
-    dynamic_rules = capa.rules.RuleSet([r for r in rules if r.meta.scopes.dynamic is not None])
+    static_rules = capa.rules.RuleSet([r for r in rules if r.scopes.static is not None])
+    dynamic_rules = capa.rules.RuleSet([r for r in rules if r.scopes.dynamic is not None])
 
     # only static rule
     assert len(static_rules) == 1
