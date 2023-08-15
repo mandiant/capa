@@ -184,8 +184,9 @@ jobs:
       run : |
         mkdir ./.github/ghidrathon
         mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
-        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
-        unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
+        #wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
+        wget "https://github.com/mandiant/Ghidrathon/archive/refs/heads/fix/65.zip"
+        unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/ -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
         workdir=$(pwd)
         gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
         unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
@@ -194,7 +195,5 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev] 
     - name: Run tests
-      run: | # runs main.py for now...
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'Practical Malware Analysis Lab 01-01.dll_'
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -process 'Practical Malware Analysis Lab 01-01.dll_' -ScriptPath ./capa -PostScript main.py
+      run: .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'mimikatz.exe_' -ScriptPath ./tests/ -PostScript test_ghidra_features.py
  
