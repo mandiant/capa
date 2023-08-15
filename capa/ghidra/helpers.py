@@ -21,6 +21,9 @@ import capa.features.extractors.ghidra.helpers
 
 logger = logging.getLogger("capa")
 
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+currentAddress = currentAddress()  # type: ignore # noqa: F821
+
 # file type as returned by Ghidra
 SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
 

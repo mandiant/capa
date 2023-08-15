@@ -20,7 +20,8 @@ from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
-listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+listing = currentProgram.getListing()  # type: ignore # noqa: F821
 
 
 def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:

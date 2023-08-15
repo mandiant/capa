@@ -16,6 +16,9 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+monitor = monitor()  # type: ignore # noqa: F821
+
 
 def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""

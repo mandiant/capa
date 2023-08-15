@@ -16,6 +16,9 @@ from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+currentAddress = currentAddress()  # type: ignore # noqa: F821
+
 
 class GhidraFeatureExtractor(FeatureExtractor):
     def __init__(self):

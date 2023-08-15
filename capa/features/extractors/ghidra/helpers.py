@@ -17,6 +17,9 @@ import capa.features.extractors.helpers
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
+monitor = monitor()  # type: ignore # noqa: F821
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+
 
 def fix_byte(b: int) -> bytes:
     """Transform signed ints from Java into bytes for Python
