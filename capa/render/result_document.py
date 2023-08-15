@@ -9,6 +9,7 @@ import datetime
 import collections
 from enum import Enum
 from typing import Dict, List, Tuple, Union, Literal, Optional
+from pathlib import Path
 
 from pydantic import Field, BaseModel, ConfigDict
 from typing_extensions import TypeAlias
@@ -646,3 +647,7 @@ class ResultDocument(FrozenModel):
                 capabilities[rule_name].append((addr.to_capa(), result))
 
         return self.meta, capabilities
+
+    @classmethod
+    def from_file(cls, path: Path) -> "ResultDocument":
+        return cls.model_validate_json(path.read_text(encoding="utf-8"))

@@ -237,7 +237,7 @@ def assert_round_trip(rd: rdoc.ResultDocument):
     one = rd
 
     doc = one.model_dump_json(exclude_none=True)
-    two = rdoc.ResultDocument.parse_raw(doc)
+    two = rdoc.ResultDocument.model_validate_json(doc)
 
     # show the round trip works
     # first by comparing the objects directly,
@@ -289,14 +289,14 @@ def test_round_trip(request, rd_file):
 @pytest.mark.xfail(reason="samples haven't been modified to the scopes keyword")
 def test_json_to_rdoc():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
-    assert isinstance(rdoc.ResultDocument.parse_file(path), rdoc.ResultDocument)
+    assert isinstance(rdoc.ResultDocument.from_file(path), rdoc.ResultDocument)
 
 
 @pytest.mark.xfail(reason="samples haven't been modified to the scopes keyword")
 def test_rdoc_to_capa():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
 
-    rd = rdoc.ResultDocument.parse_file(path)
+    rd = rdoc.ResultDocument.from_file(path)
 
     meta, capabilites = rd.to_capa()
     assert isinstance(meta, rdoc.Metadata)
