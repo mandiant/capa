@@ -19,6 +19,7 @@ import yaml
 from typing_extensions import TypeAlias
 
 from capa.main import collect_rule_file_paths
+from capa.rules import Rule
 
 DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os")
 DYNAMIC_CHARACTERISTICS = ("embedded-pe",)
@@ -50,15 +51,23 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
             # is either subscope or ceng
             if key in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
                 # is subscope
-                stat, dyn = rec_scope(key, value)
-                if not context and dyn:
-                    dynamic.append({"or": [stat, dyn]})
+                stat, dyn = rec_scope(key, value, context=context)
+                if not context:
+                    if dyn:
+                        dynamic.append({"or": [stat, dyn]})
+                    else:
+                        dynamic.append(stat)
                 elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
             elif key in ENGINE_STATEMENTS or key.endswith("or more"):
                 # is ceng
-                stat, dyn = rec_bool(key, value, context)
-                if dyn:
+                stat, dyn = rec_bool(key, value, context=context)
+                if not context:
+                    if dyn:
+                        dynamic.append(dyn)
+                    else:
+                        dynamic.append(stat)
+                elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
             else:
                 raise ValueError(f"key: {key}, value: {value}")
@@ -72,17 +81,38 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
     return static, dynamic
 
 
-def rec_scope(key: str, value: List) -> Tuple[Dict[str, List], Dict[str, Optional[List]]]:
+def rec_scope(key: str, value: List, context=False) -> Tuple[Dict[str, List], Dict[str, Optional[List]]]:
     """
     takes in a static subscope, and returns it alongside its dynamic counterpart.
     """
-    if len(value) > 1 or (key == "instruction" and key not in ENGINE_STATEMENTS):
-        _, dynamic = rec_features_list([{"and": value}], context="dynamic")
+    if context == "static":
+        if key == "instruction":
+            stat, _ = rec_features_list([{"and": value}], context=context)
+            stat = stat[0]["and"]
+        else:
+            stat, _ = rec_bool(key, value, context=context)
+        return {key: stat}, {}
+    elif context == "dynamic":
+        if key == "instruction":
+            _, dyn = rec_features_list([{"and": value}], context=context)
+        else:
+            _, dyn = rec_bool(key, value, context=context)
+        if dyn:
+            return {}, {GET_DYNAMIC_EQUIV[key]: dyn}
+        else:
+            return {}, {}
     else:
-        _, dynamic = rec_features_list(value, context="dynamic")
-    if dynamic:
-        return {key: value}, {GET_DYNAMIC_EQUIV[key]: dynamic}
-    return {key: value}, {}
+        if key == "instruction":
+            stat, _ = rec_features_list([{"and": value}], context="static")
+            _, dyn = rec_features_list([{"and": value}], context="dynamic")
+            stat = stat[0]["and"]
+        else:
+            stat, _ = rec_features_list(value, context="static")
+            _, dyn = rec_features_list(value, context="dynamic")
+        if dyn:
+            return {key: stat}, {GET_DYNAMIC_EQUIV[key]: dyn}
+        else:
+            return {key: stat}, {}
 
 
 def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Optional[List]]]:
@@ -90,11 +120,20 @@ def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Opti
     takes in a capa logical statement and returns a static and dynamic variation of it.
     """
     stat, dyn = rec_features_list(value, context)
-    if key == "and" and len(stat) != len(dyn):
-        return {key: value}, {}
-    if dyn:
-        return {key: value}, {key: dyn}
-    return {key: value}, {}
+    if context == "static":
+        return {key: stat}, {}
+    elif context == "dynamic":
+        if key == "and" and len(stat) != len(dyn):
+            return {}, {}
+        elif dyn:
+            return {}, {key: dyn}
+        else:
+            return {}, {}
+    else:
+        if dyn:
+            return {key: stat}, {key: dyn}
+        else:
+            return {key: stat}, {}
 
 
 class NoAliasDumper(yaml.SafeDumper):
@@ -146,7 +185,8 @@ def upgrade_rule(content) -> str:
 
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
-    return upgraded_rule
+    if Rule.from_yaml(upgraded_rule):
+        return upgraded_rule
 
 
 def main(argv: Optional[List[str]] = None) -> int:
