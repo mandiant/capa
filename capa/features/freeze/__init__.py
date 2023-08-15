@@ -14,7 +14,7 @@ import logging
 from enum import Enum
 from typing import List, Tuple, Union
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, ConfigDict
 from typing_extensions import TypeAlias
 
 import capa.helpers
@@ -38,8 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class HashableModel(BaseModel):
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class AddressType(str, Enum):
@@ -57,7 +56,7 @@ class AddressType(str, Enum):
 
 class Address(HashableModel):
     type: AddressType
-    value: Union[int, Tuple[int, ...], None]
+    value: Union[int, Tuple[int, ...], None] = None  # None default value to support deserialization of NO_ADDRESS
 
     @classmethod
     def from_capa(cls, a: capa.features.address.Address) -> "Address":
@@ -84,18 +83,6 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.DynamicCallAddress):
             return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
-
-        elif isinstance(a, capa.features.address.DynamicReturnAddress):
-            return cls(
-                type=AddressType.DYNAMIC,
-                value=(
-                    a.call.thread.process.ppid,
-                    a.call.thread.process.pid,
-                    a.call.thread.tid,
-                    a.call.id,
-                    a.return_address,
-                ),
-            )
 
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
@@ -160,19 +147,6 @@ class Address(HashableModel):
                 id=id_,
             )
 
-        elif self.type is AddressType.DYNAMIC:
-            assert isinstance(self.value, tuple)
-            ppid, pid, tid, id_, return_address = self.value
-            return capa.features.address.DynamicReturnAddress(
-                call=capa.features.address.DynamicCallAddress(
-                    thread=capa.features.address.ThreadAddress(
-                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
-                    ),
-                    id=id_,
-                ),
-                return_address=return_address,
-            )
-
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
 
@@ -234,8 +208,10 @@ class ThreadFeature(HashableModel):
 class CallFeature(HashableModel):
     """
     args:
-        call: the call id to which this feature belongs.
-        address: the address at which this feature is found (it's dynamic return address).
+        call: the address of the call to which this feature belongs.
+        address: the address at which this feature is found.
+
+    call != address for consistency with Process and Thread.
     """
 
     call: Address
@@ -271,9 +247,7 @@ class BasicBlockFeature(HashableModel):
     basic_block: Address = Field(alias="basic block")
     address: Address
     feature: Feature
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class InstructionFeature(HashableModel):
@@ -282,8 +256,7 @@ class InstructionFeature(HashableModel):
         instruction: the address of the instruction to which this feature belongs.
         address: the address at which this feature is found.
 
-    instruction != address because, e.g., the feature may be found *within* the scope (basic block),
-    versus right at its starting address.
+    instruction != address because, for consistency with Function and BasicBlock.
     """
 
     instruction: Address
@@ -306,9 +279,7 @@ class FunctionFeatures(BaseModel):
     address: Address
     features: Tuple[FunctionFeature, ...]
     basic_blocks: Tuple[BasicBlockFeatures, ...] = Field(alias="basic blocks")
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class CallFeatures(BaseModel):
@@ -332,18 +303,14 @@ class StaticFeatures(BaseModel):
     global_: Tuple[GlobalFeature, ...] = Field(alias="global")
     file: Tuple[FileFeature, ...]
     functions: Tuple[FunctionFeatures, ...]
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DynamicFeatures(BaseModel):
     global_: Tuple[GlobalFeature, ...] = Field(alias="global")
     file: Tuple[FileFeature, ...]
     processes: Tuple[ProcessFeatures, ...]
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 Features: TypeAlias = Union[StaticFeatures, DynamicFeatures]
@@ -352,9 +319,7 @@ Features: TypeAlias = Union[StaticFeatures, DynamicFeatures]
 class Extractor(BaseModel):
     name: str
     version: str = capa.version.__version__
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class Freeze(BaseModel):
@@ -363,9 +328,7 @@ class Freeze(BaseModel):
     sample_hashes: SampleHashes
     extractor: Extractor
     features: Features
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 def dumps_static(extractor: StaticFeatureExtractor) -> str:
@@ -467,7 +430,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     )  # type: ignore
     # Mypy is unable to recognise `base_address` as a argument due to alias
 
-    return freeze.json()
+    return freeze.model_dump_json()
 
 
 def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:

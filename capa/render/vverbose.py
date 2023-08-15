@@ -88,7 +88,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
         # so, we have to inline some of the feature rendering here.
 
         child = statement.child
-        value = child.dict(by_alias=True).get(child.type)
+        value = child.model_dump(by_alias=True).get(child.type)
 
         if value:
             if isinstance(child, frzf.StringFeature):
@@ -141,7 +141,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
         value = feature.class_
     else:
         # convert attributes to dictionary using aliased names, if applicable
-        value = feature.dict(by_alias=True).get(key)
+        value = feature.model_dump(by_alias=True).get(key)
 
     if value is None:
         raise ValueError(f"{key} contains None")
@@ -336,11 +336,12 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
+        rows.append(("scopes", ""))
         if rule.meta.scopes.static:
-            rows.append(("static scope:", str(rule.meta.scopes.static)))
+            rows.append(("  static:", str(rule.meta.scopes.static)))
 
         if rule.meta.scopes.dynamic:
-            rows.append(("dynamic scope:", str(rule.meta.scopes.dynamic)))
+            rows.append(("  dynamic:", str(rule.meta.scopes.dynamic)))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
@@ -368,8 +369,13 @@ def render_rules(ostream, doc: rd.ResultDocument):
             render_match(ostream, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
-                ostream.write(f"static scope: {rule.meta.scopes.static}")
-                ostream.write(f"dynamic scope: {rule.meta.scopes.dynamic}")
+                if doc.meta.flavor == rd.Flavor.STATIC:
+                    ostream.write(f"{rule.meta.scopes.static}")
+                elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+                    ostream.write(f"{rule.meta.scopes.dynamic}")
+                else:
+                    capa.helpers.assert_never(doc.meta.flavor)
+
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 

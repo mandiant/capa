@@ -56,10 +56,8 @@ def format_address(address: frz.Address) -> str:
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
     elif address.type == frz.AddressType.DYNAMIC:
         assert isinstance(address.value, tuple)
-        id_, return_address = address.value
-        assert isinstance(id_, int)
-        assert isinstance(return_address, int)
-        return f"event: {id_}, retaddr: 0x{return_address:x}"
+        ppid, pid, tid, id_, return_address = address.value
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}, return address: {capa.helpers.hex(return_address)}"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
         ppid, pid = address.value
@@ -71,6 +69,10 @@ def format_address(address: frz.Address) -> str:
         tid = address.value
         assert isinstance(tid, int)
         return f"thread id: {tid}"
+    elif address.type == frz.AddressType.CALL:
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid, id_ = address.value
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
@@ -90,6 +92,7 @@ def render_static_meta(ostream, doc: rd.ResultDocument):
         os                   windows
         format               pe
         arch                 amd64
+        analysis             static
         extractor            VivisectFeatureExtractor
         base address         0x10000000
         rules                (embedded rules)
@@ -108,6 +111,7 @@ def render_static_meta(ostream, doc: rd.ResultDocument):
         ("os", doc.meta.analysis.os),
         ("format", doc.meta.analysis.format),
         ("arch", doc.meta.analysis.arch),
+        ("analysis", doc.meta.flavor),
         ("extractor", doc.meta.analysis.extractor),
         ("base address", format_address(doc.meta.analysis.base_address)),
         ("rules", "\n".join(doc.meta.analysis.rules)),
@@ -152,6 +156,7 @@ def render_dynamic_meta(ostream, doc: rd.ResultDocument):
         ("os", doc.meta.analysis.os),
         ("format", doc.meta.analysis.format),
         ("arch", doc.meta.analysis.arch),
+        ("analysis", doc.meta.flavor),
         ("extractor", doc.meta.analysis.extractor),
         ("rules", "\n".join(doc.meta.analysis.rules)),
         ("process count", len(doc.meta.analysis.feature_counts.processes)),

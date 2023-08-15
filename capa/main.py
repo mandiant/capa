@@ -20,7 +20,6 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from enum import Enum
 from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
@@ -29,6 +28,7 @@ import tqdm
 import colorama
 import tqdm.contrib.logging
 from pefile import PEFormatError
+from typing_extensions import assert_never
 from elftools.common.exceptions import ELFError
 
 import capa.perf
@@ -79,8 +79,6 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
-    STATIC_FORMATS,
-    DYNAMIC_FORMATS,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import (
@@ -115,15 +113,6 @@ E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
 
 logger = logging.getLogger("capa")
-
-
-class ExecutionContext(str, Enum):
-    STATIC = "static"
-    DYNAMIC = "dynamic"
-
-
-STATIC_CONTEXT = ExecutionContext.STATIC
-DYNAMIC_CONTEXT = ExecutionContext.DYNAMIC
 
 
 @contextlib.contextmanager
@@ -750,7 +739,7 @@ def get_extractor(
     if format_ == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.load(Path(path).open())
+        report = json.load(Path(path).open(encoding="utf-8"))
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif format_ == FORMAT_DOTNET:
@@ -826,7 +815,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
-        report = json.load(Path(sample).open())
+        report = json.load(Path(sample).open(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors
@@ -889,7 +878,6 @@ def get_rules(
     rule_paths: List[RulePath],
     cache_dir=None,
     on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
-    analysis_context: Optional[ExecutionContext] = None,
 ) -> RuleSet:
     """
     args:
@@ -928,14 +916,7 @@ def get_rules(
             rules.append(rule)
             logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
-    # filter rules according to the execution context
-    if analysis_context is STATIC_CONTEXT:
-        ruleset = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.static)
-    elif analysis_context is DYNAMIC_CONTEXT:
-        ruleset = capa.rules.RuleSet(rules, rules_filter_func=lambda rule: rule.scopes.dynamic)
-    else:
-        # default: load all rules
-        ruleset = capa.rules.RuleSet(rules)
+    ruleset = capa.rules.RuleSet(rules)
 
     capa.rules.cache.cache_ruleset(cache_dir, ruleset)
 
@@ -1022,6 +1003,13 @@ def collect_metadata(
     arch = get_arch(sample_path)
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
+    if isinstance(extractor, StaticFeatureExtractor):
+        flavor = rdoc.Flavor.STATIC
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        flavor = rdoc.Flavor.DYNAMIC
+    else:
+        assert_never(extractor)
+
     return rdoc.Metadata(
         timestamp=datetime.datetime.now(),
         version=capa.version.__version__,
@@ -1032,6 +1020,7 @@ def collect_metadata(
             sha256=sha256,
             path=str(Path(sample_path).resolve()),
         ),
+        flavor=flavor,
         analysis=get_sample_analysis(
             format_,
             arch,
@@ -1456,15 +1445,7 @@ def main(argv: Optional[List[str]] = None):
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        if format_ in STATIC_FORMATS:
-            analysis_context = STATIC_CONTEXT
-        elif format_ in DYNAMIC_FORMATS:
-            analysis_context = DYNAMIC_CONTEXT
-        else:
-            # freeze or result formats
-            analysis_context = None
-
-        rules = get_rules(args.rules, cache_dir=cache_dir, analysis_context=analysis_context)
+        rules = get_rules(args.rules, cache_dir=cache_dir)
 
         logger.debug(
             "successfully loaded %s rules",

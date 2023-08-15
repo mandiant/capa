@@ -80,6 +80,18 @@ def test_elf_symbol_table():
         assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
 
 
+def test_elf_android_notes():
+    # DEBUG:capa.features.extractors.elf:guess: osabi: None
+    # DEBUG:capa.features.extractors.elf:guess: ph notes: OS.ANDROID
+    # DEBUG:capa.features.extractors.elf:guess: sh notes: None
+    # DEBUG:capa.features.extractors.elf:guess: linker: None
+    # DEBUG:capa.features.extractors.elf:guess: ABI versions needed: None
+    # DEBUG:capa.features.extractors.elf:guess: needed dependencies: OS.ANDROID
+    path = get_data_path_by_name("1038a2")
+    with Path(path).open("rb") as f:
+        assert capa.features.extractors.elf.detect_elf_os(f) == "android"
+
+
 def test_elf_parse_capa_pyinstaller_header():
     # error after misidentified large pydata section with address 0; fixed in #1454
     # compressed ELF header of capa-v5.1.0-linux

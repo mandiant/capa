@@ -273,8 +273,8 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                             continue
 
                         if isinstance(feature, API):
-                            assert isinstance(addr, capa.features.address.DynamicReturnAddress)
-                            apis.append((addr.call.id, str(feature.value)))
+                            assert isinstance(addr, capa.features.address.DynamicCallAddress)
+                            apis.append((addr.id, str(feature.value)))
 
                         if isinstance(feature, (Number, String)):
                             arguments.append(str(feature.value))

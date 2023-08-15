@@ -42,7 +42,6 @@ from capa.features.extractors.base_extractor import (
     BBHandle,
     CallHandle,
     InsnHandle,
-    SampleHashes,
     ThreadHandle,
     ProcessHandle,
     FunctionHandle,
@@ -364,10 +363,22 @@ def get_data_path_by_name(name) -> Path:
             / "data"
             / "dynamic"
             / "cape"
+            / "v2.2"
             / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        )
+    elif name.startswith("d46900"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+    elif name.startswith("1038a2"):
+        return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -652,54 +663,6 @@ def parametrize(params, values, **kwargs):
     ids = list(map(make_test_id, values))
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
-
-EXTRACTOR_HASHING_TESTS = [
-    # viv extractor
-    (
-        get_viv_extractor(get_data_path_by_name("mimikatz")),
-        SampleHashes(
-            md5="5f66b82558ca92e54e77f216ef4c066c",
-            sha1="e4f82e4d7f22938dc0a0ff8a4a7ad2a763643d38",
-            sha256="131314a6f6d1d263c75b9909586b3e1bd837036329ace5e69241749e861ac01d",
-        ),
-    ),
-    # PE extractor
-    (
-        get_pefile_extractor(get_data_path_by_name("mimikatz")),
-        SampleHashes(
-            md5="5f66b82558ca92e54e77f216ef4c066c",
-            sha1="e4f82e4d7f22938dc0a0ff8a4a7ad2a763643d38",
-            sha256="131314a6f6d1d263c75b9909586b3e1bd837036329ace5e69241749e861ac01d",
-        ),
-    ),
-    # dnFile extractor
-    (
-        get_dnfile_extractor(get_data_path_by_name("b9f5b")),
-        SampleHashes(
-            md5="b9f5bd514485fb06da39beff051b9fdc",
-            sha1="c72a2e50410475a51d897d29ffbbaf2103754d53",
-            sha256="34acc4c0b61b5ce0b37c3589f97d1f23e6d84011a241e6f85683ee517ce786f1",
-        ),
-    ),
-    # dotnet File
-    (
-        get_dotnetfile_extractor(get_data_path_by_name("b9f5b")),
-        SampleHashes(
-            md5="b9f5bd514485fb06da39beff051b9fdc",
-            sha1="c72a2e50410475a51d897d29ffbbaf2103754d53",
-            sha256="34acc4c0b61b5ce0b37c3589f97d1f23e6d84011a241e6f85683ee517ce786f1",
-        ),
-    ),
-    # cape extractor
-    (
-        get_cape_extractor(get_data_path_by_name("0000a657")),
-        SampleHashes(
-            md5="e2147b5333879f98d515cd9aa905d489",
-            sha1="ad4d520fb7792b4a5701df973d6bd8a6cbfbb57f",
-            sha256="0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82",
-        ),
-    ),
-]
 
 DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
     [

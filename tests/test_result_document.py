@@ -236,7 +236,7 @@ def test_basic_block_node_from_capa():
 def assert_round_trip(rd: rdoc.ResultDocument):
     one = rd
 
-    doc = one.json(exclude_none=True)
+    doc = one.model_dump_json(exclude_none=True)
     two = rdoc.ResultDocument.parse_raw(doc)
 
     # show the round trip works
@@ -244,14 +244,14 @@ def assert_round_trip(rd: rdoc.ResultDocument):
     # which works thanks to pydantic model equality.
     assert one == two
     # second by showing their json representations are the same.
-    assert one.json(exclude_none=True) == two.json(exclude_none=True)
+    assert one.model_dump_json(exclude_none=True) == two.model_dump_json(exclude_none=True)
 
     # now show that two different versions are not equal.
     three = copy.deepcopy(two)
     three.meta.__dict__.update({"version": "0.0.0"})
     assert one.meta.version != three.meta.version
     assert one != three
-    assert one.json(exclude_none=True) != three.json(exclude_none=True)
+    assert one.model_dump_json(exclude_none=True) != three.model_dump_json(exclude_none=True)
 
 
 @pytest.mark.parametrize(

@@ -97,25 +97,27 @@ GLOBAL_SCOPE = "global"
 
 # these literals are used to check if the flavor
 # of a rule is correct.
-STATIC_SCOPES = (
+STATIC_SCOPES = {
     FILE_SCOPE,
     GLOBAL_SCOPE,
     FUNCTION_SCOPE,
     BASIC_BLOCK_SCOPE,
     INSTRUCTION_SCOPE,
-)
-DYNAMIC_SCOPES = (
+}
+DYNAMIC_SCOPES = {
     FILE_SCOPE,
     GLOBAL_SCOPE,
     PROCESS_SCOPE,
     THREAD_SCOPE,
     CALL_SCOPE,
-)
+}
 
 
 @dataclass
 class Scopes:
+    # when None, the scope is not supported by a rule
     static: Optional[str] = None
+    # when None, the scope is not supported by a rule
     dynamic: Optional[str] = None
 
     def __contains__(self, scope: Union[Scope, str]) -> bool:
@@ -135,6 +137,10 @@ class Scopes:
     @classmethod
     def from_dict(self, scopes: dict) -> "Scopes":
         assert isinstance(scopes, dict)
+
+        # make local copy so we don't make changes outside of this routine
+        scopes = dict(scopes)
+
         # mark non-specified scopes as invalid
         if "static" not in scopes:
             scopes["static"] = None
@@ -148,15 +154,10 @@ class Scopes:
             raise InvalidRule("invalid scopes value. At least one scope must be specified")
 
         # check that all the specified scopes are valid
-        if scopes["static"] not in (
-            *STATIC_SCOPES,
-            None,
-        ):
+        if scopes["static"] and scopes["static"] not in STATIC_SCOPES:
             raise InvalidRule(f"{scopes['static']} is not a valid static scope")
-        if scopes["dynamic"] not in (
-            *DYNAMIC_SCOPES,
-            None,
-        ):
+
+        if scopes["dynamic"] and scopes["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes['dynamic']} is not a valid dynamic scope")
 
         return Scopes(static=scopes["static"], dynamic=scopes["dynamic"])
@@ -887,6 +888,33 @@ class Rule:
 
         yield from self._extract_subscope_rules_rec(self.statement)
 
+    def _extract_all_features_rec(self, statement) -> Set[Feature]:
+        feature_set: Set[Feature] = set()
+
+        for child in statement.get_children():
+            if isinstance(child, Statement):
+                feature_set.update(self._extract_all_features_rec(child))
+            else:
+                feature_set.add(child)
+        return feature_set
+
+    def extract_all_features(self) -> Set[Feature]:
+        """
+        recursively extracts all feature statements in this rule.
+
+        returns:
+            set: A set of all feature statements contained within this rule.
+        """
+        if not isinstance(self.statement, ceng.Statement):
+            # For rules with single feature like
+            # anti-analysis\obfuscation\obfuscated-with-advobfuscator.yml
+            # contains a single feature - substring , which is of type String
+            return {
+                self.statement,
+            }
+
+        return self._extract_all_features_rec(self.statement)
+
     def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.rule"] += 1
@@ -1235,7 +1263,6 @@ class RuleSet:
     def __init__(
         self,
         rules: List[Rule],
-        rules_filter_func=None,
     ):
         super().__init__()
 
@@ -1252,11 +1279,6 @@ class RuleSet:
         rules = self._extract_subscope_rules(rules)
 
         ensure_rule_dependencies_are_met(rules)
-
-        if rules_filter_func:
-            # this allows for filtering the ruleset based on
-            # the execution context (static or dynamic)
-            rules = list(filter(rules_filter_func, rules))
 
         if len(rules) == 0:
             raise InvalidRuleSet("no rules selected")

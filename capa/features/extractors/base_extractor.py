@@ -12,6 +12,8 @@ import dataclasses
 from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
+# TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
+# https://github.com/mandiant/capa/issues/1699
 from typing_extensions import TypeAlias
 
 import capa.features.address
@@ -328,7 +330,7 @@ class CallHandle:
     reference to an api call extracted by the sandbox.
 
     Attributes:
-        address: call's id address
+        address: call's address, such as event index or id
         inner: sandbox-specific data
     """
 
@@ -445,8 +447,8 @@ class DynamicFeatureExtractor:
     ) -> Iterator[Tuple[Feature, Address]]:
         """
         Yields all features of a call. These include:
-        - api's
-        - arguments
+        - api name
+        - bytes/strings/numbers extracted from arguments
         """
         raise NotImplementedError()
 

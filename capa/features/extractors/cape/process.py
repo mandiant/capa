@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[ThreadHandle]:
     """
-    get a thread's child processes
+    get the threads associated with a given process
     """
 
     process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
@@ -44,9 +44,8 @@ def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple
     if not environ:
         return
 
-    for _, value in environ.items():
-        if value:
-            yield String(value), ph.address
+    for value in (value for value in environ.values() if value):
+        yield String(value), ph.address
 
 
 def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
