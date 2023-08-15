@@ -21,6 +21,8 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+monitor = monitor()  # type: ignore # noqa: F821
 
 # significantly cut down on runtime by caching api info
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()

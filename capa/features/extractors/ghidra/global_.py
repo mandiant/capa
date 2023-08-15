@@ -15,6 +15,7 @@ from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Fe
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
+currentProgram = currentProgram()  # type: ignore # noqa: F821
 
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:
