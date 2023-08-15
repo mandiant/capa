@@ -10,7 +10,6 @@ Must invoke this script from within the Ghidra Runtime Enviornment
 """
 import sys
 import logging
-from pathlib import Path
 
 import pytest
 import fixtures
@@ -19,7 +18,7 @@ logger = logging.getLogger("test_ghidra_features")
 
 ghidra_present: bool = False
 try:
-    import ghidra.program.flatapi # noqa: F401
+    import ghidra.program.flatapi  # noqa: F401
 
     ghidra_present = True
 except ImportError:
@@ -27,22 +26,22 @@ except ImportError:
 
 
 def standardize_posix_str(psx_str):
-    """ fixture test passes the PosixPath to the test data 
+    """fixture test passes the PosixPath to the test data
 
-        params: psx_str - PosixPath() to the test data
-        return: string that matches test-id sample name
+    params: psx_str - PosixPath() to the test data
+    return: string that matches test-id sample name
     """
 
     if "Practical Malware Analysis Lab" in str(psx_str):
         # <PosixPath>/'Practical Malware Analysis Lab 16-01.exe_' -> 'pma16-01'
-        wanted_str = "pma" + str(psx_str).split('/')[-1][len("Practical Malware Analysis Lab "):-5]
+        wanted_str = "pma" + str(psx_str).split("/")[-1][len("Practical Malware Analysis Lab ") : -5]
     else:
         # <PosixPath>/mimikatz.exe_ -> mimikatz
-        wanted_str = str(psx_str).split('/')[-1][:-5]
+        wanted_str = str(psx_str).split("/")[-1][:-5]
 
-    if '_' in wanted_str:
+    if "_" in wanted_str:
         # al-khaser_x86 -> al-khaser x86
-        wanted_str = wanted_str.replace('_', ' ')
+        wanted_str = wanted_str.replace("_", " ")
 
     return wanted_str
 
@@ -50,7 +49,7 @@ def standardize_posix_str(psx_str):
 def check_input_file(wanted):
     """check that test is running on the loaded sample
 
-        params: wanted - PosixPath() passed from test arg
+    params: wanted - PosixPath() passed from test arg
     """
 
     import capa.ghidra.helpers as ghidra_helpers
@@ -74,12 +73,10 @@ def get_ghidra_extractor(path):
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
 @fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"])
 def test_ghidra_features(sample, scope, feature, expected):
-
     try:
         check_input_file(sample)
     except RuntimeError:
         pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
-        
 
     fixtures.do_test_feature_presence(get_ghidra_extractor, sample, scope, feature, expected)
 
@@ -87,7 +84,6 @@ def test_ghidra_features(sample, scope, feature, expected):
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
 @fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_COUNT_TESTS, indirect=["sample", "scope"])
 def test_ghidra_feature_counts(sample, scope, feature, expected):
-
     try:
         check_input_file(sample)
     except RuntimeError:
@@ -97,4 +93,4 @@ def test_ghidra_feature_counts(sample, scope, feature, expected):
 
 
 if __name__ == "__main__":
-    sys.exit(pytest.main(["--pyargs", "-s", "test_ghidra_features"]))
+    sys.exit(pytest.main(["--pyargs", "-v", "test_ghidra_features"]))
