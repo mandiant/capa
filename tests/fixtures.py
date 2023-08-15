@@ -377,6 +377,8 @@ def get_data_path_by_name(name) -> Path:
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
+    elif name.startswith("1038a2"):
+        return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
