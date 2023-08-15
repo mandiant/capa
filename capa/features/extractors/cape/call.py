@@ -15,7 +15,7 @@ import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
-from capa.features.address import Address, DynamicReturnAddress
+from capa.features.address import Address
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
@@ -44,14 +44,13 @@ def extract_call_features(
     calls: List[Dict[str, Any]] = process["calls"]
     call = calls[ch.address.id]
     assert call["thread_id"] == str(th.address.tid)
-    caller = DynamicReturnAddress(call=ch.address, return_address=int(call["caller"], 16))
     # list similar to disassembly: arguments right-to-left, call
     for arg in call["arguments"][::-1]:
         try:
-            yield Number(int(arg["value"], 16)), caller
+            yield Number(int(arg["value"], 16)), ch.address
         except ValueError:
-            yield String(arg["value"]), caller
-    yield API(call["api"]), caller
+            yield String(arg["value"]), ch.address
+    yield API(call["api"]), ch.address
 
 
 def extract_features(

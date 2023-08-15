@@ -84,18 +84,6 @@ class Address(HashableModel):
         elif isinstance(a, capa.features.address.DynamicCallAddress):
             return cls(type=AddressType.CALL, value=(a.thread.process.ppid, a.thread.process.pid, a.thread.tid, a.id))
 
-        elif isinstance(a, capa.features.address.DynamicReturnAddress):
-            return cls(
-                type=AddressType.DYNAMIC,
-                value=(
-                    a.call.thread.process.ppid,
-                    a.call.thread.process.pid,
-                    a.call.thread.tid,
-                    a.call.id,
-                    a.return_address,
-                ),
-            )
-
         elif a == capa.features.address.NO_ADDRESS or isinstance(a, capa.features.address._NoAddress):
             return cls(type=AddressType.NO_ADDRESS, value=None)
 
@@ -159,19 +147,6 @@ class Address(HashableModel):
                 id=id_,
             )
 
-        elif self.type is AddressType.DYNAMIC:
-            assert isinstance(self.value, tuple)
-            ppid, pid, tid, id_, return_address = self.value
-            return capa.features.address.DynamicReturnAddress(
-                call=capa.features.address.DynamicCallAddress(
-                    thread=capa.features.address.ThreadAddress(
-                        process=capa.features.address.ProcessAddress(ppid=ppid, pid=pid), tid=tid
-                    ),
-                    id=id_,
-                ),
-                return_address=return_address,
-            )
-
         elif self.type is AddressType.NO_ADDRESS:
             return capa.features.address.NO_ADDRESS
 
@@ -233,8 +208,10 @@ class ThreadFeature(HashableModel):
 class CallFeature(HashableModel):
     """
     args:
-        call: the call id to which this feature belongs.
-        address: the address at which this feature is found (it's dynamic return address).
+        call: the address of the call to which this feature belongs.
+        address: the address at which this feature is found.
+
+    call != address for consistency with Process and Thread.
     """
 
     call: Address
@@ -279,8 +256,7 @@ class InstructionFeature(HashableModel):
         instruction: the address of the instruction to which this feature belongs.
         address: the address at which this feature is found.
 
-    instruction != address because, e.g., the feature may be found *within* the scope (basic block),
-    versus right at its starting address.
+    instruction != address because, for consistency with Function and BasicBlock.
     """
 
     instruction: Address

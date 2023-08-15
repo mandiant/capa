@@ -116,29 +116,6 @@ class DynamicCallAddress(Address):
         return (self.thread, self.id) < (other.thread, other.id)
 
 
-class DynamicReturnAddress(Address):
-    """an address from a dynamic analysis trace"""
-
-    def __init__(self, call: DynamicCallAddress, return_address: int):
-        assert return_address >= 0
-        self.call = call
-        self.return_address = return_address
-
-    def __repr__(self):
-        return f"{self.call}, dynamic-call(return-address: 0x{self.return_address:x})"
-
-    def __hash__(self):
-        return hash((self.call, self.return_address))
-
-    def __eq__(self, other):
-        assert isinstance(other, DynamicReturnAddress)
-        return (self.call, self.return_address) == (other.call, other.return_address)
-
-    def __lt__(self, other):
-        assert isinstance(other, DynamicReturnAddress)
-        return (self.call, self.return_address) < (other.call, other.return_address)
-
-
 class RelativeVirtualAddress(int, Address):
     """a memory address relative to a base address"""
 
