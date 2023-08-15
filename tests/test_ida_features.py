@@ -98,7 +98,7 @@ def nocollect(f):
     return f
 
 
-# although these look like pytest tests, they're not, because they doesn't run within pytest
+# although these look like pytest tests, they're not, because they don't run within pytest
 # (the runner is below) and they use `yield`, which is deprecated.
 @nocollect
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
