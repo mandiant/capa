@@ -44,7 +44,7 @@ def is_runtime_ida():
 
 
 def is_runtime_ghidra():
-    return importlib.util.find_spec("ghidra.program.flatapi") is not None
+    return importlib.util.find_spec("ghidra") is not None
 
 
 def assert_never(value) -> NoReturn:

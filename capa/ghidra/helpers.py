@@ -16,7 +16,6 @@ import capa.version
 import capa.features.common
 import capa.features.freeze
 import capa.render.result_document as rdoc
-import capa.features.extractors.ghidra.file
 import capa.features.extractors.ghidra.helpers
 
 logger = logging.getLogger("capa")
