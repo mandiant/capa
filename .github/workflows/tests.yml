@@ -188,8 +188,10 @@ jobs:
         wget "https://github.com/mandiant/Ghidrathon/archive/refs/heads/fix/65.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
         workdir=$(pwd)
-        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
-        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        #gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
+        gradle -p ./.github/ghidrathon/Ghidrathon-fix-65/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
+        #unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        unzip .github/ghidrathon/Ghidrathon-fix-65/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
