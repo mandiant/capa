@@ -122,7 +122,7 @@ class Info(Model):
     package: str
     parent_id: Optional[int] = None
     parent_sample: DictTODO
-    route: bool
+    route: Optional[bool] = None
     shrike_refer: Optional[str] = None
     shrike_sid: Optional[int] = None
     shrike_msg: Optional[str] = None
@@ -131,7 +131,7 @@ class Info(Model):
     started: str
     timeout: bool
     tlp: Optional[str] = None
-    user_id: int
+    user_id: Optional[int] = None
     version: str
 
 
@@ -301,6 +301,11 @@ class Network(Model):
     dns: List[DnsResolution]
     smtp: ListTODO
     irc: ListTODO
+    domainlookups: Optional[DictTODO] = None
+    iplookups: Optional[DictTODO] = None
+    http_ex: Optional[ListTODO]
+    https_ex: Optional[ListTODO]
+    smtp_ex: Optional[ListTODO]
     dead_hosts: List[Tuple[str, int]]
 
 
@@ -340,6 +345,16 @@ class Signer(Model):
     aux_signers: ListTODO
 
 
+class Resource(Model):
+    name: str
+    language: str
+    sublanguage: str
+    filetype: Optional[str]
+    offset: HexInt
+    size: HexInt
+    entropy: float
+
+
 class PE(Model):
     peid_signatures: TODO
     imagebase: HexInt
@@ -361,7 +376,7 @@ class PE(Model):
     sections: List[Section]
 
     overlay: TODO
-    resources: ListTODO
+    resources: List[Resource]
     icon: TODO
     icon_hash: TODO
     icon_fuzzy: TODO
@@ -384,26 +399,62 @@ class Signature(Model):
     weight: int
 
 
+class FlareCapa(Model):
+    ATTCK: Dict[str, List[str]]
+    CAPABILITY: Dict[str, List[str]]
+    MBC: Dict[str, List[str]]
+    md5: str
+    sha1: str
+    sha256: str
+    path: str
+
+
 class Static(Model):
     pe: PE
+    flare_capa: Optional[FlareCapa] = None
+
+
+class DnsEvent(Model):
+    id: int
+    type: str
+    rrname: str
+    rrtype: str
+    tx_id: int
+
+
+class SuricataNetworkEntry(Model):
+    timestamp: str
+    event_type: str
+    proto: str
+
+    flow_id: int
+    pcap_cnt: int
+
+    src_ip: str
+    src_port: int
+
+    dest_ip: str
+    dest_port: int
+
+    dns: Optional[DnsEvent]
 
 
 class Suricata(Model):
     alerts: ListTODO
-    dns: ListTODO
+    dns: List[SuricataNetworkEntry]
     fileinfo: ListTODO
     files: ListTODO
     http: ListTODO
     perf: ListTODO
     ssh: ListTODO
     tls: ListTODO
-    alert_log_full_path: TODO
-    dns_log_full_path: TODO
-    eve_log_full_path: TODO
-    file_log_full_path: TODO
-    http_log_full_path: TODO
-    ssh_log_full_path: TODO
-    tls_log_full_path: TODO
+    alert_log_full_path: Optional[str] = None
+    dns_log_full_path: Optional[str] = None
+    eve_log_full_path: Optional[str] = None
+    file_log_full_path: Optional[str] = None
+    http_log_full_path: Optional[str] = None
+    ssh_log_full_path: Optional[str] = None
+    tls_log_full_path: Optional[str] = None
 
 
 class Target(Model):
@@ -416,28 +467,59 @@ class TTP(Model):
     signature: str
 
 
+class VirusTotalResult(Model):
+    vendor: str
+    sig: Optional[str]
+
+
+class VirusTotalScan(Model):
+    detected: bool
+    result: TODO
+    update: str
+    version: Optional[str] = None
+
+
+class VirusTotal(Model):
+    md5: str
+    sha1: str
+    sha256: str
+    permalink: str
+    positives: int
+    total: int
+    resource: str
+    response_code: int
+    results: List[VirusTotalResult]
+    scan_date: str
+    scan_id: str
+    scans: Dict[str, VirusTotalScan]
+    verbose_msg: str
+
+
 class CapeReport(Model):
-    statistics: Statistics
-    detections: str
-    detections2pid: Dict[int, List[str]]
-    CAPE: CAPE
-    info: Info
     behavior: Behavior
+    CAPE: CAPE
     curtain: TODO
     debug: Debug
     deduplicated_shots: List[int]
+    detections: Optional[str] = None
+    detections2pid: Optional[Dict[int, List[str]]] = None
     dropped: List[File]
+    info: Info
+    malfamily_tag: str
+    malscore: float
     network: Network
     procdump: List[Payload]
+    procmemory: ListTODO
+    signatures: List[Signature]
     static: Static
+    statistics: Statistics
     strings: List[str]
     suricata: Suricata
+    sysmon: ListTODO
     target: Target
-    procmemory: ListTODO
-    malfamily_tag: str
-    signatures: List[Signature]
-    malscore: float
-    ttps: List[TTP]
+    # List[TTP{ttp, signature}] or Dict[ttp, signature]
+    ttps: Union[List[TTP], Dict[str, str]]
+    virustotal: VirusTotal
 
     @classmethod
     def from_buf(cls, buf: bytes) -> "CapeReport":
@@ -450,7 +532,14 @@ if __name__ == "__main__":
     from pathlib import Path
 
     path = Path(sys.argv[1])
-
     buf = gzip.decompress(path.read_bytes())
+
+    import json
+
+    doc = json.loads(buf)
+    from pprint import pprint
+
+    pprint(doc["static"]["flare_capa"])
+
     report = CapeReport.from_buf(buf)
     assert report is not None
