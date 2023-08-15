@@ -92,6 +92,15 @@ def get_ida_extractor(_path):
     return capa.features.extractors.ida.extractor.IdaFeatureExtractor()
 
 
+def nocollect(f):
+    "don't collect the decorated function as a pytest test"
+    f.__test__ = False
+    return f
+
+
+# although these look like pytest tests, they're not, because they don't run within pytest
+# (the runner is below) and they use `yield`, which is deprecated.
+@nocollect
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_features():
     # we're guaranteed to be in a function here, so there's a stack frame
@@ -118,6 +127,7 @@ def test_ida_features():
             yield this_name, id, "pass", None
 
 
+@nocollect
 @pytest.mark.skip(reason="IDA Pro tests must be run within IDA")
 def test_ida_feature_counts():
     # we're guaranteed to be in a function here, so there's a stack frame

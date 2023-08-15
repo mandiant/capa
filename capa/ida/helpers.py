@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import json
 import logging
 import datetime
 import contextlib
@@ -223,7 +222,7 @@ def load_and_verify_cached_results() -> Optional[rdoc.ResultDocument]:
     logger.debug("loading cached capa results from netnode '%s'", CAPA_NETNODE)
 
     n = netnode.Netnode(CAPA_NETNODE)
-    doc = rdoc.ResultDocument.parse_obj(json.loads(n[NETNODE_RESULTS]))
+    doc = rdoc.ResultDocument.model_validate_json(n[NETNODE_RESULTS])
 
     for rule in rutils.capability_rules(doc):
         for location_, _ in rule.matches:
