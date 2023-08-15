@@ -751,7 +751,7 @@ def get_extractor(
     if format_ == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.load(Path(path).open())
+        report = json.load(Path(path).open(encoding="utf-8"))
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif format_ == FORMAT_DOTNET:
@@ -827,7 +827,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
-        report = json.load(Path(sample).open())
+        report = json.load(Path(sample).open(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors

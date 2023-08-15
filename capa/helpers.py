@@ -52,7 +52,7 @@ def assert_never(value) -> NoReturn:
 
 
 def get_format_from_report(sample: Path) -> str:
-    report = json.load(sample.open())
+    report = json.load(sample.open(encoding="utf-8"))
     if "CAPE" in report:
         return FORMAT_CAPE
     return FORMAT_UNKNOWN
