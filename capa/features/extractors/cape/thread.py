@@ -7,38 +7,22 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Iterator
 
-import capa.features.extractors.cape.helpers
-from capa.features.common import Feature
-from capa.features.address import NO_ADDRESS, Address, DynamicCallAddress
+from capa.features.address import DynamicCallAddress
+from capa.features.extractors.cape.models import Process
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def get_calls(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
-    calls: List[Dict[str, Any]] = process["calls"]
+def get_calls(ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
+    process: Process = ph.inner
 
-    tid = str(th.address.tid)
-    for call in calls:
-        if call["thread_id"] != tid:
+    tid = th.address.tid
+    for call_index, call in enumerate(process.calls):
+        if call.thread_id != tid:
             continue
 
-        addr = DynamicCallAddress(thread=th.address, id=call["id"])
-        ch = CallHandle(address=addr, inner={})
-        yield ch
-
-
-def extract_thread_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-    yield from ((Feature(0), NO_ADDRESS),)
-
-
-def extract_features(behavior: Dict, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-    for handler in THREAD_HANDLERS:
-        for feature, addr in handler(behavior, ph, th):
-            yield feature, addr
-
-
-THREAD_HANDLERS = (extract_thread_features,)
+        addr = DynamicCallAddress(thread=th.address, id=call_index)
+        yield CallHandle(address=addr, inner=call)

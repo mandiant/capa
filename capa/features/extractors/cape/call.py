@@ -7,29 +7,24 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Tuple, Iterator
+from typing import Tuple, Iterator
 
-import capa.features.extractors.cape.file
-import capa.features.extractors.cape.thread
-import capa.features.extractors.cape.global_
-import capa.features.extractors.cape.process
+from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
+from capa.features.extractors.cape.models import Call
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def extract_call_features(
-    behavior: Dict, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-) -> Iterator[Tuple[Feature, Address]]:
+def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     """
-    this method extrcts the given call's features (api name and arguments),
+    this method extrcts the given call's features (such as API name and arguments),
     and returns them as API, Number, and String features.
 
     args:
-      behavior: a dictionary of behavioral artifacts extracted by the sandbox
       ph: process handle (for defining the extraction scope)
       th: thread handle (for defining the extraction scope)
       ch: call handle (for defining the extraction scope)
@@ -37,27 +32,29 @@ def extract_call_features(
     yields:
       Feature, address; where Feature is either: API, Number, or String.
     """
-    # TODO(yelhamer): find correct base address used at runtime.
-    # this address may vary from the PE header, may read actual base from procdump.pe.imagebase or similar.
-    # https://github.com/mandiant/capa/issues/1618
-    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
-    calls: List[Dict[str, Any]] = process["calls"]
-    call = calls[ch.address.id]
-    assert call["thread_id"] == str(th.address.tid)
+    call: Call = ch.inner
+
     # list similar to disassembly: arguments right-to-left, call
-    for arg in call["arguments"][::-1]:
-        try:
-            yield Number(int(arg["value"], 16)), ch.address
-        except ValueError:
-            yield String(arg["value"]), ch.address
-    yield API(call["api"]), ch.address
+    for arg in reversed(call.arguments):
+        if isinstance(arg, list) and len(arg) == 0:
+            # unsure why CAPE captures arguments as empty lists?
+            continue
+
+        elif isinstance(arg, str):
+            yield String(arg), ch.address
+
+        elif isinstance(arg, int):
+            yield Number(arg), ch.address
+
+        else:
+            assert_never(arg)
+
+    yield API(call.api), ch.address
 
 
-def extract_features(
-    behavior: Dict, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
-) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     for handler in CALL_HANDLERS:
-        for feature, addr in handler(behavior, ph, th, ch):
+        for feature, addr in handler(ph, th, ch):
             yield feature, addr
 
 

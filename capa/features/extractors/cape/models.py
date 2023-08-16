@@ -63,6 +63,10 @@ EmptyDict: TypeAlias = BaseModel
 EmptyList: TypeAlias = List[Any]
 
 
+class Info(FlexibleModel):
+    version: str
+
+
 class ImportedSymbol(ExactModel):
     address: HexInt
     name: str
@@ -251,7 +255,7 @@ class ProcessFile(File):
 class Argument(ExactModel):
     name: str
     # unsure why empty list is provided here
-    value: Union[HexInt, str, EmptyList]
+    value: Union[HexInt, int, str, EmptyList]
     pretty_value: Optional[str] = None
 
 
@@ -359,6 +363,8 @@ class CAPE(ExactModel):
 class CapeReport(FlexibleModel):
     # the input file, I think
     target: Target
+    # info about the processing job, like machine and distributed metadata.
+    info: Info
 
     #
     # static analysis results
@@ -397,8 +403,6 @@ class CapeReport(FlexibleModel):
 
     # screenshot hash values
     deduplicated_shots: Skip = None
-    # info about the processing job, like machine and distributed metadata.
-    info: Skip = None
     # k-v pairs describing the time it took to run each stage.
     statistics: Skip = None
     # k-v pairs of ATT&CK ID to signature name or similar.

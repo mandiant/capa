@@ -14,8 +14,10 @@ import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
-from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress, _NoAddress
+from capa.exceptions import UnsupportedFormatError
+from capa.features.common import Feature, Characteristic
+from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
+from capa.features.extractors.cape.models import CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -26,26 +28,26 @@ from capa.features.extractors.base_extractor import (
 
 logger = logging.getLogger(__name__)
 
-TESTED_VERSIONS = ("2.2-CAPE",)
+TESTED_VERSIONS = {"2.2-CAPE", "2.4-CAPE"}
 
 
 class CapeExtractor(DynamicFeatureExtractor):
-    def __init__(self, cape_version: str, static: Dict, behavior: Dict):
+    def __init__(self, report: CapeReport):
         super().__init__()
-        self.cape_version = cape_version
-        self.static = static
-        self.behavior = behavior
+        self.report: CapeReport = report
+
         self.sample_hashes = SampleHashes(
-            md5=static["file"]["md5"].lower(),
-            sha1=static["file"]["sha1"].lower(),
-            sha256=static["file"]["sha256"].lower(),
+            md5=self.report.target.file.md5.lower(),
+            sha1=self.report.target.file.sha1.lower(),
+            sha256=self.report.target.file.sha256.lower(),
         )
 
-        self.global_features = capa.features.extractors.cape.global_.extract_features(self.static)
+        self.global_features = capa.features.extractors.cape.global_.extract_features(self.report)
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
-        return AbsoluteVirtualAddress(self.static["pe"]["imagebase"])
+        assert self.report.static is not None and self.report.static.pe is not None
+        return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
 
     def get_sample_hashes(self) -> SampleHashes:
         return self.sample_hashes
@@ -54,44 +56,43 @@ class CapeExtractor(DynamicFeatureExtractor):
         yield from self.global_features
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.cape.file.extract_features(self.static)
+        yield from capa.features.extractors.cape.file.extract_features(self.report)
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        yield from capa.features.extractors.cape.file.get_processes(self.behavior)
+        yield from capa.features.extractors.cape.file.get_processes(self.report)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.cape.process.extract_features(self.behavior, ph)
+        yield from capa.features.extractors.cape.process.extract_features(ph)
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        yield from capa.features.extractors.cape.process.get_threads(self.behavior, ph)
+        yield from capa.features.extractors.cape.process.get_threads(ph)
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.cape.thread.extract_features(self.behavior, ph, th)
+        if False:
+            # force this routine to be a generator,
+            # but we don't actually have any elements to generate.
+            yield Characteristic("never"), NO_ADDRESS
+        return
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-        yield from capa.features.extractors.cape.thread.get_calls(self.behavior, ph, th)
+        yield from capa.features.extractors.cape.thread.get_calls(ph, th)
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.cape.call.extract_features(self.behavior, ph, th, ch)
+        yield from capa.features.extractors.cape.call.extract_features(ph, th, ch)
 
     @classmethod
     def from_report(cls, report: Dict) -> "CapeExtractor":
-        cape_version = report["info"]["version"]
-        if cape_version not in TESTED_VERSIONS:
-            logger.warning("CAPE version '%s' not tested/supported yet", cape_version)
+        cr = CapeReport.model_validate(report)
 
-        static = report["static"]
-        format_ = list(static.keys())[0]
-        static = static[format_]
-        static.update(report["behavior"].pop("summary"))
-        static.update(report["target"])
-        static.update({"processtree": report["behavior"]["processtree"]})
-        static.update({"strings": report["strings"]})
-        static.update({"format": format_})
+        if cr.info.version not in TESTED_VERSIONS:
+            logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
-        behavior = report.pop("behavior")
-        behavior["network"] = report.pop("network")
+        if cr.static is None:
+            raise UnsupportedFormatError("CAPE report missing static analysis")
 
-        return cls(cape_version, static, behavior)
+        if cr.static.pe is None:
+            raise UnsupportedFormatError("CAPE report missing static analysis")
+
+        return cls(cr)

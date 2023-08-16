@@ -7,106 +7,98 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, Tuple, Iterator
+from typing import Tuple, Iterator
 
 from capa.features.file import Export, Import, Section
 from capa.features.common import String, Feature
 from capa.features.address import NO_ADDRESS, Address, ProcessAddress, AbsoluteVirtualAddress
 from capa.features.extractors.helpers import generate_symbols
+from capa.features.extractors.cape.models import CapeReport
 from capa.features.extractors.base_extractor import ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def get_processes(static: Dict) -> Iterator[ProcessHandle]:
+def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
     """
     get all the created processes for a sample
     """
-
-    def rec(process):
-        address: ProcessAddress = ProcessAddress(pid=process["pid"], ppid=process["parent_id"])
-        inner: Dict[str, str] = {"name": process["name"]}
-        yield ProcessHandle(address=address, inner=inner)
-        for child in process["children"]:
-            yield from rec(child)
-
-    for process in static["processtree"]:
-        yield from rec(process)
+    for process in report.behavior.processes:
+        addr = ProcessAddress(pid=process.process_id, ppid=process.parent_id)
+        yield ProcessHandle(address=addr, inner=process)
 
 
-def extract_import_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+def extract_import_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     """
     extract imported function names
     """
-    imports = static["imports"]
+    assert report.static is not None and report.static.pe is not None
+    imports = report.static.pe.imports
 
-    """
-        2.2-CAPE
-        "imports": [
-            {
-             "dll": "RPCRT4.dll",
-             "imports": [{"address": "0x40504c","name": "NdrSimpleTypeUnmarshall"}, ...]
-            },
-            ...
-        ]
-
-        2.4-CAPE
-        "imports": {
-            "ADVAPI32": {
-                "dll": "ADVAPI32.dll",
-                "imports": [{"address": "0x522000", "name": "OpenSCManagerA"}, ...],
-                ...
-            },
-            ...
-        }
-    """
     if isinstance(imports, dict):
-        imports = imports.values()
+        imports = list(imports.values())
+
+    assert isinstance(imports, list)
 
     for library in imports:
-        for function in library["imports"]:
-            addr = int(function["address"], 16)
-            for name in generate_symbols(library["dll"], function["name"]):
-                yield Import(name), AbsoluteVirtualAddress(addr)
+        for function in library.imports:
+            for name in generate_symbols(library.dll, function.name):
+                yield Import(name), AbsoluteVirtualAddress(function.address)
 
 
-def extract_export_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    for function in static["exports"]:
-        name, address = function["name"], int(function["address"], 16)
-        yield Export(name), AbsoluteVirtualAddress(address)
+def extract_export_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    assert report.static is not None and report.static.pe is not None
+    for function in report.static.pe.exports:
+        yield Export(function.name), AbsoluteVirtualAddress(function.address)
 
 
-def extract_section_names(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    # be consistent with static extractors and use section VA
-    base = int(static["imagebase"], 16)
-    for section in static["sections"]:
-        name, address = section["name"], int(section["virtual_address"], 16)
-        yield Section(name), AbsoluteVirtualAddress(base + address)
+def extract_section_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    assert report.static is not None and report.static.pe is not None
+    for section in report.static.pe.sections:
+        yield Section(section.name), AbsoluteVirtualAddress(section.virtual_address)
 
 
-def extract_file_strings(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    for string_ in static["strings"]:
-        yield String(string_), NO_ADDRESS
+def extract_file_strings(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    if report.strings is not None:
+        for string in report.strings:
+            yield String(string), NO_ADDRESS
 
 
-def extract_used_regkeys(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    for regkey in static["keys"]:
+def extract_used_regkeys(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for regkey in report.behavior.summary.keys:
         yield String(regkey), NO_ADDRESS
 
 
-def extract_used_files(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    for filename in static["files"]:
-        yield String(filename), NO_ADDRESS
+def extract_used_files(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for file in report.behavior.summary.files:
+        yield String(file), NO_ADDRESS
 
 
-def extract_used_mutexes(static: Dict) -> Iterator[Tuple[Feature, Address]]:
-    for mutex in static["mutexes"]:
+def extract_used_mutexes(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for mutex in report.behavior.summary.mutexes:
         yield String(mutex), NO_ADDRESS
 
 
-def extract_features(static: Dict) -> Iterator[Tuple[Feature, Address]]:
+def extract_used_commands(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for cmd in report.behavior.summary.executed_commands:
+        yield String(cmd), NO_ADDRESS
+
+
+def extract_used_apis(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for symbol in report.behavior.summary.resolved_apis:
+        yield String(symbol), NO_ADDRESS
+
+
+def extract_used_services(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    for svc in report.behavior.summary.created_services:
+        yield String(svc), NO_ADDRESS
+    for svc in report.behavior.summary.started_services:
+        yield String(svc), NO_ADDRESS
+
+
+def extract_features(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
-        for feature, addr in handler(static):
+        for feature, addr in handler(report):
             yield feature, addr
 
 
@@ -118,4 +110,6 @@ FILE_HANDLERS = (
     extract_used_regkeys,
     extract_used_files,
     extract_used_mutexes,
+    extract_used_apis,
+    extract_used_services,
 )
