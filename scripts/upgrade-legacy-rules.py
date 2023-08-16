@@ -181,10 +181,11 @@ def upgrade_rule(content) -> str:
     else:
         features = stat
 
+    print(content)
     content["rule"] = {"meta": meta, "features": {"~": features}}
-
-    upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False).split("\n")
+    upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False, width=float("inf")).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
+    print(upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -232,7 +233,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Get rules
     rule_file_paths: List[Path] = collect_rule_file_paths([old_rules_path])
     rule_contents = [rule_path.read_bytes() for rule_path in rule_file_paths]
-
     for path, content in zip(rule_file_paths, rule_contents):
         """
         This loop goes through the list of rules and does the following:
