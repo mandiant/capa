@@ -45,13 +45,13 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
     """
     dynamic = []  # type: List[Dict]
     for node in static:
-        for key, value in node.items():
+        for _key, _value in node.items():
             pass
-        if isinstance(value, list):
+        if isinstance(_value, list):
             # is either subscope or ceng
-            if key in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
+            if _key in (*STATIC_SCOPES, *DYNAMIC_SCOPES):
                 # is subscope
-                stat, dyn = rec_scope(key, value, context=context)
+                stat, dyn = rec_scope(_key, _value, context=context)
                 if not context:
                     if dyn:
                         dynamic.append({"or": [stat, dyn]})
@@ -59,22 +59,22 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
                         dynamic.append(stat)
                 elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
-            elif key in ENGINE_STATEMENTS or key.endswith("or more"):
+            elif _key in ENGINE_STATEMENTS or _key.endswith("or more"):
                 # is ceng
-                stat, dyn = rec_bool(key, value, context=context)
+                stat, dyn = rec_bool(_key, _value, context=context)
                 if not context:
                     if dyn:
                         dynamic.append(dyn)
                 elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
             else:
-                raise ValueError(f"key: {key}, value: {value}")
-        if key.startswith("count"):
-            key = key.split("(")[1].split(")")[0]
-        if key.startswith("characteristic"):
-            if value in DYNAMIC_CHARACTERISTICS:
+                raise ValueError(f"key: {_key}, value: {_value}")
+        if _key.startswith("count"):
+            _key = _key.split("(")[1].split(")")[0]
+        if _key.startswith("characteristic"):
+            if _value in DYNAMIC_CHARACTERISTICS:
                 dynamic.append(node)
-        if key in DYNAMIC_FEATURES:
+        if _key in DYNAMIC_FEATURES:
             dynamic.append(node)
     return static, dynamic
 
@@ -250,10 +250,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             with save_path.open("w", encoding="utf-8") as f:
                 f.write(new_rule)
         except IOError as e:
-            logger.error(f"{e}")
+            logger.error("%s" % e)
             return -1
         else:
-            logger.error(f"updated rule: {path}")
+            logger.error("updated rule: %s" % path)
 
     print(f"Successfully updated {len(rule_file_paths)} rules.")
     return 0
