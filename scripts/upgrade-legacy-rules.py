@@ -65,8 +65,6 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
                 if not context:
                     if dyn:
                         dynamic.append(dyn)
-                    else:
-                        dynamic.append(stat)
                 elif context == "dynamic" and dyn:
                     dynamic.append(dyn)
             else:
@@ -125,12 +123,18 @@ def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Opti
     elif context == "dynamic":
         if key == "and" and len(stat) != len(dyn):
             return {}, {}
+        elif key == "or" and len(dyn) == len(list(filter(lambda x: x.get("description"), dyn))):
+            return {}, {}
         elif dyn:
             return {}, {key: dyn}
         else:
             return {}, {}
     else:
-        if dyn:
+        if key == "and" and len(stat) != len(dyn):
+            return {key: stat}, {}
+        elif key == "or" and len(dyn) == len(list(filter(lambda x: x.get("description"), dyn))):
+            return {}, {}
+        elif dyn:
             return {key: stat}, {key: dyn}
         else:
             return {key: stat}, {}
@@ -181,11 +185,9 @@ def upgrade_rule(content) -> str:
     else:
         features = stat
 
-    print(content)
     content["rule"] = {"meta": meta, "features": {"~": features}}
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False, width=float("inf")).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
-    print(upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
