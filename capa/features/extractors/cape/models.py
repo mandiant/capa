@@ -113,7 +113,7 @@ class Machine(Model):
 class Info(Model):
     category: str
     custom: str
-    distributed: DictTODO
+    distributed: Optional[DictTODO] = None
     duration: int
     ended: str
     id: int
@@ -231,7 +231,149 @@ class Debug(Model):
     errors: List[str]
 
 
+class ImportedSymbol(Model):
+    address: HexInt
+    name: str
+
+
+class ImportedDll(Model):
+    dll: str
+    imports: List[ImportedSymbol]
+
+
+class DirectoryEntry(Model):
+    name: str
+    virtual_address: HexInt
+    size: HexInt
+
+
+class Section(Model):
+    name: str
+    raw_address: HexInt
+    virtual_address: HexInt
+    virtual_size: HexInt
+    size_of_data: HexInt
+    characteristics: str
+    characteristics_raw: HexInt
+    entropy: float
+
+
+class Signer(Model):
+    aux_sha1: Optional[TODO] = None
+    aux_timestamp: Optional[None] = None
+    aux_valid: Optional[bool] = None
+    aux_error: Optional[bool] = None
+    aux_error_desc: Optional[str] = None
+    aux_signers: Optional[ListTODO] = None
+
+
+class Resource(Model):
+    name: str
+    language: str
+    sublanguage: str
+    filetype: Optional[str]
+    offset: HexInt
+    size: HexInt
+    entropy: float
+
+
+class Signature(Model):
+    alert: bool
+    confidence: int
+    data: List[Dict[str, Any]]
+    description: str
+    families: List[str]
+    name: str
+    new_data: ListTODO
+    references: List[str]
+    severity: int
+    weight: int
+
+
+class Overlay(Model):
+    offset: HexInt
+    size: HexInt
+
+
+class PE(Model):
+    peid_signatures: TODO
+    imagebase: HexInt
+    entrypoint: HexInt
+    reported_checksum: HexInt
+    actual_checksum: HexInt
+    osversion: str
+    pdbpath: Optional[str] = None
+    timestamp: str
+
+    # List[ImportedDll], or Dict[basename(dll), ImportedDll]
+    imports: Union[List[ImportedDll], Dict[str, ImportedDll]]
+    imported_dll_count: int
+    imphash: str
+
+    exported_dll_name: Optional[str] = None
+    exports: ListTODO
+
+    dirents: List[DirectoryEntry]
+    sections: List[Section]
+
+    ep_bytes: Optional[HexBytes] = None
+
+    overlay: Optional[Overlay] = None
+    resources: List[Resource]
+    icon: TODO
+    icon_hash: TODO
+    icon_fuzzy: TODO
+    icon_dhash: Optional[TODO] = None
+    versioninfo: ListTODO
+
+    digital_signers: ListTODO
+    guest_signers: Signer
+
+
+class VirusTotalResult(Model):
+    vendor: str
+    sig: Optional[str]
+
+
+class VirusTotalScan(Model):
+    result: str
+    detected: Optional[bool] = None
+    update: Optional[str] = None
+    version: Optional[str] = None
+    engine_name: Optional[str] = None
+    engine_version: Optional[str] = None
+    engine_update: Optional[str] = None
+    method: Optional[str] = None
+    category: Optional[str] = None
+
+
+class VirusTotal(Model):
+    md5: str
+    sha1: str
+    sha256: str
+    tlsh: Optional[str] = None
+    permalink: str
+    positives: Optional[int] = None
+    positive: Optional[int] = None
+    detection: Optional[str] = None
+    total: int
+    resource: str
+    response_code: Optional[int] = None
+    names: Optional[List[str]] = None
+    results: List[VirusTotalResult]
+    scan_date: Optional[str] = None
+    scan_id: str
+    scans: Dict[str, VirusTotalScan]
+    verbose_msg: Optional[str] = None
+
+
+class VirusTotalError(Model):
+    error: bool
+    msg: str
+
+
 class File(Model):
+    type: str
     name: Union[List[str], str]
     path: str
     guest_paths: Union[List[str], str, None]
@@ -245,13 +387,16 @@ class File(Model):
     sha256: str
     sha512: str
     sha3_384: str
+    rh_hash: Optional[str] = None
     ssdeep: str
-    type: str
+    tlsh: str
     yara: List[Yara]
     cape_yara: List[Yara]
     clamav: List[ClamAV]
-    tlsh: str
     data: Optional[str] = None
+    pe: Optional[PE] = None
+    strings: Optional[List[str]] = None
+    virustotal: Optional[Union[VirusTotal, VirusTotalError]] = None
 
 
 class Host(Model):
@@ -291,112 +436,22 @@ class DnsResolution(Model):
 
 
 class Network(Model):
-    pcap_sha256: str
-    hosts: List[Host]
-    domains: List[Domain]
-    tcp: List[TcpConnection]
-    udp: List[UdpConnection]
-    icmp: ListTODO
-    http: ListTODO
-    dns: List[DnsResolution]
-    smtp: ListTODO
-    irc: ListTODO
+    pcap_sha256: Optional[str] = None
+    hosts: Optional[List[Host]] = None
+    domains: Optional[List[Domain]] = None
+    tcp: Optional[List[TcpConnection]] = None
+    udp: Optional[List[UdpConnection]] = None
+    icmp: Optional[ListTODO] = None
+    http: Optional[ListTODO] = None
+    dns: Optional[List[DnsResolution]] = None
+    smtp: Optional[ListTODO] = None
+    irc: Optional[ListTODO] = None
     domainlookups: Optional[DictTODO] = None
     iplookups: Optional[DictTODO] = None
-    http_ex: Optional[ListTODO]
-    https_ex: Optional[ListTODO]
-    smtp_ex: Optional[ListTODO]
-    dead_hosts: List[Tuple[str, int]]
-
-
-class ImportedSymbol(Model):
-    address: HexInt
-    name: str
-
-
-class ImportedDll(Model):
-    dll: str
-    imports: List[ImportedSymbol]
-
-
-class DirectoryEntry(Model):
-    name: str
-    virtual_address: HexInt
-    size: HexInt
-
-
-class Section(Model):
-    name: str
-    raw_address: HexInt
-    virtual_address: HexInt
-    virtual_size: HexInt
-    size_of_data: HexInt
-    characteristics: str
-    characteristics_raw: HexInt
-    entropy: float
-
-
-class Signer(Model):
-    aux_sha1: TODO
-    aux_timestamp: None
-    aux_valid: bool
-    aux_error: bool
-    aux_error_desc: str
-    aux_signers: ListTODO
-
-
-class Resource(Model):
-    name: str
-    language: str
-    sublanguage: str
-    filetype: Optional[str]
-    offset: HexInt
-    size: HexInt
-    entropy: float
-
-
-class PE(Model):
-    peid_signatures: TODO
-    imagebase: HexInt
-    entrypoint: HexInt
-    reported_checksum: HexInt
-    actual_checksum: HexInt
-    osversion: str
-    pdbpath: Optional[str] = None
-    timestamp: str
-
-    imports: List[ImportedDll]
-    imported_dll_count: int
-    imphash: str
-
-    exported_dll_name: Optional[str] = None
-    exports: ListTODO
-
-    dirents: List[DirectoryEntry]
-    sections: List[Section]
-
-    overlay: TODO
-    resources: List[Resource]
-    icon: TODO
-    icon_hash: TODO
-    icon_fuzzy: TODO
-    versioninfo: ListTODO
-
-    digital_signers: ListTODO
-    guest_signers: Signer
-
-
-class Signature(Model):
-    alert: bool
-    confidence: int
-    data: List[Dict[str, Any]]
-    description: str
-    families: List[str]
-    name: str
-    new_data: ListTODO
-    references: List[str]
-    severity: int
-    weight: int
+    http_ex: Optional[ListTODO] = None
+    https_ex: Optional[ListTODO] = None
+    smtp_ex: Optional[ListTODO] = None
+    dead_hosts: Optional[List[Tuple[str, int]]] = None
 
 
 class FlareCapa(Model):
@@ -467,59 +522,31 @@ class TTP(Model):
     signature: str
 
 
-class VirusTotalResult(Model):
-    vendor: str
-    sig: Optional[str]
-
-
-class VirusTotalScan(Model):
-    detected: bool
-    result: TODO
-    update: str
-    version: Optional[str] = None
-
-
-class VirusTotal(Model):
-    md5: str
-    sha1: str
-    sha256: str
-    permalink: str
-    positives: int
-    total: int
-    resource: str
-    response_code: int
-    results: List[VirusTotalResult]
-    scan_date: str
-    scan_id: str
-    scans: Dict[str, VirusTotalScan]
-    verbose_msg: str
-
-
 class CapeReport(Model):
     behavior: Behavior
     CAPE: CAPE
-    curtain: TODO
+    curtain: Optional[TODO] = None
     debug: Debug
-    deduplicated_shots: List[int]
+    deduplicated_shots: Optional[List[int]] = None
     detections: Optional[str] = None
     detections2pid: Optional[Dict[int, List[str]]] = None
     dropped: List[File]
     info: Info
-    malfamily_tag: str
+    malfamily_tag: Optional[str] = None
     malscore: float
     network: Network
     procdump: List[Payload]
     procmemory: ListTODO
     signatures: List[Signature]
-    static: Static
-    statistics: Statistics
-    strings: List[str]
+    static: Optional[Static] = None
+    statistics: Optional[Statistics] = None
+    strings: Optional[List[str]] = None
     suricata: Suricata
-    sysmon: ListTODO
+    sysmon: Optional[ListTODO] = None
     target: Target
     # List[TTP{ttp, signature}] or Dict[ttp, signature]
     ttps: Union[List[TTP], Dict[str, str]]
-    virustotal: VirusTotal
+    virustotal: Optional[VirusTotal] = None
 
     @classmethod
     def from_buf(cls, buf: bytes) -> "CapeReport":
@@ -539,7 +566,7 @@ if __name__ == "__main__":
     doc = json.loads(buf)
     from pprint import pprint
 
-    pprint(doc["static"]["flare_capa"])
+    #pprint(doc["target"]["file"]["pe"]["imports"])
 
     report = CapeReport.from_buf(buf)
     assert report is not None
