@@ -93,6 +93,6 @@ class CapeExtractor(DynamicFeatureExtractor):
             raise UnsupportedFormatError("CAPE report missing static analysis")
 
         if cr.static.pe is None:
-            raise UnsupportedFormatError("CAPE report missing static analysis")
+            raise UnsupportedFormatError("CAPE report missing PE analysis")
 
         return cls(cr)
