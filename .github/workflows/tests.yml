@@ -181,7 +181,7 @@ jobs:
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
     - name: Install Ghidrathon
-      run : |
+      run : | # Colton TODO: fix wget url & unzip paths pending merge of breaking Ghidrathon changes
         mkdir ./.github/ghidrathon
         mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
         # wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip

@@ -93,4 +93,6 @@ def test_ghidra_feature_counts(sample, scope, feature, expected):
 
 
 if __name__ == "__main__":
-    sys.exit(pytest.main(["--pyargs", "-v", "test_ghidra_features"]))
+    # No support for faulthandler module in Ghidrathon, see:
+    # https://github.com/mandiant/Ghidrathon/issues/70
+    sys.exit(pytest.main(["--pyargs", "-p no:faulthandler", "test_ghidra_features"]))
