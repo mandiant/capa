@@ -190,6 +190,8 @@ def upgrade_rule(content) -> str:
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False, width=float("inf")).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
     upgraded_rule = re.sub(r"number: '(\d+|0[xX][0-9a-fA-F]+)'", r"number: \1", upgraded_rule)
+    upgraded_rule = re.sub(r"string: (.*)", r'string: "\1"', upgraded_rule)
+    print(upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
