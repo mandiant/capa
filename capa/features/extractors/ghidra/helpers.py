@@ -9,10 +9,16 @@ from typing import Dict, List, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
+from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
+from capa.features.address import AbsoluteVirtualAddress
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+
+monitor = monitor()  # type: ignore # noqa: F821
+currentProgram = currentProgram()  # type: ignore # noqa: F821
 
 
 def fix_byte(b: int) -> bytes:
@@ -71,10 +77,29 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
         return bytez
 
 
-def get_function_symbols() -> Iterator[ghidra.program.database.function.FunctionDB]:
+def get_function_symbols() -> Iterator[FunctionHandle]:
     """yield all non-external function symbols"""
 
-    yield from currentProgram.getFunctionManager().getFunctionsNoStubs(True)  # type: ignore [name-defined] # noqa: F821
+    for fhandle in currentProgram.getFunctionManager().getFunctionsNoStubs(True):  # type: ignore [name-defined] # noqa: F821
+        yield FunctionHandle(address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()), inner=fhandle)
+
+
+def get_function_blocks(fh: FunctionHandle) -> Iterator[BBHandle]:
+    """yield BBHandle for each bb in a given function"""
+
+    func: ghidra.program.database.function.FunctionDB = fh.inner
+    for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), func.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
+        yield BBHandle(address=AbsoluteVirtualAddress(bb.getMinAddress().getOffset()), inner=bb)
+
+
+def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
+    """yield InshHandle for each insn in a given basicblock"""
+
+    bb: ghidra.program.model.block.CodeBlock = bbh.inner
+    for addr in bb.getAddresses(True):
+        insn = getInstructionAt(addr)  # type: ignore [name-defined] # noqa: F821
+        if insn:
+            yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
 def get_file_imports() -> Dict[int, List[str]]:

@@ -12,15 +12,16 @@ from typing import Tuple, Iterator
 
 import ghidra
 from ghidra.program.model.lang import OperandType
-from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 
 import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
+from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
-listing = currentProgram.getListing()  # type: ignore [name-defined] # noqa: F821
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+listing = currentProgram.getListing()  # type: ignore # noqa: F821
 
 
 def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
@@ -98,16 +99,20 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     return False
 
 
-def extract_bb_stackstring(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_stackstring(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract stackstring indicators from basic block"""
+    bb: ghidra.program.model.block.CodeBlock = bbh.inner
+
     if bb_contains_stackstring(bb):
-        yield Characteristic("stack string"), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
+        yield Characteristic("stack string"), bbh.address
 
 
-def extract_bb_tight_loop(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
+def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """check basic block for tight loop indicators"""
+    bb: ghidra.program.model.block.CodeBlock = bbh.inner
+
     if _bb_has_tight_loop(bb):
-        yield Characteristic("tight loop"), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
+        yield Characteristic("tight loop"), bbh.address
 
 
 BASIC_BLOCK_HANDLERS = (
@@ -116,7 +121,7 @@ BASIC_BLOCK_HANDLERS = (
 )
 
 
-def extract_features(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract features from the given basic block.
 
@@ -126,17 +131,17 @@ def extract_features(bb: ghidra.program.model.block.CodeBlock) -> Iterator[Tuple
     yields:
       Tuple[Feature, int]: the features and their location found in this basic block.
     """
-    yield BasicBlock(), AbsoluteVirtualAddress(bb.getMinAddress().getOffset())
+    yield BasicBlock(), bbh.address
     for bb_handler in BASIC_BLOCK_HANDLERS:
-        for feature, addr in bb_handler(bb):
+        for feature, addr in bb_handler(fh, bbh):
             yield feature, addr
 
 
 def main():
     features = []
-    for fhandle in capa.features.extractors.ghidra.helpers.get_function_symbols():
-        for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), fhandle.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
-            features.extend(list(extract_features(bb)))
+    for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
+        for bbh in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
+            features.extend(list(extract_features(fh, bbh)))
 
     import pprint
 

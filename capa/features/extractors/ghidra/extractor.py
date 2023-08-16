@@ -5,16 +5,19 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple
+from typing import List, Tuple, Iterator
 
-import ghidra
-
+import capa.features.extractors.ghidra.file
+import capa.features.extractors.ghidra.insn
 import capa.features.extractors.ghidra.global_
+import capa.features.extractors.ghidra.function
+import capa.features.extractors.ghidra.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
-currentProgram: ghidra.program.database.ProgramDB
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+currentAddress = currentAddress()  # type: ignore # noqa: F821
 
 
 class GhidraFeatureExtractor(FeatureExtractor):
@@ -33,3 +36,33 @@ class GhidraFeatureExtractor(FeatureExtractor):
 
     def extract_file_features(self):
         yield from capa.features.extractors.ghidra.file.extract_features()
+
+    def get_functions(self) -> Iterator[FunctionHandle]:
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        yield from ghidra_helpers.get_function_symbols()
+
+    @staticmethod
+    def get_function(addr: int) -> FunctionHandle:
+        get_addr = currentAddress.getAddress(hex(addr))  # type: ignore [name-defined] # noqa: F821
+        func = getFunctionContaining(get_addr)  # type: ignore [name-defined] # noqa: F821
+        return FunctionHandle(address=AbsoluteVirtualAddress(func.getAddress().getOffset()), inner=func)
+
+    def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.ghidra.function.extract_features(fh)
+
+    def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        yield from ghidra_helpers.get_function_blocks(fh)
+
+    def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
+        yield from capa.features.extractors.ghidra.basicblock.extract_features(fh, bbh)
+
+    def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        yield from ghidra_helpers.get_insn_in_range(bbh)
+
+    def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):
+        yield from capa.features.extractors.ghidra.insn.extract_features(fh, bbh, ih)

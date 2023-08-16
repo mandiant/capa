@@ -14,19 +14,25 @@ import capa.features.extractors.ghidra.helpers
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
+from capa.features.extractors.base_extractor import FunctionHandle
+
+currentProgram = currentProgram()  # type: ignore # noqa: F821
+monitor = monitor()  # type: ignore # noqa: F821
 
 
-def extract_function_calls_to(fh: ghidra.program.database.function.FunctionDB):
+def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
-    for ref in fh.getSymbol().getReferences():
+    f: ghidra.program.database.function.FunctionDB = fh.inner
+    for ref in f.getSymbol().getReferences():
         if ref.getReferenceType().isCall():
             yield Characteristic("calls to"), AbsoluteVirtualAddress(ref.getFromAddress().getOffset())
 
 
-def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
-    edges = []
+def extract_function_loop(fh: FunctionHandle):
+    f: ghidra.program.database.function.FunctionDB = fh.inner
 
-    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), fh.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
+    edges = []
+    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), f.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
         dests = block.getDestinations(monitor)  # type: ignore [name-defined] # noqa: F821
         s_addrs = block.getStartAddresses()
 
@@ -35,16 +41,18 @@ def extract_function_loop(fh: ghidra.program.database.function.FunctionDB):
                 edges.append((addr.getOffset(), dests.next().getDestinationAddress().getOffset()))
 
     if loops.has_loop(edges):
-        yield Characteristic("loop"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
+        yield Characteristic("loop"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
-def extract_recursive_call(fh: ghidra.program.database.function.FunctionDB):
-    for f in fh.getCalledFunctions(monitor):  # type: ignore [name-defined] # noqa: F821
-        if f.getEntryPoint().getOffset() == fh.getEntryPoint().getOffset():
-            yield Characteristic("recursive call"), AbsoluteVirtualAddress(fh.getEntryPoint().getOffset())
+def extract_recursive_call(fh: FunctionHandle):
+    f: ghidra.program.database.function.FunctionDB = fh.inner
+
+    for func in f.getCalledFunctions(monitor):  # type: ignore [name-defined] # noqa: F821
+        if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():
+            yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
 
-def extract_features(fh: ghidra.program.database.function.FunctionDB) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr
