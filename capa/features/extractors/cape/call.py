@@ -36,18 +36,19 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
 
     # list similar to disassembly: arguments right-to-left, call
     for arg in reversed(call.arguments):
-        if isinstance(arg, list) and len(arg) == 0:
+        value = arg.value
+        if isinstance(value, list) and len(arg) == 0:
             # unsure why CAPE captures arguments as empty lists?
             continue
 
-        elif isinstance(arg, str):
-            yield String(arg), ch.address
+        elif isinstance(value, str):
+            yield String(value), ch.address
 
         elif isinstance(arg, int):
-            yield Number(arg), ch.address
+            yield Number(value), ch.address
 
         else:
-            assert_never(arg)
+            assert_never(value)
 
     yield API(call.api), ch.address
 
