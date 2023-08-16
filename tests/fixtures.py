@@ -1407,8 +1407,8 @@ def _039a6_dotnetfile_extractor():
     return get_dnfile_extractor(get_data_path_by_name("_039a6"))
 
 
-def get_result_doc(path):
-    return capa.render.result_document.ResultDocument.parse_file(path)
+def get_result_doc(path: Path):
+    return capa.render.result_document.ResultDocument.from_file(path)
 
 
 @pytest.fixture

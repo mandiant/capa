@@ -30,6 +30,7 @@ See the License for the specific language governing permissions and limitations 
 """
 import logging
 import binascii
+from pathlib import Path
 
 import ida_nalt
 import ida_funcs
@@ -68,7 +69,7 @@ def main():
     if not path:
         return 0
 
-    result_doc = capa.render.result_document.ResultDocument.parse_file(path)
+    result_doc = capa.render.result_document.ResultDocument.from_file(Path(path))
     meta, capabilities = result_doc.to_capa()
 
     # in IDA 7.4, the MD5 hash may be truncated, for example:
