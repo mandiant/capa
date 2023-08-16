@@ -8,6 +8,7 @@
 from typing import List, Tuple, Iterator
 
 import idaapi
+import ida_nalt
 
 import capa.ida.helpers
 import capa.features.extractors.elf
@@ -35,7 +36,7 @@ class IdaFeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
         self.sample_hashes = SampleHashes(
-            md5=idaapi.get_input_file_md5(), sha1="(unknown)", sha256=idaapi.get_input_file_sha256()
+            md5=ida_nalt.retrieve_input_file_md5(), sha1="(unknown)", sha256=ida_nalt.retrieve_input_file_sha256()
         )
 
     def get_base_address(self):
