@@ -8,6 +8,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 
+import re
 import sys
 import logging
 import argparse
@@ -75,7 +76,7 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
             if _value in DYNAMIC_CHARACTERISTICS:
                 dynamic.append(node)
         if _key in DYNAMIC_FEATURES:
-            dynamic.append(node)
+            dynamic.append({_key: _value})
     return static, dynamic
 
 
@@ -188,6 +189,7 @@ def upgrade_rule(content) -> str:
     content["rule"] = {"meta": meta, "features": {"~": features}}
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False, width=float("inf")).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
+    upgraded_rule = re.sub(r"number: '(\d+|0[xX][0-9a-fA-F]+)'", r"number: \1", upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -242,7 +244,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         2. Get its dynamic-format equivalent.
         3. Compute its save path and save it there.
         """
-        content = yaml.load(content.decode("utf-8"), Loader=yaml.Loader)
+        content = yaml.load(content.decode("utf-8"), Loader=yaml.BaseLoader)
         new_rule = upgrade_rule(content)
         save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
