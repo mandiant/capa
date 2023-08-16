@@ -163,7 +163,7 @@ class PE(Model):
 
     # List[ImportedDll], or Dict[basename(dll), ImportedDll]
     imports: Union[List[ImportedDll], Dict[str, ImportedDll]]
-    imported_dll_count: int
+    imported_dll_count: Optional[int] = None
     imphash: str
 
     exported_dll_name: Optional[str] = None
@@ -212,7 +212,7 @@ class File(Model):
     sha512: str
     sha3_384: str
     ssdeep: str
-    tlsh: str
+    tlsh: Optional[str] = None
     rh_hash: Optional[str] = None
 
     #
@@ -519,7 +519,7 @@ class HTTP(Model):
     referrer: str
     ua: str
 
-    status: int
+    status: Union[int, Literal["None"]]
     contenttype: str
     length: int
 
@@ -564,7 +564,7 @@ class Static(Model):
 
 class CAPE(Model):
     payloads: List[ProcessFile]
-    configs: ListTODO
+    configs: Skip = None
 
 
 class CapeReport(Model):
@@ -588,7 +588,7 @@ class CapeReport(Model):
 
     network: Network
     suricata: Suricata
-    dropped: List[File]
+    dropped: Optional[List[File]] = None
     procdump: List[ProcessFile]
     procmemory: ListTODO
 
@@ -623,7 +623,7 @@ class CapeReport(Model):
     signatures: List[Signature]
     malfamily_tag: Optional[str] = None
     malscore: float
-    detections: Optional[str] = None
+    detections: Skip = None
     detections2pid: Optional[Dict[int, List[str]]] = None
     # AV detections for the sample.
     virustotal: Skip = None
