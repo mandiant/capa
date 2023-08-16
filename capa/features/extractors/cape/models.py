@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import binascii
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Any, Dict, List, Tuple, Union, Literal, Optional
 
 from pydantic import Field, BaseModel, ConfigDict
 from typing_extensions import Annotated, TypeAlias
@@ -46,6 +46,9 @@ TODO: TypeAlias = None
 ListTODO: TypeAlias = List[None]
 DictTODO: TypeAlias = Model
 
+EmptyDict: TypeAlias = BaseModel
+EmptyList: TypeAlias = List[Any]
+
 
 class ImportedSymbol(Model):
     address: HexInt
@@ -74,18 +77,9 @@ class Section(Model):
     entropy: float
 
 
-class Signer(Model):
-    aux_sha1: Optional[TODO] = None
-    aux_timestamp: Optional[None] = None
-    aux_valid: Optional[bool] = None
-    aux_error: Optional[bool] = None
-    aux_error_desc: Optional[str] = None
-    aux_signers: Optional[ListTODO] = None
-
-
 class Resource(Model):
     name: str
-    language: str
+    language: Optional[str] = None
     sublanguage: str
     filetype: Optional[str]
     offset: HexInt
@@ -106,9 +100,55 @@ class Signature(Model):
     weight: int
 
 
+class DigitalSigner(Model):
+    extensions_authorityInfoAccess_caIssuers: Optional[str] = None
+    extensions_authorityKeyIdentifier: Optional[str] = None
+    extensions_cRLDistributionPoints_0: Optional[str] = None
+    extensions_certificatePolicies_0: Optional[str] = None
+    extensions_subjectAltName_0: Optional[str] = None
+    extensions_subjectKeyIdentifier: Optional[str] = None
+
+    issuer_commonName: str
+    issuer_countryName: str
+    issuer_localityName: str
+    issuer_organizationName: str
+    issuer_stateOrProvinceName: str
+    md5_fingerprint: str
+    not_after: str
+    not_before: str
+    serial_number: str
+    sha1_fingerprint: str
+    sha256_fingerprint: str
+    subject_commonName: str
+    subject_countryName: str
+    subject_localityName: str
+    subject_organizationName: str
+    subject_stateOrProvinceName: str
+
+
+class Signer(Model):
+    aux_sha1: Optional[TODO] = None
+    aux_timestamp: Optional[None] = None
+    aux_valid: Optional[bool] = None
+    aux_error: Optional[bool] = None
+    aux_error_desc: Optional[str] = None
+    aux_signers: Optional[ListTODO] = None
+
+
 class Overlay(Model):
     offset: HexInt
     size: HexInt
+
+
+class KV(Model):
+    name: str
+    value: str
+
+
+class ExportedSymbol(Model):
+    address: HexInt
+    name: str
+    ordinal: int
 
 
 class PE(Model):
@@ -127,7 +167,7 @@ class PE(Model):
     imphash: str
 
     exported_dll_name: Optional[str] = None
-    exports: ListTODO
+    exports: List[ExportedSymbol]
 
     dirents: List[DirectoryEntry]
     sections: List[Section]
@@ -136,13 +176,18 @@ class PE(Model):
 
     overlay: Optional[Overlay] = None
     resources: List[Resource]
-    icon: TODO
-    icon_hash: TODO
-    icon_fuzzy: TODO
-    icon_dhash: Optional[TODO] = None
-    versioninfo: ListTODO
+    versioninfo: List[KV]
 
-    digital_signers: ListTODO
+    # base64 encoded data
+    icon: Optional[str] = None
+    # MD5-like hash
+    icon_hash: Optional[str] = None
+    # MD5-like hash
+    icon_fuzzy: Optional[str] = None
+    # short hex string
+    icon_dhash: Optional[str] = None
+
+    digital_signers: List[DigitalSigner]
     guest_signers: Signer
 
 
@@ -151,6 +196,7 @@ class File(Model):
     cape_type_code: Optional[int] = None
     cape_type: Optional[str] = None
 
+    pid: Optional[Union[int, Literal[""]]] = None
     name: Union[List[str], str]
     path: str
     guest_paths: Union[List[str], str, None]
@@ -204,7 +250,8 @@ class ProcessFile(File):
 
 class Argument(Model):
     name: str
-    value: Union[HexInt, str]
+    # unsure why empty list is provided here
+    value: Union[HexInt, str, EmptyList]
     pretty_value: Optional[str] = None
 
 
@@ -267,12 +314,16 @@ class EventMoveData(Model):
     to: Optional[str] = None
 
 
+class EventSvcData(Model):
+    service: str
+
+
 class EnhancedEvent(Model):
     event: str
     object: str
     timestamp: str
     eid: int
-    data: Union[EventFileData, EventRegData, EventMoveData]
+    data: Union[EventFileData, EventRegData, EventMoveData, EventSvcData]
 
 
 class Summary(Model):
@@ -291,6 +342,15 @@ class Summary(Model):
     started_services: List[str]
 
 
+class EncryptedBuffer(Model):
+    process_name: str
+    pid: int
+
+    api_call: str
+    buffer: str
+    buffer_size: int
+
+
 class Behavior(Model):
     summary: Summary
 
@@ -301,7 +361,7 @@ class Behavior(Model):
 
     anomaly: List[str]
     enhanced: List[EnhancedEvent]
-    encryptedbuffers: ListTODO
+    encryptedbuffers: List[EncryptedBuffer]
 
 
 class Host(Model):
@@ -334,10 +394,15 @@ class UdpEvent(Model):
     time: float
 
 
+class DnsEventAnswer(Model):
+    type: str
+    data: str
+
+
 class DnsEvent(Model):
     request: str
     type: str
-    answers: ListTODO
+    answers: List[DnsEventAnswer]
 
 
 class IcmpEvent(Model):
@@ -366,12 +431,32 @@ class Network(Model):
     dead_hosts: Optional[List[Tuple[str, int]]] = None
 
 
+class DnsAnswer(Model):
+    rdata: str
+    rrname: str
+    rrtype: str
+    ttl: int
+
+
 class SuricataDnsEvent(Model):
     id: int
     type: str
     rrname: str
     rrtype: str
-    tx_id: int
+
+    tx_id: Optional[int] = None
+
+    # dict from query type ("A") to resolutions ("127.0.0.1")
+    grouped: Optional[Dict[str, List[str]]] = None
+    answers: Optional[List[DnsAnswer]] = None
+
+    rcode: Optional[str] = None
+    opcode: Optional[int] = None
+    ra: Optional[bool] = None
+    rd: Optional[bool] = None
+    qr: Optional[bool] = None
+    flags: Optional[int] = None
+    version: Optional[int] = None
 
 
 class SuricataNetworkEntry(Model):
@@ -391,15 +476,63 @@ class SuricataNetworkEntry(Model):
     dns: Optional[SuricataDnsEvent]
 
 
+class JA3(Model):
+    hash: str
+    string: str
+
+
+class TLS(Model):
+    timestamp: str
+
+    srcip: str
+    srcport: int
+
+    dstip: str
+    dstport: int
+
+    version: str
+    sni: str
+
+    subject: Optional[str] = None
+    issuerdn: Optional[str] = None
+    notafter: Optional[str] = None
+    notbefore: Optional[str] = None
+    serial: Optional[str] = None
+    fingerprint: Optional[str] = None
+
+    ja3: Union[JA3, EmptyDict]
+    ja3s: Union[JA3, EmptyDict]
+
+
+class HTTP(Model):
+    timestamp: str
+
+    srcip: str
+    srcport: int
+
+    dstip: str
+    dstport: int
+
+    hostname: str
+    http_method: str
+    uri: str
+    referrer: str
+    ua: str
+
+    status: int
+    contenttype: str
+    length: int
+
+
 class Suricata(Model):
     alerts: ListTODO
     dns: List[SuricataNetworkEntry]
     fileinfo: ListTODO
     files: ListTODO
-    http: ListTODO
+    http: List[HTTP]
     perf: ListTODO
     ssh: ListTODO
-    tls: ListTODO
+    tls: List[TLS]
 
     # paths to log files, not relevant to capa
     alert_log_full_path: Skip = None
@@ -409,6 +542,14 @@ class Suricata(Model):
     http_log_full_path: Skip = None
     ssh_log_full_path: Skip = None
     tls_log_full_path: Skip = None
+
+
+class Curtain(Model):
+    # seems to be behavior analysis via event log monitoring?
+    pid: int
+    behaviors: List[str]
+    filter: List[Any]
+    events: List[Any]
 
 
 class Target(Model):
@@ -456,8 +597,9 @@ class CapeReport(Model):
     #
     # seems to have to do with processing powershell logs.
     # disabled by default, and i don't see the source on github.
-    curtain: Optional[TODO] = None
+    curtain: Optional[Dict[int, Curtain]] = None
     sysmon: Optional[ListTODO] = None
+    url_analysis: Optional[DictTODO] = None
 
     #
     # information we won't use in capa
@@ -503,8 +645,10 @@ if __name__ == "__main__":
 
     doc = json.loads(buf)
 
-    # from pprint import pprint
-    # pprint(doc["network"]["icmp"][225])
+    from pprint import pprint
+
+    # pprint(doc["behavior"]["encryptedbuffers"][0])
+    # from IPython import embed; embed()
 
     report = CapeReport.from_buf(buf)
     assert report is not None
