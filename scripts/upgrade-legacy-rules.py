@@ -252,10 +252,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             with save_path.open("w", encoding="utf-8") as f:
                 f.write(new_rule)
         except IOError as e:
-            logger.error("%s" % e)
+            logger.error("%s", e)
             return -1
         else:
-            logger.error("updated rule: %s" % path)
+            logger.error("updated rule: %s", path)
 
     print(f"Successfully updated {len(rule_file_paths)} rules.")
     return 0
