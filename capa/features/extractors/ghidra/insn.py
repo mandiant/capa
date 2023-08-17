@@ -21,8 +21,6 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 # security cookie checks may perform non-zeroing XORs, these are expected within a certain
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-monitor = monitor()  # type: ignore # noqa: F821
 
 # significantly cut down on runtime by caching api info
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
@@ -377,13 +375,17 @@ def check_nzxor_security_cookie_delta(
     Check the last bb of the function containing the insn
     """
 
-    model = SimpleBlockModel(currentProgram)  # type: ignore [name-defined] # noqa: F821
+    model = SimpleBlockModel(currentProgram())  # type: ignore [name-defined] # noqa: F821
     insn_addr = insn.getAddress()
     func_asv = fh.getBody()
     first_addr = func_asv.getMinAddress()
     last_addr = func_asv.getMaxAddress()
 
-    if model.getFirstCodeBlockContaining(first_addr, monitor) == model.getFirstCodeBlockContaining(last_addr, monitor):  # type: ignore [name-defined] # noqa: F821
+    if model.getFirstCodeBlockContaining(
+        first_addr, monitor()  # type: ignore [name-defined] # noqa: F821
+    ) == model.getFirstCodeBlockContaining(
+        last_addr, monitor()  # type: ignore [name-defined] # noqa: F821
+    ):
         if insn_addr < first_addr.add(SECURITY_COOKIE_BYTES_DELTA):
             return True
         else:

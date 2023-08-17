@@ -31,6 +31,7 @@ Example:
 import sys
 import logging
 import argparse
+from pathlib import Path
 
 import capa.render.proto
 import capa.render.result_document
@@ -64,7 +65,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO)
         logging.getLogger().setLevel(logging.INFO)
 
-    rd = capa.render.result_document.ResultDocument.parse_file(args.json)
+    rd = capa.render.result_document.ResultDocument.from_file(Path(args.json))
     pb = capa.render.proto.doc_to_pb2(rd)
 
     sys.stdout.buffer.write(pb.SerializeToString(deterministic=True))

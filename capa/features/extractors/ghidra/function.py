@@ -16,9 +16,6 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
 from capa.features.extractors.base_extractor import FunctionHandle
 
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-monitor = monitor()  # type: ignore # noqa: F821
-
 
 def extract_function_calls_to(fh: FunctionHandle):
     """extract callers to a function"""
@@ -32,8 +29,8 @@ def extract_function_loop(fh: FunctionHandle):
     f: ghidra.program.database.function.FunctionDB = fh.inner
 
     edges = []
-    for block in SimpleBlockIterator(BasicBlockModel(currentProgram), f.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
-        dests = block.getDestinations(monitor)  # type: ignore [name-defined] # noqa: F821
+    for block in SimpleBlockIterator(BasicBlockModel(currentProgram()), f.getBody(), monitor()):  # type: ignore [name-defined] # noqa: F821
+        dests = block.getDestinations(monitor())  # type: ignore [name-defined] # noqa: F821
         s_addrs = block.getStartAddresses()
 
         while dests.hasNext():  # For loop throws Python TypeError
@@ -47,7 +44,7 @@ def extract_function_loop(fh: FunctionHandle):
 def extract_recursive_call(fh: FunctionHandle):
     f: ghidra.program.database.function.FunctionDB = fh.inner
 
-    for func in f.getCalledFunctions(monitor):  # type: ignore [name-defined] # noqa: F821
+    for func in f.getCalledFunctions(monitor()):  # type: ignore [name-defined] # noqa: F821
         if func.getEntryPoint().getOffset() == f.getEntryPoint().getOffset():
             yield Characteristic("recursive call"), AbsoluteVirtualAddress(f.getEntryPoint().getOffset())
 
