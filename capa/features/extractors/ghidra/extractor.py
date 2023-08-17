@@ -16,9 +16,6 @@ from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-currentAddress = currentAddress()  # type: ignore # noqa: F821
-
 
 class GhidraFeatureExtractor(FeatureExtractor):
     def __init__(self):
@@ -29,7 +26,7 @@ class GhidraFeatureExtractor(FeatureExtractor):
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
 
     def get_base_address(self):
-        return AbsoluteVirtualAddress(currentProgram.getImageBase().getOffset())  # type: ignore [name-defined] # noqa: F821
+        return AbsoluteVirtualAddress(currentProgram().getImageBase().getOffset())  # type: ignore [name-defined] # noqa: F821
 
     def extract_global_features(self):
         yield from self.global_features
@@ -44,7 +41,7 @@ class GhidraFeatureExtractor(FeatureExtractor):
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
-        get_addr = currentAddress.getAddress(hex(addr))  # type: ignore [name-defined] # noqa: F821
+        get_addr = currentAddress().getAddress(hex(addr))  # type: ignore [name-defined] # noqa: F821
         func = getFunctionContaining(get_addr)  # type: ignore [name-defined] # noqa: F821
         return FunctionHandle(address=AbsoluteVirtualAddress(func.getAddress().getOffset()), inner=func)
 

@@ -20,9 +20,6 @@ from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
 
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-listing = currentProgram.getListing()  # type: ignore # noqa: F821
-
 
 def get_printable_len(op: ghidra.program.model.scalar.Scalar) -> int:
     """Return string length if all operand bytes are ascii or utf16-le printable"""
@@ -79,7 +76,7 @@ def bb_contains_stackstring(bb: ghidra.program.model.block.CodeBlock) -> bool:
     true if basic block contains enough moves of constant bytes to the stack
     """
     count = 0
-    for insn in listing.getInstructions(bb, True):
+    for insn in currentProgram().getListing().getInstructions(bb, True):  # type: ignore [name-defined] # noqa: F821
         if is_mov_imm_to_stack(insn):
             count += get_printable_len(insn.getScalar(1))
         if count > MIN_STACKSTRING_LEN:
@@ -91,7 +88,8 @@ def _bb_has_tight_loop(bb: ghidra.program.model.block.CodeBlock):
     """
     parse tight loops, true if last instruction in basic block branches to bb start
     """
-    last_insn = listing.getInstructions(bb, False).next()  # Reverse Ordered, first InstructionDB
+    # Reverse Ordered, first InstructionDB
+    last_insn = currentProgram().getListing().getInstructions(bb, False).next()  # type: ignore [name-defined] # noqa: F821
 
     if last_insn.getFlowType().isJump():
         return last_insn.getAddress(0) == bb.getMinAddress()

@@ -15,17 +15,16 @@ from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Fe
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
-currentProgram = currentProgram()  # type: ignore # noqa: F821
 
 
 def extract_os() -> Iterator[Tuple[Feature, Address]]:
-    format_name: str = currentProgram.getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    format_name: str = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
 
     if "PE" in format_name:
         yield OS(OS_WINDOWS), NO_ADDRESS
 
     elif "ELF" in format_name:
-        program_memory = currentProgram.getMemory()  # type: ignore [name-defined] # noqa: F821
+        program_memory = currentProgram().getMemory()  # type: ignore [name-defined] # noqa: F821
         fbytes_list = program_memory.getAllFileBytes()
         fbytes = fbytes_list[0]
 
@@ -58,7 +57,7 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
 
 
 def extract_arch() -> Iterator[Tuple[Feature, Address]]:
-    lang_id = currentProgram.getMetadata().get("Language ID")  # type: ignore [name-defined] # noqa: F821
+    lang_id = currentProgram().getMetadata().get("Language ID")  # type: ignore [name-defined] # noqa: F821
 
     if "x86" in lang_id and "64" in lang_id:
         yield Arch(ARCH_AMD64), NO_ADDRESS

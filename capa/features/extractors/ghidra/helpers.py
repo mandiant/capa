@@ -17,9 +17,6 @@ import capa.features.extractors.helpers
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
-monitor = monitor()  # type: ignore # noqa: F821
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-
 
 def fix_byte(b: int) -> bytes:
     """Transform signed ints from Java into bytes for Python
@@ -38,7 +35,7 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
     # .add(1) to avoid false positives on regular PE files
-    eas = findBytes(currentProgram.getMinAddress().add(1), seqstr, 1, 1)  # type: ignore [name-defined] # noqa: F821
+    eas = findBytes(currentProgram().getMinAddress().add(1), seqstr, 1, 1)  # type: ignore [name-defined] # noqa: F821
     yield from eas
 
 
@@ -80,7 +77,7 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
 def get_function_symbols() -> Iterator[FunctionHandle]:
     """yield all non-external function symbols"""
 
-    for fhandle in currentProgram.getFunctionManager().getFunctionsNoStubs(True):  # type: ignore [name-defined] # noqa: F821
+    for fhandle in currentProgram().getFunctionManager().getFunctionsNoStubs(True):  # type: ignore [name-defined] # noqa: F821
         yield FunctionHandle(address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()), inner=fhandle)
 
 
@@ -88,7 +85,7 @@ def get_function_blocks(fh: FunctionHandle) -> Iterator[BBHandle]:
     """yield BBHandle for each bb in a given function"""
 
     func: ghidra.program.database.function.FunctionDB = fh.inner
-    for bb in SimpleBlockIterator(BasicBlockModel(currentProgram), func.getBody(), monitor):  # type: ignore [name-defined] # noqa: F821
+    for bb in SimpleBlockIterator(BasicBlockModel(currentProgram()), func.getBody(), monitor()):  # type: ignore [name-defined] # noqa: F821
         yield BBHandle(address=AbsoluteVirtualAddress(bb.getMinAddress().getOffset()), inner=bb)
 
 
@@ -107,7 +104,7 @@ def get_file_imports() -> Dict[int, List[str]]:
 
     import_dict: Dict[int, List[str]] = {}
 
-    for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
@@ -138,7 +135,7 @@ def get_file_externs() -> Dict[int, List[str]]:
 
     extern_dict: Dict[int, List[str]] = {}
 
-    for sym in currentProgram.getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
+    for sym in currentProgram().getSymbolTable().getAllSymbols(True):  # type: ignore [name-defined] # noqa: F821
         # .isExternal() misses more than this config for the function symbols
         if sym.getSymbolType() == SymbolType.FUNCTION and sym.getSource() == SourceType.ANALYSIS and sym.isGlobal():
             name = sym.getName()  # starts to resolve names based on Ghidra's FidDB
@@ -176,7 +173,7 @@ def map_fake_import_addrs() -> Dict[int, List[int]]:
     """
     fake_dict: Dict[int, List[int]] = {}
 
-    for f in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for f in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         for r in f.getSymbol().getReferences():
             if r.getReferenceType().isData():
                 fake_dict.setdefault(f.getEntryPoint().getOffset(), []).append(r.getFromAddress().getOffset())
@@ -200,7 +197,7 @@ def get_external_locs() -> List[int]:
     - 0x000b34EC -> External Location
     """
     locs = []
-    for fh in currentProgram.getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
+    for fh in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
         external_loc = fh.getExternalLocation().getAddress()
         if external_loc:
             locs.append(external_loc)
