@@ -22,7 +22,7 @@ from typing_extensions import TypeAlias
 from capa.main import collect_rule_file_paths
 from capa.rules import Rule
 
-DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os")
+DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os", "arch")
 DYNAMIC_CHARACTERISTICS = ("embedded-pe",)
 ENGINE_STATEMENTS = ("and", "or", "optional", "not")
 STATIC_SCOPES = ("function", "basic block", "instruction")
@@ -139,7 +139,7 @@ def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Opti
         return {key: stat}, {}
     elif context == "dynamic":
         if key == "and" and len(stat) != len(dyn):
-            return {}, {}
+            return {key: stat}, {}
         elif key == "or" and len(dyn) == len(list(filter(lambda x: x.get("description"), dyn))):
             return {}, {}
         elif dyn:
@@ -218,7 +218,7 @@ def upgrade_rule(content) -> str:
     upgraded_rule = re.sub(
         r"(string|substring|regex): (.*)",
         lambda x: f"{x.group(1)}: "
-        + (f'"{format_string(x.group(2))}"' if ('"' not in x.group(2) and "\\" not in x.group(2)) else x.group(2)),
+        + (x.group(2) if ('"' not in x.group(2) and "\\" not in x.group(2)) else f'"{format_string(x.group(2))}"'),
         upgraded_rule,
     )
     print(upgraded_rule)
