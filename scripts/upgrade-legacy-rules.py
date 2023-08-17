@@ -170,15 +170,19 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
     return new_meta
 
 
+def format_escapes(s):
+    return s.replace("\\", "\\\\")
+
+
 def upgrade_rule(content) -> str:
     """
     Takes in an old rule and returns its equivalent in the new rule format.
     """
     features = content["rule"]["features"]
 
-    for key, value in features[0].items():
+    for _key, _value in features[0].items():
         pass
-    stat, dyn = rec_features_list([{key: value}])
+    stat, dyn = rec_features_list([{_key: _value}])
 
     meta = update_meta(content["rule"]["meta"], has_dyn=dyn)
     if dyn:
@@ -190,8 +194,11 @@ def upgrade_rule(content) -> str:
     upgraded_rule = yaml.dump(content, Dumper=NoAliasDumper, sort_keys=False, width=float("inf")).split("\n")
     upgraded_rule = "\n".join(list(filter(lambda line: "~" not in line, upgraded_rule)))
     upgraded_rule = re.sub(r"number: '(\d+|0[xX][0-9a-fA-F]+)'", r"number: \1", upgraded_rule)
-    upgraded_rule = re.sub(r"string: (.*)", r'string: "\1"', upgraded_rule)
-    print(upgraded_rule)
+    upgraded_rule = re.sub(
+        r"(string|substring|regex): (.*)",
+        lambda x: f"{x.group(1)}: " + (f'"{format_escapes(x.group(2))}"' if '"' not in x.group(2) else x.group(2)),
+        upgraded_rule,
+    )
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
