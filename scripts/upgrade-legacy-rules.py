@@ -186,7 +186,7 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
     return new_meta
 
 
-def format_escapes(s: str):
+def format_string(s: str):
     s = s.replace("\n", "\\n")
     if s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
@@ -215,10 +215,9 @@ def upgrade_rule(content) -> str:
     upgraded_rule = re.sub(r"number: '(\d+|0[xX][0-9a-fA-F]+)'", r"number: \1", upgraded_rule)
     upgraded_rule = re.sub(
         r"(string|substring|regex): (.*)",
-        lambda x: f"{x.group(1)}: " + (f'"{format_escapes(x.group(2))}"' if '"' not in x.group(2) else x.group(2)),
+        lambda x: f"{x.group(1)}: " + (f'"{format_string(x.group(2))}"' if '"' not in x.group(2) else x.group(2)),
         upgraded_rule,
     )
-    print(upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -274,7 +273,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         3. Compute its save path and save it there.
         """
         content = yaml.load(content.decode("utf-8"), Loader=yaml.BaseLoader)
-        print(path)
         new_rule = upgrade_rule(content)
         save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
