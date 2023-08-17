@@ -115,7 +115,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
                 # the symbol table gets stored as a function's attribute in order to avoid running
                 # this code everytime the call is made, thus preventing the computational overhead.
                 try:
-                    fh.ctx["cache"]["symtab"] = SymTab.from_Elf(f.vw.parsedbin)
+                    fh.ctx["cache"]["symtab"] = SymTab.from_viv(f.vw.parsedbin)
                 except Exception:
                     fh.ctx["cache"]["symtab"] = None
 

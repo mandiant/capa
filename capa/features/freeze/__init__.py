@@ -320,7 +320,7 @@ def loads(s: str) -> capa.features.extractors.base_extractor.FeatureExtractor:
     """deserialize a set of features (as a NullFeatureExtractor) from a string."""
     import capa.features.extractors.null as null
 
-    freeze = Freeze.parse_raw(s)
+    freeze = Freeze.model_validate_json(s)
     if freeze.version != 2:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 

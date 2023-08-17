@@ -9,18 +9,23 @@
 
 ### Breaking Changes
 
-### New Rules (5)
+### New Rules (6)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 - nursery/enumerate-device-drivers-on-linux @mr-tz
+- anti-analysis/anti-vm/vm-detection/check-for-foreground-window-switch ervin.ocampo@mandiant.com
 -
 
 ### Bug Fixes
 
 - Fix binja backend stack string detection. #1473 @xusheng6
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
+- OS: detect Android ELF files #1705 @williballenthin
+- ELF: fix parsing of symtab #1704 @williballenthin
+- result document: don't use deprecated pydantic functions #1718 @williballenthin
+- pytest: don't mark IDA tests as pytest tests #1719 @williballenthin
 
 ### capa explorer IDA Pro plugin
 - fix unhandled exception when resolving rule path #1693 @mike-hunhoff
