@@ -194,11 +194,18 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         push offset aAcr     ; "ACR  > "
     """
     insn: ghidra.program.database.code.InstructionDB = ih.inner
+    dyn_addr = OperandType.DYNAMIC | OperandType.ADDRESS
 
     ref = insn.getAddress()
     for i in range(insn.getNumOperands()):
         if OperandType.isScalarAsAddress(insn.getOperandType(i)):
             ref = insn.getAddress(i)
+        # strings are also referenced dynamically via pointers & arrays, so we need to deref them
+        if insn.getOperandType(i) == dyn_addr:
+            ref = insn.getAddress(i)
+            dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
+            if dat and dat.isPointer():
+                ref = dat.getValue()
 
     if ref != insn.getAddress():
         ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
