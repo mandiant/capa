@@ -70,13 +70,29 @@ def rec_features_list(static: List[dict], context=False) -> tuple[List[Dict], Li
                     dynamic.append(dyn)
             else:
                 raise ValueError(f"key: {_key}, value: {_value}")
-        if _key.startswith("count"):
-            _key = _key.split("(")[1].split(")")[0]
+        if _key == "offset":
+            if isinstance(_value, str) and "=" not in _value:
+                try:
+                    node[_key] = int(node[_key])
+                except:
+                    node[_key] = int(node[_key], 16)
         if _key.startswith("characteristic"):
             if _value in DYNAMIC_CHARACTERISTICS:
                 dynamic.append(node)
+        if _key == "string":
+            node[_key] = node[_key].replace("\n", "\\n")
+        if _key.startswith("count"):
+            if isinstance(node[_key], str) and "or more" not in node[_key]:
+                try:
+                    node[_key] = int(node[_key])
+                except:
+                    try:
+                        node[_key] = int(node[_key], 16)
+                    except:
+                        pass
+            _key = _key.split("(")[1].split(")")[0]
         if _key in DYNAMIC_FEATURES:
-            dynamic.append({_key: _value})
+            dynamic.append(node)
     return static, dynamic
 
 
@@ -170,7 +186,10 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
     return new_meta
 
 
-def format_escapes(s):
+def format_escapes(s: str):
+    s = s.replace("\n", "\\n")
+    if s.startswith("'") and s.endswith("'"):
+        s = s[1:-1]
     return s.replace("\\", "\\\\")
 
 
@@ -199,6 +218,7 @@ def upgrade_rule(content) -> str:
         lambda x: f"{x.group(1)}: " + (f'"{format_escapes(x.group(2))}"' if '"' not in x.group(2) else x.group(2)),
         upgraded_rule,
     )
+    print(upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -254,6 +274,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         3. Compute its save path and save it there.
         """
         content = yaml.load(content.decode("utf-8"), Loader=yaml.BaseLoader)
+        print(path)
         new_rule = upgrade_rule(content)
         save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
