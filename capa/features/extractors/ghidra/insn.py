@@ -38,6 +38,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
     addr_data = OperandType.ADDRESS | OperandType.DATA  # needs dereferencing
+    addr_code = OperandType.ADDRESS | OperandType.CODE  # needs dereferencing
 
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
@@ -49,7 +50,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
                 return
         else:
             return
-    elif ref_type == addr_data:
+    elif ref_type in (addr_data, addr_code):
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
@@ -117,25 +118,25 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         return
 
     for i in range(insn.getNumOperands()):
-        if insn.getOperandType(i) != OperandType.SCALAR:
+        if not OperandType.isScalar(insn.getOperandType(i)):
             # skip things like:
             #   references, void types
             continue
+        else:
+            const = insn.getScalar(i).getValue()
+            addr = ih.address
 
-        const = insn.getScalar(i).getValue()
-        addr = ih.address
+            yield Number(const), addr
+            yield OperandNumber(i, const), addr
 
-        yield Number(const), addr
-        yield OperandNumber(i, const), addr
-
-        if insn.getMnemonicString().startswith("ADD") and 0 < const < MAX_STRUCTURE_SIZE:
-            # for pattern like:
-            #
-            #     add eax, 0x10
-            #
-            # assume 0x10 is also an offset (imagine eax is a pointer).
-            yield Offset(const), addr
-            yield OperandOffset(i, const), addr
+            if insn.getMnemonicString().startswith("ADD") and 0 < const < MAX_STRUCTURE_SIZE:
+                # for pattern like:
+                #
+                #     add eax, 0x10
+                #
+                # assume 0x10 is also an offset (imagine eax is a pointer).
+                yield Offset(const), addr
+                yield OperandOffset(i, const), addr
 
 
 def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -173,7 +174,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
 
     ref = insn.getAddress()  # init to insn addr
     for i in range(insn.getNumOperands()):
-        if OperandType.isScalarAsAddress(insn.getOperandType(i)):
+        if OperandType.isAddress(insn.getOperandType(i)):
             ref = insn.getAddress(i)  # pulls pointer if there is one
 
     if ref != insn.getAddress():  # bail out if there's no pointer
@@ -279,6 +280,7 @@ def extract_insn_cross_section_cflow(
 
     # OperandType to dereference
     addr_data = OperandType.ADDRESS | OperandType.DATA
+    addr_code = OperandType.ADDRESS | OperandType.CODE
 
     ref_type = insn.getOperandType(0)
 
@@ -293,7 +295,7 @@ def extract_insn_cross_section_cflow(
                 return
         else:
             return
-    elif ref_type == addr_data:
+    elif ref_type in (addr_data, addr_code):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if capa.features.extractors.ghidra.helpers.check_addr_for_api(

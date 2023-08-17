@@ -267,8 +267,19 @@ def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
 
 
 def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
+    addr_code = OperandType.ADDRESS | OperandType.CODE
     to_deref = insn.getAddress(0)
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+
+    if insn.getOperandType(0) == addr_code:
+        # addr | code usually points to a thunked function, we can
+        # follow the thunk chain down once. Addresses point cyclically
+        # ex. mimikatz.exe_:0x455a41
+        thunk_jmp = getInstructionAt(to_deref)  # type: ignore [name-defined] # noqa: F821
+        if thunk_jmp:
+            for i in range(thunk_jmp.getNumOperands()):
+                if OperandType.isAddress(thunk_jmp.getOperandType(i)):
+                    return thunk_jmp.getAddress(i)
     if not dat:
         return to_deref
     if dat.isDefined() and dat.isPointer():
