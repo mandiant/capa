@@ -1585,8 +1585,8 @@ def main(argv: Optional[List[str]] = None):
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
-        if has_file_limitation(rules, capabilities):
-            # bail if capa encountered file limitation e.g. a packed binary
+        if isinstance(extractor, StaticFeatureExtractor) and has_file_limitation(rules, capabilities):
+            # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION
