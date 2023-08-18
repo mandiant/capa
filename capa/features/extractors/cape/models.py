@@ -245,12 +245,12 @@ class ProcessFile(File):
     #
     # like a File, but also has dynamic analysis results
     #
-    pid: int
-    process_path: str
-    process_name: str
-    module_path: str
+    pid: Optional[int] = None
+    process_path: Optional[str] = None
+    process_name: Optional[str] = None
+    module_path: Optional[str] = None
     virtual_address: Optional[HexInt] = None
-    target_pid: Optional[int] = None
+    target_pid: Optional[Union[int, str]] = None
     target_path: Optional[str] = None
     target_process: Optional[str] = None
 
@@ -357,8 +357,8 @@ class Static(ExactModel):
     flare_capa: Skip = None
 
 
-class CAPE(ExactModel):
-    payloads: List[Union[ProcessFile, File]]
+class Cape(ExactModel):
+    payloads: List[ProcessFile]
     configs: Skip = None
 
 
@@ -383,7 +383,7 @@ class CapeReport(FlexibleModel):
     behavior: Behavior
 
     # post-processed results: payloads and extracted configs
-    CAPE: CAPE
+    CAPE: Optional[Cape] = None
     dropped: Optional[List[File]] = None
     procdump: List[ProcessFile]
     procmemory: ListTODO
