@@ -169,7 +169,7 @@ class RangeStatement(StatementModel):
 class SubscopeStatement(StatementModel):
     type: Literal["subscope"] = "subscope"
     description: Optional[str] = None
-    scope: capa.rules.Scope
+    scopes: capa.rules.Scopes
 
 
 Statement = Union[
@@ -360,7 +360,7 @@ class Match(FrozenModel):
                     # note! replace `node`
                     node = StatementNode(
                         statement=SubscopeStatement(
-                            scope=rule.meta["scope"],
+                            scopes=rule.meta["scopes"],
                         )
                     )
 
