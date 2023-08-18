@@ -69,7 +69,7 @@ class Info(FlexibleModel):
 
 class ImportedSymbol(ExactModel):
     address: HexInt
-    name: str
+    name: Optional[str] = None
 
 
 class ImportedDll(ExactModel):
@@ -105,29 +105,31 @@ class Resource(ExactModel):
 
 
 class DigitalSigner(FlexibleModel):
-    extensions_authorityInfoAccess_caIssuers: Optional[str] = None
-    extensions_authorityKeyIdentifier: Optional[str] = None
-    extensions_cRLDistributionPoints_0: Optional[str] = None
-    extensions_certificatePolicies_0: Optional[str] = None
-    extensions_subjectAltName_0: Optional[str] = None
-    extensions_subjectKeyIdentifier: Optional[str] = None
-
-    issuer_commonName: str
-    issuer_countryName: str
-    issuer_localityName: str
-    issuer_organizationName: str
-    issuer_stateOrProvinceName: str
     md5_fingerprint: str
     not_after: str
     not_before: str
     serial_number: str
     sha1_fingerprint: str
     sha256_fingerprint: str
-    subject_commonName: str
-    subject_countryName: str
-    subject_localityName: str
-    subject_organizationName: str
-    subject_stateOrProvinceName: str
+
+    issuer_commonName: Optional[str] = None
+    issuer_countryName: Optional[str] = None
+    issuer_localityName: Optional[str] = None
+    issuer_organizationName: Optional[str] = None
+    issuer_stateOrProvinceName: Optional[str] = None
+
+    subject_commonName: Optional[str] = None
+    subject_countryName: Optional[str] = None
+    subject_localityName: Optional[str] = None
+    subject_organizationName: Optional[str] = None
+    subject_stateOrProvinceName: Optional[str] = None
+
+    extensions_authorityInfoAccess_caIssuers: Optional[str] = None
+    extensions_authorityKeyIdentifier: Optional[str] = None
+    extensions_cRLDistributionPoints_0: Optional[str] = None
+    extensions_certificatePolicies_0: Optional[str] = None
+    extensions_subjectAltName_0: Optional[str] = None
+    extensions_subjectKeyIdentifier: Optional[str] = None
 
 
 class Signer(ExactModel):
@@ -216,7 +218,8 @@ class File(ExactModel):
     sha512: str
     sha3_384: str
     ssdeep: str
-    tlsh: Optional[str] = None
+    # unsure why this would ever be "False"
+    tlsh: Optional[Union[str, bool]] = None
     rh_hash: Optional[str] = None
 
     #
@@ -324,7 +327,8 @@ class EncryptedBuffer(ExactModel):
 
     api_call: str
     buffer: str
-    buffer_size: int
+    buffer_size: Optional[int] = None
+    crypt_key: Optional[Union[HexInt, str]] = None
 
 
 class Behavior(ExactModel):
@@ -354,7 +358,7 @@ class Static(ExactModel):
 
 
 class CAPE(ExactModel):
-    payloads: List[ProcessFile]
+    payloads: List[Union[ProcessFile, File]]
     configs: Skip = None
 
 
