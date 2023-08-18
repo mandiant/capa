@@ -353,7 +353,7 @@ class Target(ExactModel):
 
 
 class Static(ExactModel):
-    pe: PE
+    pe: Optional[PE] = None
     flare_capa: Skip = None
 
 
