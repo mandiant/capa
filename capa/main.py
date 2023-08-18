@@ -1502,6 +1502,10 @@ def main(argv: Optional[List[str]] = None):
         return E_INVALID_FILE_TYPE
 
     for file_extractor in file_extractors:
+        if isinstance(file_extractor, DynamicFeatureExtractor):
+            # Dynamic feature extractors can handle packed samples
+            continue
+
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
