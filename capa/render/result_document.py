@@ -169,7 +169,7 @@ class RangeStatement(StatementModel):
 class SubscopeStatement(StatementModel):
     type: Literal["subscope"] = "subscope"
     description: Optional[str] = None
-    scopes: capa.rules.Scopes
+    scope: capa.rules.Scope
 
 
 Statement = Union[
@@ -358,9 +358,11 @@ class Match(FrozenModel):
                     # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
                     #
                     # note! replace `node`
+                    # subscopes cannot have both a static and dynamic scope set
+                    assert None in (rule.scopes.static, rule.scopes.dynamic)
                     node = StatementNode(
                         statement=SubscopeStatement(
-                            scopes=rule.meta["scopes"],
+                            scope=rule.scopes.static or rule.scopes.dynamic,
                         )
                     )
 
