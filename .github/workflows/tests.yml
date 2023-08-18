@@ -39,9 +39,9 @@ jobs:
     - name: Lint with ruff
       run: pre-commit run ruff
     - name: Lint with isort
-      run: pre-commit run isort
+      run: pre-commit run isort --show-diff-on-failure
     - name: Lint with black
-      run: pre-commit run black
+      run: pre-commit run black --show-diff-on-failure
     - name: Lint with flake8
       run: pre-commit run flake8
     - name: Check types with mypy
