@@ -6,8 +6,9 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import pickle
+import json
 import collections
+from pathlib import Path
 
 import tabulate
 
@@ -84,12 +85,16 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         +-------------------------------------------------------+-------------------------------------------------+
     """
 
-    def load_rules_prevalence(filename: str) -> dict:
-        with open(filename, "rb") as pickle_file:
-            return pickle.load(pickle_file)
+    def load_rules_prevalence(file: Path) -> dict:
+        try:
+            return json.load(file.open("r"))
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File '{file}' not found.")
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while loading '{file}': {e}")
 
     subrule_matches = find_subrule_matches(doc)
-    rules_prevalence = load_rules_prevalence("./assets/rules_prevalence.pickle")
+    rules_prevalence = load_rules_prevalence(Path("./assets/rules_prevalence.json"))
 
     # seperate rules based on their prevalence
     common = []
@@ -101,13 +106,13 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         count = len(rule.matches)
         matches = f"({count} matches)" if count > 1 else ""
 
-        rule_prevalence = float(rules_prevalence.get(rule.meta.name + "\n", 0))
+        rule_prevalence = float(rules_prevalence.get(rule.meta.name, 0))
         if rule_prevalence < 0:
             raise ValueError("Match probability cannot be negative")
 
         prevalences = [rutils.bold("rare"), rutils.bold("common"), "unknown"]
 
-        if rule_prevalence >= 0.05 or rule_prevalence == 0:
+        if rule_prevalence == 0 or rule_prevalence >= 0.05:
             prevalence = prevalences[2] if rule_prevalence == 0 else prevalences[1]
             common.append((rule.meta.namespace, rule.meta.name, matches, prevalence))
         else:
