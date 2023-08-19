@@ -591,6 +591,13 @@ def build_statements(d, scope: str):
         ensure_feature_valid_for_scope(scope, feature)
         return feature
 
+    elif key.startswith("com/"):
+        com_name = d[key]
+        com_type = key[len("com/") :]
+        if com_type not in capa.features.common.VALID_COM_TYPES:
+            raise InvalidRule(f"unexpected {key} type {com_type}")
+        return capa.features.common.COMFactory(com_name, com_type)
+
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
