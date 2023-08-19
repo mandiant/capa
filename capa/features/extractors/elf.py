@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Set, Dict, List, Tuple, BinaryIO, Iterator, Optional
 from dataclasses import dataclass
 
+import Elf  # from vivisect
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,6 +56,7 @@ class OS(str, Enum):
     CLOUD = "cloud"
     SYLLABLE = "syllable"
     NACL = "nacl"
+    ANDROID = "android"
 
 
 # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
@@ -709,17 +712,17 @@ class SymTab:
         yield from self.symbols
 
     @classmethod
-    def from_Elf(cls, ElfBinary) -> Optional["SymTab"]:
-        endian = "<" if ElfBinary.getEndian() == 0 else ">"
-        bitness = ElfBinary.bits
+    def from_viv(cls, elf: Elf.Elf) -> Optional["SymTab"]:
+        endian = "<" if elf.getEndian() == 0 else ">"
+        bitness = elf.bits
 
         SHT_SYMTAB = 0x2
-        for section in ElfBinary.sections:
-            if section.sh_info & SHT_SYMTAB:
-                strtab_section = ElfBinary.sections[section.sh_link]
-                sh_symtab = Shdr.from_viv(section, ElfBinary.readAtOffset(section.sh_offset, section.sh_size))
+        for section in elf.sections:
+            if section.sh_type == SHT_SYMTAB:
+                strtab_section = elf.sections[section.sh_link]
+                sh_symtab = Shdr.from_viv(section, elf.readAtOffset(section.sh_offset, section.sh_size))
                 sh_strtab = Shdr.from_viv(
-                    strtab_section, ElfBinary.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
+                    strtab_section, elf.readAtOffset(strtab_section.sh_offset, strtab_section.sh_size)
                 )
 
         try:
@@ -764,6 +767,11 @@ def guess_os_from_ph_notes(elf: ELF) -> Optional[OS]:
         elif note.name == "FreeBSD":
             logger.debug("note owner: %s", "FREEBSD")
             return OS.FREEBSD
+        elif note.name == "Android":
+            logger.debug("note owner: %s", "Android")
+            # see the following for parsing the structure:
+            # https://android.googlesource.com/platform/ndk/+/master/parse_elfnote.py
+            return OS.ANDROID
         elif note.name == "GNU":
             abi_tag = note.abi_tag
             if abi_tag:
@@ -855,6 +863,8 @@ def guess_os_from_needed_dependencies(elf: ELF) -> Optional[OS]:
             return OS.HURD
         if needed.startswith("libhurduser.so"):
             return OS.HURD
+        if needed.startswith("libandroid.so"):
+            return OS.ANDROID
 
     return None
 

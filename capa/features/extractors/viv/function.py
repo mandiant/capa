@@ -38,7 +38,7 @@ def extract_function_symtab_names(fh: FunctionHandle) -> Iterator[Tuple[Feature,
         # this is in order to eliminate the computational overhead of refetching symtab each time.
         if "symtab" not in fh.ctx["cache"]:
             try:
-                fh.ctx["cache"]["symtab"] = SymTab.from_Elf(fh.inner.vw.parsedbin)
+                fh.ctx["cache"]["symtab"] = SymTab.from_viv(fh.inner.vw.parsedbin)
             except Exception:
                 fh.ctx["cache"]["symtab"] = None
 

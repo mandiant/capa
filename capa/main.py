@@ -1223,7 +1223,7 @@ def main(argv: Optional[List[str]] = None):
 
     if format_ == FORMAT_RESULT:
         # result document directly parses into meta, capabilities
-        result_doc = capa.render.result_document.ResultDocument.parse_file(args.sample)
+        result_doc = capa.render.result_document.ResultDocument.from_file(Path(args.sample))
         meta, capabilities = result_doc.to_capa()
 
     else:
