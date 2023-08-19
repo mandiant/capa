@@ -88,7 +88,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     rows = []
 
     # Step 1: Load entropy_dict from the pickle file
-    with open("./rules_prevalence.pickle", 'rb') as pickle_file:
+    with open("./assets/rules_prevalence.pickle", 'rb') as pickle_file:
         entropy_dict = pickle.load(pickle_file)
 
     # Step 2: Combine the loop and categorization
