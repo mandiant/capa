@@ -19,11 +19,6 @@ def bold(s: str) -> str:
     return termcolor.colored(s, "cyan")
 
 
-def bold1(s: str) -> str:
-    """draw attention to the given string, set color to blue"""
-    return termcolor.colored(s, "blue")
-
-
 def bold2(s: str) -> str:
     """draw attention to the given string, within a `bold` section"""
     return termcolor.colored(s, "green")

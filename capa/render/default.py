@@ -84,14 +84,14 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         +-------------------------------------------------------+-------------------------------------------------+
     """
 
+    def load_rules_prevalence(filename: str) -> dict:
+        with open(filename, "rb") as pickle_file:
+            return pickle.load(pickle_file)
+
     subrule_matches = find_subrule_matches(doc)
-    rows = []
+    rules_prevalence = load_rules_prevalence("./assets/rules_prevalence.pickle")
 
-    # Step 1: Load entropy_dict from the pickle file
-    with open("./assets/rules_prevalence.pickle", 'rb') as pickle_file:
-        entropy_dict = pickle.load(pickle_file)
-
-    # Step 2: Combine the loop and categorization
+    # seperate rules based on their prevalence
     common = []
     rare = []
     for rule in rutils.capability_rules(doc):
@@ -100,41 +100,46 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
         count = len(rule.matches)
         matches = f"({count} matches)" if count > 1 else ""
-        
-        entropy = float(entropy_dict.get(rule.meta.name+"\n", 0) / 593)
-        if entropy < 0:
-            raise ValueError("match probability cannot be negative")
-        
+
+        rule_prevalence = float(rules_prevalence.get(rule.meta.name + "\n", 0))
+        if rule_prevalence < 0:
+            raise ValueError("Match probability cannot be negative")
+
         prevalences = [rutils.bold("rare"), rutils.bold("common"), "unknown"]
-        if entropy >= 0.05 or entropy == 0:
-            prevalence = prevalences[1] if entropy > 0.1 else prevalences[2]
+
+        if rule_prevalence >= 0.05 or rule_prevalence == 0:
+            prevalence = prevalences[2] if rule_prevalence == 0 else prevalences[1]
             common.append((rule.meta.namespace, rule.meta.name, matches, prevalence))
         else:
             rare.append((rule.meta.namespace, rule.meta.name, matches, prevalences[0]))
 
     rows = []
+
     def process_data(data):
-        if len(data)==0:
+        "joins combine similar rules into a single section"
+        if len(data) == 0:
             return
         capabilities = ""
         namespaces = ""
         prevalences = ""
-        
+
         for ns, c, i, p in sorted(data, key=lambda x: (x[0], x[1])):
             capabilities += f"{rutils.bold(c)} {i}\n"
             namespaces += ns + "\n"
             prevalences += p + "\n"
-        
+
         rows.append((capabilities.strip(), namespaces.strip(), prevalences.strip()))
-    
+
     process_data(rare)
     process_data(common)
-    # rows = [(f"{rutils.bold1(c, 0)} {i}*", ns, p) for ns, c, i, p in sorted(rare, key=lambda x: (x[0], x[1]))] + \
-    #         [(f"{rutils.bold1(c, 1)} {i}", ns, p) for ns, c, i, p in sorted(common, key=lambda x: (x[0], x[1]))]
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50), width("Prevalence", 10)], tablefmt="mixed_grid")
+            tabulate.tabulate(
+                rows,
+                headers=[width("Capability", 50), width("Namespace", 50), width("Prevalence", 10)],
+                tablefmt="mixed_grid",
+            )
         )
         ostream.write("\n")
     else:
