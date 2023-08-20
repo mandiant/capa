@@ -175,6 +175,8 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
     """
     new_meta = {}  # type: Dict[str, Union[List, Dict, str]]
     for key, value in meta.items():
+        if key == "authors":
+            value = list(map(lambda author: f'"{author}"', value))
         if key != "scope":
             if isinstance(value, list):
                 new_meta[key] = {"~": value}
@@ -218,10 +220,18 @@ def upgrade_rule(content) -> str:
     upgraded_rule = re.sub(
         r"(string|substring|regex): (.*)",
         lambda x: f"{x.group(1)}: "
-        + (x.group(2) if ('"' not in x.group(2) and "\\" not in x.group(2)) else f'"{format_string(x.group(2))}"'),
+        + (
+            f'"{format_string(x.group(2))}"'
+            if ((x.group(2).startswith("'") and x.group(2).endswith("'")) or "\\" in x.group(2))
+            else x.group(2)
+        ),
         upgraded_rule,
     )
-    print(upgraded_rule)
+    upgraded_rule = re.sub(
+        r"  meta:\n([\S\s]*)  features:",
+        lambda x: "  meta:\n" + x.group(1).replace("'", "") + "  features:",
+        upgraded_rule,
+    )
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -277,7 +287,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         3. Compute its save path and save it there.
         """
         content = yaml.load(content.decode("utf-8"), Loader=yaml.BaseLoader)
-        print(path)
         new_rule = upgrade_rule(content)
         save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
