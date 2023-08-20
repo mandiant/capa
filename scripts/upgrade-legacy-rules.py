@@ -192,9 +192,10 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
 
 def format_string(s: str):
     s = s.replace("\n", "\\n")
+    s = s.replace("\\", "\\\\")
     if s.startswith("'") and s.endswith("'"):
         s = s[1:-1]
-    return s.replace("\\", "\\\\")
+    return s.replace('"', '\\"')
 
 
 def upgrade_rule(content) -> str:
@@ -221,9 +222,9 @@ def upgrade_rule(content) -> str:
         r"(string|substring|regex): (.*)",
         lambda x: f"{x.group(1)}: "
         + (
-            f'"{format_string(x.group(2))}"'
-            if ((x.group(2).startswith("'") and x.group(2).endswith("'")) or "\\" in x.group(2))
-            else x.group(2)
+            x.group(2)
+            if (x.group(2).startswith("/") and (x.group(2).endswith("/") or x.group(2).endswith("/i")))
+            else f'"{format_string(x.group(2))}"'
         ),
         upgraded_rule,
     )
