@@ -22,7 +22,7 @@ from typing_extensions import TypeAlias
 from capa.main import collect_rule_file_paths
 from capa.rules import Rule
 
-DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os", "arch")
+DYNAMIC_FEATURES = ("api", "string", "substring", "number", "description", "regex", "match", "os", "arch", "format")
 DYNAMIC_CHARACTERISTICS = ("embedded-pe",)
 ENGINE_STATEMENTS = ("and", "or", "optional", "not")
 STATIC_SCOPES = ("function", "basic block", "instruction")
@@ -147,7 +147,8 @@ def rec_bool(key, value, context=False) -> Tuple[Dict[str, List], Dict[str, Opti
         else:
             return {}, {}
     else:
-        if key == "and" and len(stat) != len(dyn):
+        _, dyn_ = rec_features_list(value, context="dynamic")
+        if key == "and" and len(stat) != len(dyn_):
             return {key: stat}, {}
         elif key == "or" and len(dyn) == len(list(filter(lambda x: x.get("description"), dyn))):
             return {}, {}
@@ -238,6 +239,7 @@ def upgrade_rule(content) -> str:
         + x.group(3),
         upgraded_rule,
     )
+    upgraded_rule = re.sub(r" comment (.*) ", r"# \1", upgraded_rule)
     if Rule.from_yaml(upgraded_rule):
         return upgraded_rule
 
@@ -292,7 +294,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         2. Get its dynamic-format equivalent.
         3. Compute its save path and save it there.
         """
-        content = yaml.load(content.decode("utf-8"), Loader=yaml.BaseLoader)
+        content = content.decode("utf-8")
+        content = re.sub(
+            r"([\s]*-.*) # (.*)\n$",
+            lambda x: x.group(1)
+            + (
+                ""
+                if (
+                    x.group(1).endswith("or:")
+                    or not re.search(r"\s*- (string|substring|regex): /.*/i?", x.group(1), flags=re.M)
+                )
+                else f" comment {x.group(2)}"
+            ),
+            content,
+            flags=re.M,
+        )
+        content = re.sub(r"^\s*description: .*\n$", "", content, flags=re.M)
+        content = yaml.load(content, Loader=yaml.BaseLoader)
         new_rule = upgrade_rule(content)
         save_path = Path(new_rules_save_path).joinpath(path.relative_to(old_rules_path))
         save_path.parents[0].mkdir(parents=True, exist_ok=True)
