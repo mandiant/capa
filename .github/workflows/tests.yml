@@ -153,7 +153,7 @@ jobs:
         ghidra-version: ["10.3"]
         public-version: ["PUBLIC_20230510"] # for ghidra releases
         jep-version: ["4.1.1"]
-        ghidrathon-version: ["2.1.0"]
+        ghidrathon-version: ["3.0.0"]
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -181,17 +181,14 @@ jobs:
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
     - name: Install Ghidrathon
-      run : | # Colton TODO: fix wget url & unzip paths pending merge of breaking Ghidrathon changes
+      run : |
         mkdir ./.github/ghidrathon
         mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
-        # wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
-        wget "https://github.com/mandiant/Ghidrathon/archive/refs/heads/fix/65.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
+        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
         workdir=$(pwd)
-        #gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
-        gradle -p ./.github/ghidrathon/Ghidrathon-fix-65/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
-        #unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
-        unzip .github/ghidrathon/Ghidrathon-fix-65/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
+        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa

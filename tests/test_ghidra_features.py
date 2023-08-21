@@ -18,7 +18,7 @@ logger = logging.getLogger("test_ghidra_features")
 
 ghidra_present: bool = False
 try:
-    import ghidra.program.flatapi  # noqa: F401
+    import ghidra  # noqa: F401
 
     ghidra_present = True
 except ImportError:
