@@ -153,7 +153,7 @@ jobs:
         ghidra-version: ["10.3"]
         public-version: ["PUBLIC_20230510"] # for ghidra releases
         jep-version: ["4.1.1"]
-        ghidrathon-version: ["2.1.0"]
+        ghidrathon-version: ["3.0.0"]
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -194,7 +194,5 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev] 
     - name: Run tests
-      run: | # runs main.py for now...
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'Practical Malware Analysis Lab 01-01.dll_'
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -process 'Practical Malware Analysis Lab 01-01.dll_' -ScriptPath ./capa -PostScript main.py
+      run: .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'mimikatz.exe_' -ScriptPath ./tests/ -PostScript test_ghidra_features.py
  
