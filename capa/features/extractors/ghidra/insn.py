@@ -392,6 +392,8 @@ def extract_function_indirect_call_characteristic_features(
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
     if insn.getMnemonicString().startswith("CALL"):
+        if OperandType.isRegister(insn.getOperandType(0)):
+            yield Characteristic("indirect call"), ih.address
         if OperandType.isIndirect(insn.getOperandType(0)):
             yield Characteristic("indirect call"), ih.address
 
