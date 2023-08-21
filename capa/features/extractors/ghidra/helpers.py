@@ -244,6 +244,13 @@ def is_sp_modified(insn: ghidra.program.database.code.InstructionDB) -> bool:
 
 def is_stack_referenced(insn: ghidra.program.database.code.InstructionDB) -> bool:
     """generic catch-all for stack references"""
+    for i in range(insn.getNumOperands()):
+        if insn.getOperandType(i) == OperandType.REGISTER:
+            if "BP" in insn.getRegister(i).getName():
+                return True
+            else:
+                continue
+
     return any(ref.isStackReference() for ref in insn.getReferencesFrom())
 
 

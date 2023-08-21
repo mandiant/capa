@@ -121,7 +121,7 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
             #   references, void types
             continue
         else:
-            const = insn.getScalar(i).getValue()
+            const = insn.getScalar(i).getUnsignedValue()
             addr = ih.address
 
             yield Number(const), addr
@@ -154,9 +154,12 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
                 # manual extraction, since the default api calls only work on the 1st dimension of the array
                 op_objs = insn.getOpObjects(i)
                 if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
-                    op_off = op_objs[-1].getValue()
+                    op_off = op_objs[-1].getUnsignedValue()
                     yield Offset(op_off), ih.address
                     yield OperandOffset(i, op_off), ih.address
+                else:
+                    yield Offset(0), ih.address
+                    yield OperandOffset(i, 0), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -431,19 +434,19 @@ def extract_features(
 
 
 INSTRUCTION_HANDLERS = (
-    extract_insn_api_features,
+    #    extract_insn_api_features,
     extract_insn_number_features,
-    extract_insn_bytes_features,
-    extract_insn_string_features,
+    #    extract_insn_bytes_features,
+    #    extract_insn_string_features,
     extract_insn_offset_features,
-    extract_insn_nzxor_characteristic_features,
-    extract_insn_mnemonic_features,
-    extract_insn_obfs_call_plus_5_characteristic_features,
-    extract_insn_peb_access_characteristic_features,
-    extract_insn_cross_section_cflow,
-    extract_insn_segment_access_features,
-    extract_function_calls_from,
-    extract_function_indirect_call_characteristic_features,
+    #    extract_insn_nzxor_characteristic_features,
+    #    extract_insn_mnemonic_features,
+    #    extract_insn_obfs_call_plus_5_characteristic_features,
+    #    extract_insn_peb_access_characteristic_features,
+    #    extract_insn_cross_section_cflow,
+    #    extract_insn_segment_access_features,
+    #    extract_function_calls_from,
+    #    extract_function_indirect_call_characteristic_features,
 )
 
 
