@@ -180,6 +180,16 @@ def get_binja_extractor(path: Path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_ghidra_extractor(path: Path):
+    import capa.features.extractors.ghidra.extractor
+
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+    setattr(extractor, "path", path.as_posix())
+
+    return extractor
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():

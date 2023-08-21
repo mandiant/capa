@@ -18,7 +18,7 @@ logger = logging.getLogger("test_ghidra_features")
 
 ghidra_present: bool = False
 try:
-    import ghidra.program.flatapi  # noqa: F401
+    import ghidra  # noqa: F401
 
     ghidra_present = True
 except ImportError:
@@ -61,23 +61,16 @@ def check_input_file(wanted):
         raise RuntimeError(f"please run the tests against sample with MD5: `{found}`")
 
 
-def get_ghidra_extractor(path):
-    import capa.features.extractors.ghidra.extractor
-
-    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
-    setattr(extractor, "path", path.as_posix())
-
-    return extractor
-
-
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
 @fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_PRESENCE_TESTS, indirect=["sample", "scope"])
 def test_ghidra_features(sample, scope, feature, expected):
     try:
         check_input_file(sample)
-        fixtures.do_test_feature_presence(get_ghidra_extractor, sample, scope, feature, expected)
+        fixtures.do_test_feature_presence(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
     except RuntimeError:
         pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
+
+    fixtures.do_test_feature_presence(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
@@ -85,9 +78,11 @@ def test_ghidra_features(sample, scope, feature, expected):
 def test_ghidra_feature_counts(sample, scope, feature, expected):
     try:
         check_input_file(sample)
-        fixtures.do_test_feature_count(get_ghidra_extractor, sample, scope, feature, expected)
+        fixtures.do_test_feature_count(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
     except RuntimeError:
         pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
+
+    fixtures.do_test_feature_count(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
 
 
 if __name__ == "__main__":
