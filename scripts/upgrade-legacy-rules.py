@@ -175,8 +175,6 @@ def update_meta(meta, has_dyn=True) -> Dict[str, Union[List, Dict, str]]:
     """
     new_meta = {}  # type: Dict[str, Union[List, Dict, str]]
     for key, value in meta.items():
-        if key == "authors":
-            value = list(map(lambda author: f'"{author}"', value))
         if key != "scope":
             if isinstance(value, list):
                 new_meta[key] = {"~": value}
@@ -229,8 +227,15 @@ def upgrade_rule(content) -> str:
         upgraded_rule,
     )
     upgraded_rule = re.sub(
-        r"  meta:\n([\S\s]*)  features:",
-        lambda x: "  meta:\n" + x.group(1).replace("'", "") + "  features:",
+        r"(    authors:\n)([\S\s]*)(\n\s*\w)",
+        lambda x: x.group(1)
+        + re.sub(
+            r"(^\s*- )(.*)",
+            lambda y: y.group(1) + (f'"{y.group(2)[1:-1]}"' if y.group(2).startswith("'@") else y.group(2)),
+            x.group(2),
+            flags=re.M,
+        )
+        + x.group(3),
         upgraded_rule,
     )
     if Rule.from_yaml(upgraded_rule):
@@ -262,9 +267,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 """
                 WARNING: you've specified the same directory for the old-rules' path and the new rules' save path.
                 This will cause this script to overwrite your old rules with the new upgraded ones.
-                Are you sure you want proceed with overwritting the old rules [O]verwrite/[E]xit:
-                """
-            )
+                Are you sure you want proceed with overwritting the old rules [O]verwrite/[E]xit: """
+            ),
+            end="",
         )
         response = ""
         while response not in ("o", "e"):
@@ -275,7 +280,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print("The ruleset will not been upgraded.")
                 return 0
             else:
-                print("Please provide a valid answer [O]verwrite/[E]xit: ")
+                print("Please provide a valid answer [O]verwrite/[E]xit: ", end="")
 
     # Get rules
     rule_file_paths: List[Path] = collect_rule_file_paths([old_rules_path])
