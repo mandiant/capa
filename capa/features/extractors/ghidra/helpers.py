@@ -276,14 +276,18 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
 
     if insn.getOperandType(0) == addr_code:
-        # addr | code usually points to a thunked function, we can
-        # follow the thunk chain down once. Addresses point cyclically
-        # ex. mimikatz.exe_:0x455a41
-        thunk_jmp = getInstructionAt(to_deref)  # type: ignore [name-defined] # noqa: F821
-        if thunk_jmp:
-            for i in range(thunk_jmp.getNumOperands()):
-                if OperandType.isAddress(thunk_jmp.getOperandType(i)):
-                    return thunk_jmp.getAddress(i)
+        if getFunctionContaining(to_deref).isThunk():  # type: ignore [name-defined] # noqa: F821
+            # addr | code usually points to a thunked function, we can
+            # follow the thunk chain down once. Addresses point cyclically
+            # ex. mimikatz.exe_:0x455a41
+            thunk_jmp = getInstructionAt(to_deref)  # type: ignore [name-defined] # noqa: F821
+            if thunk_jmp:
+                for i in range(thunk_jmp.getNumOperands()):
+                    if OperandType.isAddress(thunk_jmp.getOperandType(i)):
+                        return thunk_jmp.getAddress(i)
+        else:
+            # if it doesn't poin to a thunk, it's usually a jmp to a label
+            return to_deref
     if not dat:
         return to_deref
     if dat.isDefined() and dat.isPointer():
