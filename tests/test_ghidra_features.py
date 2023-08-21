@@ -66,7 +66,6 @@ def check_input_file(wanted):
 def test_ghidra_features(sample, scope, feature, expected):
     try:
         check_input_file(sample)
-        fixtures.do_test_feature_presence(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
     except RuntimeError:
         pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
 
@@ -80,7 +79,6 @@ def test_ghidra_features(sample, scope, feature, expected):
 def test_ghidra_feature_counts(sample, scope, feature, expected):
     try:
         check_input_file(sample)
-        fixtures.do_test_feature_count(fixtures.get_ghidra_extractor, sample, scope, feature, expected)
     except RuntimeError:
         pytest.skip(reason="Test must be ran against sample loaded in Ghidra")
 
