@@ -26,7 +26,6 @@ SECURITY_COOKIE_BYTES_DELTA = 0x40
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
 externs = capa.features.extractors.ghidra.helpers.get_file_externs()
 mapped_fake_addrs = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
-external_locs = capa.features.extractors.ghidra.helpers.get_external_locs()
 
 
 def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
@@ -52,7 +51,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+            addr_ref, mapped_fake_addrs, imports, externs
         ):
             return
         ref = addr_ref.getOffset()
@@ -62,7 +61,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
         # pure address does not need to get dereferenced/ handled
         addr_ref = insn.getAddress(0)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+            addr_ref, mapped_fake_addrs, imports, externs
         ):
             return
         ref = addr_ref.getOffset()
@@ -316,27 +315,21 @@ def extract_insn_cross_section_cflow(
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
             ref = insn.getAddress(0)  # Ghidra dereferences REG | ADDR
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-                ref, mapped_fake_addrs, imports, externs, external_locs
-            ):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
                 return
         else:
             return
     elif ref_type in (addr_data, addr_code) or OperandType.isIndirect(ref_type):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, mapped_fake_addrs, imports, externs, external_locs
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
     else:
         # pure address does not need to get dereferenced/ handled
         ref = insn.getAddress(0)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, mapped_fake_addrs, imports, externs, external_locs
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
             return
 
     this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821

@@ -109,6 +109,8 @@ def get_file_imports() -> Dict[int, List[str]]:
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
 
+        ex_loc = f.getExternalLocation().getAddress()  # map external locations as well (offset into module files)
+
         fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_* / <EXTERNAL>::import
         if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
@@ -118,9 +120,13 @@ def get_file_imports() -> Dict[int, List[str]]:
         if "<EXTERNAL>" in fstr[0]:
             for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
                 import_dict.setdefault(addr, []).append(name)
+                if ex_loc:
+                    import_dict.setdefault(ex_loc.getOffset(), []).append(name)
         else:
             for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
                 import_dict.setdefault(addr, []).append(name)
+                if ex_loc:
+                    import_dict.setdefault(ex_loc.getOffset(), []).append(name)
 
     return import_dict
 
@@ -187,35 +193,11 @@ def map_fake_import_addrs() -> Dict[int, List[int]]:
     return fake_dict
 
 
-def get_external_locs() -> List[int]:
-    """
-     Helps to discern external offsets from regular bytes when extracting
-     data.
-
-    Ghidra behavior:
-     - Offsets that point to specific sections of external programs
-      i.e. library code.
-     - Stored in data, and pointed to by an absolute address
-     https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/program/model/symbol/ExternalLocation.java#L25-30
-
-    Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
-    - 0x473090 -> PTR_CreateServiceW_00473090
-    - 0x000b34EC -> External Location
-    """
-    locs = []
-    for fh in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
-        external_loc = fh.getExternalLocation().getAddress()
-        if external_loc:
-            locs.append(external_loc)
-    return locs
-
-
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
     fakes: Dict[int, List[int]],
     imports: Dict[int, List[str]],
     externs: Dict[int, List[str]],
-    ex_locs: List[int],
 ) -> bool:
     offset = addr.getOffset()
 
@@ -229,9 +211,6 @@ def check_addr_for_api(
 
     extern = externs.get(offset)
     if extern:
-        return True
-
-    if addr in ex_locs:
         return True
 
     return False
