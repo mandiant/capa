@@ -491,7 +491,7 @@ def find_dynamic_capabilities(
                 feature_counts.processes += (
                     rdoc.ProcessFeatureCount(address=frz.Address.from_capa(p.address), count=feature_count),
                 )
-                logger.debug("analyzed process 0x%x and extracted %d features", p.address, feature_count)
+                logger.debug("analyzed %s and extracted %d features", p.address, feature_count)
 
                 for rule_name, res in process_matches.items():
                     all_process_matches[rule_name].extend(res)
