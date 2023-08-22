@@ -259,9 +259,10 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
     addr_code = OperandType.ADDRESS | OperandType.CODE
     to_deref = insn.getAddress(0)
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+    thfunc = getFunctionContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
 
     if insn.getOperandType(0) == addr_code:
-        if getFunctionContaining(to_deref).isThunk():  # type: ignore [name-defined] # noqa: F821
+        if thfunc and thfunc.isThunk():
             # addr | code can point to a thunked function, we can
             # follow the thunk chain down once. Addresses point cyclically
             # ex. mimikatz.exe_:0x455a41
