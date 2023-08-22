@@ -166,7 +166,7 @@ class MissingStaticScope(Lint):
     recommendation = "Add a static scope for the rule (file, function, basic block, instruction, or unspecified)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "static" in rule.meta.get("scopes")
+        return "static" not in rule.meta.get("scopes")
 
 
 class MissingDynamicScope(Lint):
@@ -174,7 +174,7 @@ class MissingDynamicScope(Lint):
     recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unspecified)"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "dynamic" in rule.meta.get("scopes")
+        return "dynamic" not in rule.meta.get("scopes")
 
 
 class InvalidStaticScope(Lint):
@@ -214,8 +214,8 @@ class InvalidScopes(Lint):
     recommendation = "At least one scope (static or dynamic) must be specified"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return (rule.meta.get("scope").get("static") not in ("unspecified", "unsupported")) or (
-            rule.meta.get("scope").get("dynamic") not in ("unspecified", "unsupported")
+        return (rule.meta.get("scope").get("static") in ("unspecified", "unsupported")) and (
+            rule.meta.get("scope").get("dynamic") in ("unspecified", "unsupported")
         )
 
 
