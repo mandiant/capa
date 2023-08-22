@@ -135,7 +135,7 @@ class Scopes:
             raise ValueError("invalid rules class. at least one scope must be specified")
 
     @classmethod
-    def from_dict(self, scopes: dict) -> "Scopes":
+    def from_dict(self, scopes: Dict) -> "Scopes":
         assert isinstance(scopes, dict)
 
         # make local copy so we don't make changes outside of this routine
