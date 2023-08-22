@@ -118,7 +118,7 @@ def get_file_imports() -> Dict[int, List[str]]:
         # Most prominently shows up in .elf samples, Ghidra's FunctionID has a
         # hard time resolving module names for Linux imports
         if "<EXTERNAL>" in fstr[0]:
-            for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
+            for name in capa.features.extractors.helpers.generate_symbols("*", fstr[1]):
                 import_dict.setdefault(addr, []).append(name)
                 if ex_loc:
                     import_dict.setdefault(ex_loc.getOffset(), []).append(name)
