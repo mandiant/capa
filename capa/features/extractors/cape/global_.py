@@ -25,65 +25,61 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import NO_ADDRESS, Address
+from capa.features.extractors.cape.models import CapeReport
 
 logger = logging.getLogger(__name__)
 
 
-def guess_elf_os(file_output) -> Iterator[Tuple[Feature, Address]]:
-    # operating systems recognized by the file command: https://github.com/file/file/blob/master/src/readelf.c#L609
-    if "Linux" in file_output:
-        yield OS(OS_LINUX), NO_ADDRESS
-    elif "Hurd" in file_output:
-        yield OS("hurd"), NO_ADDRESS
-    elif "Solaris" in file_output:
-        yield OS("solaris"), NO_ADDRESS
-    elif "kFreeBSD" in file_output:
-        yield OS("freebsd"), NO_ADDRESS
-    elif "kNetBSD" in file_output:
-        yield OS("netbsd"), NO_ADDRESS
-    else:
-        logger.warning("unrecognized OS: %s", file_output)
-        yield OS(OS_ANY), NO_ADDRESS
-
-
-def extract_arch(static) -> Iterator[Tuple[Feature, Address]]:
-    if "Intel 80386" in static["file"]["type"]:
+def extract_arch(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    if "Intel 80386" in report.target.file.type:
         yield Arch(ARCH_I386), NO_ADDRESS
-    elif "x86-64" in static["file"]["type"]:
+    elif "x86-64" in report.target.file.type:
         yield Arch(ARCH_AMD64), NO_ADDRESS
     else:
-        logger.warning("unrecognized Architecture: %s", static["file"]["type"])
+        logger.warning("unrecognized Architecture: %s", report.target.file.type)
         yield Arch(ARCH_ANY), NO_ADDRESS
 
 
-def extract_format(static) -> Iterator[Tuple[Feature, Address]]:
-    if "PE" in static["file"]["type"]:
+def extract_format(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
+    if "PE" in report.target.file.type:
         yield Format(FORMAT_PE), NO_ADDRESS
-    elif "ELF" in static["file"]["type"]:
+    elif "ELF" in report.target.file.type:
         yield Format(FORMAT_ELF), NO_ADDRESS
     else:
-        logger.warning("unknown file format, file command output: %s", static["file"]["type"])
+        logger.warning("unknown file format, file command output: %s", report.target.file.type)
         yield Format(FORMAT_UNKNOWN), NO_ADDRESS
 
 
-def extract_os(static) -> Iterator[Tuple[Feature, Address]]:
+def extract_os(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     # this variable contains the output of the file command
-    file_command = static["file"]["type"]
+    file_output = report.target.file.type
 
-    if "windows" in file_command.lower():
+    if "windows" in file_output.lower():
         yield OS(OS_WINDOWS), NO_ADDRESS
-    elif "elf" in file_command.lower():
-        # implement os guessing from the cape trace
-        yield from guess_elf_os(file_command)
+    elif "elf" in file_output.lower():
+        # operating systems recognized by the file command: https://github.com/file/file/blob/master/src/readelf.c#L609
+        if "Linux" in file_output:
+            yield OS(OS_LINUX), NO_ADDRESS
+        elif "Hurd" in file_output:
+            yield OS("hurd"), NO_ADDRESS
+        elif "Solaris" in file_output:
+            yield OS("solaris"), NO_ADDRESS
+        elif "kFreeBSD" in file_output:
+            yield OS("freebsd"), NO_ADDRESS
+        elif "kNetBSD" in file_output:
+            yield OS("netbsd"), NO_ADDRESS
+        else:
+            logger.warning("unrecognized OS: %s", file_output)
+            yield OS(OS_ANY), NO_ADDRESS
     else:
         # the sample is shellcode
-        logger.debug("unsupported file format, file command output: %s", file_command)
+        logger.debug("unsupported file format, file command output: %s", file_output)
         yield OS(OS_ANY), NO_ADDRESS
 
 
-def extract_features(static) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(report: CapeReport) -> Iterator[Tuple[Feature, Address]]:
     for global_handler in GLOBAL_HANDLER:
-        for feature, addr in global_handler(static):
+        for feature, addr in global_handler(report):
             yield feature, addr
 
 

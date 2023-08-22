@@ -7,50 +7,41 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import logging
-from typing import Dict, List, Tuple, Iterator
+from typing import List, Tuple, Iterator
 
-import capa.features.extractors.cape.file
-import capa.features.extractors.cape.thread
-import capa.features.extractors.cape.global_
-import capa.features.extractors.cape.process
 from capa.features.common import String, Feature
 from capa.features.address import Address, ThreadAddress
+from capa.features.extractors.cape.models import Process
 from capa.features.extractors.base_extractor import ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
 
-def get_threads(behavior: Dict, ph: ProcessHandle) -> Iterator[ThreadHandle]:
+def get_threads(ph: ProcessHandle) -> Iterator[ThreadHandle]:
     """
     get the threads associated with a given process
     """
-
-    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
-    threads: List = process["threads"]
+    process: Process = ph.inner
+    threads: List[int] = process.threads
 
     for thread in threads:
-        address: ThreadAddress = ThreadAddress(process=ph.address, tid=int(thread))
+        address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
         yield ThreadHandle(address=address, inner={})
 
 
-def extract_environ_strings(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_environ_strings(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     extract strings from a process' provided environment variables.
     """
+    process: Process = ph.inner
 
-    process = capa.features.extractors.cape.helpers.find_process(behavior["processes"], ph)
-    environ: Dict[str, str] = process["environ"]
-
-    if not environ:
-        return
-
-    for value in (value for value in environ.values() if value):
+    for value in (value for value in process.environ.values() if value):
         yield String(value), ph.address
 
 
-def extract_features(behavior: Dict, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_features(ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
     for handler in PROCESS_HANDLERS:
-        for feature, addr in handler(behavior, ph):
+        for feature, addr in handler(ph):
             yield feature, addr
 
 

@@ -63,6 +63,7 @@ from capa.helpers import (
     redirecting_print_to_tqdm,
     log_unsupported_arch_error,
     log_unsupported_format_error,
+    log_unsupported_cape_report_error,
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
@@ -111,6 +112,8 @@ E_INVALID_FILE_TYPE = 16
 E_INVALID_FILE_ARCH = 17
 E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
+E_MISSING_CAPE_STATIC_ANALYSIS = 20
+E_MISSING_CAPE_DYNAMIC_ANALYSIS = 21
 
 logger = logging.getLogger("capa")
 
@@ -1053,7 +1056,7 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
     matched_threads = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if capa.rules.THREAD_SCOPE in rule.meta.get("scopes")["dynamic"]:
+        if capa.rules.THREAD_SCOPE in rule.scopes:
             for addr, _ in matches:
                 assert addr in processes_by_thread
                 matched_threads.add(addr)
@@ -1096,7 +1099,7 @@ def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.get("scopes")["static"]:
+        if capa.rules.BASIC_BLOCK_SCOPE in rule.scopes:
             for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
@@ -1491,8 +1494,18 @@ def main(argv: Optional[List[str]] = None):
     except (ELFError, OverflowError) as e:
         logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
+    except UnsupportedFormatError:
+        if format_ == FORMAT_CAPE:
+            log_unsupported_cape_report_error()
+        else:
+            log_unsupported_format_error()
+        return E_INVALID_FILE_TYPE
 
     for file_extractor in file_extractors:
+        if isinstance(file_extractor, DynamicFeatureExtractor):
+            # Dynamic feature extractors can handle packed samples
+            continue
+
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
@@ -1555,7 +1568,10 @@ def main(argv: Optional[List[str]] = None):
                     disable_progress=args.quiet or args.debug,
                 )
             except UnsupportedFormatError:
-                log_unsupported_format_error()
+                if format_ == FORMAT_CAPE:
+                    log_unsupported_cape_report_error()
+                else:
+                    log_unsupported_format_error()
                 return E_INVALID_FILE_TYPE
             except UnsupportedArchError:
                 log_unsupported_arch_error()
@@ -1569,8 +1585,8 @@ def main(argv: Optional[List[str]] = None):
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
-        if has_file_limitation(rules, capabilities):
-            # bail if capa encountered file limitation e.g. a packed binary
+        if isinstance(extractor, StaticFeatureExtractor) and has_file_limitation(rules, capabilities):
+            # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION

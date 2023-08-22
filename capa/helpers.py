@@ -141,6 +141,17 @@ def log_unsupported_format_error():
     logger.error("-" * 80)
 
 
+def log_unsupported_cape_report_error():
+    logger.error("-" * 80)
+    logger.error(" Input file is not a valid CAPE report.")
+    logger.error(" ")
+    logger.error(" capa currently only supports analyzing standard CAPE json reports.")
+    logger.error(
+        " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
+    )
+    logger.error("-" * 80)
+
+
 def log_unsupported_os_error():
     logger.error("-" * 80)
     logger.error(" Input file does not appear to target a supported OS.")
