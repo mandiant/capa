@@ -10,8 +10,8 @@ import sys
 import logging
 import textwrap
 import subprocess
-from datetime import date
 from pathlib import Path
+from datetime import date
 
 import pytest
 
@@ -27,8 +27,10 @@ def get_script_path(s: str):
 def get_file_path():
     return str(CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_")
 
+
 def get_data_path(p: str):
-    return str(CD / "data" / p )
+    return str(CD / "data" / p)
+
 
 def get_rules_path():
     return str(CD / ".." / "rules")
@@ -71,87 +73,80 @@ def test_bulk_process(tmp_path):
     p = run_program(get_script_path("bulk-process.py"), [str(t.parent)])
     assert p.returncode == 0
 
+
 @pytest.mark.parametrize(
     "script,args,expected_output_path",
     [
         # Test match-2-yar x86 EXE
         pytest.param(
-            "match-2-yar.py", 
-            [
-                get_data_path("9324d1a8ae37a36ae560c37448c9705a.exe_")
-            ], 
-            "yara/expected_9324d1a8ae37a36ae560c37448c9705a.exe_.yar"
+            "match-2-yar.py",
+            [get_data_path("9324d1a8ae37a36ae560c37448c9705a.exe_")],
+            "yara/expected_9324d1a8ae37a36ae560c37448c9705a.exe_.yar",
         ),
         # Test match-2-yar x64 EXE
         pytest.param(
-            "match-2-yar.py", 
-            [
-                get_data_path("c2bb17c12975ea61ff43a71afd9c3ff111d018af161859abae0bdb0b3dae98f9.exe_")
-            ], 
-            "yara/expected_c2bb17c12975e.yar"
+            "match-2-yar.py",
+            [get_data_path("c2bb17c12975ea61ff43a71afd9c3ff111d018af161859abae0bdb0b3dae98f9.exe_")],
+            "yara/expected_c2bb17c12975e.yar",
         ),
         # Test match-2-yar x86 .NET EXE
         pytest.param(
-            "match-2-yar.py", 
+            "match-2-yar.py",
             [
-                "-f", 
-                "dotnet", 
+                "-f",
+                "dotnet",
                 get_data_path("dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_"),
-
-            ], 
-            "yara/expected_1c444ebeba24dcba8628b7dfe5fec7c6.exe_.yar"
+            ],
+            "yara/expected_1c444ebeba24dcba8628b7dfe5fec7c6.exe_.yar",
         ),
         # Test match-2-yar files with multiple X86 PEs
         pytest.param(
-            "match-2-yar.py", 
-            [ 
+            "match-2-yar.py",
+            [
                 get_data_path("Practical Malware Analysis Lab 03-04.exe_"),
                 get_data_path("Practical Malware Analysis Lab 11-03.exe_"),
-                get_data_path("Practical Malware Analysis Lab 16-01.exe_")
-            ], 
-            "yara/expected_pma_03-04.exe_11-03.exe_16-01.exe"
+                get_data_path("Practical Malware Analysis Lab 16-01.exe_"),
+            ],
+            "yara/expected_pma_03-04.exe_11-03.exe_16-01.exe",
         ),
         # Test match-2-yar files with CAPA file limitations are filtered out of multi sample
         pytest.param(
-            "match-2-yar.py", 
-            [ 
+            "match-2-yar.py",
+            [
                 get_data_path("Practical Malware Analysis Lab 01-01.exe_"),
-                get_data_path("Practical Malware Analysis Lab 01-02.exe_")
-            ], 
-            "yara/expected_pma_01-01.exe_01-02.exe"
+                get_data_path("Practical Malware Analysis Lab 01-02.exe_"),
+            ],
+            "yara/expected_pma_01-01.exe_01-02.exe",
         ),
-        
         # Test match-2-yar multiple x86 .NET PE
         pytest.param(
-            "match-2-yar.py", 
+            "match-2-yar.py",
             [
-                "-f", 
-                "dotnet", 
+                "-f",
+                "dotnet",
                 get_data_path("dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_"),
                 get_data_path("dotnet/692f7fd6d198e804d6af98eb9e390d61.exe_"),
-
-            ], 
-            "yara/expected_1c444ebe_692f7fd6.yar"
+            ],
+            "yara/expected_1c444ebe_692f7fd6.yar",
         ),
     ],
 )
 def test_script_expected_output(script, args, expected_output_path):
     script_path = get_script_path(script)
-    with open(get_data_path(expected_output_path), 'rb') as f:
-        expected_output = f.read()
-    
+
+    expected_output = Path(get_data_path(expected_output_path)).read_bytes()
     # Update dates in expected output to be todays date
     dates_to_replace = [
         b"2023-08-10",
     ]
     for dt in dates_to_replace:
-        expected_output = expected_output.replace(dt, date.today().isoformat().encode('utf8'))
+        expected_output = expected_output.replace(dt, date.today().isoformat().encode("utf8"))
 
     p = run_program(script_path, args)
 
     assert p.returncode == 0
-    assert p.stdout.decode('utf8') == expected_output.decode('utf8')
-    
+    assert p.stdout.decode("utf8") == expected_output.decode("utf8")
+
 
 def run_program(script_path, args):
     args = [sys.executable] + [script_path] + args
@@ -283,3 +278,9 @@ def test_detect_duplicate_features(tmpdir):
         args = [rule_dir.strpath, rule_path]
         overlaps_found = run_program(script_path, args)
         assert overlaps_found.returncode == expected_overlaps
+
+
+# Rough outline for function extract bytes, function length, function masking
+# Use importlib to import the script
+# Use fixtures vivisect to get a vivisect workspace for a given path
+# We can use known functions from the yara matches to extract out  length, bytes, and masked sig
