@@ -11,6 +11,7 @@ from io import BytesIO
 from typing import Tuple, Iterator
 
 import capa.features.extractors.elf
+import capa.features.extractors.ghidra.helpers
 from capa.features.common import OS, ARCH_I386, ARCH_AMD64, OS_WINDOWS, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
 
@@ -28,12 +29,9 @@ def extract_os() -> Iterator[Tuple[Feature, Address]]:
         fbytes_list = program_memory.getAllFileBytes()
         fbytes = fbytes_list[0]
 
-        # Java likes to return signed ints, so we must convert them
-        # back into unsigned bytes manually and write to BytesIO
-        #   note: May be deprecated if Jep has implements better support for Java Lists
         pb_arr = b""
         for i in range(fbytes.getSize()):
-            pb_arr = pb_arr + (fbytes.getOriginalByte(i) & 0xFF).to_bytes(1, "little")
+            pb_arr = pb_arr + capa.features.extractors.ghidra.helpers.fix_byte(fbytes.getOriginalByte(i))
         buf = BytesIO(pb_arr)
 
         with contextlib.closing(buf) as f:
