@@ -388,6 +388,7 @@ def test_rules_flavor_filtering():
                         name: static rule
                         scopes:
                             static: function
+                            dynamic: unsupported
                     features:
                         - api: CreateFileA
                 """
@@ -400,6 +401,7 @@ def test_rules_flavor_filtering():
                     meta:
                         name: dynamic rule
                         scopes:
+                            static: unsupported
                             dynamic: thread
                     features:
                         - api: CreateFileA
@@ -415,6 +417,142 @@ def test_rules_flavor_filtering():
     assert len(static_rules) == 1
     # only dynamic rule
     assert len(dynamic_rules) == 1
+
+
+def test_meta_scope_keywords():
+    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+        for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+            _ = capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    f"""
+                    rule:
+                        meta:
+                            name: test rule
+                            scopes:
+                                static: {static_scope}
+                                dynamic: {dynamic_scope}
+                        features:
+                            - or:
+                                - format: pe
+                    """
+                )
+            )
+
+    # its also ok to specify "unsupported"
+    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                f"""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: {static_scope}
+                            dynamic: unsupported
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                f"""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: unsupported
+                            dynamic: {dynamic_scope}
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+
+    # its also ok to specify "unspecified"
+    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                f"""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: {static_scope}
+                            dynamic: unspecified
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                f"""
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: unspecified
+                            dynamic: {dynamic_scope}
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+
+    # but at least one scope must be specified
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes: {}
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: unsupported
+                            dynamic: unsupported
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                        scopes:
+                            static: unspecified
+                            dynamic: unspecified
+                    features:
+                        - or:
+                            - format: pe
+                """
+            )
+        )
 
 
 def test_lib_rules():

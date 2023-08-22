@@ -22,6 +22,7 @@ def test_rule_scope_instruction():
                     name: test rule
                     scopes:
                         static: instruction
+                        dynamic: unsupported
                 features:
                 - and:
                     - mnemonic: mov
@@ -40,6 +41,7 @@ def test_rule_scope_instruction():
                         name: test rule
                         scopes:
                             static: instruction
+                            dynamic: unsupported
                     features:
                         - characteristic: embedded pe
                 """

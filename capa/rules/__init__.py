@@ -143,13 +143,27 @@ class Scopes:
 
         # mark non-specified scopes as invalid
         if "static" not in scopes:
-            scopes["static"] = None
+            raise InvalidRule("static scope must be provided")
         if "dynamic" not in scopes:
-            scopes["dynamic"] = None
+            raise InvalidRule("dynamic scope must be provided")
 
         # check the syntax of the meta `scopes` field
         if sorted(scopes) != ["dynamic", "static"]:
             raise InvalidRule("scope flavors can be either static or dynamic")
+
+        if scopes["static"] == "unsupported":
+            scopes["static"] = None
+        if scopes["dynamic"] == "unsupported":
+            scopes["dynamic"] = None
+
+        # unspecified is used to indicate a rule is yet to be migrated.
+        # TODO(williballenthin): this scope term should be removed once all rules have been migrated.
+        # https://github.com/mandiant/capa/issues/1747
+        if scopes["static"] == "unspecified":
+            scopes["static"] = None
+        if scopes["dynamic"] == "unspecified":
+            scopes["dynamic"] = None
+
         if (not scopes["static"]) and (not scopes["dynamic"]):
             raise InvalidRule("invalid scopes value. At least one scope must be specified")
 
