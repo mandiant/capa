@@ -30,12 +30,14 @@ Example::
 """
 import os
 import sys
+import json
 import logging
 import argparse
+import binascii
 import collections
 import multiprocessing
 import multiprocessing.pool
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Union
 from pathlib import Path
 from datetime import date
 
@@ -323,7 +325,7 @@ def get_sig_and_mask_for_dotnet_func(dnpe, body):
 
     comment = ""
     sig = ""
-    func_bytes = ""
+    func_bytes = b""
     for insn in body.instructions:
         comment += (
             "{:04X}".format(insn.offset)
@@ -335,11 +337,11 @@ def get_sig_and_mask_for_dotnet_func(dnpe, body):
         )
 
         sig += insn.get_opcode_bytes().hex()
-        func_bytes += insn.get_opcode_bytes().hex()
+        func_bytes += insn.get_opcode_bytes()
 
         if insn.operand:
             sig += "??" * len(insn.get_operand_bytes())
-            func_bytes += insn.get_operand_bytes().hex()
+            func_bytes += insn.get_operand_bytes()
 
     # Format the sig to be in the same style as the vivi portion (bytes seperated by spaces)
     formatted_sig = ""
@@ -357,11 +359,25 @@ def get_sig_and_mask_for_dotnet_func(dnpe, body):
 class CodeFeature:
     """Basic object that that will be used to create yara rules"""
 
-    def __init__(self, sig: str, comment: str, bytez: bytes, filemd5: str):
-        self.sig = sig
+    def __init__(
+        self, sig: str, comment: str, bytez: bytes, filemd5: str, addr: Union[int, tuple[int, int], None], scope: str
+    ):
+        self.sig = sig.strip().upper()
         self.comment = comment
         self.bytez = bytez
+        self.addr = addr
         self.filemd5 = filemd5
+        self.scope = scope
+
+    def json(self):
+        return {
+            "sig": self.sig,
+            "comment": self.comment,
+            "bytez": binascii.hexlify(self.bytez, " ", bytes_per_sep=1).decode("utf8").upper(),
+            "addr": self.addr,
+            "filemd5": self.filemd5,
+            "scope": self.scope,
+        }
 
 
 def get_code_features_for_capa_doc(doc: rd.ResultDocument, extractor):
@@ -411,7 +427,7 @@ def get_code_features_for_capa_doc(doc: rd.ResultDocument, extractor):
 
         bytez = get_cb_bytes(file_vw, addr)
         sig = genSigAndMask(addr, bytez, doc.meta.analysis.arch)
-        code_features.append(CodeFeature(sig, comment, bytez, filemd5))
+        code_features.append(CodeFeature(sig, comment, bytez, filemd5, addr, capa.rules.BASIC_BLOCK_SCOPE))
 
     for addr, rules in func_matches.items():
         comment = f"function at 0x{addr:08x}@{filemd5} with {len(rules)} features:\n"
@@ -421,7 +437,7 @@ def get_code_features_for_capa_doc(doc: rd.ResultDocument, extractor):
 
         bytez = get_function_bytes(file_vw, addr)
         sig = genSigAndMask(addr, bytez, doc.meta.analysis.arch)
-        code_features.append(CodeFeature(sig, comment, bytez, filemd5))
+        code_features.append(CodeFeature(sig, comment, bytez, filemd5, addr, capa.rules.FUNCTION_SCOPE))
 
     if len(code_features) == 0:
         logger.warning("No code features found for %s", filemd5)
@@ -479,7 +495,7 @@ def get_code_features_for_dotnet_doc(doc: rd.ResultDocument, extractor):
         func_comment, sig, bytez = get_sig_and_mask_for_dotnet_func(dnpe, f.inner)
         comment += func_comment
 
-        code_features.append(CodeFeature(sig, comment, bytez, filemd5))
+        code_features.append(CodeFeature(sig, comment, bytez, filemd5, addr, capa.rules.FUNCTION_SCOPE))
 
     if len(code_features) == 0:
         logger.warning("No code features found for %s", filemd5)
@@ -596,6 +612,7 @@ def multi_process_capa(argv=None):
     parser.add_argument("input", type=str, nargs="+", help="Path to directory or files to analyze")
     parser.add_argument("-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor")
     parser.add_argument("--no-mp", action="store_true", help="disable subprocesses")
+    parser.add_argument("--dump-features", action="store_true", help="output feature dictionary as json")
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
@@ -665,7 +682,20 @@ def multi_process_capa(argv=None):
 
     logger.info("Done processing %s samples", len(samples))
 
+    if args.dump_features:
+        dump_file_features(results)
+        sys.exit(0)
+
     return results
+
+
+# Output related functions
+
+
+def dump_file_features(result_dict: dict):
+    """Print out bytes for the code features extracted"""
+    output_dict = {filemd5: [x.json() for x in features] for filemd5, features in result_dict.items()}
+    print(json.dumps(output_dict, indent=4))
 
 
 # YARA related functions
