@@ -109,12 +109,18 @@ def get_file_imports() -> Dict[int, List[str]]:
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
 
-        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
+        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_* / <EXTERNAL>::import
         if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
-        for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
-            import_dict.setdefault(addr, []).append(name)
+        # Most prominently shows up in .elf samples, Ghidra's FunctionID has a
+        # hard time resolving module names for Linux imports
+        if "<EXTERNAL>" in fstr[0]:
+            for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
+                import_dict.setdefault(addr, []).append(name)
+        else:
+            for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
+                import_dict.setdefault(addr, []).append(name)
 
     return import_dict
 
@@ -277,14 +283,24 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
 
     if insn.getOperandType(0) == addr_code:
         if getFunctionContaining(to_deref).isThunk():  # type: ignore [name-defined] # noqa: F821
-            # addr | code usually points to a thunked function, we can
+            # addr | code can point to a thunked function, we can
             # follow the thunk chain down once. Addresses point cyclically
             # ex. mimikatz.exe_:0x455a41
             thunk_jmp = getInstructionAt(to_deref)  # type: ignore [name-defined] # noqa: F821
             if thunk_jmp:
                 for i in range(thunk_jmp.getNumOperands()):
                     if OperandType.isAddress(thunk_jmp.getOperandType(i)):
-                        return thunk_jmp.getAddress(i)
+                        thunk_addr = thunk_jmp.getAddress(i)
+                        thunk_dat = getDataContaining(thunk_addr)  # type: ignore [name-defined] # noqa: F821
+
+                        # Sometimes in .elf files, we have to follow the chain down one more level
+                        # ex. 7351f...:0x408790
+                        if not thunk_dat:
+                            return thunk_addr
+                        elif thunk_dat.isDefined() & thunk_dat.isPointer():
+                            return thunk_dat.getValue()
+                        else:
+                            return thunk_addr
         else:
             # if it doesn't poin to a thunk, it's usually a jmp to a label
             return to_deref
