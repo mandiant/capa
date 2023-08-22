@@ -335,7 +335,6 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     """
     serialize the given extractor to a string
     """
-    assert isinstance(extractor, StaticFeatureExtractor)
     global_features: List[GlobalFeature] = []
     for feature, _ in extractor.extract_global_features():
         global_features.append(
