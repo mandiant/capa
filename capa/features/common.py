@@ -444,10 +444,9 @@ def get_guid_string_and_bytes(name: str, com_type: str):
     return guid_string, guid_bytes
 
 
-class COMFactory:
-    def __new__(cls, com_name: str, com_type: str):
-        guid_string, guid_bytes = get_guid_string_and_bytes(com_name, com_type)
-        return capa.engine.Or([Bytes(guid_bytes, com_name), String(guid_string, com_name)])
+def translate_com_feature(com_name: str, com_type: str) -> capa.engine.Statement:
+    guid_string, guid_bytes = get_guid_string_and_bytes(com_name, com_type)
+    return capa.engine.Or([Bytes(guid_bytes, com_name), String(guid_string, com_name)])
 
 
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
