@@ -577,7 +577,7 @@ def run_capa_and_get_features(args):
     try:
         doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
         logger.info("Building code features for %s", path)
-        if type(extractor) == DnfileFeatureExtractor:
+        if extractor is DnfileFeatureExtractor:
             # Handle .NET files
             features = get_code_features_for_dotnet_doc(doc, extractor)
         else:
