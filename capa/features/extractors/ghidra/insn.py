@@ -26,7 +26,6 @@ SECURITY_COOKIE_BYTES_DELTA = 0x40
 imports = capa.features.extractors.ghidra.helpers.get_file_imports()
 externs = capa.features.extractors.ghidra.helpers.get_file_externs()
 mapped_fake_addrs = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
-external_locs = capa.features.extractors.ghidra.helpers.get_external_locs()
 
 
 def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
@@ -36,6 +35,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
     addr_data = OperandType.ADDRESS | OperandType.DATA  # needs dereferencing
+    addr_code = OperandType.ADDRESS | OperandType.CODE  # needs dereferencing
 
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
@@ -47,23 +47,21 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
                 return
         else:
             return
-    elif ref_type == addr_data:
+    elif ref_type in (addr_data, addr_code) or OperandType.isIndirect(ref_type):
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+            addr_ref, mapped_fake_addrs, imports, externs
         ):
             return
         ref = addr_ref.getOffset()
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
-    elif OperandType.isIndirect(ref_type):
-        return  # cannot resolve the indirection statically
     else:
         # pure address does not need to get dereferenced/ handled
         addr_ref = insn.getAddress(0)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs, external_locs
+            addr_ref, mapped_fake_addrs, imports, externs
         ):
             return
         ref = addr_ref.getOffset()
@@ -115,25 +113,40 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         return
 
     for i in range(insn.getNumOperands()):
-        if insn.getOperandType(i) != OperandType.SCALAR:
+        # Exceptions for LEA insn:
+        # invalid operand encoding, considered numbers instead of offsets
+        # see: mimikatz.exe_:0x4018C0
+        if insn.getOperandType(i) == OperandType.DYNAMIC and insn.getMnemonicString().startswith("LEA"):
+            # Additional check, avoid yielding "wide" values (ex. mimikatz.exe:0x471EE6 LEA EBX, [ECX + EAX*0x4])
+            op_objs = insn.getOpObjects(i)
+            if len(op_objs) == 3:  # ECX, EAX, 0x4
+                continue
+
+            if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
+                const = op_objs[-1].getUnsignedValue()
+                addr = ih.address
+
+                yield Number(const), addr
+                yield OperandNumber(i, const), addr
+        elif not OperandType.isScalar(insn.getOperandType(i)):
             # skip things like:
             #   references, void types
             continue
+        else:
+            const = insn.getScalar(i).getUnsignedValue()
+            addr = ih.address
 
-        const = insn.getScalar(i).getValue()
-        addr = ih.address
+            yield Number(const), addr
+            yield OperandNumber(i, const), addr
 
-        yield Number(const), addr
-        yield OperandNumber(i, const), addr
-
-        if insn.getMnemonicString().startswith("ADD") and 0 < const < MAX_STRUCTURE_SIZE:
-            # for pattern like:
-            #
-            #     add eax, 0x10
-            #
-            # assume 0x10 is also an offset (imagine eax is a pointer).
-            yield Offset(const), addr
-            yield OperandOffset(i, const), addr
+            if insn.getMnemonicString().startswith("ADD") and 0 < const < MAX_STRUCTURE_SIZE:
+                # for pattern like:
+                #
+                #     add eax, 0x10
+                #
+                # assume 0x10 is also an offset (imagine eax is a pointer).
+                yield Offset(const), addr
+                yield OperandOffset(i, const), addr
 
 
 def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -144,6 +157,9 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         .text:0040112F cmp [esi+4], ebx
     """
     insn: ghidra.program.database.code.InstructionDB = ih.inner
+
+    if insn.getMnemonicString().startswith("LEA"):
+        return
 
     # ignore any stack references
     if not capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
@@ -156,6 +172,9 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
                     op_off = op_objs[-1].getValue()
                     yield Offset(op_off), ih.address
                     yield OperandOffset(i, op_off), ih.address
+                else:
+                    yield Offset(0), ih.address
+                    yield OperandOffset(i, 0), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -171,7 +190,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
 
     ref = insn.getAddress()  # init to insn addr
     for i in range(insn.getNumOperands()):
-        if OperandType.isScalarAsAddress(insn.getOperandType(i)):
+        if OperandType.isAddress(insn.getOperandType(i)):
             ref = insn.getAddress(i)  # pulls pointer if there is one
 
     if ref != insn.getAddress():  # bail out if there's no pointer
@@ -193,11 +212,18 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         push offset aAcr     ; "ACR  > "
     """
     insn: ghidra.program.database.code.InstructionDB = ih.inner
+    dyn_addr = OperandType.DYNAMIC | OperandType.ADDRESS
 
     ref = insn.getAddress()
     for i in range(insn.getNumOperands()):
         if OperandType.isScalarAsAddress(insn.getOperandType(i)):
             ref = insn.getAddress(i)
+        # strings are also referenced dynamically via pointers & arrays, so we need to deref them
+        if insn.getOperandType(i) == dyn_addr:
+            ref = insn.getAddress(i)
+            dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
+            if dat and dat.isPointer():
+                ref = dat.getValue()
 
     if ref != insn.getAddress():
         ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
@@ -277,6 +303,7 @@ def extract_insn_cross_section_cflow(
 
     # OperandType to dereference
     addr_data = OperandType.ADDRESS | OperandType.DATA
+    addr_code = OperandType.ADDRESS | OperandType.CODE
 
     ref_type = insn.getOperandType(0)
 
@@ -285,29 +312,21 @@ def extract_insn_cross_section_cflow(
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
             ref = insn.getAddress(0)  # Ghidra dereferences REG | ADDR
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-                ref, mapped_fake_addrs, imports, externs, external_locs
-            ):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
                 return
         else:
             return
-    elif ref_type == addr_data:
+    elif ref_type in (addr_data, addr_code) or OperandType.isIndirect(ref_type):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, mapped_fake_addrs, imports, externs, external_locs
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
-    elif OperandType.isIndirect(ref_type):
-        return  # cannot resolve the indirection statically
     else:
         # pure address does not need to get dereferenced/ handled
         ref = insn.getAddress(0)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, mapped_fake_addrs, imports, externs, external_locs
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
             return
 
     this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821
@@ -359,6 +378,8 @@ def extract_function_indirect_call_characteristic_features(
     insn: ghidra.program.database.code.InstructionDB = ih.inner
 
     if insn.getMnemonicString().startswith("CALL"):
+        if OperandType.isRegister(insn.getOperandType(0)):
+            yield Characteristic("indirect call"), ih.address
         if OperandType.isIndirect(insn.getOperandType(0)):
             yield Characteristic("indirect call"), ih.address
 

@@ -73,7 +73,9 @@ def test_ghidra_features(sample, scope, feature, expected):
 
 
 @pytest.mark.skipif(ghidra_present is False, reason="Ghidra tests must be ran within Ghidra")
-@fixtures.parametrize("sample,scope,feature,expected", fixtures.FEATURE_COUNT_TESTS, indirect=["sample", "scope"])
+@fixtures.parametrize(
+    "sample,scope,feature,expected", fixtures.FEATURE_COUNT_TESTS_GHIDRA, indirect=["sample", "scope"]
+)
 def test_ghidra_feature_counts(sample, scope, feature, expected):
     try:
         check_input_file(sample)

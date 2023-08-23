@@ -1063,6 +1063,14 @@ FEATURE_COUNT_TESTS_DOTNET = [
 ]
 
 
+FEATURE_COUNT_TESTS_GHIDRA = [
+    # Ghidra may render functions as labels, as well as provide differing amounts of call references
+    # (Colton) TODO: Add more test cases
+    ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
+    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
+]
+
+
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)

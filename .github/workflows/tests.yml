@@ -194,5 +194,9 @@ jobs:
     - name: Install capa
       run: pip install -e .[dev] 
     - name: Run tests
-      run: .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'mimikatz.exe_' -ScriptPath ./tests/ -PostScript test_ghidra_features.py
+      run: | 
+        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/mimikatz.exe_ -ScriptPath ./tests/ -PostScript test_ghidra_features.py > ../output.log
+        cat ../output.log
+        exit_code=$(cat ../output.log | grep exit | awk '{print $NF}')
+        exit $exit_code
  

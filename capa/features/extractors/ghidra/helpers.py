@@ -14,6 +14,7 @@ from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
+from capa.features.common import THUNK_CHAIN_DEPTH_DELTA
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -109,12 +110,19 @@ def get_file_imports() -> Dict[int, List[str]]:
             if r.getReferenceType().isData():
                 addr = r.getFromAddress().getOffset()  # gets pointer to fake external addr
 
-        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_*
+        ex_loc = f.getExternalLocation().getAddress()  # map external locations as well (offset into module files)
+
+        fstr = f.toString().split("::")  # format: MODULE.dll::import / MODULE::Ordinal_* / <EXTERNAL>::import
         if "Ordinal_" in fstr[1]:
             fstr[1] = f"#{fstr[1].split('_')[1]}"
 
-        for name in capa.features.extractors.helpers.generate_symbols(fstr[0][:-4], fstr[1]):
+        # <EXTERNAL> mostly shows up in ELF files, otherwise, strip '.dll' w/ [:-4]
+        fstr[0] = "*" if "<EXTERNAL>" in fstr[0] else fstr[0][:-4]
+
+        for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
             import_dict.setdefault(addr, []).append(name)
+            if ex_loc:
+                import_dict.setdefault(ex_loc.getOffset(), []).append(name)
 
     return import_dict
 
@@ -181,35 +189,11 @@ def map_fake_import_addrs() -> Dict[int, List[int]]:
     return fake_dict
 
 
-def get_external_locs() -> List[int]:
-    """
-     Helps to discern external offsets from regular bytes when extracting
-     data.
-
-    Ghidra behavior:
-     - Offsets that point to specific sections of external programs
-      i.e. library code.
-     - Stored in data, and pointed to by an absolute address
-     https://github.com/NationalSecurityAgency/ghidra/blob/26d4bd9104809747c21f2528cab8aba9aef9acd5/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/program/model/symbol/ExternalLocation.java#L25-30
-
-    Example: (mimikatz.exe_) 5f66b82558ca92e54e77f216ef4c066c:0x473090
-    - 0x473090 -> PTR_CreateServiceW_00473090
-    - 0x000b34EC -> External Location
-    """
-    locs = []
-    for fh in currentProgram().getFunctionManager().getExternalFunctions():  # type: ignore [name-defined] # noqa: F821
-        external_loc = fh.getExternalLocation().getAddress()
-        if external_loc:
-            locs.append(external_loc)
-    return locs
-
-
 def check_addr_for_api(
     addr: ghidra.program.model.address.Address,
     fakes: Dict[int, List[int]],
     imports: Dict[int, List[str]],
     externs: Dict[int, List[str]],
-    ex_locs: List[int],
 ) -> bool:
     offset = addr.getOffset()
 
@@ -223,9 +207,6 @@ def check_addr_for_api(
 
     extern = externs.get(offset)
     if extern:
-        return True
-
-    if addr in ex_locs:
         return True
 
     return False
@@ -244,6 +225,13 @@ def is_sp_modified(insn: ghidra.program.database.code.InstructionDB) -> bool:
 
 def is_stack_referenced(insn: ghidra.program.database.code.InstructionDB) -> bool:
     """generic catch-all for stack references"""
+    for i in range(insn.getNumOperands()):
+        if insn.getOperandType(i) == OperandType.REGISTER:
+            if "BP" in insn.getRegister(i).getName():
+                return True
+            else:
+                continue
+
     return any(ref.isStackReference() for ref in insn.getReferencesFrom())
 
 
@@ -263,9 +251,34 @@ def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
     return all(n == operands[0] for n in operands)
 
 
+def handle_thunk(addr: ghidra.program.model.address.Address):
+    """Follow thunk chains down to a reasonable depth"""
+    ref = addr
+    for _ in range(THUNK_CHAIN_DEPTH_DELTA):
+        thunk_jmp = getInstructionAt(ref)  # type: ignore [name-defined] # noqa: F821
+        if thunk_jmp and is_call_or_jmp(thunk_jmp):
+            if OperandType.isAddress(thunk_jmp.getOperandType(0)):
+                ref = thunk_jmp.getAddress(0)
+        else:
+            thunk_dat = getDataContaining(ref)  # type: ignore [name-defined] # noqa: F821
+            if thunk_dat and thunk_dat.isDefined() and thunk_dat.isPointer():
+                ref = thunk_dat.getValue()
+                break  # end of thunk chain reached
+    return ref
+
+
 def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
+    addr_code = OperandType.ADDRESS | OperandType.CODE
     to_deref = insn.getAddress(0)
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+
+    if insn.getOperandType(0) == addr_code:
+        thfunc = getFunctionContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
+        if thfunc and thfunc.isThunk():
+            return handle_thunk(to_deref)
+        else:
+            # if it doesn't poin to a thunk, it's usually a jmp to a label
+            return to_deref
     if not dat:
         return to_deref
     if dat.isDefined() and dat.isPointer():

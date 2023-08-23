@@ -20,9 +20,6 @@ import capa.features.extractors.ghidra.helpers
 
 logger = logging.getLogger("capa")
 
-currentProgram = currentProgram()  # type: ignore # noqa: F821
-currentAddress = currentAddress()  # type: ignore # noqa: F821
-
 # file type as returned by Ghidra
 SUPPORTED_FILE_TYPES = ("Executable and Linking Format (ELF)", "Portable Executable (PE)", "Raw Binary")
 
@@ -36,28 +33,40 @@ class GHIDRAIO:
     def __init__(self):
         super().__init__()
         self.offset = 0
+        self.bytez = self.get_file_bytes()
 
     def seek(self, offset, whence=0):
         assert whence == 0
         self.offset = offset
 
     def read(self, size):
-        try:
-            # ghidra.program.model.address.Address has no public constructor,
-            # so we have to use the exposed currentAddress object for its
-            # member function .getAddress()
-            ea = currentAddress.getAddress(hex(self.offset))  # type: ignore [name-defined] # noqa: F821
-        except RuntimeError:  # AddressFormatException to Ghidra
+        logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, currentProgram().getImageBase().add(self.offset).getOffset())  # type: ignore [name-defined] # noqa: F821
+
+        b_len = len(self.bytez)
+        if size > b_len - self.offset:
             logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
             return b""
-
-        logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, ea.getOffset())
-
-        # returns bytes or b""
-        return capa.features.extractors.ghidra.helpers.get_bytes(ea, size)
+        else:
+            read_bytes = b""
+            read = [
+                capa.features.extractors.ghidra.helpers.fix_byte(b)
+                for b in self.bytez[self.offset : self.offset + size]
+            ]
+            for b in read:
+                read_bytes = read_bytes + b
+            return read_bytes
 
     def close(self):
         return
+
+    def get_file_bytes(self):
+        fbytes = currentProgram().getMemory().getAllFileBytes()[0]  # type: ignore [name-defined] # noqa: F821
+        bytez = b""
+        for i in range(fbytes.getSize()):
+            # getOriginalByte() allows for raw file parsing on the Ghidra side
+            # other functions will fail as Ghidra will think that it's reading uninitialized memory
+            bytez = bytez + capa.features.extractors.ghidra.helpers.fix_byte(fbytes.getOriginalByte(i))
+        return bytez
 
 
 def is_supported_ghidra_version():
@@ -75,7 +84,7 @@ def is_running_headless():
 
 
 def is_supported_file_type():
-    file_info = currentProgram.getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    file_info = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
     if file_info.filetype not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
         logger.error(" Input file does not appear to be a supported file type.")
@@ -90,7 +99,7 @@ def is_supported_file_type():
 
 
 def is_supported_arch_type():
-    file_info = currentProgram.getLanguageID()  # type: ignore [name-defined] # noqa: F821
+    file_info = currentProgram().getLanguageID()  # type: ignore [name-defined] # noqa: F821
     if "x86" not in file_info or not any(arch in file_info for arch in ["32", "64"]):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
@@ -102,18 +111,18 @@ def is_supported_arch_type():
 
 
 def get_file_md5():
-    return currentProgram.getExecutableMD5()  # type: ignore [name-defined] # noqa: F821
+    return currentProgram().getExecutableMD5()  # type: ignore [name-defined] # noqa: F821
 
 
 def get_file_sha256():
-    return currentProgram.getExecutableSHA256()  # type: ignore [name-defined] # noqa: F821
+    return currentProgram().getExecutableSHA256()  # type: ignore [name-defined] # noqa: F821
 
 
 def collect_metadata(rules: List[Path]):
     md5 = get_file_md5()
     sha256 = get_file_sha256()
 
-    info = currentProgram.getLanguageID().toString()  # type: ignore [name-defined] # noqa: F821
+    info = currentProgram().getLanguageID().toString()  # type: ignore [name-defined] # noqa: F821
     if "x86" in info and "64" in info:
         arch = "x86_64"
     elif "x86" in info and "32" in info:
@@ -121,7 +130,7 @@ def collect_metadata(rules: List[Path]):
     else:
         arch = "unknown arch"
 
-    format_name: str = currentProgram.getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
+    format_name: str = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
     if "PE" in format_name:
         os = "windows"
     elif "ELF" in format_name:
@@ -138,15 +147,15 @@ def collect_metadata(rules: List[Path]):
             md5=md5,
             sha1="",
             sha256=sha256,
-            path=currentProgram.getExecutablePath(),  # type: ignore [name-defined] # noqa: F821
+            path=currentProgram().getExecutablePath(),  # type: ignore [name-defined] # noqa: F821
         ),
         analysis=rdoc.Analysis(
-            format=currentProgram.getExecutableFormat(),  # type: ignore [name-defined] # noqa: F821
+            format=currentProgram().getExecutableFormat(),  # type: ignore [name-defined] # noqa: F821
             arch=arch,
             os=os,
             extractor="ghidra",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
-            base_address=capa.features.freeze.Address.from_capa(currentProgram.getImageBase().getOffset()),  # type: ignore [name-defined] # noqa: F821
+            base_address=capa.features.freeze.Address.from_capa(currentProgram().getImageBase().getOffset()),  # type: ignore [name-defined] # noqa: F821
             layout=rdoc.Layout(
                 functions=(),
             ),
