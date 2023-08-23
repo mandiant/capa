@@ -8,6 +8,7 @@
 from typing import Dict, List, Iterator
 
 import ghidra
+import java.lang
 from ghidra.program.model.lang import OperandType
 from ghidra.program.model.block import BasicBlockModel, SimpleBlockIterator
 from ghidra.program.model.symbol import SourceType, SymbolType
@@ -36,7 +37,7 @@ def find_byte_sequence(seq: bytes) -> Iterator[int]:
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
     # .add(1) to avoid false positives on regular PE files
-    eas = findBytes(currentProgram().getMinAddress().add(1), seqstr, 1, 1)  # type: ignore [name-defined] # noqa: F821
+    eas = findBytes(currentProgram().getMinAddress().add(1), seqstr, java.lang.Integer.MAX_VALUE, 1)  # type: ignore [name-defined] # noqa: F821
     yield from eas
 
 
