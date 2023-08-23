@@ -511,8 +511,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                 address=paddr,
                 features=tuple(pfeatures),
                 threads=tuple(threads),
-            )  # type: ignore
-            # Mypy is unable to recognise `basic_blocks` as a argument due to alias
+            )
         )
 
     features = DynamicFeatures(
