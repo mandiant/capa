@@ -126,9 +126,6 @@ jobs:
     - name: Install capa
       if: ${{ env.BN_SERIAL != 0 }}
       run: pip install -e .[dev]
-    - name: Install Match-2-Yar Dependencies
-      if: ${{ env.BN_SERIAL != 0 }}
-      run: pip install mkyara yaramod
     - name: install Binary Ninja
       if: ${{ env.BN_SERIAL != 0 }}
       run: |
