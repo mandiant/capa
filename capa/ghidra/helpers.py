@@ -63,6 +63,8 @@ class GHIDRAIO:
         fbytes = currentProgram().getMemory().getAllFileBytes()[0]  # type: ignore [name-defined] # noqa: F821
         bytez = b""
         for i in range(fbytes.getSize()):
+            # getOriginalByte() allows for raw file parsing on the Ghidra side
+            # other functions will fail as Ghidra will think that it's reading uninitialized memory
             bytez = bytez + capa.features.extractors.ghidra.helpers.fix_byte(fbytes.getOriginalByte(i))
         return bytez
 
