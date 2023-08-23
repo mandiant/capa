@@ -151,20 +151,74 @@ class NamespaceDoesntMatchRulePath(Lint):
         return rule.meta["namespace"] not in get_normpath(rule.meta["capa/path"])
 
 
-class MissingScope(Lint):
-    name = "missing scope"
-    recommendation = "Add meta.scope so that the scope is explicit (defaults to `function`)"
+class MissingScopes(Lint):
+    name = "missing scopes"
+    recommendation = (
+        "Add meta.scopes with both the static (meta.scopes.static) and dynamic (meta.scopes.dynamic) scopes"
+    )
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "scope" not in rule.meta
+        return "scopes" not in rule.meta
 
 
-class InvalidScope(Lint):
-    name = "invalid scope"
-    recommendation = "Use only file, function, basic block, or instruction rule scopes"
+class MissingStaticScope(Lint):
+    name = "missing static scope"
+    recommendation = (
+        "Add a static scope for the rule (file, function, basic block, instruction, or unspecified/unsupported)"
+    )
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scope") not in ("file", "function", "basic block", "instruction")
+        return "static" not in rule.meta.get("scopes")
+
+
+class MissingDynamicScope(Lint):
+    name = "missing dynamic scope"
+    recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unspecified/unsupported)"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return "dynamic" not in rule.meta.get("scopes")
+
+
+class InvalidStaticScope(Lint):
+    name = "invalid static scope"
+    recommendation = (
+        "For the static scope, use either: file, function, basic block, instruction, or unspecified/unsupported"
+    )
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return rule.meta.get("scopes").get("static") not in (
+            "file",
+            "function",
+            "basic block",
+            "instruction",
+            "unspecified",
+            "unsupported",
+        )
+
+
+class InvalidDynamicScope(Lint):
+    name = "invalid static scope"
+    recommendation = "For the dynamic scope, use either: file, process, thread, call, or unspecified/unsupported"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return rule.meta.get("scopes").get("dynamic") not in (
+            "file",
+            "process",
+            "thread",
+            "call",
+            "unspecified",
+            "unsupported",
+        )
+
+
+class InvalidScopes(Lint):
+    name = "invalid scopes"
+    recommendation = "At least one scope (static or dynamic) must be specified"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return (rule.meta.get("scope").get("static") in ("unspecified", "unsupported")) and (
+            rule.meta.get("scope").get("dynamic") in ("unspecified", "unsupported")
+        )
 
 
 class MissingAuthors(Lint):
@@ -700,14 +754,18 @@ def lint_name(ctx: Context, rule: Rule):
     return run_lints(NAME_LINTS, ctx, rule)
 
 
-SCOPE_LINTS = (
-    MissingScope(),
-    InvalidScope(),
+SCOPES_LINTS = (
+    MissingScopes(),
+    MissingStaticScope(),
+    MissingDynamicScope(),
+    InvalidStaticScope(),
+    InvalidDynamicScope(),
+    InvalidScopes(),
 )
 
 
 def lint_scope(ctx: Context, rule: Rule):
-    return run_lints(SCOPE_LINTS, ctx, rule)
+    return run_lints(SCOPES_LINTS, ctx, rule)
 
 
 META_LINTS = (
