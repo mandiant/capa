@@ -256,14 +256,14 @@ def handle_thunk(addr: ghidra.program.model.address.Address):
     ref = addr
     for _ in range(THUNK_CHAIN_DEPTH_DELTA):
         thunk_jmp = getInstructionAt(ref)  # type: ignore [name-defined] # noqa: F821
-        if thunk_jmp:
-            for i in range(thunk_jmp.getNumOperands()):
-                if OperandType.isAddress(thunk_jmp.getOperandType(i)):
-                    ref = thunk_jmp.getAddress(i)
+        if thunk_jmp and is_call_or_jmp(thunk_jmp):
+            if OperandType.isAddress(thunk_jmp.getOperandType(0)):
+                ref = thunk_jmp.getAddress(0)
         else:
             thunk_dat = getDataContaining(ref)  # type: ignore [name-defined] # noqa: F821
             if thunk_dat and thunk_dat.isDefined() and thunk_dat.isPointer():
                 ref = thunk_dat.getValue()
+                break  # end of thunk chain reached
     return ref
 
 
