@@ -199,10 +199,6 @@ SUPPORTED_FEATURES: Dict[str, Set] = {
     },
     PROCESS_SCOPE: {
         capa.features.common.MatchedRule,
-        capa.features.common.String,
-        capa.features.common.Substring,
-        capa.features.common.Regex,
-        capa.features.common.Characteristic("embedded pe"),
     },
     THREAD_SCOPE: set(),
     CALL_SCOPE: {
