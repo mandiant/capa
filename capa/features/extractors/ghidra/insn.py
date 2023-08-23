@@ -117,15 +117,12 @@ def extract_insn_number_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         # invalid operand encoding, considered numbers instead of offsets
         # see: mimikatz.exe_:0x4018C0
         if insn.getOperandType(i) == OperandType.DYNAMIC and insn.getMnemonicString().startswith("LEA"):
+            # Additional check, avoid yielding "wide" values (ex. mimikatz.exe:0x471EE6 LEA EBX, [ECX + EAX*0x4])
             op_objs = insn.getOpObjects(i)
-            if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
-                # Additional check, avoid yielding "wide" values (ex. mimikatz.exe:0x471EE6 LEA EBX, [ECX + EAX*0x4])
-                if isinstance(op_objs[-2], ghidra.program.model.lang.Register):
-                    # EAX*0x4, note: Ghidra does not currently support this level of offset & number differentiation
-                    # all byte addressing is referred to as a DYNAMIC OperandType
-                    if op_objs[-2].getName() + "*" + hex(op_objs[-1].getValue()) in insn.toString():
-                        continue
+            if len(op_objs) == 3:  # ECX, EAX, 0x4
+                continue
 
+            if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
                 const = op_objs[-1].getUnsignedValue()
                 addr = ih.address
 
