@@ -196,7 +196,7 @@ jobs:
     - name: Run tests
       run: | 
         .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/'kernel32-64.dll_' -ScriptPath ./tests/ -PostScript test_ghidra_features.py > ../output.log
-        cat output.log
-        exit_code=$(cat output.log | grep exit | awk '{print $NF}')
+        cat ../output.log
+        exit_code=$(cat ../output.log | grep exit | awk '{print $NF}')
         exit $exit_code
  
