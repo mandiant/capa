@@ -9,13 +9,15 @@
 
 ### Breaking Changes
 
-### New Rules (6)
+### New Rules (8)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
 - host-interaction/bootloader/get-uefi-variable jakub.jozwiak@mandiant.com
 - host-interaction/bootloader/set-uefi-variable jakub.jozwiak@mandiant.com
 - nursery/enumerate-device-drivers-on-linux @mr-tz
 - anti-analysis/anti-vm/vm-detection/check-for-foreground-window-switch ervin.ocampo@mandiant.com
+- linking/static/sqlite3/linked-against-cppsqlite3 still@teamt5.org
+- linking/static/sqlite3/linked-against-sqlite3 still@teamt5.org
 -
 
 ### Bug Fixes
