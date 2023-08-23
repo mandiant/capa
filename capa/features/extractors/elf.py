@@ -898,7 +898,7 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
 
 def detect_elf_os(f) -> str:
     """
-    f: type Union[BinaryIO, IDAIO]
+    f: type Union[BinaryIO, IDAIO, GHIDRAIO]
     """
     try:
         elf = ELF(f)
