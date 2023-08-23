@@ -14,6 +14,7 @@ from ghidra.program.model.symbol import SourceType, SymbolType
 from ghidra.program.model.address import AddressSpace
 
 import capa.features.extractors.helpers
+from capa.features.common import THUNK_CHAIN_DEPTH_DELTA
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
@@ -250,32 +251,31 @@ def is_zxor(insn: ghidra.program.database.code.InstructionDB) -> bool:
     return all(n == operands[0] for n in operands)
 
 
+def handle_thunk(addr: ghidra.program.model.address.Address):
+    """Follow thunk chains down to a reasonable depth"""
+    ref = addr
+    for _ in range(THUNK_CHAIN_DEPTH_DELTA):
+        thunk_jmp = getInstructionAt(ref)  # type: ignore [name-defined] # noqa: F821
+        if thunk_jmp:
+            for i in range(thunk_jmp.getNumOperands()):
+                if OperandType.isAddress(thunk_jmp.getOperandType(i)):
+                    ref = thunk_jmp.getAddress(i)
+        else:
+            thunk_dat = getDataContaining(ref)  # type: ignore [name-defined] # noqa: F821
+            if thunk_dat and thunk_dat.isDefined() and thunk_dat.isPointer():
+                ref = thunk_dat.getValue()
+    return ref
+
+
 def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
     addr_code = OperandType.ADDRESS | OperandType.CODE
     to_deref = insn.getAddress(0)
     dat = getDataContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
-    thfunc = getFunctionContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
 
     if insn.getOperandType(0) == addr_code:
+        thfunc = getFunctionContaining(to_deref)  # type: ignore [name-defined] # noqa: F821
         if thfunc and thfunc.isThunk():
-            # addr | code can point to a thunked function, we can
-            # follow the thunk chain down once. Addresses point cyclically
-            # ex. mimikatz.exe_:0x455a41
-            thunk_jmp = getInstructionAt(to_deref)  # type: ignore [name-defined] # noqa: F821
-            if thunk_jmp:
-                for i in range(thunk_jmp.getNumOperands()):
-                    if OperandType.isAddress(thunk_jmp.getOperandType(i)):
-                        thunk_addr = thunk_jmp.getAddress(i)
-                        thunk_dat = getDataContaining(thunk_addr)  # type: ignore [name-defined] # noqa: F821
-
-                        # Sometimes in .elf files, we have to follow the chain down one more level
-                        # ex. 7351f...:0x408790
-                        if not thunk_dat:
-                            return thunk_addr
-                        elif thunk_dat.isDefined() & thunk_dat.isPointer():
-                            return thunk_dat.getValue()
-                        else:
-                            return thunk_addr
+            return handle_thunk(to_deref)
         else:
             # if it doesn't poin to a thunk, it's usually a jmp to a label
             return to_deref
