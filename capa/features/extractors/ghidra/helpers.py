@@ -20,24 +20,25 @@ from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 
-def fix_byte(b: int) -> bytes:
-    """Transform signed ints from Java into bytes for Python
+def ints_to_bytes(bytez: List[int]) -> bytes:
+    """convert Java signed ints to Python bytes
 
     args:
-        b: signed int returned from Java processing
+        bytez: list of Java signed ints
     """
-    return (b & 0xFF).to_bytes(1, "little")
+    return bytes([b & 0xFF for b in bytez])
 
 
-def find_byte_sequence(seq: bytes) -> Iterator[int]:
+def find_byte_sequence(addr: ghidra.program.model.address.Address, seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
 
     args:
+        addr: start address
         seq: bytes to search e.g. b"\x01\x03"
     """
     seqstr = "".join([f"\\x{b:02x}" for b in seq])
-    # .add(1) to avoid false positives on regular PE files
-    eas = findBytes(currentProgram().getMinAddress().add(1), seqstr, java.lang.Integer.MAX_VALUE, 1)  # type: ignore [name-defined] # noqa: F821
+    eas = findBytes(addr, seqstr, java.lang.Integer.MAX_VALUE, 1)  # type: ignore [name-defined] # noqa: F821
+
     yield from eas
 
 
@@ -48,15 +49,10 @@ def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
         addr: Address to begin pull from
         length: length of bytes to pull
     """
-
-    bytez = b""
     try:
-        signed_ints = getBytes(addr, length)  # type: ignore [name-defined] # noqa: F821
-        for b in signed_ints:
-            bytez = bytez + fix_byte(b)
-        return bytez
+        return ints_to_bytes(getBytes(addr, length))
     except RuntimeError:
-        return bytez
+        return b""
 
 
 def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
@@ -65,15 +61,7 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
     args:
         block: MemoryBlock to pull from
     """
-
-    bytez = b""
-    try:
-        signed_ints = getBytes(block.getStart(), block.getEnd().getOffset() - block.getStart().getOffset())  # type: ignore [name-defined] # noqa: F821
-        for b in signed_ints:
-            bytez = bytez + fix_byte(b)
-        return bytez
-    except RuntimeError:
-        return bytez
+    return get_bytes(block.getStart(), block.getSize())
 
 
 def get_function_symbols() -> Iterator[FunctionHandle]:

@@ -22,7 +22,7 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
 
-def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
+def find_embedded_pe() -> Iterator[Tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for Ghidra from:
@@ -39,10 +39,11 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
     ]
 
     todo = []
+    start_addr = currentProgram().getMinAddress().add(1)  # add 1 to avoid header false positive
     for mzx, pex, i in mz_xor:
         # find all segment offsets containing XOR'd "MZ" bytes
         off: ghidra.program.model.address.GenericAddress
-        for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(mzx):
+        for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(start_addr, mzx):
             todo.append((off, mzx, pex, i))
 
     seg_max = currentProgram().getMaxAddress()  # type: ignore [name-defined] # noqa: F821
@@ -73,8 +74,7 @@ def check_segment_for_pe() -> Iterator[Tuple[int, int]]:
 
 def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
     """extract embedded PE features"""
-
-    for ea, _ in check_segment_for_pe():
+    for ea, _ in find_embedded_pe():
         yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
