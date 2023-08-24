@@ -15,6 +15,7 @@ from enum import Enum
 from typing import List, Tuple, Union
 
 from pydantic import Field, BaseModel, ConfigDict
+
 # TODO(williballenthin): use typing.TypeAlias directly in Python 3.10+
 from typing_extensions import TypeAlias
 
