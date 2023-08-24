@@ -37,7 +37,7 @@ import binascii
 import collections
 import multiprocessing
 import multiprocessing.pool
-from typing import Set, Dict, List, Union
+from typing import Set, Dict, List
 from pathlib import Path
 from datetime import date
 
@@ -359,9 +359,7 @@ def get_sig_and_mask_for_dotnet_func(dnpe, body):
 class CodeFeature:
     """Basic object that that will be used to create yara rules"""
 
-    def __init__(
-        self, sig: str, comment: str, bytez: bytes, filemd5: str, addr: Union[int, tuple[int, int], None], scope: str
-    ):
+    def __init__(self, sig: str, comment: str, bytez: bytes, filemd5: str, addr, scope: str):
         self.sig = sig.strip().upper()
         self.comment = comment
         self.bytez = bytez

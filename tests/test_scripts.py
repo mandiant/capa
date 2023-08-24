@@ -290,10 +290,6 @@ def test_detect_duplicate_features(tmpdir):
         assert overlaps_found.returncode == expected_overlaps
 
 
-# Rough outline for function extract bytes, function length, function masking
-# Use importlib to import the script
-# Use fixtures vivisect to get a vivisect workspace for a given path
-# We can use known functions from the yara matches to extract out  length, bytes, and masked sig
 @pytest.mark.parametrize(
     "path,is_dotnet,filemd5,addr,scope,expected_bytestring,expected_sig",
     [
@@ -350,7 +346,7 @@ def test_detect_duplicate_features(tmpdir):
     ],
 )
 def test_match2yar_feature_extraction(path, is_dotnet, filemd5, addr, scope, expected_bytestring, expected_sig):
-    """Test extracting a function byte string using vivisect workspaces"""
+    """Test extracting and masking bytes based on matches using match-2-yar script"""
     output = get_match_2_yar_features(path, is_dotnet)
 
     output = output.decode("utf8")
