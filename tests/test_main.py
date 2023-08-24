@@ -11,7 +11,6 @@ import json
 import textwrap
 from pathlib import Path
 
-import pytest
 import fixtures
 
 import capa.main
