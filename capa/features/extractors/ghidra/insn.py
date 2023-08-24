@@ -47,7 +47,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
                 return
         else:
             return
-    elif ref_type in (addr_data, addr_code) or OperandType.isIndirect(ref_type):
+    elif ref_type in (addr_data, addr_code) or (OperandType.isIndirect(ref_type) and OperandType.isAddress(ref_type)):
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
@@ -60,6 +60,11 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     else:
         # pure address does not need to get dereferenced/ handled
         addr_ref = insn.getAddress(0)
+        if not addr_ref:
+            # If it returned null, it was an indirect
+            # that had no address reference.
+            # This check is faster than checking for (indirect and not address)
+            return
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
             addr_ref, mapped_fake_addrs, imports, externs
         ):
@@ -316,7 +321,7 @@ def extract_insn_cross_section_cflow(
                 return
         else:
             return
-    elif ref_type in (addr_data, addr_code) or OperandType.isIndirect(ref_type):
+    elif ref_type in (addr_data, addr_code) or (OperandType.isIndirect(ref_type) and OperandType.isAddress(ref_type)):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
@@ -326,6 +331,11 @@ def extract_insn_cross_section_cflow(
     else:
         # pure address does not need to get dereferenced/ handled
         ref = insn.getAddress(0)
+        if not ref:
+            # If it returned null, it was an indirect
+            # that had no address reference.
+            # This check is faster than checking for (indirect and not address)
+            return
         if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
             return
 
