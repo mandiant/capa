@@ -50,7 +50,7 @@ def get_bytes(addr: ghidra.program.model.address.Address, length: int) -> bytes:
         length: length of bytes to pull
     """
     try:
-        return ints_to_bytes(getBytes(addr, length)) # type: ignore [name-defined] # noqa: F821
+        return ints_to_bytes(getBytes(addr, length))  # type: ignore [name-defined] # noqa: F821
     except RuntimeError:
         return b""
 
