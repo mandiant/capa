@@ -39,7 +39,7 @@ def find_embedded_pe() -> Iterator[Tuple[int, int]]:
     ]
 
     todo = []
-    start_addr = currentProgram().getMinAddress().add(1)  # add 1 to avoid header false positive
+    start_addr = currentProgram().getMinAddress().add(1)  # type: ignore [name-defined] # noqa: F821
     for mzx, pex, i in mz_xor:
         # find all segment offsets containing XOR'd "MZ" bytes
         off: ghidra.program.model.address.GenericAddress
