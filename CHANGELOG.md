@@ -28,6 +28,7 @@
 - ELF: fix parsing of symtab #1704 @williballenthin
 - result document: don't use deprecated pydantic functions #1718 @williballenthin
 - pytest: don't mark IDA tests as pytest tests #1719 @williballenthin
+- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - fix unhandled exception when resolving rule path #1693 @mike-hunhoff
