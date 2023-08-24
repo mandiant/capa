@@ -75,7 +75,7 @@ def run_program(script_path, args):
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
-@pytest.mark.xfail(reason="RD test files haven't been updated yet")
+@pytest.mark.xfail(reason="result document test files haven't been updated yet")
 def test_proto_conversion(tmp_path):
     t = tmp_path / "proto-test"
     t.mkdir()
