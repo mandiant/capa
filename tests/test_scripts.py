@@ -38,25 +38,15 @@ def get_rule_path():
 @pytest.mark.parametrize(
     "script,args",
     [
-        pytest.param("capa2yara.py", [get_rules_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")),
-        pytest.param(
-            "capafmt.py", [get_rule_path()], marks=pytest.mark.xfail(reason="rendering hasn't been added yet")
-        ),
+        pytest.param("capa2yara.py", [get_rules_path()]),
+        pytest.param("capafmt.py", [get_rule_path()]),
         # not testing lint.py as it runs regularly anyway
         pytest.param("match-function-id.py", [get_file_path()]),
-        pytest.param(
-            "show-capabilities-by-function.py",
-            [get_file_path()],
-            marks=pytest.mark.xfail(reason="rendering hasn't been added yet"),
-        ),
+        pytest.param("show-capabilities-by-function.py", [get_file_path()]),
         pytest.param("show-features.py", [get_file_path()]),
         pytest.param("show-features.py", ["-F", "0x407970", get_file_path()]),
-        pytest.param(
-            "show-unused-features.py", [get_file_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")
-        ),
-        pytest.param(
-            "capa_as_library.py", [get_file_path()], marks=pytest.mark.xfail(reason="relies on legacy ruleset")
-        ),
+        pytest.param("show-unused-features.py", [get_file_path()]),
+        pytest.param("capa_as_library.py", [get_file_path()]),
     ],
 )
 def test_scripts(script, args):
@@ -65,7 +55,6 @@ def test_scripts(script, args):
     assert p.returncode == 0
 
 
-@pytest.mark.xfail(reason="relies on legacy ruleset")
 def test_bulk_process(tmp_path):
     # create test directory to recursively analyze
     t = tmp_path / "test"
@@ -86,7 +75,7 @@ def run_program(script_path, args):
     return subprocess.run(args, stdout=subprocess.PIPE)
 
 
-@pytest.mark.xfail(reason="rendering hasn't been added yet")
+@pytest.mark.xfail(reason="RD test files haven't been updated yet")
 def test_proto_conversion(tmp_path):
     t = tmp_path / "proto-test"
     t.mkdir()

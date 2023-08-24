@@ -566,7 +566,7 @@ def convert_rules(rules, namespaces, cround, make_priv):
             logger.info("skipping already converted rule capa: %s - yara rule: %s", rule.name, rule_name)
             continue
 
-        logger.info("-------------------------- DOING RULE CAPA: %s - yara rule: ", rule.name, rule_name)
+        logger.info("-------------------------- DOING RULE CAPA: %s - yara rule: %s", rule.name, rule_name)
         if "capa/path" in rule.meta:
             url = get_rule_url(rule.meta["capa/path"])
         else:
@@ -603,7 +603,12 @@ def convert_rules(rules, namespaces, cround, make_priv):
                 meta_name = meta
                 # e.g. 'examples:' can be a list
                 seen_hashes = []
-                if isinstance(metas[meta], list):
+                if isinstance(metas[meta], dict):
+                    if meta_name == "scopes":
+                        yara_meta += "\t" + "static scope" + ' = "' + metas[meta]["static"] + '"\n'
+                        yara_meta += "\t" + "dynamic scope" + ' = "' + metas[meta]["dynamic"] + '"\n'
+
+                elif isinstance(metas[meta], list):
                     if meta_name == "examples":
                         meta_name = "hash"
                     if meta_name == "att&ck":
