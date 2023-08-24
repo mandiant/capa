@@ -170,6 +170,8 @@ capa explorer helps you identify interesting areas of a program and build new ca
 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
+If you use Ghidra, then you can enable the [Ghidra Backend](/capa/ghidra/). capa will extract features directly from your Ghidra databases and help you identify the functionality of the programs that you import or are already working on. 
+
 # further information
 ## capa
 - [Installation](https://github.com/mandiant/capa/blob/master/doc/installation.md)
