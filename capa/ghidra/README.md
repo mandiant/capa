@@ -8,7 +8,7 @@ The Ghidra Backend is an application of the FLARE team's open-source project, Gh
 **Required Dependencies:**
 | Dependency | Version | Source |
 |------------|---------|--------|
-| capa | `>=6.1.0` | `<url for capa release>`
+| capa | `>= 6.1.0` | `<url for capa release>`
 | Ghidrathon | `>= 3.0.0` | https://github.com/mandiant/Ghidrathon/tree/v3.0.0 |
 > **note:** Please follow the Ghidrathon installation guide to ensure all additional dependency requirements are met and that it is properly configured to work with Ghidra
 
@@ -24,7 +24,7 @@ The syntax is as so:
 ```
 > **note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
-If you do not have an existing ghidra project, you may also create one with the `headlessAnalyzer` via the `-Import` flag. Post scripts may also be ran in the same invocation.
+If you do not have an existing ghidra project, you may also create one with the headlessAnalyzer via the `-Import` flag. Post scripts may also be ran in the same invocation.
 
 The syntax to both import a new file and run capa against it is:
 ```bash
@@ -32,7 +32,8 @@ The syntax to both import a new file and run capa against it is:
 ```
 > **note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
 
-A successful `headlessAnalyzer` run should look like:
+A successful headlessAnalyzer run should look like:
+
 <img src="/doc/img/ghidrathon_headless.gif">
 
 ### Script Console
