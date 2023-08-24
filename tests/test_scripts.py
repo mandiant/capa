@@ -140,11 +140,7 @@ def test_script_expected_output(script, args, expected_output_path):
 
     expected_output = Path(get_data_path(expected_output_path)).read_bytes()
     # Update dates in expected output to be todays date
-    dates_to_replace = [
-        b"2023-08-10",
-    ]
-    for dt in dates_to_replace:
-        expected_output = expected_output.replace(dt, date.today().isoformat().encode("utf8"))
+    expected_output = expected_output.replace(b"EXPECTED_DATE", date.today().isoformat().encode("utf8"))
 
     p = run_program(script_path, args)
 

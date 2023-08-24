@@ -834,12 +834,10 @@ def build_yara_ruleset(files_dict, **kwargs):
 
         chosen_code_version = sorted(result_dict.values, key=lambda x: x.filemd5)[0]
         file_combinations[sample_combo_key]["features"].append(chosen_code_version)
-        logger.warning("Adding %s to %s", chosen_code_version.sig, sample_combo_key)
         file_combinations[sample_combo_key]["feature_count"] += 1
 
     # Create a list of combo keys and sort them so we get deterministic output
     combo_keys = sorted(file_combinations.keys(), key=lambda x: (len(x), x))
-    logger.warning("Combo Keys: %s", combo_keys)
 
     # Build the YARA rule set based on the grouping
     yara_file = yaramod.YaraFileBuilder()
