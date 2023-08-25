@@ -22,15 +22,44 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 # byte range within the first and returning basic blocks, this helps to reduce FP features
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
-# significantly cut down on runtime by caching api info
-imports = capa.features.extractors.ghidra.helpers.get_file_imports()
-externs = capa.features.extractors.ghidra.helpers.get_file_externs()
-mapped_fake_addrs = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
+
+def get_imports(ctx: Dict[str, Any]) -> Dict[int, Any]:
+    """Populate the import cache for this context"""
+    if "imports_cache" not in ctx:
+        ctx["imports_cache"] = capa.features.extractors.ghidra.helpers.get_file_imports()
+    return ctx["imports_cache"]
 
 
-def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
-    """check instruction for API call"""
+def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
+    """Populate the externs cache for this context"""
+    if "externs_cache" not in ctx:
+        ctx["externs_cache"] = capa.features.extractors.ghidra.helpers.get_file_externs()
+    return ctx["externs_cache"]
+
+
+def get_fakes(ctx: Dict[str, Any]) -> Dict[int, Any]:
+    """Populate the fake import addrs cache for this context"""
+    if "fakes_cache" not in ctx:
+        ctx["fakes_cache"] = capa.features.extractors.ghidra.helpers.get_file_externs()
+    return ctx["fakes_cache"]
+
+
+def check_for_api_call(
+    insn, externs: Dict[int, Any], fakes: Dict[int, Any], imports: Dict[int, Any], imp_or_ex: bool
+) -> Iterator[Any]:
+    """check instruction for API call
+
+    params:
+        externs - external library functions cache
+        fakes - mapped fake import addresses cache
+        imports - imported functions cache
+        imp_or_ex - flag to check imports or externs
+
+    yields:
+        matched api calls
+    """
     info = ()
+    funcs = imports if imp_or_ex else externs
 
     # assume only CALLs or JMPs are passed
     ref_type = insn.getOperandType(0)
@@ -42,7 +71,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
             # If it's an address in a register, check the mapped fake addrs
             # since they're dereferenced to their fake addrs
             op_ref = insn.getAddress(0).getOffset()
-            ref = mapped_fake_addrs.get(op_ref)  # obtain the real addr
+            ref = fakes.get(op_ref)  # obtain the real addr
             if not ref:
                 return
         else:
@@ -50,9 +79,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
     elif ref_type in (addr_data, addr_code) or (OperandType.isIndirect(ref_type) and OperandType.isAddress(ref_type)):
         # we must dereference and check if the addr is a pointer to an api function
         addr_ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs
-        ):
+        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, fakes, imports, externs):
             return
         ref = addr_ref.getOffset()
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
@@ -65,9 +92,7 @@ def check_for_api_call(insn, funcs: Dict[int, Any]) -> Iterator[Any]:
             # that had no address reference.
             # This check is faster than checking for (indirect and not address)
             return
-        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            addr_ref, mapped_fake_addrs, imports, externs
-        ):
+        if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, fakes, imports, externs):
             return
         ref = addr_ref.getOffset()
 
@@ -89,12 +114,12 @@ def extract_insn_api_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) 
         return
 
     # check calls to imported functions
-    for api in check_for_api_call(insn, imports):
+    for api in check_for_api_call(insn, get_externs(fh.ctx), get_fakes(fh.ctx), get_imports(fh.ctx), True):
         for imp in api:
             yield API(imp), ih.address
 
     # check calls to extern functions
-    for api in check_for_api_call(insn, externs):
+    for api in check_for_api_call(insn, get_externs(fh.ctx), get_fakes(fh.ctx), get_imports(fh.ctx), False):
         for ext in api:
             yield API(ext), ih.address
 
@@ -317,14 +342,18 @@ def extract_insn_cross_section_cflow(
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
             ref = insn.getAddress(0)  # Ghidra dereferences REG | ADDR
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+                ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
+            ):
                 return
         else:
             return
     elif ref_type in (addr_data, addr_code) or (OperandType.isIndirect(ref_type) and OperandType.isAddress(ref_type)):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
+        ):
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
@@ -336,7 +365,9 @@ def extract_insn_cross_section_cflow(
             # that had no address reference.
             # This check is faster than checking for (indirect and not address)
             return
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, mapped_fake_addrs, imports, externs):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
+            ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
+        ):
             return
 
     this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821
