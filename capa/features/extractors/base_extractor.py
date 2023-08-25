@@ -126,7 +126,6 @@ class StaticFeatureExtractor:
         """
         raise NotImplementedError()
 
-    @abc.abstractmethod
     def get_sample_hashes(self) -> SampleHashes:
         """
         fetch the hashes for the sample contained within the extractor.
@@ -363,7 +362,6 @@ class DynamicFeatureExtractor:
         super().__init__()
         self._sample_hashes = hashes
 
-    @abc.abstractmethod
     def get_sample_hashes(self) -> SampleHashes:
         """
         fetch the hashes for the sample contained within the extractor.
