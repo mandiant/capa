@@ -5,10 +5,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import re
 import struct
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 
-import ghidra
 from ghidra.program.model.symbol import SourceType, SymbolType
 
 import capa.features.extractors.common
@@ -22,14 +22,49 @@ from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, Absolu
 MAX_OFFSET_PE_AFTER_MZ = 0x200
 
 
-def find_embedded_pe() -> Iterator[Tuple[int, int]]:
+def find_embedded_pe(block_bytez: bytes, mz_xor: List[Tuple[bytes, bytes, int]]) -> Iterator[Tuple[int, int]]:
     """check segment for embedded PE
 
     adapted for Ghidra from:
     https://github.com/vivisect/vivisect/blob/91e8419a861f4977https://github.com/vivisect/vivisect/blob/91e8419a861f49779f18316f155311967e696836/PE/carve.py#L259f18316f155311967e696836/PE/carve.py#L25
     """
+    todo = []
 
-    mz_xor = [
+    for mzx, pex, i in mz_xor:
+        for match in re.finditer(re.escape(mzx), block_bytez):
+            todo.append((match.start(), mzx, pex, i))
+
+    seg_max = len(block_bytez)  # type: ignore [name-defined] # noqa: F821
+    while len(todo):
+        off, mzx, pex, i = todo.pop()
+
+        # MZ header has one field we will check e_lfanew is at 0x3c
+        e_lfanew = off + 0x3C
+
+        if seg_max < e_lfanew + 4:
+            continue
+
+        e_lfanew_bytes = block_bytez[e_lfanew : e_lfanew + 4]
+        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
+
+        # assume XOR'd "PE" bytes exist within threshold
+        if newoff > MAX_OFFSET_PE_AFTER_MZ:
+            continue
+
+        peoff = off + newoff
+        if seg_max < peoff + 2:
+            continue
+
+        pe_bytes = block_bytez[peoff : peoff + 2]
+        if pe_bytes == pex:
+            yield off, i
+
+
+def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
+    """extract embedded PE features"""
+
+    # pre-compute XOR pairs
+    mz_xor: List[Tuple[bytes, bytes, int]] = [
         (
             capa.features.extractors.helpers.xor_static(b"MZ", i),
             capa.features.extractors.helpers.xor_static(b"PE", i),
@@ -38,44 +73,15 @@ def find_embedded_pe() -> Iterator[Tuple[int, int]]:
         for i in range(256)
     ]
 
-    todo = []
-    start_addr = currentProgram().getMinAddress().add(1)  # type: ignore [name-defined] # noqa: F821
-    for mzx, pex, i in mz_xor:
-        # find all segment offsets containing XOR'd "MZ" bytes
-        off: ghidra.program.model.address.GenericAddress
-        for off in capa.features.extractors.ghidra.helpers.find_byte_sequence(start_addr, mzx):
-            todo.append((off, mzx, pex, i))
-
-    seg_max = currentProgram().getMaxAddress()  # type: ignore [name-defined] # noqa: F821
-    while len(todo):
-        off, mzx, pex, i = todo.pop()
-
-        # MZ header has one field we will check e_lfanew is at 0x3c
-        e_lfanew = off.add(0x3C)
-
-        if seg_max.getOffset() < (e_lfanew.getOffset() + 4):
+    for block in currentProgram().getMemory().getBlocks():  # type: ignore [name-defined] # noqa: F821
+        if not all((block.isLoaded(), block.isInitialized(), "Headers" not in block.getName())):
             continue
 
-        e_lfanew_bytes = capa.features.extractors.ghidra.helpers.get_bytes(e_lfanew, 4)
-        newoff = struct.unpack("<I", capa.features.extractors.helpers.xor_static(e_lfanew_bytes, i))[0]
+        for off, _ in find_embedded_pe(capa.features.extractors.ghidra.helpers.get_block_bytes(block), mz_xor):
+            # add offset back to block start
+            ea: int = block.getStart().add(off).getOffset()
 
-        # assume XOR'd "PE" bytes exist within threshold
-        if newoff > MAX_OFFSET_PE_AFTER_MZ:
-            continue
-
-        peoff = off.add(newoff)
-        if seg_max.getOffset() < (peoff.getOffset() + 2):
-            continue
-
-        pe_bytes = capa.features.extractors.ghidra.helpers.get_bytes(peoff, 2)
-        if pe_bytes == pex:
-            yield off.getOffset(), i
-
-
-def extract_file_embedded_pe() -> Iterator[Tuple[Feature, Address]]:
-    """extract embedded PE features"""
-    for ea, _ in find_embedded_pe():
-        yield Characteristic("embedded pe"), FileOffsetAddress(ea)
+            yield Characteristic("embedded pe"), FileOffsetAddress(ea)
 
 
 def extract_file_export_names() -> Iterator[Tuple[Feature, Address]]:
