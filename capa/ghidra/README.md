@@ -5,7 +5,7 @@
 The Ghidra feature extractor is an application of the FLARE team's open-source project, Ghidrathon, to integrate capa with Ghidra. capa is a framework that uses a well-defined collection of rules to identify capabilities in a program. You can run capa against a PE file, ELF file, or shellcode and it tells you what it thinks the program can do. For example, it might suggest that the program is a backdoor, can install services, or relies on HTTP to communicate. The Ghidra feature extractor can be used to run capa analysis on your Ghidra databases without needing access to the original binary file.
 
 ## Installation & Usage:
-**Required Dependencies:**
+**Dependencies:**
 | Dependency | Version | Source |
 |------------|---------|--------|
 | capa | `>= 6.1.0` | `<url for capa release>`
