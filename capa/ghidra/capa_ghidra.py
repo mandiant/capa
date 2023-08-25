@@ -116,7 +116,7 @@ def run_ui():
     )
 
     rules_path: pathlib.Path = pathlib.Path(rules_dir)
-    logger.info("running capa using rules from %s" % str(rules_path))  # noqa: G002
+    logger.info("running capa using rules from %s", str(rules_path))
 
     rules = capa.main.get_rules([rules_path])
 
