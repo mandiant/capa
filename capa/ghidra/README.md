@@ -21,7 +21,7 @@ The syntax is as so:
 ```bash
 ./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_install/capa -PostScript main.py
 ```
-> **note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
+> **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
 If you do not have an existing ghidra project, you may also create one with the headlessAnalyzer via the `-Import` flag. Post scripts may also be ran in the same invocation.
 
