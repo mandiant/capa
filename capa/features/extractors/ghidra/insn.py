@@ -113,13 +113,17 @@ def extract_insn_api_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) 
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
+    externs = get_externs(fh.ctx)
+    fakes = get_fakes(fh.ctx)
+    imports = get_imports(fh.ctx)
+
     # check calls to imported functions
-    for api in check_for_api_call(insn, get_externs(fh.ctx), get_fakes(fh.ctx), get_imports(fh.ctx), True):
+    for api in check_for_api_call(insn, externs, fakes, imports, True):
         for imp in api:
             yield API(imp), ih.address
 
     # check calls to extern functions
-    for api in check_for_api_call(insn, get_externs(fh.ctx), get_fakes(fh.ctx), get_imports(fh.ctx), False):
+    for api in check_for_api_call(insn, externs, fakes, imports, False):
         for ext in api:
             yield API(ext), ih.address
 
@@ -331,6 +335,10 @@ def extract_insn_cross_section_cflow(
     if not capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
         return
 
+    externs = get_externs(fh.ctx)
+    fakes = get_fakes(fh.ctx)
+    imports = get_imports(fh.ctx)
+
     # OperandType to dereference
     addr_data = OperandType.ADDRESS | OperandType.DATA
     addr_code = OperandType.ADDRESS | OperandType.CODE
@@ -342,18 +350,14 @@ def extract_insn_cross_section_cflow(
     if OperandType.isRegister(ref_type):
         if OperandType.isAddress(ref_type):
             ref = insn.getAddress(0)  # Ghidra dereferences REG | ADDR
-            if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-                ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
-            ):
+            if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, fakes, imports, externs):
                 return
         else:
             return
     elif ref_type in (addr_data, addr_code) or (OperandType.isIndirect(ref_type) and OperandType.isAddress(ref_type)):
         # we must dereference and check if the addr is a pointer to an api function
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, fakes, imports, externs):
             return
     elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
@@ -365,9 +369,7 @@ def extract_insn_cross_section_cflow(
             # that had no address reference.
             # This check is faster than checking for (indirect and not address)
             return
-        if capa.features.extractors.ghidra.helpers.check_addr_for_api(
-            ref, get_fakes(fh.ctx), get_imports(fh.ctx), get_externs(fh.ctx)
-        ):
+        if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, fakes, imports, externs):
             return
 
     this_mem_block = getMemoryBlock(insn.getAddress())  # type: ignore [name-defined] # noqa: F821
