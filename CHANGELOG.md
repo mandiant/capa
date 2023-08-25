@@ -17,8 +17,8 @@
 ### Development
 
 ### Raw diffs
-- [capa <release>...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
-- [capa-rules <release>...master](https://github.com/mandiant/capa-rules/compare/v6.1.0...master)
+- [capa v6.1.0...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
+- [capa-rules v6.1.0...master](https://github.com/mandiant/capa-rules/compare/v6.1.0...master)
 
 ## v6.1.0
 
