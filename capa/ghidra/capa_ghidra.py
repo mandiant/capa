@@ -149,6 +149,9 @@ def main():
     if not capa.ghidra.helpers.is_supported_file_type():
         return capa.main.E_INVALID_FILE_TYPE
 
+    if not capa.ghidra.helpers.is_supported_arch_type():
+        return capa.main.E_INVALID_FILE_ARCH
+
     if isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
         return run_headless()
     else:
