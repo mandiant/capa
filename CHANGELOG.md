@@ -34,10 +34,6 @@ Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Morit
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 - develop script to highlight features not used during matching #331 @Aayush-Goel-04
 
-### Breaking Changes
-
-(none)
-
 ### New Rules (8)
 
 - executable/pe/export/forwarded-export ronnie.salomonsen@mandiant.com
