@@ -357,7 +357,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
-        if capa.rules.FILE_SCOPE in rule.meta.scopes:
+        if capa.rules.Scope.FILE in rule.meta.scopes:
             matches = doc.rules[rule.meta.name].matches
             if len(matches) != 1:
                 # i think there should only ever be one match per file-scope rule,
@@ -379,13 +379,13 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
-                if capa.rules.BASIC_BLOCK_SCOPE in rule.meta.scopes:
+                if capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes:
                     ostream.write(
                         " in function "
                         + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))
                     )
 
-                if capa.rules.THREAD_SCOPE in rule.meta.scopes:
+                if capa.rules.Scope.THREAD in rule.meta.scopes:
                     ostream.write(
                         " in process "
                         + capa.render.verbose.format_address(

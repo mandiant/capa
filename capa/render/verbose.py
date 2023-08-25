@@ -214,7 +214,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
             rows.append((key, v))
 
-        if capa.rules.FILE_SCOPE not in rule.meta.scopes:
+        if capa.rules.Scope.FILE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
             rows.append(("matches", "\n".join(map(format_address, locations))))
 
