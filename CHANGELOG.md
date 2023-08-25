@@ -51,6 +51,7 @@ Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Morit
 
 ### Bug Fixes
 
+- rules: fix forwarded export characteristic #1656 @RonnieSalomonsen
 - Binary Ninja: Fix stack string detection #1473 @xusheng6
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 - OS: detect Android ELF files #1705 @williballenthin
