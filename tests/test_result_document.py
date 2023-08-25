@@ -257,42 +257,25 @@ def assert_round_trip(rd: rdoc.ResultDocument):
 @pytest.mark.parametrize(
     "rd_file",
     [
-        pytest.param(
-            "a3f3bbc_rd",
-            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
-        ),
-        pytest.param(
-            "al_khaserx86_rd",
-            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
-        ),
-        pytest.param(
-            "al_khaserx64_rd",
-            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
-        ),
-        pytest.param(
-            "a076114_rd",
-            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
-        ),
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
         pytest.param("pma0101_rd"),
-        pytest.param(
-            "dotnet_1c444e_rd",
-            marks=pytest.mark.xfail(reason="document needs to be updated to the final scopes syntax once that's added"),
-        ),
+        pytest.param("dotnet_1c444e_rd"),
+        pytest.param(""),
     ],
 )
-@pytest.mark.xfail(reason="samples haven't been modified to the scopes keyword")
 def test_round_trip(request, rd_file):
     rd: rdoc.ResultDocument = request.getfixturevalue(rd_file)
     assert_round_trip(rd)
 
 
-@pytest.mark.xfail(reason="samples haven't been modified to the scopes keyword")
 def test_json_to_rdoc():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
     assert isinstance(rdoc.ResultDocument.from_file(path), rdoc.ResultDocument)
 
 
-@pytest.mark.xfail(reason="samples haven't been modified to the scopes keyword")
 def test_rdoc_to_capa():
     path = fixtures.get_data_path_by_name("pma01-01-rd")
 
