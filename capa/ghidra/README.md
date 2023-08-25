@@ -29,7 +29,7 @@ The syntax to both import a new file and run capa against it is:
 ```bash
 ./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -Import /path/to/sample_name.exe_ -ScriptPath /path/to/capa_install/capa -PostScript main.py
 ```
-> **note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
+> **Note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
 
 A successful headlessAnalyzer run should look like:
 
