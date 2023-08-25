@@ -10,7 +10,6 @@ The Ghidra feature extractor is an application of the FLARE team's open-source p
 |------------|---------|--------|
 | capa | `>= 6.1.0` | `<url for capa release>`
 | Ghidrathon | `>= 3.0.0` | https://github.com/mandiant/Ghidrathon |
-> **note:** Please follow the Ghidrathon installation guide to ensure all additional dependency requirements are met and that it is properly configured to work with Ghidra
 
 Once Ghidrathon is configured and ready-to-go, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include the `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
 
