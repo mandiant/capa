@@ -164,7 +164,10 @@ class Scopes:
         if scopes_["dynamic"] and scopes_["dynamic"] not in DYNAMIC_SCOPES:
             raise InvalidRule(f"{scopes_['dynamic']} is not a valid dynamic scope")
 
-        return Scopes(static=Scope(scopes_["static"]), dynamic=Scope(scopes_["dynamic"]))
+        return Scopes(
+            static=Scope(scopes_["static"]) if scopes_["static"] else None,
+            dynamic=Scope(scopes_["dynamic"]) if scopes_["dynamic"] else None,
+        )
 
 
 SUPPORTED_FEATURES: Dict[str, Set] = {
