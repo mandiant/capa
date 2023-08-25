@@ -71,6 +71,9 @@ class _ScopeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumType
     SCOPE_FUNCTION: _Scope.ValueType  # 2
     SCOPE_BASIC_BLOCK: _Scope.ValueType  # 3
     SCOPE_INSTRUCTION: _Scope.ValueType  # 4
+    SCOPE_PROCESS: _Scope.ValueType  # 5
+    SCOPE_THREAD: _Scope.ValueType  # 6
+    SCOPE_CALL: _Scope.ValueType  # 7
 
 class Scope(_Scope, metaclass=_ScopeEnumTypeWrapper): ...
 
@@ -79,6 +82,9 @@ SCOPE_FILE: Scope.ValueType  # 1
 SCOPE_FUNCTION: Scope.ValueType  # 2
 SCOPE_BASIC_BLOCK: Scope.ValueType  # 3
 SCOPE_INSTRUCTION: Scope.ValueType  # 4
+SCOPE_PROCESS: Scope.ValueType  # 5
+SCOPE_THREAD: Scope.ValueType  # 6
+SCOPE_CALL: Scope.ValueType  # 7
 global___Scope = Scope
 
 @typing_extensions.final

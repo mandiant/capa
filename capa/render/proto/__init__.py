@@ -117,6 +117,12 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
         return capa_pb2.Scope.SCOPE_BASIC_BLOCK
     elif scope == capa.rules.Scope.INSTRUCTION:
         return capa_pb2.Scope.SCOPE_INSTRUCTION
+    elif scope == capa.rules.Scope.PROCESS:
+        return capa_pb2.Scope.SCOPE_PROCESS
+    elif scope == capa.rules.Scope.THREAD:
+        return capa_pb2.Scope.SCOPE_THREAD
+    elif scope == capa.rules.Scope.CALL:
+        return capa_pb2.Scope.SCOPE_CALL
     else:
         assert_never(scope)
 

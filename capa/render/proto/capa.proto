@@ -312,6 +312,9 @@ enum Scope {
   SCOPE_FUNCTION = 2;
   SCOPE_BASIC_BLOCK = 3;
   SCOPE_INSTRUCTION = 4;
+  SCOPE_PROCESS = 5;
+  SCOPE_THREAD = 6;
+  SCOPE_CALL = 7;
 }
 
 message SectionFeature {
