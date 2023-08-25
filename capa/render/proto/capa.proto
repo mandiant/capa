@@ -82,6 +82,25 @@ message CompoundStatement {
   optional string description = 2;
 }
 
+message DynamicAnalysis {
+  string format = 1;
+  string arch = 2;
+  string os = 3;
+  string extractor = 4;
+  repeated string rules = 5;
+  DynamicLayout layout = 6;
+  DynamicFeatureCounts feature_counts = 7;
+}
+
+message DynamicFeatureCounts {
+  uint64 file = 1;
+  repeated ProcessFeatureCount processes = 2;
+}
+
+message DynamicLayout {
+  repeated ProcessLayout processes = 1;
+}
+
 message ExportFeature {
   string type = 1;
   string export = 2;
@@ -205,6 +224,11 @@ message Metadata {
   Sample sample = 4;
   Analysis analysis = 5;
   Flavor flavor = 6;
+  oneof analysis2 {
+    // use analysis2 instead of analysis (deprecated in v7.0)
+    StaticAnalysis static_analysis = 7;
+    DynamicAnalysis dynamic_analysis = 8;
+  };
 }
 
 message MnemonicFeature {
@@ -251,6 +275,16 @@ message OperandOffsetFeature {
   optional string description = 4;
 }
 
+message ProcessFeatureCount {
+  Address address = 1;
+  uint64 count = 2;
+}
+
+message ProcessLayout {
+  Address address = 1;
+  repeated ThreadLayout matched_threads = 2;
+}
+
 message PropertyFeature {
   string type = 1;
   string property_ = 2;  // property is a Python top-level decorator name
@@ -288,6 +322,7 @@ message RuleMetadata {
   string name = 1;
   string namespace = 2;
   repeated string authors = 3;
+  // deprecated in v7.0
   Scope scope = 4 [deprecated = true];
   repeated AttackSpec attack = 5;
   repeated MBCSpec mbc = 6;
@@ -297,6 +332,7 @@ message RuleMetadata {
   bool lib = 10;
   MaecMetadata maec = 11;
   bool is_subscope_rule = 12;
+  // use scopes over scope (deprecated in v7.0)
   Scopes scopes = 13;
 }
 
@@ -345,6 +381,27 @@ message StatementNode {
   };
 }
 
+message StaticAnalysis {
+  string format = 1;
+  string arch = 2;
+  string os = 3;
+  string extractor = 4;
+  repeated string rules = 5;
+  Address base_address = 6;
+  StaticLayout layout = 7;
+  StaticFeatureCounts feature_counts = 8;
+  repeated LibraryFunction library_functions = 9;
+}
+
+message StaticFeatureCounts {
+  uint64 file = 1;
+  repeated FunctionFeatureCount functions = 2;
+}
+
+message StaticLayout {
+  repeated FunctionLayout functions = 1;
+}
+
 message StringFeature {
   string type = 1;
   string string = 2;
@@ -361,6 +418,10 @@ message SubstringFeature {
   string type = 1;
   string substring = 2;
   optional string description = 3;
+}
+
+message ThreadLayout {
+  Address address = 1;
 }
 
 message Addresses { repeated Address address = 1; }

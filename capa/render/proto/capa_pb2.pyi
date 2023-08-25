@@ -359,6 +359,78 @@ class CompoundStatement(google.protobuf.message.Message):
 global___CompoundStatement = CompoundStatement
 
 @typing_extensions.final
+class DynamicAnalysis(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FORMAT_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    EXTRACTOR_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    LAYOUT_FIELD_NUMBER: builtins.int
+    FEATURE_COUNTS_FIELD_NUMBER: builtins.int
+    format: builtins.str
+    arch: builtins.str
+    os: builtins.str
+    extractor: builtins.str
+    @property
+    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def layout(self) -> global___DynamicLayout: ...
+    @property
+    def feature_counts(self) -> global___DynamicFeatureCounts: ...
+    def __init__(
+        self,
+        *,
+        format: builtins.str = ...,
+        arch: builtins.str = ...,
+        os: builtins.str = ...,
+        extractor: builtins.str = ...,
+        rules: collections.abc.Iterable[builtins.str] | None = ...,
+        layout: global___DynamicLayout | None = ...,
+        feature_counts: global___DynamicFeatureCounts | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "os", b"os", "rules", b"rules"]) -> None: ...
+
+global___DynamicAnalysis = DynamicAnalysis
+
+@typing_extensions.final
+class DynamicFeatureCounts(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FILE_FIELD_NUMBER: builtins.int
+    PROCESSES_FIELD_NUMBER: builtins.int
+    file: builtins.int
+    @property
+    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessFeatureCount]: ...
+    def __init__(
+        self,
+        *,
+        file: builtins.int = ...,
+        processes: collections.abc.Iterable[global___ProcessFeatureCount] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["file", b"file", "processes", b"processes"]) -> None: ...
+
+global___DynamicFeatureCounts = DynamicFeatureCounts
+
+@typing_extensions.final
+class DynamicLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PROCESSES_FIELD_NUMBER: builtins.int
+    @property
+    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessLayout]: ...
+    def __init__(
+        self,
+        *,
+        processes: collections.abc.Iterable[global___ProcessLayout] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["processes", b"processes"]) -> None: ...
+
+global___DynamicLayout = DynamicLayout
+
+@typing_extensions.final
 class ExportFeature(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -800,6 +872,8 @@ class Metadata(google.protobuf.message.Message):
     SAMPLE_FIELD_NUMBER: builtins.int
     ANALYSIS_FIELD_NUMBER: builtins.int
     FLAVOR_FIELD_NUMBER: builtins.int
+    STATIC_ANALYSIS_FIELD_NUMBER: builtins.int
+    DYNAMIC_ANALYSIS_FIELD_NUMBER: builtins.int
     timestamp: builtins.str
     """iso8601 format, like: 2019-01-01T00:00:00Z"""
     version: builtins.str
@@ -810,6 +884,11 @@ class Metadata(google.protobuf.message.Message):
     @property
     def analysis(self) -> global___Analysis: ...
     flavor: global___Flavor.ValueType
+    @property
+    def static_analysis(self) -> global___StaticAnalysis:
+        """use analysis2 instead of analysis (deprecated in v7.0)"""
+    @property
+    def dynamic_analysis(self) -> global___DynamicAnalysis: ...
     def __init__(
         self,
         *,
@@ -819,9 +898,12 @@ class Metadata(google.protobuf.message.Message):
         sample: global___Sample | None = ...,
         analysis: global___Analysis | None = ...,
         flavor: global___Flavor.ValueType = ...,
+        static_analysis: global___StaticAnalysis | None = ...,
+        dynamic_analysis: global___DynamicAnalysis | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "sample", b"sample"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "argv", b"argv", "flavor", b"flavor", "sample", b"sample", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "analysis2", b"analysis2", "dynamic_analysis", b"dynamic_analysis", "sample", b"sample", "static_analysis", b"static_analysis"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "analysis2", b"analysis2", "argv", b"argv", "dynamic_analysis", b"dynamic_analysis", "flavor", b"flavor", "sample", b"sample", "static_analysis", b"static_analysis", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["analysis2", b"analysis2"]) -> typing_extensions.Literal["static_analysis", "dynamic_analysis"] | None: ...
 
 global___Metadata = Metadata
 
@@ -1000,6 +1082,47 @@ class OperandOffsetFeature(google.protobuf.message.Message):
 global___OperandOffsetFeature = OperandOffsetFeature
 
 @typing_extensions.final
+class ProcessFeatureCount(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    COUNT_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    count: builtins.int
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        count: builtins.int = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "count", b"count"]) -> None: ...
+
+global___ProcessFeatureCount = ProcessFeatureCount
+
+@typing_extensions.final
+class ProcessLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCHED_THREADS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def matched_threads(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ThreadLayout]: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        matched_threads: collections.abc.Iterable[global___ThreadLayout] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_threads", b"matched_threads"]) -> None: ...
+
+global___ProcessLayout = ProcessLayout
+
+@typing_extensions.final
 class PropertyFeature(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1168,6 +1291,7 @@ class RuleMetadata(google.protobuf.message.Message):
     @property
     def authors(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
     scope: global___Scope.ValueType
+    """deprecated in v7.0"""
     @property
     def attack(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___AttackSpec]: ...
     @property
@@ -1182,7 +1306,8 @@ class RuleMetadata(google.protobuf.message.Message):
     def maec(self) -> global___MaecMetadata: ...
     is_subscope_rule: builtins.bool
     @property
-    def scopes(self) -> global___Scopes: ...
+    def scopes(self) -> global___Scopes:
+        """use scopes over scope (deprecated in v7.0)"""
     def __init__(
         self,
         *,
@@ -1332,6 +1457,86 @@ class StatementNode(google.protobuf.message.Message):
 global___StatementNode = StatementNode
 
 @typing_extensions.final
+class StaticAnalysis(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FORMAT_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    EXTRACTOR_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    BASE_ADDRESS_FIELD_NUMBER: builtins.int
+    LAYOUT_FIELD_NUMBER: builtins.int
+    FEATURE_COUNTS_FIELD_NUMBER: builtins.int
+    LIBRARY_FUNCTIONS_FIELD_NUMBER: builtins.int
+    format: builtins.str
+    arch: builtins.str
+    os: builtins.str
+    extractor: builtins.str
+    @property
+    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def base_address(self) -> global___Address: ...
+    @property
+    def layout(self) -> global___StaticLayout: ...
+    @property
+    def feature_counts(self) -> global___StaticFeatureCounts: ...
+    @property
+    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def __init__(
+        self,
+        *,
+        format: builtins.str = ...,
+        arch: builtins.str = ...,
+        os: builtins.str = ...,
+        extractor: builtins.str = ...,
+        rules: collections.abc.Iterable[builtins.str] | None = ...,
+        base_address: global___Address | None = ...,
+        layout: global___StaticLayout | None = ...,
+        feature_counts: global___StaticFeatureCounts | None = ...,
+        library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
+
+global___StaticAnalysis = StaticAnalysis
+
+@typing_extensions.final
+class StaticFeatureCounts(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FILE_FIELD_NUMBER: builtins.int
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    file: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def __init__(
+        self,
+        *,
+        file: builtins.int = ...,
+        functions: collections.abc.Iterable[global___FunctionFeatureCount] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["file", b"file", "functions", b"functions"]) -> None: ...
+
+global___StaticFeatureCounts = StaticFeatureCounts
+
+@typing_extensions.final
+class StaticLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def __init__(
+        self,
+        *,
+        functions: collections.abc.Iterable[global___FunctionLayout] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["functions", b"functions"]) -> None: ...
+
+global___StaticLayout = StaticLayout
+
+@typing_extensions.final
 class StringFeature(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -1399,6 +1604,23 @@ class SubstringFeature(google.protobuf.message.Message):
     def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
 
 global___SubstringFeature = SubstringFeature
+
+@typing_extensions.final
+class ThreadLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address"]) -> None: ...
+
+global___ThreadLayout = ThreadLayout
 
 @typing_extensions.final
 class Addresses(google.protobuf.message.Message):

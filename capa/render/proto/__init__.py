@@ -146,45 +146,88 @@ def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor.ValueType:
         assert_never(flavor)
 
 
-def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
-    assert isinstance(meta.analysis, rd.StaticAnalysis)
-    return capa_pb2.Metadata(
-        timestamp=str(meta.timestamp),
-        version=meta.version,
-        argv=meta.argv,
-        sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
-        flavor=flavor_to_pb2(meta.flavor),
-        analysis=capa_pb2.Analysis(
-            format=meta.analysis.format,
-            arch=meta.analysis.arch,
-            os=meta.analysis.os,
-            extractor=meta.analysis.extractor,
-            rules=list(meta.analysis.rules),
-            base_address=addr_to_pb2(meta.analysis.base_address),
-            layout=capa_pb2.Layout(
-                functions=[
-                    capa_pb2.FunctionLayout(
-                        address=addr_to_pb2(f.address),
-                        matched_basic_blocks=[
-                            capa_pb2.BasicBlockLayout(address=addr_to_pb2(bb.address)) for bb in f.matched_basic_blocks
-                        ],
-                    )
-                    for f in meta.analysis.layout.functions
-                ]
-            ),
-            feature_counts=capa_pb2.FeatureCounts(
-                file=meta.analysis.feature_counts.file,
-                functions=[
-                    capa_pb2.FunctionFeatureCount(address=addr_to_pb2(f.address), count=f.count)
-                    for f in meta.analysis.feature_counts.functions
-                ],
-            ),
-            library_functions=[
-                capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name)
-                for lf in meta.analysis.library_functions
+def static_analysis_to_pb2(analysis: rd.StaticAnalysis) -> capa_pb2.StaticAnalysis:
+    return capa_pb2.StaticAnalysis(
+        format=analysis.format,
+        arch=analysis.arch,
+        os=analysis.os,
+        extractor=analysis.extractor,
+        rules=list(analysis.rules),
+        base_address=addr_to_pb2(analysis.base_address),
+        layout=capa_pb2.StaticLayout(
+            functions=[
+                capa_pb2.FunctionLayout(
+                    address=addr_to_pb2(f.address),
+                    matched_basic_blocks=[
+                        capa_pb2.BasicBlockLayout(address=addr_to_pb2(bb.address)) for bb in f.matched_basic_blocks
+                    ],
+                )
+                for f in analysis.layout.functions
+            ]
+        ),
+        feature_counts=capa_pb2.StaticFeatureCounts(
+            file=analysis.feature_counts.file,
+            functions=[
+                capa_pb2.FunctionFeatureCount(address=addr_to_pb2(f.address), count=f.count)
+                for f in analysis.feature_counts.functions
+            ],
+        ),
+        library_functions=[
+            capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name)
+            for lf in analysis.library_functions
+        ],
+    )
+
+
+def dynamic_analysis_to_pb2(analysis: rd.DynamicAnalysis) -> capa_pb2.DynamicAnalysis:
+    return capa_pb2.DynamicAnalysis(
+        format=analysis.format,
+        arch=analysis.arch,
+        os=analysis.os,
+        extractor=analysis.extractor,
+        rules=list(analysis.rules),
+        layout=capa_pb2.DynamicLayout(
+            processes=[
+                capa_pb2.ProcessLayout(
+                    address=addr_to_pb2(p.address),
+                    matched_threads=[
+                        capa_pb2.ThreadLayout(address=addr_to_pb2(t.address)) for t in p.matched_threads
+                    ],
+                )
+                for p in analysis.layout.processes
+            ]
+        ),
+        feature_counts=capa_pb2.DynamicFeatureCounts(
+            file=analysis.feature_counts.file,
+            processes=[
+                capa_pb2.ProcessFeatureCount(address=addr_to_pb2(p.address), count=p.count)
+                for p in analysis.feature_counts.processes
             ],
         ),
     )
+
+
+def metadata_to_pb2(meta: rd.Metadata) -> capa_pb2.Metadata:
+    if isinstance(meta.analysis, rd.StaticAnalysis):
+        return capa_pb2.Metadata(
+            timestamp=str(meta.timestamp),
+            version=meta.version,
+            argv=meta.argv,
+            sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+            flavor=flavor_to_pb2(meta.flavor),
+            static_analysis=static_analysis_to_pb2(meta.analysis),
+        )
+    elif isinstance(meta.analysis, rd.DynamicAnalysis):
+        return capa_pb2.Metadata(
+            timestamp=str(meta.timestamp),
+            version=meta.version,
+            argv=meta.argv,
+            sample=google.protobuf.json_format.ParseDict(meta.sample.model_dump(), capa_pb2.Sample()),
+            flavor=flavor_to_pb2(meta.flavor),
+            dynamic_analysis=dynamic_analysis_to_pb2(meta.analysis),
+        )
+    else:
+        assert_never(meta.analysis)
 
 
 def statement_to_pb2(statement: rd.Statement) -> capa_pb2.StatementNode:
@@ -522,58 +565,115 @@ def flavor_from_pb2(flavor: capa_pb2.Flavor.ValueType) -> rd.Flavor:
         assert_never(flavor)
 
 
-def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
-    return rd.Metadata(
-        timestamp=datetime.datetime.fromisoformat(meta.timestamp),
-        version=meta.version,
-        argv=tuple(meta.argv) if meta.argv else None,
-        sample=rd.Sample(
-            md5=meta.sample.md5,
-            sha1=meta.sample.sha1,
-            sha256=meta.sample.sha256,
-            path=meta.sample.path,
-        ),
-        flavor=flavor_from_pb2(meta.flavor),
-        analysis=rd.StaticAnalysis(
-            format=meta.analysis.format,
-            arch=meta.analysis.arch,
-            os=meta.analysis.os,
-            extractor=meta.analysis.extractor,
-            rules=tuple(meta.analysis.rules),
-            base_address=addr_from_pb2(meta.analysis.base_address),
-            layout=rd.StaticLayout(
-                functions=tuple(
-                    [
-                        rd.FunctionLayout(
-                            address=addr_from_pb2(f.address),
-                            matched_basic_blocks=tuple(
-                                [
-                                    rd.BasicBlockLayout(address=addr_from_pb2(bb.address))
-                                    for bb in f.matched_basic_blocks
-                                ]
-                            ),
-                        )
-                        for f in meta.analysis.layout.functions
-                    ]
-                )
-            ),
-            feature_counts=rd.StaticFeatureCounts(
-                file=meta.analysis.feature_counts.file,
-                functions=tuple(
-                    [
-                        rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
-                        for f in meta.analysis.feature_counts.functions
-                    ]
-                ),
-            ),
-            library_functions=tuple(
+def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnalysis:
+    return rd.StaticAnalysis(
+        format=analysis.format,
+        arch=analysis.arch,
+        os=analysis.os,
+        extractor=analysis.extractor,
+        rules=tuple(analysis.rules),
+        base_address=addr_from_pb2(analysis.base_address),
+        layout=rd.StaticLayout(
+            functions=tuple(
                 [
-                    rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
-                    for lf in meta.analysis.library_functions
+                    rd.FunctionLayout(
+                        address=addr_from_pb2(f.address),
+                        matched_basic_blocks=tuple(
+                            [
+                                rd.BasicBlockLayout(address=addr_from_pb2(bb.address))
+                                for bb in f.matched_basic_blocks
+                            ]
+                        ),
+                    )
+                    for f in analysis.layout.functions
+                ]
+            )
+        ),
+        feature_counts=rd.StaticFeatureCounts(
+            file=analysis.feature_counts.file,
+            functions=tuple(
+                [
+                    rd.FunctionFeatureCount(address=addr_from_pb2(f.address), count=f.count)
+                    for f in analysis.feature_counts.functions
+                ]
+            ),
+        ),
+        library_functions=tuple(
+            [
+                rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
+                for lf in analysis.library_functions
+            ]
+        ),
+    )
+
+
+def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicAnalysis:
+    return rd.DynamicAnalysis(
+        format=analysis.format,
+        arch=analysis.arch,
+        os=analysis.os,
+        extractor=analysis.extractor,
+        rules=tuple(analysis.rules),
+        layout=rd.DynamicLayout(
+            processes=tuple(
+                [
+                    rd.ProcessLayout(
+                        address=addr_from_pb2(p.address),
+                        matched_threads=tuple(
+                            [
+                                rd.ThreadLayout(address=addr_from_pb2(t.address))
+                                for t in p.matched_threads
+                            ]
+                        ),
+                    )
+                    for p in analysis.layout.processes
+                ]
+            )
+        ),
+        feature_counts=rd.DynamicFeatureCounts(
+            file=analysis.feature_counts.file,
+            processes=tuple(
+                [
+                    rd.ProcessFeatureCount(address=addr_from_pb2(p.address), count=p.count)
+                    for p in analysis.feature_counts.processes
                 ]
             ),
         ),
     )
+
+
+def metadata_from_pb2(meta: capa_pb2.Metadata) -> rd.Metadata:
+    analysis_type = meta.WhichOneof("analysis2")
+    if analysis_type == "static_analysis":
+        return rd.Metadata(
+            timestamp=datetime.datetime.fromisoformat(meta.timestamp),
+            version=meta.version,
+            argv=tuple(meta.argv) if meta.argv else None,
+            sample=rd.Sample(
+                md5=meta.sample.md5,
+                sha1=meta.sample.sha1,
+                sha256=meta.sample.sha256,
+                path=meta.sample.path,
+            ),
+            flavor=flavor_from_pb2(meta.flavor),
+            analysis=static_analysis_from_pb2(meta.static_analysis),
+        )
+    elif analysis_type == "dynamic_analysis":
+        return rd.Metadata(
+            timestamp=datetime.datetime.fromisoformat(meta.timestamp),
+            version=meta.version,
+            argv=tuple(meta.argv) if meta.argv else None,
+            sample=rd.Sample(
+                md5=meta.sample.md5,
+                sha1=meta.sample.sha1,
+                sha256=meta.sample.sha256,
+                path=meta.sample.path,
+            ),
+            flavor=flavor_from_pb2(meta.flavor),
+            analysis=dynamic_analysis_from_pb2(meta.dynamic_analysis),
+        )
+    else:
+        assert_never(analysis_type)
 
 
 def statement_from_pb2(statement: capa_pb2.StatementNode) -> rd.Statement:
