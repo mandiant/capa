@@ -9,12 +9,10 @@
 import re
 import abc
 import codecs
-import pickle
 import typing
 import logging
 import collections
 from typing import TYPE_CHECKING, Set, Dict, List, Union, Optional
-from pathlib import Path
 
 if TYPE_CHECKING:
     # circular import, otherwise
@@ -404,50 +402,6 @@ class Bytes(Feature):
     def get_value_str(self):
         assert isinstance(self.value, bytes)
         return hex_string(bytes_to_str(self.value))
-
-
-# COM data source https://github.com/stevemk14ebr/COM-Code-Helper/tree/master
-VALID_COM_TYPES = {"class": "assets/classes.pickle", "interface": "assets/interfaces.pickle"}
-
-
-def get_guid_string_and_bytes(name: str, com_type: str):
-    if com_type not in VALID_COM_TYPES:
-        raise ValueError(f"unexpected COM feature type {com_type}")
-
-    with Path(VALID_COM_TYPES[com_type]).open("rb") as pickle_file:
-        com_data = pickle.load(pickle_file)
-        guid_string = com_data.get(name)
-        if guid_string is None:
-            raise ValueError(f"{name} doesn't exist in COM {com_type} database")
-
-    hex_chars = guid_string.replace("-", "")
-    h = [hex_chars[i : i + 2] for i in range(0, len(hex_chars), 2)]
-    reordered_hex_pairs = [
-        h[3],
-        h[2],
-        h[1],
-        h[0],
-        h[5],
-        h[4],
-        h[7],
-        h[6],
-        h[8],
-        h[9],
-        h[10],
-        h[11],
-        h[12],
-        h[13],
-        h[14],
-        h[15],
-    ]
-    guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
-    return guid_string, guid_bytes
-
-
-class COMFactory:
-    def __new__(cls, com_name: str, com_type: str):
-        guid_string, guid_bytes = get_guid_string_and_bytes(com_name, com_type)
-        return capa.engine.Or([Bytes(guid_bytes, com_name), String(guid_string, com_name)])
 
 
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types

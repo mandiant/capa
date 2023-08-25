@@ -8,6 +8,8 @@
 
 import io
 import re
+import gzip
+import json
 import uuid
 import codecs
 import logging
@@ -25,7 +27,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator
+from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
 
 import yaml
 import pydantic
@@ -192,6 +194,55 @@ class InvalidRuleSet(ValueError):
 
     def __repr__(self):
         return str(self)
+
+
+# COM data source https://github.com/stevemk14ebr/COM-Code-Helper/tree/master
+CD = Path(__file__).resolve().parent.parent.parent
+VALID_COM_TYPES = {
+    "class": CD / "assets" / "classes.json.gz",
+    "interface": CD / "assets" / "interfaces.json.gz",
+}
+
+
+def translate_com_feature(com_name: str, com_type: str, description) -> ceng.Or:
+    com_db_path = Path(VALID_COM_TYPES[com_type])
+    if not com_db_path.exists():
+        logger.error(f"Using COM: {com_type} database '{com_db_path}', but it doesn't exist")
+        raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
+
+    with gzip.open(com_db_path, "rb") as gzfile:
+        com_db: Dict[str, List[str]] = json.loads(gzfile.read().decode("utf-8"))
+        guid_strings: Optional[List[str]] = com_db.get(com_name)
+        if guid_strings is None or len(guid_strings) == 0:
+            logger.error(f"{com_name} doesn't exist in COM {com_type} database")
+            raise ValueError(f"{com_name} doesn't exist in COM {com_type} database")
+
+    com_features: List = []
+    for guid_string in guid_strings:
+        hex_chars = guid_string.replace("-", "")
+        h = [hex_chars[i : i + 2] for i in range(0, len(hex_chars), 2)]
+        reordered_hex_pairs = [
+            h[3],
+            h[2],
+            h[1],
+            h[0],
+            h[5],
+            h[4],
+            h[7],
+            h[6],
+            h[8],
+            h[9],
+            h[10],
+            h[11],
+            h[12],
+            h[13],
+            h[14],
+            h[15],
+        ]
+        guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
+        com_features.append(capa.features.common.StringFactory(guid_string, com_name))
+        com_features.append(capa.features.common.Bytes(guid_bytes, com_name))
+    return ceng.Or(com_features)
 
 
 def ensure_feature_valid_for_scope(scope: str, feature: Union[Feature, Statement]):
@@ -592,11 +643,10 @@ def build_statements(d, scope: str):
         return feature
 
     elif key.startswith("com/"):
-        com_name = d[key]
         com_type = key[len("com/") :]
-        if com_type not in capa.features.common.VALID_COM_TYPES:
-            raise InvalidRule(f"unexpected {key} type {com_type}")
-        return capa.features.common.COMFactory(com_name, com_type)
+        if com_type not in VALID_COM_TYPES:
+            raise InvalidRule(f"unexpected COM type: {com_type}")
+        return translate_com_feature(d[key], com_type, d.get("description"))
 
     else:
         Feature = parse_feature(key)
