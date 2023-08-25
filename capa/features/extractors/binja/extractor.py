@@ -29,19 +29,15 @@ from capa.features.extractors.base_extractor import (
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(Path(bv.file.original_filename).read_bytes()))
         self.bv = bv
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_os(self.bv))
         self.global_features.extend(capa.features.extractors.binja.global_.extract_arch(self.bv))
-        self.sample_hashes = SampleHashes.from_bytes(Path(bv.file.original_filename).read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.bv.start)
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features

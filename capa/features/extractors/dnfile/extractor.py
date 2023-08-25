@@ -76,9 +76,8 @@ class DnFileFeatureExtractorCache:
 
 class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
-        self.sample_hashes = SampleHashes.from_bytes(path.read_bytes())
+        super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
 
         # pre-compute .NET token lookup tables; each .NET method has access to this cache for feature extraction
         # most relevant at instruction scope
@@ -92,9 +91,6 @@ class DnfileFeatureExtractor(StaticFeatureExtractor):
 
     def get_base_address(self):
         return NO_ADDRESS
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features

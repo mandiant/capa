@@ -106,13 +106,14 @@ class StaticFeatureExtractor:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
+    def __init__(self, hashes: SampleHashes):
         #
         # note: a subclass should define ctor parameters for its own use.
         #  for example, the Vivisect feature extract might require the vw and/or path.
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
+        self.sample_hashes = hashes
 
     @abc.abstractmethod
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
@@ -130,7 +131,7 @@ class StaticFeatureExtractor:
         """
         fetch the hashes for the sample contained within the extractor.
         """
-        raise NotImplementedError()
+        return self.sample_hashes
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -353,20 +354,21 @@ class DynamicFeatureExtractor:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
+    def __init__(self, hashes: SampleHashes):
         #
         # note: a subclass should define ctor parameters for its own use.
         #  for example, the Vivisect feature extract might require the vw and/or path.
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
+        self.sample_hashes = hashes
 
     @abc.abstractmethod
     def get_sample_hashes(self) -> SampleHashes:
         """
         fetch the hashes for the sample contained within the extractor.
         """
-        raise NotImplementedError()
+        return self.sample_hashes
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:

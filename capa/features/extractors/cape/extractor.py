@@ -33,24 +33,20 @@ TESTED_VERSIONS = {"2.2-CAPE", "2.4-CAPE"}
 
 class CapeExtractor(DynamicFeatureExtractor):
     def __init__(self, report: CapeReport):
-        super().__init__()
-        self.report: CapeReport = report
-
-        self.sample_hashes = SampleHashes(
-            md5=self.report.target.file.md5.lower(),
-            sha1=self.report.target.file.sha1.lower(),
-            sha256=self.report.target.file.sha256.lower(),
+        super().__init__(
+            hashes=SampleHashes(
+                md5=report.target.file.md5.lower(),
+                sha1=report.target.file.sha1.lower(),
+                sha256=report.target.file.sha256.lower(),
+            )
         )
-
+        self.report: CapeReport = report
         self.global_features = capa.features.extractors.cape.global_.extract_features(self.report)
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
         assert self.report.static is not None and self.report.static.pe is not None
         return AbsoluteVirtualAddress(self.report.static.pe.imagebase)
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features

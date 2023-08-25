@@ -30,20 +30,18 @@ from capa.features.extractors.base_extractor import (
 
 class IdaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            hashes=SampleHashes(
+                md5=ida_nalt.retrieve_input_file_md5(), sha1="(unknown)", sha256=ida_nalt.retrieve_input_file_sha256()
+            )
+        )
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ida.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ida.global_.extract_arch())
-        self.sample_hashes = SampleHashes(
-            md5=ida_nalt.retrieve_input_file_md5(), sha1="(unknown)", sha256=ida_nalt.retrieve_input_file_sha256()
-        )
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(idaapi.get_imagebase())
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features
