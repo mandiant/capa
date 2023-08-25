@@ -187,16 +187,12 @@ GLOBAL_HANDLERS = (
 
 class PefileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe = pefile.PE(str(path))
-        self.sample_hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.pe.OPTIONAL_HEADER.ImageBase)
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self):
         buf = Path(self.path).read_bytes()

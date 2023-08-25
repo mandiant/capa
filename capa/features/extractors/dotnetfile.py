@@ -167,16 +167,12 @@ GLOBAL_HANDLERS = (
 
 class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
-        self.sample_hashes = SampleHashes.from_bytes(self.path.read_bytes())
 
     def get_base_address(self):
         return NO_ADDRESS
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def get_entry_point(self) -> int:
         # self.pe.net.Flags.CLT_NATIVE_ENTRYPOINT

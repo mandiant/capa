@@ -33,11 +33,10 @@ logger = logging.getLogger(__name__)
 
 class VivisectFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, vw, path: Path, os):
-        super().__init__()
         self.vw = vw
         self.path = path
         self.buf = path.read_bytes()
-        self.sample_hashes = SampleHashes.from_bytes(self.buf)
+        super().__init__(hashes=SampleHashes.from_bytes(self.buf))
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
@@ -48,9 +47,6 @@ class VivisectFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         # assume there is only one file loaded into the vw
         return AbsoluteVirtualAddress(list(self.vw.filemeta.values())[0]["imagebase"])
-
-    def get_sample_hashes(self) -> SampleHashes:
-        return self.sample_hashes
 
     def extract_global_features(self):
         yield from self.global_features
