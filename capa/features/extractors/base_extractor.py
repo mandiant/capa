@@ -113,7 +113,7 @@ class StaticFeatureExtractor:
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
-        self.sample_hashes = hashes
+        self.__sample_hashes = hashes
 
     @abc.abstractmethod
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
@@ -131,7 +131,7 @@ class StaticFeatureExtractor:
         """
         fetch the hashes for the sample contained within the extractor.
         """
-        return self.sample_hashes
+        return self.__sample_hashes
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -361,14 +361,14 @@ class DynamicFeatureExtractor:
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
-        self.sample_hashes = hashes
+        self.__sample_hashes = hashes
 
     @abc.abstractmethod
     def get_sample_hashes(self) -> SampleHashes:
         """
         fetch the hashes for the sample contained within the extractor.
         """
-        return self.sample_hashes
+        return self.__sample_hashes
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
