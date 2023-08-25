@@ -204,18 +204,18 @@ VALID_COM_TYPES = {
 }
 
 
-def translate_com_feature(com_name: str, com_type: str, description) -> ceng.Or:
+def translate_com_feature(com_name: str, com_type: str) -> ceng.Or:
     com_db_path = Path(VALID_COM_TYPES[com_type])
     if not com_db_path.exists():
-        logger.error(f"Using COM: {com_type} database '{com_db_path}', but it doesn't exist")
+        logger.error("Using COM %s database '%s', but it doesn't exist", com_type, com_db_path)
         raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
 
     with gzip.open(com_db_path, "rb") as gzfile:
         com_db: Dict[str, List[str]] = json.loads(gzfile.read().decode("utf-8"))
         guid_strings: Optional[List[str]] = com_db.get(com_name)
         if guid_strings is None or len(guid_strings) == 0:
-            logger.error(f"{com_name} doesn't exist in COM {com_type} database")
-            raise ValueError(f"{com_name} doesn't exist in COM {com_type} database")
+            logger.error(" %s doesn't exist in COM %s database", com_name, com_type)
+            raise InvalidRule(f"'{com_name}' doesn't exist in COM {com_type} database")
 
     com_features: List = []
     for guid_string in guid_strings:
@@ -240,8 +240,8 @@ def translate_com_feature(com_name: str, com_type: str, description) -> ceng.Or:
             h[15],
         ]
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
-        com_features.append(capa.features.common.StringFactory(guid_string, com_name))
-        com_features.append(capa.features.common.Bytes(guid_bytes, com_name))
+        com_features.append(capa.features.common.StringFactory(guid_string, f"{com_name} as guid string"))
+        com_features.append(capa.features.common.Bytes(guid_bytes, f"{com_name} as bytes"))
     return ceng.Or(com_features)
 
 
@@ -646,7 +646,8 @@ def build_statements(d, scope: str):
         com_type = key[len("com/") :]
         if com_type not in VALID_COM_TYPES:
             raise InvalidRule(f"unexpected COM type: {com_type}")
-        return translate_com_feature(d[key], com_type, d.get("description"))
+        value, description = parse_description(d[key], key, d.get("description"))
+        return translate_com_feature(value, com_type)
 
     else:
         Feature = parse_feature(key)
