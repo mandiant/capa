@@ -37,7 +37,17 @@ class GhidraFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
-        yield from ghidra_helpers.get_function_symbols()
+        imports = ghidra_helpers.get_file_imports()
+        externs = ghidra_helpers.get_file_externs()
+        fakes = ghidra_helpers.map_fake_import_addrs()
+
+        for fhandle in ghidra_helpers.get_function_symbols():
+            fh: FunctionHandle = FunctionHandle(
+                address=fhandle.getEntryPoint().getOffset(),
+                inner=fhandle,
+                ctx={"imports_cache": imports, "externs_cache": externs, "fakes_cache": fakes},
+            )
+            yield fh
 
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:

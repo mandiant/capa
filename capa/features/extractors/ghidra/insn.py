@@ -40,7 +40,7 @@ def get_externs(ctx: Dict[str, Any]) -> Dict[int, Any]:
 def get_fakes(ctx: Dict[str, Any]) -> Dict[int, Any]:
     """Populate the fake import addrs cache for this context"""
     if "fakes_cache" not in ctx:
-        ctx["fakes_cache"] = capa.features.extractors.ghidra.helpers.get_file_externs()
+        ctx["fakes_cache"] = capa.features.extractors.ghidra.helpers.map_fake_import_addrs()
     return ctx["fakes_cache"]
 
 
@@ -505,7 +505,9 @@ INSTRUCTION_HANDLERS = (
 def main():
     """ """
     features = []
-    for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
+    from capa.features.extractors.ghidra.extractor import GhidraFeatureExtractor
+
+    for fh in GhidraFeatureExtractor().get_functions():
         for bb in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
             for insn in capa.features.extractors.ghidra.helpers.get_insn_in_range(bb):
                 features.extend(list(extract_features(fh, bb, insn)))

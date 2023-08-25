@@ -64,11 +64,9 @@ def get_block_bytes(block: ghidra.program.model.mem.MemoryBlock) -> bytes:
     return get_bytes(block.getStart(), block.getSize())
 
 
-def get_function_symbols() -> Iterator[FunctionHandle]:
+def get_function_symbols():
     """yield all non-external function symbols"""
-
-    for fhandle in currentProgram().getFunctionManager().getFunctionsNoStubs(True):  # type: ignore [name-defined] # noqa: F821
-        yield FunctionHandle(address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()), inner=fhandle)
+    yield from currentProgram().getFunctionManager().getFunctionsNoStubs(True)  # type: ignore [name-defined] # noqa: F821
 
 
 def get_function_blocks(fh: FunctionHandle) -> Iterator[BBHandle]:
