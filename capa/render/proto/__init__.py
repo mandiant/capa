@@ -127,6 +127,16 @@ def scope_to_pb2(scope: capa.rules.Scope) -> capa_pb2.Scope.ValueType:
         assert_never(scope)
 
 
+def scopes_to_pb2(scopes: capa.rules.Scopes) -> capa_pb2.Scopes:
+    doc = {}
+    if scopes.static:
+        doc["static"] = scope_to_pb2(scopes.static)
+    if scopes.dynamic:
+        doc["dynamic"] = scope_to_pb2(scopes.dynamic)
+
+    return google.protobuf.json_format.ParseDict(doc, capa_pb2.Scopes())
+
+
 def flavor_to_pb2(flavor: rd.Flavor) -> capa_pb2.Flavor.ValueType:
     if flavor == rd.Flavor.STATIC:
         return capa_pb2.Flavor.FLAVOR_STATIC
@@ -411,7 +421,7 @@ def rule_metadata_to_pb2(rule_metadata: rd.RuleMetadata) -> capa_pb2.RuleMetadat
     # after manual type conversions to the RuleMetadata, we can rely on the protobuf json parser
     # conversions include tuple -> list and rd.Enum -> proto.enum
     meta = dict_tuple_to_list_values(rule_metadata.model_dump())
-    meta["scope"] = scope_to_pb2(meta["scope"])
+    meta["scopes"] = scopes_to_pb2(meta["scopes"])
     meta["attack"] = list(map(dict_tuple_to_list_values, meta.get("attack", [])))
     meta["mbc"] = list(map(dict_tuple_to_list_values, meta.get("mbc", [])))
 
@@ -494,6 +504,13 @@ def scope_from_pb2(scope: capa_pb2.Scope.ValueType) -> capa.rules.Scope:
         return capa.rules.Scope.INSTRUCTION
     else:
         assert_never(scope)
+
+
+def scopes_from_pb2(scopes: capa_pb2.Scopes) -> capa.rules.Scopes:
+    return capa.rules.Scopes(
+        static=scope_from_pb2(scopes.static) if scopes.static else None,
+        dynamic=scope_from_pb2(scopes.dynamic) if scopes.dynamic else None,
+    )
 
 
 def flavor_from_pb2(flavor: capa_pb2.Flavor.ValueType) -> rd.Flavor:

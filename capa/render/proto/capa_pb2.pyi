@@ -1162,6 +1162,7 @@ class RuleMetadata(google.protobuf.message.Message):
     LIB_FIELD_NUMBER: builtins.int
     MAEC_FIELD_NUMBER: builtins.int
     IS_SUBSCOPE_RULE_FIELD_NUMBER: builtins.int
+    SCOPES_FIELD_NUMBER: builtins.int
     name: builtins.str
     namespace: builtins.str
     @property
@@ -1180,6 +1181,8 @@ class RuleMetadata(google.protobuf.message.Message):
     @property
     def maec(self) -> global___MaecMetadata: ...
     is_subscope_rule: builtins.bool
+    @property
+    def scopes(self) -> global___Scopes: ...
     def __init__(
         self,
         *,
@@ -1195,9 +1198,10 @@ class RuleMetadata(google.protobuf.message.Message):
         lib: builtins.bool = ...,
         maec: global___MaecMetadata | None = ...,
         is_subscope_rule: builtins.bool = ...,
+        scopes: global___Scopes | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["maec", b"maec"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["attack", b"attack", "authors", b"authors", "description", b"description", "examples", b"examples", "is_subscope_rule", b"is_subscope_rule", "lib", b"lib", "maec", b"maec", "mbc", b"mbc", "name", b"name", "namespace", b"namespace", "references", b"references", "scope", b"scope"]) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["maec", b"maec", "scopes", b"scopes"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["attack", b"attack", "authors", b"authors", "description", b"description", "examples", b"examples", "is_subscope_rule", b"is_subscope_rule", "lib", b"lib", "maec", b"maec", "mbc", b"mbc", "name", b"name", "namespace", b"namespace", "references", b"references", "scope", b"scope", "scopes", b"scopes"]) -> None: ...
 
 global___RuleMetadata = RuleMetadata
 
@@ -1224,6 +1228,29 @@ class Sample(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"]) -> None: ...
 
 global___Sample = Sample
+
+@typing_extensions.final
+class Scopes(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    STATIC_FIELD_NUMBER: builtins.int
+    DYNAMIC_FIELD_NUMBER: builtins.int
+    static: global___Scope.ValueType
+    dynamic: global___Scope.ValueType
+    def __init__(
+        self,
+        *,
+        static: global___Scope.ValueType | None = ...,
+        dynamic: global___Scope.ValueType | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_dynamic", b"_dynamic"]) -> typing_extensions.Literal["dynamic"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_static", b"_static"]) -> typing_extensions.Literal["static"] | None: ...
+
+global___Scopes = Scopes
 
 @typing_extensions.final
 class SectionFeature(google.protobuf.message.Message):

@@ -297,6 +297,7 @@ message RuleMetadata {
   bool lib = 10;
   MaecMetadata maec = 11;
   bool is_subscope_rule = 12;
+  Scopes scopes = 13;
 }
 
 message Sample {
@@ -315,6 +316,11 @@ enum Scope {
   SCOPE_PROCESS = 5;
   SCOPE_THREAD = 6;
   SCOPE_CALL = 7;
+}
+
+message Scopes {
+  optional Scope static = 1;
+  optional Scope dynamic = 2;
 }
 
 message SectionFeature {

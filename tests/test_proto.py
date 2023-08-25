@@ -46,7 +46,7 @@ def test_doc_to_pb2(request, rd_file):
         assert matches.meta.name == m.name
         assert cmp_optional(matches.meta.namespace, m.namespace)
         assert list(matches.meta.authors) == m.authors
-        assert capa.render.proto.scope_to_pb2(matches.meta.scope) == m.scope
+        assert capa.render.proto.scopes_to_pb2(matches.meta.scopes) == m.scopes
 
         assert len(matches.meta.attack) == len(m.attack)
         for rd_attack, proto_attack in zip(matches.meta.attack, m.attack):
@@ -116,10 +116,27 @@ def test_addr_to_pb2():
 
 
 def test_scope_to_pb2():
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.Scope.FILE)) == capa_pb2.SCOPE_FILE
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.Scope.FUNCTION)) == capa_pb2.SCOPE_FUNCTION
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.Scope.BASIC_BLOCK)) == capa_pb2.SCOPE_BASIC_BLOCK
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.Scope.INSTRUCTION)) == capa_pb2.SCOPE_INSTRUCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FILE) == capa_pb2.SCOPE_FILE
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FUNCTION) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.BASIC_BLOCK) == capa_pb2.SCOPE_BASIC_BLOCK
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.INSTRUCTION) == capa_pb2.SCOPE_INSTRUCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.PROCESS) == capa_pb2.SCOPE_PROCESS
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.THREAD) == capa_pb2.SCOPE_THREAD
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.CALL) == capa_pb2.SCOPE_CALL
+
+
+def test_scopes_to_pb2():
+    assert capa.render.proto.scopes_to_pb2(
+        capa.rules.Scopes.from_dict({"static": "file", "dynamic": "file"})
+    ) == capa_pb2.Scopes(
+        static=capa_pb2.SCOPE_FILE,
+        dynamic=capa_pb2.SCOPE_FILE,
+    )
+    assert capa.render.proto.scopes_to_pb2(
+        capa.rules.Scopes.from_dict({"static": "file", "dynamic": "unsupported"})
+    ) == capa_pb2.Scopes(
+        static=capa_pb2.SCOPE_FILE,
+    )
 
 
 def cmp_optional(a: Any, b: Any) -> bool:
