@@ -13,7 +13,7 @@ The Ghidra feature extractor is an application of the FLARE team's open-source p
 
 Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include the Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
 
-### headlessAnalyzer
+### Ghidra's headlessAnalyzer
 
 To invoke capa headlessly (i.e. without the Ghidra user interface), we must call the `analyzeHeadless` script provided in your `$GHIDRA_INSTALL_DIR` and point it towards capa's `main.py`. One thing to note is that capa runs as a `PostScript`, as in post-analysis script, so we need to provide `analyzeHeadless` with the path and script to run against our project.
 
