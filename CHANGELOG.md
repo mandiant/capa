@@ -47,7 +47,6 @@ Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Morit
 - anti-analysis/anti-vm/vm-detection/check-for-foreground-window-switch ervin.ocampo@mandiant.com
 - linking/static/sqlite3/linked-against-cppsqlite3 still@teamt5.org
 - linking/static/sqlite3/linked-against-sqlite3 still@teamt5.org
--
 
 ### Bug Fixes
 
