@@ -288,7 +288,7 @@ message RuleMetadata {
   string name = 1;
   string namespace = 2;
   repeated string authors = 3;
-  Scope scope = 4;
+  Scope scope = 4 [deprecated = true];
   repeated AttackSpec attack = 5;
   repeated MBCSpec mbc = 6;
   repeated string references = 7;

@@ -7,10 +7,12 @@
 - add call scope #771 @yelhamer
 - add process scope for the dynamic analysis flavor #1517 @yelhamer
 - Add thread scope for the dynamic analysis flavor #1517 @yelhamer
+- protobuf: add `Metadata.flavor` @williballenthin
 
 ### Breaking Changes
 
 - remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
+- protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
 
 ### New Rules (0)
 
