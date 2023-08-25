@@ -4,14 +4,32 @@
 
 The Ghidra feature extractor is an application of the FLARE team's open-source project, Ghidrathon, to integrate capa with Ghidra. capa is a framework that uses a well-defined collection of rules to identify capabilities in a program. You can run capa against a PE file, ELF file, or shellcode and it tells you what it thinks the program can do. For example, it might suggest that the program is a backdoor, can install services, or relies on HTTP to communicate. The Ghidra feature extractor can be used to run capa analysis on your Ghidra databases without needing access to the original binary file.
 
-## Installation & Usage:
-**Dependencies:**
+## Getting Started
+
+### Installation
+
 | Dependency | Version | Source |
 |------------|---------|--------|
-| capa | `>= 6.1.0` | `<url for capa release>`
 | Ghidrathon | `>= 3.0.0` | https://github.com/mandiant/Ghidrathon |
 
+In order to run capa using the Ghidra feature extractor, you must install capa as a library and obtain the offical capa rules that match the version you have installed. The following steps may be followed:
+
+1. Install capa and its dependencies from PyPI using the Python interpreter configured for your Ghidra installation:
+```bash
+$ pip install flare-capa
+```
+
+2. Download and extract the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match the version you have installed
+   1. Use the following command to view the version of capa you have installed:
+```bash
+$ pip show flare-capa
+OR
+$ capa --version
+```
+
 Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include the Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
+
+## Running capa with the Ghidra feature extractor
 
 ### Ghidra's headlessAnalyzer
 
@@ -31,9 +49,20 @@ The syntax to both import a new file and run capa against it is:
 ```
 > **Note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
 
-A successful headlessAnalyzer run should look like:
+### Ghidrathon's Script Console
 
-<img src="/doc/img/ghidrathon_headless.gif">
+To invoke capa from Ghidrathon's Script Console, open your Ghidra project's Code Browser and open the `Ghidrathon` window by navigating to `Window -> Ghidrathon`. From here, capa may be ran as a module. 
 
-### Script Console
+You must import capa into the console and run it via:
+
+```python3
+>>> from capa import main
+>>> main.ghidra_main()
+```
+
+A successful invocation should look similar to:
+
+<div align="center">
+    <img src="/doc/img/ghidrathon_console.png">
+</div>
 
