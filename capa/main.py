@@ -1056,7 +1056,7 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
     matched_threads = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if capa.rules.THREAD_SCOPE in rule.scopes:
+        if capa.rules.Scope.THREAD in rule.scopes:
             for addr, _ in matches:
                 assert addr in processes_by_thread
                 matched_threads.add(addr)
@@ -1099,7 +1099,7 @@ def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if capa.rules.BASIC_BLOCK_SCOPE in rule.scopes:
+        if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
             for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)

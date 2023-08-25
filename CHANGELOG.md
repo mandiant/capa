@@ -10,6 +10,8 @@
 
 ### Breaking Changes
 
+- remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
+
 ### New Rules (0)
 
 -
