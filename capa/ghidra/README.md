@@ -27,17 +27,20 @@ OR
 $ capa --version
 ```
 
-Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include the Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
+3. Copy `capa_ghidra.py` to your Ghidra user scripts directory OR update the `Ghidra Script Manager` path to point to it.
+   1. This entrypoint script is located in `capa_install_dir/capa/ghidra/`
+
+Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
 
 ## Running capa with the Ghidra feature extractor
 
 ### Ghidra's headlessAnalyzer
 
-To invoke capa headlessly (i.e. without the Ghidra user interface), we must call the `analyzeHeadless` script provided in your `$GHIDRA_INSTALL_DIR` and point it towards capa's `main.py`. One thing to note is that capa runs as a `PostScript`, as in post-analysis script, so we need to provide `analyzeHeadless` with the path and script to run against our project.
+To invoke capa headlessly (i.e. without the Ghidra user interface), we must call the `analyzeHeadless` script provided in your `$GHIDRA_INSTALL_DIR/support` and point it towards capa's `capa_ghidra.py`. One thing to note is that capa runs as a `PostScript`, as in post-analysis script, so we need to provide `analyzeHeadless` with the path and script to run against our project. The preferred method for the Ghidra feature extractor is the entrypoint script, `/capa/ghidra/capa_ghidra.py`. Additional capa command line arguments must be provided in a single, space-delimited string i.e. `"/path/to/rules -v"`. To display the help & usage statement, the keyword `help` must be used instead of the typical `-h or --help`.
 
 The syntax is as so:
 ```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_install/capa -PostScript main.py
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_install/capa/ghidra -PostScript capa_ghidra.py "/path/to/rules/"
 ```
 > **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
@@ -45,24 +48,104 @@ If you do not have an existing ghidra project, you may also create one with the 
 
 The syntax to both import a new file and run capa against it is:
 ```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -Import /path/to/sample_name.exe_ -ScriptPath /path/to/capa_install/capa -PostScript main.py
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -Import /path/to/sample_name.exe_ -ScriptPath /path/to/capa_install/capa/ghidra -PostScript capa_ghidra.py "/path/to/rules/"
 ```
 > **Note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
 
+**Example Output - very verbose flag:**
+```
+$ analyzeHeadless /home/wampus test -process Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ -PostScript capa_ghidra.py "/home/wampus/capa/rules -vv"
+[...]
+INFO  REPORT: Analysis succeeded for file: /Practical Malware Analysis Lab 01-01.dll_ (HeadlessAnalyzer)  
+INFO  SCRIPT: /ghidra_scripts/capa_ghidra.py (HeadlessAnalyzer)  
+md5                     290934c61de9176ad682ffdd65f0a669                                                                                                                                                                                                   
+sha1
+sha256                  f50e42c8dfaab649bde0398867e930b86c2a599e8db83b8260393082268f2dba
+path                    /home/spring/Documents/capa/tests/data/Practical Malware Analysis Lab 01-01.dll_
+timestamp               2023-08-25 15:40:39.990986
+capa version            6.0.0
+os                      windows
+format                  Portable Executable (PE)
+arch                    x86
+extractor               ghidra
+base address            global
+rules                   /home/spring/Documents/capa/rules
+function count          5
+library function count  0
+total feature count     376
+
+contain loop (3 matches, only showing first match of library rule)
+author  moritz.raabe@mandiant.com
+scope   function
+function @ 0x10001010
+  or:
+    characteristic: loop @ 0x10001010
+
+delay execution (2 matches, only showing first match of library rule)
+author      michael.hunhoff@mandiant.com, @ramen0x3f
+scope       basic block
+mbc         Anti-Behavioral Analysis::Dynamic Analysis Evasion::Delayed Execution [B0003.003]
+references  https://docs.microsoft.com/en-us/windows/win32/sync/wait-functions, https://github.com/LordNoteworthy/al-khaser/blob/master/al-khaser/TimingAttacks/timing.cpp
+basic block @ 0x10001154 in function 0x10001010
+  or:
+    and:
+      os: windows
+      or:
+        api: kernel32.Sleep @ 0x10001159
+
+check mutex
+namespace  host-interaction/mutex
+author     moritz.raabe@mandiant.com, anushka.virgaonkar@mandiant.com
+scope      basic block
+mbc        Process::Check Mutex [C0043]
+basic block @ 0x1000102E in function 0x10001010
+  and:
+    or:
+      api: kernel32.OpenMutex @ 0x10001059
+
+create mutex
+namespace  host-interaction/mutex
+author     moritz.raabe@mandiant.com, michael.hunhoff@mandiant.com
+scope      function
+mbc        Process::Create Mutex [C0042]
+function @ 0x10001010
+  or:
+    api: kernel32.CreateMutex @ 0x1000106E
+
+create process on Windows
+namespace  host-interaction/process/create
+author     moritz.raabe@mandiant.com
+scope      basic block
+mbc        Process::Create Process [C0017]
+basic block @ 0x10001179 in function 0x10001010
+  or:
+    api: kernel32.CreateProcess @ 0x100011AF
+
+
+
+Script /ghidra_scripts/capa_ghidra.py called exit with code 0
+INFO  ANALYZING changes made by post scripts: /Practical Malware Analysis Lab 01-01.dll_ (HeadlessAnalyzer)  
+
+[...]
+```
+
 ### Ghidrathon's Script Console
 
-To invoke capa from Ghidrathon's Script Console, open your Ghidra project's Code Browser and open the `Ghidrathon` window by navigating to `Window -> Ghidrathon`. From here, capa may be ran as a module. 
+To invoke capa from Ghidrathon's Script Console, open your Ghidra project's Code Browser and open the `Ghidrathon` window by navigating to `Window -> Ghidrathon`.
 
 You must import capa into the console and run it via:
 
 ```python3
->>> from capa import main
->>> main.ghidra_main()
+>>> import capa
+>>> from capa.ghidra import capa_ghidra 
+>>> capa_ghidra.main()
 ```
 
-A successful invocation should look similar to:
+A successful invocation will prompt you to choose a `rules` directory, to specify the verbosity level of output, and will look similar to:
 
 <div align="center">
     <img src="/doc/img/ghidrathon_console.png">
+    <img src="/doc/img/ghidra_verbosity.png">
+    <img src="/doc/img/ghidra_console_output.png">
 </div>
 
