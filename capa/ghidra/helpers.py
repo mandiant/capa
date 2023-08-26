@@ -32,8 +32,9 @@ class GHIDRAIO:
 
     def __init__(self):
         super().__init__()
+
         self.offset = 0
-        self.bytez = self.get_file_bytes()
+        self.bytes_ = self.get_bytes()
 
     def seek(self, offset, whence=0):
         assert whence == 0
@@ -42,31 +43,23 @@ class GHIDRAIO:
     def read(self, size):
         logger.debug("reading 0x%x bytes at 0x%x (ea: 0x%x)", size, self.offset, currentProgram().getImageBase().add(self.offset).getOffset())  # type: ignore [name-defined] # noqa: F821
 
-        b_len = len(self.bytez)
-        if size > b_len - self.offset:
+        if size > len(self.bytes_) - self.offset:
             logger.debug("cannot read 0x%x bytes at 0x%x (ea: BADADDR)", size, self.offset)
             return b""
         else:
-            read_bytes = b""
-            read = [
-                capa.features.extractors.ghidra.helpers.fix_byte(b)
-                for b in self.bytez[self.offset : self.offset + size]
-            ]
-            for b in read:
-                read_bytes = read_bytes + b
-            return read_bytes
+            return self.bytes_[self.offset : self.offset + size]
 
     def close(self):
         return
 
-    def get_file_bytes(self):
-        fbytes = currentProgram().getMemory().getAllFileBytes()[0]  # type: ignore [name-defined] # noqa: F821
-        bytez = b""
-        for i in range(fbytes.getSize()):
-            # getOriginalByte() allows for raw file parsing on the Ghidra side
-            # other functions will fail as Ghidra will think that it's reading uninitialized memory
-            bytez = bytez + capa.features.extractors.ghidra.helpers.fix_byte(fbytes.getOriginalByte(i))
-        return bytez
+    def get_bytes(self):
+        file_bytes = currentProgram().getMemory().getAllFileBytes()[0]  # type: ignore [name-defined] # noqa: F821
+
+        # getOriginalByte() allows for raw file parsing on the Ghidra side
+        # other functions will fail as Ghidra will think that it's reading uninitialized memory
+        bytes_ = [file_bytes.getOriginalByte(i) for i in range(file_bytes.getSize())]
+
+        return capa.features.extractors.ghidra.helpers.ints_to_bytes(bytes_)
 
 
 def is_supported_ghidra_version():
@@ -85,7 +78,7 @@ def is_running_headless():
 
 def is_supported_file_type():
     file_info = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
-    if file_info.filetype not in SUPPORTED_FILE_TYPES:
+    if file_info not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
         logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
@@ -99,8 +92,9 @@ def is_supported_file_type():
 
 
 def is_supported_arch_type():
-    file_info = currentProgram().getLanguageID()  # type: ignore [name-defined] # noqa: F821
-    if "x86" not in file_info or not any(arch in file_info for arch in ["32", "64"]):
+    lang_id = str(currentProgram().getLanguageID()).lower()  # type: ignore [name-defined] # noqa: F821
+
+    if not all((lang_id.startswith("x86"), any(arch in lang_id for arch in ("32", "64")))):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
         logger.error(" ")

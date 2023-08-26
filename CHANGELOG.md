@@ -6,8 +6,37 @@
 - ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 - develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
+- ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 
 ### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v6.1.0...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
+- [capa-rules v6.1.0...master](https://github.com/mandiant/capa-rules/compare/v6.1.0...master)
+
+## v6.1.0
+
+capa v6.1.0 is a bug fix release, most notably fixing unhandled exceptions in the capa explorer IDA Pro plugin.
+@Aayush-Goel-04 put a lot of effort into improving code quality and adding a script for rule authors.
+The script shows which features are present in a sample but not referenced by any existing rule.
+You could use this script to find opportunities for new rules.
+
+Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Moritz, Ervin, and still@teamt5.org!
+
+### New Features
+- ELF: implement import and export name extractor #1607 #1608 @Aayush-Goel-04
+- bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
+- develop script to highlight features not used during matching #331 @Aayush-Goel-04
 
 ### New Rules (8)
 
@@ -18,25 +47,24 @@
 - anti-analysis/anti-vm/vm-detection/check-for-foreground-window-switch ervin.ocampo@mandiant.com
 - linking/static/sqlite3/linked-against-cppsqlite3 still@teamt5.org
 - linking/static/sqlite3/linked-against-sqlite3 still@teamt5.org
--
 
 ### Bug Fixes
 
-- Fix binja backend stack string detection. #1473 @xusheng6
+- rules: fix forwarded export characteristic #1656 @RonnieSalomonsen
+- Binary Ninja: Fix stack string detection #1473 @xusheng6
 - linter: skip native API check for NtProtectVirtualMemory #1675 @williballenthin 
 - OS: detect Android ELF files #1705 @williballenthin
 - ELF: fix parsing of symtab #1704 @williballenthin
 - result document: don't use deprecated pydantic functions #1718 @williballenthin
 - pytest: don't mark IDA tests as pytest tests #1719 @williballenthin
+- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - fix unhandled exception when resolving rule path #1693 @mike-hunhoff
 
-### Development
-
 ### Raw diffs
-- [capa v6.0.0...master](https://github.com/mandiant/capa/compare/v6.0.0...master)
-- [capa-rules v6.0.0...master](https://github.com/mandiant/capa-rules/compare/v6.0.0...master)
+- [capa v6.0.0...v6.1.0](https://github.com/mandiant/capa/compare/v6.0.0...v6.1.0)
+- [capa-rules v6.0.0...v6.1.0](https://github.com/mandiant/capa-rules/compare/v6.0.0...v6.1.0)
 
 ## v6.0.0
 
