@@ -624,11 +624,11 @@ def is_freeze(buf: bytes) -> bool:
     return buf[: len(MAGIC)] == MAGIC
 
 
-def is_static(buf: bytes) -> bool:
+def is_static_freeze(buf: bytes) -> bool:
     return buf[: len(STATIC_MAGIC)] == STATIC_MAGIC
 
 
-def is_dynamic(buf: bytes) -> bool:
+def is_dynamic_freeze(buf: bytes) -> bool:
     return buf[: len(DYNAMIC_MAGIC)] == DYNAMIC_MAGIC
 
 
@@ -636,9 +636,9 @@ def load(buf: bytes):
     """deserialize a set of features (as a NullFeatureExtractor) from a byte array."""
     if not is_freeze(buf):
         raise ValueError("missing magic header")
-    if is_static(buf):
+    if is_static_freeze(buf):
         return loads_static(zlib.decompress(buf[len(STATIC_MAGIC) :]).decode("utf-8"))
-    elif is_dynamic(buf):
+    elif is_dynamic_freeze(buf):
         return loads_dynamic(zlib.decompress(buf[len(DYNAMIC_MAGIC) :]).decode("utf-8"))
     else:
         raise ValueError("invalid magic header")

@@ -55,8 +55,8 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
     dll = dll.lower()
 
     # trim extensions observed in dynamic traces
-    dll = dll.replace(".dll", "")
-    dll = dll.replace(".drv", "")
+    dll = dll[0:-4] if dll.endswith(".dll") else dll
+    dll = dll[0:-4] if dll.endswith(".drv") else dll
 
     # kernel32.CreateFileA
     yield f"{dll}.{symbol}"
