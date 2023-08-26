@@ -129,6 +129,19 @@ INFO  ANALYZING changes made by post scripts: /Practical Malware Analysis Lab 01
 [...]
 ```
 
+### Ghidra's Script Manager
+
+To invoke capa from the `Ghidra Script Manager`, open your Ghidra Project's Code Browser and open the `Script Manager` window by navigating to `Window -> Script Manager`. Select `capa_ghidra.py` and run the script. capa will then prompt you to choose a `rules` directory and specify the output verbosity level. 
+> **Note:** In order for the Script Manager to recognize `capa_ghidra.py` you must either copy it to your Ghidra user scripts directory or update the Script Manager search path to include directory that contains it.
+
+Successful invocation from the `Ghidra Script Manager` will look like:
+
+<div align="center">
+    <img src="/doc/img/ghidra_script_mngr_rules.png">
+    <img src="/doc/img/ghidra_script_mngr_verbosity.png">
+    <img src="/doc/img/ghidra_script_mngr_output.png">
+</div>
+
 ### Ghidrathon's Script Console
 
 To invoke capa from Ghidrathon's Script Console, open your Ghidra project's Code Browser and open the `Ghidrathon` window by navigating to `Window -> Ghidrathon`.
