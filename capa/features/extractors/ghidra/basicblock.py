@@ -137,7 +137,9 @@ def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Featur
 
 def main():
     features = []
-    for fh in capa.features.extractors.ghidra.helpers.get_function_symbols():
+    from capa.features.extractors.ghidra.extractor import GhidraFeatureExtractor
+
+    for fh in GhidraFeatureExtractor().get_functions():
         for bbh in capa.features.extractors.ghidra.helpers.get_function_blocks(fh):
             features.extend(list(extract_features(fh, bbh)))
 
