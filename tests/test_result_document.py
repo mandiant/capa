@@ -263,7 +263,6 @@ def assert_round_trip(rd: rdoc.ResultDocument):
         pytest.param("a076114_rd"),
         pytest.param("pma0101_rd"),
         pytest.param("dotnet_1c444e_rd"),
-        pytest.param(""),
     ],
 )
 def test_round_trip(request, rd_file):

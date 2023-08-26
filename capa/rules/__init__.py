@@ -86,6 +86,10 @@ class Scope(str, Enum):
     # not used to validate rules.
     GLOBAL = "global"
 
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_str(f"{node.value}")
+
 
 # these literals are used to check if the flavor
 # of a rule is correct.
@@ -979,6 +983,7 @@ class Rule:
 
         # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
         y = ruamel.yaml.YAML(typ="rt")
+        y.register_class(Scope)
 
         # use block mode, not inline json-like mode
         y.default_flow_style = False
