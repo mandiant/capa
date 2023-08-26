@@ -20,10 +20,15 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 class GhidraFeatureExtractor(FeatureExtractor):
     def __init__(self):
         super().__init__()
+        import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ghidra.file.extract_file_format())
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_os())
         self.global_features.extend(capa.features.extractors.ghidra.global_.extract_arch())
+        self.imports = ghidra_helpers.get_file_imports()
+        self.externs = ghidra_helpers.get_file_externs()
+        self.fakes = ghidra_helpers.map_fake_import_addrs()
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(currentProgram().getImageBase().getOffset())  # type: ignore [name-defined] # noqa: F821
@@ -37,15 +42,11 @@ class GhidraFeatureExtractor(FeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
 
-        imports = ghidra_helpers.get_file_imports()
-        externs = ghidra_helpers.get_file_externs()
-        fakes = ghidra_helpers.map_fake_import_addrs()
-
         for fhandle in ghidra_helpers.get_function_symbols():
             fh: FunctionHandle = FunctionHandle(
                 address=fhandle.getEntryPoint().getOffset(),
                 inner=fhandle,
-                ctx={"imports_cache": imports, "externs_cache": externs, "fakes_cache": fakes},
+                ctx={"imports_cache": self.imports, "externs_cache": self.externs, "fakes_cache": self.fakes},
             )
             yield fh
 
