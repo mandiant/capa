@@ -199,6 +199,21 @@ def ida_main():
     return 0
 
 
+def ghidra_main():
+    import capa.features.extractors.ghidra.extractor
+
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+
+    for feature, addr in extractor.extract_file_features():
+        print(f"file: {format_address(addr)}: {feature}")
+
+    function_handles = tuple(extractor.get_functions())
+
+    print_features(function_handles, extractor)
+
+    return 0
+
+
 def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
     for f in functions:
         if extractor.is_library_function(f.address):
@@ -248,5 +263,7 @@ def print_features(functions, extractor: capa.features.extractors.base_extractor
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
+    elif capa.helpers.is_runtime_ghidra():
+        ghidra_main()
     else:
         sys.exit(main())

@@ -10,9 +10,16 @@ Must invoke this script from within the Ghidra Runtime Enviornment
 """
 import sys
 import logging
+from pathlib import Path
 
 import pytest
-import fixtures
+
+try:
+    sys.path.append(str(Path(__file__).parent))
+    import fixtures
+finally:
+    sys.path.pop()
+
 
 logger = logging.getLogger("test_ghidra_features")
 
