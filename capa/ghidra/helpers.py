@@ -78,7 +78,7 @@ def is_running_headless():
 
 def is_supported_file_type():
     file_info = currentProgram().getExecutableFormat()  # type: ignore [name-defined] # noqa: F821
-    if file_info.filetype not in SUPPORTED_FILE_TYPES:
+    if file_info not in SUPPORTED_FILE_TYPES:
         logger.error("-" * 80)
         logger.error(" Input file does not appear to be a supported file type.")
         logger.error(" ")
@@ -92,8 +92,9 @@ def is_supported_file_type():
 
 
 def is_supported_arch_type():
-    file_info = currentProgram().getLanguageID()  # type: ignore [name-defined] # noqa: F821
-    if "x86" not in file_info or not any(arch in file_info for arch in ["32", "64"]):
+    lang_id = str(currentProgram().getLanguageID()).lower()  # type: ignore [name-defined] # noqa: F821
+
+    if not all((lang_id.startswith("x86"), any(arch in lang_id for arch in ("32", "64")))):
         logger.error("-" * 80)
         logger.error(" Input file does not appear to target a supported architecture.")
         logger.error(" ")

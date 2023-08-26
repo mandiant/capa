@@ -53,7 +53,7 @@ class GhidraFeatureExtractor(FeatureExtractor):
     @staticmethod
     def get_function(addr: int) -> FunctionHandle:
         func = getFunctionContaining(toAddr(addr))  # type: ignore [name-defined] # noqa: F821
-        return FunctionHandle(address=AbsoluteVirtualAddress(func.getAddress().getOffset()), inner=func)
+        return FunctionHandle(address=AbsoluteVirtualAddress(func.getEntryPoint().getOffset()), inner=func)
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.ghidra.function.extract_features(fh)

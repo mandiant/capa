@@ -79,12 +79,8 @@ def get_function_blocks(fh: FunctionHandle) -> Iterator[BBHandle]:
 
 def get_insn_in_range(bbh: BBHandle) -> Iterator[InsnHandle]:
     """yield InshHandle for each insn in a given basicblock"""
-
-    bb: ghidra.program.model.block.CodeBlock = bbh.inner
-    for addr in bb.getAddresses(True):
-        insn = getInstructionAt(addr)  # type: ignore [name-defined] # noqa: F821
-        if insn:
-            yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
+    for insn in currentProgram().getListing().getInstructions(bbh.inner, True):  # type: ignore [name-defined] # noqa: F821
+        yield InsnHandle(address=AbsoluteVirtualAddress(insn.getAddress().getOffset()), inner=insn)
 
 
 def get_file_imports() -> Dict[int, List[str]]:
