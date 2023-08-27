@@ -156,7 +156,7 @@ You must import capa into the console and run it via:
 >>> capa_ghidra.main()
 ```
 
-Similarly to the `Ghidra Script Manager`, successful invocation will prompt you to choose a `rules` directory, to specify the verbosity level of output, and will look similar to:
+Similarly to the Ghidra Script Manager, you will be prompted to choose a capa rules directory and specify output verbosity:
 
 <div align="center">
     <img src="/doc/img/ghidra_console_output.png">
