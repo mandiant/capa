@@ -46,7 +46,7 @@ The syntax is as so:
 ```
 > **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
-If you do not have an existing ghidra project, you may also create one with the headlessAnalyzer via the `-Import` flag. Post scripts may also be ran in the same invocation.
+If you do not have an existing ghidra project, you may also create one with the Headless Analyzer via the `-Import` flag. Post scripts may also be ran in the same invocation.
 
 The syntax to both import a new file and run capa against it is:
 ```bash
