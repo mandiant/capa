@@ -36,7 +36,7 @@ Once Ghidrathon is configured, you may now invoke capa from within Ghidra in thr
 
 ## Running capa with the Ghidra feature extractor
 
-### Ghidra's headlessAnalyzer
+### Ghidra's Headless Analyzer
 
 To invoke capa headlessly (i.e. without the Ghidra user interface), we must call the `analyzeHeadless` script provided in your `$GHIDRA_INSTALL_DIR/support` and point it towards capa's `capa_ghidra.py`. One thing to note is that capa runs as a `PostScript`, as in post-analysis script, so we need to provide `analyzeHeadless` with the path and script to run against our project. The preferred method for the Ghidra feature extractor is the entrypoint script, `/capa/ghidra/capa_ghidra.py`. Additional capa command line arguments must be provided in a single, space-delimited string i.e. `"/path/to/rules -v"`. To display the help & usage statement, the keyword `help` must be used instead of the typical `-h or --help`.
 
