@@ -88,11 +88,11 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
 
     def load_rules_prevalence(file: Path) -> Dict[str, str]:
+        if not file.exists():
+            raise FileNotFoundError(f"File '{file}' not found.")
         try:
             with gzip.open(file, "rb") as gzfile:
                 return json.loads(gzfile.read().decode("utf-8"))
-        except FileNotFoundError:
-            raise FileNotFoundError(f"File '{file}' not found.")
         except Exception as e:
             raise RuntimeError(f"An error occurred while loading '{file}': {e}")
 
