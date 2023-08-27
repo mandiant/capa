@@ -14,7 +14,7 @@ The Ghidra feature extractor is an application of the FLARE team's open-source p
 | Python | `>= 3.8` | https://www.python.org/downloads |
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
 
-In order to run capa using the Ghidra feature extractor, you must install capa as a library and obtain the offical capa rules that match the version you have installed. The following steps may be followed:
+In order to run capa using the Ghidra feature extractor, you must install capa as a library and obtain the official capa rules that match the version you have installed. You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
 
 1. Install capa and its dependencies from PyPI using the Python interpreter configured for your Ghidra installation:
 ```bash
