@@ -6,8 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import gzip
 import json
 import collections
+from typing import Dict
 from pathlib import Path
 
 import tabulate
@@ -85,16 +87,18 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         +-------------------------------------------------------+-------------------------------------------------+
     """
 
-    def load_rules_prevalence(file: Path) -> dict:
+    def load_rules_prevalence(file: Path) -> Dict[str, str]:
         try:
-            return json.load(file.open("r"))
+            with gzip.open(file, "rb") as gzfile:
+                return json.loads(gzfile.read().decode("utf-8"))
         except FileNotFoundError:
             raise FileNotFoundError(f"File '{file}' not found.")
         except Exception as e:
             raise RuntimeError(f"An error occurred while loading '{file}': {e}")
 
     subrule_matches = find_subrule_matches(doc)
-    rules_prevalence = load_rules_prevalence(Path("./assets/rules_prevalence.json"))
+    CD = Path(__file__).resolve().parent.parent.parent
+    rules_prevalence = load_rules_prevalence(CD / "assets" / "rules_prevalence.json.gz")
 
     # seperate rules based on their prevalence
     common = []
@@ -106,17 +110,14 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         count = len(rule.matches)
         matches = f"({count} matches)" if count > 1 else ""
 
-        rule_prevalence = float(rules_prevalence.get(rule.meta.name, 0))
-        if rule_prevalence < 0:
-            raise ValueError("Match probability cannot be negative")
+        prevalence = rules_prevalence.get(rule.meta.name, None)
 
-        prevalences = [rutils.bold("rare"), rutils.bold("common"), "unknown"]
-
-        if rule_prevalence == 0 or rule_prevalence >= 0.05:
-            prevalence = prevalences[2] if rule_prevalence == 0 else prevalences[1]
-            common.append((rule.meta.namespace, rule.meta.name, matches, prevalence))
+        if prevalence == "rare":
+            rare.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold(prevalence)))
+        elif prevalence == "common":
+            common.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold(prevalence)))
         else:
-            rare.append((rule.meta.namespace, rule.meta.name, matches, prevalences[0]))
+            common.append((rule.meta.namespace, rule.meta.name, matches, "unknown"))
 
     rows = []
 
