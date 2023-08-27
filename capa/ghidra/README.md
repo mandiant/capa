@@ -29,7 +29,7 @@ OR
 $ capa --version
 ```
 
-3. Copy `capa_ghidra.py` to your Ghidra user scripts directory OR update the `Ghidra Script Manager` path to point to it.
+3. Copy `capa_ghidra.py`, found [here](/capa/ghidra/capa_ghidra.py), to your Ghidra user scripts directory OR manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
    1. This entrypoint script is located in `capa_install_dir/capa/ghidra/`
 
 Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
