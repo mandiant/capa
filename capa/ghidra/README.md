@@ -42,7 +42,7 @@ To invoke capa headlessly (i.e. without the Ghidra user interface), we must call
 
 The syntax is as so:
 ```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_install/capa/ghidra -PostScript capa_ghidra.py "/path/to/rules/"
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_ghidra.py/ -PostScript capa_ghidra.py "/path/to/capa/rules/"
 ```
 > **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
