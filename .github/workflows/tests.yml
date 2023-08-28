@@ -2,9 +2,9 @@ name: CI
 
 on: 
   push:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, backend-ghidra ]
 
 permissions: read-all
 
@@ -184,7 +184,7 @@ jobs:
       run : |
         mkdir ./.github/ghidrathon
         mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
-        wget "https://github.com/mandiant/Ghidrathon/archive/refs/tags/v${{ matrix.ghidrathon-version }}.zip" -O ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip
+        curl -o ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip "https://codeload.github.com/mandiant/Ghidrathon/zip/refs/tags/v${{ matrix.ghidrathon-version }}"
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
         workdir=$(pwd)
         gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
