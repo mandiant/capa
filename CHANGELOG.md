@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 
 ### Breaking Changes
@@ -108,8 +109,6 @@ For those that use capa as a library, we've introduced some limited breaking cha
 - anti-analysis/anti-av/patch-event-tracing-for-windows-function jakub.jozwiak@mandiant.com
 - data-manipulation/encoding/xor/covertly-decode-and-write-data-to-windows-directory-using-indirect-calls dan.kelly@mandiant.com
 - linking/runtime-linking/resolve-function-by-brute-ratel-badger-hash jakub.jozwiak@mandiant.com
-
-
 
 ### Bug Fixes
 - extractor: add a Binary Ninja test that asserts its version #1487 @xusheng6
