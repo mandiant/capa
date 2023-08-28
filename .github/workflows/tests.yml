@@ -2,9 +2,9 @@ name: CI
 
 on: 
   push:
-    branches: [ master, backend-ghidra ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, backend-ghidra ]
+    branches: [ master ]
 
 permissions: read-all
 
