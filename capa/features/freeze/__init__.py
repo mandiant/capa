@@ -53,7 +53,6 @@ class AddressType(str, Enum):
     PROCESS = "process"
     THREAD = "thread"
     CALL = "call"
-    DYNAMIC = "dynamic"
     NO_ADDRESS = "no address"
 
 
