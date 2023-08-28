@@ -110,7 +110,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         count = len(rule.matches)
         matches = f"({count} matches)" if count > 1 else ""
 
-        prevalence = rules_prevalence.get(rule.meta.name, None)
+        prevalence = rules_prevalence.get(rule.meta.name)
 
         if prevalence == "rare":
             rare.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold(prevalence)))
