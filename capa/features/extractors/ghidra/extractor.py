@@ -44,7 +44,7 @@ class GhidraFeatureExtractor(FeatureExtractor):
 
         for fhandle in ghidra_helpers.get_function_symbols():
             fh: FunctionHandle = FunctionHandle(
-                address=fhandle.getEntryPoint().getOffset(),
+                address=AbsoluteVirtualAddress(fhandle.getEntryPoint().getOffset()),
                 inner=fhandle,
                 ctx={"imports_cache": self.imports, "externs_cache": self.externs, "fakes_cache": self.fakes},
             )
