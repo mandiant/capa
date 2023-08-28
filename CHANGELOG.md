@@ -3,9 +3,6 @@
 ## master (unreleased)
 
 ### New Features
-- ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
-- bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
-- develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 
 ### Breaking Changes
@@ -15,6 +12,7 @@
 -
 
 ### Bug Fixes
+- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 
@@ -57,7 +55,6 @@ Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Morit
 - ELF: fix parsing of symtab #1704 @williballenthin
 - result document: don't use deprecated pydantic functions #1718 @williballenthin
 - pytest: don't mark IDA tests as pytest tests #1719 @williballenthin
-- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 - fix unhandled exception when resolving rule path #1693 @mike-hunhoff
