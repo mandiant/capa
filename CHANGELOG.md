@@ -3,14 +3,12 @@
 ## master (unreleased)
 
 ### New Features
-<<<<<<< HEAD
 - ELF: implement file import and export name extractor #1607 #1608 @Aayush-Goel-04
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 - develop script to highlight the features that are not used during matching #331 @Aayush-Goel-04
 - add script to create code-based YARA based on CAPA match details called match-2-yar @jconnor0426
 
 =======
->>>>>>> master
 
 ### Breaking Changes
 
