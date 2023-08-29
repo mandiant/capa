@@ -29,20 +29,39 @@ OR
 $ capa --version
 ```
 
-3. Copy `capa_ghidra.py`, found [here](/capa/ghidra/capa_ghidra.py), to your Ghidra user scripts directory OR manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
+3. Copy `capa_ghidra.py`, found [here](/capa/ghidra/capa_ghidra.py), to your `$USER_HOME/ghidra_scripts` directory OR manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
    1. This entrypoint script is located in `capa_install_dir/capa/ghidra/`
 
-Once Ghidrathon is configured, you may now invoke capa from within Ghidra in three different ways. Each method suits different use cases of capa, and they include Ghidra's `headlessAnalyzer`, `Scripting Console`, and `Script Manger`.
+Once Ghidrathon is configured, you may now invoke capa from within Ghidra in two different ways. These include Ghidra's Headless Analyzer and Script Manager.
 
 ## Running capa with the Ghidra feature extractor
 
+### Ghidra's Script Manager
+
+To invoke capa from the `Ghidra Script Manager`, open your Ghidra Project's Code Browser and open the `Script Manager` window by navigating to `Window -> Script Manager`. Select `capa_ghidra.py` and run the script. capa will then prompt you to choose a `rules` directory and specify the output verbosity level. 
+> **Note:** In order for the Script Manager to recognize `capa_ghidra.py` you must either copy it to your `$USER_HOME/ghidra_scripts` directory or update the Script Manager search path to include the directory that contains it.
+
+<div align="center">
+    <img src="/doc/img/ghidra_script_mngr_rules.png">
+    <img src="/doc/img/ghidra_script_mngr_verbosity.png">
+    <img src="/doc/img/ghidra_script_mngr_output.png">
+</div>
+
 ### Ghidra's Headless Analyzer
 
-To invoke capa headlessly (i.e. without the Ghidra user interface), we must call the `analyzeHeadless` script provided in your `$GHIDRA_INSTALL_DIR/support` and point it towards capa's `capa_ghidra.py`. One thing to note is that capa runs as a `PostScript`, as in post-analysis script, so we need to provide `analyzeHeadless` with the path and script to run against our project. The preferred method for the Ghidra feature extractor is the entrypoint script, `/capa/ghidra/capa_ghidra.py`. Additional capa command line arguments must be provided in a single, space-delimited string i.e. `"/path/to/rules -v"`. To display the help & usage statement, the keyword `help` must be used instead of the typical `-h or --help`.
+To invoke capa using the Ghidra Headless Analyzer, you can use Ghidra's `analyzeHeadless` script, located in your `$GHIDRA_INSTALL_DIR/support` directory.
+
+`analyzeHeadless` requires these arguments to invoke capa:
+1. `/path/to/ghidra/project ghidra_project_name`
+2. `-process sample.exe_` OR `-Import /path/to/sample/sample.exe_`
+3. `-ScriptPath /path/to/capa_ghidra/`
+4. `-PostScript capa_ghidra.py`
+5. `"/path/to/rules/ <args_to_capa>"`
+> `"/path/to/rules/ <args_to_capa>"` must be provided in a single, space-delimited string. The help statement, normally accessed via `-h or --help`, must be accessed via the keyword `help` instead. 
 
 The syntax is as so:
 ```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -process sample_name.exe_ -ScriptPath /path/to/capa_ghidra.py/ -PostScript capa_ghidra.py "/path/to/capa/rules/"
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -process sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "/path/to/rules/ -vv"
 ```
 > **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
 
@@ -50,9 +69,14 @@ If you do not have an existing Ghidra project, you may also create one with the 
 
 The syntax to both import a new file and run capa against it is:
 ```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/gpr_dir/ gpr_name -Import /path/to/sample_name.exe_ -ScriptPath /path/to/capa_install/capa/ghidra -PostScript capa_ghidra.py "/path/to/rules/"
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -Import /path/to/sample/sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "/path/to/rules/"
 ```
-> **Note:** The `/path/to/gpr_dir/` must exist before importing a new project into it.
+> **Note:** The `/path/to/ghidra/project/` must exist before importing a new project into it.
+
+To view the usage and help statement, the syntax is:
+```bash
+./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -process sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "help"
+```
 
 **Example Output - very verbose flag:**
 ```
@@ -130,34 +154,3 @@ INFO  ANALYZING changes made by post scripts: /Practical Malware Analysis Lab 01
 
 [...]
 ```
-
-### Ghidra's Script Manager
-
-To invoke capa from the `Ghidra Script Manager`, open your Ghidra Project's Code Browser and open the `Script Manager` window by navigating to `Window -> Script Manager`. Select `capa_ghidra.py` and run the script. capa will then prompt you to choose a `rules` directory and specify the output verbosity level. 
-> **Note:** In order for the Script Manager to recognize `capa_ghidra.py` you must either copy it to your Ghidra user scripts directory or update the Script Manager search path to include the directory that contains it.
-
-
-<div align="center">
-    <img src="/doc/img/ghidra_script_mngr_rules.png">
-    <img src="/doc/img/ghidra_script_mngr_verbosity.png">
-    <img src="/doc/img/ghidra_script_mngr_output.png">
-</div>
-
-### Ghidrathon's Script Console
-
-To invoke capa from Ghidrathon's Script Console, open your Ghidra project's Code Browser and open the `Ghidrathon` window by navigating to `Window -> Ghidrathon`.
-
-You must import capa into the console and run it via:
-
-```python3
->>> import capa
->>> from capa.ghidra import capa_ghidra 
->>> capa_ghidra.main()
-```
-
-Similarly to the Ghidra Script Manager, you will be prompted to choose a capa rules directory and specify output verbosity:
-
-<div align="center">
-    <img src="/doc/img/ghidra_console_output.png">
-</div>
-
