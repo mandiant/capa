@@ -57,7 +57,10 @@ To invoke capa using the Ghidra Headless Analyzer, you can use Ghidra's `analyze
 3. `-ScriptPath /path/to/capa_ghidra/`
 4. `-PostScript capa_ghidra.py`
 5. `"/path/to/rules/ <args_to_capa>"`
-> `"/path/to/rules/ <args_to_capa>"` must be provided in a single, space-delimited string. The help statement, normally accessed via `-h or --help`, must be accessed via the keyword `help` instead. 
+> `"/path/to/rules/ <args_to_capa>"` must be provided in a single, space-delimited string. The help statement, normally accessed via `-h or --help`, must be accessed using the keyword `help` instead. 
+
+To run capa against shellcode, Ghidra will require an additional argument to be passed to the Headless Analyzer. `-processor <languageID>` is used to specify the architecture in which Ghidra will process the sample.
+> **Note:** More information on specifying the languageID can be found in the `$GHIDRA_INSTALL_DIR/support/analyzeHeadlessREADME.html` documentation.
 
 The syntax is as so:
 ```bash
@@ -78,7 +81,7 @@ To view the usage and help statement, the syntax is:
 ./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -process sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "help"
 ```
 
-**Example Output - very verbose flag:**
+**Example Output: Shellcode & -vv flag**
 ```
 $ analyzeHeadless /home/wampus test -process Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ -PostScript capa_ghidra.py "/home/wampus/capa/rules -vv"
 [...]
