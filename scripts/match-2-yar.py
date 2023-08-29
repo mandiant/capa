@@ -65,7 +65,7 @@ try:
     from capstone import CS_MODE_32, CS_MODE_64, CS_ARCH_X86, CS_OPT_SYNTAX_INTEL, Cs
 except ImportError:
     print(
-        """\nFailed to import a module try installing required Python libraries with the following:
+        """\nFailed to import a module try installing required Python libraries with the following command:
 pip install mkyara yaramod
 """
     )
@@ -91,7 +91,7 @@ class BufferCanvas(MemoryCanvas):
 
 
 def get_disassembly_output(vw, va, size):
-    """Get Vivisect's disassembly view for a given virtual addresss and size
+    """Get Vivisect's disassembly view for a given virtual address and size
 
     Args:
         vw: Vivisect Workspace
@@ -107,8 +107,8 @@ def get_disassembly_output(vw, va, size):
     return mcav.output
 
 
-def get_comment_for_func(vw, funcva):
-    """Get a CodeFeature comment for a function
+def get_disassembly_for_func(vw, funcva):
+    """Get vivisect disassembly for a function
 
     This function gets the size of a function and
     uses that to get a dump of the function disassembly
@@ -125,8 +125,8 @@ def get_comment_for_func(vw, funcva):
     return get_disassembly_output(vw, funcva, funcsize)
 
 
-def get_comment_for_cb(vw, va):
-    """Get a CodeFeature comment for a Code Block
+def get_disassembly_for_cb(vw, va):
+    """Get vivisect disassembly for a for a Code Block
 
     This function gets the size of a code block and
     uses that to get a dump of the code block disassembly
@@ -421,7 +421,7 @@ def get_code_features_for_capa_doc(doc: rd.ResultDocument, extractor):
         comment = f"Basic Block at 0x{addr:08x}@{filemd5} with {len(rules)} features:\n"
         for rule_name in sorted(rules):
             comment += f"  - {rule_name}\n"
-        comment += get_comment_for_cb(file_vw, addr)
+        comment += get_disassembly_for_cb(file_vw, addr)
 
         bytez = get_cb_bytes(file_vw, addr)
         sig = genSigAndMask(addr, bytez, doc.meta.analysis.arch)
@@ -431,7 +431,7 @@ def get_code_features_for_capa_doc(doc: rd.ResultDocument, extractor):
         comment = f"function at 0x{addr:08x}@{filemd5} with {len(rules)} features:\n"
         for rule_name in sorted(rules):
             comment += f"  - {rule_name}\n"
-        comment += get_comment_for_func(file_vw, addr)
+        comment += get_disassembly_for_func(file_vw, addr)
 
         bytez = get_function_bytes(file_vw, addr)
         sig = genSigAndMask(addr, bytez, doc.meta.analysis.arch)
