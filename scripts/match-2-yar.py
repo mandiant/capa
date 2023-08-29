@@ -155,19 +155,30 @@ def get_function_size(vw, funcva):
         int: size of the function
     """
     fsize = 0
-    if funcva not in vw.getFunctions():
-        funcva = vw.getFunction(funcva)
-        if funcva is None:
-            raise Exception("Given funcva not a function or within a known function")
-    func_blocks = [cbva for cbva, _, _ in vw.getFunctionBlocks(funcva)]
+    # Get the effective function given a virtual address
+    effective_funcva = vw.getFunction(funcva)
+    if effective_funcva is None:
+        raise Exception("Given funcva not a function or within a known function")
+    # These should only disagree if the funcva provided
+    # wasn't the start of a function
+    if effective_funcva != funcva:
+        logger.debug("Requested function addr %s was contained in function %s", hex(funcva), hex(effective_funcva))
+
+    # Get the blocks of the effective function
+    func_blocks = [cbva for cbva, _, _ in vw.getFunctionBlocks(effective_funcva)]
+
     # Figure out the size of the first linear chunk
-    # in this function...
+    # in this function.
+    # Note: if funcva isn't the start of the function (funcva != effective_funcva)
+    # Then we'll get everything from funcva and after
     cb = vw.getCodeBlock(funcva)
     if cb[0] not in func_blocks:
-        raise Exception("funcva not in given func")
+        raise Exception(
+            "Provided funcva not in effective func [funcva=%s, effective_funcva=%s]", hex(funcva), hex(effective_funcva)
+        )
     while cb is not None:
         cbva, cbsize, cbfunc = cb
-        if cbfunc != funcva:
+        if cbfunc != effective_funcva:
             break
         fsize += cbsize
         cb = vw.getCodeBlock(cbva + cbsize)
