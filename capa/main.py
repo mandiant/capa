@@ -1021,7 +1021,7 @@ def collect_metadata(
             md5=md5,
             sha1=sha1,
             sha256=sha256,
-            path=str(Path(sample_path).resolve()),
+            path=Path(sample_path).resolve().as_posix(),
         ),
         flavor=flavor,
         analysis=get_sample_analysis(
