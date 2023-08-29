@@ -94,6 +94,8 @@ dev = [
     "types-psutil==5.8.23",
     "types_requests==2.31.0.2",
     "types-protobuf==4.23.0.3",
+]
+scripts = [
     "yaramod==3.20.1",
     "mkYARA==1.0.0",
 ]

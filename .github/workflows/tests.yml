@@ -125,7 +125,7 @@ jobs:
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       if: ${{ env.BN_SERIAL != 0 }}
-      run: pip install -e .[dev]
+      run: pip install -e .[dev,scripts]
     - name: install Binary Ninja
       if: ${{ env.BN_SERIAL != 0 }}
       run: |
