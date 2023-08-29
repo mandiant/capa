@@ -94,7 +94,7 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: pip install -e .[dev]
+      run: pip install -e .[dev,scripts]
     - name: Run tests
       run: pytest -v tests/
 
