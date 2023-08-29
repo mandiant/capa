@@ -197,15 +197,18 @@ class InvalidRuleSet(ValueError):
 
 
 # COM data source https://github.com/stevemk14ebr/COM-Code-Helper/tree/master
-CD = Path(__file__).resolve().parent.parent.parent
 VALID_COM_TYPES = {
-    "class": CD / "assets" / "classes.json.gz",
-    "interface": CD / "assets" / "interfaces.json.gz",
+    "class": {"db_path": "assets/classes.json.gz", "prefix": "CLSID_"},
+    "interface": {"db_path": "assets/interfaces.json.gz", "prefix": "IID_"},
 }
 
 
 def translate_com_feature(com_name: str, com_type: str) -> ceng.Or:
-    com_db_path = Path(VALID_COM_TYPES[com_type])
+    if com_type not in VALID_COM_TYPES:
+        raise InvalidRule(f"Invalid COM type present {com_type}")
+
+    CD = Path(__file__).resolve().parent.parent.parent
+    com_db_path = CD / VALID_COM_TYPES[com_type]["db_path"]
     if not com_db_path.exists():
         logger.error("Using COM %s database '%s', but it doesn't exist", com_type, com_db_path)
         raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
@@ -240,8 +243,9 @@ def translate_com_feature(com_name: str, com_type: str) -> ceng.Or:
             h[15],
         ]
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
-        com_features.append(capa.features.common.StringFactory(guid_string, f"{com_name} as guid string"))
-        com_features.append(capa.features.common.Bytes(guid_bytes, f"{com_name} as bytes"))
+        prefix = VALID_COM_TYPES[com_type]["prefix"]
+        com_features.append(capa.features.common.StringFactory(guid_string, f"{prefix+com_name} as guid string"))
+        com_features.append(capa.features.common.Bytes(guid_bytes, f"{prefix+com_name} as bytes"))
     return ceng.Or(com_features)
 
 
