@@ -19,17 +19,17 @@ jobs:
     steps:
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it and copies all sources into ZIP file for submitting for analysis. Replace this section with your applications build steps
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@master
       with:
         repository: ''
 
-    - uses: vimtor/action-zip@v1
+    - uses: vimtor/action-zip@master
       with:
         files: /
         recursive: true
         dest: veracode-pipeline-scan-results-to-sarif.zip
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@master
       with:
         name: my-artifact
         path: veracode-pipeline-scan-results-to-sarif.zip
@@ -40,12 +40,13 @@ jobs:
         args: -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
     - run: unzip -o pipeline-scan-LATEST.zip
 
-    - uses: actions/setup-java@v2
+    - uses: actions/setup-java@master
       with:
+        distribution: 'ubuntu-latest'
         java-version: 1.8
     - run: java -jar pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --fail_on_severity="Very High, High" --file veracode-pipeline-scan-results-to-sarif.zip
       continue-on-error: true
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@master
       with:
         name: ScanResults
         path: results.json
@@ -54,7 +55,7 @@ jobs:
       uses: veracode/veracode-pipeline-scan-results-to-sarif@master
       with:
         pipeline-results-json: results.json
-    - uses: github/codeql-action/upload-sarif@v2
+    - uses: github/codeql-action/upload-sarif@master
       with:
         # Path to SARIF file relative to the root of the repository
         sarif_file: veracode-results.sarif
