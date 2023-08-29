@@ -83,77 +83,81 @@ To view the usage and help statement, the syntax is:
 
 **Example Output: Shellcode & -vv flag**
 ```
-$ analyzeHeadless /home/wampus test -process Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ -PostScript capa_ghidra.py "/home/wampus/capa/rules -vv"
+$ analyzeHeadless ~/Desktop/ghidra_projects/ capa_test -process 499c2a85f6e8142c3f48d4251c9c7cd6.raw32 -processor x86:LE:32:default -ScriptPath ./capa/ghidra/ -PostScript capa_ghidra.py "./rules -vv"
 [...]
-INFO  REPORT: Analysis succeeded for file: /Practical Malware Analysis Lab 01-01.dll_ (HeadlessAnalyzer)  
-INFO  SCRIPT: /ghidra_scripts/capa_ghidra.py (HeadlessAnalyzer)  
-md5                     290934c61de9176ad682ffdd65f0a669                                                                                                                                                                                                   
+INFO  REPORT: Analysis succeeded for file: /499c2a85f6e8142c3f48d4251c9c7cd6.raw32 (HeadlessAnalyzer)  
+INFO  SCRIPT: /home/wumbo/capa/./capa/ghidra/capa_ghidra.py (HeadlessAnalyzer)  
+md5                     499c2a85f6e8142c3f48d4251c9c7cd6                                                                                                                                                                                                    
 sha1
-sha256                  f50e42c8dfaab649bde0398867e930b86c2a599e8db83b8260393082268f2dba
-path                    /home/spring/Documents/capa/tests/data/Practical Malware Analysis Lab 01-01.dll_
-timestamp               2023-08-25 15:40:39.990986
-capa version            6.0.0
-os                      windows
-format                  Portable Executable (PE)
+sha256                  e8e02191c1b38c808d27a899ac164b3675eb5cadd3a8907b0ffa863714000e72
+path                    /home/wumbo/capa/./tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32
+timestamp               2023-08-29 17:57:00.946588
+capa version            6.1.0
+os                      unknown os
+format                  Raw Binary
 arch                    x86
 extractor               ghidra
 base address            global
-rules                   /home/spring/Documents/capa/rules
-function count          5
+rules                   /home/wumbo/capa/rules
+function count          42
 library function count  0
-total feature count     376
+total feature count     1970
 
-contain loop (3 matches, only showing first match of library rule)
+contain loop (24 matches, only showing first match of library rule)
 author  moritz.raabe@mandiant.com
 scope   function
-function @ 0x10001010
+function @ 0x0
   or:
-    characteristic: loop @ 0x10001010
+    characteristic: loop @ 0x0
+    characteristic: tight loop @ 0x278
 
-delay execution (2 matches, only showing first match of library rule)
-author      michael.hunhoff@mandiant.com, @ramen0x3f
-scope       basic block
-mbc         Anti-Behavioral Analysis::Dynamic Analysis Evasion::Delayed Execution [B0003.003]
-references  https://docs.microsoft.com/en-us/windows/win32/sync/wait-functions, https://github.com/LordNoteworthy/al-khaser/blob/master/al-khaser/TimingAttacks/timing.cpp
-basic block @ 0x10001154 in function 0x10001010
-  or:
-    and:
-      os: windows
-      or:
-        api: kernel32.Sleep @ 0x10001159
-
-check mutex
-namespace  host-interaction/mutex
-author     moritz.raabe@mandiant.com, anushka.virgaonkar@mandiant.com
-scope      basic block
-mbc        Process::Check Mutex [C0043]
-basic block @ 0x1000102E in function 0x10001010
-  and:
-    or:
-      api: kernel32.OpenMutex @ 0x10001059
-
-create mutex
-namespace  host-interaction/mutex
-author     moritz.raabe@mandiant.com, michael.hunhoff@mandiant.com
-scope      function
-mbc        Process::Create Mutex [C0042]
-function @ 0x10001010
-  or:
-    api: kernel32.CreateMutex @ 0x1000106E
-
-create process on Windows
-namespace  host-interaction/process/create
+contain obfuscated stackstrings
+namespace  anti-analysis/obfuscation/string/stackstring
 author     moritz.raabe@mandiant.com
 scope      basic block
-mbc        Process::Create Process [C0017]
-basic block @ 0x10001179 in function 0x10001010
+att&ck     Defense Evasion::Obfuscated Files or Information::Indicator Removal from Tools [T1027.005]
+mbc        Anti-Static Analysis::Executable Code Obfuscation::Argument Obfuscation [B0032.020], Anti-Static Analysis::Executable Code Obfuscation::Stack Strings [B0032.017]
+basic block @ 0x0 in function 0x0
+  characteristic: stack string @ 0x0
+
+encode data using XOR
+namespace  data-manipulation/encoding/xor
+author     moritz.raabe@mandiant.com
+scope      basic block
+att&ck     Defense Evasion::Obfuscated Files or Information [T1027]
+mbc        Defense Evasion::Obfuscated Files or Information::Encoding-Standard Algorithm [E1027.m02], Data::Encode Data::XOR [C0026.002]
+basic block @ 0x8AF in function 0x8A1
+  and:
+    characteristic: tight loop @ 0x8AF
+    characteristic: nzxor @ 0x8C0
+    not: = filter for potential false positives
+      or:
+        or: = unsigned bitwise negation operation (~i)
+          number: 0xFFFFFFFF = bitwise negation for unsigned 32 bits
+          number: 0xFFFFFFFFFFFFFFFF = bitwise negation for unsigned 64 bits
+        or: = signed bitwise negation operation (~i)
+          number: 0xFFFFFFF = bitwise negation for signed 32 bits
+          number: 0xFFFFFFFFFFFFFFF = bitwise negation for signed 64 bits
+        or: = Magic constants used in the implementation of strings functions.
+          number: 0x7EFEFEFF = optimized string constant for 32 bits
+          number: 0x81010101 = -0x81010101 = 0x7EFEFEFF
+          number: 0x81010100 = 0x81010100 = ~0x7EFEFEFF
+          number: 0x7EFEFEFEFEFEFEFF = optimized string constant for 64 bits
+          number: 0x8101010101010101 = -0x8101010101010101 = 0x7EFEFEFEFEFEFEFF
+          number: 0x8101010101010100 = 0x8101010101010100 = ~0x7EFEFEFEFEFEFEFF
+
+get OS information via KUSER_SHARED_DATA
+namespace   host-interaction/os/version
+author      @mr-tz
+scope       function
+att&ck      Discovery::System Information Discovery [T1082]
+references  https://www.geoffchappell.com/studies/windows/km/ntoskrnl/inc/api/ntexapi_x/kuser_shared_data/index.htm
+function @ 0x1CA6
   or:
-    api: kernel32.CreateProcess @ 0x100011AF
+    number: 0x7FFE026C = NtMajorVersion @ 0x1D18
 
 
 
-Script /ghidra_scripts/capa_ghidra.py called exit with code 0
-INFO  ANALYZING changes made by post scripts: /Practical Malware Analysis Lab 01-01.dll_ (HeadlessAnalyzer)  
-
+Script /home/wumbo/capa/./capa/ghidra/capa_ghidra.py called exit with code 0
 [...]
 ```
