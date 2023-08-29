@@ -1,61 +1,58 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
 # This workflow will initiate a Veracode Static Analysis Pipeline scan, return a results.json and convert to SARIF for upload as a code scanning alert
 
 name: Veracode Static Analysis Pipeline Scan
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches: [ master ]
   pull_request:
+    # The branches below must be a subset of the branches above
     branches: [ master ]
+  schedule:
+    - cron: '35 1 * * 5'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  contents: read
+
 jobs:
   # This workflow contains a job to build and submit pipeline scan, you will need to customize the build process accordingly and make sure the artifact you build is used as the file input to the pipeline scan file parameter
   build-and-pipeline-scan:
     # The type of runner that the job will run on
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     runs-on: ubuntu-latest
     steps:
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it and copies all sources into ZIP file for submitting for analysis. Replace this section with your applications build steps
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
       with:
         repository: ''
 
-    - uses: vimtor/action-zip@master
-      with:
-        files: /
-        recursive: true
-        dest: veracode-pipeline-scan-results-to-sarif.zip
-
-    - uses: actions/upload-artifact@master
-      with:
-        name: my-artifact
-        path: veracode-pipeline-scan-results-to-sarif.zip
+    - run: zip -r veracode-scan-target.zip ./
 
     # download the Veracode Static Analysis Pipeline scan jar
-    - uses: wei/curl@master
-      with:
-        args: -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+    - run: curl --silent --show-error --fail -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
     - run: unzip -o pipeline-scan-LATEST.zip
 
-    - uses: actions/setup-java@master
+    - uses: actions/setup-java@main
       with:
-        distribution: 'ubuntu-latest'
-        java-version: 1.8
-    - run: java -jar pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --fail_on_severity="Very High, High" --file veracode-pipeline-scan-results-to-sarif.zip
+        java-version: 8
+        distribution: 'temurin'
+    - run: java -jar pipeline-scan.jar --veracode_api_id "${{secrets.VERACODE_API_ID}}" --veracode_api_key "${{secrets.VERACODE_API_KEY}}" --fail_on_severity="Very High, High" --file veracode-scan-target.zip
       continue-on-error: true
-    - uses: actions/upload-artifact@master
-      with:
-        name: ScanResults
-        path: results.json
     - name: Convert pipeline scan output to SARIF format
       id: convert
-      uses: veracode/veracode-pipeline-scan-results-to-sarif@master
+      uses: veracode/veracode-pipeline-scan-results-to-sarif@37a60a38fedd7712b5e7bdfd41cc6bf5843a6791
       with:
         pipeline-results-json: results.json
-    - uses: github/codeql-action/upload-sarif@master
+    - uses: github/codeql-action/upload-sarif@v2
       with:
         # Path to SARIF file relative to the root of the repository
         sarif_file: veracode-results.sarif
