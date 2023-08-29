@@ -95,6 +95,8 @@ def render_static_meta(ostream, meta: rd.Metadata):
         function count       42
         total feature count  1918
     """
+
+    assert isinstance(doc.meta.analysis, rd.DynamicAnalysis)
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
