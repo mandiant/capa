@@ -4,9 +4,13 @@
 
 The Ghidra feature extractor is an application of the FLARE team's open-source project, Ghidrathon, to integrate capa with Ghidra using Python 3. capa is a framework that uses a well-defined collection of rules to identify capabilities in a program. You can run capa against a PE file, ELF file, or shellcode and it tells you what it thinks the program can do. For example, it might suggest that the program is a backdoor, can install services, or relies on HTTP to communicate. The Ghidra feature extractor can be used to run capa analysis on your Ghidra databases without needing access to the original binary file.
 
+<img src="/doc/img/ghidra_script_mngr_output.png">
+
 ## Getting Started
 
 ### Installation
+
+Please ensure that you have the following dependencies installed before continuing:
 
 | Dependency | Version | Source |
 |------------|---------|--------|
@@ -14,83 +18,87 @@ The Ghidra feature extractor is an application of the FLARE team's open-source p
 | Python | `>= 3.8` | https://www.python.org/downloads |
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
 
-In order to run capa using the Ghidra feature extractor, you must install capa as a library and obtain the official capa rules that match the version you have installed. You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
+In order to run capa using using Ghidra, you must install capa as a library, obtain the official capa rules that match the capa version you have installed, and configure the Python 3 script [capa_ghidra.py](/capa/ghidra/capa_ghidra.py). You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
 
-1. Install capa and its dependencies from PyPI:
+1. Install capa and its dependencies from PyPI using the following command:
 ```bash
 $ pip install flare-capa
 ```
 
-2. Download and extract the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match the version you have installed
-   1. Use the following command to view the version of capa you have installed:
+2. Download and extract the [official capa rules](https://github.com/mandiant/capa-rules/releases) that match the capa version you have installed. Use the following command to view the version of capa you have installed:
 ```bash
 $ pip show flare-capa
 OR
 $ capa --version
 ```
 
-3. Copy `capa_ghidra.py`, found [here](/capa/ghidra/capa_ghidra.py), to your `$USER_HOME/ghidra_scripts` directory OR manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
-   1. This entrypoint script is located in `capa_install_dir/capa/ghidra/`
+3. Copy [capa_ghidra.py](/capa/ghidra/capa_ghidra.py) to your `$USER_HOME/ghidra_scripts` directory or manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
 
-Once Ghidrathon is configured, you may now invoke capa from within Ghidra in two different ways. These include Ghidra's Headless Analyzer and Script Manager.
+## Usage
 
-## Running capa with the Ghidra feature extractor
+After completing the installation steps you can execute `capa_ghidra.py` using the Ghidra Script Manager or Headless Analyzer.
 
-### Ghidra's Script Manager
+### Ghidra Script Manager
 
-To invoke capa from the `Ghidra Script Manager`, open your Ghidra Project's Code Browser and open the `Script Manager` window by navigating to `Window -> Script Manager`. Select `capa_ghidra.py` and run the script. capa will then prompt you to choose a `rules` directory and specify the output verbosity level. 
-> **Note:** In order for the Script Manager to recognize `capa_ghidra.py` you must either copy it to your `$USER_HOME/ghidra_scripts` directory or update the Script Manager search path to include the directory that contains it.
+To execute `capa_ghidra.py` using the Ghidra Script Manager, first open the Ghidra Script Manager by navigating to `Window > Script Manager` in the Ghidra Code Browser. Next, locate `capa_ghidra.py` by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search funtionality. Finally, double-click `capa_ghidra.py` to execute the script. If you don't see `capa_ghidra.py`, make sure you have copied the script to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager
 
-<div align="center">
-    <img src="/doc/img/ghidra_script_mngr_rules.png">
-    <img src="/doc/img/ghidra_script_mngr_verbosity.png">
-    <img src="/doc/img/ghidra_script_mngr_output.png">
-</div>
+When executed, `capa_ghidra.py` asks you to provide your capa rules directory and preferred output format. `capa_ghidra.py` supports `default`, `verbose`, and `vverbose` output formats when executed from the Ghidra Script Manager. `capa_ghidra.py` writes output to the Ghidra Console Window.
 
-### Ghidra's Headless Analyzer
+#### Example
 
-To invoke capa using the Ghidra Headless Analyzer, you can use Ghidra's `analyzeHeadless` script, located in your `$GHIDRA_INSTALL_DIR/support` directory.
+The following is an example of running `capa_ghidra.py` using the Ghidra Script Manager:
 
-`analyzeHeadless` requires these arguments to invoke capa:
-1. `/path/to/ghidra/project ghidra_project_name`
-2. `-process sample.exe_` OR `-Import /path/to/sample/sample.exe_`
-3. `-ScriptPath /path/to/capa_ghidra/`
-4. `-PostScript capa_ghidra.py`
-5. `"/path/to/rules/ <args_to_capa>"`
-> `"/path/to/rules/ <args_to_capa>"` must be provided in a single, space-delimited string. The help statement, normally accessed via `-h or --help`, must be accessed using the keyword `help` instead. 
+Selecting capa rules:
+<img src="/doc/img/ghidra_script_mngr_rules.png">
 
-To run capa against shellcode, Ghidra will require an additional argument to be passed to the Headless Analyzer. `-processor <languageID>` is used to specify the architecture in which Ghidra will process the sample.
-> **Note:** More information on specifying the languageID can be found in the `$GHIDRA_INSTALL_DIR/support/analyzeHeadlessREADME.html` documentation.
+Choosing output format:
+<img src="/doc/img/ghidra_script_mngr_verbosity.png">
 
-The syntax is as so:
-```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -process sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "/path/to/rules/ -vv"
+Viewing results in Ghidra Console Window:
+<img src="/doc/img/ghidra_script_mngr_output.png">
+
+### Ghidra Headless Analyzer
+
+To execute `capa_ghidra.py` using the Ghidra Headless Analyzer, you can use the Ghidra `analyzeHeadless` script located in your `$GHIDRA_HOME/support` directory. You will need to provide the following arguments to the Ghidra `analyzeHeadless` script:
+
+1. `</path/to/ghidra/project/>`: path to Ghidra project
+2. `<ghidra_project_name>`: name of Ghidra Project
+3. `-process <sample_name>`: name of sample `<sample_name>`
+4. `-ScriptPath </path/to/capa_ghidra/>`: OPTIONAL argument specifying path `</path/to/capa_ghidra/>` to `capa_ghidra.py`
+5. `-PostScript capa_ghidra.py`: executes `capa_ghidra.py` as post-analysis script
+6. `"<capa_args>"`: single, quoted string containing capa arguments that must specify capa rules directory and output format, e.g. `"<path/to/capa/rules> --verbose"`. `capa_ghidra.py` supports `default`, `verbose`, `vverbose` and `json` formats when executed using the Ghidra Headless Analyzer. `capa_ghidra.py` writes output to the console window used to execute the Ghidra `analyzeHeadless` script.
+7. `-processor <languageID>`: required ONLY if sample `<sample_name>` is shellcode. More information on specifying the `<languageID>` can be found in the `$GHIDRA_HOME/support/analyzeHeadlessREADME.html` documentation.
+
+The following is an example of combining these arguments into a single `analyzeHeadless` script command:
+
 ```
-> **Note:** You may add the `$GHIDRA_INSTALL_DIR/support` to your `$PATH` in order to call `analyzeHeadless` as a standalone program.
-
-If you do not have an existing Ghidra project, you may also create one with the Headless Analyzer via the `-Import` flag. Post scripts may also be ran in the same invocation.
-
-The syntax to both import a new file and run capa against it is:
-```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -Import /path/to/sample/sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "/path/to/rules/"
-```
-> **Note:** The `/path/to/ghidra/project/` must exist before importing a new project into it.
-
-To view the usage and help statement, the syntax is:
-```bash
-./$GHIDRA_INSTALL_DIR/support/analyzeHeadless /path/to/ghidra/project/ ghidra_project_name -process sample.exe_ -ScriptPath /path/to/capa_ghidra/ -PostScript capa_ghidra.py "help"
+$GHIDRA_HOME/support/analyzeHeadless </path/to/ghidra/project/> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "/path/to/capa/rules/ --verbose"
 ```
 
-**Example Output: Shellcode & -vv flag**
+You may also want to run capa against a sample that you have not yet imported into your Ghidra project. The following is an example of importing a sample and running `capa_ghidra.py` using a single `analyzeHeadless` script command:
+
 ```
-$ analyzeHeadless ~/Desktop/ghidra_projects/ capa_test -process 499c2a85f6e8142c3f48d4251c9c7cd6.raw32 -processor x86:LE:32:default -ScriptPath ./capa/ghidra/ -PostScript capa_ghidra.py "./rules -vv"
+$GHIDRA_HOME/support/analyzeHeadless </path/to/ghidra/project/> <ghidra_project_name> -Import </path/to/sample> -PostScript capa_ghidra.py "/path/to/capa/rules/ --verbose"
+```
+
+You can also provide `capa_ghidra.py` the single argument `"help"` to view supported arguments when running the script using the Ghidra Headless Analyzer:
+```
+$GHIDRA_HOME/support/analyzeHeadless </path/to/ghidra/project/> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "help"
+```
+
+#### Example
+
+The following is an example of running `capa_ghidra.py` against a shellcode sample using the Ghidra `analyzeHeadless` script:
+```
+$ analyzeHeadless /home/wumbo/Desktop/ghidra_projects/ capa_test -process 499c2a85f6e8142c3f48d4251c9c7cd6.raw32 -processor x86:LE:32:default -PostScript capa_ghidra.py "/home/wumbo/capa/rules -vv"
 [...]
+
 INFO  REPORT: Analysis succeeded for file: /499c2a85f6e8142c3f48d4251c9c7cd6.raw32 (HeadlessAnalyzer)  
-INFO  SCRIPT: /home/wumbo/capa/./capa/ghidra/capa_ghidra.py (HeadlessAnalyzer)  
+INFO  SCRIPT: /home/wumbo/ghidra_scripts/capa_ghidra.py (HeadlessAnalyzer)  
 md5                     499c2a85f6e8142c3f48d4251c9c7cd6                                                                                                                                                                                                    
 sha1
 sha256                  e8e02191c1b38c808d27a899ac164b3675eb5cadd3a8907b0ffa863714000e72
-path                    /home/wumbo/capa/./tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32
+path                    /home/wumbo/capa/tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32
 timestamp               2023-08-29 17:57:00.946588
 capa version            6.1.0
 os                      unknown os
@@ -158,6 +166,7 @@ function @ 0x1CA6
 
 
 
-Script /home/wumbo/capa/./capa/ghidra/capa_ghidra.py called exit with code 0
+Script /home/wumbo/ghidra_scripts/capa_ghidra.py called exit with code 0
+
 [...]
 ```
