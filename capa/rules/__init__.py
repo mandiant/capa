@@ -244,7 +244,7 @@ def translate_com_feature(com_name: str, com_type: str) -> ceng.Or:
         ]
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
         prefix = VALID_COM_TYPES[com_type]["prefix"]
-        com_features.append(capa.features.common.StringFactory(guid_string, f"{prefix+com_name} as guid string"))
+        com_features.append(capa.features.common.StringFactory(guid_string, f"{prefix+com_name} as GUID string"))
         com_features.append(capa.features.common.Bytes(guid_bytes, f"{prefix+com_name} as bytes"))
     return ceng.Or(com_features)
 
