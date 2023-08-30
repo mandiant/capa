@@ -3,6 +3,8 @@
 ## master (unreleased)
 
 ### New Features
+- ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
+- ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 
 ### Breaking Changes
 
@@ -11,6 +13,7 @@
 -
 
 ### Bug Fixes
+- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
 
 ### capa explorer IDA Pro plugin
 
