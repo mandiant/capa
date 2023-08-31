@@ -43,6 +43,14 @@ def is_runtime_ida():
     return importlib.util.find_spec("idc") is not None
 
 
+def is_runtime_ghidra():
+    try:
+        currentProgram  # type: ignore [name-defined] # noqa: F821
+    except NameError:
+        return False
+    return True
+
+
 def assert_never(value) -> NoReturn:
     # careful: python -O will remove this assertion.
     # but this is only used for type checking, so it's ok.

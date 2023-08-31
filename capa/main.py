@@ -97,6 +97,7 @@ E_INVALID_FILE_TYPE = 16
 E_INVALID_FILE_ARCH = 17
 E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
+E_UNSUPPORTED_GHIDRA_VERSION = 20
 
 logger = logging.getLogger("capa")
 
@@ -256,6 +257,11 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
             pbar = tqdm.tqdm
+            if capa.helpers.is_runtime_ghidra():
+                # Ghidrathon interpreter cannot properly handle
+                # the TMonitor thread that is created via a monitor_interval
+                # > 0
+                pbar.monitor_interval = 0
             if disable_progress:
                 # do not use tqdm to avoid unnecessary side effects when caller intends
                 # to disable progress completely
@@ -1338,8 +1344,47 @@ def ida_main():
     print(capa.render.default.render(meta, rules, capabilities))
 
 
+def ghidra_main():
+    import capa.rules
+    import capa.ghidra.helpers
+    import capa.render.default
+    import capa.features.extractors.ghidra.extractor
+
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
+
+    logger.debug("-" * 80)
+    logger.debug(" Using default embedded rules.")
+    logger.debug(" ")
+    logger.debug(" You can see the current default rule set here:")
+    logger.debug("     https://github.com/mandiant/capa-rules")
+    logger.debug("-" * 80)
+
+    rules_path = get_default_root() / "rules"
+    logger.debug("rule path: %s", rules_path)
+    rules = get_rules([rules_path])
+
+    meta = capa.ghidra.helpers.collect_metadata([rules_path])
+
+    capabilities, counts = find_capabilities(
+        rules,
+        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
+        not capa.ghidra.helpers.is_running_headless(),
+    )
+
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
+
+    if has_file_limitation(rules, capabilities, is_standalone=False):
+        logger.info("capa encountered warnings during analysis")
+
+    print(capa.render.default.render(meta, rules, capabilities))
+
+
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
+    elif capa.helpers.is_runtime_ghidra():
+        ghidra_main()
     else:
         sys.exit(main())
