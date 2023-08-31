@@ -85,7 +85,7 @@ def test_bulk_process(tmp_path):
         pytest.param(
             "match-2-yar.py",
             [get_data_path("9324d1a8ae37a36ae560c37448c9705a.exe_")],
-            "yara/expected_9324d1a8ae37a36ae560c37448c9705a.exe_.yar",
+            "yara/expected_9324d1a8ae37a36ae560c37448c9705a.yar",
         ),
         # Test match-2-yar x64 EXE
         pytest.param(
@@ -101,7 +101,7 @@ def test_bulk_process(tmp_path):
                 "dotnet",
                 get_data_path("dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_"),
             ],
-            "yara/expected_1c444ebeba24dcba8628b7dfe5fec7c6.exe_.yar",
+            "yara/expected_1c444ebeba24dcba8628b7dfe5fec7c6.yar",
         ),
         # Test match-2-yar files with multiple X86 PEs
         pytest.param(
@@ -111,7 +111,7 @@ def test_bulk_process(tmp_path):
                 get_data_path("Practical Malware Analysis Lab 11-03.exe_"),
                 get_data_path("Practical Malware Analysis Lab 16-01.exe_"),
             ],
-            "yara/expected_pma_03-04.exe_11-03.exe_16-01.exe",
+            "yara/expected_pma_03-04_11-03_16-01.yar",
         ),
         # Test match-2-yar files with CAPA file limitations are filtered out of multi sample
         pytest.param(
@@ -120,7 +120,7 @@ def test_bulk_process(tmp_path):
                 get_data_path("Practical Malware Analysis Lab 01-01.exe_"),
                 get_data_path("Practical Malware Analysis Lab 01-02.exe_"),
             ],
-            "yara/expected_pma_01-01.exe_01-02.exe",
+            "yara/expected_pma_01-01_01-02.yar",
         ),
         # Test match-2-yar multiple x86 .NET PE
         pytest.param(
