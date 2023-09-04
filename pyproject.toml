@@ -98,7 +98,7 @@ dev = [
 build = [
     "pyinstaller==5.10.1",
     "setuptools==68.0.0",
-    "build==0.10.0"
+    "build==1.0.0"
 ]
 
 [project.urls]
