@@ -423,7 +423,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     # Mypy is unable to recognise `global_` as a argument due to alias
 
     freeze = Freeze(
-        version=2,
+        version=3,
         base_address=Address.from_capa(extractor.get_base_address()),
         sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
@@ -527,7 +527,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     base_addr = get_base_addr() if get_base_addr else capa.features.address.NO_ADDRESS
 
     freeze = Freeze(
-        version=2,
+        version=3,
         base_address=Address.from_capa(base_addr),
         sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
