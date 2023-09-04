@@ -1087,7 +1087,6 @@ def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities
     otherwise, we may pollute the json document with
     a large amount of un-referenced data.
     """
-    assert isinstance(extractor, StaticFeatureExtractor)
     functions_by_bb: Dict[Address, Address] = {}
     bbs_by_function: Dict[Address, List[Address]] = {}
     for f in extractor.get_functions():
