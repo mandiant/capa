@@ -1,6 +1,7 @@
 [submodule "rules"]
 	path = rules
 	url = ../capa-rules.git
+	branch = dynamic-syntax
 [submodule "tests/data"]
 	path = tests/data
 	url = ../capa-testfiles.git
