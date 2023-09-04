@@ -541,7 +541,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
 def loads_static(s: str) -> StaticFeatureExtractor:
     """deserialize a set of features (as a NullStaticFeatureExtractor) from a string."""
     freeze = Freeze.model_validate_json(s)
-    if freeze.version != 2:
+    if freeze.version != 3:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert isinstance(freeze.features, StaticFeatures)
@@ -574,7 +574,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
 def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     """deserialize a set of features (as a NullDynamicFeatureExtractor) from a string."""
     freeze = Freeze.parse_raw(s)
-    if freeze.version != 2:
+    if freeze.version != 3:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert isinstance(freeze.features, DynamicFeatures)
