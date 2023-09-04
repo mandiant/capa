@@ -145,7 +145,7 @@ def find_instruction_capabilities(
     returns: tuple containing (features for instruction, match results for instruction)
     """
     # all features found for the instruction.
-    features = collections.defaultdict(set)  # type: FeatureSet
+    features: FeatureSet = collections.defaultdict(set)
 
     for feature, addr in itertools.chain(
         extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
@@ -173,11 +173,11 @@ def find_basic_block_capabilities(
     """
     # all features found within this basic block,
     # includes features found within instructions.
-    features = collections.defaultdict(set)  # type: FeatureSet
+    features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the instruction scope.
     # might be found at different instructions, thats ok.
-    insn_matches = collections.defaultdict(list)  # type: MatchResults
+    insn_matches: MatchResults = collections.defaultdict(list)
 
     for insn in extractor.get_instructions(f, bb):
         ifeatures, imatches = find_instruction_capabilities(ruleset, extractor, f, bb, insn)
@@ -213,15 +213,15 @@ def find_code_capabilities(
     """
     # all features found within this function,
     # includes features found within basic blocks (and instructions).
-    function_features = collections.defaultdict(set)  # type: FeatureSet
+    function_features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the basic block scope.
     # might be found at different basic blocks, thats ok.
-    bb_matches = collections.defaultdict(list)  # type: MatchResults
+    bb_matches: MatchResults = collections.defaultdict(list)
 
     # matches found at the instruction scope.
     # might be found at different instructions, thats ok.
-    insn_matches = collections.defaultdict(list)  # type: MatchResults
+    insn_matches: MatchResults = collections.defaultdict(list)
 
     for bb in extractor.get_basic_blocks(fh):
         features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, fh, bb)
@@ -242,7 +242,7 @@ def find_code_capabilities(
 
 
 def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
-    file_features = collections.defaultdict(set)  # type: FeatureSet
+    file_features: FeatureSet = collections.defaultdict(set)
 
     for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
         # not all file features may have virtual addresses.
@@ -265,9 +265,9 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 def find_static_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
-    all_function_matches = collections.defaultdict(list)  # type: MatchResults
-    all_bb_matches = collections.defaultdict(list)  # type: MatchResults
-    all_insn_matches = collections.defaultdict(list)  # type: MatchResults
+    all_function_matches: MatchResults = collections.defaultdict(list)
+    all_bb_matches: MatchResults = collections.defaultdict(list)
+    all_insn_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
@@ -328,7 +328,7 @@ def find_static_capabilities(
 
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
-    function_and_lower_features = collections.defaultdict(set)  # type: FeatureSet
+    function_and_lower_features: FeatureSet = collections.defaultdict(set)
     for rule_name, results in itertools.chain(
         all_function_matches.items(), all_bb_matches.items(), all_insn_matches.items()
     ):
@@ -368,7 +368,7 @@ def find_call_capabilities(
     returns: tuple containing (features for call, match results for call)
     """
     # all features found for the call.
-    features = collections.defaultdict(set)  # type: FeatureSet
+    features: FeatureSet = collections.defaultdict(set)
 
     for feature, addr in itertools.chain(
         extractor.extract_call_features(ph, th, ch), extractor.extract_global_features()
@@ -396,11 +396,11 @@ def find_thread_capabilities(
     """
     # all features found within this thread,
     # includes features found within calls.
-    features = collections.defaultdict(set)  # type: FeatureSet
+    features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the call scope.
     # might be found at different calls, thats ok.
-    call_matches = collections.defaultdict(list)  # type: MatchResults
+    call_matches: MatchResults = collections.defaultdict(list)
 
     for ch in extractor.get_calls(ph, th):
         ifeatures, imatches = find_call_capabilities(ruleset, extractor, ph, th, ch)
@@ -434,15 +434,15 @@ def find_process_capabilities(
     """
     # all features found within this process,
     # includes features found within threads (and calls).
-    process_features = collections.defaultdict(set)  # type: FeatureSet
+    process_features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the basic threads.
     # might be found at different threads, thats ok.
-    thread_matches = collections.defaultdict(list)  # type: MatchResults
+    thread_matches: MatchResults = collections.defaultdict(list)
 
     # matches found at the call scope.
     # might be found at different calls, thats ok.
-    call_matches = collections.defaultdict(list)  # type: MatchResults
+    call_matches: MatchResults = collections.defaultdict(list)
 
     for th in extractor.get_threads(ph):
         features, tmatches, cmatches = find_thread_capabilities(ruleset, extractor, ph, th)
@@ -465,9 +465,9 @@ def find_process_capabilities(
 def find_dynamic_capabilities(
     ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
-    all_process_matches = collections.defaultdict(list)  # type: MatchResults
-    all_thread_matches = collections.defaultdict(list)  # type: MatchResults
-    all_call_matches = collections.defaultdict(list)  # type: MatchResults
+    all_process_matches: MatchResults = collections.defaultdict(list)
+    all_thread_matches: MatchResults = collections.defaultdict(list)
+    all_call_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
 
@@ -502,7 +502,7 @@ def find_dynamic_capabilities(
 
     # collection of features that captures the rule matches within process and thread scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
-    process_and_lower_features = collections.defaultdict(set)  # type: FeatureSet
+    process_and_lower_features: FeatureSet = collections.defaultdict(set)
     for rule_name, results in itertools.chain(
         all_process_matches.items(), all_thread_matches.items(), all_call_matches.items()
     ):
@@ -902,7 +902,7 @@ def get_rules(
     if ruleset is not None:
         return ruleset
 
-    rules = []  # type: List[Rule]
+    rules: List[Rule] = []
 
     total_rule_count = len(rule_file_paths)
     for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
