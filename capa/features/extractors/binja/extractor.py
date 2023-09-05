@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import List, Tuple, Iterator
-from pathlib import Path
 
 import binaryninja as binja
 
@@ -29,7 +28,7 @@ from capa.features.extractors.base_extractor import (
 
 class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
-        super().__init__(hashes=SampleHashes.from_bytes(Path(bv.file.original_filename).read_bytes()))
+        super().__init__(hashes=SampleHashes.from_bytes(bv.file.raw.read(0, len(bv.file.raw))))
         self.bv = bv
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))

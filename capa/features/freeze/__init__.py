@@ -53,7 +53,6 @@ class AddressType(str, Enum):
     PROCESS = "process"
     THREAD = "thread"
     CALL = "call"
-    DYNAMIC = "dynamic"
     NO_ADDRESS = "no address"
 
 
@@ -424,7 +423,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
     # Mypy is unable to recognise `global_` as a argument due to alias
 
     freeze = Freeze(
-        version=2,
+        version=3,
         base_address=Address.from_capa(extractor.get_base_address()),
         sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
@@ -528,7 +527,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     base_addr = get_base_addr() if get_base_addr else capa.features.address.NO_ADDRESS
 
     freeze = Freeze(
-        version=2,
+        version=3,
         base_address=Address.from_capa(base_addr),
         sample_hashes=extractor.get_sample_hashes(),
         extractor=Extractor(name=extractor.__class__.__name__),
@@ -542,7 +541,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
 def loads_static(s: str) -> StaticFeatureExtractor:
     """deserialize a set of features (as a NullStaticFeatureExtractor) from a string."""
     freeze = Freeze.model_validate_json(s)
-    if freeze.version != 2:
+    if freeze.version != 3:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert isinstance(freeze.features, StaticFeatures)
@@ -575,7 +574,7 @@ def loads_static(s: str) -> StaticFeatureExtractor:
 def loads_dynamic(s: str) -> DynamicFeatureExtractor:
     """deserialize a set of features (as a NullDynamicFeatureExtractor) from a string."""
     freeze = Freeze.parse_raw(s)
-    if freeze.version != 2:
+    if freeze.version != 3:
         raise ValueError(f"unsupported freeze format version: {freeze.version}")
 
     assert isinstance(freeze.features, DynamicFeatures)
@@ -624,11 +623,11 @@ def is_freeze(buf: bytes) -> bool:
     return buf[: len(MAGIC)] == MAGIC
 
 
-def is_static(buf: bytes) -> bool:
+def is_static_freeze(buf: bytes) -> bool:
     return buf[: len(STATIC_MAGIC)] == STATIC_MAGIC
 
 
-def is_dynamic(buf: bytes) -> bool:
+def is_dynamic_freeze(buf: bytes) -> bool:
     return buf[: len(DYNAMIC_MAGIC)] == DYNAMIC_MAGIC
 
 
@@ -636,9 +635,9 @@ def load(buf: bytes):
     """deserialize a set of features (as a NullFeatureExtractor) from a byte array."""
     if not is_freeze(buf):
         raise ValueError("missing magic header")
-    if is_static(buf):
+    if is_static_freeze(buf):
         return loads_static(zlib.decompress(buf[len(STATIC_MAGIC) :]).decode("utf-8"))
-    elif is_dynamic(buf):
+    elif is_dynamic_freeze(buf):
         return loads_dynamic(zlib.decompress(buf[len(DYNAMIC_MAGIC) :]).decode("utf-8"))
     else:
         raise ValueError("invalid magic header")

@@ -412,8 +412,6 @@ class DynamicFeatureExtractor:
         """
         Yields all the features of a process. These include:
         - file features of the process' image
-        - inter-process injection
-        - detected dynamic DLL loading
         """
         raise NotImplementedError()
 
@@ -429,8 +427,6 @@ class DynamicFeatureExtractor:
         """
         Yields all the features of a thread. These include:
         - sequenced api traces
-        - file/registry interactions
-        - network activity
         """
         raise NotImplementedError()
 

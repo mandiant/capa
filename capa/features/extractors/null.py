@@ -59,6 +59,9 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
     def get_base_address(self):
         return self.base_address
 
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
+
     def extract_global_features(self):
         for feature in self.global_features:
             yield feature, NO_ADDRESS
@@ -120,6 +123,9 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     def extract_global_features(self):
         for feature in self.global_features:
             yield feature, NO_ADDRESS
+
+    def get_sample_hashes(self) -> SampleHashes:
+        return self.sample_hashes
 
     def extract_file_features(self):
         for address, feature in self.file_features:

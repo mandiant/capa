@@ -54,10 +54,6 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(token, int)
         assert isinstance(offset, int)
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
-    elif address.type == frz.AddressType.DYNAMIC:
-        assert isinstance(address.value, tuple)
-        ppid, pid, tid, id_, return_address = address.value
-        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}, return address: {capa.helpers.hex(return_address)}"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
         ppid, pid = address.value
@@ -79,7 +75,7 @@ def format_address(address: frz.Address) -> str:
         raise ValueError("unexpected address type")
 
 
-def render_static_meta(ostream, doc: rd.ResultDocument):
+def render_static_meta(ostream, meta: rd.Metadata):
     """
     like:
 
@@ -100,33 +96,33 @@ def render_static_meta(ostream, doc: rd.ResultDocument):
         total feature count  1918
     """
 
-    assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
+    assert isinstance(meta.analysis, rd.StaticAnalysis)
     rows = [
-        ("md5", doc.meta.sample.md5),
-        ("sha1", doc.meta.sample.sha1),
-        ("sha256", doc.meta.sample.sha256),
-        ("path", doc.meta.sample.path),
-        ("timestamp", doc.meta.timestamp),
-        ("capa version", doc.meta.version),
-        ("os", doc.meta.analysis.os),
-        ("format", doc.meta.analysis.format),
-        ("arch", doc.meta.analysis.arch),
-        ("analysis", doc.meta.flavor),
-        ("extractor", doc.meta.analysis.extractor),
-        ("base address", format_address(doc.meta.analysis.base_address)),
-        ("rules", "\n".join(doc.meta.analysis.rules)),
-        ("function count", len(doc.meta.analysis.feature_counts.functions)),
-        ("library function count", len(doc.meta.analysis.library_functions)),
+        ("md5", meta.sample.md5),
+        ("sha1", meta.sample.sha1),
+        ("sha256", meta.sample.sha256),
+        ("path", meta.sample.path),
+        ("timestamp", meta.timestamp),
+        ("capa version", meta.version),
+        ("os", meta.analysis.os),
+        ("format", meta.analysis.format),
+        ("arch", meta.analysis.arch),
+        ("analysis", meta.flavor),
+        ("extractor", meta.analysis.extractor),
+        ("base address", format_address(meta.analysis.base_address)),
+        ("rules", "\n".join(meta.analysis.rules)),
+        ("function count", len(meta.analysis.feature_counts.functions)),
+        ("library function count", len(meta.analysis.library_functions)),
         (
             "total feature count",
-            doc.meta.analysis.feature_counts.file + sum(f.count for f in doc.meta.analysis.feature_counts.functions),
+            meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions),
         ),
     ]
 
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
 
-def render_dynamic_meta(ostream, doc: rd.ResultDocument):
+def render_dynamic_meta(ostream, meta: rd.Metadata):
     """
     like:
 
@@ -145,24 +141,24 @@ def render_dynamic_meta(ostream, doc: rd.ResultDocument):
         total feature count  1918
     """
 
-    assert isinstance(doc.meta.analysis, rd.DynamicAnalysis)
+    assert isinstance(meta.analysis, rd.DynamicAnalysis)
     rows = [
-        ("md5", doc.meta.sample.md5),
-        ("sha1", doc.meta.sample.sha1),
-        ("sha256", doc.meta.sample.sha256),
-        ("path", doc.meta.sample.path),
-        ("timestamp", doc.meta.timestamp),
-        ("capa version", doc.meta.version),
-        ("os", doc.meta.analysis.os),
-        ("format", doc.meta.analysis.format),
-        ("arch", doc.meta.analysis.arch),
-        ("analysis", doc.meta.flavor),
-        ("extractor", doc.meta.analysis.extractor),
-        ("rules", "\n".join(doc.meta.analysis.rules)),
-        ("process count", len(doc.meta.analysis.feature_counts.processes)),
+        ("md5", meta.sample.md5),
+        ("sha1", meta.sample.sha1),
+        ("sha256", meta.sample.sha256),
+        ("path", meta.sample.path),
+        ("timestamp", meta.timestamp),
+        ("capa version", meta.version),
+        ("os", meta.analysis.os),
+        ("format", meta.analysis.format),
+        ("arch", meta.analysis.arch),
+        ("analysis", meta.flavor),
+        ("extractor", meta.analysis.extractor),
+        ("rules", "\n".join(meta.analysis.rules)),
+        ("process count", len(meta.analysis.feature_counts.processes)),
         (
             "total feature count",
-            doc.meta.analysis.feature_counts.file + sum(p.count for p in doc.meta.analysis.feature_counts.processes),
+            meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes),
         ),
     ]
 
@@ -171,9 +167,9 @@ def render_dynamic_meta(ostream, doc: rd.ResultDocument):
 
 def render_meta(osstream, doc: rd.ResultDocument):
     if isinstance(doc.meta.analysis, rd.StaticAnalysis):
-        render_static_meta(osstream, doc)
+        render_static_meta(osstream, doc.meta)
     elif isinstance(doc.meta.analysis, rd.DynamicAnalysis):
-        render_dynamic_meta(osstream, doc)
+        render_dynamic_meta(osstream, doc.meta)
     else:
         raise ValueError("invalid meta analysis")
 
