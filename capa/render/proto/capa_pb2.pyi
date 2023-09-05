@@ -882,11 +882,14 @@ class Metadata(google.protobuf.message.Message):
     @property
     def sample(self) -> global___Sample: ...
     @property
-    def analysis(self) -> global___Analysis: ...
+    def analysis(self) -> global___Analysis:
+        """deprecated in v7.0.
+        use analysis2 instead.
+        """
     flavor: global___Flavor.ValueType
     @property
     def static_analysis(self) -> global___StaticAnalysis:
-        """use analysis2 instead of analysis (deprecated in v7.0)"""
+        """use analysis2 instead of analysis (deprecated in v7.0)."""
     @property
     def dynamic_analysis(self) -> global___DynamicAnalysis: ...
     def __init__(
@@ -1291,7 +1294,9 @@ class RuleMetadata(google.protobuf.message.Message):
     @property
     def authors(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
     scope: global___Scope.ValueType
-    """deprecated in v7.0"""
+    """deprecated in v7.0.
+    use scopes instead.
+    """
     @property
     def attack(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___AttackSpec]: ...
     @property
@@ -1307,7 +1312,7 @@ class RuleMetadata(google.protobuf.message.Message):
     is_subscope_rule: builtins.bool
     @property
     def scopes(self) -> global___Scopes:
-        """use scopes over scope (deprecated in v7.0)"""
+        """use scopes over scope (deprecated in v7.0)."""
     def __init__(
         self,
         *,
