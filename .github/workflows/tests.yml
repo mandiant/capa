@@ -177,18 +177,15 @@ jobs:
     - name: Install Ghidra ${{ matrix.ghidra-version }} 
       run: |
         mkdir ./.github/ghidra
-        mkdir ./.github/ghidra/project
         wget "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_${{ matrix.ghidra-version }}_build/ghidra_${{ matrix.ghidra-version }}_${{ matrix.public-version }}.zip" -O ./.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip
         unzip .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC.zip -d .github/ghidra/
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        mkdir -p ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
         curl -o ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip "https://codeload.github.com/mandiant/Ghidrathon/zip/refs/tags/v${{ matrix.ghidrathon-version }}"
         unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
-        workdir=$(pwd)
-        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$workdir/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC 
-        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d ~/.ghidra/.ghidra_${{ matrix.ghidra-version }}_PUBLIC/Extensions
+        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$(pwd)/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
+        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/Ghidra/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
