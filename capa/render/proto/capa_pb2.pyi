@@ -31,6 +31,9 @@ class _AddressTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._En
     ADDRESSTYPE_DN_TOKEN: _AddressType.ValueType  # 4
     ADDRESSTYPE_DN_TOKEN_OFFSET: _AddressType.ValueType  # 5
     ADDRESSTYPE_NO_ADDRESS: _AddressType.ValueType  # 6
+    ADDRESSTYPE_PROCESS: _AddressType.ValueType  # 7
+    ADDRESSTYPE_THREAD: _AddressType.ValueType  # 8
+    ADDRESSTYPE_CALL: _AddressType.ValueType  # 9
 
 class AddressType(_AddressType, metaclass=_AddressTypeEnumTypeWrapper): ...
 
@@ -41,6 +44,9 @@ ADDRESSTYPE_FILE: AddressType.ValueType  # 3
 ADDRESSTYPE_DN_TOKEN: AddressType.ValueType  # 4
 ADDRESSTYPE_DN_TOKEN_OFFSET: AddressType.ValueType  # 5
 ADDRESSTYPE_NO_ADDRESS: AddressType.ValueType  # 6
+ADDRESSTYPE_PROCESS: AddressType.ValueType  # 7
+ADDRESSTYPE_THREAD: AddressType.ValueType  # 8
+ADDRESSTYPE_CALL: AddressType.ValueType  # 9
 global___AddressType = AddressType
 
 class _Flavor:
@@ -117,21 +123,33 @@ class Address(google.protobuf.message.Message):
     TYPE_FIELD_NUMBER: builtins.int
     V_FIELD_NUMBER: builtins.int
     TOKEN_OFFSET_FIELD_NUMBER: builtins.int
+    PPID_PID_FIELD_NUMBER: builtins.int
+    PPID_PID_TID_FIELD_NUMBER: builtins.int
+    PPID_PID_TID_ID_FIELD_NUMBER: builtins.int
     type: global___AddressType.ValueType
     @property
     def v(self) -> global___Integer: ...
     @property
     def token_offset(self) -> global___Token_Offset: ...
+    @property
+    def ppid_pid(self) -> global___Ppid_Pid: ...
+    @property
+    def ppid_pid_tid(self) -> global___Ppid_Pid_Tid: ...
+    @property
+    def ppid_pid_tid_id(self) -> global___Ppid_Pid_Tid_Id: ...
     def __init__(
         self,
         *,
         type: global___AddressType.ValueType = ...,
         v: global___Integer | None = ...,
         token_offset: global___Token_Offset | None = ...,
+        ppid_pid: global___Ppid_Pid | None = ...,
+        ppid_pid_tid: global___Ppid_Pid_Tid | None = ...,
+        ppid_pid_tid_id: global___Ppid_Pid_Tid_Id | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["token_offset", b"token_offset", "v", b"v", "value", b"value"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["v", "token_offset"] | None: ...
+    def HasField(self, field_name: typing_extensions.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "v", b"v", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["v", "token_offset", "ppid_pid", "ppid_pid_tid", "ppid_pid_tid_id"] | None: ...
 
 global___Address = Address
 
@@ -1684,6 +1702,81 @@ class Token_Offset(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["offset", b"offset", "token", b"token"]) -> None: ...
 
 global___Token_Offset = Token_Offset
+
+@typing_extensions.final
+class Ppid_Pid(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid"]) -> None: ...
+
+global___Ppid_Pid = Ppid_Pid
+
+@typing_extensions.final
+class Ppid_Pid_Tid(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    TID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    @property
+    def tid(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+        tid: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+
+global___Ppid_Pid_Tid = Ppid_Pid_Tid
+
+@typing_extensions.final
+class Ppid_Pid_Tid_Id(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    TID_FIELD_NUMBER: builtins.int
+    ID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    @property
+    def tid(self) -> global___Integer: ...
+    @property
+    def id(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+        tid: global___Integer | None = ...,
+        id: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+
+global___Ppid_Pid_Tid_Id = Ppid_Pid_Tid_Id
 
 @typing_extensions.final
 class Integer(google.protobuf.message.Message):

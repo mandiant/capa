@@ -11,6 +11,9 @@ message Address {
   oneof value {
     Integer v = 2;
     Token_Offset token_offset = 3;
+    Ppid_Pid ppid_pid = 4;
+    Ppid_Pid_Tid ppid_pid_tid = 5;
+    Ppid_Pid_Tid_Id ppid_pid_tid_id = 6;
   };
 }
 
@@ -22,6 +25,9 @@ enum AddressType {
   ADDRESSTYPE_DN_TOKEN = 4;
   ADDRESSTYPE_DN_TOKEN_OFFSET = 5;
   ADDRESSTYPE_NO_ADDRESS = 6;
+  ADDRESSTYPE_PROCESS = 7;
+  ADDRESSTYPE_THREAD = 8;
+  ADDRESSTYPE_CALL = 9;
 }
 
 message Analysis {
@@ -437,6 +443,24 @@ message Pair_Address_Match {
 message Token_Offset {
   Integer token = 1;
   uint64 offset = 2;  // offset is always >= 0
+}
+
+message Ppid_Pid {
+  Integer ppid = 1;
+  Integer pid = 2;
+}
+
+message Ppid_Pid_Tid {
+  Integer ppid = 1;
+  Integer pid = 2;
+  Integer tid = 3;
+}
+
+message Ppid_Pid_Tid_Id {
+  Integer ppid = 1;
+  Integer pid = 2;
+  Integer tid = 3;
+  Integer id = 4;
 }
 
 message Integer { oneof value { uint64 u = 1; sint64 i = 2; } }  // unsigned or signed int
