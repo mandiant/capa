@@ -193,7 +193,7 @@ jobs:
     - name: Run tests
       run: | 
         mkdir ./.github/ghidra/project
-        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/mimikatz.exe_ -ScriptPath ./tests/ -PostScript test_ghidra_features.py
+        .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/support/analyzeHeadless .github/ghidra/project ghidra_test -Import ./tests/data/mimikatz.exe_ -ScriptPath ./tests/ -PostScript test_ghidra_features.py > ../output.log
         cat ../output.log
         exit_code=$(cat ../output.log | grep exit | awk '{print $NF}')
         exit $exit_code
