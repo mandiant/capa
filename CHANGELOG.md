@@ -8,8 +8,9 @@
 
 ### Breaking Changes
 
-### New Rules (0)
+### New Rules (1)
 
+- nursery/get-ntoskrnl-base-address @mr-tz
 -
 
 ### Bug Fixes
