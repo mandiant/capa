@@ -145,6 +145,57 @@ def cmp_optional(a: Any, b: Any) -> bool:
     return a == b
 
 
+def assert_static_analyis(analysis: rd.StaticAnalysis, dst: capa_pb2.StaticAnalysis):
+    assert analysis.format == dst.format
+    assert analysis.arch == dst.arch
+    assert analysis.os == dst.os
+    assert analysis.extractor == dst.extractor
+    assert list(analysis.rules) == dst.rules
+
+    assert capa.render.proto.addr_to_pb2(analysis.base_address) == dst.base_address
+
+    assert len(analysis.layout.functions) == len(dst.layout.functions)
+    for rd_f, proto_f in zip(analysis.layout.functions, dst.layout.functions):
+        assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
+
+        assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
+        for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
+            assert capa.render.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
+
+    assert analysis.feature_counts.file == dst.feature_counts.file
+    assert len(analysis.feature_counts.functions) == len(dst.feature_counts.functions)
+    for rd_cf, proto_cf in zip(analysis.feature_counts.functions, dst.feature_counts.functions):
+        assert capa.render.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
+        assert rd_cf.count == proto_cf.count
+
+    assert len(analysis.library_functions) == len(dst.library_functions)
+    for rd_lf, proto_lf in zip(analysis.library_functions, dst.library_functions):
+        assert capa.render.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
+        assert rd_lf.name == proto_lf.name
+
+
+def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAnalysis):
+    assert analysis.format == dst.format
+    assert analysis.arch == dst.arch
+    assert analysis.os == dst.os
+    assert analysis.extractor == dst.extractor
+    assert list(analysis.rules) == dst.rules
+
+    assert len(analysis.layout.processes) == len(dst.layout.processes)
+    for rd_p, proto_p in zip(analysis.layout.processes, dst.layout.processes):
+        assert capa.render.proto.addr_to_pb2(rd_p.address) == proto_p.address
+
+        assert len(rd_p.matched_threads) == len(proto_p.matched_threads)
+        for rd_t, proto_t in zip(rd_p.matched_threads, proto_p.matched_threads):
+            assert capa.render.proto.addr_to_pb2(rd_t.address) == proto_t.address
+
+    assert analysis.feature_counts.processes == dst.feature_counts.processes
+    assert len(analysis.feature_counts.processes) == len(dst.feature_counts.processes)
+    for rd_cp, proto_cp in zip(analysis.feature_counts.processes, dst.feature_counts.processes):
+        assert capa.render.proto.addr_to_pb2(rd_cp.address) == proto_cp.address
+        assert rd_cp.count == proto_cp.count
+
+
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert isinstance(rd.Metadata.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
@@ -159,32 +210,18 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert meta.sample.sha256 == dst.sample.sha256
     assert meta.sample.path == dst.sample.path
 
-    assert meta.analysis.format == dst.analysis.format
-    assert meta.analysis.arch == dst.analysis.arch
-    assert meta.analysis.os == dst.analysis.os
-    assert meta.analysis.extractor == dst.analysis.extractor
-    assert list(meta.analysis.rules) == dst.analysis.rules
-    assert capa.render.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
-
-    assert isinstance(rd.Metadata.analysis.layout, rd.StaticLayout)
-    assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)
-    for rd_f, proto_f in zip(meta.analysis.layout.functions, dst.analysis.layout.functions):
-        assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
-
-        assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
-        for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
-            assert capa.render.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
-
-    assert meta.analysis.feature_counts.file == dst.analysis.feature_counts.file
-    assert len(meta.analysis.feature_counts.functions) == len(dst.analysis.feature_counts.functions)
-    for rd_cf, proto_cf in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
-        assert capa.render.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
-        assert rd_cf.count == proto_cf.count
-
-    assert len(meta.analysis.library_functions) == len(dst.analysis.library_functions)
-    for rd_lf, proto_lf in zip(meta.analysis.library_functions, dst.analysis.library_functions):
-        assert capa.render.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
-        assert rd_lf.name == proto_lf.name
+    if meta.flavor == rd.Flavor.STATIC:
+        assert dst.flavor == capa_pb2.FLAVOR_STATIC
+        assert dst.WhichOneof("analysis2") == "static_analysis"
+        assert isinstance(meta.analysis, rd.StaticAnalysis)
+        assert_static_analyis(meta.analysis, dst.static_analysis)
+    elif meta.flavor == rd.Flavor.DYNAMIC:
+        assert dst.flavor == capa_pb2.FLAVOR_DYNAMIC
+        assert dst.WhichOneof("analysis2") == "dynamic_analysis"
+        assert isinstance(meta.analysis, rd.DynamicAnalysis)
+        assert_dynamic_analyis(meta.analysis, dst.dynamic_analysis)
+    else:
+        assert_never(dst.flavor)
 
 
 def assert_match(ma: rd.Match, mb: capa_pb2.Match):

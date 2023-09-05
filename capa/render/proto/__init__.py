@@ -173,8 +173,7 @@ def static_analysis_to_pb2(analysis: rd.StaticAnalysis) -> capa_pb2.StaticAnalys
             ],
         ),
         library_functions=[
-            capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name)
-            for lf in analysis.library_functions
+            capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name) for lf in analysis.library_functions
         ],
     )
 
@@ -190,9 +189,7 @@ def dynamic_analysis_to_pb2(analysis: rd.DynamicAnalysis) -> capa_pb2.DynamicAna
             processes=[
                 capa_pb2.ProcessLayout(
                     address=addr_to_pb2(p.address),
-                    matched_threads=[
-                        capa_pb2.ThreadLayout(address=addr_to_pb2(t.address)) for t in p.matched_threads
-                    ],
+                    matched_threads=[capa_pb2.ThreadLayout(address=addr_to_pb2(t.address)) for t in p.matched_threads],
                 )
                 for p in analysis.layout.processes
             ]
@@ -579,10 +576,7 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
                     rd.FunctionLayout(
                         address=addr_from_pb2(f.address),
                         matched_basic_blocks=tuple(
-                            [
-                                rd.BasicBlockLayout(address=addr_from_pb2(bb.address))
-                                for bb in f.matched_basic_blocks
-                            ]
+                            [rd.BasicBlockLayout(address=addr_from_pb2(bb.address)) for bb in f.matched_basic_blocks]
                         ),
                     )
                     for f in analysis.layout.functions
@@ -599,10 +593,7 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
             ),
         ),
         library_functions=tuple(
-            [
-                rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name)
-                for lf in analysis.library_functions
-            ]
+            [rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions]
         ),
     )
 
@@ -620,10 +611,7 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
                     rd.ProcessLayout(
                         address=addr_from_pb2(p.address),
                         matched_threads=tuple(
-                            [
-                                rd.ThreadLayout(address=addr_from_pb2(t.address))
-                                for t in p.matched_threads
-                            ]
+                            [rd.ThreadLayout(address=addr_from_pb2(t.address)) for t in p.matched_threads]
                         ),
                     )
                     for p in analysis.layout.processes
