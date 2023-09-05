@@ -197,7 +197,7 @@ def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAn
 
 
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
-    assert isinstance(rd.Metadata.analysis, rd.StaticAnalysis)
+    assert isinstance(meta.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     if meta.argv is None:
@@ -399,6 +399,7 @@ def assert_round_trip(doc: rd.ResultDocument):
         pytest.param("a076114_rd"),
         pytest.param("pma0101_rd"),
         pytest.param("dotnet_1c444e_rd"),
+        pytest.param("dynamic_a0000a6_rd")
     ],
 )
 def test_round_trip(request, rd_file):
