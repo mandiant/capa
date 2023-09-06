@@ -180,6 +180,16 @@ def get_binja_extractor(path: Path):
     return extractor
 
 
+@lru_cache(maxsize=1)
+def get_ghidra_extractor(path: Path):
+    import capa.features.extractors.ghidra.extractor
+
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+    setattr(extractor, "path", path.as_posix())
+
+    return extractor
+
+
 def extract_global_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_global_features():
@@ -359,7 +369,7 @@ def get_sample_md5_by_name(name):
     elif name.startswith("3b13b"):
         # file name is SHA256 hash
         return "56a6ffe6a02941028cc8235204eef31d"
-    elif name == "7351f.elf":
+    elif name.startswith("7351f"):
         return "7351f8a40c5450557b24622417fc478d"
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"
@@ -1052,6 +1062,14 @@ FEATURE_COUNT_TESTS = [
 FEATURE_COUNT_TESTS_DOTNET = [
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), 1),
     ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls from"), 9),
+]
+
+
+FEATURE_COUNT_TESTS_GHIDRA = [
+    # Ghidra may render functions as labels, as well as provide differing amounts of call references
+    # (Colton) TODO: Add more test cases
+    ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
+    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
 ]
 
 
