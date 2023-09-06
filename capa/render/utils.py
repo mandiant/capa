@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import io
+import sys
 import gzip
 import json
 from typing import Dict, Union, Iterator
@@ -59,8 +60,11 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
 
 
 def load_rules_prevalence() -> Dict[str, str]:
-    CD = Path(__file__).resolve().parent.parent.parent
-    file = CD / "assets" / "rules_prevalence.json.gz"
+    if hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS"):
+        file = Path(sys._MEIPASS) / "assets" / "rules_prevalence.json.gz"  # type: ignore
+    else:
+        CD = Path(__file__).resolve().parent.parent.parent
+        file = CD / "assets" / "rules_prevalence.json.gz"
     if not file.exists():
         raise FileNotFoundError(f"File '{file}' not found.")
     try:
