@@ -6,11 +6,8 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-import gzip
-import json
 import collections
 from typing import Dict
-from pathlib import Path
 
 import tabulate
 
@@ -78,66 +75,56 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
     example::
 
-        +-------------------------------------------------------+-------------------------------------------------+
-        | CAPABILITY                                            | NAMESPACE                                       |
-        |-------------------------------------------------------+-------------------------------------------------|
-        | check for OutputDebugString error (2 matches)         | anti-analysis/anti-debugging/debugger-detection |
-        | read and send data from client to server              | c2/file-transfer                                |
-        | ...                                                   | ...                                             |
-        +-------------------------------------------------------+-------------------------------------------------+
+        +-------------------------------------------------------+-------------------------------------------------+------------+
+        | CAPABILITY                                            | NAMESPACE                                       | PREVALENCE |
+        |-------------------------------------------------------+-------------------------------------------------|------------|
+        | check for OutputDebugString error (2 matches)         | anti-analysis/anti-debugging/debugger-detection | rare       |
+        | ...                                                   | ...                                             | ...        |
+        |-------------------------------------------------------|-------------------------------------------------|------------|
+        | read and send data from client to server              | c2/file-transfer                                | common     |
+        | ...                                                   | ...                                             | ...        |
+        +-------------------------------------------------------+-------------------------------------------------+------------+
     """
-
-    def load_rules_prevalence(file: Path) -> Dict[str, str]:
-        if not file.exists():
-            raise FileNotFoundError(f"File '{file}' not found.")
-        try:
-            with gzip.open(file, "rb") as gzfile:
-                return json.loads(gzfile.read().decode("utf-8"))
-        except Exception as e:
-            raise RuntimeError(f"An error occurred while loading '{file}': {e}")
-
     subrule_matches = find_subrule_matches(doc)
-    CD = Path(__file__).resolve().parent.parent.parent
-    rules_prevalence = load_rules_prevalence(CD / "assets" / "rules_prevalence.json.gz")
+    rules_prevalence = rutils.load_rules_prevalence()
 
     # seperate rules based on their prevalence
-    common = []
-    rare = []
+    common: Dict[str, str] = {"capability": "", "namespace": "", "prevalence": ""}
+    had_common = False
+    rare: Dict[str, str] = {"capability": "", "namespace": "", "prevalence": ""}
+    had_rare = False
+
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
             continue
 
         count = len(rule.matches)
-        matches = f"({count} matches)" if count > 1 else ""
-
-        prevalence = rules_prevalence.get(rule.meta.name)
-
-        if prevalence == "rare":
-            rare.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold(prevalence)))
-        elif prevalence == "common":
-            common.append((rule.meta.namespace, rule.meta.name, matches, rutils.bold(prevalence)))
+        if count == 1:
+            capability = rutils.bold(rule.meta.name)
         else:
-            common.append((rule.meta.namespace, rule.meta.name, matches, "unknown"))
+            capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
+
+        namespace = rule.meta.namespace if rule.meta.namespace is not None else ""
+        prevalence = rules_prevalence.get(rule.meta.name, "unknown")
+        if prevalence == "rare" or prevalence == "common":
+            prevalence = rutils.bold(prevalence)
+
+        if "rare" in prevalence:
+            rare["capability"] += capability + "\n"
+            rare["namespace"] += namespace + "\n"
+            rare["prevalence"] += prevalence + "\n"
+            had_rare = True
+        else:
+            common["capability"] += capability + "\n"
+            common["namespace"] += namespace + "\n"
+            common["prevalence"] += prevalence + "\n"
+            had_common = True
 
     rows = []
-
-    def process_data(data):
-        "joins combine similar rules into a single section"
-        if len(data) == 0:
-            return
-        capabilities = ""
-        namespaces = ""
-        prevalences = ""
-
-        for ns, c, i, p in sorted(data, key=lambda x: (x[0], x[1])):
-            capabilities += f"{rutils.bold(c)} {i}\n"
-            namespaces += ns + "\n"
-            prevalences += p + "\n"
-
-        rows.append((capabilities.strip(), namespaces.strip(), prevalences.strip()))
-
-    process_data(rare)
-    process_data(common)
+    if had_rare:
+        rows.append((rare["capability"], rare["namespace"], rare["prevalence"]))
+    if had_common:
+        rows.append((common["capability"], common["namespace"], common["prevalence"]))
 
     if rows:
         ostream.write(
