@@ -61,7 +61,7 @@ packages = ["capa"]
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit==3.3.3",
+    "pre-commit==3.4.0",
     "pytest==7.4.0",
     "pytest-sugar==0.9.7",
     "pytest-instafail==0.5.0",
@@ -77,7 +77,7 @@ dev = [
     "flake8-simplify==0.20.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.0.285",
+    "ruff==0.0.286",
     "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.5.1",

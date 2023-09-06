@@ -2,7 +2,7 @@
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
-[![Number of rules](https://img.shields.io/badge/rules-831-blue.svg)](https://github.com/mandiant/capa-rules)
+[![Number of rules](https://img.shields.io/badge/rules-832-blue.svg)](https://github.com/mandiant/capa-rules)
 [![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
 [![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
@@ -169,6 +169,8 @@ If you use IDA Pro, then you can use the [capa explorer](https://github.com/mand
 capa explorer helps you identify interesting areas of a program and build new capa rules using features extracted directly from your IDA Pro database.
 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
+
+If you use Ghidra, you can use the Python 3 [Ghidra feature extractor](/capa/ghidra/). This integration enables capa to extract features directly from your Ghidra database, which can help you identify capabilities in programs that you analyze using Ghidra.
 
 # further information
 ## capa
