@@ -13,6 +13,7 @@ import sys
 import json
 import logging
 import pathlib
+from contextlib import suppress
 
 import capa
 import capa.main
@@ -23,13 +24,13 @@ import capa.features.extractors.ghidra.extractor
 
 logger = logging.getLogger("capa_ghidra")
 
+
 class CAPADATA:
-    def __init__(self, namespace, scope, capability, match, label_list, attack=None):
-        self.namesapce = namespace
-        self.scope = scope 
-        self.capability = capability 
-        self.match = match 
-        self.label_list = label_list 
+    def __init__(self, namespace, scope, capability, locations, attack=None):
+        self.namespace = namespace
+        self.scope = scope
+        self.capability = capability
+        self.locations = locations
         self.attack = attack
 
 
@@ -63,18 +64,18 @@ def get_capabilities():
         logger.info("capa encountered warnings during analysis")
 
     return capa.render.json.render(meta, rules, capabilities)
-    
+
 
 def get_locations(match):
     """recursively collect data from matches"""
 
-    if "locations" in match.keys():
-        if len(match['locations']) != 0:
-            for loc in match['locations']:
-                yield loc['value']
+    if "locations" in match:
+        if len(match["locations"]) != 0:
+            for loc in match["locations"]:
+                yield loc["value"]
 
-    if len(match['children']) != 0:
-        for child in match['children']:
+    if len(match["children"]) != 0:
+        for child in match["children"]:
             return get_locations(child)
     else:
         return []
@@ -88,37 +89,41 @@ def parse_json(capa_data):
     # capa_data[]
     ghidra_data = []
 
-    rules = capa_data['rules']
+    rules = capa_data["rules"]
     for rule in rules.keys():
-
         # dict data of currently matched rule
         this_capability = rules[rule]
-        meta = this_capability['meta']
+        meta = this_capability["meta"]
+
+        # return MITRE ATT&CK or None
+        this_attack = meta.get("att&ck")
 
         # scope match for the rule
-        this_scope = meta['scope']
+        this_scope = meta["scope"]
         this_locs = []
-        this_locs.append(this_capability['matches'][0][0]['value'])
+        this_locs.append(this_capability["matches"][0][0]["value"])
 
-        if 'namespace' in meta.keys():
+        if "namespace" in meta:
             # split into list to help define child namespaces
             # in ghidra
-            this_namespace = meta['namespace'].split('/')
+            this_namespace = meta["namespace"].split("/")
         else:
             this_namespace = [""]
 
         # recurse to find all locations
-        matches = this_capability['matches'][0][1]
-        try:
-            if len(matches['locations']) == 0:
-                for match in matches['children']:
+        matches = this_capability["matches"][0][1]
+        with suppress(KeyError):
+            if len(matches["locations"]) == 0:
+                for match in matches["children"]:
                     for loc in get_locations(match):
-                        this_locs.append(loc) 
+                        this_locs.append(loc)
             else:
-                for loc in matches['locations']:
-                    this_locs.append(loc['value'])  
-        except KeyError:
-            pass
+                for loc in matches["locations"]:
+                    this_locs.append(loc["value"])
+
+        ghidra_data.append(CAPADATA(this_namespace, this_scope, rule, this_locs, this_attack))
+
+    return ghidra_data
 
 
 def main():
@@ -135,7 +140,9 @@ def main():
         return
     else:
         capa_data = json.loads(get_capabilities())
-        return parse_json(capa_data)
+        for item in parse_json(capa_data):
+            print(item.namespace, "->", item.capability, "->", item.locations)
+        return
 
 
 if __name__ == "__main__":
