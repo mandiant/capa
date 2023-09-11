@@ -5,6 +5,7 @@
 ### New Features
 - ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
+- ghidra: implement capa explorer for Ghidra #1734 @colton-gabertan
 
 ### Breaking Changes
 
