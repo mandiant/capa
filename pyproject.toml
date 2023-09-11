@@ -45,7 +45,7 @@ dependencies = [
     "ruamel.yaml==0.17.32",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
-    "pyelftools==0.29",
+    "pyelftools==0.30",
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==2.1.1",
