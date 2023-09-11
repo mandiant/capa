@@ -13,6 +13,7 @@ import sys
 import json
 import logging
 import pathlib
+from typing import Dict, List
 from contextlib import suppress
 
 from ghidra.app.cmd.label import CreateNamespacesCmd
@@ -36,6 +37,26 @@ class CAPADATA:
         self.locations = locations
         self.node = node
         self.attack = attack
+
+    def recurse_node(self, node_dict):
+        """pull string data by recursing node dicts"""
+
+        if not node_dict:
+            # KeyError
+            # ex. {'type':'subscope', 'scope':'basic block'}
+            return ""
+
+        if isinstance(node_dict, str):
+            return node_dict
+
+        with suppress(KeyError):
+            # pull from the 'type' key, or get descriptions
+            # descriptions are more helpful for extracted features
+            # such as numbers
+            if "description" in node_dict:
+                return node_dict.get("description")
+            else:
+                return self.recurse_node(node_dict.get(node_dict.get("type")))
 
     def create_namespace(self):
         """create new ghidra namespace for each capa namespace"""
@@ -91,20 +112,18 @@ class CAPADATA:
                 continue
 
             # create labels at basic block & insn scopes
-            if self.node:
-                with suppress(KeyError):
-                    node_feat = self.node[self.locations.index(addr)].get("feature")
-                    if node_feat:
-                        txt = node_feat[list(node_feat.keys())[1]]
-                    else:
-                        continue
+            node_to_parse = self.node[self.locations.index(addr)]
+            if node_to_parse:
+                txt = self.recurse_node(node_to_parse)
 
-                    if isinstance(txt, int):
-                        txt = hex(txt)
-
-                    txt = txt.replace(" ", "-")
-                    createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                if not txt:
                     continue
+                if isinstance(txt, int):
+                    txt = hex(txt)
+
+                txt = txt.replace(" ", "-")
+                createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                continue
 
             createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
@@ -162,7 +181,7 @@ def parse_json(capa_data):
     for rule in rules.keys():
         # loosely coupled location & node data lists
         this_locs = []
-        this_node = []
+        this_node: List[Dict] = []
 
         # dict data of currently matched rule
         this_capability = rules[rule]
@@ -175,6 +194,8 @@ def parse_json(capa_data):
         this_scope = meta["scope"]
         with suppress(KeyError):
             this_locs.append(this_capability["matches"][0][0]["value"])
+            # align node data
+            this_node.append({})
 
         if "namespace" in meta:
             # split into list to help define child namespaces
