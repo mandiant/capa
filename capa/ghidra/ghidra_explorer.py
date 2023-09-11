@@ -15,6 +15,9 @@ import logging
 import pathlib
 from contextlib import suppress
 
+from ghidra.app.cmd.label import CreateNamespacesCmd
+from ghidra.program.model.symbol import Namespace, SourceType, SymbolType
+
 import capa
 import capa.main
 import capa.rules
@@ -26,12 +29,84 @@ logger = logging.getLogger("capa_ghidra")
 
 
 class CAPADATA:
-    def __init__(self, namespace, scope, capability, locations, attack=None):
+    def __init__(self, namespace, scope, capability, locations, node, attack=None):
         self.namespace = namespace
         self.scope = scope
         self.capability = capability
         self.locations = locations
+        self.node = node
         self.attack = attack
+
+    def create_namespace(self):
+        """create new ghidra namespace for each capa namespace"""
+
+        # handle rules w/o namespace -> capa lib rule
+        if self.namespace == "capa":
+            lib_str = Namespace.DELIMITER + "lib" + Namespace.DELIMITER
+            self.namespace = self.namespace + lib_str + self.capability.replace(" ", "-")
+        cmd = CreateNamespacesCmd(self.namespace, SourceType.USER_DEFINED)
+        cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
+
+        return cmd.getNamespace()
+
+    def add_bookmark(self, addr, txt, category="CapaExplorer"):
+        """create bookmark at addr"""
+        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
+
+    def tag_functions(self):
+        """create function tags for capabilities"""
+
+        # self.locations[0] will always be the largest
+        # scoped offset yielded i.e. closest to an entrypoint
+        addr = toAddr(hex(self.locations[0]))  # type: ignore [name-defined] # noqa: F821
+        f = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
+
+        # bookmark Mitre ATT&CK tactics @ function scope
+        if f:
+            f.addTag(self.capability)
+            if self.attack:
+                for item in self.attack:
+                    self.add_bookmark(addr, item.get("tactic"), "CapaExplorer::Mitre ATT&CK")
+
+    def bookmark_locations(self):
+        """bookmark & label findings at all scopes"""
+        st = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
+        ns = self.create_namespace()
+
+        for addr in self.locations:
+            txt = self.capability.replace(" ", "-")
+            a = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
+
+            self.add_bookmark(a, txt)
+
+            # avoid re-naming functions
+            to_cont = False
+            for s in st.getSymbols(a):
+                if s.getSymbolType() == SymbolType.FUNCTION:
+                    to_cont = True
+                    txt = s.getName()
+                    createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+
+            if to_cont:
+                continue
+
+            # create labels at basic block & insn scopes
+            if self.node:
+                with suppress(KeyError):
+                    node_feat = self.node[self.locations.index(addr)].get("feature")
+                    if node_feat:
+                        txt = node_feat[list(node_feat.keys())[1]]
+                    else:
+                        continue
+
+                    if isinstance(txt, int):
+                        txt = hex(txt)
+
+                    txt = txt.replace(" ", "-")
+                    createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                    continue
+
+            createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
 
 def get_capabilities():
@@ -66,62 +141,56 @@ def get_capabilities():
     return capa.render.json.render(meta, rules, capabilities)
 
 
-def get_locations(match):
+def get_locations(match_dict):
     """recursively collect data from matches"""
+    if "locations" in match_dict:
+        for loc in match_dict.get("locations"):
+            if "type" in loc:
+                if loc.get("type") == "absolute" or loc.get("type") == "file":
+                    yield loc.get("value"), match_dict.get("node")
 
-    if "locations" in match:
-        if len(match["locations"]) != 0:
-            for loc in match["locations"]:
-                yield loc["value"]
-
-    if len(match["children"]) != 0:
-        for child in match["children"]:
-            return get_locations(child)
-    else:
-        return []
+    if match_dict["children"]:
+        for child in match_dict.get("children"):
+            yield from get_locations(child)
 
 
 def parse_json(capa_data):
-    # for key in capa_data['rules'].keys() -> key == rule name
-    #   key['meta']['namespace'] -> capa namespace to add to ghidra namespace
-    #       key['matches'][0][0]['value'] -> first offset
-    #       key['matches'][0][1] // recursively hop down ['children'] key, collect locations & node data
-    # capa_data[]
+    """Parse json produced by capa"""
     ghidra_data = []
 
     rules = capa_data["rules"]
     for rule in rules.keys():
+        # loosely coupled location & node data lists
+        this_locs = []
+        this_node = []
+
         # dict data of currently matched rule
         this_capability = rules[rule]
         meta = this_capability["meta"]
 
         # return MITRE ATT&CK or None
-        this_attack = meta.get("att&ck")
+        this_attack = meta.get("attack")
 
         # scope match for the rule
         this_scope = meta["scope"]
-        this_locs = []
-        this_locs.append(this_capability["matches"][0][0]["value"])
+        with suppress(KeyError):
+            this_locs.append(this_capability["matches"][0][0]["value"])
 
         if "namespace" in meta:
             # split into list to help define child namespaces
             # in ghidra
-            this_namespace = meta["namespace"].split("/")
+            namespace_str = Namespace.DELIMITER.join(meta["namespace"].split("/"))
+            this_namespace = "capa" + Namespace.DELIMITER + namespace_str
         else:
-            this_namespace = [""]
+            this_namespace = "capa"
 
         # recurse to find all locations
         matches = this_capability["matches"][0][1]
-        with suppress(KeyError):
-            if len(matches["locations"]) == 0:
-                for match in matches["children"]:
-                    for loc in get_locations(match):
-                        this_locs.append(loc)
-            else:
-                for loc in matches["locations"]:
-                    this_locs.append(loc["value"])
+        for m in get_locations(matches):
+            this_locs.append(m[0])
+            this_node.append(m[1])
 
-        ghidra_data.append(CAPADATA(this_namespace, this_scope, rule, this_locs, this_attack))
+        ghidra_data.append(CAPADATA(this_namespace, this_scope, rule, this_locs, this_node, this_attack))
 
     return ghidra_data
 
@@ -137,12 +206,13 @@ def main():
         return capa.main.E_INVALID_FILE_ARCH
 
     if isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
-        return
+        return 0
     else:
         capa_data = json.loads(get_capabilities())
         for item in parse_json(capa_data):
-            print(item.namespace, "->", item.capability, "->", item.locations)
-        return
+            item.tag_functions()
+            item.bookmark_locations()
+        return 0
 
 
 if __name__ == "__main__":
