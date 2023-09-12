@@ -46,6 +46,9 @@ class CAPADATA:
             # ex. {'type':'subscope', 'scope':'basic block'}
             return ""
 
+        if isinstance(node_dict, int):
+            node_dict = hex(node_dict)
+
         if isinstance(node_dict, str):
             return node_dict
 
@@ -118,8 +121,6 @@ class CAPADATA:
 
                 if not txt:
                     continue
-                if isinstance(txt, int):
-                    txt = hex(txt)
 
                 txt = txt.replace(" ", "-")
                 createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
