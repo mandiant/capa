@@ -95,6 +95,10 @@ dev = [
     "types_requests==2.31.0.2",
     "types-protobuf==4.23.0.3",
 ]
+scripts = [
+    "yaramod==3.20.1",
+    "mkYARA==1.0.0",
+]
 build = [
     "pyinstaller==5.10.1",
     "setuptools==68.0.0",
