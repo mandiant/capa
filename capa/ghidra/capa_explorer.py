@@ -26,7 +26,7 @@ import capa.render.json
 import capa.ghidra.helpers
 import capa.features.extractors.ghidra.extractor
 
-logger = logging.getLogger("capa_ghidra")
+logger = logging.getLogger("capa_explorer")
 
 
 class CAPADATA:
@@ -52,14 +52,10 @@ class CAPADATA:
         if isinstance(node_dict, str):
             return node_dict
 
-        with suppress(KeyError):
-            # pull from the 'type' key, or get descriptions
-            # descriptions are more helpful for extracted features
-            # such as numbers
-            if "description" in node_dict:
-                return node_dict.get("description")
-            else:
-                return self.recurse_node(node_dict.get(node_dict.get("type")))
+        if "description" in node_dict:
+            return node_dict.get("description")
+        else:
+            return self.recurse_node(node_dict.get(node_dict.get("type")))
 
     def create_namespace(self):
         """create new ghidra namespace for each capa namespace"""
@@ -90,7 +86,8 @@ class CAPADATA:
             f.addTag(self.capability)
             if self.attack:
                 for item in self.attack:
-                    self.add_bookmark(addr, item.get("tactic"), "CapaExplorer::Mitre ATT&CK")
+                    attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
+                    self.add_bookmark(addr, attack_txt, "CapaExplorer::Mitre ATT&CK")
 
     def bookmark_locations(self):
         """bookmark & label findings at all scopes"""
@@ -130,9 +127,6 @@ class CAPADATA:
 
 
 def get_capabilities():
-    logging.basicConfig(level=logging.INFO)
-    logging.getLogger().setLevel(logging.INFO)
-
     rules_dir: str = ""
     try:
         selected_dir = askDirectory("Choose capa rules directory", "Ok")  # type: ignore [name-defined] # noqa: F821
@@ -218,6 +212,9 @@ def parse_json(capa_data):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
+
     if not capa.ghidra.helpers.is_supported_ghidra_version():
         return capa.main.E_UNSUPPORTED_GHIDRA_VERSION
 
