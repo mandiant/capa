@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from binaryninja import Function, BinaryView, LowLevelILOperation
+from binaryninja import Function, BinaryView, RegisterValueType, LowLevelILOperation
 
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -23,13 +23,27 @@ def extract_function_calls_to(fh: FunctionHandle):
         # Everything that is a code reference to the current function is considered a caller, which actually includes
         # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
         # considered a caller to the function
-        if caller.llil is not None and caller.llil.operation in [
+        llil = caller.llil
+        if (llil is None) or llil.operation not in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
             LowLevelILOperation.LLIL_JUMP,
             LowLevelILOperation.LLIL_TAILCALL,
         ]:
-            yield Characteristic("calls to"), AbsoluteVirtualAddress(caller.address)
+            continue
+
+        if llil.dest.value.type not in [
+            RegisterValueType.ImportedAddressValue,
+            RegisterValueType.ConstantValue,
+            RegisterValueType.ConstantPointerValue,
+        ]:
+            continue
+
+        address = llil.dest.value.value
+        if address != func.start:
+            continue
+
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(caller.address)
 
 
 def extract_function_loop(fh: FunctionHandle):
