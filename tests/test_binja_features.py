@@ -69,4 +69,4 @@ def test_standalone_binja_backend():
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
 def test_binja_version():
     version = binaryninja.core_version_info()
-    assert version.major == 3 and version.minor == 4
+    assert version.major == 3 and version.minor == 5
