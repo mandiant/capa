@@ -9,7 +9,7 @@ import re
 from typing import List, Callable
 from dataclasses import dataclass
 
-from binaryninja import LowLevelILInstruction
+from binaryninja import BinaryView, LowLevelILInstruction
 from binaryninja.architecture import InstructionTextToken
 
 
@@ -51,3 +51,21 @@ def unmangle_c_name(name: str) -> str:
             return match.group(1)
 
     return name
+
+
+def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
+    s = ""
+    count = 0
+    while count < max_len:
+        try:
+            c = bv.read(offset + count, 1)[0]
+        except Exception:
+            break
+
+        if c == 0:
+            break
+
+        s += chr(c)
+        count += 1
+
+    return s
