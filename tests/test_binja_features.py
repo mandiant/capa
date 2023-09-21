@@ -36,7 +36,7 @@ except ImportError:
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS,
+    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
     indirect=["sample", "scope"],
 )
 def test_binja_features(sample, scope, feature, expected):
