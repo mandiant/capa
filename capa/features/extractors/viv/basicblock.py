@@ -8,9 +8,10 @@
 
 import string
 import struct
-from typing import Tuple, Iterator
+from typing import Tuple, Union, Iterator
 
 import envi
+import envi.archs.arm.disasm
 import envi.archs.i386.disasm
 
 from capa.features.common import Feature, Characteristic
@@ -76,7 +77,7 @@ def extract_stackstring(f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Featu
         yield Characteristic("stack string"), bb.address
 
 
-def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
+def is_mov_imm_to_stack(instr: Union[envi.archs.i386.disasm.i386Opcode, envi.archs.arm.disasm.ArmOpcode]) -> bool:
     """
     Return if instruction moves immediate onto stack
     """
@@ -92,22 +93,27 @@ def is_mov_imm_to_stack(instr: envi.archs.i386.disasm.i386Opcode) -> bool:
     if not src.isImmed():
         return False
 
-    if not isinstance(dst, envi.archs.i386.disasm.i386SibOper) and not isinstance(
-        dst, envi.archs.i386.disasm.i386RegMemOper
+    if (
+        not isinstance(dst, envi.archs.i386.disasm.i386SibOper)
+        and not isinstance(dst, envi.archs.i386.disasm.i386RegMemOper)
+        and not isinstance(dst, envi.archs.arm.disasm.ArmRegOper)
     ):
         return False
 
     if not dst.reg:
         return False
 
-    rname = dst._dis_regctx.getRegisterName(dst.reg)
-    if rname not in ["ebp", "rbp", "esp", "rsp"]:
+    if isinstance(dst, (envi.archs.i386.disasm.i386SibOper, envi.archs.i386.disasm.i386RegMemOper)):
+        rname = dst._dis_regctx.getRegisterName(dst.reg)
+    else:
+        rname = dst.reg
+    if rname not in ["ebp", "rbp", "esp", "rsp", envi.archs.arm.disasm.REG_SP, envi.archs.arm.disasm.REG_BP]:
         return False
 
     return True
 
 
-def get_printable_len(oper: envi.archs.i386.disasm.i386ImmOper) -> int:
+def get_printable_len(oper: Union[envi.archs.i386.disasm.i386ImmOper, envi.archs.arm.disasm.ArmImmOper]) -> int:
     """
     Return string length if all operand bytes are ascii or utf16-le printable
     """
