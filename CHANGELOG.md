@@ -5,6 +5,7 @@
 ### New Features
 - ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
+- binja: add support for symtab names #1504 @xusheng6
 
 ### Breaking Changes
 
@@ -15,6 +16,9 @@
 
 ### Bug Fixes
 - ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
+- binja: improve function call site detection @xusheng6
+- binja: use binaryninja.load to open files @xusheng6
+- binja: bump binja version to 3.5 #1789 @xusheng6
 
 ### capa explorer IDA Pro plugin
 
