@@ -40,12 +40,6 @@ except ImportError:
     indirect=["sample", "scope"],
 )
 def test_binja_features(sample, scope, feature, expected):
-    if isinstance(feature, capa.features.file.Export) and "." in str(feature.value):
-        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
-
-    if feature == capa.features.common.Characteristic("forwarded export"):
-        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
-
     fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 
