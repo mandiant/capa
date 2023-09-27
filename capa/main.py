@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, Optional
+from typing import Any, Dict, List, Tuple, Callable, Optional, Union
 from pathlib import Path
 
 import halo
@@ -392,7 +392,7 @@ def is_supported_format(sample: Path) -> bool:
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
 
 
-def is_supported_arch(sample: Path) -> str:
+def is_supported_arch(sample: Path) -> Union[str, int, float, bytes]:
     buf = sample.read_bytes()
 
     arch = list(capa.features.extractors.common.extract_arch(buf))
@@ -537,6 +537,7 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+    arch = None
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
@@ -587,7 +588,6 @@ def get_extractor(
         return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
     elif backend == BACKEND_VIV:
-
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             vw = get_workspace(path, format_, sigpaths)
 
