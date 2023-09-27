@@ -54,7 +54,7 @@ def unmangle_c_name(name: str) -> str:
 
 
 def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
-    s = []
+    s: List[str] = []
     while len(s) < max_len:
         try:
             c = bv.read(offset + len(s), 1)[0]
