@@ -54,9 +54,8 @@ def unmangle_c_name(name: str) -> str:
 
 
 def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
-    s = ""
-    count = 0
-    while count < max_len:
+    s = []
+    while len(s) < max_len:
         try:
             c = bv.read(offset + count, 1)[0]
         except Exception:
@@ -65,7 +64,6 @@ def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
         if c == 0:
             break
 
-        s += chr(c)
-        count += 1
+        s.append(chr(c))
 
-    return s
+    return "".join(s)
