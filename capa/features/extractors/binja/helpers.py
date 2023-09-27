@@ -57,7 +57,7 @@ def read_c_string(bv: BinaryView, offset: int, max_len: int) -> str:
     s = []
     while len(s) < max_len:
         try:
-            c = bv.read(offset + count, 1)[0]
+            c = bv.read(offset + len(s), 1)[0]
         except Exception:
             break
 
