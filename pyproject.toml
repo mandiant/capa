@@ -46,7 +46,7 @@ dependencies = [
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.30",
-    "dnfile==0.13.0",
+    "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.1.1",
     "protobuf==4.23.4",
