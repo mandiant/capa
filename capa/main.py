@@ -20,7 +20,7 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, Optional
+from typing import Any, Dict, List, Tuple, Callable, Optional, Union
 from pathlib import Path
 
 import halo
@@ -78,6 +78,7 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import NO_ADDRESS, Address
+from capa.features.extractors.viv.syscall import resolve_syscall_functions
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
@@ -98,6 +99,7 @@ E_INVALID_FILE_ARCH = 17
 E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
 E_UNSUPPORTED_GHIDRA_VERSION = 20
+UNSUPPORTED = "UNSUPPORTED"
 
 logger = logging.getLogger("capa")
 
@@ -390,10 +392,13 @@ def is_supported_format(sample: Path) -> bool:
     return len(list(capa.features.extractors.common.extract_format(taste))) == 1
 
 
-def is_supported_arch(sample: Path) -> bool:
+def is_supported_arch(sample: Path) -> Union[str, int, float, bytes]:
     buf = sample.read_bytes()
 
-    return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
+    arch = list(capa.features.extractors.common.extract_arch(buf))
+    if len(arch) != 1:
+        return UNSUPPORTED
+    return arch[0][0].value
 
 
 def get_arch(sample: Path) -> str:
@@ -532,11 +537,13 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+    arch = None
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
 
-        if not is_supported_arch(path):
+        arch = is_supported_arch(path)
+        if arch == UNSUPPORTED:
             raise UnsupportedArchError()
 
         if os_ == OS_AUTO and not is_supported_os(path):
@@ -581,8 +588,6 @@ def get_extractor(
         return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
     elif backend == BACKEND_VIV:
-        import capa.features.extractors.viv.extractor
-
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
             vw = get_workspace(path, format_, sigpaths)
 
@@ -595,6 +600,13 @@ def get_extractor(
                     logger.info("source directory is not writable, won't save intermediate workspace")
             else:
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
+
+        if arch == "ARM":
+            import capa.features.extractors.viv.extractor
+
+            return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_, arm=True)
+
+        import capa.features.extractors.viv.extractor
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
@@ -1278,6 +1290,10 @@ def main(argv: Optional[List[str]] = None):
                 return E_INVALID_FILE_OS
 
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
+
+        # for ELF handle staticly linked library
+        if format_ == FORMAT_ELF:
+            resolve_syscall_functions(extractor)
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 

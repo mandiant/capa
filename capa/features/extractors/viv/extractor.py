@@ -17,6 +17,7 @@ import capa.features.extractors.viv.file
 import capa.features.extractors.viv.insn
 import capa.features.extractors.viv.global_
 import capa.features.extractors.viv.function
+import capa.features.extractors.viv.insn_arm
 import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -26,10 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 class VivisectFeatureExtractor(FeatureExtractor):
-    def __init__(self, vw, path: Path, os):
+    def __init__(self, vw, path: Path, os, arm=False):
         super().__init__()
         self.vw = vw
         self.path = path
+        self.arm = arm
         self.buf = path.read_bytes()
 
         # pre-compute these because we'll yield them at *every* scope.
@@ -74,7 +76,10 @@ class VivisectFeatureExtractor(FeatureExtractor):
     def extract_insn_features(
         self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
     ) -> Iterator[Tuple[Feature, Address]]:
-        yield from capa.features.extractors.viv.insn.extract_features(fh, bbh, ih)
+        if self.arm:
+            yield from capa.features.extractors.viv.insn_arm.extract_features(fh, bbh, ih)
+        else:
+            yield from capa.features.extractors.viv.insn.extract_features(fh, bbh, ih)
 
     def is_library_function(self, addr):
         return viv_utils.flirt.is_library_function(self.vw, addr)

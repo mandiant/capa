@@ -978,7 +978,7 @@ def detect_elf_os(f) -> str:
     elif symtab_guess:
         ret = symtab_guess
 
-    return ret.value if ret is not None else "unknown"
+    return ret.value if ret is not None else "linux"
 
 
 def detect_elf_arch(f: BinaryIO) -> str:
