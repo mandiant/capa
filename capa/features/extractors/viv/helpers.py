@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Optional
 
+import envi
 from vivisect import VivWorkspace
 from vivisect.const import XR_TO, REF_CODE
 
@@ -21,3 +22,19 @@ def get_coderef_from(vw: VivWorkspace, va: int) -> Optional[int]:
         return xrefs[0][XR_TO]
     else:
         return None
+
+
+def read_memory(vw, va: int, size: int) -> bytes:
+    # as documented in #176, vivisect will not readMemory() when the section is not marked readable.
+    #
+    # but here, we don't care about permissions.
+    # so, copy the viv implementation of readMemory and remove the permissions check.
+    #
+    # this is derived from:
+    #   https://github.com/vivisect/vivisect/blob/5eb4d237bddd4069449a6bc094d332ceed6f9a96/envi/memory.py#L453-L462
+    for mva, mmaxva, mmap, mbytes in vw._map_defs:
+        if va >= mva and va < mmaxva:
+            mva, msize, mperms, mfname = mmap
+            offset = va - mva
+            return mbytes[offset : offset + size]
+    raise envi.exc.SegmentationViolation(va)

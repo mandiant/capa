@@ -11,6 +11,7 @@ from typing import Set, List, Deque, Tuple, Optional
 
 import envi
 import vivisect.const
+import envi.archs.arm.disasm
 import envi.archs.i386.disasm
 import envi.archs.amd64.disasm
 from vivisect import VivWorkspace
@@ -20,12 +21,15 @@ i386RegOper = envi.archs.i386.disasm.i386RegOper
 i386ImmOper = envi.archs.i386.disasm.i386ImmOper
 i386ImmMemOper = envi.archs.i386.disasm.i386ImmMemOper
 Amd64RipRelOper = envi.archs.amd64.disasm.Amd64RipRelOper
+ARMRegOper = envi.archs.arm.disasm.ArmRegOper
+ARMImmOper = envi.archs.arm.disasm.ArmImmOper
+ARMScaledOffsetOper = envi.archs.arm.disasm.ArmScaledOffsetOper
 LOC_OP = vivisect.const.LOC_OP
 IF_NOFALL = envi.IF_NOFALL
 REF_CODE = vivisect.const.REF_CODE
 FAR_BRANCH_MASK = envi.BR_PROC | envi.BR_DEREF | envi.BR_ARCH
 
-DESTRUCTIVE_MNEMONICS = ("mov", "lea", "pop", "xor")
+DESTRUCTIVE_MNEMONICS = ("mov", "lea", "ldr", "pop", "xor", "eor")
 
 
 def get_previous_instructions(vw: VivWorkspace, va: int) -> List[int]:
@@ -71,6 +75,38 @@ class NotFoundError(Exception):
     pass
 
 
+def find_value(vw: VivWorkspace, va: int, reg: int, q):
+    tmp = 0
+    seen = set([])  # type: Set[int]
+
+    q.extend(get_previous_instructions(vw, va))
+    while q:
+        cur = q.popleft()
+        if cur in seen:
+            continue
+        seen.add(cur)
+        insn = vw.parseOpcode(cur)
+        if len(insn.opers) == 0:
+            q.extend(get_previous_instructions(vw, cur))
+            continue
+
+        opnd0 = insn.opers[0]
+        if not (isinstance(opnd0, ARMRegOper) and opnd0.reg == reg):
+            q.extend(get_previous_instructions(vw, cur))
+            continue
+        if insn.mnem == "sub" and isinstance(insn.opers[1], ARMImmOper):
+            tmp -= insn.opers[1].val
+            q.extend(get_previous_instructions(vw, cur))
+            continue
+        if insn.mnem == "add" and isinstance(insn.opers[1], ARMImmOper):
+            tmp += insn.opers[1].val
+            q.extend(get_previous_instructions(vw, cur))
+            continue
+        if insn.mnem == "mov" and isinstance(insn.opers[1], ARMImmOper):
+            return insn.opers[1].val + tmp
+    return None
+
+
 def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Optional[int]]:
     """
     scan backwards from the given address looking for assignments to the given register.
@@ -106,7 +142,9 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Optional[
             continue
 
         opnd0 = insn.opers[0]
-        if not (isinstance(opnd0, i386RegOper) and opnd0.reg == reg and insn.mnem in DESTRUCTIVE_MNEMONICS):
+        if not (
+            isinstance(opnd0, (i386RegOper, ARMRegOper)) and opnd0.reg == reg and insn.mnem in DESTRUCTIVE_MNEMONICS
+        ):
             q.extend(get_previous_instructions(vw, cur))
             continue
 
@@ -115,16 +153,24 @@ def find_definition(vw: VivWorkspace, va: int, reg: int) -> Tuple[int, Optional[
         # we currently only support extracting the constant from something like: `mov $reg, IAT`
         # so, any other pattern results in an unknown value, represented by None.
         # this is a good place to extend in the future, if we need more robust support.
-        if insn.mnem != "mov":
+        if insn.mnem not in ("mov", "ldr"):
             return (cur, None)
         else:
             opnd1 = insn.opers[1]
-            if isinstance(opnd1, i386ImmOper):
+            if isinstance(opnd1, (i386ImmOper, ARMImmOper)):
                 return (cur, opnd1.getOperValue(opnd1))
             elif isinstance(opnd1, i386ImmMemOper):
                 return (cur, opnd1.getOperAddr(opnd1))
             elif isinstance(opnd1, Amd64RipRelOper):
                 return (cur, opnd1.getOperAddr(insn))
+            elif isinstance(opnd1, ARMScaledOffsetOper):
+                base_reg = find_value(vw, cur, opnd1.base_reg, q)
+                if base_reg is None:
+                    return (cur, None)
+                offset_reg = find_value(vw, cur, opnd1.offset_reg, q)
+                if offset_reg is None:
+                    return (cur, None)
+                return (cur, base_reg + offset_reg)
             else:
                 # might be something like: `mov $reg, dword_401000[eax]`
                 return (cur, None)
@@ -136,7 +182,9 @@ def is_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> bool:
     if insn is None:
         insn = vw.parseOpcode(va)
 
-    return insn.mnem in ("call", "jmp") and isinstance(insn.opers[0], envi.archs.i386.disasm.i386RegOper)
+    return insn.mnem in ("call", "jmp", "bl", "blx", "b", "bx") and isinstance(
+        insn.opers[0], (envi.archs.i386.disasm.i386RegOper, envi.archs.arm.disasm.ArmRegOper)
+    )
 
 
 def resolve_indirect_call(vw: VivWorkspace, va: int, insn: envi.Opcode) -> Tuple[int, Optional[int]]:
