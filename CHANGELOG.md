@@ -10,9 +10,10 @@
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (2)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
+- host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
 -
 
 ### Bug Fixes
