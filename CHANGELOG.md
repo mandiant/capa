@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (12)
+### New Rules (13)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -24,6 +24,7 @@
 - nursery/persist-via-gnome-autostart-on-linux michael.hunhoff@mandiant.com
 - nursery/set-thread-name-on-linux michael.hunhoff@mandiant.com
 - load-code/dotnet/load-windows-common-language-runtime michael.hunhoff@mandiant.com blas.kojusner@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/log-keystrokes-via-input-method-manager @mr-tz
 -
 
 ### Bug Fixes
