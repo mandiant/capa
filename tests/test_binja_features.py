@@ -36,16 +36,10 @@ except ImportError:
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
 @fixtures.parametrize(
     "sample,scope,feature,expected",
-    fixtures.FEATURE_PRESENCE_TESTS,
+    fixtures.FEATURE_PRESENCE_TESTS + fixtures.FEATURE_SYMTAB_FUNC_TESTS,
     indirect=["sample", "scope"],
 )
 def test_binja_features(sample, scope, feature, expected):
-    if isinstance(feature, capa.features.file.Export) and "." in str(feature.value):
-        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
-
-    if feature == capa.features.common.Characteristic("forwarded export"):
-        pytest.xfail("skip Binja unsupported forwarded export feature, see #1646")
-
     fixtures.do_test_feature_presence(fixtures.get_binja_extractor, sample, scope, feature, expected)
 
 
@@ -69,4 +63,4 @@ def test_standalone_binja_backend():
 @pytest.mark.skipif(binja_present is False, reason="Skip binja tests if the binaryninja Python API is not installed")
 def test_binja_version():
     version = binaryninja.core_version_info()
-    assert version.major == 3 and version.minor == 4
+    assert version.major == 3 and version.minor == 5
