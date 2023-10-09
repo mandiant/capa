@@ -159,7 +159,8 @@ def get_dnfile_extractor(path: Path):
 
 @lru_cache(maxsize=1)
 def get_binja_extractor(path: Path):
-    from binaryninja import Settings, BinaryViewType
+    import binaryninja
+    from binaryninja import Settings
 
     import capa.features.extractors.binja.extractor
 
@@ -168,7 +169,7 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = BinaryViewType.get_view_of_file(str(path))
+    bv = binaryninja.load(str(path))
     if path.name.endswith("kernel32-64.dll_"):
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
 

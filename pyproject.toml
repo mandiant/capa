@@ -45,7 +45,7 @@ dependencies = [
     "ruamel.yaml==0.17.32",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
-    "pyelftools==0.29",
+    "pyelftools==0.30",
     "dnfile==0.13.0",
     "dncil==1.0.2",
     "pydantic==2.1.1",
@@ -62,7 +62,7 @@ packages = ["capa"]
 [project.optional-dependencies]
 dev = [
     "pre-commit==3.4.0",
-    "pytest==7.4.0",
+    "pytest==7.4.2",
     "pytest-sugar==0.9.7",
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
@@ -77,7 +77,7 @@ dev = [
     "flake8-simplify==0.20.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.0.286",
+    "ruff==0.0.291",
     "black==23.7.0",
     "isort==5.11.4",
     "mypy==1.5.1",
@@ -98,7 +98,7 @@ dev = [
 build = [
     "pyinstaller==5.10.1",
     "setuptools==68.0.0",
-    "build==0.10.0"
+    "build==1.0.3"
 ]
 
 [project.urls]
