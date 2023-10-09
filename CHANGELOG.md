@@ -7,6 +7,7 @@
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
+- add com class/interface features #322 @Aayush-goel-04
 
 ### Breaking Changes
 
@@ -54,7 +55,6 @@ Speaking of new rules, we have eight additions, coming from Ronnie, Jakub, Morit
 - ELF: implement import and export name extractor #1607 #1608 @Aayush-Goel-04
 - bump pydantic from 1.10.9 to 2.1.1 #1582 @Aayush-Goel-04
 - develop script to highlight features not used during matching #331 @Aayush-Goel-04
-- add com class/interface features #322 @Aayush-goel-04
 
 ### New Rules (8)
 
