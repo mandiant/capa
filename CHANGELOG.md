@@ -10,11 +10,12 @@
 
 ### Breaking Changes
 
-### New Rules (3)
+### New Rules (4)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
 - nursery/capture-process-snapshot-data @mr-tz
+- collection/network/capture-packets-using-sharppcap jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
