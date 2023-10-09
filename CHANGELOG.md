@@ -10,12 +10,19 @@
 
 ### Breaking Changes
 
-### New Rules (4)
+### New Rules (11)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
 - nursery/capture-process-snapshot-data @mr-tz
 - collection/network/capture-packets-using-sharppcap jakub.jozwiak@mandiant.com
+- nursery/communicate-with-kernel-module-via-netlink-socket-on-linux michael.hunhoff@mandiant.com
+- nursery/get-current-pid-on-linux michael.hunhoff@mandiant.com
+- nursery/get-file-system-information-on-linux michael.hunhoff@mandiant.com
+- nursery/get-password-database-entry-on-linux michael.hunhoff@mandiant.com
+- nursery/mark-thread-detached-on-linux michael.hunhoff@mandiant.com
+- nursery/persist-via-gnome-autostart-on-linux michael.hunhoff@mandiant.com
+- nursery/set-thread-name-on-linux michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
