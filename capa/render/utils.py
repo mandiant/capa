@@ -60,6 +60,35 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
 
 def load_rules_prevalence() -> Dict[str, str]:
     CD = Path(__file__).resolve().parent.parent.parent
+    import logging
+
+    logger = logging.getLogger(__name__)
+    CD1 = Path(__file__).resolve()
+    CD2 = Path(__file__).resolve().parent
+    CD3 = Path(__file__).resolve().parent.parent
+    CD4 = Path(__file__).resolve().parent.parent.parent
+    CD5 = Path(__file__).resolve().parent.parent.parent.parent
+    logger.error(f"1 {CD1}")
+    logger.error(f"2 {CD2}")
+    logger.error(f"3 {CD3}")
+    logger.error(f"4 {CD4}")
+    logger.error(f"5 {CD5}")
+    CD1 = CD1 / "assets/rules_prevalence.json.gz"
+    CD2 = CD2 / "assets/rules_prevalence.json.gz"
+    CD3 = CD3 / "assets/rules_prevalence.json.gz"
+    CD4 = CD4 / "assets/rules_prevalence.json.gz"
+    CD5 = CD5 / "assets/rules_prevalence.json.gz"
+    if CD1.exists():
+        logger.error(f"cd1 : {CD1}")
+    if CD2.exists():
+        logger.error(f"cd2 : {CD2}")
+    if CD3.exists():
+        logger.error(f"cd3 : {CD3}")
+    if CD4.exists():
+        logger.error(f"cd4 : {CD4}")
+    if CD5.exists():
+        logger.error(f"cd5 : {CD5}")
+
     file = CD / "assets/rules_prevalence.json.gz"
     if not file.exists():
         raise FileNotFoundError(f"File '{file}' not found.")
