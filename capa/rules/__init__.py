@@ -209,7 +209,6 @@ def translate_com_feature(com_name: str, com_type: str) -> ceng.Or:
 
     CD = Path(__file__).resolve().parent.parent.parent
     com_db_path = CD / VALID_COM_TYPES[com_type]["db_path"]
-    logger.error(f"Path {CD} and  {com_db_path} exits")
     if not com_db_path.exists():
         logger.error("Using COM %s database '%s', but it doesn't exist", com_type, com_db_path)
         raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
