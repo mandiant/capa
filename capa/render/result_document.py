@@ -136,6 +136,16 @@ class Metadata(Model):
     analysis: Analysis
 
 
+class StaticMetadata(Metadata):
+    flavor: Flavor = Flavor.STATIC
+    analysis: StaticAnalysis
+
+
+class DynamicMetadata(Metadata):
+    flavor: Flavor = Flavor.DYNAMIC
+    analysis: DynamicAnalysis
+
+
 class CompoundStatementType:
     AND = "and"
     OR = "or"

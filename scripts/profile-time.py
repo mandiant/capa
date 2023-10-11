@@ -54,7 +54,6 @@ import capa.helpers
 import capa.features
 import capa.features.common
 import capa.features.freeze
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.profile")
 

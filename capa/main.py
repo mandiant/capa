@@ -1007,13 +1007,13 @@ def collect_metadata(
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
     if isinstance(extractor, StaticFeatureExtractor):
-        flavor = rdoc.Flavor.STATIC
+        meta_class: type = rdoc.StaticMetadata
     elif isinstance(extractor, DynamicFeatureExtractor):
-        flavor = rdoc.Flavor.DYNAMIC
+        meta_class = rdoc.DynamicMetadata
     else:
         assert_never(extractor)
 
-    return rdoc.Metadata(
+    return meta_class(
         timestamp=datetime.datetime.now(),
         version=capa.version.__version__,
         argv=tuple(argv) if argv else None,
@@ -1023,7 +1023,6 @@ def collect_metadata(
             sha256=sha256,
             path=Path(sample_path).resolve().as_posix(),
         ),
-        flavor=flavor,
         analysis=get_sample_analysis(
             format_,
             arch,
