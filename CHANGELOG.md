@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (15)
+### New Rules (16)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -27,6 +27,7 @@
 - nursery/log-keystrokes-via-input-method-manager @mr-tz
 - nursery/encrypt-data-using-rc4-via-systemfunction032 richard.weiss@mandiant.com
 - nursery/add-value-to-global-atom-table @mr-tz
+- nursery/enumerate-processes-that-use-resource @Ana06
 -
 
 ### Bug Fixes
