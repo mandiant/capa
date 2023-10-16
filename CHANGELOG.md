@@ -10,7 +10,7 @@
 
 ### Breaking Changes
 
-### New Rules (16)
+### New Rules (19)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -28,6 +28,9 @@
 - nursery/encrypt-data-using-rc4-via-systemfunction032 richard.weiss@mandiant.com
 - nursery/add-value-to-global-atom-table @mr-tz
 - nursery/enumerate-processes-that-use-resource @Ana06
+- host-interaction/process/inject/allocate-or-change-rwx-memory @mr-tz
+- lib/allocate-or-change-rw-memory 0x534a@mailbox.org @mr-tz
+- lib/change-memory-protection @mr-tz
 -
 
 ### Bug Fixes
