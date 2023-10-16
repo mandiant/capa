@@ -1026,8 +1026,7 @@ def test_translate_com_features():
         capa.features.common.Bytes(b"[\x94\x18\xe0\x86\xaa\x08@\x9b\xd4gw\xa1\xe4\x0c\x11", f"IID_{com_name} as bytes"),
         capa.features.common.StringFactory("e018945b-aa86-4008-9bd4-6777a1e40c11", f"IID_{com_name} as GUID string"),
     ]
-    for child in r.statement.get_children():
-        assert child in com_features
+    assert set(com_features) == set(r.statement.get_children())
 
 
 def test_invalid_com_features():
