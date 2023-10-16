@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (13)
+### New Rules (16)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -26,6 +26,9 @@
 - nursery/set-thread-name-on-linux michael.hunhoff@mandiant.com
 - load-code/dotnet/load-windows-common-language-runtime michael.hunhoff@mandiant.com blas.kojusner@mandiant.com jakub.jozwiak@mandiant.com
 - nursery/log-keystrokes-via-input-method-manager @mr-tz
+- nursery/encrypt-data-using-rc4-via-systemfunction032 richard.weiss@mandiant.com
+- nursery/add-value-to-global-atom-table @mr-tz
+- nursery/enumerate-processes-that-use-resource @Ana06
 -
 
 ### Bug Fixes
