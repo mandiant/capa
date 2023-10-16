@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     """
-    this method extrcts the given call's features (such as API name and arguments),
+    this method extracts the given call's features (such as API name and arguments),
     and returns them as API, Number, and String features.
 
     args:

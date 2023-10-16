@@ -83,7 +83,15 @@ import capa.features.address
 import capa.features.extractors.pefile
 from capa.helpers import get_auto_format, log_unsupported_runtime_error
 from capa.features.insn import API, Number
-from capa.features.common import FORMAT_AUTO, FORMAT_FREEZE, DYNAMIC_FORMATS, String, Feature, is_global_feature
+from capa.features.common import (
+    FORMAT_AUTO,
+    FORMAT_CAPE,
+    FORMAT_FREEZE,
+    DYNAMIC_FORMATS,
+    String,
+    Feature,
+    is_global_feature,
+)
 from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
@@ -132,8 +140,11 @@ def main(argv=None):
             extractor = capa.main.get_extractor(
                 args.sample, format_, args.os, args.backend, sig_paths, should_save_workspace
             )
-        except capa.exceptions.UnsupportedFormatError:
-            capa.helpers.log_unsupported_format_error()
+        except capa.exceptions.UnsupportedFormatError as e:
+            if format_ == FORMAT_CAPE:
+                capa.helpers.log_unsupported_cape_report_error(str(e))
+            else:
+                capa.helpers.log_unsupported_format_error()
             return -1
         except capa.exceptions.UnsupportedRuntimeError:
             log_unsupported_runtime_error()
@@ -248,13 +259,13 @@ def print_static_features(functions, extractor: StaticFeatureExtractor):
 
 def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
-        print(f"proc: {p.inner['name']} (ppid={p.address.ppid}, pid={p.address.pid})")
+        print(f"proc: {p.inner.process_name} (ppid={p.address.ppid}, pid={p.address.pid})")
 
         for feature, addr in extractor.extract_process_features(p):
             if is_global_feature(feature):
                 continue
 
-            print(f" proc: {p.inner['name']}: {feature}")
+            print(f" proc: {p.inner.process_name}: {feature}")
 
             for t in extractor.get_threads(p):
                 print(f"  thread: {t.address.tid}")
@@ -283,7 +294,7 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
                         print(f"    arguments=[{', '.join(arguments)}]")
 
                     for cid, api in apis:
-                        print(f"call {cid}: {api}({', '.join(arguments)})")
+                        print(f"    call {cid}: {api}({', '.join(arguments)})")
 
 
 def ida_main():
