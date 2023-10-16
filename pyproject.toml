@@ -37,7 +37,7 @@ dependencies = [
     "tabulate==0.9.0",
     "colorama==0.4.6",
     "termcolor==2.3.0",
-    "wcwidth==0.2.6",
+    "wcwidth==0.2.8",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
@@ -46,7 +46,7 @@ dependencies = [
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.30",
-    "dnfile==0.13.0",
+    "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.1.1",
     "protobuf==4.23.4",
@@ -67,7 +67,7 @@ dev = [
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
     "flake8==6.1.0",
-    "flake8-bugbear==23.7.10",
+    "flake8-bugbear==23.9.16",
     "flake8-encodings==0.5.0.post1",
     "flake8-comprehensions==3.14.0",
     "flake8-logging-format==0.9.0",
@@ -78,8 +78,8 @@ dev = [
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.0.291",
-    "black==23.7.0",
     "isort==5.12.0",
+    "black==23.9.1",
     "mypy==1.5.1",
     "psutil==5.9.2",
     "stix2==3.0.1",
@@ -96,7 +96,7 @@ dev = [
     "types-protobuf==4.24.0.1",
 ]
 build = [
-    "pyinstaller==5.13.1",
+    "pyinstaller==6.0.0",
     "setuptools==68.0.0",
     "build==1.0.3"
 ]
