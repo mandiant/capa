@@ -33,9 +33,10 @@ def get_processes(report: CapeReport) -> Iterator[ProcessHandle]:
             seen_processes[addr] = [process]
         else:
             logger.warning(
-                "pid and ppid reuse detected between process " + process + " and process" + "es"
-                if len(seen_processes[addr]) > 1
-                else "" + ": " + seen_processes[addr]
+                "pid and ppid reuse detected between process %s and process%s: %s",
+                process,
+                "es" if len(seen_processes[addr]) > 1 else "",
+                seen_processes[addr],
             )
             seen_processes[addr].append(process)
 
