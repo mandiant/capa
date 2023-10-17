@@ -156,7 +156,7 @@ GLOBAL_HANDLERS = (
 
 class ElfFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__(SampleHashes.from_bytes(self.path.read_bytes()))
+        super().__init__(SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
