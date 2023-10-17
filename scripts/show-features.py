@@ -315,8 +315,71 @@ def ida_main():
     return 0
 
 
+def print_features(functions, extractor: capa.features.extractors.base_extractor.FeatureExtractor):
+    for f in functions:
+        if extractor.is_library_function(f.address):
+            function_name = extractor.get_function_name(f.address)
+            logger.debug("skipping library function %s (%s)", format_address(f.address), function_name)
+            continue
+
+        print(f"func: {format_address(f.address)}")
+
+        for feature, addr in extractor.extract_function_features(f):
+            if capa.features.common.is_global_feature(feature):
+                continue
+
+            if f.address != addr:
+                print(f" func: {format_address(f.address)}: {feature} -> {format_address(addr)}")
+            else:
+                print(f" func: {format_address(f.address)}: {feature}")
+
+        for bb in extractor.get_basic_blocks(f):
+            for feature, addr in extractor.extract_basic_block_features(f, bb):
+                if capa.features.common.is_global_feature(feature):
+                    continue
+
+                if bb.address != addr:
+                    print(f" bb: {format_address(bb.address)}: {feature} -> {format_address(addr)}")
+                else:
+                    print(f" bb: {format_address(bb.address)}: {feature}")
+
+            for insn in extractor.get_instructions(f, bb):
+                for feature, addr in extractor.extract_insn_features(f, bb, insn):
+                    if capa.features.common.is_global_feature(feature):
+                        continue
+
+                    try:
+                        if insn.address != addr:
+                            print(
+                                f"  insn: {format_address(f.address)}: {format_address(insn.address)}: {feature} -> {format_address(addr)}"
+                            )
+                        else:
+                            print(f"  insn: {format_address(insn.address)}: {feature}")
+
+                    except UnicodeEncodeError:
+                        # may be an issue while piping to less and encountering non-ascii characters
+                        continue
+
+
+def ghidra_main():
+    import capa.features.extractors.ghidra.extractor
+
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+
+    for feature, addr in extractor.extract_file_features():
+        print(f"file: {format_address(addr)}: {feature}")
+
+    function_handles = tuple(extractor.get_functions())
+
+    print_features(function_handles, extractor)
+
+    return 0
+
+
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
+    elif capa.helpers.is_runtime_ghidra():
+        ghidra_main()
     else:
         sys.exit(main())

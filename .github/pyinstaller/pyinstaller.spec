@@ -79,7 +79,7 @@ exe = EXE(
     name="capa",
     icon="logo.ico",
     debug=False,
-    strip=None,
+    strip=False,
     upx=True,
     console=True,
 )
