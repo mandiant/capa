@@ -420,8 +420,11 @@ def test_rules_flavor_filtering():
 
 
 def test_meta_scope_keywords():
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
-        for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    static_scopes = list(sorted(map(lambda e: e.value, capa.rules.STATIC_SCOPES)))
+    dynamic_scopes = list(sorted(map(lambda e: e.value, capa.rules.DYNAMIC_SCOPES)))
+
+    for static_scope in static_scopes:
+        for dynamic_scope in dynamic_scopes:
             _ = capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     f"""
@@ -439,7 +442,7 @@ def test_meta_scope_keywords():
             )
 
     # its also ok to specify "unsupported"
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+    for static_scope in static_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -455,7 +458,7 @@ def test_meta_scope_keywords():
                 """
             )
         )
-    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    for dynamic_scope in dynamic_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -473,7 +476,7 @@ def test_meta_scope_keywords():
         )
 
     # its also ok to specify "unspecified"
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+    for static_scope in static_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -489,7 +492,7 @@ def test_meta_scope_keywords():
                 """
             )
         )
-    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    for dynamic_scope in dynamic_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""

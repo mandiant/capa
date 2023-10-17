@@ -931,12 +931,13 @@ class Rule:
     def from_dict(cls, d: Dict[str, Any], definition: str) -> "Rule":
         meta = d["rule"]["meta"]
         name = meta["name"]
+
         # if scope is not specified, default to function scope.
         # this is probably the mode that rule authors will start with.
         # each rule has two scopes, a static-flavor scope, and a
         # dynamic-flavor one. which one is used depends on the analysis type.
         if "scope" in meta:
-            raise InvalidRule("rule is in legacy mode (has scope meta field). please update to the new syntax.")
+            raise InvalidRule(f"legacy rule detected (rule.meta.scope), please update to the new syntax: {name}")
         elif "scopes" in meta:
             scopes_ = meta.get("scopes")
         else:

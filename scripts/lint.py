@@ -216,8 +216,8 @@ class InvalidScopes(Lint):
     recommendation = "At least one scope (static or dynamic) must be specified"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return (rule.meta.get("scope").get("static") in ("unspecified", "unsupported")) and (
-            rule.meta.get("scope").get("dynamic") in ("unspecified", "unsupported")
+        return (rule.meta.get("scopes").get("static") in ("unspecified", "unsupported")) and (
+            rule.meta.get("scopes").get("dynamic") in ("unspecified", "unsupported")
         )
 
 
@@ -978,10 +978,6 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     default_samples_path = str(Path(__file__).resolve().parent.parent / "tests" / "data")
-
-    # TODO(yelhamer): remove once support for the legacy scope field has been added
-    # https://github.com/mandiant/capa/pull/1580
-    return 0
 
     parser = argparse.ArgumentParser(description="Lint capa rules.")
     capa.main.install_common_args(parser, wanted={"tag"})
