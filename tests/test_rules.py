@@ -420,8 +420,8 @@ def test_rules_flavor_filtering():
 
 
 def test_meta_scope_keywords():
-    static_scopes = list(sorted(map(lambda e: e.value, capa.rules.STATIC_SCOPES)))
-    dynamic_scopes = list(sorted(map(lambda e: e.value, capa.rules.DYNAMIC_SCOPES)))
+    static_scopes = sorted([e.value for e in capa.rules.STATIC_SCOPES])
+    dynamic_scopes = sorted([e.value for e in capa.rules.DYNAMIC_SCOPES])
 
     for static_scope in static_scopes:
         for dynamic_scope in dynamic_scopes:
