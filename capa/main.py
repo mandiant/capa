@@ -80,7 +80,6 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
-    DYNAMIC_FORMATS,
 )
 from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.base_extractor import (
@@ -1360,8 +1359,6 @@ def handle_common_args(args):
 
         args.rules = rules_paths
 
-
-def handle_signatures_arg(args):
     if hasattr(args, "signatures"):
         if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
             logger.debug("-" * 80)
@@ -1556,9 +1553,6 @@ def main(argv: Optional[List[str]] = None):
             # and use those for extracting.
 
             try:
-                if format_ not in DYNAMIC_FORMATS:
-                    # signatures are loaded only for static anaylsis
-                    handle_signatures_arg(args)
                 if format_ == FORMAT_PE:
                     sig_paths = get_signatures(args.signatures)
                 else:

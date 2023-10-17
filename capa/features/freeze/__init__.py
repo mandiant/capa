@@ -658,7 +658,6 @@ def main(argv=None):
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
-    capa.main.handle_signatures_arg(args)
 
     sigpaths = capa.main.get_signatures(args.signatures)
 

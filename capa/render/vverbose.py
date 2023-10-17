@@ -379,13 +379,13 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
-                if capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes:
+                if doc.meta.flavor == rd.Flavor.STATIC and rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
                     ostream.write(
                         " in function "
                         + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))
                     )
 
-                if capa.rules.Scope.THREAD in rule.meta.scopes:
+                if doc.meta.flavor == rd.Flavor.DYNAMIC and rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                     ostream.write(
                         " in process "
                         + capa.render.verbose.format_address(
