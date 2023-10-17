@@ -539,11 +539,13 @@ def find_dynamic_capabilities(
     return matches, meta
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
+def find_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
+) -> Tuple[MatchResults, Any]:
     if isinstance(extractor, StaticFeatureExtractor):
-        return find_static_capabilities(ruleset, extractor, kwargs)
+        return find_static_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
     elif isinstance(extractor, DynamicFeatureExtractor):
-        return find_dynamic_capabilities(ruleset, extractor, kwargs)
+        return find_dynamic_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
     else:
         raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
