@@ -80,7 +80,7 @@ def extract_function_loop(fhandle: FunctionHandle) -> Iterator[Tuple[Feature, Ad
                     bflags & envi.BR_COND
                     or bflags & envi.BR_FALL
                     or bflags & envi.BR_TABLE
-                    or bb.instructions[-1].mnem == "jmp"
+                    or bb.instructions[-1].mnem in ["jmp", "b", "bx"]
                 ):
                     edges.append((bb.va, bva))
 

@@ -8,7 +8,7 @@
 import logging
 from typing import Tuple, Iterator
 
-from capa.features.common import ARCH_I386, ARCH_AMD64, Arch, Feature
+from capa.features.common import ARCH_ARM, ARCH_I386, ARCH_AMD64, Arch, Feature
 from capa.features.address import NO_ADDRESS, Address
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,9 @@ def extract_arch(vw) -> Iterator[Tuple[Feature, Address]]:
 
     elif arch == "i386":
         yield Arch(ARCH_I386), NO_ADDRESS
+
+    elif arch == "ARM":
+        yield Arch(ARCH_ARM), NO_ADDRESS
 
     else:
         # we likely end up here:

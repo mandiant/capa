@@ -23,6 +23,8 @@ from capa.features.insn import API, MAX_STRUCTURE_SIZE, Number, Offset, Mnemonic
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.elf import SymTab
+from capa.features.extractors.viv.helpers import read_memory
+from capa.features.extractors.viv.syscall import get_library_function_name
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.viv.indirect_calls import NotFoundError, resolve_indirect_call
 
@@ -79,6 +81,15 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
 
     if insn.mnem == "jmp":
         if f.vw.getFunctionMeta(f.va, "Thunk"):
+            return
+
+    # Added a case for catching basic blocks that contain direct calls to system functions.
+    if insn.mnem in ("int", "syscall"):
+        if insn.mnem != "int" or insn.opers[0].imm == 128:
+            name = get_library_function_name(f.vw, bb)
+            if name is None:
+                return
+            yield API(name), ih.address
             return
 
     # traditional call via IAT
@@ -220,22 +231,6 @@ def derefs(vw, p):
             return
 
         p = next
-
-
-def read_memory(vw, va: int, size: int) -> bytes:
-    # as documented in #176, vivisect will not readMemory() when the section is not marked readable.
-    #
-    # but here, we don't care about permissions.
-    # so, copy the viv implementation of readMemory and remove the permissions check.
-    #
-    # this is derived from:
-    #   https://github.com/vivisect/vivisect/blob/5eb4d237bddd4069449a6bc094d332ceed6f9a96/envi/memory.py#L453-L462
-    for mva, mmaxva, mmap, mbytes in vw._map_defs:
-        if va >= mva and va < mmaxva:
-            mva, msize, mperms, mfname = mmap
-            offset = va - mva
-            return mbytes[offset : offset + size]
-    raise envi.exc.SegmentationViolation(va)
 
 
 def read_bytes(vw, va: int) -> bytes:
