@@ -1556,6 +1556,9 @@ def main(argv: Optional[List[str]] = None):
             # and use those for extracting.
 
             try:
+                if format_ not in DYNAMIC_FORMATS:
+                    # signatures are loaded only for static anaylsis
+                    handle_signatures_arg(args)
                 if format_ == FORMAT_PE:
                     sig_paths = get_signatures(args.signatures)
                 else:
