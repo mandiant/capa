@@ -11,6 +11,7 @@ from pathlib import Path
 
 import dnfile
 import pefile
+from dnfile.types import DnType
 
 import capa.features.extractors.helpers
 from capa.features.file import Import, FunctionName
@@ -33,7 +34,6 @@ from capa.features.common import (
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
-    DnType,
     iter_dotnet_table,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,

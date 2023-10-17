@@ -359,7 +359,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
         format_ = "sc64"
     else:
-        format_ = capa.main.get_auto_format(nice_path)
+        format_ = capa.helpers.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
     extractor = capa.main.get_extractor(

@@ -215,7 +215,7 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
             description=node.description,
             min=node.min,
             max=node.max,
-            child=frz.feature_from_capa(node.child),
+            child=frzf.feature_from_capa(node.child),
         )
 
     elif isinstance(node, capa.engine.Subscope):
@@ -241,7 +241,7 @@ def node_from_capa(node: Union[capa.engine.Statement, capa.engine.Feature]) -> N
         return StatementNode(statement=statement_from_capa(node))
 
     elif isinstance(node, capa.engine.Feature):
-        return FeatureNode(feature=frz.feature_from_capa(node))
+        return FeatureNode(feature=frzf.feature_from_capa(node))
 
     else:
         assert_never(node)

@@ -34,7 +34,7 @@ def find_embedded_pe(block_bytez: bytes, mz_xor: List[Tuple[bytes, bytes, int]])
         for match in re.finditer(re.escape(mzx), block_bytez):
             todo.append((match.start(), mzx, pex, i))
 
-    seg_max = len(block_bytez)  # type: ignore [name-defined] # noqa: F821
+    seg_max = len(block_bytez)  # noqa: F821
     while len(todo):
         off, mzx, pex, i = todo.pop()
 

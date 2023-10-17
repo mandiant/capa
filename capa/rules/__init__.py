@@ -322,7 +322,7 @@ def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Stat
         # features of this scope that are not Characteristics will be Type instances.
         # check that the given feature is one of these types.
         types_for_scope = filter(lambda t: isinstance(t, type), supported_features)
-        if not isinstance(feature, tuple(types_for_scope)):  # type: ignore
+        if not isinstance(feature, tuple(types_for_scope)):
             raise InvalidRule(f"feature {feature} not supported for scopes {scopes}")
 
 
@@ -990,7 +990,7 @@ class Rule:
 
         # leave quotes unchanged.
         # manually verified this property exists, even if mypy complains.
-        y.preserve_quotes = True  # type: ignore
+        y.preserve_quotes = True
 
         # indent lists by two spaces below their parent
         #
@@ -1002,7 +1002,7 @@ class Rule:
 
         # avoid word wrapping
         # manually verified this property exists, even if mypy complains.
-        y.width = 4096  # type: ignore
+        y.width = 4096
 
         return y
 

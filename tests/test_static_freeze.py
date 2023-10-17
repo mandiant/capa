@@ -140,7 +140,7 @@ def test_freeze_bytes_roundtrip():
 
 
 def roundtrip_feature(feature):
-    assert feature == capa.features.freeze.feature_from_capa(feature).to_capa()
+    assert feature == capa.features.freeze.features.feature_from_capa(feature).to_capa()
 
 
 def test_serialize_features():

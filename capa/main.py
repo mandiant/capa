@@ -823,7 +823,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
-    elif format_ == capa.features.extractors.common.FORMAT_ELF:
+    elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
@@ -1462,7 +1462,7 @@ def main(argv: Optional[List[str]] = None):
             # during the load of the RuleSet, we extract subscope statements into their own rules
             # that are subsequently `match`ed upon. this inflates the total rule count.
             # so, filter out the subscope rules when reporting total number of loaded rules.
-            len(list(filter(lambda r: not r.is_subscope_rule(), rules.rules.values()))),
+            len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
