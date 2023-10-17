@@ -207,24 +207,17 @@ VALID_COM_TYPES = {
     ComType.INTERFACE: {"db_path": "assets/interfaces.json.gz", "prefix": "IID_"},
 }
 
-com_db_cache: Dict[ComType, Dict[str, List[str]]] = {}
 
-
+@lru_cache(maxsize=None)
 def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
     com_db_path: Path = capa.main.get_default_root() / VALID_COM_TYPES[com_type]["db_path"]
-
-    if com_type in com_db_cache:
-        # If the com database is already in the cache, return it
-        return com_db_cache[com_type]
 
     if not com_db_path.exists():
         raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
 
     try:
         with gzip.open(com_db_path, "rb") as gzfile:
-            com_db: Dict[str, List[str]] = json.loads(gzfile.read().decode("utf-8"))
-            com_db_cache[com_type] = com_db  # Cache the loaded database
-            return com_db
+            return json.loads(gzfile.read().decode("utf-8"))
     except Exception as e:
         raise IOError(f"Error loading COM database from '{com_db_path}'") from e
 
