@@ -1573,8 +1573,9 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-            # TODO this should be wrapped and refactored as it's tedious to update everywhere
+            # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
             #  see same code and show-features above examples
+            #  https://github.com/mandiant/capa/issues/1813
             try:
                 extractor = get_extractor(
                     args.sample,
@@ -1587,7 +1588,7 @@ def main(argv: Optional[List[str]] = None):
                 )
             except UnsupportedFormatError as e:
                 if format_ == FORMAT_CAPE:
-                    log_unsupported_cape_report_error(e)
+                    log_unsupported_cape_report_error(str(e))
                 else:
                     log_unsupported_format_error()
                 return E_INVALID_FILE_TYPE

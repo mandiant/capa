@@ -85,6 +85,7 @@ class CapeExtractor(DynamicFeatureExtractor):
         if cr.info.version not in TESTED_VERSIONS:
             logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
+        # observed in 2.4-CAPE reports from capesandbox.com
         if cr.static is None and cr.target.file.pe is not None:
             cr.static = Static()
             cr.static.pe = cr.target.file.pe

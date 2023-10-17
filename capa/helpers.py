@@ -150,7 +150,7 @@ def log_unsupported_format_error():
 
 def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
-    logger.error(f" Input file is not a valid CAPE report: {error}")
+    logger.error("Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
     logger.error(" capa currently only supports analyzing standard CAPE json reports.")
     logger.error(
@@ -161,7 +161,7 @@ def log_unsupported_cape_report_error(error: str):
 
 def log_empty_cape_report_error(error: str):
     logger.error("-" * 80)
-    logger.error(f" CAPE report is empty or only contains little useful data: {error}")
+    logger.error(" CAPE report is empty or only contains little useful data: %s", error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)

@@ -205,11 +205,9 @@ class PE(ExactModel):
     guest_signers: Signer
 
 
-# TODO
-#  target.file.dotnet,
-#  target.file.extracted_files,
-#  target.file.extracted_files_tool,
+# TODO(mr-tz): target.file.dotnet, target.file.extracted_files, target.file.extracted_files_tool,
 #  target.file.extracted_files_time
+# https://github.com/mandiant/capa/issues/1814
 class File(FlexibleModel):
     type: str
     cape_type_code: Optional[int] = None
