@@ -984,7 +984,6 @@ class Rule:
 
         # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
         y = ruamel.yaml.YAML(typ="rt")
-        y.register_class(Scope)
 
         # use block mode, not inline json-like mode
         y.default_flow_style = False
@@ -1064,7 +1063,6 @@ class Rule:
             meta[k] = v
         # the name and scope of the rule instance overrides anything in meta.
         meta["name"] = self.name
-        meta["scopes"] = asdict(self.scopes)
 
         def move_to_end(m, k):
             # ruamel.yaml uses an ordereddict-like structure to track maps (CommentedMap).
