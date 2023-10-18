@@ -42,7 +42,7 @@ dependencies = [
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==3.1",
-    "ruamel.yaml==0.17.32",
+    "ruamel.yaml==0.17.35",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.30",
@@ -61,7 +61,7 @@ packages = ["capa"]
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit==3.4.0",
+    "pre-commit==3.5.0",
     "pytest==7.4.2",
     "pytest-sugar==0.9.7",
     "pytest-instafail==0.5.0",
@@ -74,13 +74,14 @@ dev = [
     "flake8-no-implicit-concat==0.3.4",
     "flake8-print==5.0.0",
     "flake8-todos==0.3.0",
-    "flake8-simplify==0.20.0",
+    "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.0.291",
     "isort==5.12.0",
     "black==23.9.1",
-    "mypy==1.5.1",
+    "isort==5.11.4",
+    "mypy==1.6.0",
     "psutil==5.9.2",
     "stix2==3.0.1",
     "requests==2.31.0",
@@ -96,7 +97,7 @@ dev = [
     "types-protobuf==4.24.0.1",
 ]
 build = [
-    "pyinstaller==6.0.0",
+    "pyinstaller==6.1.0",
     "setuptools==68.0.0",
     "build==1.0.3"
 ]
