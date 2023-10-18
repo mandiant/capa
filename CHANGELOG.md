@@ -7,6 +7,7 @@
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
+- add com class/interface features #322 @Aayush-goel-04
 
 ### Breaking Changes
 
