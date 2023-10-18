@@ -271,7 +271,6 @@ def render_rules(ostream, doc: rd.ResultDocument):
     """
 
     functions_by_bb: Dict[capa.features.address.Address, capa.features.address.Address] = {}
-    processes_by_thread: Dict[capa.features.address.Address, capa.features.address.Address] = {}
     if isinstance(doc.meta.analysis, rd.StaticAnalysis):
         for finfo in doc.meta.analysis.layout.functions:
             faddress = finfo.address.to_capa()
@@ -280,12 +279,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 bbaddress = bb.address.to_capa()
                 functions_by_bb[bbaddress] = faddress
     elif isinstance(doc.meta.analysis, rd.DynamicAnalysis):
-        for pinfo in doc.meta.analysis.layout.processes:
-            paddress = pinfo.address.to_capa()
-
-            for thread in pinfo.matched_threads:
-                taddress = thread.address.to_capa()
-                processes_by_thread[taddress] = paddress
+        pass
     else:
         raise ValueError("invalid analysis field in the document's meta")
 
@@ -336,12 +330,11 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         rows.append(("author", ", ".join(rule.meta.authors)))
 
-        rows.append(("scopes", ""))
-        if rule.meta.scopes.static:
-            rows.append(("  static:", str(rule.meta.scopes.static)))
+        if doc.meta.flavor == rd.Flavor.STATIC:
+            rows.append(("scope", f"{rule.meta.scopes.static}"))
 
-        if rule.meta.scopes.dynamic:
-            rows.append(("  dynamic:", str(rule.meta.scopes.dynamic)))
+        if doc.meta.flavor == rd.Flavor.DYNAMIC:
+            rows.append(("scope", f"{rule.meta.scopes.dynamic}"))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
@@ -376,6 +369,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 else:
                     capa.helpers.assert_never(doc.meta.flavor)
 
+                # TODO(mr-tz): process rendering should use human-readable name
+                # https://github.com/mandiant/capa/issues/1816
+
                 ostream.write(" @ ")
                 ostream.write(capa.render.verbose.format_address(location))
 
@@ -383,14 +379,6 @@ def render_rules(ostream, doc: rd.ResultDocument):
                     ostream.write(
                         " in function "
                         + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))
-                    )
-
-                if doc.meta.flavor == rd.Flavor.DYNAMIC and rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
-                    ostream.write(
-                        " in process "
-                        + capa.render.verbose.format_address(
-                            frz.Address.from_capa(processes_by_thread[location.to_capa()])
-                        )
                     )
 
                 ostream.write("\n")
