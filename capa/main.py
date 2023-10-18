@@ -62,10 +62,17 @@ from capa.helpers import (
     log_unsupported_os_error,
     redirecting_print_to_tqdm,
     log_unsupported_arch_error,
+    log_empty_cape_report_error,
     log_unsupported_format_error,
     log_unsupported_cape_report_error,
 )
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
+from capa.exceptions import (
+    EmptyReportError,
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+    UnsupportedRuntimeError,
+)
 from capa.features.common import (
     OS_AUTO,
     OS_LINUX,
@@ -1501,12 +1508,17 @@ def main(argv: Optional[List[str]] = None):
     except (ELFError, OverflowError) as e:
         logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
-    except UnsupportedFormatError:
+    except UnsupportedFormatError as e:
         if format_ == FORMAT_CAPE:
-            log_unsupported_cape_report_error()
+            log_unsupported_cape_report_error(str(e))
         else:
             log_unsupported_format_error()
         return E_INVALID_FILE_TYPE
+    except EmptyReportError as e:
+        if format_ == FORMAT_CAPE:
+            log_empty_cape_report_error(str(e))
+        else:
+            log_unsupported_format_error()
 
     for file_extractor in file_extractors:
         if isinstance(file_extractor, DynamicFeatureExtractor):
@@ -1564,6 +1576,9 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
+            # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
+            #  see same code and show-features above examples
+            #  https://github.com/mandiant/capa/issues/1813
             try:
                 extractor = get_extractor(
                     args.sample,
@@ -1574,9 +1589,9 @@ def main(argv: Optional[List[str]] = None):
                     should_save_workspace,
                     disable_progress=args.quiet or args.debug,
                 )
-            except UnsupportedFormatError:
+            except UnsupportedFormatError as e:
                 if format_ == FORMAT_CAPE:
-                    log_unsupported_cape_report_error()
+                    log_unsupported_cape_report_error(str(e))
                 else:
                     log_unsupported_format_error()
                 return E_INVALID_FILE_TYPE
