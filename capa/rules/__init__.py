@@ -223,9 +223,6 @@ def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
 
 
 def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Or:
-    if com_type not in VALID_COM_TYPES:
-        raise InvalidRule(f"Invalid COM type present {com_type}")
-
     com_db = load_com_database(com_type)
     guid_strings: Optional[List[str]] = com_db.get(com_name)
     if guid_strings is None or len(guid_strings) == 0:
