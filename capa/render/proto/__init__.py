@@ -613,7 +613,7 @@ def addr_from_pb2(addr: capa_pb2.Address) -> frz.Address:
         pid = int_from_pb2(addr.ppid_pid_tid_id.pid)
         tid = int_from_pb2(addr.ppid_pid_tid_id.tid)
         id_ = int_from_pb2(addr.ppid_pid_tid_id.id)
-        return frz.Address(type=frz.AddressType.PROCESS, value=(ppid, pid, tid, id_))
+        return frz.Address(type=frz.AddressType.CALL, value=(ppid, pid, tid, id_))
 
     elif addr.type == capa_pb2.AddressType.ADDRESSTYPE_NO_ADDRESS:
         return frz.Address(type=frz.AddressType.NO_ADDRESS, value=None)

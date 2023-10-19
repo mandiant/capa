@@ -374,20 +374,22 @@ def assert_round_trip(doc: rd.ResultDocument):
     # show the round trip works
     # first by comparing the objects directly,
     # which works thanks to pydantic model equality.
+    assert one.meta == two.meta
+    assert one.rules == two.rules
     assert one == two
+
     # second by showing their protobuf representations are the same.
-    assert capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True) == capa.render.proto.doc_to_pb2(
-        two
-    ).SerializeToString(deterministic=True)
+    one_bytes = capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True)
+    two_bytes = capa.render.proto.doc_to_pb2(two).SerializeToString(deterministic=True)
+    assert one_bytes == two_bytes
 
     # now show that two different versions are not equal.
     three = copy.deepcopy(two)
     three.meta.__dict__.update({"version": "0.0.0"})
     assert one.meta.version != three.meta.version
     assert one != three
-    assert capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True) != capa.render.proto.doc_to_pb2(
-        three
-    ).SerializeToString(deterministic=True)
+    three_bytes = capa.render.proto.doc_to_pb2(three).SerializeToString(deterministic=True)
+    assert one_bytes != three_bytes
 
 
 @pytest.mark.parametrize(
