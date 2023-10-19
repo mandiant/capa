@@ -107,7 +107,7 @@ jobs:
     env:
       BN_SERIAL: ${{ secrets.BN_SERIAL }}
     runs-on: ubuntu-20.04
-    needs: [code_style, rule_linter]
+    needs: [tests]
     strategy:
       fail-fast: false
       matrix:
@@ -147,7 +147,7 @@ jobs:
   ghidra-tests:
     name: Ghidra tests for ${{ matrix.python-version }}
     runs-on: ubuntu-20.04
-    needs: [code_style, rule_linter]
+    needs: [tests]
     strategy:
       fail-fast: false
       matrix:
