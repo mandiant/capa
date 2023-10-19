@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import io
+import re
 import logging
 import binascii
 import contextlib
@@ -64,10 +65,8 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_FREEZE), NO_ADDRESS
     elif buf.startswith(MATCH_RESULT):
         yield Format(FORMAT_RESULT), NO_ADDRESS
-    elif (
-        buf.replace(b" ", b"").replace(b"\r", b"").replace(b"\n", b"").replace(b"\t", b"").startswith(MATCH_JSON_OBJECT)
-    ):
-        # potential start of JSON object data - `{"` without whitespace (\r\n\t)
+    elif re.sub(b"\w", b"", buf[:20]).startswith(MATCH_JSON_OBJECT):
+        # potential start of JSON object data without whitespace
         # we don't know what it is exactly, but may support it (e.g. a dynamic CAPE sandbox report)
         # skip verdict here and let subsequent code analyze this further
         return
