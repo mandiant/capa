@@ -17,6 +17,7 @@ import capa.main
 import capa.rules
 import capa.engine
 import capa.features
+import capa.features.capabilities.common
 
 
 def test_main(z9324d_extractor):
@@ -277,7 +278,7 @@ def test_match_across_scopes_file_function(z9324d_extractor):
             ),
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "install service" in capabilities
     assert ".text section" in capabilities
     assert ".text section and install service" in capabilities
@@ -345,7 +346,7 @@ def test_match_across_scopes(z9324d_extractor):
             ),
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "tight loop" in capabilities
     assert "kill thread loop" in capabilities
     assert "kill thread program" in capabilities
@@ -373,7 +374,7 @@ def test_subscope_bb_rules(z9324d_extractor):
         ]
     )
     # tight loop at 0x403685
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "test rule" in capabilities
 
 
@@ -397,7 +398,7 @@ def test_byte_matching(z9324d_extractor):
             )
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "byte match test" in capabilities
 
 
@@ -422,7 +423,7 @@ def test_count_bb(z9324d_extractor):
             )
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "count bb" in capabilities
 
 
@@ -449,7 +450,7 @@ def test_instruction_scope(z9324d_extractor):
             )
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000" in capabilities
     assert 0x4071A4 in {result[0] for result in capabilities["push 1000"]}
 
@@ -481,7 +482,7 @@ def test_instruction_subscope(z9324d_extractor):
             )
         ]
     )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
+    capabilities, meta = capa.features.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000 on i386" in capabilities
     assert 0x406F60 in {result[0] for result in capabilities["push 1000 on i386"]}
 
