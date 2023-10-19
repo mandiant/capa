@@ -18,6 +18,7 @@
 
 - remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
 - protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
+- protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 
 ### New Rules (19)
 
