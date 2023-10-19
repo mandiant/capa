@@ -38,7 +38,7 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: process
+                    dynamic: file
                 authors:
                   - test
             features:
