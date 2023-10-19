@@ -25,7 +25,7 @@ repos:
     hooks:
     -   id: isort
         name: isort
-        stages: [commit, push]
+        stages: [commit, push, manual]
         language: system
         entry: isort
         args: 
@@ -45,7 +45,7 @@ repos:
     hooks:
     -   id: black
         name: black
-        stages: [commit, push]
+        stages: [commit, push, manual]
         language: system
         entry: black
         args: 
@@ -62,7 +62,7 @@ repos:
     hooks:
     -   id: ruff
         name: ruff
-        stages: [commit, push]
+        stages: [commit, push, manual]
         language: system
         entry: ruff
         args: 
@@ -79,7 +79,7 @@ repos:
     hooks:
     -   id: flake8
         name: flake8
-        stages: [push]
+        stages: [push, manual]
         language: system
         entry: flake8
         args: 
@@ -97,7 +97,7 @@ repos:
     hooks:
     -   id: mypy
         name: mypy
-        stages: [push]
+        stages: [push, manual]
         language: system
         entry: mypy
         args: 

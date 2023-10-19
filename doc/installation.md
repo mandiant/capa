@@ -107,16 +107,17 @@ We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same
 
 Run all linters liks:
 
-    ❯ pre-commit run --all-files
+    ❯ pre-commit run --hook-stage manual
     isort....................................................................Passed
     black....................................................................Passed
     ruff.....................................................................Passed
     flake8...................................................................Passed
     mypy.....................................................................Passed
+    pytest (fast)............................................................Passed
 
 Or run a single linter like:
 
-    ❯ pre-commit run --all-files isort
+    ❯ pre-commit run --hook-stage manual isort
     isort....................................................................Passed
 
 

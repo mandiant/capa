@@ -43,9 +43,9 @@ jobs:
     - name: Lint with black
       run: pre-commit run black --show-diff-on-failure
     - name: Lint with flake8
-      run: pre-commit run flake8
+      run: pre-commit run flake8 --hook-stage manual
     - name: Check types with mypy
-      run:  pre-commit run mypy
+      run:  pre-commit run mypy --hook-stage manual
 
   rule_linter:
     runs-on: ubuntu-20.04
@@ -98,7 +98,7 @@ jobs:
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
-      run:  pre-commit run pytest-fast --all-files
+      run:  pre-commit run pytest-fast --all-files --hook-stage manual
     - name: Run tests
       run: pytest -v tests/
 
