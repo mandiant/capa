@@ -410,7 +410,9 @@ def test_com_feature_matching(z395eb_extractor):
                     rule:
                         meta:
                             name: initialize IWebBrowser2
-                            scope: basic block
+                            scopes:
+                              - static: basic block
+                              - dynamic: unsupported
                         features:
                             - and:
                                 - api: ole32.CoCreateInstance
