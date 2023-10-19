@@ -109,3 +109,21 @@ repos:
         -   "tests/"
         always_run: true
         pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: pytest-fast
+        name: pytest (fast)
+        stages: []
+        language: system
+        entry: pytest
+        args: 
+        -   "tests/"
+        -   "--ignore=tests/test_binja_features.py"
+        -   "--ignore=tests/test_ghidra_features.py"
+        -   "--ignore=tests/test_ida_features.py"
+        -   "--ignore=tests/test_viv_features.py"
+        -   "--ignore=tests/test_main.py"
+        -   "--ignore=tests/test_scripts.py"
+        always_run: true
+        pass_filenames: false
