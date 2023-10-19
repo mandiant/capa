@@ -105,7 +105,7 @@ To install these development dependencies, run:
 
 We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same linters & configuration locally as in CI.
 
-Run all linters liks:
+Run all linters like:
 
     ❯ pre-commit run --hook-stage=manual --all-files
     isort....................................................................Passed
