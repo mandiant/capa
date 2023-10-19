@@ -12,10 +12,13 @@
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04
+- protobuf: add `Metadata.flavor` @williballenthin
 
 ### Breaking Changes
 
 - remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
+- protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
+- protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 
 ### New Rules (19)
 
