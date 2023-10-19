@@ -50,7 +50,7 @@ import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import Rule, RuleSet
-from capa.engine import FeatureSet, MatchResults
+from capa.engine import MatchResults
 from capa.helpers import (
     get_format,
     get_file_taste,
@@ -83,7 +83,7 @@ from capa.features.common import (
     FORMAT_FREEZE,
     FORMAT_RESULT,
 )
-from capa.features.address import NO_ADDRESS, Address
+from capa.features.address import Address
 from capa.features.capabilities.common import find_capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import (
     SampleHashes,
