@@ -107,7 +107,7 @@ We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same
 
 Run all linters liks:
 
-    ❯ pre-commit run --hook-stage manual
+    ❯ pre-commit run --hook-stage=manual --all-files
     isort....................................................................Passed
     black....................................................................Passed
     ruff.....................................................................Passed
@@ -117,16 +117,16 @@ Run all linters liks:
 
 Or run a single linter like:
 
-    ❯ pre-commit run --hook-stage manual isort
+    ❯ pre-commit run --all-files --hook-stage=manual isort
     isort....................................................................Passed
 
 
 Importantly, you can configure pre-commit to run automatically before every commit by running:
 
-    ❯ pre-commit install --hook-type pre-commit
+    ❯ pre-commit install --hook-type=pre-commit
     pre-commit installed at .git/hooks/pre-commit
 
-    ❯ pre-commit install --hook-type pre-push
+    ❯ pre-commit install --hook-type=pre-push
     pre-commit installed at .git/hooks/pre-push
 
 This way you can ensure that you don't commit code style or formatting offenses.
