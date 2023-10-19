@@ -14,10 +14,10 @@ import capa.features.extractors.cape.file
 import capa.features.extractors.cape.thread
 import capa.features.extractors.cape.global_
 import capa.features.extractors.cape.process
-from capa.exceptions import UnsupportedFormatError
+from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
-from capa.features.extractors.cape.models import CapeReport
+from capa.features.extractors.cape.models import Static, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -85,10 +85,18 @@ class CapeExtractor(DynamicFeatureExtractor):
         if cr.info.version not in TESTED_VERSIONS:
             logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
+        # observed in 2.4-CAPE reports from capesandbox.com
+        if cr.static is None and cr.target.file.pe is not None:
+            cr.static = Static()
+            cr.static.pe = cr.target.file.pe
+
         if cr.static is None:
             raise UnsupportedFormatError("CAPE report missing static analysis")
 
         if cr.static.pe is None:
             raise UnsupportedFormatError("CAPE report missing PE analysis")
+
+        if len(cr.behavior.processes) == 0:
+            raise EmptyReportError("CAPE did not capture any processes")
 
         return cls(cr)

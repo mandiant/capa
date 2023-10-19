@@ -132,13 +132,21 @@ class DigitalSigner(FlexibleModel):
     extensions_subjectKeyIdentifier: Optional[str] = None
 
 
+class AuxSigner(ExactModel):
+    name: str
+    issued_to: str = Field(alias="Issued to")
+    issued_by: str = Field(alias="Issued by")
+    expires: str = Field(alias="Expires")
+    sha1_hash: str = Field(alias="SHA1 hash")
+
+
 class Signer(ExactModel):
-    aux_sha1: Optional[TODO] = None
-    aux_timestamp: Optional[None] = None
+    aux_sha1: Optional[str] = None
+    aux_timestamp: Optional[str] = None
     aux_valid: Optional[bool] = None
     aux_error: Optional[bool] = None
     aux_error_desc: Optional[str] = None
-    aux_signers: Optional[ListTODO] = None
+    aux_signers: Optional[List[AuxSigner]] = None
 
 
 class Overlay(ExactModel):
@@ -197,7 +205,10 @@ class PE(ExactModel):
     guest_signers: Signer
 
 
-class File(ExactModel):
+# TODO(mr-tz): target.file.dotnet, target.file.extracted_files, target.file.extracted_files_tool,
+#  target.file.extracted_files_time
+# https://github.com/mandiant/capa/issues/1814
+class File(FlexibleModel):
     type: str
     cape_type_code: Optional[int] = None
     cape_type: Optional[str] = None
@@ -350,6 +361,7 @@ class Behavior(ExactModel):
 class Target(ExactModel):
     category: str
     file: File
+    pe: Optional[PE] = None
 
 
 class Static(ExactModel):
@@ -385,7 +397,7 @@ class CapeReport(FlexibleModel):
     # post-processed results: payloads and extracted configs
     CAPE: Optional[Cape] = None
     dropped: Optional[List[File]] = None
-    procdump: List[ProcessFile]
+    procdump: Optional[List[ProcessFile]] = None
     procmemory: ListTODO
 
     # =========================================================================

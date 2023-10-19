@@ -38,7 +38,7 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
                 name: test rule
                 scopes:
                     static: file
-                    dynamic: process
+                    dynamic: file
                 authors:
                   - test
             features:
@@ -399,6 +399,30 @@ def test_byte_matching(z9324d_extractor):
     )
     capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
     assert "byte match test" in capabilities
+
+
+def test_com_feature_matching(z395eb_extractor):
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: initialize IWebBrowser2
+                            scope: basic block
+                        features:
+                            - and:
+                                - api: ole32.CoCreateInstance
+                                - com/class: InternetExplorer #bytes: 01 DF 02 00 00 00 00 00 C0 00 00 00 00 00 00 46 = CLSID_InternetExplorer
+                                - com/interface: IWebBrowser2 #bytes: 61 16 0C D3 AF CD D0 11 8A 3E 00 C0 4F C9 E2 6E = IID_IWebBrowser2
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.main.find_capabilities(rules, z395eb_extractor)
+    assert "initialize IWebBrowser2" in capabilities
 
 
 def test_count_bb(z9324d_extractor):

@@ -17,7 +17,7 @@ import capa.features.extractors.strings
 from capa.features.file import Export, Import, Section, FunctionName
 from capa.features.common import FORMAT_PE, FORMAT_ELF, Format, String, Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.binja.helpers import unmangle_c_name
+from capa.features.extractors.binja.helpers import read_c_string, unmangle_c_name
 
 
 def check_segment_for_pe(bv: BinaryView, seg: Segment) -> Iterator[Tuple[int, int]]:
@@ -82,6 +82,24 @@ def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address
             if name != unmangled_name:
                 yield Export(unmangled_name), AbsoluteVirtualAddress(sym.address)
 
+    for sym in bv.get_symbols_of_type(SymbolType.DataSymbol):
+        if sym.binding not in [SymbolBinding.GlobalBinding]:
+            continue
+
+        name = sym.short_name
+        if not name.startswith("__forwarder_name"):
+            continue
+
+        # Due to https://github.com/Vector35/binaryninja-api/issues/4641, in binja version 3.5, the symbol's name
+        # does not contain the DLL name. As a workaround, we read the C string at the symbol's address, which contains
+        # both the DLL name and the function name.
+        # Once the above issue is closed in the next binjs stable release, we can update the code here to use the
+        # symbol name directly.
+        name = read_c_string(bv, sym.address, 1024)
+        forwarded_name = capa.features.extractors.helpers.reformat_forwarded_export_name(name)
+        yield Export(forwarded_name), AbsoluteVirtualAddress(sym.address)
+        yield Characteristic("forwarded export"), AbsoluteVirtualAddress(sym.address)
+
 
 def extract_file_import_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
     """extract function imports
@@ -125,15 +143,17 @@ def extract_file_function_names(bv: BinaryView) -> Iterator[Tuple[Feature, Addre
     """
     for sym_name in bv.symbols:
         for sym in bv.symbols[sym_name]:
-            if sym.type == SymbolType.LibraryFunctionSymbol:
-                name = sym.short_name
-                yield FunctionName(name), sym.address
-                if name.startswith("_"):
-                    # some linkers may prefix linked routines with a `_` to avoid name collisions.
-                    # extract features for both the mangled and un-mangled representations.
-                    # e.g. `_fwrite` -> `fwrite`
-                    # see: https://stackoverflow.com/a/2628384/87207
-                    yield FunctionName(name[1:]), sym.address
+            if sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.FunctionSymbol]:
+                continue
+
+            name = sym.short_name
+            yield FunctionName(name), sym.address
+            if name.startswith("_"):
+                # some linkers may prefix linked routines with a `_` to avoid name collisions.
+                # extract features for both the mangled and un-mangled representations.
+                # e.g. `_fwrite` -> `fwrite`
+                # see: https://stackoverflow.com/a/2628384/87207
+                yield FunctionName(name[1:]), sym.address
 
 
 def extract_file_format(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:

@@ -94,27 +94,31 @@ def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle)
                 candidate_addrs.append(stub_addr)
 
             for address in candidate_addrs:
-                sym = func.view.get_symbol_at(address)
-                if sym is None or sym.type not in [SymbolType.ImportAddressSymbol, SymbolType.ImportedFunctionSymbol]:
-                    continue
+                for sym in func.view.get_symbols(address):
+                    if sym is None or sym.type not in [
+                        SymbolType.ImportAddressSymbol,
+                        SymbolType.ImportedFunctionSymbol,
+                        SymbolType.FunctionSymbol,
+                    ]:
+                        continue
 
-                sym_name = sym.short_name
+                    sym_name = sym.short_name
 
-                lib_name = ""
-                import_lib = bv.lookup_imported_object_library(sym.address)
-                if import_lib is not None:
-                    lib_name = import_lib[0].name
-                    if lib_name.endswith(".dll"):
-                        lib_name = lib_name[:-4]
-                    elif lib_name.endswith(".so"):
-                        lib_name = lib_name[:-3]
+                    lib_name = ""
+                    import_lib = bv.lookup_imported_object_library(sym.address)
+                    if import_lib is not None:
+                        lib_name = import_lib[0].name
+                        if lib_name.endswith(".dll"):
+                            lib_name = lib_name[:-4]
+                        elif lib_name.endswith(".so"):
+                            lib_name = lib_name[:-3]
 
-                for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name):
-                    yield API(name), ih.address
-
-                if sym_name.startswith("_"):
-                    for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name[1:]):
+                    for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name):
                         yield API(name), ih.address
+
+                    if sym_name.startswith("_"):
+                        for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym_name[1:]):
+                            yield API(name), ih.address
 
 
 def extract_insn_number_features(

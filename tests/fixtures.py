@@ -166,7 +166,8 @@ def get_dnfile_extractor(path: Path):
 
 @lru_cache(maxsize=1)
 def get_binja_extractor(path: Path):
-    from binaryninja import Settings, BinaryViewType
+    import binaryninja
+    from binaryninja import Settings
 
     import capa.features.extractors.binja.extractor
 
@@ -175,7 +176,7 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = BinaryViewType.get_view_of_file(str(path))
+    bv = binaryninja.load(str(path))
     if path.name.endswith("kernel32-64.dll_"):
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
 
@@ -199,6 +200,16 @@ def get_cape_extractor(path):
         report = json.loads(report_json)
 
     return CapeExtractor.from_report(report)
+
+
+@lru_cache(maxsize=1)
+def get_ghidra_extractor(path: Path):
+    import capa.features.extractors.ghidra.extractor
+
+    extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
+    setattr(extractor, "path", path.as_posix())
+
+    return extractor
 
 
 def extract_global_features(extractor):
@@ -307,6 +318,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
         return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+    elif name.startswith("395eb"):
+        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
     elif name.startswith("a1982"):
         return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
     elif name.startswith("a933a"):
@@ -426,7 +439,7 @@ def get_sample_md5_by_name(name):
     elif name.startswith("3b13b"):
         # file name is SHA256 hash
         return "56a6ffe6a02941028cc8235204eef31d"
-    elif name == "7351f.elf":
+    elif name.startswith("7351f"):
         return "7351f8a40c5450557b24622417fc478d"
     elif name.startswith("79abd"):
         return "79abd17391adc6251ecdc58d13d76baf"
@@ -1278,6 +1291,14 @@ FEATURE_COUNT_TESTS_DOTNET = [
 ]
 
 
+FEATURE_COUNT_TESTS_GHIDRA = [
+    # Ghidra may render functions as labels, as well as provide differing amounts of call references
+    # (Colton) TODO: Add more test cases
+    ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
+    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
+]
+
+
 def do_test_feature_presence(get_extractor, sample, scope, feature, expected):
     extractor = get_extractor(sample)
     features = scope(extractor)
@@ -1325,6 +1346,11 @@ def a1982_extractor():
 @pytest.fixture
 def z9324d_extractor():
     return get_extractor(get_data_path_by_name("9324d..."))
+
+
+@pytest.fixture
+def z395eb_extractor():
+    return get_extractor(get_data_path_by_name("395eb..."))
 
 
 @pytest.fixture

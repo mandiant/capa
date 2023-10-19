@@ -31,9 +31,9 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
+from capa.features.extractors.dnfile.types import DnType
 from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
-    DnType,
     iter_dotnet_table,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,

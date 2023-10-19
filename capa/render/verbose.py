@@ -23,6 +23,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 See the License for the specific language governing permissions and limitations under the License.
 """
 import enum
+from typing import cast
 
 import tabulate
 
@@ -61,10 +62,12 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(pid, int)
         return f"process ppid: {ppid}, process pid: {pid}"
     elif address.type == frz.AddressType.THREAD:
-        assert isinstance(address.value, int)
-        tid = address.value
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid = address.value
+        assert isinstance(ppid, int)
+        assert isinstance(pid, int)
         assert isinstance(tid, int)
-        return f"thread id: {tid}"
+        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}"
     elif address.type == frz.AddressType.CALL:
         assert isinstance(address.value, tuple)
         ppid, pid, tid, id_ = address.value
@@ -75,7 +78,7 @@ def format_address(address: frz.Address) -> str:
         raise ValueError("unexpected address type")
 
 
-def render_static_meta(ostream, meta: rd.Metadata):
+def render_static_meta(ostream, meta: rd.StaticMetadata):
     """
     like:
 
@@ -96,7 +99,6 @@ def render_static_meta(ostream, meta: rd.Metadata):
         total feature count  1918
     """
 
-    assert isinstance(meta.analysis, rd.StaticAnalysis)
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
@@ -122,7 +124,7 @@ def render_static_meta(ostream, meta: rd.Metadata):
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
 
 
-def render_dynamic_meta(ostream, meta: rd.Metadata):
+def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
     """
     like:
 
@@ -141,7 +143,6 @@ def render_dynamic_meta(ostream, meta: rd.Metadata):
         total feature count  1918
     """
 
-    assert isinstance(meta.analysis, rd.DynamicAnalysis)
     rows = [
         ("md5", meta.sample.md5),
         ("sha1", meta.sample.sha1),
@@ -166,10 +167,10 @@ def render_dynamic_meta(ostream, meta: rd.Metadata):
 
 
 def render_meta(osstream, doc: rd.ResultDocument):
-    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
-        render_static_meta(osstream, doc.meta)
-    elif isinstance(doc.meta.analysis, rd.DynamicAnalysis):
-        render_dynamic_meta(osstream, doc.meta)
+    if doc.meta.flavor is rd.Flavor.STATIC:
+        render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
+    elif doc.meta.flavor is rd.Flavor.DYNAMIC:
+        render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
     else:
         raise ValueError("invalid meta analysis")
 

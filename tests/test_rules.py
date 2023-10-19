@@ -420,8 +420,11 @@ def test_rules_flavor_filtering():
 
 
 def test_meta_scope_keywords():
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
-        for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    static_scopes = sorted([e.value for e in capa.rules.STATIC_SCOPES])
+    dynamic_scopes = sorted([e.value for e in capa.rules.DYNAMIC_SCOPES])
+
+    for static_scope in static_scopes:
+        for dynamic_scope in dynamic_scopes:
             _ = capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     f"""
@@ -439,7 +442,7 @@ def test_meta_scope_keywords():
             )
 
     # its also ok to specify "unsupported"
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+    for static_scope in static_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -455,7 +458,7 @@ def test_meta_scope_keywords():
                 """
             )
         )
-    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    for dynamic_scope in dynamic_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -473,7 +476,7 @@ def test_meta_scope_keywords():
         )
 
     # its also ok to specify "unspecified"
-    for static_scope in sorted(capa.rules.STATIC_SCOPES):
+    for static_scope in static_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -489,7 +492,7 @@ def test_meta_scope_keywords():
                 """
             )
         )
-    for dynamic_scope in sorted(capa.rules.DYNAMIC_SCOPES):
+    for dynamic_scope in dynamic_scopes:
         _ = capa.rules.Rule.from_yaml(
             textwrap.dedent(
                 f"""
@@ -1528,3 +1531,72 @@ def test_property_access_symbol():
         )
         is True
     )
+
+
+def test_translate_com_features():
+    r = capa.rules.Rule.from_yaml(
+        textwrap.dedent(
+            """
+            rule:
+                meta:
+                    name: test rule
+                features:
+                    - com/class: WICPngDecoder
+                    # 389ea17b-5078-4cde-b6ef-25c15175c751 WICPngDecoder
+                    # e018945b-aa86-4008-9bd4-6777a1e40c11 WICPngDecoder
+            """
+        )
+    )
+    com_name = "WICPngDecoder"
+    com_features = [
+        capa.features.common.Bytes(b"{\xa1\x9e8xP\xdeL\xb6\xef%\xc1Qu\xc7Q", f"CLSID_{com_name} as bytes"),
+        capa.features.common.StringFactory("389ea17b-5078-4cde-b6ef-25c15175c751", f"CLSID_{com_name} as GUID string"),
+        capa.features.common.Bytes(b"[\x94\x18\xe0\x86\xaa\x08@\x9b\xd4gw\xa1\xe4\x0c\x11", f"IID_{com_name} as bytes"),
+        capa.features.common.StringFactory("e018945b-aa86-4008-9bd4-6777a1e40c11", f"IID_{com_name} as GUID string"),
+    ]
+    assert set(com_features) == set(r.statement.get_children())
+
+
+def test_invalid_com_features():
+    # test for unknown COM class
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - com/class: invalid_com
+                """
+            )
+        )
+
+    # test for unknown COM interface
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - com/interface: invalid_com
+                """
+            )
+        )
+
+    # test for invalid COM type
+    # valid_com_types = "class", "interface"
+    with pytest.raises(capa.rules.InvalidRule):
+        _ = capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule
+                    features:
+                        - com/invalid_COM_type: WICPngDecoder
+                """
+            )
+        )

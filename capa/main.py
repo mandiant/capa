@@ -62,10 +62,17 @@ from capa.helpers import (
     log_unsupported_os_error,
     redirecting_print_to_tqdm,
     log_unsupported_arch_error,
+    log_empty_cape_report_error,
     log_unsupported_format_error,
     log_unsupported_cape_report_error,
 )
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
+from capa.exceptions import (
+    EmptyReportError,
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+    UnsupportedRuntimeError,
+)
 from capa.features.common import (
     OS_AUTO,
     OS_LINUX,
@@ -112,8 +119,9 @@ E_INVALID_FILE_TYPE = 16
 E_INVALID_FILE_ARCH = 17
 E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
-E_MISSING_CAPE_STATIC_ANALYSIS = 20
-E_MISSING_CAPE_DYNAMIC_ANALYSIS = 21
+E_UNSUPPORTED_GHIDRA_VERSION = 20
+E_MISSING_CAPE_STATIC_ANALYSIS = 21
+E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 
 logger = logging.getLogger("capa")
 
@@ -276,6 +284,11 @@ def find_static_capabilities(
     with redirecting_print_to_tqdm(disable_progress):
         with tqdm.contrib.logging.logging_redirect_tqdm():
             pbar = tqdm.tqdm
+            if capa.helpers.is_runtime_ghidra():
+                # Ghidrathon interpreter cannot properly handle
+                # the TMonitor thread that is created via a monitor_interval
+                # > 0
+                pbar.monitor_interval = 0
             if disable_progress:
                 # do not use tqdm to avoid unnecessary side effects when caller intends
                 # to disable progress completely
@@ -532,11 +545,13 @@ def find_dynamic_capabilities(
     return matches, meta
 
 
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, **kwargs) -> Tuple[MatchResults, Any]:
+def find_capabilities(
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
+) -> Tuple[MatchResults, Any]:
     if isinstance(extractor, StaticFeatureExtractor):
-        return find_static_capabilities(ruleset, extractor, kwargs)
+        return find_static_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
     elif isinstance(extractor, DynamicFeatureExtractor):
-        return find_dynamic_capabilities(ruleset, extractor, kwargs)
+        return find_dynamic_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
     else:
         raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")
 
@@ -761,7 +776,8 @@ def get_extractor(
                 sys.path.append(str(bn_api))
 
         try:
-            from binaryninja import BinaryView, BinaryViewType
+            import binaryninja
+            from binaryninja import BinaryView
         except ImportError:
             raise RuntimeError(
                 "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
@@ -771,7 +787,7 @@ def get_extractor(
         import capa.features.extractors.binja.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = BinaryViewType.get_view_of_file(str(path))
+            bv: BinaryView = binaryninja.load(str(path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
@@ -814,7 +830,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
-    elif format_ == capa.features.extractors.common.FORMAT_ELF:
+    elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == FORMAT_CAPE:
@@ -1007,13 +1023,13 @@ def collect_metadata(
     os_ = get_os(sample_path) if os_ == OS_AUTO else os_
 
     if isinstance(extractor, StaticFeatureExtractor):
-        flavor = rdoc.Flavor.STATIC
+        meta_class: type = rdoc.StaticMetadata
     elif isinstance(extractor, DynamicFeatureExtractor):
-        flavor = rdoc.Flavor.DYNAMIC
+        meta_class = rdoc.DynamicMetadata
     else:
         assert_never(extractor)
 
-    return rdoc.Metadata(
+    return meta_class(
         timestamp=datetime.datetime.now(),
         version=capa.version.__version__,
         argv=tuple(argv) if argv else None,
@@ -1023,7 +1039,6 @@ def collect_metadata(
             sha256=sha256,
             path=Path(sample_path).resolve().as_posix(),
         ),
-        flavor=flavor,
         analysis=get_sample_analysis(
             format_,
             arch,
@@ -1454,7 +1469,7 @@ def main(argv: Optional[List[str]] = None):
             # during the load of the RuleSet, we extract subscope statements into their own rules
             # that are subsequently `match`ed upon. this inflates the total rule count.
             # so, filter out the subscope rules when reporting total number of loaded rules.
-            len(list(filter(lambda r: not r.is_subscope_rule(), rules.rules.values()))),
+            len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
@@ -1493,12 +1508,17 @@ def main(argv: Optional[List[str]] = None):
     except (ELFError, OverflowError) as e:
         logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
-    except UnsupportedFormatError:
+    except UnsupportedFormatError as e:
         if format_ == FORMAT_CAPE:
-            log_unsupported_cape_report_error()
+            log_unsupported_cape_report_error(str(e))
         else:
             log_unsupported_format_error()
         return E_INVALID_FILE_TYPE
+    except EmptyReportError as e:
+        if format_ == FORMAT_CAPE:
+            log_empty_cape_report_error(str(e))
+        else:
+            log_unsupported_format_error()
 
     for file_extractor in file_extractors:
         if isinstance(file_extractor, DynamicFeatureExtractor):
@@ -1556,6 +1576,9 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
+            # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
+            #  see same code and show-features above examples
+            #  https://github.com/mandiant/capa/issues/1813
             try:
                 extractor = get_extractor(
                     args.sample,
@@ -1566,9 +1589,9 @@ def main(argv: Optional[List[str]] = None):
                     should_save_workspace,
                     disable_progress=args.quiet or args.debug,
                 )
-            except UnsupportedFormatError:
+            except UnsupportedFormatError as e:
                 if format_ == FORMAT_CAPE:
-                    log_unsupported_cape_report_error()
+                    log_unsupported_cape_report_error(str(e))
                 else:
                     log_unsupported_format_error()
                 return E_INVALID_FILE_TYPE
@@ -1644,8 +1667,47 @@ def ida_main():
     print(capa.render.default.render(meta, rules, capabilities))
 
 
+def ghidra_main():
+    import capa.rules
+    import capa.ghidra.helpers
+    import capa.render.default
+    import capa.features.extractors.ghidra.extractor
+
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
+
+    logger.debug("-" * 80)
+    logger.debug(" Using default embedded rules.")
+    logger.debug(" ")
+    logger.debug(" You can see the current default rule set here:")
+    logger.debug("     https://github.com/mandiant/capa-rules")
+    logger.debug("-" * 80)
+
+    rules_path = get_default_root() / "rules"
+    logger.debug("rule path: %s", rules_path)
+    rules = get_rules([rules_path])
+
+    meta = capa.ghidra.helpers.collect_metadata([rules_path])
+
+    capabilities, counts = find_capabilities(
+        rules,
+        capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor(),
+        not capa.ghidra.helpers.is_running_headless(),
+    )
+
+    meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.library_functions = counts["library_functions"]
+
+    if has_file_limitation(rules, capabilities, is_standalone=False):
+        logger.info("capa encountered warnings during analysis")
+
+    print(capa.render.default.render(meta, rules, capabilities))
+
+
 if __name__ == "__main__":
     if capa.helpers.is_runtime_ida():
         ida_main()
+    elif capa.helpers.is_runtime_ghidra():
+        ghidra_main()
     else:
         sys.exit(main())

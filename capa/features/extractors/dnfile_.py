@@ -55,7 +55,7 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Feature, Addr
 
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, address in file_handler(pe=pe):  # type: ignore
+        for feature, address in file_handler(pe=pe):
             yield feature, address
 
 
