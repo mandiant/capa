@@ -1540,6 +1540,9 @@ def test_translate_com_features():
             rule:
                 meta:
                     name: test rule
+                    scopes:
+                      static: basic block
+                      dynamic: call
                 features:
                     - com/class: WICPngDecoder
                     # 389ea17b-5078-4cde-b6ef-25c15175c751 WICPngDecoder
