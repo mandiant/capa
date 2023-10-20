@@ -140,10 +140,6 @@ def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespac
     )
 
 
-def is_internal_rule(rule: Rule) -> bool:
-    return rule.meta.get("namespace", "").startswith("internal/")
-
-
 def is_supported_format(sample: Path) -> bool:
     """
     Return if this is a supported file based on magic header values
