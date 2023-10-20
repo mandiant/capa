@@ -1078,8 +1078,7 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("hello-world", "file", capa.features.file.Import("System.Console::WriteLine"), True),
         ("_1c444", "file", capa.features.common.String(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"), True),
         ("_1c444", "file", capa.features.common.String("get_IsAlive"), True),
-        # not extracting dll anymore
-        ("_1c444", "file", capa.features.file.Import("gdi32.CreateCompatibleBitmap"), False),
+        ("_1c444", "file", capa.features.file.Import("gdi32.CreateCompatibleBitmap"), True),
         ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
         ("_1c444", "file", capa.features.file.Import("gdi32::CreateCompatibleBitmap"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
