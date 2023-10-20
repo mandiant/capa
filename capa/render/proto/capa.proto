@@ -11,6 +11,9 @@ message Address {
   oneof value {
     Integer v = 2;
     Token_Offset token_offset = 3;
+    Ppid_Pid ppid_pid = 4;
+    Ppid_Pid_Tid ppid_pid_tid = 5;
+    Ppid_Pid_Tid_Id ppid_pid_tid_id = 6;
   };
 }
 
@@ -22,6 +25,9 @@ enum AddressType {
   ADDRESSTYPE_DN_TOKEN = 4;
   ADDRESSTYPE_DN_TOKEN_OFFSET = 5;
   ADDRESSTYPE_NO_ADDRESS = 6;
+  ADDRESSTYPE_PROCESS = 7;
+  ADDRESSTYPE_THREAD = 8;
+  ADDRESSTYPE_CALL = 9;
 }
 
 message Analysis {
@@ -80,6 +86,25 @@ message ClassFeature {
 message CompoundStatement {
   string type = 1;
   optional string description = 2;
+}
+
+message DynamicAnalysis {
+  string format = 1;
+  string arch = 2;
+  string os = 3;
+  string extractor = 4;
+  repeated string rules = 5;
+  DynamicLayout layout = 6;
+  DynamicFeatureCounts feature_counts = 7;
+}
+
+message DynamicFeatureCounts {
+  uint64 file = 1;
+  repeated ProcessFeatureCount processes = 2;
+}
+
+message DynamicLayout {
+  repeated ProcessLayout processes = 1;
 }
 
 message ExportFeature {
@@ -203,8 +228,15 @@ message Metadata {
   string version = 2;
   repeated string argv = 3;
   Sample sample = 4;
-  Analysis analysis = 5;
+  // deprecated in v7.0.
+  // use analysis2 instead.
+  Analysis analysis = 5 [deprecated = true];
   Flavor flavor = 6;
+  oneof analysis2 {
+    // use analysis2 instead of analysis (deprecated in v7.0).
+    StaticAnalysis static_analysis = 7;
+    DynamicAnalysis dynamic_analysis = 8;
+  };
 }
 
 message MnemonicFeature {
@@ -251,6 +283,16 @@ message OperandOffsetFeature {
   optional string description = 4;
 }
 
+message ProcessFeatureCount {
+  Address address = 1;
+  uint64 count = 2;
+}
+
+message ProcessLayout {
+  Address address = 1;
+  repeated ThreadLayout matched_threads = 2;
+}
+
 message PropertyFeature {
   string type = 1;
   string property_ = 2;  // property is a Python top-level decorator name
@@ -288,7 +330,9 @@ message RuleMetadata {
   string name = 1;
   string namespace = 2;
   repeated string authors = 3;
-  Scope scope = 4;
+  // deprecated in v7.0.
+  // use scopes instead.
+  Scope scope = 4 [deprecated = true];
   repeated AttackSpec attack = 5;
   repeated MBCSpec mbc = 6;
   repeated string references = 7;
@@ -297,6 +341,8 @@ message RuleMetadata {
   bool lib = 10;
   MaecMetadata maec = 11;
   bool is_subscope_rule = 12;
+  // use scopes over scope (deprecated in v7.0).
+  Scopes scopes = 13;
 }
 
 message Sample {
@@ -312,6 +358,14 @@ enum Scope {
   SCOPE_FUNCTION = 2;
   SCOPE_BASIC_BLOCK = 3;
   SCOPE_INSTRUCTION = 4;
+  SCOPE_PROCESS = 5;
+  SCOPE_THREAD = 6;
+  SCOPE_CALL = 7;
+}
+
+message Scopes {
+  optional Scope static = 1;
+  optional Scope dynamic = 2;
 }
 
 message SectionFeature {
@@ -336,6 +390,27 @@ message StatementNode {
   };
 }
 
+message StaticAnalysis {
+  string format = 1;
+  string arch = 2;
+  string os = 3;
+  string extractor = 4;
+  repeated string rules = 5;
+  Address base_address = 6;
+  StaticLayout layout = 7;
+  StaticFeatureCounts feature_counts = 8;
+  repeated LibraryFunction library_functions = 9;
+}
+
+message StaticFeatureCounts {
+  uint64 file = 1;
+  repeated FunctionFeatureCount functions = 2;
+}
+
+message StaticLayout {
+  repeated FunctionLayout functions = 1;
+}
+
 message StringFeature {
   string type = 1;
   string string = 2;
@@ -354,6 +429,10 @@ message SubstringFeature {
   optional string description = 3;
 }
 
+message ThreadLayout {
+  Address address = 1;
+}
+
 message Addresses { repeated Address address = 1; }
 
 message Pair_Address_Match {
@@ -364,6 +443,24 @@ message Pair_Address_Match {
 message Token_Offset {
   Integer token = 1;
   uint64 offset = 2;  // offset is always >= 0
+}
+
+message Ppid_Pid {
+  Integer ppid = 1;
+  Integer pid = 2;
+}
+
+message Ppid_Pid_Tid {
+  Integer ppid = 1;
+  Integer pid = 2;
+  Integer tid = 3;
+}
+
+message Ppid_Pid_Tid_Id {
+  Integer ppid = 1;
+  Integer pid = 2;
+  Integer tid = 3;
+  Integer id = 4;
 }
 
 message Integer { oneof value { uint64 u = 1; sint64 i = 2; } }  // unsigned or signed int
