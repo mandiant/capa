@@ -8,6 +8,8 @@
 
 import io
 import re
+import gzip
+import json
 import uuid
 import codecs
 import logging
@@ -324,6 +326,68 @@ def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Stat
         types_for_scope = filter(lambda t: isinstance(t, type), supported_features)
         if not isinstance(feature, tuple(types_for_scope)):
             raise InvalidRule(f"feature {feature} not supported for scopes {scopes}")
+
+
+class ComType(Enum):
+    CLASS = "class"
+    INTERFACE = "interface"
+
+
+# COM data source https://github.com/stevemk14ebr/COM-Code-Helper/tree/master
+VALID_COM_TYPES = {
+    ComType.CLASS: {"db_path": "assets/classes.json.gz", "prefix": "CLSID_"},
+    ComType.INTERFACE: {"db_path": "assets/interfaces.json.gz", "prefix": "IID_"},
+}
+
+
+@lru_cache(maxsize=None)
+def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
+    com_db_path: Path = capa.main.get_default_root() / VALID_COM_TYPES[com_type]["db_path"]
+
+    if not com_db_path.exists():
+        raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
+
+    try:
+        with gzip.open(com_db_path, "rb") as gzfile:
+            return json.loads(gzfile.read().decode("utf-8"))
+    except Exception as e:
+        raise IOError(f"Error loading COM database from '{com_db_path}'") from e
+
+
+def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Or:
+    com_db = load_com_database(com_type)
+    guid_strings: Optional[List[str]] = com_db.get(com_name)
+    if guid_strings is None or len(guid_strings) == 0:
+        logger.error(" %s doesn't exist in COM %s database", com_name, com_type)
+        raise InvalidRule(f"'{com_name}' doesn't exist in COM {com_type} database")
+
+    com_features: List = []
+    for guid_string in guid_strings:
+        hex_chars = guid_string.replace("-", "")
+        h = [hex_chars[i : i + 2] for i in range(0, len(hex_chars), 2)]
+        reordered_hex_pairs = [
+            h[3],
+            h[2],
+            h[1],
+            h[0],
+            h[5],
+            h[4],
+            h[7],
+            h[6],
+            h[8],
+            h[9],
+            h[10],
+            h[11],
+            h[12],
+            h[13],
+            h[14],
+            h[15],
+        ]
+        guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
+        prefix = VALID_COM_TYPES[com_type]["prefix"]
+        com_features.append(capa.features.common.StringFactory(guid_string, f"{prefix+com_name} as GUID string"))
+        com_features.append(capa.features.common.Bytes(guid_bytes, f"{prefix+com_name} as bytes"))
+    return ceng.Or(com_features)
 
 
 def parse_int(s: str) -> int:
@@ -741,6 +805,13 @@ def build_statements(d, scopes: Scopes):
             raise InvalidRule(str(e)) from e
         ensure_feature_valid_for_scopes(scopes, feature)
         return feature
+
+    elif key.startswith("com/"):
+        com_type = str(key[len("com/") :]).upper()
+        if com_type not in [item.name for item in ComType]:
+            raise InvalidRule(f"unexpected COM type: {com_type}")
+        value, description = parse_description(d[key], key, d.get("description"))
+        return translate_com_feature(value, ComType[com_type])
 
     else:
         Feature = parse_feature(key)

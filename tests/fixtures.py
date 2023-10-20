@@ -318,6 +318,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
         return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+    elif name.startswith("395eb"):
+        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
     elif name.startswith("a1982"):
         return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
     elif name.startswith("a933a"):
@@ -1347,6 +1349,11 @@ def z9324d_extractor():
 
 
 @pytest.fixture
+def z395eb_extractor():
+    return get_extractor(get_data_path_by_name("395eb..."))
+
+
+@pytest.fixture
 def pma12_04_extractor():
     return get_extractor(get_data_path_by_name("pma12-04"))
 
@@ -1432,29 +1439,42 @@ def get_result_doc(path: Path):
 
 @pytest.fixture
 def pma0101_rd():
+    # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
     return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
+    # .NET sample
+    # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
     return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
 
 
 @pytest.fixture
 def a3f3bbc_rd():
+    # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
     return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx86_rd():
+    # python -m capa.main tests/data/al-khaser_x86.exe_ --json > tests/data/rd/al-khaser_x86.exe_.json
     return get_result_doc(CD / "data" / "rd" / "al-khaser_x86.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx64_rd():
+    # python -m capa.main tests/data/al-khaser_x64.exe_ --json > tests/data/rd/al-khaser_x64.exe_.json
     return get_result_doc(CD / "data" / "rd" / "al-khaser_x64.exe_.json")
 
 
 @pytest.fixture
 def a076114_rd():
+    # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
     return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
+
+
+@pytest.fixture
+def dynamic_a0000a6_rd():
+    # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
+    return get_result_doc(CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json")

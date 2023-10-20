@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import io
+import re
 import logging
 import binascii
 import contextlib
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 MATCH_PE = b"MZ"
 MATCH_ELF = b"\x7fELF"
 MATCH_RESULT = b'{"meta":'
+MATCH_JSON_OBJECT = b'{"'
 
 
 def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
@@ -63,6 +65,11 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_FREEZE), NO_ADDRESS
     elif buf.startswith(MATCH_RESULT):
         yield Format(FORMAT_RESULT), NO_ADDRESS
+    elif re.sub(rb"\w", b"", buf[:20]).startswith(MATCH_JSON_OBJECT):
+        # potential start of JSON object data without whitespace
+        # we don't know what it is exactly, but may support it (e.g. a dynamic CAPE sandbox report)
+        # skip verdict here and let subsequent code analyze this further
+        return
     else:
         # we likely end up here:
         #  1. handling a file format (e.g. macho)
