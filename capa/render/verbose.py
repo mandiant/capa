@@ -115,6 +115,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                      0x10003797
     """
     had_match = False
+    rules_prevalence = rutils.load_rules_prevalence()
     for rule in rutils.capability_rules(doc):
         count = len(rule.matches)
         if count == 1:
@@ -138,6 +139,8 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 v = v.value
 
             rows.append((key, v))
+
+        rows.append(("prevalence", rules_prevalence.get(rule.meta.name, "unknown")))
 
         if rule.meta.scope != capa.rules.FILE_SCOPE:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
