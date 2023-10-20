@@ -136,26 +136,26 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
             assert isinstance(address, ProcessAddress)
             yield ProcessHandle(address=address, inner={})
 
-    def extract_process_features(self, p):
-        for addr, feature in self.processes[p.address].features:
+    def extract_process_features(self, ph):
+        for addr, feature in self.processes[ph.address].features:
             yield feature, addr
 
-    def get_threads(self, p):
-        for address in sorted(self.processes[p].threads.keys()):
+    def get_threads(self, ph):
+        for address in sorted(self.processes[ph.address].threads.keys()):
             assert isinstance(address, ThreadAddress)
             yield ThreadHandle(address=address, inner={})
 
-    def extract_thread_features(self, p, t):
-        for addr, feature in self.processes[p.address].threads[t.address].features:
+    def extract_thread_features(self, ph, th):
+        for addr, feature in self.processes[ph.address].threads[th.address].features:
             yield feature, addr
 
-    def get_calls(self, p, t):
-        for address in sorted(self.processes[p.address].threads[t.address].calls.keys()):
+    def get_calls(self, ph, th):
+        for address in sorted(self.processes[ph.address].threads[th.address].calls.keys()):
             assert isinstance(address, DynamicCallAddress)
             yield CallHandle(address=address, inner={})
 
-    def extract_call_features(self, p, t, call):
-        for address, feature in self.processes[p.address].threads[t.address].calls[call.address].features:
+    def extract_call_features(self, ph, th, ch):
+        for address, feature in self.processes[ph.address].threads[th.address].calls[ch.address].features:
             yield feature, address
 
 
