@@ -331,10 +331,12 @@ def render_rules(ostream, doc: rd.ResultDocument):
         rows.append(("author", ", ".join(rule.meta.authors)))
 
         if doc.meta.flavor == rd.Flavor.STATIC:
-            rows.append(("scope", f"{rule.meta.scopes.static}"))
+            assert rule.meta.scopes.static is not None
+            rows.append(("scope", rule.meta.scopes.static.value))
 
         if doc.meta.flavor == rd.Flavor.DYNAMIC:
-            rows.append(("scope", f"{rule.meta.scopes.dynamic}"))
+            assert rule.meta.scopes.dynamic is not None
+            rows.append(("scope", rule.meta.scopes.dynamic.value))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))
@@ -363,9 +365,11 @@ def render_rules(ostream, doc: rd.ResultDocument):
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
                 if doc.meta.flavor == rd.Flavor.STATIC:
-                    ostream.write(f"{rule.meta.scopes.static}")
+                    assert rule.meta.scopes.static is not None
+                    ostream.write(rule.meta.scopes.static.value)
                 elif doc.meta.flavor == rd.Flavor.DYNAMIC:
-                    ostream.write(f"{rule.meta.scopes.dynamic}")
+                    assert rule.meta.scopes.dynamic is not None
+                    ostream.write(rule.meta.scopes.dynamic.value)
                 else:
                     capa.helpers.assert_never(doc.meta.flavor)
 
