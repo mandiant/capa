@@ -55,6 +55,7 @@ class ThreadLayout(Model):
 
 class ProcessLayout(Model):
     address: frz.Address
+    name: str
     matched_threads: Tuple[ThreadLayout, ...]
 
 
