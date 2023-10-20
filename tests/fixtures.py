@@ -776,20 +776,17 @@ FEATURE_PRESENCE_TESTS = sorted(
         # forwarded export
         ("ea2876", "file", capa.features.file.Export("vresion.GetFileVersionInfoA"), True),
         # file/imports
-        # not extracting dll anymore
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), False),
+        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
-        # not extracting dll anymore
+        ("mimikatz", "file", capa.features.file.Import("IsWow64Process"), True),
         ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
-        ("mimikatz", "file", capa.features.file.Import("exit"), False),
         ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
         ("mimikatz", "file", capa.features.file.Import("#11"), False),
         ("mimikatz", "file", capa.features.file.Import("#nope"), False),
         ("mimikatz", "file", capa.features.file.Import("nope"), False),
-        # not extracting dll anymore
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), False),
-        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), False),
+        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContextW"), True),
+        ("mimikatz", "file", capa.features.file.Import("advapi32.CryptAcquireContext"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptAcquireContextW"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptAcquireContext"), True),
         # function/characteristic(loop)

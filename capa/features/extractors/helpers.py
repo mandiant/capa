@@ -41,7 +41,7 @@ def is_ordinal(symbol: str) -> bool:
     return False
 
 
-def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
+def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
     """
     for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
@@ -50,22 +50,35 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
       - CreateFile
       - ws2_32.#1
 
-    note that since v7 dll names are NOT included anymore except for ordinals
-    dlls are good for documentation but not used during matching
+    note that since capa v7 only `import` features include DLL names:
+      - kernel32.CreateFileA
+      - kernel32.CreateFile
+
+    for `api` features dll names are good for documentation but not used during matching
     """
     # normalize dll name
     dll = dll.lower()
+
+    # trim extensions observed in dynamic traces
+    dll = dll[0:-4] if dll.endswith(".dll") else dll
+    dll = dll[0:-4] if dll.endswith(".drv") else dll
+
+    if include_dll:
+        # ws2_32.#1
+        # kernel32.CreateFileA
+        yield f"{dll}.{symbol}"
 
     if not is_ordinal(symbol):
         # CreateFileA
         yield symbol
 
+        if include_dll:
+            # kernel32.CreateFile
+            yield f"{dll}.{symbol[:-1]}"
+
         if is_aw_function(symbol):
             # CreateFile
             yield symbol[:-1]
-    elif dll:
-        # ws2_32.#1
-        yield f"{dll}.{symbol}"
 
 
 def reformat_forwarded_export_name(forwarded_name: str) -> str:

@@ -58,7 +58,7 @@ def extract_import_names(report: CapeReport) -> Iterator[Tuple[Feature, Address]
             if not function.name:
                 continue
 
-            for name in generate_symbols(library.dll, function.name):
+            for name in generate_symbols(library.dll, function.name, include_dll=True):
                 yield Import(name), AbsoluteVirtualAddress(function.address)
 
 

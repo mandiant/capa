@@ -102,7 +102,7 @@ def get_file_imports() -> Dict[int, List[str]]:
         # <EXTERNAL> mostly shows up in ELF files, otherwise, strip '.dll' w/ [:-4]
         fstr[0] = "*" if "<EXTERNAL>" in fstr[0] else fstr[0][:-4]
 
-        for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1]):
+        for name in capa.features.extractors.helpers.generate_symbols(fstr[0], fstr[1], include_dll=True):
             import_dict.setdefault(addr, []).append(name)
             if ex_loc:
                 import_dict.setdefault(ex_loc.getOffset(), []).append(name)

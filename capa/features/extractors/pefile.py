@@ -84,7 +84,7 @@ def extract_file_import_names(pe, **kwargs):
                     except UnicodeDecodeError:
                         continue
 
-                for name in capa.features.extractors.helpers.generate_symbols(modname, impname):
+                for name in capa.features.extractors.helpers.generate_symbols(modname, impname, include_dll=True):
                     yield Import(name), AbsoluteVirtualAddress(imp.address)
 
 
