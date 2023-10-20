@@ -80,7 +80,7 @@ def run_headless():
     meta.analysis.library_functions = counts["library_functions"]
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
-    if capa.main.has_file_limitation(rules, capabilities, is_standalone=True):
+    if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=True):
         logger.info("capa encountered warnings during analysis")
 
     if args.json:
@@ -130,7 +130,7 @@ def run_ui():
     meta.analysis.library_functions = counts["library_functions"]
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
-    if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
+    if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
     if verbose == "vverbose":

@@ -84,7 +84,7 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import Address
-from capa.capabilities.common import find_capabilities, find_file_capabilities
+from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import (
     SampleHashes,
     FeatureExtractor,
@@ -142,32 +142,6 @@ def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespac
 
 def is_internal_rule(rule: Rule) -> bool:
     return rule.meta.get("namespace", "").startswith("internal/")
-
-
-def is_file_limitation_rule(rule: Rule) -> bool:
-    return rule.meta.get("namespace", "") == "internal/limitation/file"
-
-
-def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
-    file_limitation_rules = list(filter(is_file_limitation_rule, rules.rules.values()))
-
-    for file_limitation_rule in file_limitation_rules:
-        if file_limitation_rule.name not in capabilities:
-            continue
-
-        logger.warning("-" * 80)
-        for line in file_limitation_rule.meta.get("description", "").split("\n"):
-            logger.warning(" %s", line)
-        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
-        if is_standalone:
-            logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
-
-        # bail on first file limitation
-        return True
-
-    return False
 
 
 def is_supported_format(sample: Path) -> bool:

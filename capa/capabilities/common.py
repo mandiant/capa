@@ -11,7 +11,7 @@ import itertools
 import collections
 from typing import Any, Tuple
 
-from capa.rules import Scope, RuleSet
+from capa.rules import Rule, Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
@@ -38,6 +38,32 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 
     _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
     return matches, len(file_features)
+
+
+def is_file_limitation_rule(rule: Rule) -> bool:
+    return rule.meta.get("namespace", "") == "internal/limitation/file"
+
+
+def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
+    file_limitation_rules = list(filter(is_file_limitation_rule, rules.rules.values()))
+
+    for file_limitation_rule in file_limitation_rules:
+        if file_limitation_rule.name not in capabilities:
+            continue
+
+        logger.warning("-" * 80)
+        for line in file_limitation_rule.meta.get("description", "").split("\n"):
+            logger.warning(" %s", line)
+        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
+        if is_standalone:
+            logger.warning(" ")
+            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
+        logger.warning("-" * 80)
+
+        # bail on first file limitation
+        return True
+
+    return False
 
 
 def find_capabilities(
