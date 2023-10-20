@@ -1128,18 +1128,21 @@ class ProcessLayout(google.protobuf.message.Message):
 
     ADDRESS_FIELD_NUMBER: builtins.int
     MATCHED_THREADS_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
     @property
     def address(self) -> global___Address: ...
     @property
     def matched_threads(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ThreadLayout]: ...
+    name: builtins.str
     def __init__(
         self,
         *,
         address: global___Address | None = ...,
         matched_threads: collections.abc.Iterable[global___ThreadLayout] | None = ...,
+        name: builtins.str = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_threads", b"matched_threads"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_threads", b"matched_threads", "name", b"name"]) -> None: ...
 
 global___ProcessLayout = ProcessLayout
 

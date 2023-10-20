@@ -291,6 +291,7 @@ message ProcessFeatureCount {
 message ProcessLayout {
   Address address = 1;
   repeated ThreadLayout matched_threads = 2;
+  string name = 3;
 }
 
 message PropertyFeature {

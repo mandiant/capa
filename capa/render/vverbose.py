@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import logging
 from typing import Dict, Iterable, Optional
 
 import tabulate
@@ -22,8 +23,39 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 
+logger = logging.getLogger(__name__)
 
-def render_locations(ostream, locations: Iterable[frz.Address]):
+
+def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    for p in layout.processes:
+        if p.address == addr:
+            return p.name
+    logger.debug("name not found for process: %s", addr)
+    return ""
+
+
+def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    process = addr.to_capa()
+    assert isinstance(process, capa.features.address.ProcessAddress)
+    name = _get_process_name(layout, addr)
+    return f"{name}[{process.pid}]"
+
+
+def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    thread = addr.to_capa()
+    assert isinstance(thread, capa.features.address.ThreadAddress)
+    name = _get_process_name(layout, frz.Address.from_capa(thread.process))
+    return f"{name}[{thread.process.pid}:{thread.tid}]"
+
+
+def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+    name = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
+    return f"{name}[{call.thread.process.pid}:{call.thread.tid}] XXX[{call.id}](A, B, C)"
+
+
+def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address]):
     import capa.render.verbose as v
 
     # its possible to have an empty locations array here,
@@ -35,9 +67,24 @@ def render_locations(ostream, locations: Iterable[frz.Address]):
         return
 
     ostream.write(" @ ")
+    location0 = locations[0]
 
     if len(locations) == 1:
-        ostream.write(v.format_address(locations[0]))
+        location = locations[0]
+
+        if location.type == frz.AddressType.CALL:
+            assert isinstance(layout, rd.DynamicLayout)
+            ostream.write(render_call(layout, location))
+
+        else:
+            ostream.write(v.format_address(locations[0]))
+
+    elif location0.type == frz.AddressType.CALL and len(locations) > 1:
+        location = locations[0]
+
+        assert isinstance(layout, rd.DynamicLayout)
+        ostream.write(render_call(layout, location))
+        ostream.write(f", and {(len(locations) - 1)} more...")
 
     elif len(locations) > 4:
         # don't display too many locations, because it becomes very noisy.
@@ -52,7 +99,7 @@ def render_locations(ostream, locations: Iterable[frz.Address]):
         raise RuntimeError("unreachable")
 
 
-def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0):
+def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent=0):
     ostream.write("  " * indent)
 
     if isinstance(statement, rd.SubscopeStatement):
@@ -114,7 +161,7 @@ def render_statement(ostream, match: rd.Match, statement: rd.Statement, indent=0
 
         if statement.description:
             ostream.write(f" = {statement.description}")
-        render_locations(ostream, match.locations)
+        render_locations(ostream, layout, match.locations)
         ostream.writeln("")
 
     else:
@@ -125,7 +172,7 @@ def render_string_value(s: str) -> str:
     return f'"{capa.features.common.escape_string(s)}"'
 
 
-def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
+def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Feature, indent=0):
     ostream.write("  " * indent)
 
     key = feature.type
@@ -177,7 +224,7 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
                 ostream.write(feature.description)
 
         if not isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
-            render_locations(ostream, match.locations)
+            render_locations(ostream, layout, match.locations)
         ostream.write("\n")
     else:
         # like:
@@ -193,15 +240,15 @@ def render_feature(ostream, match: rd.Match, feature: frzf.Feature, indent=0):
             ostream.write("  " * (indent + 1))
             ostream.write("- ")
             ostream.write(rutils.bold2(render_string_value(capture)))
-            render_locations(ostream, locations)
+            render_locations(ostream, layout, locations)
             ostream.write("\n")
 
 
-def render_node(ostream, match: rd.Match, node: rd.Node, indent=0):
+def render_node(ostream, layout: rd.Layout, match: rd.Match, node: rd.Node, indent=0):
     if isinstance(node, rd.StatementNode):
-        render_statement(ostream, match, node.statement, indent=indent)
+        render_statement(ostream, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
-        render_feature(ostream, match, node.feature, indent=indent)
+        render_feature(ostream, layout, match, node.feature, indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 
@@ -214,7 +261,7 @@ MODE_SUCCESS = "success"
 MODE_FAILURE = "failure"
 
 
-def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
+def render_match(ostream, layout: rd.Layout, match: rd.Match, indent=0, mode=MODE_SUCCESS):
     child_mode = mode
     if mode == MODE_SUCCESS:
         # display only nodes that evaluated successfully.
@@ -246,10 +293,10 @@ def render_match(ostream, match: rd.Match, indent=0, mode=MODE_SUCCESS):
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(ostream, match, match.node, indent=indent)
+    render_node(ostream, layout, match, match.node, indent=indent)
 
     for child in match.children:
-        render_match(ostream, child, indent=indent + 1, mode=child_mode)
+        render_match(ostream, layout, child, indent=indent + 1, mode=child_mode)
 
 
 def render_rules(ostream, doc: rd.ResultDocument):
@@ -361,32 +408,47 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
                 raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
             first_address, first_match = matches[0]
-            render_match(ostream, first_match, indent=0)
+            render_match(ostream, doc.meta.analysis.layout, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
                 if doc.meta.flavor == rd.Flavor.STATIC:
                     assert rule.meta.scopes.static is not None
                     ostream.write(rule.meta.scopes.static.value)
+                    ostream.write(" @ ")
+                    ostream.write(capa.render.verbose.format_address(location))
+
+                    if rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
+                        ostream.write(
+                            " in function "
+                            + capa.render.verbose.format_address(
+                                frz.Address.from_capa(functions_by_bb[location.to_capa()])
+                            )
+                        )
+
                 elif doc.meta.flavor == rd.Flavor.DYNAMIC:
                     assert rule.meta.scopes.dynamic is not None
+                    assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
+
                     ostream.write(rule.meta.scopes.dynamic.value)
+                    # TODO(mr-tz): process rendering should use human-readable name
+                    # https://github.com/mandiant/capa/issues/1816
+
+                    ostream.write(" @ ")
+
+                    if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
+                        ostream.write(render_process(doc.meta.analysis.layout, location))
+                    elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
+                        ostream.write(render_thread(doc.meta.analysis.layout, location))
+                    elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                        ostream.write(render_call(doc.meta.analysis.layout, location))
+                    else:
+                        capa.helpers.assert_never(rule.meta.scopes.dynamic)
+
                 else:
                     capa.helpers.assert_never(doc.meta.flavor)
 
-                # TODO(mr-tz): process rendering should use human-readable name
-                # https://github.com/mandiant/capa/issues/1816
-
-                ostream.write(" @ ")
-                ostream.write(capa.render.verbose.format_address(location))
-
-                if doc.meta.flavor == rd.Flavor.STATIC and rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
-                    ostream.write(
-                        " in function "
-                        + capa.render.verbose.format_address(frz.Address.from_capa(functions_by_bb[location.to_capa()]))
-                    )
-
                 ostream.write("\n")
-                render_match(ostream, match, indent=1)
+                render_match(ostream, doc.meta.analysis.layout, match, indent=1)
                 if rule.meta.lib:
                     # only show first match
                     break

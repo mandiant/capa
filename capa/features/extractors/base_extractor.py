@@ -416,6 +416,14 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_process_name(self, ph: ProcessHandle) -> str:
+        """
+        Returns the human-readable name for the given process,
+        such as the filename.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         """
         Enumerate threads in the given process.

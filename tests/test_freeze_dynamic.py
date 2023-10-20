@@ -45,6 +45,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
     ],
     processes={
         ProcessAddress(pid=1): capa.features.extractors.null.ProcessFeatures(
+            name="explorer.exe",
             features=[],
             threads={
                 ThreadAddress(ProcessAddress(pid=1), tid=1): capa.features.extractors.null.ThreadFeatures(

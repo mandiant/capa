@@ -110,6 +110,7 @@ class ThreadFeatures:
 class ProcessFeatures:
     features: List[Tuple[Address, Feature]]
     threads: Dict[Address, ThreadFeatures]
+    name: str
 
 
 @dataclass
@@ -139,6 +140,9 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     def extract_process_features(self, ph):
         for addr, feature in self.processes[ph.address].features:
             yield feature, addr
+
+    def get_process_name(self, ph) -> str:
+        return self.processes[ph.address].name
 
     def get_threads(self, ph):
         for address in sorted(self.processes[ph.address].threads.keys()):

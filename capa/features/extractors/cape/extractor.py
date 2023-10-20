@@ -17,7 +17,7 @@ import capa.features.extractors.cape.process
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
-from capa.features.extractors.cape.models import Static, CapeReport
+from capa.features.extractors.cape.models import Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -59,6 +59,10 @@ class CapeExtractor(DynamicFeatureExtractor):
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.process.extract_features(ph)
+
+    def get_process_name(self, ph) -> str:
+        process: Process = ph.inner
+        return process.process_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         yield from capa.features.extractors.cape.process.get_threads(ph)

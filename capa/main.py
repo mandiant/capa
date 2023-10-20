@@ -1062,8 +1062,10 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
     assert isinstance(extractor, DynamicFeatureExtractor)
     processes_by_thread: Dict[Address, Address] = {}
     threads_by_processes: Dict[Address, List[Address]] = {}
+    names_by_process: Dict[Address, str] = {}
     for p in extractor.get_processes():
         threads_by_processes[p.address] = []
+        names_by_process[p.address] = extractor.get_process_name(p)
         for t in extractor.get_threads(p):
             processes_by_thread[t.address] = p.address
             threads_by_processes[p.address].append(t.address)
@@ -1080,6 +1082,7 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
         processes=tuple(
             rdoc.ProcessLayout(
                 address=frz.Address.from_capa(p),
+                name=names_by_process[p],
                 matched_threads=tuple(
                     rdoc.ThreadLayout(address=frz.Address.from_capa(t)) for t in threads if t in matched_threads
                 )  # this object is open to extension in the future,
