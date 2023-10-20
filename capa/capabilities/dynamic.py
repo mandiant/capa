@@ -22,7 +22,7 @@ from capa.helpers import redirecting_print_to_tqdm
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
-logger = logging.getLogger("capa")
+logger = logging.getLogger(__name__)
 
 
 def find_call_capabilities(
