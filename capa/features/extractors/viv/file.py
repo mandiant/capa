@@ -73,7 +73,7 @@ def extract_file_import_names(vw, **kwargs) -> Iterator[Tuple[Feature, Address]]
             impname = "#" + impname[len("ord") :]
 
         addr = AbsoluteVirtualAddress(va)
-        for name in capa.features.extractors.helpers.generate_symbols(modname, impname):
+        for name in capa.features.extractors.helpers.generate_symbols(modname, impname, include_dll=True):
             yield Import(name), addr
 
 

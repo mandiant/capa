@@ -779,6 +779,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
+        ("mimikatz", "file", capa.features.file.Import("IsWow64Process"), True),
         ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
         ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
         ("mimikatz", "file", capa.features.file.Import("#11"), False),
@@ -859,11 +860,12 @@ FEATURE_PRESENCE_TESTS = sorted(
         #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
         ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), True),
+        # not extracting dll anymore
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), False),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
@@ -872,7 +874,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
         # insn/api: thunk
-        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
+        # not extracting dll anymore
+        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), False),
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
         # insn/api: x64
         (
@@ -896,10 +899,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
         ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
         # insn/api: resolve indirect calls
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), True),
+        # not extracting dll anymore
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("CreatePipe"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("SetHandleInformation"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("CloseHandle"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("WriteFile"), True),
         # insn/string
         ("mimikatz", "function=0x40105D", capa.features.common.String("SCardControl"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.String("SCardTransmit"), True),
@@ -1074,7 +1082,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
         ("_1c444", "file", capa.features.file.Import("gdi32::CreateCompatibleBitmap"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
-        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), True),
+        # not extracting dll anymore
+        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
         ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), True),
         ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
