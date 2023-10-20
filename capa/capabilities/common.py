@@ -16,7 +16,7 @@ from capa.engine import FeatureSet, MatchResults
 from capa.features.address import NO_ADDRESS
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
-logger = logging.getLogger("capa")
+logger = logging.getLogger(__name__)
 
 
 def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
