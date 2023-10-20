@@ -126,6 +126,7 @@ FILE_HANDLERS = (
     extract_used_regkeys,
     extract_used_files,
     extract_used_mutexes,
+    extract_used_commands,
     extract_used_apis,
     extract_used_services,
 )

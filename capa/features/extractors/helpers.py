@@ -46,37 +46,31 @@ def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
     for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
     these include:
-      - kernel32.CreateFileA
-      - kernel32.CreateFile
       - CreateFileA
       - CreateFile
+      - ws2_32.#1
+
+    note that since v7 dll names are NOT included anymore except for ordinals
+    dlls are good for documentation but not used during matching
     """
     # normalize dll name
     dll = dll.lower()
-
-    # trim extensions observed in dynamic traces
-    dll = dll[0:-4] if dll.endswith(".dll") else dll
-    dll = dll[0:-4] if dll.endswith(".drv") else dll
-
-    # kernel32.CreateFileA
-    yield f"{dll}.{symbol}"
 
     if not is_ordinal(symbol):
         # CreateFileA
         yield symbol
 
-    if is_aw_function(symbol):
-        # kernel32.CreateFile
-        yield f"{dll}.{symbol[:-1]}"
-
-        if not is_ordinal(symbol):
+        if is_aw_function(symbol):
             # CreateFile
             yield symbol[:-1]
+    elif dll:
+        # ws2_32.#1
+        yield f"{dll}.{symbol}"
 
 
 def reformat_forwarded_export_name(forwarded_name: str) -> str:
     """
-    a forwarded export has a DLL name/path an symbol name.
+    a forwarded export has a DLL name/path and symbol name.
     we want the former to be lowercase, and the latter to be verbatim.
     """
 

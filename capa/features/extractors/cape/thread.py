@@ -10,7 +10,7 @@ import logging
 from typing import Iterator
 
 from capa.features.address import DynamicCallAddress
-from capa.features.extractors.helpers import is_aw_function
+from capa.features.extractors.helpers import generate_symbols
 from capa.features.extractors.cape.models import Process
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
@@ -25,22 +25,8 @@ def get_calls(ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
         if call.thread_id != tid:
             continue
 
-        for symbol in generate_symbols(call.api):
+        for symbol in generate_symbols("", call.api):
             call.api = symbol
 
             addr = DynamicCallAddress(thread=th.address, id=call_index)
             yield CallHandle(address=addr, inner=call)
-
-
-def generate_symbols(symbol: str) -> Iterator[str]:
-    """
-    for a given symbol name, generate variants.
-    we over-generate features to make matching easier.
-    """
-
-    # CreateFileA
-    yield symbol
-
-    if is_aw_function(symbol):
-        # CreateFile
-        yield symbol[:-1]

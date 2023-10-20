@@ -16,7 +16,7 @@ import capa.features.common
 import capa.features.address
 from capa.engine import Or
 from capa.features.file import FunctionName
-from capa.features.insn import Number, Offset, Property
+from capa.features.insn import API, Number, Offset, Property
 from capa.features.common import (
     OS,
     OS_LINUX,
@@ -935,6 +935,28 @@ def test_count_number_symbol():
     assert bool(r.evaluate({Number(2): {ADDR1, ADDR2}})) is False
     assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1}})) is False
     assert bool(r.evaluate({Number(0x100, description="symbol name"): {ADDR1, ADDR2, ADDR3}})) is True
+
+
+def test_count_api():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: thread
+            features:
+                - or:
+                    - count(api(kernel32.CreateFileA)): 1
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    # apis including their DLL names are not extracted anymore
+    assert bool(r.evaluate({API("kernel32.CreateFileA"): set()})) is False
+    assert bool(r.evaluate({API("kernel32.CreateFile"): set()})) is False
+    assert bool(r.evaluate({API("CreateFile"): {ADDR1}})) is False
+    assert bool(r.evaluate({API("CreateFileA"): {ADDR1}})) is True
 
 
 def test_invalid_number():
