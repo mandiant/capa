@@ -43,7 +43,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.engine import Statement, FeatureSet
+from capa.engine import Statement, FeatureSet, MatchResults
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
 
@@ -1621,6 +1621,11 @@ class RuleSet:
                             rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                             break
         return RuleSet(list(rules_filtered))
+
+    def has_rule_with_namespace(self, capabilities: MatchResults, namespace: str) -> bool:
+        return any(
+            self.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
+        )
 
     def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
         """

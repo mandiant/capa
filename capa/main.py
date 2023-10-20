@@ -134,12 +134,6 @@ def set_vivisect_log_level(level):
     logging.getLogger("Elf").setLevel(level)
 
 
-def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
-    return any(
-        rules.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
-    )
-
-
 def is_supported_format(sample: Path) -> bool:
     """
     Return if this is a supported file based on magic header values
