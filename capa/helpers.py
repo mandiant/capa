@@ -147,11 +147,9 @@ def redirecting_print_to_tqdm(disable_progress):
 
 def log_unsupported_format_error():
     logger.error("-" * 80)
-    logger.error(" Input file does not appear to be a PE or ELF file.")
+    logger.error(" Input file does not appear to be a supported file.")
     logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
-    )
+    logger.error(" See all supported file formats via capa's help output (-h).")
     logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
     logger.error("-" * 80)
 
@@ -160,7 +158,7 @@ def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
     logger.error("Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
-    logger.error(" capa currently only supports analyzing standard CAPE json reports.")
+    logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
     logger.error(
         " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
     )
