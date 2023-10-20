@@ -54,6 +54,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                         DynamicCallAddress(
                             thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=1
                         ): capa.features.extractors.null.CallFeatures(
+                            name="CreateFile(12)",
                             features=[
                                 (
                                     DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=1),
@@ -68,6 +69,7 @@ EXTRACTOR = capa.features.extractors.null.NullDynamicFeatureExtractor(
                         DynamicCallAddress(
                             thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2
                         ): capa.features.extractors.null.CallFeatures(
+                            name="WriteFile()",
                             features=[
                                 (
                                     DynamicCallAddress(thread=ThreadAddress(ProcessAddress(pid=1), tid=1), id=2),

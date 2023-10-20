@@ -158,6 +158,8 @@ def test_render_vverbose_feature(feature, expected):
         captures={},
     )
 
-    capa.render.vverbose.render_feature(ostream, matches, feature, indent=0)
+    layout = capa.render.result_document.StaticLayout(functions=())
+
+    capa.render.vverbose.render_feature(ostream, layout, matches, feature, indent=0)
 
     assert ostream.getvalue().strip() == expected

@@ -456,5 +456,15 @@ class DynamicFeatureExtractor:
         """
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
+        """
+        Returns the human-readable name for the given call,
+        such as as rendered API log entry, like:
+
+            Foo(1, "two", b"\x00\x11") -> -1
+        """
+        raise NotImplementedError()
+
 
 FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

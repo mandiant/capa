@@ -34,6 +34,25 @@ def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     return ""
 
 
+def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    thread = frz.Address.from_capa(call.thread)
+    process = frz.Address.from_capa(call.thread.process)
+
+    # danger: O(n**3)
+    for p in layout.processes:
+        if p.address == process:
+            for t in p.matched_threads:
+                if t.address == thread:
+                    for c in t.matched_calls:
+                        if c.address == addr:
+                            return c.name
+    logger.debug("name not found for call: %s", addr)
+    return ""
+
+
 def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     process = addr.to_capa()
     assert isinstance(process, capa.features.address.ProcessAddress)
@@ -51,8 +70,10 @@ def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     call = addr.to_capa()
     assert isinstance(call, capa.features.address.DynamicCallAddress)
-    name = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
-    return f"{name}[{call.thread.process.pid}:{call.thread.tid}] XXX[{call.id}](A, B, C)"
+
+    pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
+    cname = _get_call_name(layout, addr)
+    return f"{pname}[{call.thread.process.pid}:{call.thread.tid}][{call.id}] {cname}"
 
 
 def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address]):

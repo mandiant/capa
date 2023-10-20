@@ -1632,19 +1632,43 @@ class SubstringFeature(google.protobuf.message.Message):
 global___SubstringFeature = SubstringFeature
 
 @typing_extensions.final
-class ThreadLayout(google.protobuf.message.Message):
+class CallLayout(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     ADDRESS_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
     @property
     def address(self) -> global___Address: ...
+    name: builtins.str
     def __init__(
         self,
         *,
         address: global___Address | None = ...,
+        name: builtins.str = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["address", b"address"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "name", b"name"]) -> None: ...
+
+global___CallLayout = CallLayout
+
+@typing_extensions.final
+class ThreadLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCHED_CALLS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def matched_calls(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CallLayout]: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        matched_calls: collections.abc.Iterable[global___CallLayout] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_calls", b"matched_calls"]) -> None: ...
 
 global___ThreadLayout = ThreadLayout
 

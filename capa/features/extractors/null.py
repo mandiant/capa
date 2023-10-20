@@ -97,6 +97,7 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
 
 @dataclass
 class CallFeatures:
+    name: str
     features: List[Tuple[Address, Feature]]
 
 
@@ -161,6 +162,9 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     def extract_call_features(self, ph, th, ch):
         for address, feature in self.processes[ph.address].threads[th.address].calls[ch.address].features:
             yield feature, address
+
+    def get_call_name(self, ph, th, ch) -> str:
+        return self.processes[ph.address].threads[th.address].calls[ch.address].name
 
 
 NullFeatureExtractor: TypeAlias = Union[NullStaticFeatureExtractor, NullDynamicFeatureExtractor]

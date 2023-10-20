@@ -289,6 +289,7 @@ class FunctionFeatures(BaseModel):
 
 class CallFeatures(BaseModel):
     address: Address
+    name: str
     features: Tuple[CallFeature, ...]
 
 
@@ -490,6 +491,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
             calls = []
             for call in extractor.get_calls(p, t):
                 caddr = Address.from_capa(call.address)
+                cname = extractor.get_call_name(p, t, call)
                 cfeatures = [
                     CallFeature(
                         call=caddr,
@@ -502,6 +504,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                 calls.append(
                     CallFeatures(
                         address=caddr,
+                        name=cname,
                         features=tuple(cfeatures),
                     )
                 )
@@ -605,7 +608,8 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
                         features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in t.features],
                         calls={
                             c.address.to_capa(): null.CallFeatures(
-                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features]
+                                name=c.name,
+                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features],
                             )
                             for c in t.calls
                         },

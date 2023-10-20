@@ -430,8 +430,14 @@ message SubstringFeature {
   optional string description = 3;
 }
 
+message CallLayout {
+  Address address = 1;
+  string name = 2;
+}
+
 message ThreadLayout {
   Address address = 1;
+  repeated CallLayout matched_calls = 2;
 }
 
 message Addresses { repeated Address address = 1; }

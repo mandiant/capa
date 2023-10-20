@@ -17,7 +17,7 @@ import capa.features.extractors.cape.process
 from capa.exceptions import EmptyReportError, UnsupportedFormatError
 from capa.features.common import Feature, Characteristic
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress, _NoAddress
-from capa.features.extractors.cape.models import Static, Process, CapeReport
+from capa.features.extractors.cape.models import Call, Static, Process, CapeReport
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -81,6 +81,43 @@ class CapeExtractor(DynamicFeatureExtractor):
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.cape.call.extract_features(ph, th, ch)
+
+    def get_call_name(self, ph, th, ch) -> str:
+        call: Call = ch.inner
+
+        parts = []
+        parts.append(call.api)
+        parts.append("(")
+        for argument in call.arguments:
+            parts.append(argument.name)
+            parts.append("=")
+
+            if argument.pretty_value:
+                parts.append(argument.pretty_value)
+            else:
+                if isinstance(argument.value, int):
+                    parts.append(hex(argument.value))
+                elif isinstance(argument.value, str):
+                    parts.append('"')
+                    parts.append(argument.value)
+                    parts.append('"')
+                elif isinstance(argument.value, list):
+                    pass
+                else:
+                    capa.helpers.assert_never(argument.value)
+
+            parts.append(", ")
+        if call.arguments:
+            # remove the trailing comma
+            parts.pop()
+        parts.append(")")
+        parts.append(" -> ")
+        if call.pretty_return:
+            parts.append(call.pretty_return)
+        else:
+            parts.append(hex(call.return_))
+
+        return "".join(parts)
 
     @classmethod
     def from_report(cls, report: Dict) -> "CapeExtractor":
