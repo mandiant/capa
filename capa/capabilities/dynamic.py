@@ -19,7 +19,7 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
-from capa.features.capabilities.common import find_file_capabilities
+from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa")

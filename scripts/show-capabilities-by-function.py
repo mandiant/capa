@@ -74,6 +74,7 @@ import capa.exceptions
 import capa.render.utils as rutils
 import capa.render.verbose
 import capa.features.freeze
+import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
 from capa.features.common import FORMAT_AUTO
@@ -186,7 +187,7 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    capabilities, counts = capa.main.find_capabilities(rules, extractor)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
 
     meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)

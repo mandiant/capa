@@ -84,7 +84,7 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.features.address import Address
-from capa.features.capabilities.common import find_capabilities, find_file_capabilities
+from capa.capabilities.common import find_capabilities, find_file_capabilities
 from capa.features.extractors.base_extractor import (
     SampleHashes,
     FeatureExtractor,

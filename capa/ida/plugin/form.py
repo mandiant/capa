@@ -25,6 +25,7 @@ import capa.version
 import capa.ida.helpers
 import capa.render.json
 import capa.features.common
+import capa.capabilities.common
 import capa.render.result_document
 import capa.features.extractors.ida.extractor
 from capa.rules import Rule
@@ -768,7 +769,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
-                    capabilities, counts = capa.main.find_capabilities(
+                    capabilities, counts = capa.capabilities.common.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
 

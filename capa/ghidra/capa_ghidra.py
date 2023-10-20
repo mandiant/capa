@@ -19,6 +19,7 @@ import capa.main
 import capa.rules
 import capa.ghidra.helpers
 import capa.render.default
+import capa.capabilities.common
 import capa.features.extractors.ghidra.extractor
 
 logger = logging.getLogger("capa_ghidra")
@@ -73,7 +74,7 @@ def run_headless():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, False)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, False)
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
@@ -123,7 +124,7 @@ def run_ui():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]

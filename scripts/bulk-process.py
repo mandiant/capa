@@ -75,6 +75,7 @@ import capa
 import capa.main
 import capa.rules
 import capa.render.json
+import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.features.common import OS_AUTO
 
@@ -136,7 +137,7 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     meta = capa.main.collect_metadata([], path, format, os_, [], extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)

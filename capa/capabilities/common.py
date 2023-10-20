@@ -43,8 +43,8 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
 def find_capabilities(
     ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
 ) -> Tuple[MatchResults, Any]:
-    from capa.features.capabilities.static import find_static_capabilities
-    from capa.features.capabilities.dynamic import find_dynamic_capabilities
+    from capa.capabilities.static import find_static_capabilities
+    from capa.capabilities.dynamic import find_dynamic_capabilities
 
     if isinstance(extractor, StaticFeatureExtractor):
         # for the time being, extractors are either static or dynamic.
