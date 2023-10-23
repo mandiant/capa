@@ -42,7 +42,7 @@ dependencies = [
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
     "networkx==3.1",
-    "ruamel.yaml==0.17.35",
+    "ruamel.yaml==0.17.40",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
     "pyelftools==0.30",
