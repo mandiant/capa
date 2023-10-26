@@ -43,7 +43,7 @@ import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
-from capa.engine import Statement, FeatureSet, MatchResults
+from capa.engine import Statement, FeatureSet
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
 
