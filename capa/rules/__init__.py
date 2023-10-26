@@ -940,9 +940,6 @@ class Rule:
             for child in statement.get_children():
                 yield from self._extract_subscope_rules_rec(child)
 
-    def is_internal_rule(self) -> bool:
-        return self.meta.get("namespace", "").startswith("internal/")
-
     def is_file_limitation_rule(self) -> bool:
         return self.meta.get("namespace", "") == "internal/limitation/file"
 
@@ -1621,11 +1618,6 @@ class RuleSet:
                             rules_filtered.update(set(get_rules_and_dependencies(rules, rule.name)))
                             break
         return RuleSet(list(rules_filtered))
-
-    def has_rule_with_namespace(self, capabilities: MatchResults, namespace: str) -> bool:
-        return any(
-            self.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
-        )
 
     def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
         """
