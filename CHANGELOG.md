@@ -6,16 +6,40 @@
 - ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 - ghidra: implement capa explorer for Ghidra #1734 @colton-gabertan
+- binja: add support for forwarded exports #1646 @xusheng6
+- binja: add support for symtab names #1504 @xusheng6
+- add com class/interface features #322 @Aayush-goel-04
 
 ### Breaking Changes
 
-### New Rules (1)
+### New Rules (19)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
+- host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
+- nursery/capture-process-snapshot-data @mr-tz
+- collection/network/capture-packets-using-sharppcap jakub.jozwiak@mandiant.com
+- nursery/communicate-with-kernel-module-via-netlink-socket-on-linux michael.hunhoff@mandiant.com
+- nursery/get-current-pid-on-linux michael.hunhoff@mandiant.com
+- nursery/get-file-system-information-on-linux michael.hunhoff@mandiant.com
+- nursery/get-password-database-entry-on-linux michael.hunhoff@mandiant.com
+- nursery/mark-thread-detached-on-linux michael.hunhoff@mandiant.com
+- nursery/persist-via-gnome-autostart-on-linux michael.hunhoff@mandiant.com
+- nursery/set-thread-name-on-linux michael.hunhoff@mandiant.com
+- load-code/dotnet/load-windows-common-language-runtime michael.hunhoff@mandiant.com blas.kojusner@mandiant.com jakub.jozwiak@mandiant.com
+- nursery/log-keystrokes-via-input-method-manager @mr-tz
+- nursery/encrypt-data-using-rc4-via-systemfunction032 richard.weiss@mandiant.com
+- nursery/add-value-to-global-atom-table @mr-tz
+- nursery/enumerate-processes-that-use-resource @Ana06
+- host-interaction/process/inject/allocate-or-change-rwx-memory @mr-tz
+- lib/allocate-or-change-rw-memory 0x534a@mailbox.org @mr-tz
+- lib/change-memory-protection @mr-tz
 -
 
 ### Bug Fixes
 - ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
+- binja: improve function call site detection @xusheng6
+- binja: use binaryninja.load to open files @xusheng6
+- binja: bump binja version to 3.5 #1789 @xusheng6
 
 ### capa explorer IDA Pro plugin
 

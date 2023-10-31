@@ -7,8 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from binaryninja import Function, BinaryView, LowLevelILOperation
+from binaryninja import Function, BinaryView, SymbolType, RegisterValueType, LowLevelILOperation
 
+from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors import loops
@@ -23,13 +24,27 @@ def extract_function_calls_to(fh: FunctionHandle):
         # Everything that is a code reference to the current function is considered a caller, which actually includes
         # many other references that are NOT a caller. For example, an instruction `push function_start` will also be
         # considered a caller to the function
-        if caller.llil is not None and caller.llil.operation in [
+        llil = caller.llil
+        if (llil is None) or llil.operation not in [
             LowLevelILOperation.LLIL_CALL,
             LowLevelILOperation.LLIL_CALL_STACK_ADJUST,
             LowLevelILOperation.LLIL_JUMP,
             LowLevelILOperation.LLIL_TAILCALL,
         ]:
-            yield Characteristic("calls to"), AbsoluteVirtualAddress(caller.address)
+            continue
+
+        if llil.dest.value.type not in [
+            RegisterValueType.ImportedAddressValue,
+            RegisterValueType.ConstantValue,
+            RegisterValueType.ConstantPointerValue,
+        ]:
+            continue
+
+        address = llil.dest.value.value
+        if address != func.start:
+            continue
+
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(caller.address)
 
 
 def extract_function_loop(fh: FunctionHandle):
@@ -59,10 +74,31 @@ def extract_recursive_call(fh: FunctionHandle):
             yield Characteristic("recursive call"), fh.address
 
 
+def extract_function_name(fh: FunctionHandle):
+    """extract function names (e.g., symtab names)"""
+    func: Function = fh.inner
+    bv: BinaryView = func.view
+    if bv is None:
+        return
+
+    for sym in bv.get_symbols(func.start):
+        if sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.FunctionSymbol]:
+            continue
+
+        name = sym.short_name
+        yield FunctionName(name), sym.address
+        if name.startswith("_"):
+            # some linkers may prefix linked routines with a `_` to avoid name collisions.
+            # extract features for both the mangled and un-mangled representations.
+            # e.g. `_fwrite` -> `fwrite`
+            # see: https://stackoverflow.com/a/2628384/87207
+            yield FunctionName(name[1:]), sym.address
+
+
 def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
     for func_handler in FUNCTION_HANDLERS:
         for feature, addr in func_handler(fh):
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call, extract_function_name)

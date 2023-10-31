@@ -558,7 +558,8 @@ def get_extractor(
                 sys.path.append(str(bn_api))
 
         try:
-            from binaryninja import BinaryView, BinaryViewType
+            import binaryninja
+            from binaryninja import BinaryView
         except ImportError:
             raise RuntimeError(
                 "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
@@ -568,7 +569,7 @@ def get_extractor(
         import capa.features.extractors.binja.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = BinaryViewType.get_view_of_file(str(path))
+            bv: BinaryView = binaryninja.load(str(path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {path}")
 

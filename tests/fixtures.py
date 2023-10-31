@@ -159,7 +159,8 @@ def get_dnfile_extractor(path: Path):
 
 @lru_cache(maxsize=1)
 def get_binja_extractor(path: Path):
-    from binaryninja import Settings, BinaryViewType
+    import binaryninja
+    from binaryninja import Settings
 
     import capa.features.extractors.binja.extractor
 
@@ -168,7 +169,7 @@ def get_binja_extractor(path: Path):
     if path.name.endswith("kernel32-64.dll_"):
         old_pdb = settings.get_bool("pdb.loadGlobalSymbols")
         settings.set_bool("pdb.loadGlobalSymbols", False)
-    bv = BinaryViewType.get_view_of_file(str(path))
+    bv = binaryninja.load(str(path))
     if path.name.endswith("kernel32-64.dll_"):
         settings.set_bool("pdb.loadGlobalSymbols", old_pdb)
 
@@ -266,6 +267,8 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
     elif name.startswith("9324d"):
         return CD / "data" / "9324d1a8ae37a36ae560c37448c9705a.exe_"
+    elif name.startswith("395eb"):
+        return CD / "data" / "395eb0ddd99d2c9e37b6d0b73485ee9c.exe_"
     elif name.startswith("a1982"):
         return CD / "data" / "a198216798ca38f280dc413f8c57f2c2.exe_"
     elif name.startswith("a933a"):
@@ -1118,6 +1121,11 @@ def a1982_extractor():
 @pytest.fixture
 def z9324d_extractor():
     return get_extractor(get_data_path_by_name("9324d..."))
+
+
+@pytest.fixture
+def z395eb_extractor():
+    return get_extractor(get_data_path_by_name("395eb..."))
 
 
 @pytest.fixture
