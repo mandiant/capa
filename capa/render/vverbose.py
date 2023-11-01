@@ -451,8 +451,6 @@ def render_rules(ostream, doc: rd.ResultDocument):
                     assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
 
                     ostream.write(rule.meta.scopes.dynamic.value)
-                    # TODO(mr-tz): process rendering should use human-readable name
-                    # https://github.com/mandiant/capa/issues/1816
 
                     ostream.write(" @ ")
 
