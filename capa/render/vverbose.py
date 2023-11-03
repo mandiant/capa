@@ -30,8 +30,8 @@ def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     for p in layout.processes:
         if p.address == addr:
             return p.name
-    logger.debug("name not found for process: %s", addr)
-    return ""
+
+    raise ValueError("name not found for process", addr)
 
 
 def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
@@ -49,8 +49,7 @@ def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
                     for c in t.matched_calls:
                         if c.address == addr:
                             return c.name
-    logger.debug("name not found for call: %s", addr)
-    return ""
+    raise ValueError("name not found for call", addr)
 
 
 def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
