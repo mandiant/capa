@@ -22,7 +22,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import enum
 from typing import cast
 
 import tabulate
@@ -109,7 +108,7 @@ def render_static_meta(ostream, meta: rd.StaticMetadata):
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
         ("arch", meta.analysis.arch),
-        ("analysis", meta.flavor),
+        ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("base address", format_address(meta.analysis.base_address)),
         ("rules", "\n".join(meta.analysis.rules)),
@@ -153,7 +152,7 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
         ("arch", meta.analysis.arch),
-        ("analysis", meta.flavor),
+        ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("rules", "\n".join(meta.analysis.rules)),
         ("process count", len(meta.analysis.feature_counts.processes)),
@@ -167,9 +166,9 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
 
 
 def render_meta(osstream, doc: rd.ResultDocument):
-    if doc.meta.flavor is rd.Flavor.STATIC:
+    if doc.meta.flavor == rd.Flavor.STATIC:
         render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
-    elif doc.meta.flavor is rd.Flavor.DYNAMIC:
+    elif doc.meta.flavor == rd.Flavor.DYNAMIC:
         render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
     else:
         raise ValueError("invalid meta analysis")
@@ -198,18 +197,23 @@ def render_rules(ostream, doc: rd.ResultDocument):
         had_match = True
 
         rows = []
-        for key in ("namespace", "description", "scopes"):
-            v = getattr(rule.meta, key)
-            if not v:
-                continue
 
-            if isinstance(v, list) and len(v) == 1:
-                v = v[0]
+        ns = rule.meta.namespace
+        if ns:
+            rows.append(("namespace", ns))
 
-            if isinstance(v, enum.Enum):
-                v = v.value
+        desc = rule.meta.description
+        if desc:
+            rows.append(("description", desc))
 
-            rows.append((key, v))
+        if doc.meta.flavor == rd.Flavor.STATIC:
+            scope = rule.meta.scopes.static
+        elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+            scope = rule.meta.scopes.dynamic
+        else:
+            raise ValueError("invalid meta analysis")
+        if scope:
+            rows.append(("scope", scope.value))
 
         if capa.rules.Scope.FILE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
