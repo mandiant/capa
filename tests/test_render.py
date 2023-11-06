@@ -182,7 +182,7 @@ def test_render_vverbose_feature(feature, expected):
     rule = capa.rules.Rule.from_yaml(src)
 
     rm = capa.render.result_document.RuleMatches(
-        meta=rule.meta,
+        meta=capa.render.result_document.RuleMetadata.from_capa(rule),
         source=src,
         matches=(),
     )
