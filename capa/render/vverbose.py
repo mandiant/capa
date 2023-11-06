@@ -221,7 +221,9 @@ def render_string_value(s: str) -> str:
     return f'"{capa.features.common.escape_string(s)}"'
 
 
-def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Feature, indent: int):
+def render_feature(
+    ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, feature: frzf.Feature, indent: int
+):
     ostream.write("  " * indent)
 
     key = feature.type
@@ -272,7 +274,16 @@ def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Fe
                 ostream.write(capa.rules.DESCRIPTION_SEPARATOR)
                 ostream.write(feature.description)
 
-        if not isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
+        if isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
+            # don't show the location of these global features
+            pass
+        elif isinstance(layout, rd.DynamicLayout) and rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+            # if we're in call scope, then the call will have been rendered at the top
+            # of the output, so don't re-render it again for each feature.
+            pass
+        elif isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
+            pass
+        else:
             render_locations(ostream, layout, match.locations, indent)
         ostream.write("\n")
     else:
@@ -289,15 +300,19 @@ def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Fe
             ostream.write("  " * (indent + 1))
             ostream.write("- ")
             ostream.write(rutils.bold2(render_string_value(capture)))
-            render_locations(ostream, layout, locations, indent=indent)
+            if isinstance(layout, rd.DynamicLayout) and rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                # like above, don't re-render calls when in call scope.
+                pass
+            else:
+                render_locations(ostream, layout, locations, indent=indent)
             ostream.write("\n")
 
 
-def render_node(ostream, layout: rd.Layout, match: rd.Match, node: rd.Node, indent: int):
+def render_node(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, node: rd.Node, indent: int):
     if isinstance(node, rd.StatementNode):
         render_statement(ostream, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
-        render_feature(ostream, layout, match, node.feature, indent=indent)
+        render_feature(ostream, layout, match, rule, node.feature, indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 
@@ -310,7 +325,7 @@ MODE_SUCCESS = "success"
 MODE_FAILURE = "failure"
 
 
-def render_match(ostream, layout: rd.Layout, match: rd.Match, indent=0, mode=MODE_SUCCESS):
+def render_match(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Match, indent=0, mode=MODE_SUCCESS):
     child_mode = mode
     if mode == MODE_SUCCESS:
         # display only nodes that evaluated successfully.
@@ -342,10 +357,10 @@ def render_match(ostream, layout: rd.Layout, match: rd.Match, indent=0, mode=MOD
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(ostream, layout, match, match.node, indent=indent)
+    render_node(ostream, layout, match, rule, match.node, indent=indent)
 
     for child in match.children:
-        render_match(ostream, layout, child, indent=indent + 1, mode=child_mode)
+        render_match(ostream, layout, rule, child, indent=indent + 1, mode=child_mode)
 
 
 def render_rules(ostream, doc: rd.ResultDocument):
@@ -457,7 +472,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
                 raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
             _, first_match = matches[0]
-            render_match(ostream, doc.meta.analysis.layout, first_match, indent=0)
+            render_match(ostream, doc.meta.analysis.layout, rule, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
                 if doc.meta.flavor == rd.Flavor.STATIC:
@@ -491,7 +506,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                     capa.helpers.assert_never(doc.meta.flavor)
 
                 ostream.write("\n")
-                render_match(ostream, doc.meta.analysis.layout, match, indent=1)
+                render_match(ostream, doc.meta.analysis.layout, rule, match, indent=1)
                 if rule.meta.lib:
                     # only show first match
                     break
