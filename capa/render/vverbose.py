@@ -5,8 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
+import textwrap
 from typing import Dict, Iterable, Optional
 
 import tabulate
@@ -72,10 +72,40 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
 
     pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
     cname = _get_call_name(layout, addr)
-    return f"{pname}[{call.thread.process.pid}:{call.thread.tid}][{call.id}] {cname}"
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return f"{pname}[{call.thread.process.pid}:{call.thread.tid}]\n{rutils.mute(newline.join(s))}"
 
 
-def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address]):
+def hanging_indent(s: str, indent: int) -> str:
+    """
+    indent the given string, except the first line,
+    such as if the string finishes an existing line.
+
+    e.g.,
+
+        EXISTINGSTUFFHERE + hanging_indent("xxxx...", 1)
+
+    becomes:
+
+        EXISTINGSTUFFHERExxxxx
+          xxxxxx
+          xxxxxx
+    """
+    prefix = "  " * indent
+    return textwrap.indent(s, prefix=prefix)[len(prefix) :]
+
+
+def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address], indent: int):
     import capa.render.verbose as v
 
     # its possible to have an empty locations array here,
@@ -94,8 +124,7 @@ def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address
 
         if location.type == frz.AddressType.CALL:
             assert isinstance(layout, rd.DynamicLayout)
-            ostream.write(render_call(layout, location))
-
+            ostream.write(hanging_indent(render_call(layout, location), indent + 1))
         else:
             ostream.write(v.format_address(locations[0]))
 
@@ -103,8 +132,8 @@ def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address
         location = locations[0]
 
         assert isinstance(layout, rd.DynamicLayout)
-        ostream.write(render_call(layout, location))
-        ostream.write(f", and {(len(locations) - 1)} more...")
+        s = f"{render_call(layout, location)}\nand {(len(locations) - 1)} more..."
+        ostream.write(hanging_indent(s, indent + 1))
 
     elif len(locations) > 4:
         # don't display too many locations, because it becomes very noisy.
@@ -119,7 +148,7 @@ def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address
         raise RuntimeError("unreachable")
 
 
-def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent=0):
+def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.Statement, indent: int):
     ostream.write("  " * indent)
 
     if isinstance(statement, rd.SubscopeStatement):
@@ -181,7 +210,7 @@ def render_statement(ostream, layout: rd.Layout, match: rd.Match, statement: rd.
 
         if statement.description:
             ostream.write(f" = {statement.description}")
-        render_locations(ostream, layout, match.locations)
+        render_locations(ostream, layout, match.locations, indent)
         ostream.writeln("")
 
     else:
@@ -192,7 +221,7 @@ def render_string_value(s: str) -> str:
     return f'"{capa.features.common.escape_string(s)}"'
 
 
-def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Feature, indent=0):
+def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Feature, indent: int):
     ostream.write("  " * indent)
 
     key = feature.type
@@ -244,7 +273,7 @@ def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Fe
                 ostream.write(feature.description)
 
         if not isinstance(feature, (frzf.OSFeature, frzf.ArchFeature, frzf.FormatFeature)):
-            render_locations(ostream, layout, match.locations)
+            render_locations(ostream, layout, match.locations, indent)
         ostream.write("\n")
     else:
         # like:
@@ -260,11 +289,11 @@ def render_feature(ostream, layout: rd.Layout, match: rd.Match, feature: frzf.Fe
             ostream.write("  " * (indent + 1))
             ostream.write("- ")
             ostream.write(rutils.bold2(render_string_value(capture)))
-            render_locations(ostream, layout, locations)
+            render_locations(ostream, layout, locations, indent=indent)
             ostream.write("\n")
 
 
-def render_node(ostream, layout: rd.Layout, match: rd.Match, node: rd.Node, indent=0):
+def render_node(ostream, layout: rd.Layout, match: rd.Match, node: rd.Node, indent: int):
     if isinstance(node, rd.StatementNode):
         render_statement(ostream, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
@@ -427,7 +456,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                 # but i'm not 100% sure if this is/will always be true.
                 # so, lets be explicit about our assumptions and raise an exception if they fail.
                 raise RuntimeError(f"unexpected file scope match count: {len(matches)}")
-            first_address, first_match = matches[0]
+            _, first_match = matches[0]
             render_match(ostream, doc.meta.analysis.layout, first_match, indent=0)
         else:
             for location, match in sorted(doc.rules[rule.meta.name].matches):
@@ -438,12 +467,8 @@ def render_rules(ostream, doc: rd.ResultDocument):
                     ostream.write(capa.render.verbose.format_address(location))
 
                     if rule.meta.scopes.static == capa.rules.Scope.BASIC_BLOCK:
-                        ostream.write(
-                            " in function "
-                            + capa.render.verbose.format_address(
-                                frz.Address.from_capa(functions_by_bb[location.to_capa()])
-                            )
-                        )
+                        func = frz.Address.from_capa(functions_by_bb[location.to_capa()])
+                        ostream.write(f" in function {capa.render.verbose.format_address(func)}")
 
                 elif doc.meta.flavor == rd.Flavor.DYNAMIC:
                     assert rule.meta.scopes.dynamic is not None
@@ -458,7 +483,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
                         ostream.write(render_thread(doc.meta.analysis.layout, location))
                     elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
-                        ostream.write(render_call(doc.meta.analysis.layout, location))
+                        ostream.write(hanging_indent(render_call(doc.meta.analysis.layout, location), indent=1))
                     else:
                         capa.helpers.assert_never(rule.meta.scopes.dynamic)
 
