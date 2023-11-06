@@ -56,14 +56,14 @@ def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     process = addr.to_capa()
     assert isinstance(process, capa.features.address.ProcessAddress)
     name = _get_process_name(layout, addr)
-    return f"{name}[{process.pid}]"
+    return f"{name}{{pid:{process.pid}}}"
 
 
 def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     thread = addr.to_capa()
     assert isinstance(thread, capa.features.address.ThreadAddress)
     name = _get_process_name(layout, frz.Address.from_capa(thread.process))
-    return f"{name}[{thread.process.pid}:{thread.tid}]"
+    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
 
 
 def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
@@ -83,7 +83,9 @@ def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
     s.append(f"){rest}")
 
     newline = "\n"
-    return f"{pname}[{call.thread.process.pid}:{call.thread.tid}]\n{rutils.mute(newline.join(s))}"
+    return (
+        f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
+    )
 
 
 def hanging_indent(s: str, indent: int) -> str:
