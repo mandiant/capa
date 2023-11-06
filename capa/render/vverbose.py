@@ -312,7 +312,7 @@ def render_node(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Matc
     if isinstance(node, rd.StatementNode):
         render_statement(ostream, layout, match, node.statement, indent=indent)
     elif isinstance(node, rd.FeatureNode):
-        render_feature(ostream, layout, match, rule, node.feature, indent=indent)
+        render_feature(ostream, layout, rule, match, node.feature, indent=indent)
     else:
         raise RuntimeError("unexpected node type: " + str(node))
 
@@ -357,7 +357,7 @@ def render_match(ostream, layout: rd.Layout, rule: rd.RuleMatches, match: rd.Mat
     else:
         raise RuntimeError("unexpected mode: " + mode)
 
-    render_node(ostream, layout, match, rule, match.node, indent=indent)
+    render_node(ostream, layout, rule, match, match.node, indent=indent)
 
     for child in match.children:
         render_match(ostream, layout, rule, child, indent=indent + 1, mode=child_mode)
