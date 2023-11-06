@@ -80,6 +80,68 @@ def format_address(address: frz.Address) -> str:
         raise ValueError("unexpected address type")
 
 
+def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    for p in layout.processes:
+        if p.address == addr:
+            return p.name
+
+    raise ValueError("name not found for process", addr)
+
+
+def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    thread = frz.Address.from_capa(call.thread)
+    process = frz.Address.from_capa(call.thread.process)
+
+    # danger: O(n**3)
+    for p in layout.processes:
+        if p.address == process:
+            for t in p.matched_threads:
+                if t.address == thread:
+                    for c in t.matched_calls:
+                        if c.address == addr:
+                            return c.name
+    raise ValueError("name not found for call", addr)
+
+
+def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    process = addr.to_capa()
+    assert isinstance(process, capa.features.address.ProcessAddress)
+    name = _get_process_name(layout, addr)
+    return f"{name}{{pid:{process.pid}}}"
+
+
+def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    thread = addr.to_capa()
+    assert isinstance(thread, capa.features.address.ThreadAddress)
+    name = _get_process_name(layout, frz.Address.from_capa(thread.process))
+    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
+
+
+def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
+    cname = _get_call_name(layout, addr)
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return (
+        f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
+    )
+
+
 def render_static_meta(ostream, meta: rd.StaticMetadata):
     """
     like:
@@ -220,7 +282,35 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
         if capa.rules.Scope.FILE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
-            rows.append(("matches", "\n".join(map(format_address, locations))))
+            lines = []
+
+            if doc.meta.flavor == rd.Flavor.STATIC:
+                lines = [format_address(loc) for loc in locations]
+            elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+                assert rule.meta.scopes.dynamic is not None
+                assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
+
+                if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
+                    lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                    # because we're only in verbose mode, we won't show the full call details (name, args, retval)
+                    # we'll only show the details of the thread in which the calls are found.
+                    # so select the thread locations and render those.
+                    thread_locations = set()
+                    for loc in locations:
+                        cloc = loc.to_capa()
+                        assert isinstance(cloc, capa.features.address.DynamicCallAddress)
+                        thread_locations.add(frz.Address.from_capa(cloc.thread))
+
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in thread_locations]
+                else:
+                    capa.helpers.assert_never(rule.meta.scopes.dynamic)
+            else:
+                capa.helpers.assert_never(doc.meta.flavor)
+
+            rows.append(("matches", "\n".join(lines)))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
