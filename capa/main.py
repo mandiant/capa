@@ -552,7 +552,7 @@ def import_binja():
         )
 
 
-def handle_binja_backend(path: Path, disable_progress: bool) -> BinjaFeatureExtractor:
+def handle_binja_backend(path: Path, disable_progress: bool) -> FeatureExtractor:
     import capa.features.extractors.binja.extractor
 
     import_binja()
@@ -565,7 +565,8 @@ def handle_binja_backend(path: Path, disable_progress: bool) -> BinjaFeatureExtr
     return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
 
-def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], os_: str, disable_progress: bool) -> VivisectFeatureExtractor:
+def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], should_save_workspace: bool, \
+                       os_: str, disable_progress: bool) -> FeatureExtractor:
     import capa.features.extractors.viv.extractor
 
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -584,12 +585,12 @@ def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], os_: str,
     return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
-def handle_pefile_backend(path: Path) -> PefileFeatureExtractor:
+def handle_pefile_backend(path: Path) -> FeatureExtractor:
     import capa.features.extractors.pefile
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 
-def handle_dotnet_format(format_: str) -> DnfileFeatureExtractor:
+def handle_dotnet_format(path: Path) -> FeatureExtractor:
     import capa.features.extractors.dnfile.extractor
     return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
