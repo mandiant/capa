@@ -41,6 +41,7 @@ import capa.rules
 import capa.engine
 import capa.helpers
 import capa.features.insn
+import capa.capabilities.common
 from capa.rules import Rule, RuleSet
 from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
@@ -366,7 +367,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         nice_path, format_, OS_AUTO, capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
 
-    capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
+    capabilities, _ = capa.capabilities.common.find_capabilities(ctx.rules, extractor, disable_progress=True)
     # mypy doesn't seem to be happy with the MatchResults type alias & set(...keys())?
     # so we ignore a few types here.
     capabilities = set(capabilities.keys())  # type: ignore

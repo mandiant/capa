@@ -57,7 +57,7 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
 
     for imp in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
-        for name in capa.features.extractors.helpers.generate_symbols(imp.module, imp.method):
+        for name in capa.features.extractors.helpers.generate_symbols(imp.module, imp.method, include_dll=True):
             yield Import(name), DNTokenAddress(imp.token)
 
 

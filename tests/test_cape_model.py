@@ -10,7 +10,7 @@ from pathlib import Path
 
 import fixtures
 
-from capa.features.extractors.cape.models import CapeReport
+from capa.features.extractors.cape.models import Call, CapeReport
 
 CD = Path(__file__).resolve().parent
 CAPE_DIR = CD / "data" / "dynamic" / "cape"
@@ -39,3 +39,34 @@ def test_cape_model_can_load(version: str, filename: str):
     buf = gzip.decompress(path.read_bytes())
     report = CapeReport.from_buf(buf)
     assert report is not None
+
+
+def test_cape_model_argument():
+    call = Call.model_validate_json(
+        """
+        {
+            "timestamp": "2023-10-20 12:30:14,015",
+            "thread_id": "2380",
+            "caller": "0x7797dff8",
+            "parentcaller": "0x77973486",
+            "category": "system",
+            "api": "TestApiCall",
+            "status": true,
+            "return": "0x00000000",
+            "arguments": [
+              {
+                "name": "Value Base 10",
+                "value": "30"
+              },
+              {
+                "name": "Value Base 16",
+                "value": "0x30"
+              }
+            ],
+            "repeated": 19,
+            "id": 0
+        }
+        """
+    )
+    assert call.arguments[0].value == 30
+    assert call.arguments[1].value == 0x30

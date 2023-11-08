@@ -25,6 +25,7 @@ import capa.version
 import capa.ida.helpers
 import capa.render.json
 import capa.features.common
+import capa.capabilities.common
 import capa.render.result_document
 import capa.features.extractors.ida.extractor
 from capa.rules import Rule
@@ -768,7 +769,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
-                    capabilities, counts = capa.main.find_capabilities(
+                    capabilities, counts = capa.capabilities.common.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
 
@@ -810,7 +811,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
 
-                    if capa.main.has_file_limitation(ruleset, capabilities, is_standalone=False):
+                    if capa.capabilities.common.has_file_limitation(ruleset, capabilities, is_standalone=False):
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
                 except Exception as e:
                     logger.exception("Failed to check for file limitations (error: %s)", e)

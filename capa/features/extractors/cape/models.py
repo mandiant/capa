@@ -14,7 +14,10 @@ from pydantic.functional_validators import BeforeValidator
 
 
 def validate_hex_int(value):
-    return int(value, 16) if isinstance(value, str) else value
+    if isinstance(value, str):
+        return int(value, 16) if value.startswith("0x") else int(value, 10)
+    else:
+        return value
 
 
 def validate_hex_bytes(value):

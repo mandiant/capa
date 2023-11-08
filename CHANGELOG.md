@@ -6,7 +6,7 @@
 - implement dynamic analysis via CAPE sandbox #48 #1535 @yelhamer
 - add call scope #771 @yelhamer
 - add process scope for the dynamic analysis flavor #1517 @yelhamer
-- Add thread scope for the dynamic analysis flavor #1517 @yelhamer
+- add thread scope for the dynamic analysis flavor #1517 @yelhamer
 - ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
 - ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
 - binja: add support for forwarded exports #1646 @xusheng6
@@ -20,6 +20,7 @@
 - protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
 - protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
+- extractor: ignore DLL name for api features #1815 @mr-tz
 
 ### New Rules (19)
 

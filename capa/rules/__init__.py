@@ -595,6 +595,13 @@ def pop_statement_description_entry(d):
     return description["description"]
 
 
+def trim_dll_part(api: str) -> str:
+    # kernel32.CreateFileA
+    if api.count(".") == 1:
+        api = api.split(".")[1]
+    return api
+
+
 def build_statements(d, scopes: Scopes):
     if len(d.keys()) > 2:
         raise InvalidRule("too many statements")
@@ -722,6 +729,10 @@ def build_statements(d, scopes: Scopes):
             #     count(number(0x100 = description))
             if term != "string":
                 value, description = parse_description(arg, term)
+
+                if term == "api":
+                    value = trim_dll_part(value)
+
                 feature = Feature(value, description=description)
             else:
                 # arg is string (which doesn't support inline descriptions), like:
@@ -816,6 +827,10 @@ def build_statements(d, scopes: Scopes):
     else:
         Feature = parse_feature(key)
         value, description = parse_description(d[key], key, d.get("description"))
+
+        if key == "api":
+            value = trim_dll_part(value)
+
         try:
             feature = Feature(value, description=description)
         except ValueError as e:
@@ -939,6 +954,9 @@ class Rule:
             #  because its been replaced by a `match` statement.
             for child in statement.get_children():
                 yield from self._extract_subscope_rules_rec(child)
+
+    def is_file_limitation_rule(self) -> bool:
+        return self.meta.get("namespace", "") == "internal/limitation/file"
 
     def is_subscope_rule(self):
         return bool(self.meta.get("capa/subscope-rule", False))

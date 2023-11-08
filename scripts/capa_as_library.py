@@ -19,6 +19,7 @@ import capa.features
 import capa.render.json
 import capa.render.utils as rutils
 import capa.render.default
+import capa.capabilities.common
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.features.common import OS_AUTO, FORMAT_AUTO
@@ -175,7 +176,7 @@ def capa_details(rules_path: Path, file_path: Path, output_format="dictionary"):
     extractor = capa.main.get_extractor(
         file_path, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], False, disable_progress=True
     )
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
     meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, counts)

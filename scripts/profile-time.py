@@ -54,6 +54,7 @@ import capa.helpers
 import capa.features
 import capa.features.common
 import capa.features.freeze
+import capa.capabilities.common
 
 logger = logging.getLogger("capa.profile")
 
@@ -114,7 +115,7 @@ def main(argv=None):
 
         def do_iteration():
             capa.perf.reset()
-            capa.main.find_capabilities(rules, extractor, disable_progress=True)
+            capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
             pbar.update(1)
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)
