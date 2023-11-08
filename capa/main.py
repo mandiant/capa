@@ -517,6 +517,89 @@ def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
     return vw
 
 
+def check_supported_format(path, os_):
+    if not is_supported_format(path):
+        raise UnsupportedFormatError()
+
+    if not is_supported_arch(path):
+        raise UnsupportedArchError()
+
+    if os_ == OS_AUTO and not is_supported_os(path):
+        raise UnsupportedOSError()
+
+
+
+def add_binja_to_path():
+    from capa.features.extractors.binja.find_binja_api import find_binja_path
+    
+    bn_api = find_binja_path()
+    if bn_api.exists():
+        sys.path.append(str(bn_api))
+
+
+
+def import_binja():
+    # When we are running as a standalone executable, we cannot directly import binaryninja
+    # We need to fist find the binja API installation path and add it into sys.path
+    if is_running_standalone():
+        add_binja_to_path()
+
+    try:
+        import binaryninja
+        from binaryninja import BinaryView
+    except ImportError:
+        raise RuntimeError(
+            "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
+            + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
+        )
+
+
+
+def handle_binja_backend(path):
+    import capa.features.extractors.binja.extractor
+
+    import_binja()
+
+    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        bv: BinaryView = binaryninja.load(str(path))
+        if bv is None:
+            raise RuntimeError(f"Binary Ninja cannot open file {path}")
+
+    return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+
+
+
+def handle_viv_backend(path, format_, sigpaths, os_):
+    import capa.features.extractors.viv.extractor
+
+    with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        vw = get_workspace(path, format_, sigpaths)
+
+        if should_save_workspace:
+            logger.debug("saving workspace")
+            try:
+                vw.saveWorkspace()
+            except IOError:
+                # see #168 for discussion around how to handle non-writable directories
+                logger.info("source directory is not writable, won't save intermediate workspace")
+        else:
+            logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
+
+    return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
+
+
+
+def handle_pefile_backend(path):
+    import capa.features.extractors.pefile
+    return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+
+
+def handle_dotnet_format(format):
+    import capa.features.extractors.dnfile.extractor
+    return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+
+
+
 def get_extractor(
     path: Path,
     format_: str,
@@ -533,73 +616,23 @@ def get_extractor(
       UnsupportedOSError
     """
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
-        if not is_supported_format(path):
-            raise UnsupportedFormatError()
-
-        if not is_supported_arch(path):
-            raise UnsupportedArchError()
-
-        if os_ == OS_AUTO and not is_supported_os(path):
-            raise UnsupportedOSError()
+        check_supported_format(path, os_)
 
     if format_ == FORMAT_DOTNET:
-        import capa.features.extractors.dnfile.extractor
-
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+        return handle_dotnet_format(format)
 
     elif backend == BACKEND_BINJA:
-        from capa.features.extractors.binja.find_binja_api import find_binja_path
-
-        # When we are running as a standalone executable, we cannot directly import binaryninja
-        # We need to fist find the binja API installation path and add it into sys.path
-        if is_running_standalone():
-            bn_api = find_binja_path()
-            if bn_api.exists():
-                sys.path.append(str(bn_api))
-
-        try:
-            import binaryninja
-            from binaryninja import BinaryView
-        except ImportError:
-            raise RuntimeError(
-                "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
-                + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
-            )
-
-        import capa.features.extractors.binja.extractor
-
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = binaryninja.load(str(path))
-            if bv is None:
-                raise RuntimeError(f"Binary Ninja cannot open file {path}")
-
-        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+        return handle_binja_backend(path)
 
     elif backend == BACKEND_PEFILE:
-        import capa.features.extractors.pefile
-
-        return capa.features.extractors.pefile.PefileFeatureExtractor(path)
+        return handle_pefile_backend(path)
 
     elif backend == BACKEND_VIV:
-        import capa.features.extractors.viv.extractor
-
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            vw = get_workspace(path, format_, sigpaths)
-
-            if should_save_workspace:
-                logger.debug("saving workspace")
-                try:
-                    vw.saveWorkspace()
-                except IOError:
-                    # see #168 for discussion around how to handle non-writable directories
-                    logger.info("source directory is not writable, won't save intermediate workspace")
-            else:
-                logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
-
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
+        return handle_viv_backend(path, format, sigpaths, os_)
 
     else:
         raise ValueError("unexpected backend: " + backend)
+     
 
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
