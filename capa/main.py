@@ -18,8 +18,7 @@ import argparse
 import datetime
 import textwrap
 import contextlib
-import collections
-from typing import Any, Set, Dict, List, Tuple, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
 import halo
