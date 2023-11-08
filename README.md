@@ -130,7 +130,7 @@ from dynamic execution traces. This is especially relevant for samples that are 
 obfuscated, since static analysis on those samples would likely not yield the desired information.
 
 Currently, capa only supports reports from the [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox. 
-Here's an example run on sample 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310 which is packed:
+Here's an example run on the packed sample with SHA256 hash 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310:
 
 ```yaml
 $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.exe
