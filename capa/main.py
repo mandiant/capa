@@ -517,7 +517,7 @@ def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
     return vw
 
 
-def check_supported_format(path: Path, os_: str):
+def check_unsupported_raise_exception(path: Path, os_: str):
     if not is_supported_format(path):
         raise UnsupportedFormatError()
 
@@ -536,7 +536,7 @@ def add_binja_to_path():
         sys.path.append(str(bn_api))
 
 
-def import_binja():
+def attempt_binja_import():
     # When we are running as a standalone executable, we cannot directly import binaryninja
     # We need to fist find the binja API installation path and add it into sys.path
     if is_running_standalone():
@@ -555,8 +555,8 @@ def import_binja():
 def handle_binja_backend(path: Path, disable_progress: bool) -> FeatureExtractor:
     import capa.features.extractors.binja.extractor
 
-    import_binja()
-
+    attempt_binja_import()
+ 
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
         bv: BinaryView = binaryninja.load(str(path))
         if bv is None:
@@ -565,34 +565,28 @@ def handle_binja_backend(path: Path, disable_progress: bool) -> FeatureExtractor
     return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
 
+def attempt_save_workspace(vw):
+    try:
+        vw.saveWorkspace()
+    except IOError:
+        # see #168 for discussion around how to handle non-writable directories
+        logger.info("source directory is not writable, won't save intermediate workspace")
+
+
 def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], should_save_workspace: bool, \
                        os_: str, disable_progress: bool) -> FeatureExtractor:
     import capa.features.extractors.viv.extractor
-
+                        
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
         vw = get_workspace(path, format_, sigpaths)
 
         if should_save_workspace:
             logger.debug("saving workspace")
-            try:
-                vw.saveWorkspace()
-            except IOError:
-                # see #168 for discussion around how to handle non-writable directories
-                logger.info("source directory is not writable, won't save intermediate workspace")
+            attempt_save_workspace(vw)
         else:
             logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
     return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
-
-
-def handle_pefile_backend(path: Path) -> FeatureExtractor:
-    import capa.features.extractors.pefile
-    return capa.features.extractors.pefile.PefileFeatureExtractor(path)
-
-
-def handle_dotnet_format(path: Path) -> FeatureExtractor:
-    import capa.features.extractors.dnfile.extractor
-    return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
 
 def get_extractor(
@@ -611,16 +605,18 @@ def get_extractor(
       UnsupportedOSError
     """
     if format_ not in (FORMAT_SC32, FORMAT_SC64):
-        check_supported_format(path, os_)
+        check_unsupported_raise_exception(path, os_)
 
     if format_ == FORMAT_DOTNET:
-        return handle_dotnet_format(format_)
+        import capa.features.extractors.dnfile.extractor
+        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     elif backend == BACKEND_BINJA:
         return handle_binja_backend(path, disable_progress)
 
     elif backend == BACKEND_PEFILE:
-        return handle_pefile_backend(path)
+        import capa.features.extractors.pefile
+        return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
     elif backend == BACKEND_VIV:
         return handle_viv_backend(path, format, sigpaths, should_save_workspace, os_, disable_progress)
