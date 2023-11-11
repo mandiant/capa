@@ -1280,8 +1280,11 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-            try:
-                extractor = get_extractor(
+            
+            # Perform error checking
+            # Return if unsupported hardware or software
+            extractor = exceptUnsupportedError(
+                 get_extractor(
                     args.sample,
                     format_,
                     args.os,
@@ -1290,15 +1293,7 @@ def main(argv: Optional[List[str]] = None):
                     should_save_workspace,
                     disable_progress=args.quiet or args.debug,
                 )
-            except UnsupportedFormatError:
-                log_unsupported_format_error()
-                return E_INVALID_FILE_TYPE
-            except UnsupportedArchError:
-                log_unsupported_arch_error()
-                return E_INVALID_FILE_ARCH
-            except UnsupportedOSError:
-                log_unsupported_os_error()
-                return E_INVALID_FILE_OS
+            )
 
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
