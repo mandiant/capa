@@ -127,7 +127,9 @@ def redirecting_print_to_tqdm(disable_progress):
 
 
 def exceptUnsupportedError(func):
-    e_list = [UnsupportedFormatError, UnsupportedArchError, UnsupportedOSError]
+    e_list, return_values = [(UnsupportedFormatError E_INVALID_FILE_TYPE),
+                             (UnsupportedArchError, E_INVALID_FILE_ARCH), 
+                             (UnsupportedOSError, E_INVALID_FILE_OS)]
   
     messsage_list = [ # UnsupportedFormatError
                 (" Input file does not appear to be a PE or ELF file.",
@@ -146,6 +148,7 @@ def exceptUnsupportedError(func):
     def logging_wrapper(exception):
         assert(exception in e_list)
         e_messages = message_list[e_list.index(exception)]
+        e_return_value = return_values[e_list.index(exception)]
         
         logger.error("-" * 80)
         logger.error(f"{e_messages[0]}")
@@ -155,6 +158,8 @@ def exceptUnsupportedError(func):
             logger.error(i)
         
         logger.error("-" * 80)
+
+        return e_return_value
                                
     if type(func(*args, **kwargs)) = ValueError:
         return logging_wrapper(func(*args, **kwargs))
