@@ -73,6 +73,10 @@ def find_subrule_matches(doc: rd.ResultDocument):
 
 def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
+render capabilities sorted by:
+- prevalence rare -> unknown
+- namespace a -> z
+
     example::
 
         +-------------------------------------------------------+-------------------------------------------------+------------+

@@ -513,7 +513,7 @@ class MaecMetadata(FrozenModel):
 @lru_cache(maxsize=None)
 def load_rules_prevalence() -> Dict[str, str]:
     CD = Path(__file__).resolve().parent.parent.parent
-    file = CD / "assets/rules_prevalence_data/rules_prevalence.json.gz"
+    file = CD / "assets" / "rules_prevalence_data" / "rules_prevalence.json.gz"
     if not file.exists():
         raise FileNotFoundError(f"File '{file}' not found.")
     try:
