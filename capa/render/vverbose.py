@@ -278,8 +278,6 @@ def render_rules(ostream, doc: rd.ResultDocument):
 
     had_match = False
 
-    rules_prevalence = rutils.load_rules_prevalence()
-
     for _, _, rule in sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()):
         # default scope hides things like lib rules, malware-category rules, etc.
         # but in vverbose mode, we really want to show everything.
@@ -307,6 +305,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
             # library rules should not have a namespace
             rows.append(("namespace", rule.meta.namespace))
 
+        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
+        rows.append(("prevalence", prevalence))
+
         if rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov:
             rows.append(
                 (
@@ -326,8 +327,6 @@ def render_rules(ostream, doc: rd.ResultDocument):
         rows.append(("author", ", ".join(rule.meta.authors)))
 
         rows.append(("scope", rule.meta.scope.value))
-
-        rows.append(("prevalence", rules_prevalence.get(rule.meta.name, "unknown")))
 
         if rule.meta.attack:
             rows.append(("att&ck", ", ".join([rutils.format_parts_id(v) for v in rule.meta.attack])))

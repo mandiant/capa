@@ -86,7 +86,6 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
         +-------------------------------------------------------+-------------------------------------------------+------------+
     """
     subrule_matches = find_subrule_matches(doc)
-    rules_prevalence = rutils.load_rules_prevalence()
 
     # seperate rules based on their prevalence
     common: Dict[str, str] = {"capability": "", "namespace": "", "prevalence": ""}
@@ -105,9 +104,7 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
             capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
 
         namespace = rule.meta.namespace if rule.meta.namespace is not None else ""
-        prevalence = rules_prevalence.get(rule.meta.name, "unknown")
-        if prevalence == "rare" or prevalence == "common":
-            prevalence = rutils.bold(prevalence)
+        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
 
         if "rare" in prevalence:
             rare["capability"] += capability + "\n"

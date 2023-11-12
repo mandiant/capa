@@ -6,10 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import io
-import gzip
-import json
-from typing import Dict, Union, Iterator
-from pathlib import Path
+from typing import Union, Iterator
 
 import termcolor
 
@@ -56,18 +53,6 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
             continue
 
         yield rule
-
-
-def load_rules_prevalence() -> Dict[str, str]:
-    CD = Path(__file__).resolve().parent.parent.parent
-    file = CD / "assets/rules_prevalence_data/rules_prevalence.json.gz"
-    if not file.exists():
-        raise FileNotFoundError(f"File '{file}' not found.")
-    try:
-        with gzip.open(file, "rb") as gzfile:
-            return json.loads(gzfile.read().decode("utf-8"))
-    except Exception as e:
-        raise RuntimeError(f"An error occurred while loading '{file}': {e}")
 
 
 class StringIO(io.StringIO):

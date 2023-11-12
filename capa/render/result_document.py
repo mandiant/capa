@@ -5,6 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import gzip
+import json
 import datetime
 import collections
 from typing import Dict, List, Tuple, Union, Literal, Optional
@@ -21,6 +23,13 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
+
+try:
+    from functools import lru_cache
+except ImportError:
+    # need to type ignore this due to mypy bug here (duplicate name):
+    # https://github.com/python/mypy/issues/1153
+    from backports.functools_lru_cache import lru_cache  # type: ignore
 
 
 class FrozenModel(BaseModel):
@@ -501,9 +510,23 @@ class MaecMetadata(FrozenModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
+@lru_cache(maxsize=None)
+def load_rules_prevalence() -> Dict[str, str]:
+    CD = Path(__file__).resolve().parent.parent.parent
+    file = CD / "assets/rules_prevalence_data/rules_prevalence.json.gz"
+    if not file.exists():
+        raise FileNotFoundError(f"File '{file}' not found.")
+    try:
+        with gzip.open(file, "rb") as gzfile:
+            return json.loads(gzfile.read().decode("utf-8"))
+    except Exception as e:
+        raise RuntimeError(f"An error occurred while loading '{file}': {e}")
+
+
 class RuleMetadata(FrozenModel):
     name: str
     namespace: Optional[str] = None
+    prevalence: str
     authors: Tuple[str, ...]
     scope: capa.rules.Scope
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
@@ -521,6 +544,7 @@ class RuleMetadata(FrozenModel):
         return cls(
             name=rule.meta.get("name"),
             namespace=rule.meta.get("namespace"),
+            prevalence=load_rules_prevalence().get(rule.meta.get("name"), "unknown"),
             authors=rule.meta.get("authors"),
             scope=capa.rules.Scope(rule.meta.get("scope")),
             attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
