@@ -175,6 +175,7 @@ def exceptUnsupportedError(func):
         logger.error("-" * 80)
         logger.error(f"{error_messages[0]}")
         logger.error(" ")
+<<<<<<< HEAD
 
         for i in error_messages[1:]:
             logger.error(i)
@@ -185,6 +186,13 @@ def exceptUnsupportedError(func):
         return error_return_value
 
 =======
+=======
+        
+        for i in e_messages[1:]:
+            logger.error(i)
+        
+        logger.error("-" * 80)
+>>>>>>> parent of a9ead120 (Update helpers.py)
                                
 >>>>>>> parent of a9ead120 (Update helpers.py)
     if type(func(*args, **kwargs)) = ValueError:
