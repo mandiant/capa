@@ -552,7 +552,7 @@ def import_binja():
         )
 
 
-def handle_binja_backend(path: Path, disable_progress: bool) -> FeatureExtractor:
+def handle_binja_backend(path: Path, disable_progress: bool) -> BinjaFeatureExtractor:
     import capa.features.extractors.binja.extractor
 
     import_binja()
@@ -565,8 +565,7 @@ def handle_binja_backend(path: Path, disable_progress: bool) -> FeatureExtractor
     return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
 
-def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], should_save_workspace: bool, \
-                       os_: str, disable_progress: bool) -> FeatureExtractor:
+def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], os_: str, disable_progress: bool) -> VivisectFeatureExtractor:
     import capa.features.extractors.viv.extractor
 
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -586,14 +585,18 @@ def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], should_sa
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 @catch_log_return_errors
 =======
 def handle_pefile_backend(path: Path) -> FeatureExtractor:
+=======
+def handle_pefile_backend(path: Path) -> PefileFeatureExtractor:
+>>>>>>> parent of 222cd6c4 (Update main.py)
     import capa.features.extractors.pefile
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 
-def handle_dotnet_format(path: Path) -> FeatureExtractor:
+def handle_dotnet_format(format_: str) -> DnfileFeatureExtractor:
     import capa.features.extractors.dnfile.extractor
     return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
