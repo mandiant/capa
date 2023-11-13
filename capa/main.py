@@ -589,6 +589,7 @@ def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], should_sa
     return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
 
 
+@catch_log_return_errors
 def get_extractor(
     path: Path,
     format_: str,
@@ -1281,18 +1282,15 @@ def main(argv: Optional[List[str]] = None):
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
             
-            # Perform error checking
-            # Return if unsupported hardware or software
-            extractor = exceptUnsupportedError(
-                 get_extractor(
-                    args.sample,
-                    format_,
-                    args.os,
-                    args.backend,
-                    sig_paths,
-                    should_save_workspace,
-                    disable_progress=args.quiet or args.debug,
-                )
+            # Error checking and logging is performed in the get_extractor call
+            extractor = get_extractor(
+                args.sample,
+                format_,
+                args.os,
+                args.backend,
+                sig_paths,
+                should_save_workspace,
+                disable_progress=args.quiet or args.debug,
             )
 
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
