@@ -127,9 +127,19 @@ def redirecting_print_to_tqdm(disable_progress):
         inspect.builtins.print = old_print  # type: ignore
 
 
+def log_unsupported_format_error():
+    logger.error("-" * 80)
+    logger.error(" Input file does not appear to be a PE or ELF file.")
+    logger.error(" ")
+    logger.error(
+        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
+    )
+    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+    logger.error("-" * 80)
+
+
 def catch_log_return_errors(func):
     error_list, return_values, message_list = \
-    
                             [(UnsupportedFormatError, E_INVALID_FILE_TYPE, 
                             (" Input file does not appear to be a PE or ELF file.",
                             " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64).",
