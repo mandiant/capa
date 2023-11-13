@@ -518,6 +518,9 @@ def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 def check_supported_format(path, os_):
     if not is_supported_format(path):
         raise UnsupportedFormatError()
@@ -592,12 +595,17 @@ def handle_viv_backend(path, format_, sigpaths, os_):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 @catch_log_return_errors
 =======
 def handle_pefile_backend(path: Path) -> FeatureExtractor:
 =======
 def handle_pefile_backend(path: Path) -> PefileFeatureExtractor:
 >>>>>>> parent of 222cd6c4 (Update main.py)
+=======
+
+def handle_pefile_backend(path):
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 =======
 
 def handle_pefile_backend(path):
@@ -612,12 +620,16 @@ def handle_dotnet_format(format):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> parent of 0aab7206 (Update main.py)
 =======
 
 >>>>>>> parent of d46fa26c (Incremental PR improvements)
 =======
 >>>>>>> parent of d061e0c5 (Update main.py)
+=======
+
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 def get_extractor(
     path: Path,
     format_: str,
@@ -644,6 +656,7 @@ def get_extractor(
             raise UnsupportedOSError()
 
     if format_ == FORMAT_DOTNET:
+<<<<<<< HEAD
         import capa.features.extractors.dnfile.extractor
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
@@ -675,6 +688,12 @@ def get_extractor(
                 raise RuntimeError(f"Binary Ninja cannot open file {path}")
 
         return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
+=======
+        return handle_dotnet_format(format)
+
+    elif backend == BACKEND_BINJA:
+        return handle_binja_backend(path)
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 
     elif backend == BACKEND_PEFILE:
         import capa.features.extractors.pefile
@@ -682,6 +701,7 @@ def get_extractor(
         return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
     elif backend == BACKEND_VIV:
+<<<<<<< HEAD
         import capa.features.extractors.viv.extractor
 
         with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -698,9 +718,13 @@ def get_extractor(
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, os_)
+=======
+        return handle_viv_backend(path, format, sigpaths, os_)
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 
     else:
         raise ValueError("unexpected backend: " + backend)
+
 
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
