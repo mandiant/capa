@@ -1281,6 +1281,7 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
+<<<<<<< HEAD
             
             # Error checking and logging is performed in the get_extractor call
             extractor = get_extractor(
@@ -1292,6 +1293,27 @@ def main(argv: Optional[List[str]] = None):
                 should_save_workspace,
                 disable_progress=args.quiet or args.debug,
             )
+=======
+            try:
+                extractor = get_extractor(
+                    args.sample,
+                    format_,
+                    args.os,
+                    args.backend,
+                    sig_paths,
+                    should_save_workspace,
+                    disable_progress=args.quiet or args.debug,
+                )
+            except UnsupportedFormatError:
+                log_unsupported_format_error()
+                return E_INVALID_FILE_TYPE
+            except UnsupportedArchError:
+                log_unsupported_arch_error()
+                return E_INVALID_FILE_ARCH
+            except UnsupportedOSError:
+                log_unsupported_os_error()
+                return E_INVALID_FILE_OS
+>>>>>>> parent of bc616d07 (Update main.py)
 
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
