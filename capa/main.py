@@ -517,7 +517,7 @@ def get_workspace(path: Path, format_: str, sigpaths: List[Path]):
     return vw
 
 
-def check_supported_format(path: Path, os_: str):
+def check_supported_format(path, os_):
     if not is_supported_format(path):
         raise UnsupportedFormatError()
 
@@ -528,12 +528,14 @@ def check_supported_format(path: Path, os_: str):
         raise UnsupportedOSError()
 
 
+
 def add_binja_to_path():
     from capa.features.extractors.binja.find_binja_api import find_binja_path
     
     bn_api = find_binja_path()
     if bn_api.exists():
         sys.path.append(str(bn_api))
+
 
 
 def import_binja():
@@ -552,7 +554,8 @@ def import_binja():
         )
 
 
-def handle_binja_backend(path: Path, disable_progress: bool) -> BinjaFeatureExtractor:
+
+def handle_binja_backend(path):
     import capa.features.extractors.binja.extractor
 
     import_binja()
@@ -565,7 +568,8 @@ def handle_binja_backend(path: Path, disable_progress: bool) -> BinjaFeatureExtr
     return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
 
-def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], os_: str, disable_progress: bool) -> VivisectFeatureExtractor:
+
+def handle_viv_backend(path, format_, sigpaths, os_):
     import capa.features.extractors.viv.extractor
 
     with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
@@ -586,22 +590,31 @@ def handle_viv_backend(path: Path, format_: str, sigpaths: List[Path], os_: str,
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 @catch_log_return_errors
 =======
 def handle_pefile_backend(path: Path) -> FeatureExtractor:
 =======
 def handle_pefile_backend(path: Path) -> PefileFeatureExtractor:
 >>>>>>> parent of 222cd6c4 (Update main.py)
+=======
+
+def handle_pefile_backend(path):
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
     import capa.features.extractors.pefile
     return capa.features.extractors.pefile.PefileFeatureExtractor(path)
 
 
-def handle_dotnet_format(format_: str) -> DnfileFeatureExtractor:
+def handle_dotnet_format(format):
     import capa.features.extractors.dnfile.extractor
     return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
 
+<<<<<<< HEAD
 >>>>>>> parent of 0aab7206 (Update main.py)
+=======
+
+>>>>>>> parent of d46fa26c (Incremental PR improvements)
 def get_extractor(
     path: Path,
     format_: str,
@@ -621,20 +634,21 @@ def get_extractor(
         check_supported_format(path, os_)
 
     if format_ == FORMAT_DOTNET:
-        return handle_dotnet_format(format_)
+        return handle_dotnet_format(format)
 
     elif backend == BACKEND_BINJA:
-        return handle_binja_backend(path, disable_progress)
+        return handle_binja_backend(path)
 
     elif backend == BACKEND_PEFILE:
         return handle_pefile_backend(path)
 
     elif backend == BACKEND_VIV:
-        return handle_viv_backend(path, format, sigpaths, os_, disable_progress)
+        return handle_viv_backend(path, format, sigpaths, os_)
 
     else:
         raise ValueError("unexpected backend: " + backend)
      
+
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
