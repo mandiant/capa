@@ -627,7 +627,7 @@ def get_extractor(
         return handle_pefile_backend(path)
 
     elif backend == BACKEND_VIV:
-        return handle_viv_backend(path, format, sigpaths, should_save_workspace, os_, disable_progress)
+        return handle_viv_backend(path, format, sigpaths, os_, disable_progress)
 
     else:
         raise ValueError("unexpected backend: " + backend)
