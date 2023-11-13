@@ -127,6 +127,7 @@ def redirecting_print_to_tqdm(disable_progress):
         inspect.builtins.print = old_print  # type: ignore
 
 
+<<<<<<< HEAD
 def catch_log_return_errors(func):
     error_list, return_values, message_list = [(UnsupportedFormatError, E_INVALID_FILE_TYPE, 
                                            (" Input file does not appear to be a PE or ELF file.",
@@ -147,6 +148,29 @@ def catch_log_return_errors(func):
         error_messages = message_list[error_list.index(exception)]
         error_return_value = return_values[error_list.index(exception)]
 
+=======
+def exceptUnsupportedError(func):
+    e_list = [UnsupportedFormatError, UnsupportedArchError, UnsupportedOSError]
+  
+    messsage_list = [ # UnsupportedFormatError
+                (" Input file does not appear to be a PE or ELF file.",
+                " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64).",
+                " If you don't know the input file type, you can try using the `file` utility to guess it."),
+                
+                # UnsupportedArchError
+                 (" Input file does not appear to target a supported architecture.",
+                 " capa currently only supports analyzing x86 (32- and 64-bit)."),
+                
+                # UnsupportedOSError
+                 (" Input file does not appear to target a supported OS.",
+                 " capa currently only supports analyzing executables for some operating systems (including Windows and Linux).")
+            ]
+    
+    def logging_wrapper(exception):
+        assert(exception in e_list)
+        e_messages = message_list[e_list.index(exception)]
+        
+>>>>>>> parent of a9ead120 (Update helpers.py)
         logger.error("-" * 80)
         logger.error(f"{error_messages[0]}")
         logger.error(" ")
@@ -155,9 +179,13 @@ def catch_log_return_errors(func):
             logger.error(i)
 
         logger.error("-" * 80)
+<<<<<<< HEAD
 
         return error_return_value
 
+=======
+                               
+>>>>>>> parent of a9ead120 (Update helpers.py)
     if type(func(*args, **kwargs)) = ValueError:
         return logging_wrapper(func(*args, **kwargs))
     
