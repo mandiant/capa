@@ -129,6 +129,7 @@ def redirecting_print_to_tqdm(disable_progress):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 def catch_log_return_errors(func):
     error_list, return_values, message_list = [(UnsupportedFormatError, E_INVALID_FILE_TYPE, 
                                            (" Input file does not appear to be a PE or ELF file.",
@@ -201,6 +202,8 @@ def exceptUnsupportedError(func):
     else:
         return func(*args, **kwargs)
 =======
+=======
+>>>>>>> parent of 50b4b067 (Updated handling for logging Unsupported Format, Arch, and OS)
 def log_unsupported_format_error():
     logger.error("-" * 80)
     logger.error(" Input file does not appear to be a PE or ELF file.")
@@ -228,6 +231,9 @@ def log_unsupported_arch_error():
     logger.error(" ")
     logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
     logger.error("-" * 80)
+<<<<<<< HEAD
+>>>>>>> parent of 50b4b067 (Updated handling for logging Unsupported Format, Arch, and OS)
+=======
 >>>>>>> parent of 50b4b067 (Updated handling for logging Unsupported Format, Arch, and OS)
 
 
