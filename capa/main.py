@@ -1283,6 +1283,7 @@ def main(argv: Optional[List[str]] = None):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             
             # Error checking and logging is performed in the get_extractor call
             extractor = get_extractor(
@@ -1295,6 +1296,8 @@ def main(argv: Optional[List[str]] = None):
                 disable_progress=args.quiet or args.debug,
             )
 =======
+=======
+>>>>>>> parent of bc616d07 (Update main.py)
 =======
 >>>>>>> parent of bc616d07 (Update main.py)
             try:
@@ -1317,6 +1320,9 @@ def main(argv: Optional[List[str]] = None):
                 log_unsupported_os_error()
                 return E_INVALID_FILE_OS
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of bc616d07 (Update main.py)
+=======
 >>>>>>> parent of bc616d07 (Update main.py)
 =======
 >>>>>>> parent of bc616d07 (Update main.py)
