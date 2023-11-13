@@ -57,9 +57,8 @@ from capa.helpers import (
     get_format,
     get_file_taste,
     get_auto_format,
-    log_unsupported_os_error,
     redirecting_print_to_tqdm,
-    log_unsupported_arch_error,
+    catch_log_return_errors,
     log_unsupported_format_error,
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
