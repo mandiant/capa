@@ -416,6 +416,14 @@ class DynamicFeatureExtractor:
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_process_name(self, ph: ProcessHandle) -> str:
+        """
+        Returns the human-readable name for the given process,
+        such as the filename.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         """
         Enumerate threads in the given process.
@@ -445,6 +453,16 @@ class DynamicFeatureExtractor:
         Yields all features of a call. These include:
         - api name
         - bytes/strings/numbers extracted from arguments
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
+        """
+        Returns the human-readable name for the given call,
+        such as as rendered API log entry, like:
+
+            Foo(1, "two", b"\x00\x11") -> -1
         """
         raise NotImplementedError()
 

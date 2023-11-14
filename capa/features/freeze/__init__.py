@@ -289,6 +289,7 @@ class FunctionFeatures(BaseModel):
 
 class CallFeatures(BaseModel):
     address: Address
+    name: str
     features: Tuple[CallFeature, ...]
 
 
@@ -300,6 +301,7 @@ class ThreadFeatures(BaseModel):
 
 class ProcessFeatures(BaseModel):
     address: Address
+    name: str
     features: Tuple[ProcessFeature, ...]
     threads: Tuple[ThreadFeatures, ...]
 
@@ -463,6 +465,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
     process_features: List[ProcessFeatures] = []
     for p in extractor.get_processes():
         paddr = Address.from_capa(p.address)
+        pname = extractor.get_process_name(p)
         pfeatures = [
             ProcessFeature(
                 process=paddr,
@@ -488,6 +491,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
             calls = []
             for call in extractor.get_calls(p, t):
                 caddr = Address.from_capa(call.address)
+                cname = extractor.get_call_name(p, t, call)
                 cfeatures = [
                     CallFeature(
                         call=caddr,
@@ -500,6 +504,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                 calls.append(
                     CallFeatures(
                         address=caddr,
+                        name=cname,
                         features=tuple(cfeatures),
                     )
                 )
@@ -515,6 +520,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
         process_features.append(
             ProcessFeatures(
                 address=paddr,
+                name=pname,
                 features=tuple(pfeatures),
                 threads=tuple(threads),
             )
@@ -595,13 +601,15 @@ def loads_dynamic(s: str) -> DynamicFeatureExtractor:
         file_features=[(f.address.to_capa(), f.feature.to_capa()) for f in freeze.features.file],
         processes={
             p.address.to_capa(): null.ProcessFeatures(
+                name=p.name,
                 features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in p.features],
                 threads={
                     t.address.to_capa(): null.ThreadFeatures(
                         features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in t.features],
                         calls={
                             c.address.to_capa(): null.CallFeatures(
-                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features]
+                                name=c.name,
+                                features=[(fe.address.to_capa(), fe.feature.to_capa()) for fe in c.features],
                             )
                             for c in t.calls
                         },

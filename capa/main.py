@@ -18,7 +18,7 @@ import argparse
 import datetime
 import textwrap
 import contextlib
-from typing import Any, Dict, List, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -592,7 +592,7 @@ def collect_metadata(
     )
 
 
-def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabilities) -> rdoc.DynamicLayout:
+def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabilities: MatchResults) -> rdoc.DynamicLayout:
     """
     compute a metadata structure that links threads
     to the processes in which they're found.
@@ -602,33 +602,72 @@ def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabiliti
     a large amount of un-referenced data.
     """
     assert isinstance(extractor, DynamicFeatureExtractor)
-    processes_by_thread: Dict[Address, Address] = {}
-    threads_by_processes: Dict[Address, List[Address]] = {}
-    for p in extractor.get_processes():
-        threads_by_processes[p.address] = []
-        for t in extractor.get_threads(p):
-            processes_by_thread[t.address] = p.address
-            threads_by_processes[p.address].append(t.address)
 
-    matched_threads = set()
-    for rule_name, matches in capabilities.items():
-        rule = rules[rule_name]
-        if capa.rules.Scope.THREAD in rule.scopes:
-            for addr, _ in matches:
-                assert addr in processes_by_thread
-                matched_threads.add(addr)
+    matched_calls: Set[Address] = set()
+
+    def result_rec(result: capa.features.common.Result):
+        for loc in result.locations:
+            if isinstance(loc, capa.features.address.DynamicCallAddress):
+                matched_calls.add(loc)
+        for child in result.children:
+            result_rec(child)
+
+    for matches in capabilities.values():
+        for _, result in matches:
+            result_rec(result)
+
+    names_by_process: Dict[Address, str] = {}
+    names_by_call: Dict[Address, str] = {}
+
+    matched_processes: Set[Address] = set()
+    matched_threads: Set[Address] = set()
+
+    threads_by_process: Dict[Address, List[Address]] = {}
+    calls_by_thread: Dict[Address, List[Address]] = {}
+
+    for p in extractor.get_processes():
+        threads_by_process[p.address] = []
+
+        for t in extractor.get_threads(p):
+            calls_by_thread[t.address] = []
+
+            for c in extractor.get_calls(p, t):
+                if c.address in matched_calls:
+                    names_by_call[c.address] = extractor.get_call_name(p, t, c)
+                    calls_by_thread[t.address].append(c.address)
+
+            if calls_by_thread[t.address]:
+                matched_threads.add(t.address)
+                threads_by_process[p.address].append(t.address)
+
+        if threads_by_process[p.address]:
+            matched_processes.add(p.address)
+            names_by_process[p.address] = extractor.get_process_name(p)
 
     layout = rdoc.DynamicLayout(
         processes=tuple(
             rdoc.ProcessLayout(
                 address=frz.Address.from_capa(p),
+                name=names_by_process[p],
                 matched_threads=tuple(
-                    rdoc.ThreadLayout(address=frz.Address.from_capa(t)) for t in threads if t in matched_threads
+                    rdoc.ThreadLayout(
+                        address=frz.Address.from_capa(t),
+                        matched_calls=tuple(
+                            rdoc.CallLayout(
+                                address=frz.Address.from_capa(c),
+                                name=names_by_call[c],
+                            )
+                            for c in calls_by_thread[t]
+                            if c in matched_calls
+                        ),
+                    )
+                    for t in threads
+                    if t in matched_threads
                 )  # this object is open to extension in the future,
                 # such as with the function name, etc.
             )
-            for p, threads in threads_by_processes.items()
-            if len([t for t in threads if t in matched_threads]) > 0
+            for p, threads in threads_by_process.items()
+            if p in matched_processes
         )
     )
 

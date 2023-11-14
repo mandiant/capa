@@ -49,12 +49,19 @@ class FunctionLayout(Model):
     matched_basic_blocks: Tuple[BasicBlockLayout, ...]
 
 
+class CallLayout(Model):
+    address: frz.Address
+    name: str
+
+
 class ThreadLayout(Model):
     address: frz.Address
+    matched_calls: Tuple[CallLayout, ...]
 
 
 class ProcessLayout(Model):
     address: frz.Address
+    name: str
     matched_threads: Tuple[ThreadLayout, ...]
 
 

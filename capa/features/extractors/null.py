@@ -97,6 +97,7 @@ class NullStaticFeatureExtractor(StaticFeatureExtractor):
 
 @dataclass
 class CallFeatures:
+    name: str
     features: List[Tuple[Address, Feature]]
 
 
@@ -110,6 +111,7 @@ class ThreadFeatures:
 class ProcessFeatures:
     features: List[Tuple[Address, Feature]]
     threads: Dict[Address, ThreadFeatures]
+    name: str
 
 
 @dataclass
@@ -140,6 +142,9 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
         for addr, feature in self.processes[ph.address].features:
             yield feature, addr
 
+    def get_process_name(self, ph) -> str:
+        return self.processes[ph.address].name
+
     def get_threads(self, ph):
         for address in sorted(self.processes[ph.address].threads.keys()):
             assert isinstance(address, ThreadAddress)
@@ -157,6 +162,9 @@ class NullDynamicFeatureExtractor(DynamicFeatureExtractor):
     def extract_call_features(self, ph, th, ch):
         for address, feature in self.processes[ph.address].threads[th.address].calls[ch.address].features:
             yield feature, address
+
+    def get_call_name(self, ph, th, ch) -> str:
+        return self.processes[ph.address].threads[th.address].calls[ch.address].name
 
 
 NullFeatureExtractor: TypeAlias = Union[NullStaticFeatureExtractor, NullDynamicFeatureExtractor]

@@ -158,6 +158,35 @@ def test_render_vverbose_feature(feature, expected):
         captures={},
     )
 
-    capa.render.vverbose.render_feature(ostream, matches, feature, indent=0)
+    layout = capa.render.result_document.StaticLayout(functions=())
+
+    src = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                authors:
+                    - user@domain.com
+                scopes:
+                    static: function
+                    dynamic: process
+                examples:
+                    - foo1234
+                    - bar5678
+            features:
+                - and:
+                    - number: 1
+                    - number: 2
+        """
+    )
+    rule = capa.rules.Rule.from_yaml(src)
+
+    rm = capa.render.result_document.RuleMatches(
+        meta=capa.render.result_document.RuleMetadata.from_capa(rule),
+        source=src,
+        matches=(),
+    )
+
+    capa.render.vverbose.render_feature(ostream, layout, rm, matches, feature, indent=0)
 
     assert ostream.getvalue().strip() == expected

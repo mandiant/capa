@@ -224,7 +224,20 @@ def dynamic_analysis_to_pb2(analysis: rd.DynamicAnalysis) -> capa_pb2.DynamicAna
             processes=[
                 capa_pb2.ProcessLayout(
                     address=addr_to_pb2(p.address),
-                    matched_threads=[capa_pb2.ThreadLayout(address=addr_to_pb2(t.address)) for t in p.matched_threads],
+                    name=p.name,
+                    matched_threads=[
+                        capa_pb2.ThreadLayout(
+                            address=addr_to_pb2(t.address),
+                            matched_calls=[
+                                capa_pb2.CallLayout(
+                                    address=addr_to_pb2(c.address),
+                                    name=c.name,
+                                )
+                                for c in t.matched_calls
+                            ],
+                        )
+                        for t in p.matched_threads
+                    ],
                 )
                 for p in analysis.layout.processes
             ]
@@ -705,8 +718,20 @@ def dynamic_analysis_from_pb2(analysis: capa_pb2.DynamicAnalysis) -> rd.DynamicA
                 [
                     rd.ProcessLayout(
                         address=addr_from_pb2(p.address),
+                        name=p.name,
                         matched_threads=tuple(
-                            [rd.ThreadLayout(address=addr_from_pb2(t.address)) for t in p.matched_threads]
+                            [
+                                rd.ThreadLayout(
+                                    address=addr_from_pb2(t.address),
+                                    matched_calls=tuple(
+                                        [
+                                            rd.CallLayout(address=addr_from_pb2(c.address), name=c.name)
+                                            for c in t.matched_calls
+                                        ]
+                                    ),
+                                )
+                                for t in p.matched_threads
+                            ]
                         ),
                     )
                     for p in analysis.layout.processes

@@ -22,7 +22,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import enum
 from typing import cast
 
 import tabulate
@@ -60,22 +59,84 @@ def format_address(address: frz.Address) -> str:
         ppid, pid = address.value
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
-        return f"process ppid: {ppid}, process pid: {pid}"
+        return f"process{{pid:{pid}}}"
     elif address.type == frz.AddressType.THREAD:
         assert isinstance(address.value, tuple)
         ppid, pid, tid = address.value
         assert isinstance(ppid, int)
         assert isinstance(pid, int)
         assert isinstance(tid, int)
-        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}"
+        return f"process{{pid:{pid},tid:{tid}}}"
     elif address.type == frz.AddressType.CALL:
         assert isinstance(address.value, tuple)
         ppid, pid, tid, id_ = address.value
-        return f"process ppid: {ppid}, process pid: {pid}, thread id: {tid}, call: {id_}"
+        return f"process{{pid:{pid},tid:{tid},call:{id_}}}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
         raise ValueError("unexpected address type")
+
+
+def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    for p in layout.processes:
+        if p.address == addr:
+            return p.name
+
+    raise ValueError("name not found for process", addr)
+
+
+def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    thread = frz.Address.from_capa(call.thread)
+    process = frz.Address.from_capa(call.thread.process)
+
+    # danger: O(n**3)
+    for p in layout.processes:
+        if p.address == process:
+            for t in p.matched_threads:
+                if t.address == thread:
+                    for c in t.matched_calls:
+                        if c.address == addr:
+                            return c.name
+    raise ValueError("name not found for call", addr)
+
+
+def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    process = addr.to_capa()
+    assert isinstance(process, capa.features.address.ProcessAddress)
+    name = _get_process_name(layout, addr)
+    return f"{name}{{pid:{process.pid}}}"
+
+
+def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    thread = addr.to_capa()
+    assert isinstance(thread, capa.features.address.ThreadAddress)
+    name = _get_process_name(layout, frz.Address.from_capa(thread.process))
+    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
+
+
+def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
+    cname = _get_call_name(layout, addr)
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return (
+        f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
+    )
 
 
 def render_static_meta(ostream, meta: rd.StaticMetadata):
@@ -109,7 +170,7 @@ def render_static_meta(ostream, meta: rd.StaticMetadata):
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
         ("arch", meta.analysis.arch),
-        ("analysis", meta.flavor),
+        ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("base address", format_address(meta.analysis.base_address)),
         ("rules", "\n".join(meta.analysis.rules)),
@@ -153,7 +214,7 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
         ("os", meta.analysis.os),
         ("format", meta.analysis.format),
         ("arch", meta.analysis.arch),
-        ("analysis", meta.flavor),
+        ("analysis", meta.flavor.value),
         ("extractor", meta.analysis.extractor),
         ("rules", "\n".join(meta.analysis.rules)),
         ("process count", len(meta.analysis.feature_counts.processes)),
@@ -167,9 +228,9 @@ def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
 
 
 def render_meta(osstream, doc: rd.ResultDocument):
-    if doc.meta.flavor is rd.Flavor.STATIC:
+    if doc.meta.flavor == rd.Flavor.STATIC:
         render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
-    elif doc.meta.flavor is rd.Flavor.DYNAMIC:
+    elif doc.meta.flavor == rd.Flavor.DYNAMIC:
         render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
     else:
         raise ValueError("invalid meta analysis")
@@ -198,22 +259,55 @@ def render_rules(ostream, doc: rd.ResultDocument):
         had_match = True
 
         rows = []
-        for key in ("namespace", "description", "scopes"):
-            v = getattr(rule.meta, key)
-            if not v:
-                continue
 
-            if isinstance(v, list) and len(v) == 1:
-                v = v[0]
+        ns = rule.meta.namespace
+        if ns:
+            rows.append(("namespace", ns))
 
-            if isinstance(v, enum.Enum):
-                v = v.value
+        desc = rule.meta.description
+        if desc:
+            rows.append(("description", desc))
 
-            rows.append((key, v))
+        if doc.meta.flavor == rd.Flavor.STATIC:
+            scope = rule.meta.scopes.static
+        elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+            scope = rule.meta.scopes.dynamic
+        else:
+            raise ValueError("invalid meta analysis")
+        if scope:
+            rows.append(("scope", scope.value))
 
         if capa.rules.Scope.FILE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
-            rows.append(("matches", "\n".join(map(format_address, locations))))
+            lines = []
+
+            if doc.meta.flavor == rd.Flavor.STATIC:
+                lines = [format_address(loc) for loc in locations]
+            elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+                assert rule.meta.scopes.dynamic is not None
+                assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
+
+                if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
+                    lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                    # because we're only in verbose mode, we won't show the full call details (name, args, retval)
+                    # we'll only show the details of the thread in which the calls are found.
+                    # so select the thread locations and render those.
+                    thread_locations = set()
+                    for loc in locations:
+                        cloc = loc.to_capa()
+                        assert isinstance(cloc, capa.features.address.DynamicCallAddress)
+                        thread_locations.add(frz.Address.from_capa(cloc.thread))
+
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in thread_locations]
+                else:
+                    capa.helpers.assert_never(rule.meta.scopes.dynamic)
+            else:
+                capa.helpers.assert_never(doc.meta.flavor)
+
+            rows.append(("matches", "\n".join(lines)))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")
