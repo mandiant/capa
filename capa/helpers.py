@@ -126,33 +126,28 @@ def redirecting_print_to_tqdm(disable_progress):
         inspect.builtins.print = old_print  # type: ignore
 
 
-def log_unsupported_format_error():
-    logger.error("-" * 80)
-    logger.error(" Input file does not appear to be a PE or ELF file.")
-    logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
-    )
-    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
-    logger.error("-" * 80)
+def raise_log_unsupported_error(e):
+    if e = UnsupportedFormatError:
+        logger.error("-" * 80)
+        logger.error(" Input file does not appear to be a PE or ELF file.")
+        logger.error(" ")
+        logger.error(" capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64).")
+        logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+        return E_INVALID_FILE_TYPE
+        
+    if e = UnsupportedArchError:
+        logger.error("-" * 80)
+        logger.error(" Input file does not appear to target a supported architecture.")
+        logger.error(" ")
+        logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
+        return E_INVALID_FILE_ARCH
 
-
-def log_unsupported_os_error():
-    logger.error("-" * 80)
-    logger.error(" Input file does not appear to target a supported OS.")
-    logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
-    )
-    logger.error("-" * 80)
-
-
-def log_unsupported_arch_error():
-    logger.error("-" * 80)
-    logger.error(" Input file does not appear to target a supported architecture.")
-    logger.error(" ")
-    logger.error(" capa currently only supports analyzing x86 (32- and 64-bit).")
-    logger.error("-" * 80)
+    if e = UnsupportedOSError:
+        logger.error("-" * 80)
+        logger.error(" Input file does not appear to target a supported OS.")
+        logger.error(" ")
+        logger.error(" capa currently only supports analyzing executables for some operating systems (including Windows and Linux).")
+        return E_INVALID_FILE_OS
 
 
 def log_unsupported_runtime_error():
