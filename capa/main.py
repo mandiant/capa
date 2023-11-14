@@ -57,10 +57,8 @@ from capa.helpers import (
     get_format,
     get_file_taste,
     get_auto_format,
-    log_unsupported_os_error,
     redirecting_print_to_tqdm,
-    log_unsupported_arch_error,
-    log_unsupported_format_error,
+    raise_log_unsupported_error,
 )
 from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
 from capa.features.common import (
@@ -600,6 +598,21 @@ def get_extractor(
 
     else:
         raise ValueError("unexpected backend: " + backend)
+
+
+def get_extractor_log_raise_errors(
+    path: Path,
+    format_: str,
+    os_: str,
+    backend: str,
+    sigpaths: List[Path],
+    should_save_workspace=False,
+    disable_progress=False,
+) -> FeatureExtractor:
+    try:
+        return get_extractor(path, format_, os_, backend, sigpaths, should_save_workspace, disable_progress)
+    except (UnsupportedFormatError, UnsupportedArchError, UnsupportedOSError) as e:
+        raise_log_unsupported_error(e)
 
 
 def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
@@ -1148,9 +1161,8 @@ def main(argv: Optional[List[str]] = None):
         except PEFormatError as e:
             logger.error("Input file '%s' is not a valid PE file: %s", args.sample, str(e))
             return E_CORRUPT_FILE
-        except UnsupportedFormatError:
-            log_unsupported_format_error()
-            return E_INVALID_FILE_TYPE
+        except UnsupportedFormatError as e:
+            raise_log_unsupported_error(e)
 
     try:
         if is_running_standalone() and args.is_default_rules:
@@ -1257,25 +1269,15 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-            try:
-                extractor = get_extractor(
-                    args.sample,
-                    format_,
-                    args.os,
-                    args.backend,
-                    sig_paths,
-                    should_save_workspace,
-                    disable_progress=args.quiet or args.debug,
-                )
-            except UnsupportedFormatError:
-                log_unsupported_format_error()
-                return E_INVALID_FILE_TYPE
-            except UnsupportedArchError:
-                log_unsupported_arch_error()
-                return E_INVALID_FILE_ARCH
-            except UnsupportedOSError:
-                log_unsupported_os_error()
-                return E_INVALID_FILE_OS
+            extractor = get_extractor_log_raise_errors(
+                args.sample,
+                format_,
+                args.os,
+                args.backend,
+                sig_paths,
+                should_save_workspace,
+                disable_progress=args.quiet or args.debug,
+            )
 
         meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
 
