@@ -15,6 +15,7 @@ from functools import lru_cache
 
 from pydantic import Field, BaseModel, ConfigDict
 
+import capa.main
 import capa.rules
 import capa.engine
 import capa.features.common
