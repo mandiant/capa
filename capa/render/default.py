@@ -73,9 +73,9 @@ def find_subrule_matches(doc: rd.ResultDocument):
 
 def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
-render capabilities sorted by:
-- prevalence rare -> unknown
-- namespace a -> z
+    render capabilities sorted by:
+      - prevalence (rare to unknown)
+      - namespace (alphabetical)
 
     example::
 
@@ -99,6 +99,9 @@ render capabilities sorted by:
 
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
+            # rules that are also matched by other rules should not get rendered by default.
+            # this cuts down on the amount of output while giving approx the same detail.
+            # see #224
             continue
 
         count = len(rule.matches)

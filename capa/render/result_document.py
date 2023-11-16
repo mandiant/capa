@@ -11,6 +11,7 @@ import datetime
 import collections
 from typing import Dict, List, Tuple, Union, Literal, Optional
 from pathlib import Path
+from functools import lru_cache
 
 from pydantic import Field, BaseModel, ConfigDict
 
@@ -23,13 +24,6 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
-
-try:
-    from functools import lru_cache
-except ImportError:
-    # need to type ignore this due to mypy bug here (duplicate name):
-    # https://github.com/python/mypy/issues/1153
-    from backports.functools_lru_cache import lru_cache  # type: ignore
 
 
 class FrozenModel(BaseModel):
@@ -512,21 +506,18 @@ class MaecMetadata(FrozenModel):
 
 @lru_cache(maxsize=None)
 def load_rules_prevalence() -> Dict[str, str]:
-    CD = Path(__file__).resolve().parent.parent.parent
+    CD = capa.main.get_default_root()
     file = CD / "assets" / "rules_prevalence_data" / "rules_prevalence.json.gz"
     if not file.exists():
-        raise FileNotFoundError(f"File '{file}' not found.")
-    try:
-        with gzip.open(file, "rb") as gzfile:
-            return json.loads(gzfile.read().decode("utf-8"))
-    except Exception as e:
-        raise RuntimeError(f"An error occurred while loading '{file}': {e}")
+        return {}
+    with gzip.open(file, "rb") as gzfile:
+        return json.loads(gzfile.read().decode("utf-8"))
 
 
 class RuleMetadata(FrozenModel):
     name: str
     namespace: Optional[str] = None
-    prevalence: str
+    prevalence: str = "unknown"
     authors: Tuple[str, ...]
     scope: capa.rules.Scope
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
