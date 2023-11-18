@@ -1087,7 +1087,21 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
+def last_resort_exception_handler(exctype: Exception, value: str, traceback: traceback) -> None:   
+    if SHOW_STACK_TRACE:
+        sys.__excepthook__(exctype, value, traceback)
+    else:
+        print(f"Unexpected exception raised: {exctype}. Please run capa in Python development mode "
+            "to see the stack trace (https://docs.python.org/3/library/devmode.html#devmode)."
+             "Please also report your issue on the capa GitHub page so we can improve the code!"
+             "(https://github.com/mandiant/capa/issues)")
+            
+
 def main(argv: Optional[List[str]] = None):
+    # we don't use argv in SHOW_STACK_TRACE because if argv = None, we could not check to see if e.g., "-d" is in argv
+    SHOW_STACK_TRACE = True if "-d" or "--debug" in sys.argv else False
+    sys.excepthook = last_resort_exception_handler
+    
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
