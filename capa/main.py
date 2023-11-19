@@ -21,6 +21,7 @@ import itertools
 import contextlib
 import collections
 from typing import Any, Dict, List, Tuple, Callable, Optional
+from types import TracebackType
 from pathlib import Path
 
 import halo
@@ -1087,21 +1088,27 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def last_resort_exception_handler(exctype: Exception, value: str, traceback: traceback) -> None:   
-    if SHOW_STACK_TRACE:
+def last_resort_exception_handler(args, exctype, value, traceback) -> None:   
+    """
+    for uncaught exceptions.
+    if debugging mode, prints traceback - else, prints helpful message.
+
+    args:
+      args (argparse.Namespace): parsed arguments potentially including "-d" or "--debug"
+      exctype (Exception): exception class
+      value (str): exception type
+      traceback (TracebackType): the Type of a traceback object
+    """
+    if "-d" or "--debug" in args:
         sys.__excepthook__(exctype, value, traceback)
     else:
         print(f"Unexpected exception raised: {exctype}. Please run capa in Python development mode "
-            "to see the stack trace (https://docs.python.org/3/library/devmode.html#devmode)."
-             "Please also report your issue on the capa GitHub page so we can improve the code!"
+            "to see the stack trace (https://docs.python.org/3/library/devmode.html#devmode). "
+             "Please also report your issue on the capa GitHub page so we can improve the code! "
              "(https://github.com/mandiant/capa/issues)")
             
 
 def main(argv: Optional[List[str]] = None):
-    # we don't use argv in SHOW_STACK_TRACE because if argv = None, we could not check to see if e.g., "-d" is in argv
-    SHOW_STACK_TRACE = True if "-d" or "--debug" in sys.argv else False
-    sys.excepthook = last_resort_exception_handler
-    
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
 
@@ -1146,6 +1153,8 @@ def main(argv: Optional[List[str]] = None):
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
+
+    sys.excepthook = last_resort_exception_handler(args, *exception_information)
 
     try:
         _ = get_file_taste(args.sample)
