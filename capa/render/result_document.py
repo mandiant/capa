@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import gzip
 import json
+import logging
 import datetime
 import collections
 from typing import Dict, List, Tuple, Union, Literal, Optional
@@ -507,9 +508,28 @@ class MaecMetadata(FrozenModel):
 
 @lru_cache(maxsize=None)
 def load_rules_prevalence() -> Dict[str, str]:
+    """
+    Load and return a dictionary containing prevalence information for rules defined in capa.
+
+    Returns:
+        Dict[str, str]: A dictionary where keys are rule names, and values are prevalence levels.
+
+    Example:
+        {
+            "capture screenshot": "rare",
+            "send data": "common",
+            "receive and write data from server to client": "common",
+            "resolve DNS": "common",
+            "reference HTTP User-Agent string": "rare"
+        }
+
+    Note:
+        Prevalence levels can be one of the following: "common", "rare"
+    """
     CD = capa.main.get_default_root()
     file = CD / "assets" / "rules_prevalence_data" / "rules_prevalence.json.gz"
     if not file.exists():
+        logging.getLogger("capa").warning("Rules prevalence db was not found. Prevalence data will not be available.")
         return {}
     with gzip.open(file, "rb") as gzfile:
         return json.loads(gzfile.read().decode("utf-8"))
