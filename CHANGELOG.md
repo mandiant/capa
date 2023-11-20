@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (19)
+### New Rules (20)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -32,6 +32,7 @@
 - host-interaction/process/inject/allocate-or-change-rwx-memory @mr-tz
 - lib/allocate-or-change-rw-memory 0x534a@mailbox.org @mr-tz
 - lib/change-memory-protection @mr-tz
+- anti-analysis/anti-av/patch-antimalware-scan-interface-function jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
