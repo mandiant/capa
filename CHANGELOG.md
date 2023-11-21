@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (20)
+### New Rules (22)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -33,6 +33,8 @@
 - lib/allocate-or-change-rw-memory 0x534a@mailbox.org @mr-tz
 - lib/change-memory-protection @mr-tz
 - anti-analysis/anti-av/patch-antimalware-scan-interface-function jakub.jozwiak@mandiant.com
+- executable/dotnet-singlefile/bundled-with-dotnet-single-file-deployment sara.rincon@mandiant.com
+- internal/limitation/file/internal-dotnet-single-file-deployment-limitation sara.rincon@mandiant.com
 -
 
 ### Bug Fixes
