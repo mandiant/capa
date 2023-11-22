@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (22)
+### New Rules (23)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -35,6 +35,7 @@
 - anti-analysis/anti-av/patch-antimalware-scan-interface-function jakub.jozwiak@mandiant.com
 - executable/dotnet-singlefile/bundled-with-dotnet-single-file-deployment sara.rincon@mandiant.com
 - internal/limitation/file/internal-dotnet-single-file-deployment-limitation sara.rincon@mandiant.com
+- data-manipulation/encoding/encode-data-using-add-xor-sub-operations jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
