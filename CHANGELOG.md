@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (23)
+### New Rules (30)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -36,6 +36,13 @@
 - executable/dotnet-singlefile/bundled-with-dotnet-single-file-deployment sara.rincon@mandiant.com
 - internal/limitation/file/internal-dotnet-single-file-deployment-limitation sara.rincon@mandiant.com
 - data-manipulation/encoding/encode-data-using-add-xor-sub-operations jakub.jozwiak@mandiant.com
+- nursery/access-camera-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/capture-microphone-audio-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/capture-screenshot-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/check-for-incoming-call-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/check-for-outgoing-call-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/compiled-with-xamarin michael.hunhoff@mandiant.com
+- nursery/get-os-version-in-dotnet-on-android michael.hunhoff@mandiant.com
 -
 
 ### Bug Fixes
