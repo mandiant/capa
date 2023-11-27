@@ -1101,6 +1101,7 @@ def main(argv: Optional[List[str]] = None):
         else:
             log_unsupported_format_error()
 
+    found_file_limitation = False
     for file_extractor in file_extractors:
         if isinstance(file_extractor, DynamicFeatureExtractor):
             # Dynamic feature extractors can handle packed samples
@@ -1117,7 +1118,8 @@ def main(argv: Optional[List[str]] = None):
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        if has_file_limitation(rules, pure_file_capabilities):
+        found_file_limitation = has_file_limitation(rules, pure_file_capabilities)
+        if found_file_limitation:
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):

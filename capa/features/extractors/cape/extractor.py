@@ -41,7 +41,9 @@ class CapeExtractor(DynamicFeatureExtractor):
             )
         )
         self.report: CapeReport = report
-        self.global_features = capa.features.extractors.cape.global_.extract_features(self.report)
+
+        # pre-compute these because we'll yield them at *every* scope.
+        self.global_features = list(capa.features.extractors.cape.global_.extract_features(self.report))
 
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, _NoAddress, None]:
         # value according to the PE header, the actual trace may use a different imagebase
