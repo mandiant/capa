@@ -52,7 +52,6 @@ import capa.features.extractors.cape.extractor
 from capa.rules import Rule, RuleSet
 from capa.engine import MatchResults
 from capa.helpers import (
-    get_format,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -559,10 +558,14 @@ def collect_metadata(
     sample_hashes: SampleHashes = extractor.get_sample_hashes()
     md5, sha1, sha256 = sample_hashes.md5, sample_hashes.sha1, sample_hashes.sha256
 
-    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
-    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
-    arch = get_arch(sample_path)
-    os_ = get_os(sample_path) if os_ == OS_AUTO else os_
+    global_feats = list(extractor.extract_global_features())
+    extractor_format = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Format)]
+    extractor_arch = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Arch)]
+    extractor_os = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.OS)]
+
+    format_ = str(extractor_format[0]) if extractor_format else "unknown" if format_ == FORMAT_AUTO else format_
+    arch = str(extractor_arch[0]) if extractor_arch else "unknown"
+    os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
 
     if isinstance(extractor, StaticFeatureExtractor):
         meta_class: type = rdoc.StaticMetadata
@@ -570,6 +573,8 @@ def collect_metadata(
         meta_class = rdoc.DynamicMetadata
     else:
         assert_never(extractor)
+
+    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
 
     return meta_class(
         timestamp=datetime.datetime.now(),
