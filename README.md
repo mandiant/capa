@@ -125,12 +125,11 @@ function @ 0x4011C0
 ...
 ```
 
-Additionally, capa also supports analyzing sandbox reports for identifying capabilities
-from dynamic execution traces. This is especially relevant for samples that are either packed or
-obfuscated, since static analysis on those samples would likely not yield the desired information.
+Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) 
+sandbox reports for dynamic capabilty extraction. In order to use this, you first 
+have to submit your sample to CAPE for analysis, and then pass the generated report to capa as you would an ordinary object file.
 
-Currently, capa only supports reports from the [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox. 
-Here's an example run on the packed sample with SHA256 hash 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310:
+Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:
 
 ```yaml
 $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.exe
@@ -147,16 +146,6 @@ WARNING:capa.capabilities.common: Use -v or -vv if you really want to see the ca
 WARNING:capa.capabilities.common:--------------------------------------------------------------------------------
 
 $ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.json
-┍━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
-│ md5                    │ 2d22ce41a5af9d807837c50ee168b040                                                                 │
-│ sha1                   │ 7bcf08a5efd57426dc61e2c8bd6ef526e487b9b6                                                         │
-│ sha256                 │ 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310                                 │
-│ analysis               │ dynamic                                                                                          │
-│ os                     │ unknown                                                                                          │
-│ format                 │ unknown                                                                                          │
-│ arch                   │ unknown                                                                                          │
-│ path                   │ /home/yacine/avast_malware/05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.json │
-┕━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
 
 ┍━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
 │ ATT&CK Tactic          │ ATT&CK Technique                                                                   │
@@ -236,33 +225,30 @@ Here's an example rule used by capa:
 ```yaml
 rule:
   meta:
-    name: hash data with CRC32
-    namespace: data-manipulation/checksum/crc32
+    name: create TCP socket
+    namespace: communication/socket/tcp
     authors:
-      - moritz.raabe@mandiant.com
+      - william.ballenthin@mandiant.com
+      - joakim@intezer.com
+      - anushka.virgaonkar@mandiant.com
     scopes:
-      static: function
-      dynamic: thread
+      static: basic block
+      dynamic: call
     mbc:
-      - Data::Checksum::CRC32 [C0032.001]
+      - Communication::Socket Communication::Create TCP Socket [C0001.011]
     examples:
-      - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
-      - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
-      - 7EFF498DE13CC734262F87E6B3EF38AB:0x100084A6
+      - Practical Malware Analysis Lab 01-01.dll_:0x10001010
   features:
     - or:
       - and:
-        - mnemonic: shr
+        - number: 6 = IPPROTO_TCP
+        - number: 1 = SOCK_STREAM
+        - number: 2 = AF_INET
         - or:
-          - number: 0xEDB88320
-          - bytes: 00 00 00 00 96 30 07 77 2C 61 0E EE BA 51 09 99 19 C4 6D 07 8F F4 6A 70 35 A5 63 E9 A3 95 64 9E = crc32_tab
-        - number: 8
-        - characteristic: nzxor
-      - and:
-        - number: 0x8320
-        - number: 0xEDB8
-        - characteristic: nzxor
-      - api: RtlComputeCrc32
+          - api: ws2_32.socket
+          - api: ws2_32.WSASocket
+          - api: socket
+      - property/read: System.Net.Sockets.TcpClient::Client
 ```
 
 The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.
