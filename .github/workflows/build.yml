@@ -17,11 +17,13 @@ jobs:
       # set to false for debugging
       fail-fast: true
       matrix:
+        python_version: [3.8]
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
+            python_version: [3.8, 3.11]
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
@@ -35,10 +37,10 @@ jobs:
         with:
           submodules: true
       # using Python 3.8 to support running across multiple operating systems including Windows 7
-      - name: Set up Python 3.8
+      - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python_version }}
       - if: matrix.os == 'ubuntu-20.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
@@ -55,10 +57,14 @@ jobs:
         run: dist/capa "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
       - name: Does it run (ELF)?
         run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
+      - name: Does it run (CAPE)?
+        run: |
+          gunzip "tests/data/dynamic/cape/v2.4/36d218f384010cce9f58b8193b7d8cc855d1dff23f80d16e13a883e152d07921.json.gz"
+          dist/capa "tests/data/dynamic/cape/v2.4/36d218f384010cce9f58b8193b7d8cc855d1dff23f80d16e13a883e152d07921.json"
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ${{ matrix.asset_name }}
-          path: dist/${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}-py${{ matrix.python_version }}
 
   test_run:
     name: Test run on ${{ matrix.os }}
