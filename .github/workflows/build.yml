@@ -17,13 +17,13 @@ jobs:
       # set to false for debugging
       fail-fast: true
       matrix:
-        python_version: [3.8]
+        # using Python 3.8 to support running across multiple operating systems including Windows 7
+        python_version: [3.8, 3.11]
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
-            python_version: [3.8, 3.11]
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
@@ -36,7 +36,6 @@ jobs:
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
         with:
           submodules: true
-      # using Python 3.8 to support running across multiple operating systems including Windows 7
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
