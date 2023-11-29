@@ -31,9 +31,9 @@ from capa.features.common import (
     Characteristic,
 )
 from capa.features.address import NO_ADDRESS, Address, DNTokenAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.dnfile.types import DnType
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 from capa.features.extractors.dnfile.helpers import (
-    DnType,
     iter_dotnet_table,
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
@@ -57,7 +57,7 @@ def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Impor
 
     for imp in get_dotnet_unmanaged_imports(pe):
         # like kernel32.CreateFileA
-        for name in capa.features.extractors.helpers.generate_symbols(imp.module, imp.method):
+        for name in capa.features.extractors.helpers.generate_symbols(imp.module, imp.method, include_dll=True):
             yield Import(name), DNTokenAddress(imp.token)
 
 
@@ -165,9 +165,9 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DotnetFileFeatureExtractor(FeatureExtractor):
+class DotnetFileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
 

@@ -143,17 +143,18 @@ def collect_metadata(rules: List[Path]):
             sha256=sha256,
             path=currentProgram().getExecutablePath(),  # type: ignore [name-defined] # noqa: F821
         ),
-        analysis=rdoc.Analysis(
+        flavor=rdoc.Flavor.STATIC,
+        analysis=rdoc.StaticAnalysis(
             format=currentProgram().getExecutableFormat(),  # type: ignore [name-defined] # noqa: F821
             arch=arch,
             os=os,
             extractor="ghidra",
             rules=tuple(r.resolve().absolute().as_posix() for r in rules),
             base_address=capa.features.freeze.Address.from_capa(currentProgram().getImageBase().getOffset()),  # type: ignore [name-defined] # noqa: F821
-            layout=rdoc.Layout(
+            layout=rdoc.StaticLayout(
                 functions=(),
             ),
-            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
+            feature_counts=rdoc.StaticFeatureCounts(file=0, functions=()),
             library_functions=(),
         ),
     )

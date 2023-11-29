@@ -75,6 +75,7 @@ import capa
 import capa.main
 import capa.rules
 import capa.render.json
+import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.features.common import OS_AUTO
 
@@ -112,7 +113,7 @@ def get_capa_results(args):
         extractor = capa.main.get_extractor(
             path, format, os_, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
         )
-    except capa.main.UnsupportedFormatError:
+    except capa.exceptions.UnsupportedFormatError:
         # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
         #
@@ -123,7 +124,7 @@ def get_capa_results(args):
             "status": "error",
             "error": f"input file does not appear to be a PE file: {path}",
         }
-    except capa.main.UnsupportedRuntimeError:
+    except capa.exceptions.UnsupportedRuntimeError:
         return {
             "path": path,
             "status": "error",
@@ -136,11 +137,9 @@ def get_capa_results(args):
             "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta = capa.main.collect_metadata([], path, format, os_, [], extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
