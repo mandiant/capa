@@ -136,7 +136,7 @@ WARNING:capa.capabilities.common:-----------------------------------------------
 WARNING:capa.capabilities.common: This sample appears to be packed.
 WARNING:capa.capabilities.common: 
 WARNING:capa.capabilities.common: Packed samples have often been obfuscated to hide their logic.
-WARNING:capa.capabilities.common: capa cannot handle obfuscation well. This means the results may be misleading or incomplete.
+WARNING:capa.capabilities.common: capa cannot handle obfuscation well using static analysis. This means the results may be misleading or incomplete.
 WARNING:capa.capabilities.common: If possible, you should try to unpack this input file before analyzing it with capa.
 WARNING:capa.capabilities.common: 
 WARNING:capa.capabilities.common: Identified via rule: (internal) packer file limitation
