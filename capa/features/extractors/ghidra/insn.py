@@ -199,6 +199,7 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
         # ignore stack references
         return
 
+    # Ghidra stores operands in 2D arrays if they contain offsets
     for i in range(insn.getNumOperands()):
         if insn.getOperandType(i) == OperandType.DYNAMIC:  # e.g. [esi + 4]
             # manual extraction, since the default api calls only work on the 1st dimension of the array
