@@ -11,19 +11,19 @@ permissions:
 
 jobs:
   build:
-    name: PyInstaller for ${{ matrix.os }}
+    name: PyInstaller for ${{ matrix.os }} Python ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       # set to false for debugging
       fail-fast: true
       matrix:
         # using Python 3.8 to support running across multiple operating systems including Windows 7
-        python_version: [3.8]
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
+            python_version: 3.8
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa-python311
@@ -32,10 +32,12 @@ jobs:
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
+            python_version: 3.8
           - os: macos-11
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
+            python_version: 3.8
     steps:
       - name: Checkout capa
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
@@ -63,8 +65,8 @@ jobs:
         run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
       - name: Does it run (CAPE)?
         run: |
-          gunzip "tests/data/dynamic/cape/v2.4/36d218f384010cce9f58b8193b7d8cc855d1dff23f80d16e13a883e152d07921.json.gz"
-          dist/capa "tests/data/dynamic/cape/v2.4/36d218f384010cce9f58b8193b7d8cc855d1dff23f80d16e13a883e152d07921.json"
+          gunzip "tests/data/dynamic/cape/v2.4/capesandbox_com/0a0882b8da225406cc838991b5f67d11.json.gz"
+          dist/capa "tests/data/dynamic/cape/v2.4/capesandbox_com/0a0882b8da225406cc838991b5f67d11.json"
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ${{ matrix.asset_name }}
