@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ master, "dynamic-feature-extraction" ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, "dynamic-feature-extraction" ]
+    branches: [ master ]
 
 permissions: read-all
 
