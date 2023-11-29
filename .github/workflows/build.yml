@@ -72,7 +72,7 @@ jobs:
           path: dist/${{ matrix.artifact_name }}
 
   test_run:
-    name: Test run on ${{ matrix.os }}
+    name: Test run on ${{ matrix.os }} / ${{ matrix.asset_name }}
     runs-on: ${{ matrix.os }}
     needs: [build]
     strategy:
