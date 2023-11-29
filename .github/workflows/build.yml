@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       # set to false for debugging
-      fail-fast: false
+      fail-fast: true
       matrix:
         # using Python 3.8 to support running across multiple operating systems including Windows 7
         include:
@@ -65,7 +65,6 @@ jobs:
       - name: Does it run (CAPE)?
         run: |
           7z e "tests/data/dynamic/cape/v2.2/d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
-          ls .
           dist/capa "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json"
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
