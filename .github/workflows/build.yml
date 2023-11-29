@@ -18,12 +18,13 @@ jobs:
       fail-fast: true
       matrix:
         # using Python 3.8 to support running across multiple operating systems including Windows 7
-        python_version: [3.8, 3.11]
+        python_version: [3.8, ]
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
+            python_version: 3.11
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
