@@ -11,7 +11,7 @@
 
 ### Breaking Changes
 
-### New Rules (30)
+### New Rules (34)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -43,6 +43,9 @@
 - nursery/check-for-outgoing-call-in-dotnet-on-android michael.hunhoff@mandiant.com
 - nursery/compiled-with-xamarin michael.hunhoff@mandiant.com
 - nursery/get-os-version-in-dotnet-on-android michael.hunhoff@mandiant.com
+- data-manipulation/compression/create-cabinet-on-windows michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- data-manipulation/compression/extract-cabinet-on-windows jakub.jozwiak@mandiant.com
+- lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
