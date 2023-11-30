@@ -115,13 +115,13 @@ def extract_file_import_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address
     for sym in bv.get_symbols_of_type(SymbolType.ImportAddressSymbol):
         lib_name = str(sym.namespace)
         addr = AbsoluteVirtualAddress(sym.address)
-        for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym.short_name):
+        for name in capa.features.extractors.helpers.generate_symbols(lib_name, sym.short_name, include_dll=True):
             yield Import(name), addr
 
         ordinal = sym.ordinal
         if ordinal != 0 and (lib_name != ""):
             ordinal_name = f"#{ordinal}"
-            for name in capa.features.extractors.helpers.generate_symbols(lib_name, ordinal_name):
+            for name in capa.features.extractors.helpers.generate_symbols(lib_name, ordinal_name, include_dll=True):
                 yield Import(name), addr
 
 

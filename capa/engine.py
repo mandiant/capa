@@ -304,7 +304,7 @@ def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -
     other strategies can be imagined that match differently; implement these elsewhere.
     specifically, this routine does "top down" matching of the given rules against the feature set.
     """
-    results = collections.defaultdict(list)  # type: MatchResults
+    results: MatchResults = collections.defaultdict(list)
 
     # copy features so that we can modify it
     # without affecting the caller (keep this function pure)

@@ -74,10 +74,12 @@ import capa.exceptions
 import capa.render.utils as rutils
 import capa.render.verbose
 import capa.features.freeze
+import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
 from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -101,6 +103,7 @@ def render_matches_by_function(doc: rd.ResultDocument):
           - send HTTP request
           - connect to HTTP server
     """
+    assert isinstance(doc.meta.analysis, rd.StaticAnalysis)
     functions_by_bb: Dict[Address, Address] = {}
     for finfo in doc.meta.analysis.layout.functions:
         faddress = finfo.address
@@ -113,10 +116,10 @@ def render_matches_by_function(doc: rd.ResultDocument):
 
     matches_by_function = collections.defaultdict(set)
     for rule in rutils.capability_rules(doc):
-        if rule.meta.scope == capa.rules.FUNCTION_SCOPE:
+        if capa.rules.Scope.FUNCTION in rule.meta.scopes:
             for addr, _ in rule.matches:
                 matches_by_function[addr].add(rule.meta.name)
-        elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+        elif capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes:
             for addr, _ in rule.matches:
                 function = functions_by_bb[addr]
                 matches_by_function[function].add(rule.meta.name)
@@ -167,7 +170,7 @@ def main(argv=None):
 
     if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
         format_ = "freeze"
-        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
+        extractor: FeatureExtractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
         format_ = args.format
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
@@ -176,6 +179,7 @@ def main(argv=None):
             extractor = capa.main.get_extractor(
                 args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
+            assert isinstance(extractor, StaticFeatureExtractor)
         except capa.exceptions.UnsupportedFormatError:
             capa.helpers.log_unsupported_format_error()
             return -1
@@ -183,14 +187,12 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
-    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor)
-    capabilities, counts = capa.main.find_capabilities(rules, extractor)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
+    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
-    if capa.main.has_file_limitation(rules, capabilities):
+    if capa.capabilities.common.has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):

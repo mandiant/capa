@@ -17,12 +17,18 @@ import capa.features.extractors.binja.function
 import capa.features.extractors.binja.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
-class BinjaFeatureExtractor(FeatureExtractor):
+class BinjaFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, bv: binja.BinaryView):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(bv.file.raw.read(0, len(bv.file.raw))))
         self.bv = bv
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.binja.file.extract_file_format(self.bv))

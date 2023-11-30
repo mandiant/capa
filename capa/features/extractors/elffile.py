@@ -17,7 +17,7 @@ import capa.features.extractors.common
 from capa.features.file import Export, Import, Section
 from capa.features.common import OS, FORMAT_ELF, Arch, Format, Feature
 from capa.features.address import NO_ADDRESS, FileOffsetAddress, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -154,9 +154,9 @@ GLOBAL_HANDLERS = (
 )
 
 
-class ElfFeatureExtractor(FeatureExtractor):
+class ElfFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
+        super().__init__(SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.elf = ELFFile(io.BytesIO(path.read_bytes()))
 
