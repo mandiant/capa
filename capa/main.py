@@ -111,6 +111,7 @@ E_UNSUPPORTED_IDA_VERSION = 19
 E_UNSUPPORTED_GHIDRA_VERSION = 20
 E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
+E_EMPTY_REPORT = 23
 
 logger = logging.getLogger("capa")
 
@@ -1103,8 +1104,10 @@ def main(argv: Optional[List[str]] = None):
     except EmptyReportError as e:
         if format_ == FORMAT_CAPE:
             log_empty_cape_report_error(str(e))
+            return E_EMPTY_REPORT
         else:
             log_unsupported_format_error()
+            return E_INVALID_FILE_TYPE
 
     found_file_limitation = False
     for file_extractor in file_extractors:
