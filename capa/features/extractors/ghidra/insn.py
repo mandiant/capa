@@ -221,7 +221,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle
     example:
         push    offset iid_004118d4_IShellLinkA ; riid
     """
-    for addr in capa.features.extractors.ghidra.helpers.find_memory_references_from_insn(ih.inner):
+    for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
         data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
         if data and not data.hasStringValue():
             extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(addr, MAX_BYTES_FEATURE_SIZE)
@@ -236,7 +236,7 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
     example:
         push offset aAcr     ; "ACR  > "
     """
-    for addr in capa.features.extractors.ghidra.helpers.find_memory_references_from_insn(ih.inner):
+    for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
         data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
         if data and data.hasStringValue():
             yield String(data.getValue()), ih.address

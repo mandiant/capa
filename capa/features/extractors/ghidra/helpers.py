@@ -277,11 +277,11 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
         return to_deref
 
 
-def find_memory_references_from_insn(insn, max_depth: int = 10):
-    """yield memory references from given instruction"""
+def find_data_references_from_insn(insn, max_depth: int = 10):
+    """yield data references from given instruction"""
     for reference in insn.getReferencesFrom():
-        if not reference.isMemoryReference():
-            # only care about memory references
+        if not reference.getReferenceType().isData():
+            # only care about data references
             continue
 
         to_addr = reference.getToAddress()
