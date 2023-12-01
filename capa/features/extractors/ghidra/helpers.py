@@ -286,10 +286,6 @@ def find_data_references_from_insn(insn, max_depth: int = 10):
 
         to_addr = reference.getToAddress()
 
-        if to_addr == insn.getAddress():
-            # skip reference to self
-            continue
-
         for _ in range(max_depth - 1):
             data = getDataAt(to_addr)  # type: ignore [name-defined] # noqa: F821
             if data and data.isPointer():
