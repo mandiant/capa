@@ -20,8 +20,8 @@ import textwrap
 import itertools
 import contextlib
 import collections
-from typing import Any, Dict, List, Tuple, Callable, Optional
 from types import TracebackType
+from typing import Any, Dict, List, Tuple, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -1088,24 +1088,36 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def last_resort_exception_handler(args, exctype, value, traceback) -> None:   
+def last_resort_exception_handler(args, exctype=None, value=None, traceback=None):
     """
-    for uncaught exceptions.
-    if debugging mode, prints traceback - else, prints helpful message.
+    custom exception handler to replace the default sys.excepthook,
+    prints traceback in debug mode, otherwise prints helpful message
+
+    using "nonlocal" keyword and closure code construct enables
+    last_resort_exception_handler args to first be initialized and
+    then be updated if the function needs to handle an exception
 
     args:
-      args (argparse.Namespace): parsed arguments potentially including "-d" or "--debug"
+      args (argparse.Namespace): parsed command-line arguments
       exctype (Exception): exception class
-      value (str): exception type
-      traceback (TracebackType): the Type of a traceback object
+      value (str): exception instance
+      traceback (TracebackType): a traceback object
     """
-    if "-d" or "--debug" in args:
-        sys.__excepthook__(exctype, value, traceback)
-    else:
-        print(f"Unexpected exception raised: {exctype}. Please run capa in Python development mode "
-            "to see the stack trace (https://docs.python.org/3/library/devmode.html#devmode). "
-             "Please also report your issue on the capa GitHub page so we can improve the code! "
-             "(https://github.com/mandiant/capa/issues)")
+    def handle_exception_information(args):
+        try:
+            nonlocal exctype, value, traceback              
+            if "-d" or "--debug" in args:
+                return sys.__excepthoook__(exctype, value, traceback)
+            else:
+                print(f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+                      "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+                      "can improve the code! (https://github.com/mandiant/capa/issues)")
+
+        except Exception as e: # pylint: disable=broad-except
+            logger.error("%s", str(e))
+            return # should this return an object like some other capa try-except statements, e.g., E_CORRUPT_FILE or E_INVALID_FILE_TYPE?
+
+    return handle_exception_information
             
 
 def main(argv: Optional[List[str]] = None):
@@ -1150,11 +1162,10 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
+    sys.excepthook = last_resort_exception_handler(args)
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
-
-    sys.excepthook = last_resort_exception_handler(args, *exception_information)
 
     try:
         _ = get_file_taste(args.sample)
