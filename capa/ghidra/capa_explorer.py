@@ -186,7 +186,7 @@ def parse_json(capa_data):
         this_attack = meta.get("attack")
 
         # scope match for the rule
-        this_scope = meta["scope"]
+        this_scope = meta["scopes"].get("static")
         with suppress(KeyError):
             this_locs.append(this_capability["matches"][0][0]["value"])
             # align node data
