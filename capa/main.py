@@ -18,8 +18,6 @@ import argparse
 import datetime
 import textwrap
 import contextlib
-import collections
-from types import TracebackType
 from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
