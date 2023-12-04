@@ -978,7 +978,7 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def last_resort_exception_handler(args, exctype=None, value=None, traceback=None):
+def last_resort_exception_handler(args: argparse.Namespace, exctype=None: Exception, value=None: str, traceback=None: TracebackType):
     """
     custom exception handler to replace the default sys.excepthook,
     prints traceback in debug mode, otherwise prints helpful message
@@ -986,18 +986,12 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
     using "nonlocal" keyword and closure code construct enables
     last_resort_exception_handler args to first be initialized and
     then be updated if the function needs to handle an exception
-
-    args:
-      args (argparse.Namespace): parsed command-line arguments
-      exctype (Exception): exception class
-      value (str): exception instance
-      traceback (TracebackType): a traceback object
     """
 
     def handle_exception_information(args):
         try:
             nonlocal exctype, value, traceback
-            if "-d" or "--debug" in args:
+            if "-d" or "--debug" in args.debug:
                 return sys.__excepthook__(exctype, value, traceback)
             else:
                 print(
@@ -1008,7 +1002,7 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
 
         except Exception as e:  # pylint: disable=broad-except
             logger.error("%s", str(e))
-            return  # should this return an object like some other capa try-except statements, e.g., E_CORRUPT_FILE or E_INVALID_FILE_TYPE?
+            return E_UNHANDLED
 
     return handle_exception_information
 
