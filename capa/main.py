@@ -993,22 +993,25 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
       value (str): exception instance
       traceback (TracebackType): a traceback object
     """
+ 
     def handle_exception_information(args):
         try:
-            nonlocal exctype, value, traceback              
+            nonlocal exctype, value, traceback
             if "-d" or "--debug" in args:
                 return sys.__excepthoook__(exctype, value, traceback)
             else:
-                print(f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+                print(
+                    f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
                       "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-                      "can improve the code! (https://github.com/mandiant/capa/issues)")
+                      "can improve the code! (https://github.com/mandiant/capa/issues)"
+                )
 
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             logger.error("%s", str(e))
-            return # should this return an object like some other capa try-except statements, e.g., E_CORRUPT_FILE or E_INVALID_FILE_TYPE?
+            return  # should this return an object like some other capa try-except statements, e.g., E_CORRUPT_FILE or E_INVALID_FILE_TYPE?
 
     return handle_exception_information
-            
+
 
 def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
