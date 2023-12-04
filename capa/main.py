@@ -993,7 +993,7 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
       value (str): exception instance
       traceback (TracebackType): a traceback object
     """
- 
+
     def handle_exception_information(args):
         try:
             nonlocal exctype, value, traceback
