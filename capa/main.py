@@ -1002,8 +1002,8 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
             else:
                 print(
                     f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-                      "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-                      "can improve the code! (https://github.com/mandiant/capa/issues)"
+                    "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+                    "can improve the code! (https://github.com/mandiant/capa/issues)"
                 )
 
         except Exception as e:  # pylint: disable=broad-except
