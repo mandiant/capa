@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import json
 import inspect
 import logging
 import contextlib
@@ -15,10 +16,11 @@ from pathlib import Path
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
 
 logger = logging.getLogger("capa")
@@ -57,12 +59,29 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_extension(sample: Path) -> str:
-    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
-        return FORMAT_SC32
-    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
-        return FORMAT_SC64
+def get_format_from_report(sample: Path) -> str:
+    report = json.load(sample.open(encoding="utf-8"))
+
+    if "CAPE" in report:
+        return FORMAT_CAPE
+
+    if "target" in report and "info" in report and "behavior" in report:
+        # CAPE report that's missing the "CAPE" key,
+        # which is not going to be much use, but its correct.
+        return FORMAT_CAPE
+
     return FORMAT_UNKNOWN
+
+
+def get_format_from_extension(sample: Path) -> str:
+    format_ = FORMAT_UNKNOWN
+    if sample.name.endswith(EXTENSIONS_SHELLCODE_32):
+        format_ = FORMAT_SC32
+    elif sample.name.endswith(EXTENSIONS_SHELLCODE_64):
+        format_ = FORMAT_SC64
+    elif sample.name.endswith(EXTENSIONS_DYNAMIC):
+        format_ = get_format_from_report(sample)
+    return format_
 
 
 def get_auto_format(path: Path) -> str:
@@ -128,12 +147,29 @@ def redirecting_print_to_tqdm(disable_progress):
 
 def log_unsupported_format_error():
     logger.error("-" * 80)
-    logger.error(" Input file does not appear to be a PE or ELF file.")
+    logger.error(" Input file does not appear to be a supported file.")
     logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing PE and ELF files (or shellcode, when using --format sc32|sc64)."
-    )
+    logger.error(" See all supported file formats via capa's help output (-h).")
     logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+    logger.error("-" * 80)
+
+
+def log_unsupported_cape_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error("Input file is not a valid CAPE report: %s", error)
+    logger.error(" ")
+    logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
+    logger.error(
+        " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
+    )
+    logger.error("-" * 80)
+
+
+def log_empty_cape_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" CAPE report is empty or only contains little useful data: %s", error)
+    logger.error(" ")
+    logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)
 
 

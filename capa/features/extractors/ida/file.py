@@ -110,7 +110,7 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
         if info[1] and info[2]:
             # e.g. in mimikatz: ('cabinet', 'FCIAddFile', 11L)
             # extract by name here and by ordinal below
-            for name in capa.features.extractors.helpers.generate_symbols(info[0], info[1]):
+            for name in capa.features.extractors.helpers.generate_symbols(info[0], info[1], include_dll=True):
                 yield Import(name), addr
             dll = info[0]
             symbol = f"#{info[2]}"
@@ -123,7 +123,7 @@ def extract_file_import_names() -> Iterator[Tuple[Feature, Address]]:
         else:
             continue
 
-        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol):
+        for name in capa.features.extractors.helpers.generate_symbols(dll, symbol, include_dll=True):
             yield Import(name), addr
 
     for ea, info in capa.features.extractors.ida.helpers.get_file_externs().items():
