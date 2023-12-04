@@ -981,7 +981,10 @@ def handle_common_args(args):
 
 
 def last_resort_exception_handler(
-    args: argparse.Namespace, exctype: Optional[Exception], value: Optional[str], traceback: Optional[TracebackType]
+    args: argparse.Namespace, 
+    exctype: Optional[type[BaseException]], 
+    value: Optional[BaseException], 
+    traceback: Optional[TracebackType]
 ):
     """
     custom exception handler to replace the default sys.excepthook,
