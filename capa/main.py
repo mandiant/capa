@@ -978,7 +978,11 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def last_resort_exception_handler(args: argparse.Namespace, exctype=None: Exception, value=None: str, traceback=None: TracebackType):
+def last_resort_exception_handler(
+    args: argparse.Namespace,
+    exctype: [None, Exception],
+    value: [None, str],
+    traceback: [None, TracebackType]):
     """
     custom exception handler to replace the default sys.excepthook,
     prints traceback in debug mode, otherwise prints helpful message
