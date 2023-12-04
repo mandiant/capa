@@ -998,7 +998,7 @@ def last_resort_exception_handler(args, exctype=None, value=None, traceback=None
         try:
             nonlocal exctype, value, traceback
             if "-d" or "--debug" in args:
-                return sys.__excepthoook__(exctype, value, traceback)
+                return sys.__excepthook__(exctype, value, traceback)
             else:
                 print(
                     f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
