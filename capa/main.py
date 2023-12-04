@@ -18,6 +18,7 @@ import argparse
 import datetime
 import textwrap
 import contextlib
+from types import TracebackType
 from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
@@ -112,6 +113,7 @@ E_UNSUPPORTED_GHIDRA_VERSION = 20
 E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 E_EMPTY_REPORT = 23
+E_UNHANDLED = 24
 
 logger = logging.getLogger("capa")
 
