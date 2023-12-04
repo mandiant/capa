@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional, Union
 from pathlib import Path
 
 import halo
@@ -981,7 +981,7 @@ def handle_common_args(args):
 
 
 def last_resort_exception_handler(
-    args: argparse.Namespace, exctype: [None, Exception], value: [None, str], traceback: [None, TracebackType]
+    args: argparse.Namespace, exctype: Union[None, Exception], value: Union[None, str], traceback: Union[None, TracebackType]
 ):
     """
     custom exception handler to replace the default sys.excepthook,
