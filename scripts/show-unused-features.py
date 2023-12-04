@@ -33,7 +33,7 @@ import capa.features.extractors.pefile
 import capa.features.extractors.base_extractor
 from capa.helpers import log_unsupported_runtime_error
 from capa.features.common import Feature
-from capa.features.extractors.base_extractor import FunctionHandle
+from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger("show-unused-features")
 
@@ -52,7 +52,7 @@ def get_rules_feature_set(rules_path) -> Set[Feature]:
 
 
 def get_file_features(
-    functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.FeatureExtractor
+    functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor
 ) -> typing.Counter[Feature]:
     feature_map: typing.Counter[Feature] = Counter()
 
@@ -144,6 +144,8 @@ def main(argv=None):
         except capa.exceptions.UnsupportedRuntimeError:
             log_unsupported_runtime_error()
             return -1
+
+    assert isinstance(extractor, StaticFeatureExtractor), "only static analysis supported today"
 
     feature_map: typing.Counter[Feature] = Counter()
 

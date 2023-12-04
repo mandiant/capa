@@ -11,34 +11,41 @@ permissions:
 
 jobs:
   build:
-    name: PyInstaller for ${{ matrix.os }}
+    name: PyInstaller for ${{ matrix.os }} / Py ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}
     strategy:
       # set to false for debugging
       fail-fast: true
       matrix:
+        # using Python 3.8 to support running across multiple operating systems including Windows 7
         include:
           - os: ubuntu-20.04
             # use old linux so that the shared library versioning is more portable
             artifact_name: capa
             asset_name: linux
+            python_version: 3.8
+          - os: ubuntu-20.04
+            artifact_name: capa
+            asset_name: linux-py311
+            python_version: 3.11
           - os: windows-2019
             artifact_name: capa.exe
             asset_name: windows
+            python_version: 3.8
           - os: macos-11
             # use older macOS for assumed better portability
             artifact_name: capa
             asset_name: macos
+            python_version: 3.8
     steps:
       - name: Checkout capa
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
         with:
           submodules: true
-      # using Python 3.8 to support running across multiple operating systems including Windows 7
-      - name: Set up Python 3.8
+      - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python_version }}
       - if: matrix.os == 'ubuntu-20.04'
         run: sudo apt-get install -y libyaml-dev
       - name: Upgrade pip, setuptools
@@ -55,13 +62,17 @@ jobs:
         run: dist/capa "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
       - name: Does it run (ELF)?
         run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
+      - name: Does it run (CAPE)?
+        run: |
+          7z e "tests/data/dynamic/cape/v2.2/d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+          dist/capa "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json"
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ${{ matrix.asset_name }}
           path: dist/${{ matrix.artifact_name }}
 
   test_run:
-    name: Test run on ${{ matrix.os }}
+    name: Test run on ${{ matrix.os }} / ${{ matrix.asset_name }}
     runs-on: ${{ matrix.os }}
     needs: [build]
     strategy:
@@ -71,6 +82,9 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: capa
             asset_name: linux
+          - os: ubuntu-22.04
+            artifact_name: capa
+            asset_name: linux-py311
           - os: windows-2022
             artifact_name: capa.exe
             asset_name: windows
@@ -95,6 +109,8 @@ jobs:
       matrix:
         include:
           - asset_name: linux
+            artifact_name: capa
+          - asset_name: linux-py311
             artifact_name: capa
           - asset_name: windows
             artifact_name: capa.exe

@@ -7,19 +7,42 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import abc
+import hashlib
 import dataclasses
 from typing import Any, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
+# TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
+# https://github.com/mandiant/capa/issues/1699
+from typing_extensions import TypeAlias
+
 import capa.features.address
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address, ThreadAddress, ProcessAddress, DynamicCallAddress, AbsoluteVirtualAddress
 
 # feature extractors may reference functions, BBs, insns by opaque handle values.
 # you can use the `.address` property to get and render the address of the feature.
 #
 # these handles are only consumed by routines on
 # the feature extractor from which they were created.
+
+
+@dataclass
+class SampleHashes:
+    md5: str
+    sha1: str
+    sha256: str
+
+    @classmethod
+    def from_bytes(cls, buf: bytes) -> "SampleHashes":
+        md5 = hashlib.md5()
+        sha1 = hashlib.sha1()
+        sha256 = hashlib.sha256()
+        md5.update(buf)
+        sha1.update(buf)
+        sha256.update(buf)
+
+        return cls(md5=md5.hexdigest(), sha1=sha1.hexdigest(), sha256=sha256.hexdigest())
 
 
 @dataclass
@@ -63,16 +86,18 @@ class InsnHandle:
     inner: Any
 
 
-class FeatureExtractor:
+class StaticFeatureExtractor:
     """
-    FeatureExtractor defines the interface for fetching features from a sample.
+    StaticFeatureExtractor defines the interface for fetching features from a
+    sample without running it; extractors that rely on the execution trace of
+    a sample must implement the other sibling class, DynamicFeatureExtracor.
 
     There may be multiple backends that support fetching features for capa.
     For example, we use vivisect by default, but also want to support saving
      and restoring features from a JSON file.
     When we restore the features, we'd like to use exactly the same matching logic
      to find matching rules.
-    Therefore, we can define a FeatureExtractor that provides features from the
+    Therefore, we can define a StaticFeatureExtractor that provides features from the
      serialized JSON file and do matching without a binary analysis pass.
     Also, this provides a way to hook in an IDA backend.
 
@@ -81,13 +106,14 @@ class FeatureExtractor:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
+    def __init__(self, hashes: SampleHashes):
         #
         # note: a subclass should define ctor parameters for its own use.
         #  for example, the Vivisect feature extract might require the vw and/or path.
         # this base class doesn't know what to do with that info, though.
         #
         super().__init__()
+        self._sample_hashes = hashes
 
     @abc.abstractmethod
     def get_base_address(self) -> Union[AbsoluteVirtualAddress, capa.features.address._NoAddress]:
@@ -99,6 +125,12 @@ class FeatureExtractor:
         in these scenarios, RelativeVirtualAddresses aren't used.
         """
         raise NotImplementedError()
+
+    def get_sample_hashes(self) -> SampleHashes:
+        """
+        fetch the hashes for the sample contained within the extractor.
+        """
+        return self._sample_hashes
 
     @abc.abstractmethod
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
@@ -262,3 +294,177 @@ class FeatureExtractor:
           Tuple[Feature, Address]: feature and its location
         """
         raise NotImplementedError()
+
+
+@dataclass
+class ProcessHandle:
+    """
+    reference to a process extracted by the sandbox.
+
+    Attributes:
+        address: process's address (pid)
+        inner: sandbox-specific data
+    """
+
+    address: ProcessAddress
+    inner: Any
+
+
+@dataclass
+class ThreadHandle:
+    """
+    reference to a thread extracted by the sandbox.
+
+    Attributes:
+        address: thread's address (tid)
+        inner: sandbox-specific data
+    """
+
+    address: ThreadAddress
+    inner: Any
+
+
+@dataclass
+class CallHandle:
+    """
+    reference to an api call extracted by the sandbox.
+
+    Attributes:
+        address: call's address, such as event index or id
+        inner: sandbox-specific data
+    """
+
+    address: DynamicCallAddress
+    inner: Any
+
+
+class DynamicFeatureExtractor:
+    """
+    DynamicFeatureExtractor defines the interface for fetching features from a
+    sandbox' analysis of a sample; extractors that rely on statically analyzing
+    a sample must implement the sibling extractor, StaticFeatureExtractor.
+
+    Features are grouped mainly into threads that alongside their meta-features are also grouped into
+    processes (that also have their own features). Other scopes (such as function and file) may also apply
+    for a specific sandbox.
+
+    This class is not instantiated directly; it is the base class for other implementations.
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, hashes: SampleHashes):
+        #
+        # note: a subclass should define ctor parameters for its own use.
+        #  for example, the Vivisect feature extract might require the vw and/or path.
+        # this base class doesn't know what to do with that info, though.
+        #
+        super().__init__()
+        self._sample_hashes = hashes
+
+    def get_sample_hashes(self) -> SampleHashes:
+        """
+        fetch the hashes for the sample contained within the extractor.
+        """
+        return self._sample_hashes
+
+    @abc.abstractmethod
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract features found at every scope ("global").
+
+        example::
+
+            extractor = CapeFeatureExtractor.from_report(json.loads(buf))
+            for feature, addr in extractor.get_global_features():
+                print(addr, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
+        """
+        extract file-scope features.
+
+        example::
+
+            extractor = CapeFeatureExtractor.from_report(json.loads(buf))
+            for feature, addr in extractor.get_file_features():
+                print(addr, feature)
+
+        yields:
+          Tuple[Feature, Address]: feature and its location
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_processes(self) -> Iterator[ProcessHandle]:
+        """
+        Enumerate processes in the trace.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all the features of a process. These include:
+        - file features of the process' image
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_process_name(self, ph: ProcessHandle) -> str:
+        """
+        Returns the human-readable name for the given process,
+        such as the filename.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
+        """
+        Enumerate threads in the given process.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all the features of a thread. These include:
+        - sequenced api traces
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
+        """
+        Enumerate calls in the given thread
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def extract_call_features(
+        self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
+        """
+        Yields all features of a call. These include:
+        - api name
+        - bytes/strings/numbers extracted from arguments
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_call_name(self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> str:
+        """
+        Returns the human-readable name for the given call,
+        such as as rendered API log entry, like:
+
+            Foo(1, "two", b"\x00\x11") -> -1
+        """
+        raise NotImplementedError()
+
+
+FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

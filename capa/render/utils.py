@@ -24,6 +24,11 @@ def bold2(s: str) -> str:
     return termcolor.colored(s, "green")
 
 
+def mute(s: str) -> str:
+    """draw attention away from the given string"""
+    return termcolor.colored(s, "dark_grey")
+
+
 def warn(s: str) -> str:
     return termcolor.colored(s, "yellow")
 

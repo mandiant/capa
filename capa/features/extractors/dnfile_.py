@@ -25,7 +25,7 @@ from capa.features.common import (
     Feature,
 )
 from capa.features.address import NO_ADDRESS, Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import FeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def extract_file_arch(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Feature, Addr
 
 def extract_file_features(pe: dnfile.dnPE) -> Iterator[Tuple[Feature, Address]]:
     for file_handler in FILE_HANDLERS:
-        for feature, address in file_handler(pe=pe):  # type: ignore
+        for feature, address in file_handler(pe=pe):
             yield feature, address
 
 
@@ -81,9 +81,9 @@ GLOBAL_HANDLERS = (
 )
 
 
-class DnfileFeatureExtractor(FeatureExtractor):
+class DnfileFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, path: Path):
-        super().__init__()
+        super().__init__(hashes=SampleHashes.from_bytes(path.read_bytes()))
         self.path: Path = path
         self.pe: dnfile.dnPE = dnfile.dnPE(str(path))
 

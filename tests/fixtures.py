@@ -38,7 +38,14 @@ from capa.features.common import (
     FeatureAccess,
 )
 from capa.features.address import Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    CallHandle,
+    InsnHandle,
+    ThreadHandle,
+    ProcessHandle,
+    FunctionHandle,
+)
 from capa.features.extractors.dnfile.extractor import DnfileFeatureExtractor
 
 CD = Path(__file__).resolve().parent
@@ -182,6 +189,20 @@ def get_binja_extractor(path: Path):
 
 
 @lru_cache(maxsize=1)
+def get_cape_extractor(path):
+    import gzip
+    import json
+
+    from capa.features.extractors.cape.extractor import CapeExtractor
+
+    with gzip.open(path, "r") as compressed_report:
+        report_json = compressed_report.read()
+        report = json.loads(report_json)
+
+    return CapeExtractor.from_report(report)
+
+
+@lru_cache(maxsize=1)
 def get_ghidra_extractor(path: Path):
     import capa.features.extractors.ghidra.extractor
 
@@ -203,6 +224,36 @@ def extract_file_features(extractor):
     features = collections.defaultdict(set)
     for feature, va in extractor.extract_file_features():
         features[feature].add(va)
+    return features
+
+
+def extract_process_features(extractor, ph):
+    features = collections.defaultdict(set)
+    for th in extractor.get_threads(ph):
+        for ch in extractor.get_calls(ph, th):
+            for feature, va in extractor.extract_call_features(ph, th, ch):
+                features[feature].add(va)
+        for feature, va in extractor.extract_thread_features(ph, th):
+            features[feature].add(va)
+    for feature, va in extractor.extract_process_features(ph):
+        features[feature].add(va)
+    return features
+
+
+def extract_thread_features(extractor, ph, th):
+    features = collections.defaultdict(set)
+    for ch in extractor.get_calls(ph, th):
+        for feature, va in extractor.extract_call_features(ph, th, ch):
+            features[feature].add(va)
+    for feature, va in extractor.extract_thread_features(ph, th):
+        features[feature].add(va)
+    return features
+
+
+def extract_call_features(extractor, ph, th, ch):
+    features = collections.defaultdict(set)
+    for feature, addr in extractor.extract_call_features(ph, th, ch):
+        features[feature].add(addr)
     return features
 
 
@@ -319,6 +370,24 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "294b8db1f2702b60fb2e42fdc50c2cee6a5046112da9a5703a548a4fa50477bc.elf_"
     elif name.startswith("2bf18d"):
         return CD / "data" / "2bf18d0403677378adad9001b1243211.elf_"
+    elif name.startswith("0000a657"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json.gz"
+        )
+    elif name.startswith("d46900"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "cape"
+            / "v2.2"
+            / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+        )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
@@ -396,6 +465,27 @@ def resolve_sample(sample):
 @pytest.fixture
 def sample(request):
     return resolve_sample(request.param)
+
+
+def get_process(extractor, ppid: int, pid: int) -> ProcessHandle:
+    for ph in extractor.get_processes():
+        if ph.address.ppid == ppid and ph.address.pid == pid:
+            return ph
+    raise ValueError("process not found")
+
+
+def get_thread(extractor, ph: ProcessHandle, tid: int) -> ThreadHandle:
+    for th in extractor.get_threads(ph):
+        if th.address.tid == tid:
+            return th
+    raise ValueError("thread not found")
+
+
+def get_call(extractor, ph: ProcessHandle, th: ThreadHandle, cid: int) -> CallHandle:
+    for ch in extractor.get_calls(ph, th):
+        if ch.address.id == cid:
+            return ch
+    raise ValueError("call not found")
 
 
 def get_function(extractor, fva: int) -> FunctionHandle:
@@ -505,6 +595,63 @@ def resolve_scope(scope):
 
         inner_function.__name__ = scope
         return inner_function
+    elif "call=" in scope:
+        # like `process=(pid:ppid),thread=tid,call=id`
+        assert "process=" in scope
+        assert "thread=" in scope
+        pspec, _, spec = scope.partition(",")
+        tspec, _, cspec = spec.partition(",")
+        pspec = pspec.partition("=")[2][1:-1].split(":")
+        assert len(pspec) == 2
+        pid, ppid = map(int, pspec)
+        tid = int(tspec.partition("=")[2])
+        cid = int(cspec.partition("=")[2])
+
+        def inner_call(extractor):
+            ph = get_process(extractor, ppid, pid)
+            th = get_thread(extractor, ph, tid)
+            ch = get_call(extractor, ph, th, cid)
+            features = extract_call_features(extractor, ph, th, ch)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_call.__name__ = scope
+        return inner_call
+    elif "thread=" in scope:
+        # like `process=(pid:ppid),thread=tid`
+        assert "process=" in scope
+        pspec, _, tspec = scope.partition(",")
+        pspec = pspec.partition("=")[2][1:-1].split(":")
+        assert len(pspec) == 2
+        pid, ppid = map(int, pspec)
+        tid = int(tspec.partition("=")[2])
+
+        def inner_thread(extractor):
+            ph = get_process(extractor, ppid, pid)
+            th = get_thread(extractor, ph, tid)
+            features = extract_thread_features(extractor, ph, th)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_thread.__name__ = scope
+        return inner_thread
+    elif "process=" in scope:
+        # like `process=(pid:ppid)`
+        pspec = scope.partition("=")[2][1:-1].split(":")
+        assert len(pspec) == 2
+        pid, ppid = map(int, pspec)
+
+        def inner_process(extractor):
+            ph = get_process(extractor, ppid, pid)
+            features = extract_process_features(extractor, ph)
+            for k, vs in extract_global_features(extractor).items():
+                features[k].update(vs)
+            return features
+
+        inner_process.__name__ = scope
+        return inner_process
     else:
         raise ValueError("unexpected scope fixture")
 
@@ -530,6 +677,84 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
+DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
+    [
+        # file/string
+        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), True),
+        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), True),
+        ("0000a657", "file", capa.features.common.String("nope"), False),
+        # file/sections
+        ("0000a657", "file", capa.features.file.Section(".rdata"), True),
+        ("0000a657", "file", capa.features.file.Section(".nope"), False),
+        # file/imports
+        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), True),
+        ("0000a657", "file", capa.features.file.Import("Nope"), False),
+        # file/exports
+        ("0000a657", "file", capa.features.file.Export("Nope"), False),
+        # process/environment variables
+        (
+            "0000a657",
+            "process=(1180:3052)",
+            capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
+            True,
+        ),
+        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), False),
+        # thread/api calls
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), False),
+        # thread/number call argument
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), False),
+        # thread/string call argument
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), True),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), False),
+        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), True),
+        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), False),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
+DYNAMIC_FEATURE_COUNT_TESTS = sorted(
+    [
+        # file/string
+        ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
+        ("0000a657", "file", capa.features.common.String("GetNamedPipeClientSessionId"), 1),
+        ("0000a657", "file", capa.features.common.String("nope"), 0),
+        # file/sections
+        ("0000a657", "file", capa.features.file.Section(".rdata"), 1),
+        ("0000a657", "file", capa.features.file.Section(".nope"), 0),
+        # file/imports
+        ("0000a657", "file", capa.features.file.Import("NdrSimpleTypeUnmarshall"), 1),
+        ("0000a657", "file", capa.features.file.Import("Nope"), 0),
+        # file/exports
+        ("0000a657", "file", capa.features.file.Export("Nope"), 0),
+        # process/environment variables
+        (
+            "0000a657",
+            "process=(1180:3052)",
+            capa.features.common.String("C:\\Users\\comp\\AppData\\Roaming\\Microsoft\\Jxoqwnx\\jxoqwn.exe"),
+            2,
+        ),
+        ("0000a657", "process=(1180:3052)", capa.features.common.String("nope"), 0),
+        # thread/api calls
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("NtQueryValueKey"), 7),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.API("GetActiveWindow"), 0),
+        # thread/number call argument
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(0x000000EC), 1),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.insn.Number(110173), 0),
+        # thread/string call argument
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("SetThreadUILanguage"), 1),
+        ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), 0),
+        ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), 1),
+        ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), 0),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
 FEATURE_PRESENCE_TESTS = sorted(
     [
         # file/characteristic("embedded pe")
@@ -554,6 +779,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("kernel32.IsWow64Process"), True),
+        ("mimikatz", "file", capa.features.file.Import("IsWow64Process"), True),
         ("mimikatz", "file", capa.features.file.Import("msvcrt.exit"), True),
         ("mimikatz", "file", capa.features.file.Import("cabinet.#11"), True),
         ("mimikatz", "file", capa.features.file.Import("#11"), False),
@@ -634,11 +860,12 @@ FEATURE_PRESENCE_TESTS = sorted(
         #    .text:004018C0 8D 4B 02                lea     ecx, [ebx+2]
         ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), True),
-        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), True),
+        # not extracting dll anymore
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContextW"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptAcquireContext"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptGenKey"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptImportKey"), False),
+        ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.CryptDestroyKey"), False),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContextW"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptAcquireContext"), True),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("CryptGenKey"), True),
@@ -647,7 +874,8 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("Nope"), False),
         ("mimikatz", "function=0x403BAC", capa.features.insn.API("advapi32.Nope"), False),
         # insn/api: thunk
-        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), True),
+        # not extracting dll anymore
+        ("mimikatz", "function=0x4556E5", capa.features.insn.API("advapi32.LsaQueryInformationPolicy"), False),
         ("mimikatz", "function=0x4556E5", capa.features.insn.API("LsaQueryInformationPolicy"), True),
         # insn/api: x64
         (
@@ -671,10 +899,15 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("mimikatz", "function=0x40B3C6", capa.features.insn.API("LocalFree"), True),
         ("c91887...", "function=0x40156F", capa.features.insn.API("CloseClipboard"), True),
         # insn/api: resolve indirect calls
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), True),
-        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), True),
+        # not extracting dll anymore
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CreatePipe"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.SetHandleInformation"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.CloseHandle"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("kernel32.WriteFile"), False),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("CreatePipe"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("SetHandleInformation"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("CloseHandle"), True),
+        ("c91887...", "function=0x401A77", capa.features.insn.API("WriteFile"), True),
         # insn/string
         ("mimikatz", "function=0x40105D", capa.features.common.String("SCardControl"), True),
         ("mimikatz", "function=0x40105D", capa.features.common.String("SCardTransmit"), True),
@@ -849,7 +1082,8 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
         ("_1c444", "file", capa.features.file.Import("CreateCompatibleBitmap"), True),
         ("_1c444", "file", capa.features.file.Import("gdi32::CreateCompatibleBitmap"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.API("GetWindowDC"), True),
-        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), True),
+        # not extracting dll anymore
+        ("_1c444", "function=0x1F68", capa.features.insn.API("user32.GetWindowDC"), False),
         ("_1c444", "function=0x1F68", capa.features.insn.Number(0xCC0020), True),
         ("_1c444", "token=0x600001D", capa.features.common.Characteristic("calls to"), True),
         ("_1c444", "token=0x6000018", capa.features.common.Characteristic("calls to"), False),
@@ -1214,29 +1448,42 @@ def get_result_doc(path: Path):
 
 @pytest.fixture
 def pma0101_rd():
+    # python -m capa.main tests/data/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_ --json > tests/data/rd/Practical\ Malware\ Analysis\ Lab\ 01-01.dll_.json
     return get_result_doc(CD / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json")
 
 
 @pytest.fixture
 def dotnet_1c444e_rd():
+    # .NET sample
+    # python -m capa.main tests/data/dotnet/1c444ebeba24dcba8628b7dfe5fec7c6.exe_ --json > tests/data/rd/1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json
     return get_result_doc(CD / "data" / "rd" / "1c444ebeba24dcba8628b7dfe5fec7c6.exe_.json")
 
 
 @pytest.fixture
 def a3f3bbc_rd():
+    # python -m capa.main tests/data/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_ --json > tests/data/rd/3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json
     return get_result_doc(CD / "data" / "rd" / "3f3bbcf8fd90bdcdcdc5494314ed4225.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx86_rd():
+    # python -m capa.main tests/data/al-khaser_x86.exe_ --json > tests/data/rd/al-khaser_x86.exe_.json
     return get_result_doc(CD / "data" / "rd" / "al-khaser_x86.exe_.json")
 
 
 @pytest.fixture
 def al_khaserx64_rd():
+    # python -m capa.main tests/data/al-khaser_x64.exe_ --json > tests/data/rd/al-khaser_x64.exe_.json
     return get_result_doc(CD / "data" / "rd" / "al-khaser_x64.exe_.json")
 
 
 @pytest.fixture
 def a076114_rd():
+    # python -m capa.main tests/data/0761142efbda6c4b1e801223de723578.dll_ --json > tests/data/rd/0761142efbda6c4b1e801223de723578.dll_.json
     return get_result_doc(CD / "data" / "rd" / "0761142efbda6c4b1e801223de723578.dll_.json")
+
+
+@pytest.fixture
+def dynamic_a0000a6_rd():
+    # python -m capa.main tests/data/dynamic/cape/v2.2/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json --json > tests/data/rd/0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json
+    return get_result_doc(CD / "data" / "rd" / "0000a65749f5902c4d82ffa701198038f0b4870b00a27cfca109f8f933476d82.json")

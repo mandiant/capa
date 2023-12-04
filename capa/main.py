@@ -11,24 +11,22 @@ See the License for the specific language governing permissions and limitations 
 import io
 import os
 import sys
+import json
 import time
-import hashlib
 import logging
 import argparse
 import datetime
 import textwrap
-import itertools
 import contextlib
 import collections
 from types import TracebackType
-from typing import Any, Dict, List, Tuple, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
 import halo
-import tqdm
 import colorama
-import tqdm.contrib.logging
 from pefile import PEFormatError
+from typing_extensions import assert_never
 from elftools.common.exceptions import ELFError
 
 import capa.perf
@@ -52,18 +50,25 @@ import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
-from capa.rules import Rule, Scope, RuleSet
-from capa.engine import FeatureSet, MatchResults
+import capa.features.extractors.cape.extractor
+from capa.rules import Rule, RuleSet
+from capa.engine import MatchResults
 from capa.helpers import (
-    get_format,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
-    redirecting_print_to_tqdm,
     log_unsupported_arch_error,
+    log_empty_cape_report_error,
     log_unsupported_format_error,
+    log_unsupported_cape_report_error,
 )
-from capa.exceptions import UnsupportedOSError, UnsupportedArchError, UnsupportedFormatError, UnsupportedRuntimeError
+from capa.exceptions import (
+    EmptyReportError,
+    UnsupportedOSError,
+    UnsupportedArchError,
+    UnsupportedFormatError,
+    UnsupportedRuntimeError,
+)
 from capa.features.common import (
     OS_AUTO,
     OS_LINUX,
@@ -72,14 +77,21 @@ from capa.features.common import (
     FORMAT_ELF,
     OS_WINDOWS,
     FORMAT_AUTO,
+    FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
 )
-from capa.features.address import NO_ADDRESS, Address
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.address import Address
+from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
+from capa.features.extractors.base_extractor import (
+    SampleHashes,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -99,6 +111,9 @@ E_INVALID_FILE_ARCH = 17
 E_INVALID_FILE_OS = 18
 E_UNSUPPORTED_IDA_VERSION = 19
 E_UNSUPPORTED_GHIDRA_VERSION = 20
+E_MISSING_CAPE_STATIC_ANALYSIS = 21
+E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
+E_EMPTY_REPORT = 23
 
 logger = logging.getLogger("capa")
 
@@ -119,267 +134,6 @@ def set_vivisect_log_level(level):
     logging.getLogger("envi").setLevel(level)
     logging.getLogger("envi.codeflow").setLevel(level)
     logging.getLogger("Elf").setLevel(level)
-
-
-def find_instruction_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle, insn: InsnHandle
-) -> Tuple[FeatureSet, MatchResults]:
-    """
-    find matches for the given rules for the given instruction.
-
-    returns: tuple containing (features for instruction, match results for instruction)
-    """
-    # all features found for the instruction.
-    features = collections.defaultdict(set)  # type: FeatureSet
-
-    for feature, addr in itertools.chain(
-        extractor.extract_insn_features(f, bb, insn), extractor.extract_global_features()
-    ):
-        features[feature].add(addr)
-
-    # matches found at this instruction.
-    _, matches = ruleset.match(Scope.INSTRUCTION, features, insn.address)
-
-    for rule_name, res in matches.items():
-        rule = ruleset[rule_name]
-        for addr, _ in res:
-            capa.engine.index_rule_matches(features, rule, [addr])
-
-    return features, matches
-
-
-def find_basic_block_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, f: FunctionHandle, bb: BBHandle
-) -> Tuple[FeatureSet, MatchResults, MatchResults]:
-    """
-    find matches for the given rules within the given basic block.
-
-    returns: tuple containing (features for basic block, match results for basic block, match results for instructions)
-    """
-    # all features found within this basic block,
-    # includes features found within instructions.
-    features = collections.defaultdict(set)  # type: FeatureSet
-
-    # matches found at the instruction scope.
-    # might be found at different instructions, thats ok.
-    insn_matches = collections.defaultdict(list)  # type: MatchResults
-
-    for insn in extractor.get_instructions(f, bb):
-        ifeatures, imatches = find_instruction_capabilities(ruleset, extractor, f, bb, insn)
-        for feature, vas in ifeatures.items():
-            features[feature].update(vas)
-
-        for rule_name, res in imatches.items():
-            insn_matches[rule_name].extend(res)
-
-    for feature, va in itertools.chain(
-        extractor.extract_basic_block_features(f, bb), extractor.extract_global_features()
-    ):
-        features[feature].add(va)
-
-    # matches found within this basic block.
-    _, matches = ruleset.match(Scope.BASIC_BLOCK, features, bb.address)
-
-    for rule_name, res in matches.items():
-        rule = ruleset[rule_name]
-        for va, _ in res:
-            capa.engine.index_rule_matches(features, rule, [va])
-
-    return features, matches, insn_matches
-
-
-def find_code_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, fh: FunctionHandle
-) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
-    """
-    find matches for the given rules within the given function.
-
-    returns: tuple containing (match results for function, match results for basic blocks, match results for instructions, number of features)
-    """
-    # all features found within this function,
-    # includes features found within basic blocks (and instructions).
-    function_features = collections.defaultdict(set)  # type: FeatureSet
-
-    # matches found at the basic block scope.
-    # might be found at different basic blocks, thats ok.
-    bb_matches = collections.defaultdict(list)  # type: MatchResults
-
-    # matches found at the instruction scope.
-    # might be found at different instructions, thats ok.
-    insn_matches = collections.defaultdict(list)  # type: MatchResults
-
-    for bb in extractor.get_basic_blocks(fh):
-        features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, fh, bb)
-        for feature, vas in features.items():
-            function_features[feature].update(vas)
-
-        for rule_name, res in bmatches.items():
-            bb_matches[rule_name].extend(res)
-
-        for rule_name, res in imatches.items():
-            insn_matches[rule_name].extend(res)
-
-    for feature, va in itertools.chain(extractor.extract_function_features(fh), extractor.extract_global_features()):
-        function_features[feature].add(va)
-
-    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
-    return function_matches, bb_matches, insn_matches, len(function_features)
-
-
-def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, function_features: FeatureSet):
-    file_features = collections.defaultdict(set)  # type: FeatureSet
-
-    for feature, va in itertools.chain(extractor.extract_file_features(), extractor.extract_global_features()):
-        # not all file features may have virtual addresses.
-        # if not, then at least ensure the feature shows up in the index.
-        # the set of addresses will still be empty.
-        if va:
-            file_features[feature].add(va)
-        else:
-            if feature not in file_features:
-                file_features[feature] = set()
-
-    logger.debug("analyzed file and extracted %d features", len(file_features))
-
-    file_features.update(function_features)
-
-    _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
-    return matches, len(file_features)
-
-
-def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None) -> Tuple[MatchResults, Any]:
-    all_function_matches = collections.defaultdict(list)  # type: MatchResults
-    all_bb_matches = collections.defaultdict(list)  # type: MatchResults
-    all_insn_matches = collections.defaultdict(list)  # type: MatchResults
-
-    feature_counts = rdoc.FeatureCounts(file=0, functions=())
-    library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
-
-    with redirecting_print_to_tqdm(disable_progress):
-        with tqdm.contrib.logging.logging_redirect_tqdm():
-            pbar = tqdm.tqdm
-            if capa.helpers.is_runtime_ghidra():
-                # Ghidrathon interpreter cannot properly handle
-                # the TMonitor thread that is created via a monitor_interval
-                # > 0
-                pbar.monitor_interval = 0
-            if disable_progress:
-                # do not use tqdm to avoid unnecessary side effects when caller intends
-                # to disable progress completely
-                def pbar(s, *args, **kwargs):
-                    return s
-
-            functions = list(extractor.get_functions())
-            n_funcs = len(functions)
-
-            pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
-            for f in pb:
-                t0 = time.time()
-                if extractor.is_library_function(f.address):
-                    function_name = extractor.get_function_name(f.address)
-                    logger.debug("skipping library function 0x%x (%s)", f.address, function_name)
-                    library_functions += (
-                        rdoc.LibraryFunction(address=frz.Address.from_capa(f.address), name=function_name),
-                    )
-                    n_libs = len(library_functions)
-                    percentage = round(100 * (n_libs / n_funcs))
-                    if isinstance(pb, tqdm.tqdm):
-                        pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
-                    continue
-
-                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
-                    ruleset, extractor, f
-                )
-                feature_counts.functions += (
-                    rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
-                )
-                t1 = time.time()
-
-                match_count = sum(len(res) for res in function_matches.values())
-                match_count += sum(len(res) for res in bb_matches.values())
-                match_count += sum(len(res) for res in insn_matches.values())
-                logger.debug(
-                    "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
-                    f.address,
-                    feature_count,
-                    match_count,
-                    t1 - t0,
-                )
-
-                for rule_name, res in function_matches.items():
-                    all_function_matches[rule_name].extend(res)
-                for rule_name, res in bb_matches.items():
-                    all_bb_matches[rule_name].extend(res)
-                for rule_name, res in insn_matches.items():
-                    all_insn_matches[rule_name].extend(res)
-
-    # collection of features that captures the rule matches within function, BB, and instruction scopes.
-    # mapping from feature (matched rule) to set of addresses at which it matched.
-    function_and_lower_features: FeatureSet = collections.defaultdict(set)
-    for rule_name, results in itertools.chain(
-        all_function_matches.items(), all_bb_matches.items(), all_insn_matches.items()
-    ):
-        locations = {p[0] for p in results}
-        rule = ruleset[rule_name]
-        capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
-
-    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
-    feature_counts.file = feature_count
-
-    matches = dict(
-        itertools.chain(
-            # each rule exists in exactly one scope,
-            # so there won't be any overlap among these following MatchResults,
-            # and we can merge the dictionaries naively.
-            all_insn_matches.items(),
-            all_bb_matches.items(),
-            all_function_matches.items(),
-            all_file_matches.items(),
-        )
-    )
-
-    meta = {
-        "feature_counts": feature_counts,
-        "library_functions": library_functions,
-    }
-
-    return matches, meta
-
-
-def has_rule_with_namespace(rules: RuleSet, capabilities: MatchResults, namespace: str) -> bool:
-    return any(
-        rules.rules[rule_name].meta.get("namespace", "").startswith(namespace) for rule_name in capabilities.keys()
-    )
-
-
-def is_internal_rule(rule: Rule) -> bool:
-    return rule.meta.get("namespace", "").startswith("internal/")
-
-
-def is_file_limitation_rule(rule: Rule) -> bool:
-    return rule.meta.get("namespace", "") == "internal/limitation/file"
-
-
-def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
-    file_limitation_rules = list(filter(is_file_limitation_rule, rules.rules.values()))
-
-    for file_limitation_rule in file_limitation_rules:
-        if file_limitation_rule.name not in capabilities:
-            continue
-
-        logger.warning("-" * 80)
-        for line in file_limitation_rule.meta.get("description", "").split("\n"):
-            logger.warning(" %s", line)
-        logger.warning(" Identified via rule: %s", file_limitation_rule.name)
-        if is_standalone:
-            logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
-        logger.warning("-" * 80)
-
-        # bail on first file limitation
-        return True
-
-    return False
 
 
 def is_supported_format(sample: Path) -> bool:
@@ -533,7 +287,8 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
-    if format_ not in (FORMAT_SC32, FORMAT_SC64):
+
+    if format_ not in (FORMAT_SC32, FORMAT_SC64, FORMAT_CAPE):
         if not is_supported_format(path):
             raise UnsupportedFormatError()
 
@@ -543,7 +298,13 @@ def get_extractor(
         if os_ == OS_AUTO and not is_supported_os(path):
             raise UnsupportedOSError()
 
-    if format_ == FORMAT_DOTNET:
+    if format_ == FORMAT_CAPE:
+        import capa.features.extractors.cape.extractor
+
+        report = json.load(Path(path).open(encoding="utf-8"))
+        return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
+
+    elif format_ == FORMAT_DOTNET:
         import capa.features.extractors.dnfile.extractor
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
@@ -613,8 +374,12 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
         file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
 
-    elif format_ == capa.features.extractors.common.FORMAT_ELF:
+    elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
+
+    elif format_ == FORMAT_CAPE:
+        report = json.load(Path(sample).open(encoding="utf-8"))
+        file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors
 
@@ -697,7 +462,7 @@ def get_rules(
     if ruleset is not None:
         return ruleset
 
-    rules = []  # type: List[Rule]
+    rules: List[Rule] = []
 
     total_rule_count = len(rule_file_paths)
     for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
@@ -712,7 +477,7 @@ def get_rules(
             rule.meta["capa/nursery"] = is_nursery_rule_path(path)
 
             rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scope)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
 
     ruleset = capa.rules.RuleSet(rules)
 
@@ -747,60 +512,177 @@ def get_signatures(sigs_path: Path) -> List[Path]:
     return paths
 
 
-def collect_metadata(
-    argv: List[str],
-    sample_path: Path,
-    format_: str,
-    os_: str,
-    rules_path: List[Path],
-    extractor: capa.features.extractors.base_extractor.FeatureExtractor,
-) -> rdoc.Metadata:
-    md5 = hashlib.md5()
-    sha1 = hashlib.sha1()
-    sha256 = hashlib.sha256()
-
-    buf = sample_path.read_bytes()
-
-    md5.update(buf)
-    sha1.update(buf)
-    sha256.update(buf)
-
-    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
-    format_ = get_format(sample_path) if format_ == FORMAT_AUTO else format_
-    arch = get_arch(sample_path)
-    os_ = get_os(sample_path) if os_ == OS_AUTO else os_
-
-    return rdoc.Metadata(
-        timestamp=datetime.datetime.now(),
-        version=capa.version.__version__,
-        argv=tuple(argv) if argv else None,
-        sample=rdoc.Sample(
-            md5=md5.hexdigest(),
-            sha1=sha1.hexdigest(),
-            sha256=sha256.hexdigest(),
-            path=sample_path.resolve().absolute().as_posix(),
-        ),
-        analysis=rdoc.Analysis(
+def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
+    if isinstance(extractor, StaticFeatureExtractor):
+        return rdoc.StaticAnalysis(
             format=format_,
             arch=arch,
             os=os_,
             extractor=extractor.__class__.__name__,
-            rules=rules,
+            rules=tuple(rules_path),
             base_address=frz.Address.from_capa(extractor.get_base_address()),
-            layout=rdoc.Layout(
+            layout=rdoc.StaticLayout(
                 functions=(),
                 # this is updated after capabilities have been collected.
                 # will look like:
                 #
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
-            feature_counts=rdoc.FeatureCounts(file=0, functions=()),
-            library_functions=(),
+            feature_counts=counts["feature_counts"],
+            library_functions=counts["library_functions"],
+        )
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return rdoc.DynamicAnalysis(
+            format=format_,
+            arch=arch,
+            os=os_,
+            extractor=extractor.__class__.__name__,
+            rules=tuple(rules_path),
+            layout=rdoc.DynamicLayout(
+                processes=(),
+            ),
+            feature_counts=counts["feature_counts"],
+        )
+    else:
+        raise ValueError("invalid extractor type")
+
+
+def collect_metadata(
+    argv: List[str],
+    sample_path: Path,
+    format_: str,
+    os_: str,
+    rules_path: List[Path],
+    extractor: FeatureExtractor,
+    counts: dict,
+) -> rdoc.Metadata:
+    # if it's a binary sample we hash it, if it's a report
+    # we fetch the hashes from the report
+    sample_hashes: SampleHashes = extractor.get_sample_hashes()
+    md5, sha1, sha256 = sample_hashes.md5, sample_hashes.sha1, sample_hashes.sha256
+
+    global_feats = list(extractor.extract_global_features())
+    extractor_format = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Format)]
+    extractor_arch = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Arch)]
+    extractor_os = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.OS)]
+
+    format_ = str(extractor_format[0]) if extractor_format else "unknown" if format_ == FORMAT_AUTO else format_
+    arch = str(extractor_arch[0]) if extractor_arch else "unknown"
+    os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
+
+    if isinstance(extractor, StaticFeatureExtractor):
+        meta_class: type = rdoc.StaticMetadata
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        meta_class = rdoc.DynamicMetadata
+    else:
+        assert_never(extractor)
+
+    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
+
+    return meta_class(
+        timestamp=datetime.datetime.now(),
+        version=capa.version.__version__,
+        argv=tuple(argv) if argv else None,
+        sample=rdoc.Sample(
+            md5=md5,
+            sha1=sha1,
+            sha256=sha256,
+            path=Path(sample_path).resolve().as_posix(),
+        ),
+        analysis=get_sample_analysis(
+            format_,
+            arch,
+            os_,
+            extractor,
+            rules,
+            counts,
         ),
     )
 
 
-def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
+def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabilities: MatchResults) -> rdoc.DynamicLayout:
+    """
+    compute a metadata structure that links threads
+    to the processes in which they're found.
+
+    only collect the threads at which some rule matched.
+    otherwise, we may pollute the json document with
+    a large amount of un-referenced data.
+    """
+    assert isinstance(extractor, DynamicFeatureExtractor)
+
+    matched_calls: Set[Address] = set()
+
+    def result_rec(result: capa.features.common.Result):
+        for loc in result.locations:
+            if isinstance(loc, capa.features.address.DynamicCallAddress):
+                matched_calls.add(loc)
+        for child in result.children:
+            result_rec(child)
+
+    for matches in capabilities.values():
+        for _, result in matches:
+            result_rec(result)
+
+    names_by_process: Dict[Address, str] = {}
+    names_by_call: Dict[Address, str] = {}
+
+    matched_processes: Set[Address] = set()
+    matched_threads: Set[Address] = set()
+
+    threads_by_process: Dict[Address, List[Address]] = {}
+    calls_by_thread: Dict[Address, List[Address]] = {}
+
+    for p in extractor.get_processes():
+        threads_by_process[p.address] = []
+
+        for t in extractor.get_threads(p):
+            calls_by_thread[t.address] = []
+
+            for c in extractor.get_calls(p, t):
+                if c.address in matched_calls:
+                    names_by_call[c.address] = extractor.get_call_name(p, t, c)
+                    calls_by_thread[t.address].append(c.address)
+
+            if calls_by_thread[t.address]:
+                matched_threads.add(t.address)
+                threads_by_process[p.address].append(t.address)
+
+        if threads_by_process[p.address]:
+            matched_processes.add(p.address)
+            names_by_process[p.address] = extractor.get_process_name(p)
+
+    layout = rdoc.DynamicLayout(
+        processes=tuple(
+            rdoc.ProcessLayout(
+                address=frz.Address.from_capa(p),
+                name=names_by_process[p],
+                matched_threads=tuple(
+                    rdoc.ThreadLayout(
+                        address=frz.Address.from_capa(t),
+                        matched_calls=tuple(
+                            rdoc.CallLayout(
+                                address=frz.Address.from_capa(c),
+                                name=names_by_call[c],
+                            )
+                            for c in calls_by_thread[t]
+                            if c in matched_calls
+                        ),
+                    )
+                    for t in threads
+                    if t in matched_threads
+                )  # this object is open to extension in the future,
+                # such as with the function name, etc.
+            )
+            for p, threads in threads_by_process.items()
+            if p in matched_processes
+        )
+    )
+
+    return layout
+
+
+def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities) -> rdoc.StaticLayout:
     """
     compute a metadata structure that links basic blocks
     to the functions in which they're found.
@@ -820,12 +702,12 @@ def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     matched_bbs = set()
     for rule_name, matches in capabilities.items():
         rule = rules[rule_name]
-        if rule.meta.get("scope") == capa.rules.BASIC_BLOCK_SCOPE:
+        if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
             for addr, _ in matches:
                 assert addr in functions_by_bb
                 matched_bbs.add(addr)
 
-    layout = rdoc.Layout(
+    layout = rdoc.StaticLayout(
         functions=tuple(
             rdoc.FunctionLayout(
                 address=frz.Address.from_capa(f),
@@ -840,6 +722,15 @@ def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
     )
 
     return layout
+
+
+def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
+    if isinstance(extractor, StaticFeatureExtractor):
+        return compute_static_layout(rules, extractor, capabilities)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return compute_dynamic_layout(rules, extractor, capabilities)
+    else:
+        raise ValueError("extractor must be either a static or dynamic extracotr")
 
 
 def install_common_args(parser, wanted=None):
@@ -910,6 +801,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_ELF, "Executable and Linkable Format"),
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
+            (FORMAT_CAPE, "CAPE sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
@@ -1199,7 +1091,7 @@ def main(argv: Optional[List[str]] = None):
             # during the load of the RuleSet, we extract subscope statements into their own rules
             # that are subsequently `match`ed upon. this inflates the total rule count.
             # so, filter out the subscope rules when reporting total number of loaded rules.
-            len(list(filter(lambda r: not r.is_subscope_rule(), rules.rules.values()))),
+            len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
         )
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
@@ -1238,8 +1130,26 @@ def main(argv: Optional[List[str]] = None):
     except (ELFError, OverflowError) as e:
         logger.error("Input file '%s' is not a valid ELF file: %s", args.sample, str(e))
         return E_CORRUPT_FILE
+    except UnsupportedFormatError as e:
+        if format_ == FORMAT_CAPE:
+            log_unsupported_cape_report_error(str(e))
+        else:
+            log_unsupported_format_error()
+        return E_INVALID_FILE_TYPE
+    except EmptyReportError as e:
+        if format_ == FORMAT_CAPE:
+            log_empty_cape_report_error(str(e))
+            return E_EMPTY_REPORT
+        else:
+            log_unsupported_format_error()
+            return E_INVALID_FILE_TYPE
 
+    found_file_limitation = False
     for file_extractor in file_extractors:
+        if isinstance(file_extractor, DynamicFeatureExtractor):
+            # Dynamic feature extractors can handle packed samples
+            continue
+
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
@@ -1251,7 +1161,8 @@ def main(argv: Optional[List[str]] = None):
 
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
-        if has_file_limitation(rules, pure_file_capabilities):
+        found_file_limitation = has_file_limitation(rules, pure_file_capabilities)
+        if found_file_limitation:
             # bail if capa encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
@@ -1273,7 +1184,7 @@ def main(argv: Optional[List[str]] = None):
 
         if format_ == FORMAT_FREEZE:
             # freeze format deserializes directly into an extractor
-            extractor = frz.load(Path(args.sample).read_bytes())
+            extractor: FeatureExtractor = frz.load(Path(args.sample).read_bytes())
         else:
             # all other formats we must create an extractor,
             # such as viv, binary ninja, etc. workspaces
@@ -1291,6 +1202,9 @@ def main(argv: Optional[List[str]] = None):
 
             should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
+            # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
+            #  see same code and show-features above examples
+            #  https://github.com/mandiant/capa/issues/1813
             try:
                 extractor = get_extractor(
                     args.sample,
@@ -1301,8 +1215,11 @@ def main(argv: Optional[List[str]] = None):
                     should_save_workspace,
                     disable_progress=args.quiet or args.debug,
                 )
-            except UnsupportedFormatError:
-                log_unsupported_format_error()
+            except UnsupportedFormatError as e:
+                if format_ == FORMAT_CAPE:
+                    log_unsupported_cape_report_error(str(e))
+                else:
+                    log_unsupported_format_error()
                 return E_INVALID_FILE_TYPE
             except UnsupportedArchError:
                 log_unsupported_arch_error()
@@ -1311,16 +1228,13 @@ def main(argv: Optional[List[str]] = None):
                 log_unsupported_os_error()
                 return E_INVALID_FILE_OS
 
-        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor)
-
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta.analysis.feature_counts = counts["feature_counts"]
-        meta.analysis.library_functions = counts["library_functions"]
+        meta = collect_metadata(argv, args.sample, args.format, args.os, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
-        if has_file_limitation(rules, capabilities):
-            # bail if capa encountered file limitation e.g. a packed binary
+        if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
+            # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION

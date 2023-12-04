@@ -46,7 +46,7 @@ def test_doc_to_pb2(request, rd_file):
         assert matches.meta.name == m.name
         assert cmp_optional(matches.meta.namespace, m.namespace)
         assert list(matches.meta.authors) == m.authors
-        assert capa.render.proto.scope_to_pb2(matches.meta.scope) == m.scope
+        assert capa.render.proto.scopes_to_pb2(matches.meta.scopes) == m.scopes
 
         assert len(matches.meta.attack) == len(m.attack)
         for rd_attack, proto_attack in zip(matches.meta.attack, m.attack):
@@ -116,10 +116,27 @@ def test_addr_to_pb2():
 
 
 def test_scope_to_pb2():
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FILE_SCOPE)) == capa_pb2.SCOPE_FILE
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.FUNCTION_SCOPE)) == capa_pb2.SCOPE_FUNCTION
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.BASIC_BLOCK_SCOPE)) == capa_pb2.SCOPE_BASIC_BLOCK
-    assert capa.render.proto.scope_to_pb2(capa.rules.Scope(capa.rules.INSTRUCTION_SCOPE)) == capa_pb2.SCOPE_INSTRUCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FILE) == capa_pb2.SCOPE_FILE
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.FUNCTION) == capa_pb2.SCOPE_FUNCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.BASIC_BLOCK) == capa_pb2.SCOPE_BASIC_BLOCK
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.INSTRUCTION) == capa_pb2.SCOPE_INSTRUCTION
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.PROCESS) == capa_pb2.SCOPE_PROCESS
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.THREAD) == capa_pb2.SCOPE_THREAD
+    assert capa.render.proto.scope_to_pb2(capa.rules.Scope.CALL) == capa_pb2.SCOPE_CALL
+
+
+def test_scopes_to_pb2():
+    assert capa.render.proto.scopes_to_pb2(
+        capa.rules.Scopes.from_dict({"static": "file", "dynamic": "file"})
+    ) == capa_pb2.Scopes(
+        static=capa_pb2.SCOPE_FILE,
+        dynamic=capa_pb2.SCOPE_FILE,
+    )
+    assert capa.render.proto.scopes_to_pb2(
+        capa.rules.Scopes.from_dict({"static": "file", "dynamic": "unsupported"})
+    ) == capa_pb2.Scopes(
+        static=capa_pb2.SCOPE_FILE,
+    )
 
 
 def cmp_optional(a: Any, b: Any) -> bool:
@@ -128,7 +145,59 @@ def cmp_optional(a: Any, b: Any) -> bool:
     return a == b
 
 
+def assert_static_analyis(analysis: rd.StaticAnalysis, dst: capa_pb2.StaticAnalysis):
+    assert analysis.format == dst.format
+    assert analysis.arch == dst.arch
+    assert analysis.os == dst.os
+    assert analysis.extractor == dst.extractor
+    assert list(analysis.rules) == dst.rules
+
+    assert capa.render.proto.addr_to_pb2(analysis.base_address) == dst.base_address
+
+    assert len(analysis.layout.functions) == len(dst.layout.functions)
+    for rd_f, proto_f in zip(analysis.layout.functions, dst.layout.functions):
+        assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
+
+        assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
+        for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
+            assert capa.render.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
+
+    assert analysis.feature_counts.file == dst.feature_counts.file
+    assert len(analysis.feature_counts.functions) == len(dst.feature_counts.functions)
+    for rd_cf, proto_cf in zip(analysis.feature_counts.functions, dst.feature_counts.functions):
+        assert capa.render.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
+        assert rd_cf.count == proto_cf.count
+
+    assert len(analysis.library_functions) == len(dst.library_functions)
+    for rd_lf, proto_lf in zip(analysis.library_functions, dst.library_functions):
+        assert capa.render.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
+        assert rd_lf.name == proto_lf.name
+
+
+def assert_dynamic_analyis(analysis: rd.DynamicAnalysis, dst: capa_pb2.DynamicAnalysis):
+    assert analysis.format == dst.format
+    assert analysis.arch == dst.arch
+    assert analysis.os == dst.os
+    assert analysis.extractor == dst.extractor
+    assert list(analysis.rules) == dst.rules
+
+    assert len(analysis.layout.processes) == len(dst.layout.processes)
+    for rd_p, proto_p in zip(analysis.layout.processes, dst.layout.processes):
+        assert capa.render.proto.addr_to_pb2(rd_p.address) == proto_p.address
+
+        assert len(rd_p.matched_threads) == len(proto_p.matched_threads)
+        for rd_t, proto_t in zip(rd_p.matched_threads, proto_p.matched_threads):
+            assert capa.render.proto.addr_to_pb2(rd_t.address) == proto_t.address
+
+    assert analysis.feature_counts.processes == dst.feature_counts.processes
+    assert len(analysis.feature_counts.processes) == len(dst.feature_counts.processes)
+    for rd_cp, proto_cp in zip(analysis.feature_counts.processes, dst.feature_counts.processes):
+        assert capa.render.proto.addr_to_pb2(rd_cp.address) == proto_cp.address
+        assert rd_cp.count == proto_cp.count
+
+
 def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
+    assert isinstance(meta.analysis, rd.StaticAnalysis)
     assert str(meta.timestamp) == dst.timestamp
     assert meta.version == dst.version
     if meta.argv is None:
@@ -141,31 +210,18 @@ def assert_meta(meta: rd.Metadata, dst: capa_pb2.Metadata):
     assert meta.sample.sha256 == dst.sample.sha256
     assert meta.sample.path == dst.sample.path
 
-    assert meta.analysis.format == dst.analysis.format
-    assert meta.analysis.arch == dst.analysis.arch
-    assert meta.analysis.os == dst.analysis.os
-    assert meta.analysis.extractor == dst.analysis.extractor
-    assert list(meta.analysis.rules) == dst.analysis.rules
-    assert capa.render.proto.addr_to_pb2(meta.analysis.base_address) == dst.analysis.base_address
-
-    assert len(meta.analysis.layout.functions) == len(dst.analysis.layout.functions)
-    for rd_f, proto_f in zip(meta.analysis.layout.functions, dst.analysis.layout.functions):
-        assert capa.render.proto.addr_to_pb2(rd_f.address) == proto_f.address
-
-        assert len(rd_f.matched_basic_blocks) == len(proto_f.matched_basic_blocks)
-        for rd_bb, proto_bb in zip(rd_f.matched_basic_blocks, proto_f.matched_basic_blocks):
-            assert capa.render.proto.addr_to_pb2(rd_bb.address) == proto_bb.address
-
-    assert meta.analysis.feature_counts.file == dst.analysis.feature_counts.file
-    assert len(meta.analysis.feature_counts.functions) == len(dst.analysis.feature_counts.functions)
-    for rd_cf, proto_cf in zip(meta.analysis.feature_counts.functions, dst.analysis.feature_counts.functions):
-        assert capa.render.proto.addr_to_pb2(rd_cf.address) == proto_cf.address
-        assert rd_cf.count == proto_cf.count
-
-    assert len(meta.analysis.library_functions) == len(dst.analysis.library_functions)
-    for rd_lf, proto_lf in zip(meta.analysis.library_functions, dst.analysis.library_functions):
-        assert capa.render.proto.addr_to_pb2(rd_lf.address) == proto_lf.address
-        assert rd_lf.name == proto_lf.name
+    if meta.flavor == rd.Flavor.STATIC:
+        assert dst.flavor == capa_pb2.FLAVOR_STATIC
+        assert dst.WhichOneof("analysis2") == "static_analysis"
+        assert isinstance(meta.analysis, rd.StaticAnalysis)
+        assert_static_analyis(meta.analysis, dst.static_analysis)
+    elif meta.flavor == rd.Flavor.DYNAMIC:
+        assert dst.flavor == capa_pb2.FLAVOR_DYNAMIC
+        assert dst.WhichOneof("analysis2") == "dynamic_analysis"
+        assert isinstance(meta.analysis, rd.DynamicAnalysis)
+        assert_dynamic_analyis(meta.analysis, dst.dynamic_analysis)
+    else:
+        assert_never(dst.flavor)
 
 
 def assert_match(ma: rd.Match, mb: capa_pb2.Match):
@@ -318,20 +374,22 @@ def assert_round_trip(doc: rd.ResultDocument):
     # show the round trip works
     # first by comparing the objects directly,
     # which works thanks to pydantic model equality.
+    assert one.meta == two.meta
+    assert one.rules == two.rules
     assert one == two
+
     # second by showing their protobuf representations are the same.
-    assert capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True) == capa.render.proto.doc_to_pb2(
-        two
-    ).SerializeToString(deterministic=True)
+    one_bytes = capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True)
+    two_bytes = capa.render.proto.doc_to_pb2(two).SerializeToString(deterministic=True)
+    assert one_bytes == two_bytes
 
     # now show that two different versions are not equal.
     three = copy.deepcopy(two)
     three.meta.__dict__.update({"version": "0.0.0"})
     assert one.meta.version != three.meta.version
     assert one != three
-    assert capa.render.proto.doc_to_pb2(one).SerializeToString(deterministic=True) != capa.render.proto.doc_to_pb2(
-        three
-    ).SerializeToString(deterministic=True)
+    three_bytes = capa.render.proto.doc_to_pb2(three).SerializeToString(deterministic=True)
+    assert one_bytes != three_bytes
 
 
 @pytest.mark.parametrize(
@@ -343,6 +401,7 @@ def assert_round_trip(doc: rd.ResultDocument):
         pytest.param("a076114_rd"),
         pytest.param("pma0101_rd"),
         pytest.param("dotnet_1c444e_rd"),
+        pytest.param("dynamic_a0000a6_rd"),
     ],
 )
 def test_round_trip(request, rd_file):

@@ -20,17 +20,23 @@ import capa.features.extractors.viv.function
 import capa.features.extractors.viv.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class VivisectFeatureExtractor(FeatureExtractor):
+class VivisectFeatureExtractor(StaticFeatureExtractor):
     def __init__(self, vw, path: Path, os):
-        super().__init__()
         self.vw = vw
         self.path = path
         self.buf = path.read_bytes()
+        super().__init__(hashes=SampleHashes.from_bytes(self.buf))
 
         # pre-compute these because we'll yield them at *every* scope.
         self.global_features: List[Tuple[Feature, Address]] = []
