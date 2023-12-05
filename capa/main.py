@@ -18,10 +18,10 @@ import argparse
 import datetime
 import textwrap
 import contextlib
-from functools import partial
 from types import TracebackType
 from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
+from functools import partial
 
 import halo
 import colorama
