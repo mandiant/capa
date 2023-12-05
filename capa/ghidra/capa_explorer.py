@@ -30,6 +30,7 @@ logger = logging.getLogger("capa_explorer")
 
 # Ghidra helpers
 
+
 def add_bookmark(addr, txt, category="CapaExplorer"):
     """create bookmark at addr"""
     currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
@@ -75,9 +76,9 @@ class CapaMatchData:
 
         return cmd.getNamespace()
 
-#    def add_bookmark(self, addr, txt, category="CapaExplorer"):
-#        """create bookmark at addr"""
-#        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
+    #    def add_bookmark(self, addr, txt, category="CapaExplorer"):
+    #        """create bookmark at addr"""
+    #        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
 
     def tag_functions(self):
         """create function tags for capabilities"""
