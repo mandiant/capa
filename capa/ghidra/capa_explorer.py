@@ -28,9 +28,15 @@ import capa.features.extractors.ghidra.extractor
 
 logger = logging.getLogger("capa_explorer")
 
+# Ghidra helpers
 
-class CAPADATA:
-    def __init__(self, namespace, scope, capability, locations, node, attack=None):
+def add_bookmark(addr, txt, category="CapaExplorer"):
+    """create bookmark at addr"""
+    currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
+
+
+class CapaMatchData:
+    def __init__(self, namespace, scope, capability, locations, node, attack={}):
         self.namespace = namespace
         self.scope = scope
         self.capability = capability
@@ -39,7 +45,7 @@ class CAPADATA:
         self.attack = attack
 
     def recurse_node(self, node_dict):
-        """pull string data by recursing node dicts"""
+        """pull match descriptions by recursing node dicts"""
 
         if not node_dict:
             # KeyError
@@ -69,9 +75,9 @@ class CAPADATA:
 
         return cmd.getNamespace()
 
-    def add_bookmark(self, addr, txt, category="CapaExplorer"):
-        """create bookmark at addr"""
-        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
+#    def add_bookmark(self, addr, txt, category="CapaExplorer"):
+#        """create bookmark at addr"""
+#        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
 
     def tag_functions(self):
         """create function tags for capabilities"""
@@ -79,39 +85,40 @@ class CAPADATA:
         # self.locations[0] will always be the largest
         # scoped offset yielded i.e. closest to an entrypoint
         addr = toAddr(hex(self.locations[0]))  # type: ignore [name-defined] # noqa: F821
-        f = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
+        func = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
 
         # bookmark Mitre ATT&CK tactics @ function scope
-        if f:
-            f.addTag(self.capability)
-            if self.attack:
-                for item in self.attack:
-                    attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
-                    self.add_bookmark(addr, attack_txt, "CapaExplorer::Mitre ATT&CK")
+        if func:
+            func.addTag(self.capability)
+            for item in self.attack:
+                attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
+                add_bookmark(addr, attack_txt, "CapaExplorer::Mitre ATT&CK")
 
     def bookmark_locations(self):
         """bookmark & label findings at all scopes"""
-        st = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
-        ns = self.create_namespace()
+        symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
+        name_space = self.create_namespace()
 
         for addr in self.locations:
             txt = self.capability.replace(" ", "-")
             a = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
 
-            self.add_bookmark(a, txt)
+            add_bookmark(a, txt)
 
             # avoid re-naming functions
+            # to namespace/rule names
             to_cont = False
-            for s in st.getSymbols(a):
-                if s.getSymbolType() == SymbolType.FUNCTION:
+            for sym in symbol_table.getSymbols(a):
+                if sym.getSymbolType() == SymbolType.FUNCTION:
                     to_cont = True
-                    txt = s.getName()
-                    createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                    txt = sym.getName()
+                    # label to classify function under capa-generated namespace
+                    createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
             if to_cont:
                 continue
 
-            # create labels at basic block & insn scopes
+            # greedily create labels at basic block & insn scopes
             node_to_parse = self.node[self.locations.index(addr)]
             if node_to_parse:
                 txt = self.recurse_node(node_to_parse)
@@ -120,10 +127,11 @@ class CAPADATA:
                     continue
 
                 txt = txt.replace(" ", "-")
-                createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
                 continue
 
-            createLabel(a, txt, ns, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+            # handle first address of match
+            createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
 
 def get_capabilities():
@@ -156,15 +164,17 @@ def get_capabilities():
 
 
 def get_locations(match_dict):
-    """recursively collect data from matches"""
+    """recursively collect match addresses and associated nodes"""
     if "locations" in match_dict:
-        for loc in match_dict.get("locations"):
+        for loc in match_dict.get("locations", {}):
             if "type" in loc:
-                if loc.get("type") == "absolute" or loc.get("type") == "file":
+                # either an rva (absolute)
+                # or an offset into a file (file)
+                if loc.get("type", "") in ("absolute", "file"):
                     yield loc.get("value"), match_dict.get("node")
 
     if match_dict["children"]:
-        for child in match_dict.get("children"):
+        for child in match_dict.get("children", {}):
             yield from get_locations(child)
 
 
@@ -188,6 +198,7 @@ def parse_json(capa_data):
         # scope match for the rule
         this_scope = meta["scopes"].get("static")
         with suppress(KeyError):
+            # always grab first location of match
             this_locs.append(this_capability["matches"][0][0]["value"])
             # align node data
             this_node.append({})
@@ -201,12 +212,14 @@ def parse_json(capa_data):
             this_namespace = "capa"
 
         # recurse to find all locations
+        # grab second dict, containing additional matches
+        # and node data
         matches = this_capability["matches"][0][1]
         for m in get_locations(matches):
             this_locs.append(m[0])
             this_node.append(m[1])
 
-        ghidra_data.append(CAPADATA(this_namespace, this_scope, rule, this_locs, this_node, this_attack))
+        ghidra_data.append(CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack))
 
     return ghidra_data
 
@@ -224,14 +237,12 @@ def main():
     if not capa.ghidra.helpers.is_supported_arch_type():
         return capa.main.E_INVALID_FILE_ARCH
 
-    if isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
-        return 0
-    else:
+    if not isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
         capa_data = json.loads(get_capabilities())
         for item in parse_json(capa_data):
             item.tag_functions()
             item.bookmark_locations()
-        return 0
+    return 0
 
 
 if __name__ == "__main__":
