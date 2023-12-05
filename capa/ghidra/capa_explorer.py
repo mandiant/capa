@@ -13,7 +13,7 @@ import sys
 import json
 import logging
 import pathlib
-from typing import Dict, List
+from typing import Any, Dict, List
 from contextlib import suppress
 
 from ghidra.app.cmd.label import CreateNamespacesCmd
@@ -37,7 +37,7 @@ def add_bookmark(addr, txt, category="CapaExplorer"):
 
 
 class CapaMatchData:
-    def __init__(self, namespace, scope, capability, locations, node, attack={}):
+    def __init__(self, namespace, scope, capability, locations, node, attack: Dict[Any, Any]):
         self.namespace = namespace
         self.scope = scope
         self.capability = capability
@@ -49,19 +49,24 @@ class CapaMatchData:
         """pull match descriptions by recursing node dicts"""
 
         if not node_dict:
-            # KeyError
+            # mismatched key, skip
             # ex. {'type':'subscope', 'scope':'basic block'}
             return ""
 
         if isinstance(node_dict, int):
+            # Number operands, usually parameters or immediates
             node_dict = hex(node_dict)
 
         if isinstance(node_dict, str):
+            # expect the "description" key's string value
             return node_dict
 
         if "description" in node_dict:
             return node_dict.get("description")
         else:
+            # if no "description" key, the "type" key's value is the
+            # expected key.
+            # ex. {'type':'api', 'api':'RegisterServiceCtrlHandler'}
             return self.recurse_node(node_dict.get(node_dict.get("type")))
 
     def create_namespace(self):
@@ -75,10 +80,6 @@ class CapaMatchData:
         cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
 
         return cmd.getNamespace()
-
-    #    def add_bookmark(self, addr, txt, category="CapaExplorer"):
-    #        """create bookmark at addr"""
-    #        currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
 
     def tag_functions(self):
         """create function tags for capabilities"""
