@@ -1056,7 +1056,7 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    sys.excepthook = last_resort_exception_handler(args)
+    sys.excepthook = last_resort_exception_handler(args, None, None, None)
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
