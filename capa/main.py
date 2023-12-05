@@ -18,6 +18,7 @@ import argparse
 import datetime
 import textwrap
 import contextlib
+from functools import partial
 from types import TracebackType
 from typing import Any, Set, Dict, List, Type, Callable, Optional
 from pathlib import Path
@@ -982,36 +983,31 @@ def handle_common_args(args):
 
 def last_resort_exception_handler(
     args: argparse.Namespace,
-    exctype: Optional[Type[BaseException]],
-    value: Optional[BaseException],
-    traceback: Optional[TracebackType],
+    exctype,
+    value: BaseException,
+    traceback: TracebackType,
 ):
     """
     custom exception handler to replace the default sys.excepthook,
     prints traceback in debug mode, otherwise prints helpful message
 
-    using "nonlocal" keyword and closure code construct enables
-    last_resort_exception_handler args to first be initialized and
-    then be updated if the function needs to handle an exception
+    args:
+      exctype (type[BaseException]): exception class  # Once capa drops support for Python 3.8, move this to the type annotation in the function parameters
     """
 
-    def handle_exception_information(args):
-        try:
-            nonlocal exctype, value, traceback
-            if "-d" or "--debug" in args.debug:
-                return sys.__excepthook__(exctype, value, traceback)
-            else:
-                print(
-                    f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-                    + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-                    + "can improve the code! (https://github.com/mandiant/capa/issues)"
-                )
+    try:
+        if args.debug:
+            return sys.__excepthook__(exctype, value, traceback)
+        else:
+            print(
+                f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+                + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+                + "can improve the code! (https://github.com/mandiant/capa/issues)"
+            )
 
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error("%s", str(e))
-            return E_UNHANDLED
-
-    return handle_exception_information
+    except Exception as e:  # pylint: disable=broad-except
+        logger.error("%s", str(e))
+        return E_UNHANDLED
 
 
 def main(argv: Optional[List[str]] = None):
@@ -1056,7 +1052,8 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    sys.excepthook = last_resort_exception_handler(args, None, None, None)
+    last_resort_params_partially_bound = partial(args)
+    sys.excepthook = last_resort_params_partially_bound
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
