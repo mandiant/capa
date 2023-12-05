@@ -982,7 +982,7 @@ def handle_common_args(args):
 
 def last_resort_exception_handler(
     args: argparse.Namespace,
-    exctype: Optional[typing.Type[BaseException]],
+    exctype: Optional[Type[BaseException]],
     value: Optional[BaseException],
     traceback: Optional[TracebackType],
 ):
