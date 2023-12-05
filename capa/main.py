@@ -20,7 +20,7 @@ import textwrap
 import contextlib
 from functools import partial
 from types import TracebackType
-from typing import Any, Set, Dict, List, Type, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -1052,7 +1052,7 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    last_resort_params_partially_bound = partial(args)
+    last_resort_params_partially_bound = partial(last_resort_exception_handler, args)
     sys.excepthook = last_resort_params_partially_bound
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
