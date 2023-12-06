@@ -53,6 +53,8 @@ class AddressType(str, Enum):
     FILE = "file"
     DN_TOKEN = "dn token"
     DN_TOKEN_OFFSET = "dn token offset"
+    DEX_METHOD_INDEX = "dex method index"
+    DEX_CLASS_INDEX = "dex class index"
     PROCESS = "process"
     THREAD = "thread"
     CALL = "call"
@@ -79,6 +81,12 @@ class Address(HashableModel):
 
         elif isinstance(a, capa.features.address.DNTokenOffsetAddress):
             return cls(type=AddressType.DN_TOKEN_OFFSET, value=(a.token, a.offset))
+
+        elif isinstance(a, capa.features.address.DexMethodAddress):
+            return cls(type=AddressType.DEX_METHOD_INDEX, value=int(a))
+
+        elif isinstance(a, capa.features.address.DexClassAddress):
+            return cls(type=AddressType.DEX_CLASS_INDEX, value=int(a))
 
         elif isinstance(a, capa.features.address.ProcessAddress):
             return cls(type=AddressType.PROCESS, value=(a.ppid, a.pid))
@@ -124,6 +132,14 @@ class Address(HashableModel):
             assert isinstance(token, int)
             assert isinstance(offset, int)
             return capa.features.address.DNTokenOffsetAddress(token, offset)
+
+        elif self.type is AddressType.DEX_METHOD_INDEX:
+            assert isinstance(self.value, int)
+            return capa.features.address.DexMethodAddress(self.value)
+
+        elif self.type is AddressType.DEX_CLASS_INDEX:
+            assert isinstance(self.value, int)
+            return capa.features.address.DexClassAddress(self.value)
 
         elif self.type is AddressType.PROCESS:
             assert isinstance(self.value, tuple)

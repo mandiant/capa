@@ -54,6 +54,12 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(token, int)
         assert isinstance(offset, int)
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
+    elif address.type == frz.AddressType.DEX_METHOD_INDEX:
+        assert isinstance(address.value, int)
+        return f"method({capa.helpers.hex(address.value)})"
+    elif address.type == frz.AddressType.DEX_CLASS_INDEX:
+        assert isinstance(address.value, int)
+        return f"class({capa.helpers.hex(address.value)})"
     elif address.type == frz.AddressType.PROCESS:
         assert isinstance(address.value, tuple)
         ppid, pid = address.value

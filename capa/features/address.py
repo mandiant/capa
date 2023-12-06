@@ -177,6 +177,34 @@ class DNTokenOffsetAddress(Address):
         return self.token + self.offset
 
 
+class DexMethodAddress(int, Address):
+    def __new__(cls, index: int):
+        return int.__new__(cls, index)
+
+    def __repr__(self):
+        return f"DexMethodAddress(index={int(self)})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def __hash__(self):
+        return int.__hash__(self)
+
+
+class DexClassAddress(int, Address):
+    def __new__(cls, index: int):
+        return int.__new__(cls, index)
+
+    def __repr__(self):
+        return f"DexClassAddress(index={int(self)})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def __hash__(self):
+        return int.__hash__(self)
+
+
 class _NoAddress(Address):
     def __eq__(self, other):
         return True
