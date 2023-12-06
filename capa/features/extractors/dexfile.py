@@ -318,27 +318,38 @@ class DexFeatureExtractor(StaticFeatureExtractor):
         yield from self.analysis.extract_file_features()
 
     def is_library_function(self, addr: Address) -> bool:
-        # exclude androidx stuff?
-        return super().is_library_function(addr)
+        assert isinstance(addr, DexMethodAddress)
+        method = self.analysis.methods_by_address[addr]
+        # exclude androidx/kotlin stuff?
+        return not method.has_code
+
+    def get_function_name(self, addr: Address) -> str:
+        assert isinstance(addr, DexMethodAddress)
+        method = self.analysis.methods_by_address[addr]
+        return method.qualified_name
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         if not self.code_analysis:
             raise Exception("code analysis is disabled")
 
         for method in self.analysis.methods:
-            yield FunctionHandle(DexMethodAddress(method.code_offset), self.analysis)
+            yield FunctionHandle(DexMethodAddress(method.code_offset), method)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         if not self.code_analysis:
             raise Exception("code analysis is disabled")
-        return self.todo()
-        yield
+        method: DexAnalyzedMethod = f.inner
+        if method.has_code:
+            return self.todo()
+            yield
 
     def get_basic_blocks(self, f: FunctionHandle) -> Iterator[BBHandle]:
         if not self.code_analysis:
             raise Exception("code analysis is disabled")
-        return self.todo()
-        yield
+        method: DexAnalyzedMethod = f.inner
+        if method.has_code:
+            return self.todo()
+            yield
 
     def extract_basic_block_features(self, f: FunctionHandle, bb: BBHandle) -> Iterator[Tuple[Feature, Address]]:
         if not self.code_analysis:
