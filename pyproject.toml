@@ -50,6 +50,7 @@ dependencies = [
     "dncil==1.0.2",
     "pydantic==2.4.0",
     "protobuf==4.23.4",
+    "dexparser==1.2.0",
 ]
 dynamic = ["version"]
 

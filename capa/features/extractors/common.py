@@ -24,8 +24,11 @@ from capa.features.common import (
     OS_AUTO,
     ARCH_ANY,
     FORMAT_PE,
+    FORMAT_DEX,
     FORMAT_ELF,
+    OS_ANDROID,
     OS_WINDOWS,
+    ARCH_DALVIK,
     FORMAT_FREEZE,
     FORMAT_RESULT,
     Arch,
@@ -41,6 +44,7 @@ logger = logging.getLogger(__name__)
 # match strings for formats
 MATCH_PE = b"MZ"
 MATCH_ELF = b"\x7fELF"
+MATCH_DEX = b"dex\n"
 MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
@@ -61,6 +65,8 @@ def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_PE), NO_ADDRESS
     elif buf.startswith(MATCH_ELF):
         yield Format(FORMAT_ELF), NO_ADDRESS
+    elif len(buf) > 8 and buf.startswith(MATCH_DEX) and buf[7] == 0x00:
+        yield Format(FORMAT_DEX), NO_ADDRESS
     elif is_freeze(buf):
         yield Format(FORMAT_FREEZE), NO_ADDRESS
     elif buf.startswith(MATCH_RESULT):
@@ -96,6 +102,9 @@ def extract_arch(buf) -> Iterator[Tuple[Feature, Address]]:
 
         yield Arch(arch), NO_ADDRESS
 
+    elif len(buf) > 8 and buf.startswith(MATCH_DEX) and buf[7] == 0x00:
+        yield Arch(ARCH_DALVIK), NO_ADDRESS
+
     else:
         # we likely end up here:
         #  1. handling shellcode, or
@@ -128,6 +137,9 @@ def extract_os(buf, os=OS_AUTO) -> Iterator[Tuple[Feature, Address]]:
             return
 
         yield OS(os), NO_ADDRESS
+
+    elif len(buf) > 8 and buf.startswith(MATCH_DEX) and buf[7] == 0x00:
+        yield OS(OS_ANDROID), NO_ADDRESS
 
     else:
         # we likely end up here:
