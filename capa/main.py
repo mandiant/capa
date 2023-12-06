@@ -309,9 +309,9 @@ def get_extractor(
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     elif format_ == FORMAT_DEX:
-        import capa.features.extractors.dexparser.extractor
+        import capa.features.extractors.dexfile
 
-        return capa.features.extractors.dexparser.extractor.DexparserFeatureExtractor(path)
+        return capa.features.extractors.dexfile.DexFeatureExtractor(path, code_analysis=True)
 
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
@@ -382,7 +382,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
 
     elif format_ == capa.features.common.FORMAT_DEX:
-        file_extractors.append(capa.features.extractors.dexfile.DexFileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.dexfile.DexFeatureExtractor(sample, code_analysis=False))
 
     elif format_ == FORMAT_CAPE:
         report = json.load(Path(sample).open(encoding="utf-8"))
