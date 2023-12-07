@@ -96,13 +96,13 @@ def get_auto_format(path: Path) -> str:
 def get_format(sample: Path) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
-    from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
+    from capa.features.extractors.dotnetfile import DotnetFileFeatureExtractor
 
     buf = sample.read_bytes()
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):
-            dnfile_extractor = DnfileFeatureExtractor(sample)
+            dnfile_extractor = DotnetFileFeatureExtractor(sample)
             if dnfile_extractor.is_dotnet_file():
                 feature = Format(FORMAT_DOTNET)
 
