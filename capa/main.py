@@ -44,7 +44,6 @@ import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 import capa.features.extractors.pefile
-import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
@@ -370,7 +369,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
 
     elif format_ == FORMAT_DOTNET:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
-        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(sample))
 
     elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))

@@ -141,10 +141,11 @@ def get_pefile_extractor(path: Path):
     return extractor
 
 
-def get_dotnetfile_extractor(path: Path):
-    import capa.features.extractors.dotnetfile
+@lru_cache(maxsize=1)
+def get_dnfile_extractor(path: Path):
+    import capa.features.extractors.dnfile.extractor
 
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -153,10 +154,10 @@ def get_dotnetfile_extractor(path: Path):
 
 
 @lru_cache(maxsize=1)
-def get_dnfile_extractor(path: Path):
-    import capa.features.extractors.dnfile.extractor
+def get_dotnetfile_extractor(path: Path):
+    import capa.features.extractors.dotnetfile
 
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
