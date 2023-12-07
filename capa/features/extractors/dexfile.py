@@ -12,11 +12,22 @@ from pathlib import Path
 from dataclasses import dataclass
 
 import dexparser.disassembler as disassembler
-from dexparser import DEXParser
+from dexparser import DEXParser, uleb128_value
 
 from capa.features.file import FunctionName
-from capa.features.common import OS, FORMAT_DEX, OS_ANDROID, ARCH_DALVIK, Arch, Class, Format, Feature, Namespace
-from capa.features.address import NO_ADDRESS, Address, DexClassAddress, DexMethodAddress
+from capa.features.common import (
+    OS,
+    FORMAT_DEX,
+    OS_ANDROID,
+    ARCH_DALVIK,
+    Arch,
+    Class,
+    Format,
+    String,
+    Feature,
+    Namespace,
+)
+from capa.features.address import NO_ADDRESS, Address, DexClassAddress, DexMethodAddress, FileOffsetAddress
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
@@ -50,11 +61,26 @@ class DexAnalyzedMethod:
     shorty_descriptor: str
     return_type: str
     parameters: List[str]
-    code_offset: int = -1
+    id_offset: int = 0
+    code_offset: int = 0
     access_flags: Optional[int] = None
 
     @property
+    def address(self):
+        # NOTE: Some methods do not have code, in that case we use the method_id offset
+        if self.has_code:
+            return self.code_offset
+        else:
+            return self.id_offset
+
+    @property
     def has_code(self):
+        # NOTE: code_offset is zero if the method is abstract/native or not defined in a class
+        return self.code_offset != 0
+
+    @property
+    def has_definition(self):
+        # NOTE: access_flags is only known if the method is defined in a class
         return self.access_flags is not None
 
     @property
@@ -117,9 +143,30 @@ class DexAnnotation(TypedDict):
 
 
 class DexAnalysis:
+    def get_strings(self):
+        # NOTE: Copied from dexparser, upstream later
+
+        strings: List[Tuple[int, bytes]] = []
+        string_ids_off = self.dex.header_data["string_ids_off"]
+
+        for i in range(self.dex.header_data["string_ids_size"]):
+            offset = struct.unpack("<L", self.dex.data[string_ids_off + (i * 4) : string_ids_off + (i * 4) + 4])[0]
+            c_size, size_offset = uleb128_value(self.dex.data, offset)
+            c_char = self.dex.data[offset + size_offset : offset + size_offset + c_size]
+            strings.append((offset, c_char))
+
+        return strings
+
     def __init__(self, dex: DEXParser):
         self.dex = dex
-        self.strings: List[bytes] = dex.get_strings()
+
+        self.strings = self.get_strings()
+        self.strings_utf8: List[str] = []
+        for _, data in self.strings:
+            # NOTE: This is technically incorrect
+            # Reference: https://source.android.com/devices/tech/dalvik/dex-format#mutf-8
+            self.strings_utf8.append(data.decode("utf-8", errors="backslashreplace"))
+
         self.type_ids: List[int] = dex.get_typeids()
         self.method_ids: List[DexMethodId] = dex.get_methods()
         self.proto_ids: List[DexProtoId] = dex.get_protoids()
@@ -130,7 +177,7 @@ class DexAnalysis:
         self.used_classes: Set[str] = set()
         self.classes = self._analyze_classes()
         self.methods = self._analyze_methods()
-        self.methods_by_address: Dict[int, DexAnalyzedMethod] = {m.code_offset: m for m in self.methods}
+        self.methods_by_address: Dict[int, DexAnalyzedMethod] = {m.address: m for m in self.methods}
 
         self.namespaces: Set[str] = set()
         for class_type in self.used_classes:
@@ -152,10 +199,7 @@ class DexAnalysis:
         pass
 
     def get_string(self, index: int) -> str:
-        data = self.strings[index]
-        # NOTE: This is technically incorrect
-        # Reference: https://source.android.com/devices/tech/dalvik/dex-format#mutf-8
-        return data.decode("utf-8", errors="backslashreplace")
+        return self.strings_utf8[index]
 
     def _decode_descriptor(self, descriptor: str) -> str:
         first = descriptor[0]
@@ -250,6 +294,9 @@ class DexAnalysis:
 
         # Fill in the missing method data
         for clazz in self.classes.values():
+            if clazz.data is None:
+                continue
+
             for method_def in clazz.data["direct_methods"]:
                 diff = method_def["diff"]
                 methods[diff].access_flags = method_def["access_flags"]
@@ -263,19 +310,18 @@ class DexAnalysis:
         # Fill in the missing code offsets with fake data
         offset = self.dex.header_data["method_ids_off"]
         for index, method in enumerate(methods):
-            if not method.has_code:
-                method.code_offset = offset + index * 8
+            method.id_offset = offset + index * 8
 
         return methods
 
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield Format(FORMAT_DEX), NO_ADDRESS
 
+        for i in range(len(self.strings)):
+            yield String(self.strings_utf8[i]), FileOffsetAddress(self.strings[i][0])
+
         for method in self.methods:
-            if method.has_code:
-                yield FunctionName(method.qualified_name), DexMethodAddress(method.code_offset)
-            else:
-                yield FunctionName(method.qualified_name), NO_ADDRESS
+            yield FunctionName(method.qualified_name), DexMethodAddress(method.address)
 
         for namespace in self.namespaces:
             yield Namespace(namespace), NO_ADDRESS
@@ -321,7 +367,7 @@ class DexFeatureExtractor(StaticFeatureExtractor):
         assert isinstance(addr, DexMethodAddress)
         method = self.analysis.methods_by_address[addr]
         # exclude androidx/kotlin stuff?
-        return not method.has_code
+        return not method.has_definition
 
     def get_function_name(self, addr: Address) -> str:
         assert isinstance(addr, DexMethodAddress)
@@ -333,7 +379,7 @@ class DexFeatureExtractor(StaticFeatureExtractor):
             raise Exception("code analysis is disabled")
 
         for method in self.analysis.methods:
-            yield FunctionHandle(DexMethodAddress(method.code_offset), method)
+            yield FunctionHandle(DexMethodAddress(method.address), method)
 
     def extract_function_features(self, f: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         if not self.code_analysis:

@@ -178,11 +178,11 @@ class DNTokenOffsetAddress(Address):
 
 
 class DexMethodAddress(int, Address):
-    def __new__(cls, index: int):
-        return int.__new__(cls, index)
+    def __new__(cls, offset: int):
+        return int.__new__(cls, offset)
 
     def __repr__(self):
-        return f"DexMethodAddress(index={int(self)})"
+        return f"DexMethodAddress(offset={hex(self)})"
 
     def __str__(self) -> str:
         return repr(self)
@@ -192,11 +192,11 @@ class DexMethodAddress(int, Address):
 
 
 class DexClassAddress(int, Address):
-    def __new__(cls, index: int):
-        return int.__new__(cls, index)
+    def __new__(cls, offset: int):
+        return int.__new__(cls, offset)
 
     def __repr__(self):
-        return f"DexClassAddress(index={int(self)})"
+        return f"DexClassAddress(offset={hex(self)})"
 
     def __str__(self) -> str:
         return repr(self)
