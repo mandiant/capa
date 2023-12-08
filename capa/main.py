@@ -21,7 +21,6 @@ import contextlib
 from types import TracebackType
 from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
-from functools import partial
 
 import halo
 import colorama
@@ -981,33 +980,20 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def last_resort_exception_handler(
-    args: argparse.Namespace,
-    exctype,
-    value: BaseException,
-    traceback: TracebackType,
-):
+def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
     """
-    custom exception handler to replace the default sys.excepthook,
-    prints traceback in debug mode, otherwise prints helpful message
+    if not in debug mode, prints helpful message on unhandled exceptions
 
     args:
-      exctype (type[BaseException]): exception class  # Once capa drops support for Python 3.8, move this to the type annotation in the function parameters
+      # TODO(aaronatp): Once capa drops support for Python 3.8, move this to the type annotation in the function parameters
+      exctype (type[BaseException]): exception class
     """
 
-    try:
-        if args.debug:
-            return sys.__excepthook__(exctype, value, traceback)
-        else:
-            print(
-                f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-                + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-                + "can improve the code! (https://github.com/mandiant/capa/issues)"
-            )
-
-    except Exception as e:  # pylint: disable=broad-except
-        logger.error("%s", str(e))
-        return E_UNHANDLED
+    print(
+        f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+        + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+        + "can improve the code! (https://github.com/mandiant/capa/issues)"
+    )
 
 
 def main(argv: Optional[List[str]] = None):
@@ -1052,8 +1038,8 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    last_resort_params_partially_bound = partial(last_resort_exception_handler, args)
-    sys.excepthook = last_resort_params_partially_bound
+    if not args.debug:
+        sys.excepthook = simple_message_exception_handler
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
