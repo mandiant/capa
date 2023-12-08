@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Type, Union, Callable, Optional
+from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
 import halo
@@ -113,7 +113,6 @@ E_UNSUPPORTED_GHIDRA_VERSION = 20
 E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 E_EMPTY_REPORT = 23
-E_UNHANDLED = 24
 
 logger = logging.getLogger("capa")
 
@@ -980,13 +979,9 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def simple_message_exception_handler(
-    exctype: Union[type[BaseException], Type[BaseException]],
-    value: BaseException,
-    traceback: TracebackType,
-):
+def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
     """
-    if not in debug mode, prints helpful message on unhandled exceptions
+    prints friendly message on unhandled exceptions to regular users (debug mode shows regular stack trace)
 
     args:
       # TODO(aaronatp): Once capa drops support for Python 3.8, move this to the type annotation in the function parameters
