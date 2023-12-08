@@ -981,7 +981,7 @@ def handle_common_args(args):
 
 def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
     """
-    prints friendly message on unhandled exceptions to regular users (debug mode shows regular stack trace)
+    prints friendly message on unexpected exceptions to regular users (debug mode shows regular stack trace)
 
     args:
       # TODO(aaronatp): Once capa drops support for Python 3.8, move the exctype type annotation to
@@ -989,12 +989,15 @@ def simple_message_exception_handler(exctype, value: BaseException, traceback: T
       # in the main function, see (https://github.com/mandiant/capa/issues/1896)
       exctype (type[BaseException]): exception class
     """
-
-    print(
-        f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
-        + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-        + "can improve the code! (https://github.com/mandiant/capa/issues)"
-    )
+    
+    if exctype is KeyboardInterrupt:
+        print("KeyboardInterrupt detected, program terminated")
+    else:
+        print(
+            f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+            + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+            + "can improve the code! (https://github.com/mandiant/capa/issues)"
+        )
 
 
 def main(argv: Optional[List[str]] = None):
