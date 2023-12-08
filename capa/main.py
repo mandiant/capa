@@ -984,8 +984,9 @@ def simple_message_exception_handler(exctype, value: BaseException, traceback: T
     prints friendly message on unhandled exceptions to regular users (debug mode shows regular stack trace)
 
     args:
-      # TODO(aaronatp): Once capa drops support for Python 3.8, move the type annotation to the function parameters
-      # and remove the "# type: ignore[1]" from the relevant place in the main function
+      # TODO(aaronatp): Once capa drops support for Python 3.8, move the exctype type annotation to the function parameters
+      # and remove the "# type: ignore[incompatible-types]" from the relevant place in the main function
+      # see (https://github.com/mandiant/capa/issues/1896)
       exctype (type[BaseException]): exception class
     """
 
@@ -1038,7 +1039,7 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
-    if not args.debug:  # type: ignore[assignment]
+    if not args.debug:  # type: ignore[incompatible-types]
         sys.excepthook = simple_message_exception_handler
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
