@@ -980,10 +980,11 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def simple_message_exception_handler(exctype: Union[type[BaseException], Type[BaseException]],
-                                     value: BaseException,
-                                     traceback: TracebackType,
-                                    ):
+def simple_message_exception_handler(
+    exctype: Union[type[BaseException], Type[BaseException]],
+    value: BaseException,
+    traceback: TracebackType,
+):
     """
     if not in debug mode, prints helpful message on unhandled exceptions
 
