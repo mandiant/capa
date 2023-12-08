@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Callable, Optional
+from typing import Any, Set, Dict, List, Type, Callable, Optional, Union
 from pathlib import Path
 
 import halo
@@ -980,7 +980,10 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
+def simple_message_exception_handler(exctype: Union[type[BaseException], Type[BaseException]],
+                                     value: BaseException,
+                                     traceback: TracebackType,
+                                    ):
     """
     if not in debug mode, prints helpful message on unhandled exceptions
 
