@@ -989,7 +989,7 @@ def simple_message_exception_handler(exctype, value: BaseException, traceback: T
       # in the main function, see (https://github.com/mandiant/capa/issues/1896)
       exctype (type[BaseException]): exception class
     """
-    
+
     if exctype is KeyboardInterrupt:
         print("KeyboardInterrupt detected, program terminated")
     else:
