@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Type, Callable, Optional, Union
+from typing import Any, Set, Dict, List, Type, Union, Callable, Optional
 from pathlib import Path
 
 import halo
