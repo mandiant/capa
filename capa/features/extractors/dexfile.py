@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import dexparser.disassembler as disassembler
 from dexparser import DEXParser, uleb128_value
 
-from capa.features.file import FunctionName
+from capa.features.file import Import, FunctionName
 from capa.features.common import (
     OS,
     FORMAT_DEX,
@@ -85,7 +85,7 @@ class DexAnalyzedMethod:
 
     @property
     def qualified_name(self):
-        return f"{self.class_type}.{self.name}"
+        return f"{self.class_type}::{self.name}"
 
 
 class DexFieldId(TypedDict):
@@ -321,7 +321,10 @@ class DexAnalysis:
             yield String(self.strings_utf8[i]), FileOffsetAddress(self.strings[i][0])
 
         for method in self.methods:
-            yield FunctionName(method.qualified_name), DexMethodAddress(method.address)
+            if method.has_definition:
+                yield FunctionName(method.qualified_name), DexMethodAddress(method.address)
+            else:
+                yield Import(method.qualified_name), DexMethodAddress(method.address)
 
         for namespace in self.namespaces:
             yield Namespace(namespace), NO_ADDRESS
