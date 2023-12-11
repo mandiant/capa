@@ -28,8 +28,6 @@ import capa.features.extractors.ghidra.extractor
 
 logger = logging.getLogger("capa_explorer")
 
-# Ghidra helpers
-
 
 def add_bookmark(addr, txt, category="CapaExplorer"):
     """create bookmark at addr"""
@@ -37,13 +35,16 @@ def add_bookmark(addr, txt, category="CapaExplorer"):
 
 
 class CapaMatchData:
-    def __init__(self, namespace, scope, capability, locations, node, attack: Dict[Any, Any]):
+    def __init__(
+        self, namespace, scope, capability, locations, node, attack: Dict[Any, Any], mbc: List[Dict[Any, Any]]
+    ):
         self.namespace = namespace
         self.scope = scope
         self.capability = capability
         self.locations = locations
         self.node = node
         self.attack = attack
+        self.mbc = mbc
 
     def recurse_node(self, node_dict):
         """pull match descriptions by recursing node dicts"""
@@ -55,7 +56,7 @@ class CapaMatchData:
 
         if isinstance(node_dict, int):
             # Number operands, usually parameters or immediates
-            node_dict = hex(node_dict)
+            return hex(node_dict)
 
         if isinstance(node_dict, str):
             # expect the "description" key's string value
@@ -89,12 +90,16 @@ class CapaMatchData:
         addr = toAddr(hex(self.locations[0]))  # type: ignore [name-defined] # noqa: F821
         func = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
 
-        # bookmark Mitre ATT&CK tactics @ function scope
+        # bookmark Mitre ATT&CK tactics & MBC @ function scope
         if func:
             func.addTag(self.capability)
             for item in self.attack:
                 attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
                 add_bookmark(addr, attack_txt, "CapaExplorer::Mitre ATT&CK")
+
+            for item in self.mbc:
+                mbc_txt = item.get("objective") + Namespace.DELIMITER + item.get("id")
+                add_bookmark(addr, mbc_txt, "CapaExplorer::MBC")
 
     def bookmark_locations(self):
         """bookmark & label findings at all scopes"""
@@ -194,8 +199,9 @@ def parse_json(capa_data):
         this_capability = rules[rule]
         meta = this_capability["meta"]
 
-        # return MITRE ATT&CK or None
+        # get Mitre ATT&CK and MBC
         this_attack = meta.get("attack")
+        this_mbc = meta.get("mbc")
 
         # scope match for the rule
         this_scope = meta["scopes"].get("static")
@@ -221,7 +227,7 @@ def parse_json(capa_data):
             this_locs.append(m[0])
             this_node.append(m[1])
 
-        ghidra_data.append(CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack))
+        ghidra_data.append(CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack, this_mbc))
 
     return ghidra_data
 
