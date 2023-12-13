@@ -79,7 +79,7 @@ dev = [
     "flake8-copyright==0.2.4",
     "ruff==0.1.7",
     "black==23.11.0",
-    "isort==5.13.0",
+    "isort==5.13.1",
     "mypy==1.7.1",
     "psutil==5.9.2",
     "stix2==3.0.1",
