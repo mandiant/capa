@@ -2,13 +2,13 @@
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
-[![Number of rules](https://img.shields.io/badge/rules-858-blue.svg)](https://github.com/mandiant/capa-rules)
+[![Number of rules](https://img.shields.io/badge/rules-859-blue.svg)](https://github.com/mandiant/capa-rules)
 [![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
 [![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 capa detects capabilities in executable files.
-You run it against a PE, ELF, .NET module, or shellcode file and it tells you what it thinks the program can do.
+You run it against a PE, ELF, .NET module, shellcode file, or a sandbox report and it tells you what it thinks the program can do.
 For example, it might suggest that the file is a backdoor, is capable of installing services, or relies on HTTP to communicate.
 
 Check out:
@@ -125,6 +125,96 @@ function @ 0x4011C0
 ...
 ```
 
+Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox reports for dynamic capabilty extraction.
+In order to use this, you first submit your sample to CAPE for analysis, and then run capa against the generated report (JSON).
+
+Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:
+
+```yaml
+$ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.exe
+WARNING:capa.capabilities.common:--------------------------------------------------------------------------------
+WARNING:capa.capabilities.common: This sample appears to be packed.
+WARNING:capa.capabilities.common: 
+WARNING:capa.capabilities.common: Packed samples have often been obfuscated to hide their logic.
+WARNING:capa.capabilities.common: capa cannot handle obfuscation well using static analysis. This means the results may be misleading or incomplete.
+WARNING:capa.capabilities.common: If possible, you should try to unpack this input file before analyzing it with capa.
+WARNING:capa.capabilities.common: Alternatively, run the sample in a supported sandbox and invoke capa against the report to obtain dynamic analysis results.
+WARNING:capa.capabilities.common: 
+WARNING:capa.capabilities.common: Identified via rule: (internal) packer file limitation
+WARNING:capa.capabilities.common: 
+WARNING:capa.capabilities.common: Use -v or -vv if you really want to see the capabilities identified by capa.
+WARNING:capa.capabilities.common:--------------------------------------------------------------------------------
+
+$ capa 05be49819139a3fdcdbddbdefd298398779521f3d68daa25275cc77508e42310.json
+
+┍━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
+│ ATT&CK Tactic          │ ATT&CK Technique                                                                   │
+┝━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┥
+│ CREDENTIAL ACCESS      │ Credentials from Password Stores T1555                                             │
+├────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ DEFENSE EVASION        │ File and Directory Permissions Modification T1222                                  │
+│                        │ Modify Registry T1112                                                              │
+│                        │ Obfuscated Files or Information T1027                                              │
+│                        │ Virtualization/Sandbox Evasion::User Activity Based Checks T1497.002               │
+├────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ DISCOVERY              │ Account Discovery T1087                                                            │
+│                        │ Application Window Discovery T1010                                                 │
+│                        │ File and Directory Discovery T1083                                                 │
+│                        │ Query Registry T1012                                                               │
+│                        │ System Information Discovery T1082                                                 │
+│                        │ System Location Discovery::System Language Discovery T1614.001                     │
+│                        │ System Owner/User Discovery T1033                                                  │
+├────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ EXECUTION              │ System Services::Service Execution T1569.002                                       │
+├────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
+│ PERSISTENCE            │ Boot or Logon Autostart Execution::Registry Run Keys / Startup Folder T1547.001    │
+│                        │ Boot or Logon Autostart Execution::Winlogon Helper DLL T1547.004                   │
+│                        │ Create or Modify System Process::Windows Service T1543.003                         │
+┕━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
+
+┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑
+│ Capability                                           │ Namespace                                            │
+┝━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┥
+│ check for unmoving mouse cursor (3 matches)          │ anti-analysis/anti-vm/vm-detection                   │
+│ gather bitkinex information                          │ collection/file-managers                             │
+│ gather classicftp information                        │ collection/file-managers                             │
+│ gather filezilla information                         │ collection/file-managers                             │
+│ gather total-commander information                   │ collection/file-managers                             │
+│ gather ultrafxp information                          │ collection/file-managers                             │
+│ resolve DNS (23 matches)                             │ communication/dns                                    │
+│ initialize Winsock library (7 matches)               │ communication/socket                                 │
+│ act as TCP client (3 matches)                        │ communication/tcp/client                             │
+│ create new key via CryptAcquireContext               │ data-manipulation/encryption                         │
+│ encrypt or decrypt via WinCrypt                      │ data-manipulation/encryption                         │
+│ hash data via WinCrypt                               │ data-manipulation/hashing                            │
+│ initialize hashing via WinCrypt                      │ data-manipulation/hashing                            │
+│ hash data with MD5                                   │ data-manipulation/hashing/md5                        │
+│ generate random numbers via WinAPI                   │ data-manipulation/prng                               │
+│ extract resource via kernel32 functions (2 matches)  │ executable/resource                                  │
+│ interact with driver via control codes (2 matches)   │ host-interaction/driver                              │
+│ get Program Files directory (18 matches)             │ host-interaction/file-system                         │
+│ get common file path (575 matches)                   │ host-interaction/file-system                         │
+│ create directory (2 matches)                         │ host-interaction/file-system/create                  │
+│ delete file                                          │ host-interaction/file-system/delete                  │
+│ get file attributes (122 matches)                    │ host-interaction/file-system/meta                    │
+│ set file attributes (8 matches)                      │ host-interaction/file-system/meta                    │
+│ move file                                            │ host-interaction/file-system/move                    │
+│ find taskbar (3 matches)                             │ host-interaction/gui/taskbar/find                    │
+│ get keyboard layout (12 matches)                     │ host-interaction/hardware/keyboard                   │
+│ get disk size                                        │ host-interaction/hardware/storage                    │
+│ get hostname (4 matches)                             │ host-interaction/os/hostname                         │
+│ allocate or change RWX memory (3 matches)            │ host-interaction/process/inject                      │
+│ query or enumerate registry key (3 matches)          │ host-interaction/registry                            │
+│ query or enumerate registry value (8 matches)        │ host-interaction/registry                            │
+│ delete registry key                                  │ host-interaction/registry/delete                     │
+│ start service                                        │ host-interaction/service/start                       │
+│ get session user name                                │ host-interaction/session                             │
+│ persist via Run registry key                         │ persistence/registry/run                             │
+│ persist via Winlogon Helper DLL registry key         │ persistence/registry/winlogon-helper                 │
+│ persist via Windows service (2 matches)              │ persistence/service                                  │
+┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙
+```
+
 capa uses a collection of rules to identify capabilities within a program.
 These rules are easy to write, even for those new to reverse engineering.
 By authoring rules, you can extend the capabilities that capa recognizes.
@@ -135,31 +225,30 @@ Here's an example rule used by capa:
 ```yaml
 rule:
   meta:
-    name: hash data with CRC32
-    namespace: data-manipulation/checksum/crc32
+    name: create TCP socket
+    namespace: communication/socket/tcp
     authors:
-      - moritz.raabe@mandiant.com
-    scope: function
+      - william.ballenthin@mandiant.com
+      - joakim@intezer.com
+      - anushka.virgaonkar@mandiant.com
+    scopes:
+      static: basic block
+      dynamic: call
     mbc:
-      - Data::Checksum::CRC32 [C0032.001]
+      - Communication::Socket Communication::Create TCP Socket [C0001.011]
     examples:
-      - 2D3EDC218A90F03089CC01715A9F047F:0x403CBD
-      - 7D28CB106CB54876B2A5C111724A07CD:0x402350  # RtlComputeCrc32
-      - 7EFF498DE13CC734262F87E6B3EF38AB:0x100084A6
+      - Practical Malware Analysis Lab 01-01.dll_:0x10001010
   features:
     - or:
       - and:
-        - mnemonic: shr
+        - number: 6 = IPPROTO_TCP
+        - number: 1 = SOCK_STREAM
+        - number: 2 = AF_INET
         - or:
-          - number: 0xEDB88320
-          - bytes: 00 00 00 00 96 30 07 77 2C 61 0E EE BA 51 09 99 19 C4 6D 07 8F F4 6A 70 35 A5 63 E9 A3 95 64 9E = crc32_tab
-        - number: 8
-        - characteristic: nzxor
-      - and:
-        - number: 0x8320
-        - number: 0xEDB8
-        - characteristic: nzxor
-      - api: RtlComputeCrc32
+          - api: ws2_32.socket
+          - api: ws2_32.WSASocket
+          - api: socket
+      - property/read: System.Net.Sockets.TcpClient::Client
 ```
 
 The [github.com/mandiant/capa-rules](https://github.com/mandiant/capa-rules) repository contains hundreds of standard library rules that are distributed with capa.

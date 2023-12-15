@@ -500,16 +500,16 @@ class CapaExplorerDataModel(QtCore.QAbstractItemModel):
                 location = location_.to_capa()
 
                 parent2: CapaExplorerDataItem
-                if rule.meta.scope == capa.rules.FILE_SCOPE:
+                if capa.rules.Scope.FILE in rule.meta.scopes:
                     parent2 = parent
-                elif rule.meta.scope == capa.rules.FUNCTION_SCOPE:
+                elif capa.rules.Scope.FUNCTION in rule.meta.scopes:
                     parent2 = CapaExplorerFunctionItem(parent, location)
-                elif rule.meta.scope == capa.rules.BASIC_BLOCK_SCOPE:
+                elif capa.rules.Scope.BASIC_BLOCK in rule.meta.scopes:
                     parent2 = CapaExplorerBlockItem(parent, location)
-                elif rule.meta.scope == capa.rules.INSTRUCTION_SCOPE:
+                elif capa.rules.Scope.INSTRUCTION in rule.meta.scopes:
                     parent2 = CapaExplorerInstructionItem(parent, location)
                 else:
-                    raise RuntimeError("unexpected rule scope: " + str(rule.meta.scope))
+                    raise RuntimeError("unexpected rule scope: " + str(rule.meta.scopes.static))
 
                 self.render_capa_doc_match(parent2, match, doc)
 

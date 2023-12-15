@@ -33,6 +33,7 @@ def render_meta(doc: rd.ResultDocument, ostream: StringIO):
         (width("md5", 22), width(doc.meta.sample.md5, 82)),
         ("sha1", doc.meta.sample.sha1),
         ("sha256", doc.meta.sample.sha256),
+        ("analysis", doc.meta.flavor),
         ("os", doc.meta.analysis.os),
         ("format", doc.meta.analysis.format),
         ("arch", doc.meta.analysis.arch),

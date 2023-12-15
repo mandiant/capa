@@ -3,15 +3,26 @@
 ## master (unreleased)
 
 ### New Features
-- ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
-- ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
+- add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
+- add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
+  - add call scope #771 @yelhamer
+  - add thread scope #1517 @yelhamer
+  - add process scope #1517 @yelhamer
+  - rules: change `meta.scope` to `meta.scopes` @yelhamer
+  - protobuf: add `Metadata.flavor` @williballenthin
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04
 
 ### Breaking Changes
 
-### New Rules (30)
+- remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
+- protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
+- protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
+- update freeze format to v3, adding support for dynamic analysis @williballenthin
+- extractor: ignore DLL name for api features #1815 @mr-tz
+
+### New Rules (34)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -43,12 +54,15 @@
 - nursery/check-for-outgoing-call-in-dotnet-on-android michael.hunhoff@mandiant.com
 - nursery/compiled-with-xamarin michael.hunhoff@mandiant.com
 - nursery/get-os-version-in-dotnet-on-android michael.hunhoff@mandiant.com
+- data-manipulation/compression/create-cabinet-on-windows michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- data-manipulation/compression/extract-cabinet-on-windows jakub.jozwiak@mandiant.com
+- lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
-- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
+- ghidra: fix `ints_to_bytes` performance #1761 @mike-hunhoff
 - binja: improve function call site detection @xusheng6
-- binja: use binaryninja.load to open files @xusheng6
+- binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
 
 ### capa explorer IDA Pro plugin
