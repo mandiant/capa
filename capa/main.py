@@ -18,6 +18,7 @@ import argparse
 import datetime
 import textwrap
 import contextlib
+from types import TracebackType
 from typing import Any, Set, Dict, List, Callable, Optional
 from pathlib import Path
 
@@ -44,7 +45,6 @@ import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 import capa.features.extractors.pefile
-import capa.features.extractors.dnfile_
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
@@ -111,6 +111,7 @@ E_UNSUPPORTED_IDA_VERSION = 19
 E_UNSUPPORTED_GHIDRA_VERSION = 20
 E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
+E_EMPTY_REPORT = 23
 
 logger = logging.getLogger("capa")
 
@@ -369,7 +370,7 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
 
     elif format_ == FORMAT_DOTNET:
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(sample))
-        file_extractors.append(capa.features.extractors.dnfile_.DnfileFeatureExtractor(sample))
+        file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(sample))
 
     elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
@@ -977,6 +978,27 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
+def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
+    """
+    prints friendly message on unexpected exceptions to regular users (debug mode shows regular stack trace)
+
+    args:
+      # TODO(aaronatp): Once capa drops support for Python 3.8, move the exctype type annotation to
+      # the function parameters and remove the "# type: ignore[assignment]" from the relevant place
+      # in the main function, see (https://github.com/mandiant/capa/issues/1896)
+      exctype (type[BaseException]): exception class
+    """
+
+    if exctype is KeyboardInterrupt:
+        print("KeyboardInterrupt detected, program terminated")
+    else:
+        print(
+            f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
+            + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
+            + "can improve the code! (https://github.com/mandiant/capa/issues)"
+        )
+
+
 def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
@@ -1019,6 +1041,8 @@ def main(argv: Optional[List[str]] = None):
     install_common_args(parser, {"sample", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
+    if not args.debug:
+        sys.excepthook = simple_message_exception_handler  # type: ignore[assignment]
     ret = handle_common_args(args)
     if ret is not None and ret != 0:
         return ret
@@ -1103,8 +1127,10 @@ def main(argv: Optional[List[str]] = None):
     except EmptyReportError as e:
         if format_ == FORMAT_CAPE:
             log_empty_cape_report_error(str(e))
+            return E_EMPTY_REPORT
         else:
             log_unsupported_format_error()
+            return E_INVALID_FILE_TYPE
 
     found_file_limitation = False
     for file_extractor in file_extractors:

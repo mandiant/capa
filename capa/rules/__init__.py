@@ -596,6 +596,10 @@ def pop_statement_description_entry(d):
 
 
 def trim_dll_part(api: str) -> str:
+    # ordinal imports, like ws2_32.#1, keep dll
+    if ".#" in api:
+        return api
+
     # kernel32.CreateFileA
     if api.count(".") == 1:
         api = api.split(".")[1]
