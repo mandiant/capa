@@ -299,22 +299,95 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
         # like kernel32.CreateFileA
         yield DnUnmanagedMethod(token, module, method)
 
+def get_nested_class_table(pe):
+    nested_class_table = {}
+    
+    # Used to find nested classes in typedef
+    for rid, nestedclass in iter_dotnet_table(pe, dnfile.mdtable.NestedClass.number):
+        assert isinstance(nestedclass, dnfile.mdtable.NestedClassRow)
+        nested_class_table[nestedclass.NestedClass.row_index] = nestedclass.EnclosingClass.row_index
+
+    return nested_class_table
+
+def get_typeref_table(pe):
+    typeref_table = []
+    
+    # Used to track values in typeref table
+    for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
+        assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
+        typeref_table.append((typeref.TypeName, typeref.TypeNamespace, typeref.struct.ResolutionScope_CodedIndex))
+        
+    return typeref_table
+
+def is_typedef_nested(rid, nested_classes, class_names, typedef, assembled_class_names):
+    name = typedef.TypeName
+    space = typedef.TypeNamespace
+    
+    if rid in nested_classes:
+        space = class_names[nested_classes[rid]-1][1]
+        
+        enclosing_class = class_names[nested_classes[rid]-1][0]
+        nested_class = class_names[rid-1][0]
+        if enclosing_class in assembled_class_names:
+            enclosing_class = f"{assembled_class_names[enclosing_class]}"
+            assembled_class_names[nested_class] = enclosing_class
+            
+        for i in class_names:
+            if i[0] == enclosing_class.split('/')[0]:
+                space = i[1]
+        
+        name = (enclosing_class, nested_class)
+
+        assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
+
+    return space, name, assembled_class_names
+
+def is_typeref_nested(rid, typeref_table, class_names, typeref, assembled_class_names):
+    name = typeref.TypeName.split('`')[0] if '`' in typeref.TypeName else typeref.TypeName
+    space = typeref.TypeNamespace
+    
+    # To be corrected
+    if typeref.struct.ResolutionScope_CodedIndex <= len(typeref_table):
+        space = typeref_table[typeref.struct.ResolutionScope_CodedIndex-1][1]
+        
+        enclosing_class = f"{space}.{name}"
+        nested_class = f"{typeref.TypeName}"
+        
+        name = (enclosing_class, nested_class)
+        
+        assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
+        
+    return space, name, assembled_class_names
 
 def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get .NET types from TypeDef and TypeRef tables"""
+    nested_class_table = get_nested_class_table(pe)
+    typedef_class_names = []
+    typedef_assembled_class_names = {}
+    
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
+        typedef_class_names.append((typedef.TypeName, typedef.TypeNamespace))
+        typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_typedef_nested(rid, nested_class_table, typedef_class_names, typedef, typedef_assembled_class_names)
+        
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
 
+
+    typeref_table = get_typeref_table(pe)
+    typeref_class_names = []
+    typeref_assembled_class_names = {}
+    
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
-
+        
+        typeref_class_names.append((typeref.TypeName, typeref.TypeNamespace))
+        typeref.TypeNamespace, typeref.TypeName, typeref_assembled_class_names = is_typeref_nested(rid, typeref_table, typeref_class_names, typeref, typeref_assembled_class_names)
+            
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
-
-
+        
 def calculate_dotnet_token_value(table: int, rid: int) -> int:
     return ((table & 0xFF) << Token.TABLE_SHIFT) | (rid & Token.RID_MASK)
 
