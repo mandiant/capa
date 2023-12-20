@@ -42,14 +42,18 @@ class DnType:
         return str(self)
 
     @staticmethod
-    def format_name(class_: str, namespace: str = "", member: str = ""):
+    def format_name(class_: tuple, namespace: str = "", member: str = ""):
+        if type(class_) == tuple:
+            if len(class_) > 2:
+                class_ = class_[0] + "." + "/".join(class_[1:])
+            else:
+                class_ = f"{class_[0]}.{class_[1]}"
         # like File::OpenRead
         name: str = f"{class_}::{member}" if member else class_
         if namespace:
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
         return name
-
 
 class DnUnmanagedMethod:
     def __init__(self, token: int, module: str, method: str):
