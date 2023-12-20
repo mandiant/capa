@@ -108,6 +108,10 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeName (index into String heap)
             TypeNamespace (index into String heap)
     """
+    #typeref_table = get_typeref_table(pe)
+    #typeref_class_names = []
+    #typeref_assembled_class_names = {}
+    
     for rid, member_ref in iter_dotnet_table(pe, dnfile.mdtable.MemberRef.number):
         assert isinstance(member_ref, dnfile.mdtable.MemberRefRow)
 
@@ -130,6 +134,9 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
         if member_ref_name.startswith(("get_", "set_")):
             # remove get_/set_ from MemberRef name
             member_ref_name = member_ref_name[4:]
+
+        #typeref_class_names.append((member_ref.Class.row.TypeName, member_ref.Class.row.TypeNamespace))
+        #member_ref.Class.row.TypeNamespace, member_ref.Class.row.TypeName, typeref_assembled_class_names = is_nested_helper(rid, typeref_table, typeref_class_names, member_ref.Class.row, typeref_assembled_class_names, False)
 
         yield DnType(
             token,
@@ -188,6 +195,10 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a contiguous run of Methods owned by this Type)
     """
+    #nested_class_table = get_nested_class_table(pe)
+    #typedef_class_names = []
+    #typedef_assembled_class_names = {}
+    
     accessor_map: Dict[int, str] = {}
     for methoddef, methoddef_access in get_dotnet_methoddef_property_accessors(pe):
         accessor_map[methoddef] = methoddef_access
@@ -210,6 +221,9 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             if method_name.startswith(("get_", "set_")):
                 # remove get_/set_
                 method_name = method_name[4:]
+
+            #typedef_class_names.append((method_name, typedef.TypeNamespace))
+            #typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_nested_helper(idx, nested_class_table, typedef_class_names, typedef, typedef_assembled_class_names, True)
 
             yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=method_name, access=access)
 
@@ -381,6 +395,7 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
 
+
     typeref_table = get_typeref_table(pe)
     typeref_class_names = []
     typeref_assembled_class_names = {}
@@ -389,7 +404,7 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
         
         typeref_class_names.append((typeref.TypeName, typeref.TypeNamespace))
-        typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_nested_helper(rid, typeref_table, typeref_class_names, typeref, typeref_assembled_class_names, False)
+        typeref.TypeNamespace, typeref.TypeName, typeref_assembled_class_names = is_nested_helper(rid, typeref_table, typeref_class_names, typeref, typeref_assembled_class_names, False)
             
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
