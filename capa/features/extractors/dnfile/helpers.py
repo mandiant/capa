@@ -319,43 +319,50 @@ def get_typeref_table(pe):
         
     return typeref_table
 
-def is_typedef_nested(rid, nested_classes, class_names, typedef, assembled_class_names):
-    name = typedef.TypeName
-    space = typedef.TypeNamespace
+def is_nested_helper(rid, table, class_names, typeX, assembled_class_names, is_typedef):
+    if is_typedef:
+        name = typeX.TypeName
+        space = typeX.TypeNamespace
+        nested_classes = table
     
-    if rid in nested_classes:
-        space = class_names[nested_classes[rid]-1][1]
+        if rid in nested_classes:
+            space = class_names[nested_classes[rid]-1][1]
         
-        enclosing_class = class_names[nested_classes[rid]-1][0]
-        nested_class = class_names[rid-1][0]
-        if enclosing_class in assembled_class_names:
-            enclosing_class = f"{assembled_class_names[enclosing_class]}"
-            assembled_class_names[nested_class] = enclosing_class
+            enclosing_class = class_names[nested_classes[rid]-1][0]
+            nested_class = class_names[rid-1][0]
+        
+            if enclosing_class in assembled_class_names:
+                enclosing_class = f"{assembled_class_names[enclosing_class]}"
+                assembled_class_names[nested_class] = enclosing_class
             
-        for i in class_names:
-            if i[0] == enclosing_class.split('/')[0]:
-                space = i[1]
+            for i in class_names:
+                if i[0] == enclosing_class.split('/')[0]:
+                    space = i[1]
         
-        name = (enclosing_class, nested_class)
-
-        assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
-
-    return space, name, assembled_class_names
-
-def is_typeref_nested(rid, typeref_table, class_names, typeref, assembled_class_names):
-    name = typeref.TypeName.split('`')[0] if '`' in typeref.TypeName else typeref.TypeName
-    space = typeref.TypeNamespace
+            name = (enclosing_class, nested_class)
+            assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
     
-    # To be corrected
-    if typeref.struct.ResolutionScope_CodedIndex <= len(typeref_table):
-        space = typeref_table[typeref.struct.ResolutionScope_CodedIndex-1][1]
+    else:
+        name = typeX.TypeName.split('`')[0] if '`' in typeX.TypeName else typeX.TypeName
+        space = typeX.TypeNamespace
+        typeref_table = table
+    
+        if typeX.struct.ResolutionScope_CodedIndex <= len(typeref_table):
+            space = typeref_table[typeX.struct.ResolutionScope_CodedIndex-1][1]
         
-        enclosing_class = f"{space}.{name}"
-        nested_class = f"{typeref.TypeName}"
+            enclosing_class = typeref_table[typeX.struct.ResolutionScope_CodedIndex-1][0]
+            nested_class = name
         
-        name = (enclosing_class, nested_class)
+            if enclosing_class in assembled_class_names:
+                enclosing_class = f"{assembled_class_names[enclosing_class]}"
+                assembled_class_names[nested_class] = enclosing_class
         
-        assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
+            for i in class_names:
+                if i[0] == enclosing_class.split('/')[0]:
+                    space = i[1]
+        
+            name = (enclosing_class, nested_class)
+            assembled_class_names[name[1]] = f"{name[0]}/{name[1]}"
         
     return space, name, assembled_class_names
 
@@ -369,11 +376,10 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
         typedef_class_names.append((typedef.TypeName, typedef.TypeNamespace))
-        typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_typedef_nested(rid, nested_class_table, typedef_class_names, typedef, typedef_assembled_class_names)
+        typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_nested_helper(rid, nested_class_table, typedef_class_names, typedef, typedef_assembled_class_names, True)
         
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
-
 
     typeref_table = get_typeref_table(pe)
     typeref_class_names = []
@@ -383,7 +389,7 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
         
         typeref_class_names.append((typeref.TypeName, typeref.TypeNamespace))
-        typeref.TypeNamespace, typeref.TypeName, typeref_assembled_class_names = is_typeref_nested(rid, typeref_table, typeref_class_names, typeref, typeref_assembled_class_names)
+        typedef.TypeNamespace, typedef.TypeName, typedef_assembled_class_names = is_nested_helper(rid, typeref_table, typeref_class_names, typeref, typeref_assembled_class_names, False)
             
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
