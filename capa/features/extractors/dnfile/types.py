@@ -43,11 +43,12 @@ class DnType:
 
     @staticmethod
     def format_name(class_: tuple, namespace: str = "", member: str = ""):
-        if type(class_) == tuple:
-            if len(class_) > 2:
-                class_ = class_[0] + "." + "/".join(class_[1:])
-            else:
-                class_ = f"{class_[0]}.{class_[1]}"
+        if len(class_) > 1:
+            # like ('myclass_outer0', 'myclass_inner0_0')
+            class_ = "/".join(class_)
+        else:
+            # like ('CompilationRelaxationsAttribute',)
+            class_ = "".join(class_)
         # like File::OpenRead
         name: str = f"{class_}::{member}" if member else class_
         if namespace:
