@@ -157,7 +157,7 @@ def extract_file_names(
     winapi_file_functions = []
     for feature, _ in cape_file.extract_import_names(report):
         assert type(feature.value) == "str"  # feature.value type annotation is: 'value: Union[str, int, float, bytes]'
-        if feature.value.str.contains("File"):
+        if feature.value.str.contains("File"):  # a lot of Windows API file interaction function names contain "File"
             winapi_file_functions.append(feature[0])
 
     for ph in process_handles:
@@ -165,6 +165,8 @@ def extract_file_names(
             for ch in call_handles:
                 call: Call = ch.inner
                 if call.api in winapi_file_functions:
-                    # winapi_file_functions functions take filename as their first variable
-                    # therefore, we yield the filename with call.arguments[0].name
-                    yield call.api, call.arguments[0].name
+                    # winapi_file_functions functions take file name as their first variable
+                    # since calling conventions commonly store function parameters on the stack in reverse order,
+                    # we yield the file name with call.arguments[-1].name
+                    # although should we use call.arguments[0].name to get file names for different calling conventions?
+                    yield call.api, call.arguments[-1].name
