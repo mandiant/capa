@@ -69,6 +69,7 @@ import logging
 import argparse
 import multiprocessing
 import multiprocessing.pool
+from typing import Tuple, Iterator, Optional
 from pathlib import Path
 
 import capa
@@ -78,6 +79,8 @@ import capa.render.json
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.features.common import OS_AUTO
+from capa.features.extractors.cape.models import CapeReport
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger("capa")
 
@@ -142,7 +145,17 @@ def get_capa_results(args):
     meta = capa.main.collect_metadata([], path, format, os_, [], extractor, counts)
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    sandbox_data = Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]
+    # report = Optional[CapeReport]
+    Path(__file__).resolve().parent.parent
+    report = json.load(Path(args.sample).open(encoding="utf-8"))
+
+    try:
+        strings = report.static.pe.imports
+    except AttributeError:
+        strings = None
+
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities, strings, sandbox_data)
     return {"path": path, "status": "ok", "ok": doc.model_dump()}
 
 
