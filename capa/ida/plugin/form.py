@@ -823,9 +823,16 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 update_wait_box("collecting results")
 
+                strings = None
+                sandbox_data = None
+
                 try:
                     self.resdoc_cache = capa.render.result_document.ResultDocument.from_capa(
-                        meta, ruleset, capabilities
+                        meta,
+                        ruleset,
+                        capabilities,
+                        strings,
+                        sandbox_data,
                     )
                 except Exception as e:
                     logger.exception("Failed to collect results (error: %s)", e)
