@@ -5,14 +5,20 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import gzip
 import textwrap
+from typing import Optional
+from pathlib import Path
+from itertools import chain
 
+import pytest  # TODO (aaronatp): rewrite the tests to use only one of these frameworks
 import fixtures
 
 import capa.rules
 import capa.render.utils
 import capa.features.file
 import capa.features.insn
+mport capa.render.default as default
 import capa.features.common
 import capa.features.freeze
 import capa.render.vverbose
@@ -20,6 +26,11 @@ import capa.features.address
 import capa.features.basicblock
 import capa.render.result_document
 import capa.features.freeze.features
+from capa.render.utils import StringIO
+from capa.features.extractors.cape.models import CapeReport
+
+CD = Path(__file__).resolve().parent
+CAPE_DIR = CD / "data" / "dynamic" / "cape"
 
 
 def test_render_number():
@@ -190,3 +201,77 @@ def test_render_vverbose_feature(feature, expected):
     capa.render.vverbose.render_feature(ostream, layout, rm, matches, feature, indent=0)
 
     assert ostream.getvalue().strip() == expected
+
+
+@pytest.mark.parametrize(
+    "rd_file",
+    [
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
+        pytest.param("pma0101_rd"),
+        pytest.param("dotnet_1c444e_rd"),
+    ],
+)
+def test_render_domains(request, rd_file):
+    doc: result_document.ResultDocument = request.getfixturevalue(rd_file)
+    report: Optional[CapeReport]
+    ostream: StringIO
+
+    render_output = default.render_domains(doc.strings, ostream)
+
+    assert len(render_output) == len(render_output[0])
+    if len(capa.capabilities.common.extract_file_names(*doc.sandbox_data, report)) > 0:
+        assert len(chain(render_output)) / len(render_output[0]) == 1
+    else:
+        assert len(chain(render_output)) / len(render_output[0]) == 0
+
+
+@pytest.mark.parametrize(
+    "rd_file",
+    [
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
+        pytest.param("pma0101_rd"),
+        pytest.param("dotnet_1c444e_rd"),
+    ],
+)
+def test_render_file_names(request, rd_file):
+    doc: result_document.ResultDocument = request.getfixturevalue(rd_file)
+    ostream: StringIO
+
+    path = CAPE_DIR / "v2.4" / "8b9aaf4fad227cde7a7dabce7ba187b0b923301718d9d40de04bdd15c9b22905.json.gz"
+    buf = gzip.decompress(path.read_bytes())
+    report = CapeReport.from_buf(buf)
+
+    render_output = default.render_file_names(doc, report, ostream)
+
+    assert len(render_output) == len(render_output[0]) + 1  # '+ 1' to account for the header
+    assert len(render_output) == len(render_output[1]) + 1  # '+ 1' also to account for the header
+    # to see how many "columns" there are in the output, we chain the rows and columns together
+    # and then divide the total number of elements by the number of rows
+    assert len(chain(render_output)) / len(render_output[0]) == 2  #
+
+
+@pytest.mark.parametrize(
+    "rd_file",
+    [
+        pytest.param("a3f3bbc_rd"),
+        pytest.param("al_khaserx86_rd"),
+        pytest.param("al_khaserx64_rd"),
+        pytest.param("a076114_rd"),
+        pytest.param("pma0101_rd"),
+        pytest.param("dotnet_1c444e_rd"),
+    ],
+)
+def test_render_ip_addresses(request, rd_file):
+    doc: result_document.ResultDocument = request.getfixturevalue(rd_file)
+    ostream: StringIO
+
+    render_output = default.render_ip_addresses(doc.strings, ostream)
+
+    assert len(render_output) == len(render_output[0])
+    assert len(chain(render_output)) / len(render_output[0]) == 1
