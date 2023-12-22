@@ -7,15 +7,19 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import List, Tuple, Iterator, Optional
 
 import tabulate
 
 import capa.render.utils as rutils
+import capa.capabilities.common as common
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.render.utils import StringIO
+from capa.features.extractors.cape.models import CapeReport
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 tabulate.PRESERVE_WHITESPACE = True
 
@@ -197,7 +201,58 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
         ostream.write("\n")
 
 
-def render_default(doc: rd.ResultDocument):
+def render_ip_addresses(doc: rd.ResultDocument, ostream: StringIO):
+    if doc.strings is not None:
+        rows = []
+        for ip_addr in common.extract_ip_addresses(doc.strings):
+            rows.append(rutils.bold(ip_addr.lower()))  # lowercase IPv6 letters
+
+        if rows:
+            ostream.write(
+                tabulate.tabulate(
+                    rows,
+                    headers=[width("Possible IP Addresses", max(len(ip_addr) for ip_addr in rows) + 1)],
+                    tablefmt="mixed_grid",
+                )
+            )
+            ostream.write("\n")
+
+
+def render_domains(doc: rd.ResultDocument, ostream: StringIO):
+    if doc.strings is not None:
+        rows = []
+        for domain in common.extract_domain_names(doc.strings):
+            rows.append(rutils.bold(domain))
+
+        if rows:
+            ostream.write(
+                tabulate.tabulate(
+                    rows,
+                    headers=[width("Web Domains", max(len(domain) for domain in rows) + 1)],
+                    tablefmt="mixed_grid",
+                )
+            )
+            ostream.write("\n")
+
+
+def render_file_names(doc: rd.ResultDocument, report: Optional[CapeReport], ostream: StringIO):
+    if doc.sandbox_data is not None and report is not None:
+        rows: List = []
+        for api, file_name in common.extract_file_names(*doc.sandbox_data, report):
+            rows.append([rutils.bold(api), rutils.bold(file_name)])
+
+        if rows:
+            ostream.write(
+                tabulate.tabulate(
+                    rows,
+                    headers=[width("APIs", 25), width("File names", 75)],
+                    tablefmt="mixed_grid",
+                )
+            )
+            ostream.write("\n")
+
+
+def render_default(doc: rd.ResultDocument, report: Optional[CapeReport]):
     ostream = rutils.StringIO()
 
     render_meta(doc, ostream)
@@ -207,10 +262,24 @@ def render_default(doc: rd.ResultDocument):
     render_mbc(doc, ostream)
     ostream.write("\n")
     render_capabilities(doc, ostream)
+    ostream.write("\n")
+    # the following functions perform ostream.write("\n") conditionally under the hood
+    # doc.strings functions under the hood
+    render_ip_addresses(doc, ostream)
+    render_domains(doc, ostream)
+    # *doc.sandbox_data under the hood
+    render_file_names(doc, report, ostream)
 
     return ostream.getvalue()
 
 
-def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
-    return render_default(doc)
+def render(
+    meta,
+    rules: RuleSet,
+    capabilities: MatchResults,
+    strings: Optional[list[str]],
+    sandbox_data: Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]],
+    report: Optional[CapeReport],
+) -> str:
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities, strings, sandbox_data)
+    return render_default(doc, report)
