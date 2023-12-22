@@ -7,13 +7,14 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
 import textwrap
-from typing import Dict, Iterable, Optional
+from typing import Dict, List, Tuple, Iterable, Iterator, Optional
 
 import tabulate
 
 import capa.rules
 import capa.helpers
 import capa.render.utils as rutils
+import capa.render.default as default
 import capa.render.verbose
 import capa.features.common
 import capa.features.freeze as frz
@@ -22,6 +23,8 @@ import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.features.extractors.cape.models import CapeReport
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
 
@@ -458,7 +461,7 @@ def render_rules(ostream, doc: rd.ResultDocument):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
-def render_vverbose(doc: rd.ResultDocument):
+def render_vverbose(doc: rd.ResultDocument, report: Optional[CapeReport]):
     ostream = rutils.StringIO()
 
     capa.render.verbose.render_meta(ostream, doc)
@@ -467,8 +470,32 @@ def render_vverbose(doc: rd.ResultDocument):
     render_rules(ostream, doc)
     ostream.write("\n")
 
+    # the following three functions perform ostream.write("\n") conditionally under the hood
+    # doc.strings functions under the hood
+    default.render_ip_addresses(doc, ostream)
+    default.render_domains(doc, ostream)
+
+    # *doc.sandbox_data under the hood
+    default.render_file_names(doc, report, ostream)
+
     return ostream.getvalue()
 
 
-def render(meta, rules: RuleSet, capabilities: MatchResults) -> str:
-    return render_vverbose(rd.ResultDocument.from_capa(meta, rules, capabilities))
+def render(
+    meta,
+    rules: RuleSet,
+    capabilities: MatchResults,
+    strings: Optional[List[str]],
+    sandbox_data: Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]],
+    report: Optional[CapeReport],
+) -> str:
+    return render_vverbose(
+        rd.ResultDocument.from_capa(
+            meta,
+            rules,
+            capabilities,
+            strings,
+            sandbox_data,
+        ),
+        report,
+    )
