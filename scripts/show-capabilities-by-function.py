@@ -60,7 +60,7 @@ import sys
 import logging
 import argparse
 import collections
-from typing import Dict
+from typing import Dict, Tuple, Iterator
 from pathlib import Path
 
 import colorama
@@ -77,9 +77,15 @@ import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
 from capa.helpers import get_file_taste
-from capa.features.common import FORMAT_AUTO
+from capa.features.common import FORMAT_AUTO, FORMAT_CAPE
 from capa.features.freeze import Address
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+)
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -187,6 +193,16 @@ def main(argv=None):
             capa.helpers.log_unsupported_runtime_error()
             return -1
 
+    try:
+        strings = extractor.strings
+    except AttributeError:
+        strings = None
+
+    if format_ == FORMAT_CAPE:
+        sandbox_data = Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]
+    else:
+        sandbox_data = None
+
     capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
 
     meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
@@ -203,7 +219,7 @@ def main(argv=None):
     #  - when not an interactive session, and disable coloring
     # renderers should use coloring and assume it will be stripped out if necessary.
     colorama.init()
-    doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+    doc = rd.ResultDocument.from_capa(meta, rules, capabilities, strings, sandbox_data)
     print(render_matches_by_function(doc))
     colorama.deinit()
 
