@@ -7,8 +7,12 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
+from typing import List
+
+import fixtures
 
 import capa.capabilities.common
+from capa.capabilities.common import extract_domain_names, extract_ip_addresses
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
@@ -307,3 +311,83 @@ def test_instruction_subscope(z9324d_extractor):
     capabilities, meta = capa.capabilities.common.find_capabilities(rules, z9324d_extractor)
     assert "push 1000 on i386" in capabilities
     assert 0x406F60 in {result[0] for result in capabilities["push 1000 on i386"]}
+
+
+@fixtures.parameterize(
+    "strings",
+    [
+        ("8.8.8.8"),
+        ("128.0.0.1"),
+        ("123.4.56.78"),
+        ("0.0.0.0"),
+        ("255.255.255.255"),
+        ("255.255.255.256"),
+        ("255.255.255.-1"),
+        ("2555.255.255.255"),
+    ],
+)
+def test_extract_ipv4_addresses(strings: List[str]):
+    assert extract_ip_addresses(strings) == "8.8.8.8"
+    assert extract_ip_addresses(strings) == "128.0.0.1"
+    assert extract_ip_addresses(strings) == "123.4.56.78"
+    assert extract_ip_addresses(strings) == "0.0.0.0"
+    assert extract_ip_addresses(strings) == "255.255.255.255"
+    assert not extract_ip_addresses(strings)  # '255.255.255.256'
+    assert not extract_ip_addresses(strings)  # '255.255.255.-1'
+    assert not extract_ip_addresses(strings)  # '2555.255.255.255'
+
+
+@fixtures.parameterize(
+    "strings",
+    [
+        ("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+        ("fe80:0000:0000:0000:0202:b3ff:fe1e:8329"),
+        ("2002::1234:5678:9abc:def0"),
+        ("::1"),
+        ("0:0:0:0:0:0:0:0"),
+        ("fc00::8::9"),
+        ("2a02:c7ff:16ce:0000:0000:0000:0000:1*"),
+        ("3ffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff"),
+        ("1234:5678:9abc:defg:1234:5678:9abc:def0"),
+        ("2001:0db8:85a3:0000:0000:8a2e:0370:"),
+        ("2001:0000:0000:0000:0000:0000:8a2e::7334"),
+        ("0:0:0:0:0:0:0:0:0"),
+        ("2001:0db8:85a3:0000:0000:8a2e:0370:G334"),
+    ],
+)
+def test_extract_ipv6_addresses(strings: List[str]):
+    assert extract_ip_addresses(strings) == "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+    assert extract_ip_addresses(strings) == "fe80:0000:0000:0000:0202:b3ff:fe1e:8329"
+    assert extract_ip_addresses(strings) == "2002::1234:5678:9abc:def0"
+    assert extract_ip_addresses(strings) == "::1"
+    assert extract_ip_addresses(strings) == "0:0:0:0:0:0:0:0"
+    assert extract_ip_addresses(strings) == "fc00::8::9"
+    assert extract_ip_addresses(strings) == "2a02:c7ff:16ce:0000:0000:0000:0000:1*"
+    assert extract_ip_addresses(strings) == "3ffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    assert not extract_ip_addresses(strings)  # '1234:5678:9abc:defg:1234:5678:9abc:def0'
+    assert not extract_ip_addresses(strings)  # '2001:0db8:85a3:0000:0000:8a2e:0370:'
+    assert not extract_ip_addresses(strings)  # '2001:0000:0000:0000:0000:0000:8a2e::7334'
+    assert not extract_ip_addresses(strings)  # '0:0:0:0:0:0:0:0:0'
+    assert not extract_ip_addresses(strings)  # '2001:0db8:85a3:0000:0000:8a2e:0370:G334'
+
+
+@fixtures.parameterize(
+    "strings",
+    [
+        ("website.com"),
+        ("website.comcomcomcomcomcomcomcomcomcom"),
+        ("2345kd-fkdgjfd.dsjfkj.web-site.gfdsa"),
+        ("g.o.o.g.l.e.com"),
+        ("foobar.co"),
+        ("foobar.c"),
+        ("g.o.o.g.l.3.com"),
+    ],
+)
+def test_extract_domain_names(strings: List[str]):
+    assert extract_domain_names(strings) == "website.com"
+    assert extract_domain_names(strings) == "website.comcomcomcomcomcomcomcomcomcom"
+    assert extract_domain_names(strings) == "2345kd-fkdgjfd.dsjfkj.web-site.gfdsa"
+    assert extract_domain_names(strings) == "g.o.o.g.l.e.com"
+    assert extract_domain_names(strings) == "foobar.co"
+    assert not extract_domain_names(strings)  # 'foobar.c'
+    assert not extract_domain_names(strings)  # 'g.o.o.g.l.3.com'
