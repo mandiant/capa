@@ -183,18 +183,22 @@ def capa_details(rules_path: Path, file_path: Path, output_format="dictionary"):
     meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
 
     capa_output: Any = False
+    
+    strings = None
+    sandbox_data = None
+    report = None
 
     if output_format == "dictionary":
         # ...as python dictionary, simplified as textable but in dictionary
-        doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
+        doc = rd.ResultDocument.from_capa(meta, rules, capabilities, strings, sandbox_data)
         capa_output = render_dictionary(doc)
     elif output_format == "json":
         # render results
         # ...as json
-        capa_output = json.loads(capa.render.json.render(meta, rules, capabilities))
+        capa_output = json.loads(capa.render.json.render(meta, rules, capabilities, strings, sandbox_data))
     elif output_format == "texttable":
         # ...as human readable text table
-        capa_output = capa.render.default.render(meta, rules, capabilities)
+        capa_output = capa.render.default.render(meta, rules, capabilities, strings, sandbox_data, report)
 
     return capa_output
 
