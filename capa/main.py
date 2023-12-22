@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Callable, Optional
+from typing import Any, Set, Dict, List, Tuple, Callable, Iterator, Optional
 from pathlib import Path
 
 import halo
@@ -84,7 +84,11 @@ from capa.features.common import (
 )
 from capa.features.address import Address
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
+from capa.features.extractors.cape.models import CapeReport
 from capa.features.extractors.base_extractor import (
+    CallHandle,
+    ThreadHandle,
+    ProcessHandle,
     SampleHashes,
     FeatureExtractor,
     StaticFeatureExtractor,
@@ -1226,14 +1230,22 @@ def main(argv: Optional[List[str]] = None):
             # do show the output in verbose mode, though.
             if not (args.verbose or args.vverbose or args.json):
                 return E_FILE_LIMITATION
+
+    sandbox_data = Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]]
+    report = json.load(Path(args.sample).open(encoding="utf-8"))
+
+    try:
+        strings = report.static.pe.imports
+    except AttributeError:
+        strings = None
     if args.json:
-        print(capa.render.json.render(meta, rules, capabilities))
+        print(capa.render.json.render(meta, rules, capabilities, strings, sandbox_data))
     elif args.vverbose:
-        print(capa.render.vverbose.render(meta, rules, capabilities))
+        print(capa.render.vverbose.render(meta, rules, capabilities, strings, sandbox_data, report))
     elif args.verbose:
-        print(capa.render.verbose.render(meta, rules, capabilities))
+        print(capa.render.verbose.render(meta, rules, capabilities, strings, sandbox_data, report))
     else:
-        print(capa.render.default.render(meta, rules, capabilities))
+        print(capa.render.default.render(meta, rules, capabilities, strings, sandbox_data, report))
     colorama.deinit()
 
     logger.debug("done.")
@@ -1271,6 +1283,10 @@ def ida_main():
 
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
 
+    report = None
+    strings = None
+    sandbox_data = None
+ 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
 
@@ -1278,7 +1294,7 @@ def ida_main():
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
 
     colorama.init(strip=True)
-    print(capa.render.default.render(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities, strings, sandbox_data, report))
 
 
 def ghidra_main():
@@ -1309,13 +1325,17 @@ def ghidra_main():
         not capa.ghidra.helpers.is_running_headless(),
     )
 
+    report = None
+    strings = None
+    sandbox_data = None
+
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")
 
-    print(capa.render.default.render(meta, rules, capabilities))
+    print(capa.render.default.render(meta, rules, capabilities, strings, sandbox_data, report))
 
 
 if __name__ == "__main__":
