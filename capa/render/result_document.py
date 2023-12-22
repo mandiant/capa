@@ -8,7 +8,7 @@
 import datetime
 import collections
 from enum import Enum
-from typing import Dict, List, Tuple, Union, Literal, Optional
+from typing import Dict, List, Tuple, Union, Literal, Iterator, Optional
 from pathlib import Path
 
 from pydantic import Field, BaseModel, ConfigDict
@@ -23,6 +23,7 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import assert_never
+from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 
 class FrozenModel(BaseModel):
@@ -628,9 +629,18 @@ class RuleMatches(FrozenModel):
 class ResultDocument(FrozenModel):
     meta: Metadata
     rules: Dict[str, RuleMatches]
+    strings: Optional[List[str]]
+    sandbox_data: Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]]
 
     @classmethod
-    def from_capa(cls, meta: Metadata, rules: RuleSet, capabilities: MatchResults) -> "ResultDocument":
+        def from_capa(
+        cls,
+        meta: Metadata,
+        rules: RuleSet,
+        capabilities: MatchResults,
+        strings: Optional[List[str]],
+        sandbox_data: Optional[Tuple[Iterator[ProcessHandle], Iterator[ThreadHandle], Iterator[CallHandle]]],
+    ) -> "ResultDocument":
         rule_matches: Dict[str, RuleMatches] = {}
         for rule_name, matches in capabilities.items():
             rule = rules[rule_name]
@@ -647,7 +657,12 @@ class ResultDocument(FrozenModel):
                 ),
             )
 
-        return ResultDocument(meta=meta, rules=rule_matches)
+        return ResultDocument(
+            meta=meta,
+            rules=rule_matches,
+            strings=strings,
+            sandbox_data=sandbox_data,
+        )
 
     def to_capa(self) -> Tuple[Metadata, Dict]:
         capabilities: Dict[
@@ -665,7 +680,7 @@ class ResultDocument(FrozenModel):
 
                 capabilities[rule_name].append((addr.to_capa(), result))
 
-        return self.meta, capabilities
+        return self.meta, capabilities  # TODO: implement strings and sandbox_data for 'to_capa' too
 
     @classmethod
     def from_file(cls, path: Path) -> "ResultDocument":
