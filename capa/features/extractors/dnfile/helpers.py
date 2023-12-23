@@ -397,7 +397,7 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         
         # If the ResolutionScope decodes to a typeRef type, then it is nested
         n = []
-        if type(typeref.ResolutionScope.table) == dnfile.mdtable.TypeRef:
+        if type(typeref.ResolutionScope.table) is dnfile.mdtable.TypeRef:
             typeref.TypeName = typeref_helper(typeref.ResolutionScope.row_index, typeref_table, n, typeref.TypeName)
               
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
