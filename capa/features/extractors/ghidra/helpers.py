@@ -275,3 +275,27 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
             return addr
     else:
         return to_deref
+
+
+def find_data_references_from_insn(insn, max_depth: int = 10):
+    """yield data references from given instruction"""
+    for reference in insn.getReferencesFrom():
+        if not reference.getReferenceType().isData():
+            # only care about data references
+            continue
+
+        to_addr = reference.getToAddress()
+
+        for _ in range(max_depth - 1):
+            data = getDataAt(to_addr)  # type: ignore [name-defined] # noqa: F821
+            if data and data.isPointer():
+                ptr_value = data.getValue()
+
+                if ptr_value is None:
+                    break
+
+                to_addr = ptr_value
+            else:
+                break
+
+        yield to_addr
