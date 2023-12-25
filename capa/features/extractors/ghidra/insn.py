@@ -198,20 +198,25 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
     if insn.getMnemonicString().startswith("LEA"):
         return
 
-    # ignore any stack references
-    if not capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
-        # Ghidra stores operands in 2D arrays if they contain offsets
-        for i in range(insn.getNumOperands()):
-            if insn.getOperandType(i) == OperandType.DYNAMIC:  # e.g. [esi + 4]
-                # manual extraction, since the default api calls only work on the 1st dimension of the array
-                op_objs = insn.getOpObjects(i)
-                if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
-                    op_off = op_objs[-1].getValue()
-                    yield Offset(op_off), ih.address
-                    yield OperandOffset(i, op_off), ih.address
-                else:
-                    yield Offset(0), ih.address
-                    yield OperandOffset(i, 0), ih.address
+    if capa.features.extractors.ghidra.helpers.is_stack_referenced(insn):
+        # ignore stack references
+        return
+
+    # Ghidra stores operands in 2D arrays if they contain offsets
+    for i in range(insn.getNumOperands()):
+        if insn.getOperandType(i) == OperandType.DYNAMIC:  # e.g. [esi + 4]
+            # manual extraction, since the default api calls only work on the 1st dimension of the array
+            op_objs = insn.getOpObjects(i)
+            if not op_objs:
+                continue
+
+            if isinstance(op_objs[-1], ghidra.program.model.scalar.Scalar):
+                op_off = op_objs[-1].getValue()
+            else:
+                op_off = 0
+
+            yield Offset(op_off), ih.address
+            yield OperandOffset(i, op_off), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:

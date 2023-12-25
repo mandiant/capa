@@ -61,7 +61,22 @@ var_names = ["".join(letters) for letters in itertools.product(string.ascii_lowe
 
 
 # this have to be the internal names used by capa.py which are sometimes different to the ones written out in the rules, e.g. "2 or more" is "Some", count is Range
-unsupported = ["characteristic", "mnemonic", "offset", "subscope", "Range"]
+unsupported = [
+    "characteristic",
+    "mnemonic",
+    "offset",
+    "subscope",
+    "Range",
+    "os",
+    "property",
+    "format",
+    "class",
+    "operand[0].number",
+    "operand[1].number",
+    "substring",
+    "arch",
+    "namespace",
+]
 # further idea: shorten this list, possible stuff:
 # - 2 or more strings: e.g.
 # -- https://github.com/mandiant/capa-rules/blob/master/collection/file-managers/gather-direct-ftp-information.yml
@@ -90,8 +105,7 @@ condition_header = """
 condition_rule = """
 private rule capa_pe_file : CAPA {
     meta:
-        description = "match in PE files. used by all further CAPA rules"
-        author = "Arnim Rupp"
+        description = "Match in PE files. Used by other CAPA rules"
     condition:
         uint16be(0) == 0x4d5a
         or uint16be(0) == 0x558b
