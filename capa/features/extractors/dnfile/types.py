@@ -43,12 +43,14 @@ class DnType:
 
     @staticmethod
     def format_name(class_: tuple, namespace: str = "", member: str = ""):
-        if len(class_) > 1:
-            # like Android.Graphics.Bitmap/CompressFormat
-            class_ = "/".join(class_)
-        else:
-            # like CompilationRelaxationsAttribute
-            class_ = "".join(class_)
+        # Temporarily re-introducing type checking due to issue caused with an uncontrolled `str` types passed through
+        if type(class_) is tuple:
+            if len(class_) > 1:
+                # like Android.Graphics.Bitmap/CompressFormat
+                class_ = "/".join(class_)
+            else:
+                # like CompilationRelaxationsAttribute
+                class_ = "".join(class_)
         # like File::OpenRead
         name: str = f"{class_}::{member}" if member else class_
         if namespace:
