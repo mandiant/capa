@@ -90,21 +90,80 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         yield Namespace(namespace), NO_ADDRESS
 
 
+def get_nested_class_table(pe):
+    nested_class_table = {}
+    
+    # Used to find nested classes in typedef
+    for rid, nestedclass in iter_dotnet_table(pe, dnfile.mdtable.NestedClass.number):
+        assert isinstance(nestedclass, dnfile.mdtable.NestedClassRow)
+        nested_class_table[nestedclass.NestedClass.row_index] = nestedclass.EnclosingClass.row_index
+
+    return nested_class_table
+
+def typedef_helper(index, nested_class_table, typedef_class_table, typedef_name, name):
+    # Append the current typeref name
+    typedef_name.append(name)
+    
+    while nested_class_table[index] in nested_class_table:
+        name = typedef_class_table[nested_class_table[index]-1].TypeName
+        typedef_name.append(name)
+        index = nested_class_table[index]
+        
+    # Document the root enclosing details
+    enclosing_name = typedef_class_table[nested_class_table[index]-1].TypeName
+    typedef_name.append(enclosing_name)
+    namespace = typedef_class_table[nested_class_table[index]-1].TypeNamespace
+    
+    return namespace, tuple(typedef_name[::-1])
+
+def typeref_helper(index, typeref_table, typeref_name, name):
+    # Not appending the current typeref name to avoid potential duplicate
+    
+    while type(typeref_table[index - 1].ResolutionScope.table) is dnfile.mdtable.TypeRef:
+        # Recursively call helper function with enclosing typeref details
+        typeref_name.append(name)
+        name = typeref_table[index - 1].TypeName
+        index = typeref_table[index - 1].ResolutionScope.row_index
+    
+    # Document the root enclosing details
+    typeref_name.append(typeref_table[index - 1].TypeName)
+    namespace = typeref_table[index - 1].TypeNamespace
+     
+    return namespace, tuple(typeref_name[::-1])
+    
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
+    nested_class_table = get_nested_class_table(pe)
+    typedef_class_table = pe.net.mdtables.tables.get(dnfile.mdtable.TypeDef.number, [])
+    
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET classes
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
+        typedef_name = []
+        typedefname = (typedef.TypeName,)
+        typedefnamespace = typedef.TypeNamespace
+        if rid in nested_class_table:
+            typedefnamespace, typedefname = typedef_helper(rid, nested_class_table, typedef_class_table, typedef_name, typedef.TypeName)
+
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
-        yield Class(DnType.format_name(typedef.TypeName, namespace=typedef.TypeNamespace)), DNTokenAddress(token)
+        yield Class(DnType.format_name(typedefname, namespace=typedefnamespace)), DNTokenAddress(token)
+
+    typeref_table = pe.net.mdtables.tables.get(dnfile.mdtable.TypeRef.number, [])
 
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET classes
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
+        # If the ResolutionScope decodes to a typeRef type then it is nested
+        typeref_name = []
+        typerefname = (typeref.TypeName,)
+        typerefnamespace = typeref.TypeNamespace
+        if type(typeref.ResolutionScope.table) == dnfile.mdtable.TypeRef:
+            typerefnamespace, typerefname = typeref_helper(typeref.ResolutionScope.row_index, typeref_table, typeref_name, typeref.TypeName)
+
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
-        yield Class(DnType.format_name(typeref.TypeName, namespace=typeref.TypeNamespace)), DNTokenAddress(token)
+        yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
 
 def extract_file_os(**kwargs) -> Iterator[Tuple[OS, Address]]:
