@@ -259,11 +259,12 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             
             typedef_name = []
             typedefname = (typedef.TypeName,)
+            typedefnamespace = typedef.TypeNamespace
             if rid in nested_class_table:
-                typedef.TypeNamespace, typedefname = typedef_helper(rid, nested_class_table, typedef_class_table, typedef_name, typedef.TypeName)
+                typedefnamespace, typedefname = typedef_helper(rid, nested_class_table, typedef_class_table, typedef_name, typedef.TypeName)
             
             token: int = calculate_dotnet_token_value(field.table.number, field.row_index)
-            yield DnType(token, typedefname, namespace=typedef.TypeNamespace, member=field.row.Name)
+            yield DnType(token, typedefname, namespace=typedefnamespace, member=field.row.Name)
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
