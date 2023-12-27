@@ -381,7 +381,7 @@ def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
         typedefnamespace = typedef.TypeNamespace
         if rid in nested_class_table:
             typedefnamespace, typedefname = typedef_helper(rid, nested_class_table, typedef_class_table, typedef_name, typedef.TypeName)
-       
+        
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield DnType(typedef_token, typedefname, namespace=typedefnamespace)
 
