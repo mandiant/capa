@@ -94,16 +94,6 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         yield Namespace(namespace), NO_ADDRESS
 
 
-def get_nested_class_table(pe):
-    nested_class_table = {}
-    
-    # Used to find nested classes in typedef
-    for rid, nestedclass in iter_dotnet_table(pe, dnfile.mdtable.NestedClass.number):
-        assert isinstance(nestedclass, dnfile.mdtable.NestedClassRow)
-        nested_class_table[nestedclass.NestedClass.row_index] = nestedclass.EnclosingClass.row_index
-
-    return nested_class_table
-    
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
     nested_class_table = enclosing_and_nested_classes_index_table(pe)
