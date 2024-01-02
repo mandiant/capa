@@ -44,9 +44,9 @@ class DnType:
     @staticmethod
     def format_name(class_: tuple, namespace: str = "", member: str = ""):
         if len(class_) > 1:
-            class_ = "/".join(class_) #class_[0] + "." + "/".join(class_[1:])
+            class_ = "/".join(class_) # Convert tuple to str, separating items with "/"
         else:
-            class_ = "".join(class_) #f"{class_[0]}.{class_[1]}"
+            class_ = "".join(class_) # Convert tuple to str
         # like File::OpenRead
         name: str = f"{class_}::{member}" if member else class_
         if namespace:
