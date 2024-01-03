@@ -43,7 +43,6 @@ from capa.features.extractors.dnfile.helpers import (
     resolve_nested_typeref_helper,
     resolve_nested_typedef_name,
     enclosing_and_nested_classes_index_table,
-    
 )
 
 logger = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         # namespace do not have an associated token, so we yield 0x0
         yield Namespace(namespace), NO_ADDRESS
 
-
+    
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
     nested_class_table = enclosing_and_nested_classes_index_table(pe)
@@ -102,28 +101,17 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
         # emit internal .NET classes
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
-        if rid in nested_class_table:
-            typedefnamespace, typedefname = resolve_nested_typedef_name(rid, nested_class_table, typedef.TypeName, pe)
-        else:
-            typedefname = (typedef.TypeName,)
-            typedefnamespace = typedef.TypeNamespace
-
+        typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
+        
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield Class(DnType.format_name(typedefname, namespace=typedefnamespace)), DNTokenAddress(token)
-
-    typeref_table = pe.net.mdtables.tables.get(dnfile.mdtable.TypeRef.number, [])
 
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET classes
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
-        # If the ResolutionScope decodes to a typeRef type then it is nested
-        if type(typeref.ResolutionScope.table) == dnfile.mdtable.TypeRef:
-            typerefnamespace, typerefname = resolve_nested_typeref_helper(typeref.ResolutionScope.row_index, typeref.TypeName, pe)
-        else:
-            typerefname = (typeref.TypeName,)
-            typerefnamespace = typeref.TypeNamespace
-
+        typerefnamespace, typerefname = resolve_nested_typeref_helper(typeref.ResolutionScope.row_index, typeref, pe)
+        
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
