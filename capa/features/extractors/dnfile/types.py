@@ -10,11 +10,11 @@ from typing import Optional
 
 
 class DnType:
-    def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
+    def __init__(self, token: int, class_: tuple, namespace: str = "", member: str = "", access: Optional[str] = None):
         self.token: int = token
         self.access: Optional[str] = access
         self.namespace: str = namespace
-        self.class_: str = class_
+        self.class_: tuple = class_
 
         if member == ".ctor":
             member = "ctor"
@@ -44,15 +44,16 @@ class DnType:
     @staticmethod
     def format_name(class_: tuple, namespace: str = "", member: str = ""):
         if len(class_) > 1:
-            class_ = "/".join(class_) # Convert tuple to str, separating items with "/"
+            class_str = "/".join(class_)  # Concat items in tuple, separated by a "/"
         else:
-            class_ = "".join(class_) # Convert tuple to str
+            class_str = "".join(class_)  # Convert tuple to str
         # like File::OpenRead
-        name: str = f"{class_}::{member}" if member else class_
+        name: str = f"{class_str}::{member}" if member else class_str
         if namespace:
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"
         return name
+
 
 class DnUnmanagedMethod:
     def __init__(self, token: int, module: str, method: str):
