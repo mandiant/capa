@@ -38,10 +38,10 @@ from capa.features.extractors.dnfile.helpers import (
     is_dotnet_mixed_mode,
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
+    resolve_nested_typedef_name,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
     resolve_nested_typeref_helper,
-    resolve_nested_typedef_name,
     enclosing_and_nested_classes_index_table,
 )
 
@@ -92,17 +92,17 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
         # namespace do not have an associated token, so we yield 0x0
         yield Namespace(namespace), NO_ADDRESS
 
-    
+
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
     nested_class_table = enclosing_and_nested_classes_index_table(pe)
-    
+
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET classes
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
         typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
-        
+
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
         yield Class(DnType.format_name(typedefname, namespace=typedefnamespace)), DNTokenAddress(token)
 
@@ -111,7 +111,7 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
         typerefnamespace, typerefname = resolve_nested_typeref_helper(typeref.ResolutionScope.row_index, typeref, pe)
-        
+
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
 
