@@ -369,7 +369,7 @@ def resolve_nested_typeref_name(index: int, typeref: dnfile.mdtable.TypeRefRow, 
     if isinstance(typeref.ResolutionScope.table, dnfile.mdtable.TypeRef):
         typeref_name = []
         name = typeref.TypeName
-        # Not appending the current typeref name to avoid potential duplicate
+        # Not appending the current TypeRef name to avoid potential duplicate
 
         # Validate index
         table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeRef.number, index)
