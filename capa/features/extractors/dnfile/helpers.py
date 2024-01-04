@@ -377,7 +377,7 @@ def resolve_nested_typeref_name(index: int, typeref: dnfile.mdtable.TypeRefRow, 
             return typeref.TypeNamespace, (typeref.TypeName,)
 
         while isinstance(table_row.ResolutionScope.table, dnfile.mdtable.TypeRef):
-            # Iterate through the typeref table to resolve the nested name
+            # Iterate through the TypeRef table to resolve the nested name
             typeref_name.append(name)
             name = table_row.TypeName
             table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeRef.number, table_row.ResolutionScope.row_index)
