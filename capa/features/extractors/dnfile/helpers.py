@@ -192,7 +192,7 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a contiguous run of Methods owned by this Type)
     """
-    nested_class_table = enclosing_and_nested_classes_index_table(pe)
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     accessor_map: Dict[int, str] = {}
     for methoddef, methoddef_access in get_dotnet_methoddef_property_accessors(pe):
@@ -233,7 +233,7 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             FieldList (index into Field table; it marks the first of a contiguous run of Fields owned by this Type)
     """
-    nested_class_table = enclosing_and_nested_classes_index_table(pe)
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
@@ -393,7 +393,7 @@ def resolve_nested_typeref_name(index: int, typeref: dnfile.mdtable.TypeRefRow, 
         return typeref.TypeNamespace, (typeref.TypeName,)
 
 
-def enclosing_and_nested_classes_index_table(pe: dnfile.dnPE):
+def get_dotnet_nested_class_table_index(pe: dnfile.dnPE):
     """Build index for EnclosingClass based off the NestedClass row index in the NestedClass table"""
     nested_class_table = {}
 
@@ -407,7 +407,7 @@ def enclosing_and_nested_classes_index_table(pe: dnfile.dnPE):
 
 def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get .NET types from TypeDef and TypeRef tables"""
-    nested_class_table = enclosing_and_nested_classes_index_table(pe)
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
