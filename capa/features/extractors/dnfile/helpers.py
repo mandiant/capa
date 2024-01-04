@@ -330,7 +330,7 @@ def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int):
 def resolve_nested_typedef_name(
     nested_class_table: dict, index: int, typedef: dnfile.mdtable.TypeDefRow, pe: dnfile.dnPE
 ):
-    """Resolves all nested TypeDef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
+    """Resolves all nested TypeDef class names. Returns the namespace as a str and the nested TypeDef name as a tuple"""
 
     if index in nested_class_table:
         typedef_name = []
