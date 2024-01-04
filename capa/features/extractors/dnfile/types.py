@@ -7,14 +7,14 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 from typing import Optional
-
+from typing import Tuple
 
 class DnType:
-    def __init__(self, token: int, class_: tuple, namespace: str = "", member: str = "", access: Optional[str] = None):
+    def __init__(self, token: int, class_: Tuple[str, ...], namespace: str = "", member: str = "", access: Optional[str] = None):
         self.token: int = token
         self.access: Optional[str] = access
         self.namespace: str = namespace
-        self.class_: tuple = class_
+        self.class_: Tuple[str, ...] = class_
 
         if member == ".ctor":
             member = "ctor"
@@ -42,7 +42,7 @@ class DnType:
         return str(self)
 
     @staticmethod
-    def format_name(class_: tuple, namespace: str = "", member: str = ""):
+    def format_name(class_: Tuple[str, ...], namespace: str = "", member: str = ""):
         if len(class_) > 1:
             class_str = "/".join(class_)  # Concat items in tuple, separated by a "/"
         else:
