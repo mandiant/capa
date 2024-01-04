@@ -340,7 +340,7 @@ def resolve_nested_typedef_name(
         typedef_name.append(name)
 
         while nested_class_table[index] in nested_class_table:
-            # Iterate through the typedef table to resolve the nested name
+            # Iterate through the TypeDef table to resolve the nested name
             table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeDef.number, nested_class_table[index])
             if table_row is None:
                 return typedef.TypeNamespace, tuple(typedef_name[::-1])
