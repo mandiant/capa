@@ -41,7 +41,7 @@ from capa.features.extractors.dnfile.helpers import (
     resolve_nested_typedef_name,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
-    resolve_nested_typeref_helper,
+    resolve_nested_typeref_name,
     get_dotnet_nested_class_table_index,
 )
 
@@ -110,7 +110,7 @@ def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Cla
         # emit external .NET classes
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
-        typerefnamespace, typerefname = resolve_nested_typeref_helper(typeref.ResolutionScope.row_index, typeref, pe)
+        typerefnamespace, typerefname = resolve_nested_typeref_name(typeref.ResolutionScope.row_index, typeref, pe)
 
         token = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
         yield Class(DnType.format_name(typerefname, namespace=typerefnamespace)), DNTokenAddress(token)
