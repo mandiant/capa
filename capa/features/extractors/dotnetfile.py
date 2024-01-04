@@ -42,7 +42,7 @@ from capa.features.extractors.dnfile.helpers import (
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
     resolve_nested_typeref_helper,
-    enclosing_and_nested_classes_index_table,
+    get_dotnet_nested_class_table_index,
 )
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
 
 def extract_file_class_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Class, Address]]:
     """emit class features from TypeRef and TypeDef tables"""
-    nested_class_table = enclosing_and_nested_classes_index_table(pe)
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
 
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET classes
