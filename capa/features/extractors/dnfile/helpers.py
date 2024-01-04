@@ -394,7 +394,7 @@ def resolve_nested_typeref_name(index: int, typeref: dnfile.mdtable.TypeRefRow, 
 
 
 def enclosing_and_nested_classes_index_table(pe: dnfile.dnPE):
-    """Build index for EnclosingClass based off the NestedClass row index in the nestedclass table"""
+    """Build index for EnclosingClass based off the NestedClass row index in the NestedClass table"""
     nested_class_table = {}
 
     # Used to find nested classes in typedef
