@@ -365,7 +365,7 @@ def resolve_nested_typedef_name(
 
 def resolve_nested_typeref_name(index: int, typeref: dnfile.mdtable.TypeRefRow, pe: dnfile.dnPE):
     """Resolves all nested TypeRef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
-    # If the ResolutionScope decodes to a typeRef type then it is nested
+    # If the ResolutionScope decodes to a TypeRef type then it is nested
     if isinstance(typeref.ResolutionScope.table, dnfile.mdtable.TypeRef):
         typeref_name = []
         name = typeref.TypeName
