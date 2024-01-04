@@ -39,9 +39,9 @@ from capa.features.extractors.dnfile.helpers import (
     get_dotnet_managed_imports,
     get_dotnet_managed_methods,
     resolve_nested_typedef_name,
+    resolve_nested_typeref_name,
     calculate_dotnet_token_value,
     get_dotnet_unmanaged_imports,
-    resolve_nested_typeref_name,
     get_dotnet_nested_class_table_index,
 )
 
