@@ -397,7 +397,7 @@ def enclosing_and_nested_classes_index_table(pe: dnfile.dnPE):
     """Build index for EnclosingClass based off the NestedClass row index in the NestedClass table"""
     nested_class_table = {}
 
-    # Used to find nested classes in typedef
+    # Used to find nested classes in TypeDef table
     for _, nestedclass in iter_dotnet_table(pe, dnfile.mdtable.NestedClass.number):
         assert isinstance(nestedclass, dnfile.mdtable.NestedClassRow)
         nested_class_table[nestedclass.NestedClass.row_index] = nestedclass.EnclosingClass.row_index
