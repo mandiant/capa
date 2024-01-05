@@ -23,6 +23,9 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
+OPERAND_TYPE_DYNAMIC_ADDRESS = OperandType.DYNAMIC | OperandType.ADDRESS
+
+
 def get_imports(ctx: Dict[str, Any]) -> Dict[int, Any]:
     """Populate the import cache for this context"""
     if "imports_cache" not in ctx:
@@ -82,7 +85,7 @@ def check_for_api_call(
         if not capa.features.extractors.ghidra.helpers.check_addr_for_api(addr_ref, fakes, imports, externs):
             return
         ref = addr_ref.getOffset()
-    elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
+    elif ref_type == OPERAND_TYPE_DYNAMIC_ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
     else:
         # pure address does not need to get dereferenced/ handled
@@ -219,27 +222,15 @@ def extract_insn_offset_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
 def extract_insn_bytes_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     parse referenced byte sequences
+
     example:
         push    offset iid_004118d4_IShellLinkA ; riid
     """
-    insn: ghidra.program.database.code.InstructionDB = ih.inner
-
-    if capa.features.extractors.ghidra.helpers.is_call_or_jmp(insn):
-        return
-
-    ref = insn.getAddress()  # init to insn addr
-    for i in range(insn.getNumOperands()):
-        if OperandType.isAddress(insn.getOperandType(i)):
-            ref = insn.getAddress(i)  # pulls pointer if there is one
-
-    if ref != insn.getAddress():  # bail out if there's no pointer
-        ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
-        if (
-            ghidra_dat and not ghidra_dat.hasStringValue() and not ghidra_dat.isPointer()
-        ):  # avoid if the data itself is a pointer
-            extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(ref, MAX_BYTES_FEATURE_SIZE)
+    for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
+        data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
+        if data and not data.hasStringValue():
+            extracted_bytes = capa.features.extractors.ghidra.helpers.get_bytes(addr, MAX_BYTES_FEATURE_SIZE)
             if extracted_bytes and not capa.features.extractors.helpers.all_zeros(extracted_bytes):
-                # don't extract byte features for obvious strings
                 yield Bytes(extracted_bytes), ih.address
 
 
@@ -250,24 +241,10 @@ def extract_insn_string_features(fh: FunctionHandle, bb: BBHandle, ih: InsnHandl
     example:
         push offset aAcr     ; "ACR  > "
     """
-    insn: ghidra.program.database.code.InstructionDB = ih.inner
-    dyn_addr = OperandType.DYNAMIC | OperandType.ADDRESS
-
-    ref = insn.getAddress()
-    for i in range(insn.getNumOperands()):
-        if OperandType.isScalarAsAddress(insn.getOperandType(i)):
-            ref = insn.getAddress(i)
-        # strings are also referenced dynamically via pointers & arrays, so we need to deref them
-        if insn.getOperandType(i) == dyn_addr:
-            ref = insn.getAddress(i)
-            dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
-            if dat and dat.isPointer():
-                ref = dat.getValue()
-
-    if ref != insn.getAddress():
-        ghidra_dat = getDataAt(ref)  # type: ignore [name-defined] # noqa: F821
-        if ghidra_dat and ghidra_dat.hasStringValue():
-            yield String(ghidra_dat.getValue()), ih.address
+    for addr in capa.features.extractors.ghidra.helpers.find_data_references_from_insn(ih.inner):
+        data = getDataAt(addr)  # type: ignore [name-defined] # noqa: F821
+        if data and data.hasStringValue():
+            yield String(data.getValue()), ih.address
 
 
 def extract_insn_mnemonic_features(
@@ -364,7 +341,7 @@ def extract_insn_cross_section_cflow(
         ref = capa.features.extractors.ghidra.helpers.dereference_ptr(insn)
         if capa.features.extractors.ghidra.helpers.check_addr_for_api(ref, fakes, imports, externs):
             return
-    elif ref_type == OperandType.DYNAMIC | OperandType.ADDRESS or ref_type == OperandType.DYNAMIC:
+    elif ref_type == OPERAND_TYPE_DYNAMIC_ADDRESS or ref_type == OperandType.DYNAMIC:
         return  # cannot resolve dynamics statically
     else:
         # pure address does not need to get dereferenced/ handled
