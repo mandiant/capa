@@ -8,6 +8,7 @@
 
 from typing import Tuple, Optional
 
+
 class DnType:
     def __init__(self, token: int, class_: Tuple[str, ...], namespace: str = "", member: str = "", access: Optional[str] = None):
         self.token: int = token
