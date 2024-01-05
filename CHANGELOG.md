@@ -13,6 +13,7 @@
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04
+- dotnet: emit enclosing class information for nested classes #1780 #1913 @bkojusner @mike-hunhoff
 
 ### Breaking Changes
 
@@ -57,7 +58,6 @@
 - data-manipulation/compression/create-cabinet-on-windows michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 - data-manipulation/compression/extract-cabinet-on-windows jakub.jozwiak@mandiant.com
 - lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
--
 
 ### Bug Fixes
 - ghidra: fix `ints_to_bytes` performance #1761 @mike-hunhoff
