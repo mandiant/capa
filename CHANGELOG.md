@@ -13,6 +13,7 @@
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04
+- dotnet: emit enclosing class information for nested classes #1780 #1913 @bkojusner @mike-hunhoff
 
 ### Breaking Changes
 
