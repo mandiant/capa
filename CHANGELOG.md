@@ -13,6 +13,7 @@
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04
+- dotnet: emit enclosing class information for nested classes #1780 #1913 @bkojusner @mike-hunhoff
 
 ### Breaking Changes
 
@@ -22,7 +23,7 @@
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
 
-### New Rules (34)
+### New Rules (36)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -57,6 +58,8 @@
 - data-manipulation/compression/create-cabinet-on-windows michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
 - data-manipulation/compression/extract-cabinet-on-windows jakub.jozwiak@mandiant.com
 - lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
+- nursery/enumerate-files-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/get-mac-address-in-dotnet moritz.raabe@mandiant.com michael.hunhoff@mandiant.com echernofsky@google.com
 -
 
 ### Bug Fixes

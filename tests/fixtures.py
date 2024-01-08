@@ -393,6 +393,10 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
         return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+    elif name.startswith("nested_typedef"):
+        return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
+    elif name.startswith("nested_typeref"):
+        return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -1272,6 +1276,114 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             capa.features.insn.Property(
                 "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=FeatureAccess.READ
             ),  # MemberRef method
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner_inner"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner1_0"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner1_1"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner0_0"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner0_1"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.OS.Build/VERSION::SdkInt"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.Media.Image/Plane::Buffer"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.Provider.Telephony/Sent/Sent::ContentUri"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.OS.Build::SdkInt"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Plane::Buffer"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Sent::ContentUri"),
             False,
         ),
     ],
