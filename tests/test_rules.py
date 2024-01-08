@@ -949,6 +949,7 @@ def test_count_api():
             features:
                 - or:
                     - count(api(kernel32.CreateFileA)): 1
+                    - count(api(System.Convert::FromBase64String)): 1
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
@@ -957,6 +958,7 @@ def test_count_api():
     assert bool(r.evaluate({API("kernel32.CreateFile"): set()})) is False
     assert bool(r.evaluate({API("CreateFile"): {ADDR1}})) is False
     assert bool(r.evaluate({API("CreateFileA"): {ADDR1}})) is True
+    assert bool(r.evaluate({API("System.Convert::FromBase64String"): {ADDR1}})) is True
 
 
 def test_invalid_number():
