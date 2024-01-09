@@ -3,11 +3,7 @@
 ## master (unreleased)
 
 ### New Features
-<<<<<<< HEAD
-- ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
-- ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
-- ghidra: implement capa explorer for Ghidra #1734 @colton-gabertan
-=======
+- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
   - add call scope #771 @yelhamer
@@ -15,7 +11,6 @@
   - add process scope #1517 @yelhamer
   - rules: change `meta.scope` to `meta.scopes` @yelhamer
   - protobuf: add `Metadata.flavor` @williballenthin
->>>>>>> master
 - binja: add support for forwarded exports #1646 @xusheng6
 - binja: add support for symtab names #1504 @xusheng6
 - add com class/interface features #322 @Aayush-goel-04

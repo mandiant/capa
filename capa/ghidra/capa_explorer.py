@@ -36,7 +36,7 @@ def add_bookmark(addr, txt, category="CapaExplorer"):
 
 class CapaMatchData:
     def __init__(
-        self, namespace, scope, capability, locations, node, attack: Dict[Any, Any], mbc: List[Dict[Any, Any]]
+        self, namespace, scope, capability, locations, node, attack: List[Dict[Any, Any]], mbc: List[Dict[Any, Any]]
     ):
         self.namespace = namespace
         self.scope = scope
@@ -56,10 +56,13 @@ class CapaMatchData:
 
         if isinstance(node_dict, int):
             # Number operands, usually parameters or immediates
+            # {'type':'number', 'number':80}
+            # hex() will cast this int to a str type
             return hex(node_dict)
 
         if isinstance(node_dict, str):
             # expect the "description" key's string value
+            # {'description':'PEB->OSMajorVersion'}
             return node_dict
 
         if "description" in node_dict:
@@ -73,13 +76,8 @@ class CapaMatchData:
     def create_namespace(self):
         """create new ghidra namespace for each capa namespace"""
 
-        # handle rules w/o namespace -> capa lib rule
-        if self.namespace == "capa":
-            lib_str = Namespace.DELIMITER + "lib" + Namespace.DELIMITER
-            self.namespace = self.namespace + lib_str + self.capability.replace(" ", "-")
         cmd = CreateNamespacesCmd(self.namespace, SourceType.USER_DEFINED)
         cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
-
         return cmd.getNamespace()
 
     def tag_functions(self):
@@ -107,38 +105,40 @@ class CapaMatchData:
         name_space = self.create_namespace()
 
         for addr in self.locations:
-            txt = self.capability.replace(" ", "-")
-            a = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
+            label_name = self.capability.replace(" ", "-")
+            ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
 
-            add_bookmark(a, txt)
+            add_bookmark(ghidra_addr, label_name)
 
-            # avoid re-naming functions
-            # to namespace/rule names
-            to_cont = False
-            for sym in symbol_table.getSymbols(a):
+            # avoid renaming user-defined functions
+            # to namespace/rule names, since they
+            # may contain matches for many rules at this scope
+            is_function = False
+            for sym in symbol_table.getSymbols(ghidra_addr):
                 if sym.getSymbolType() == SymbolType.FUNCTION:
-                    to_cont = True
-                    txt = sym.getName()
+                    is_function = True
+                    label_name = sym.getName()
                     # label to classify function under capa-generated namespace
-                    createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                    createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
-            if to_cont:
+            if is_function:
+                # skip re-labelling a function
                 continue
 
             # greedily create labels at basic block & insn scopes
             node_to_parse = self.node[self.locations.index(addr)]
             if node_to_parse:
-                txt = self.recurse_node(node_to_parse)
+                label_name = self.recurse_node(node_to_parse)
 
-                if not txt:
+                if not label_name:
                     continue
 
-                txt = txt.replace(" ", "-")
-                createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                label_name = label_name.replace(" ", "-")
+                createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
                 continue
 
             # handle first address of match
-            createLabel(a, txt, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+            createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
 
 
 def get_capabilities():
@@ -153,7 +153,7 @@ def get_capabilities():
 
     if not rules_dir:
         logger.info("You must choose a capa rules directory before running capa.")
-        return capa.main.E_MISSING_RULES
+        return ""  # return empty str to avoid handling both int and str types
 
     rules_path: pathlib.Path = pathlib.Path(rules_dir)
     logger.info("running capa using rules from %s", str(rules_path))
@@ -165,6 +165,7 @@ def get_capabilities():
     capabilities, counts = capa.main.find_capabilities(rules, extractor, True)
 
     if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
+        popup("Capa Explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 
     return capa.render.json.render(meta, rules, capabilities)
@@ -172,25 +173,22 @@ def get_capabilities():
 
 def get_locations(match_dict):
     """recursively collect match addresses and associated nodes"""
-    if "locations" in match_dict:
-        for loc in match_dict.get("locations", {}):
-            if "type" in loc:
-                # either an rva (absolute)
-                # or an offset into a file (file)
-                if loc.get("type", "") in ("absolute", "file"):
-                    yield loc.get("value"), match_dict.get("node")
 
-    if match_dict["children"]:
-        for child in match_dict.get("children", {}):
-            yield from get_locations(child)
+    for loc in match_dict.get("locations", {}):
+        # either an rva (absolute)
+        # or an offset into a file (file)
+        if loc.get("type", "") in ("absolute", "file"):
+            yield loc.get("value"), match_dict.get("node")
+
+    for child in match_dict.get("children", {}):
+        yield from get_locations(child)
 
 
 def parse_json(capa_data):
     """Parse json produced by capa"""
-    ghidra_data = []
 
     rules = capa_data["rules"]
-    for rule in rules.keys():
+    for rule in capa_data.get("rules", {}).keys():
         # loosely coupled location & node data lists
         this_locs = []
         this_node: List[Dict] = []
@@ -200,8 +198,13 @@ def parse_json(capa_data):
         meta = this_capability["meta"]
 
         # get Mitre ATT&CK and MBC
+        # avoid passing NoneTypes
         this_attack = meta.get("attack")
+        if not this_attack:
+            this_attack = []
         this_mbc = meta.get("mbc")
+        if not this_mbc:
+            this_mbc = []
 
         # scope match for the rule
         this_scope = meta["scopes"].get("static")
@@ -213,11 +216,15 @@ def parse_json(capa_data):
 
         if "namespace" in meta:
             # split into list to help define child namespaces
-            # in ghidra
+            # this requires the correct delimiter used by Ghidra
+            # Ex. 'communication/named-pipe/create' -> capa::communication::named-pipe::create
             namespace_str = Namespace.DELIMITER.join(meta["namespace"].split("/"))
             this_namespace = "capa" + Namespace.DELIMITER + namespace_str
+            # lib rules via the official rules repo will not contain data
+            # for the "namespaces" key, so format using rule itself
         else:
-            this_namespace = "capa"
+            lib_str = "capa" + Namespace.DELIMITER + "lib" + Namespace.DELIMITER
+            this_namespace = lib_str + rule.replace(" ", "-")
 
         # recurse to find all locations
         # grab second dict, containing additional matches
@@ -227,29 +234,43 @@ def parse_json(capa_data):
             this_locs.append(m[0])
             this_node.append(m[1])
 
-        ghidra_data.append(CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack, this_mbc))
-
-    return ghidra_data
+        yield CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack, this_mbc)
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
     logging.getLogger().setLevel(logging.INFO)
 
+    if isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
+        logger.error("unsupported ghidra execution mode")
+        return capa.main.E_UNSUPPORTED_GHIDRA_EXECUTION_MODE
+
     if not capa.ghidra.helpers.is_supported_ghidra_version():
+        logger.error("unsupported ghidra version")
         return capa.main.E_UNSUPPORTED_GHIDRA_VERSION
 
     if not capa.ghidra.helpers.is_supported_file_type():
+        logger.error("unsupported file type")
         return capa.main.E_INVALID_FILE_TYPE
 
     if not capa.ghidra.helpers.is_supported_arch_type():
+        logger.error("unsupported file architecture")
         return capa.main.E_INVALID_FILE_ARCH
 
-    if not isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
-        capa_data = json.loads(get_capabilities())
-        for item in parse_json(capa_data):
-            item.tag_functions()
-            item.bookmark_locations()
+    # capa_data will always contain {'meta':..., 'rules':...}
+    # if the 'rules' key contains no values, then there were no matches
+    # found
+    capa_data = json.loads(get_capabilities())
+    if not capa_data.get("rules"):
+        logger.info("capa explorer found no matches")
+        popup("capa explorer found no matches.")  # type: ignore [name-defined] # noqa: F821
+        return capa.main.E_EMPTY_REPORT
+
+    for item in parse_json(capa_data):
+        item.tag_functions()
+        item.bookmark_locations()
+    logger.info("capa explorer analysis complete")
+    popup("""capa explorer analysis complete.\nPlease see results in the Bookmarks and Namespaces section of the Symbol Tree Window.""")  # type: ignore [name-defined] # noqa: F821
     return 0
 
 
@@ -258,4 +279,7 @@ if __name__ == "__main__":
         from capa.exceptions import UnsupportedRuntimeError
 
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
-    sys.exit(main())
+    exit_code = main()
+    if exit_code != 0:
+        popup("Capa Explorer encountered errors during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
+    sys.exit(exit_code)
