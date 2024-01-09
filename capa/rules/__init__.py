@@ -602,7 +602,9 @@ def trim_dll_part(api: str) -> str:
 
     # kernel32.CreateFileA
     if api.count(".") == 1:
-        api = api.split(".")[1]
+        if "::" not in api:
+            # skip System.Convert::FromBase64String
+            api = api.split(".")[1]
     return api
 
 

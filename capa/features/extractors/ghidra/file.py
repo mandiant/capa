@@ -127,8 +127,10 @@ def extract_file_strings() -> Iterator[Tuple[Feature, Address]]:
     """extract ASCII and UTF-16 LE strings"""
 
     for block in currentProgram().getMemory().getBlocks():  # type: ignore [name-defined] # noqa: F821
-        if block.isInitialized():
-            p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
+        if not block.isInitialized():
+            continue
+
+        p_bytes = capa.features.extractors.ghidra.helpers.get_block_bytes(block)
 
         for s in capa.features.extractors.strings.extract_ascii_strings(p_bytes):
             offset = block.getStart().getOffset() + s.offset
