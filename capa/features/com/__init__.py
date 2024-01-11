@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 from enum import Enum
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
+from typing import Dict, List
 
 from capa.helpers import assert_never
 
@@ -34,4 +34,3 @@ def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
         return capa.features.com.interfaces.COM_INTERFACES
     else:
         assert_never(com_type)
-

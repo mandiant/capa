@@ -8,8 +8,6 @@
 
 import io
 import re
-import gzip
-import json
 import uuid
 import codecs
 import logging
@@ -38,8 +36,8 @@ import yaml.parser
 import capa.perf
 import capa.engine as ceng
 import capa.features
-import capa.features.com
 import capa.optimizer
+import capa.features.com
 import capa.features.file
 import capa.features.insn
 import capa.features.common
