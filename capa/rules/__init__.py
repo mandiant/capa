@@ -360,7 +360,7 @@ def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Statement:
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
         prefix = capa.features.com.COM_PREFIXES[com_type]
         symbol = prefix + com_name
-        com_features.append(capa.features.common.StringFactory(guid, f"{symbol} as GUID string"))
+        com_features.append(capa.features.common.String(guid, f"{symbol} as GUID string"))
         com_features.append(capa.features.common.Bytes(guid_bytes, f"{symbol} as bytes"))
     return ceng.Or(com_features)
 
