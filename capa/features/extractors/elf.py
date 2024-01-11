@@ -108,6 +108,9 @@ class Shdr:
             buf,
         )
 
+    def get_name(self, elf: "ELF") -> str:
+        return elf.shstrtab.buf[self.name:].partition(b"\x00")[0].decode("ascii")
+
 
 class ELF:
     def __init__(self, f: BinaryIO):
@@ -120,6 +123,7 @@ class ELF:
         self.e_phnum: int
         self.e_shentsize: int
         self.e_shnum: int
+        self.e_shstrndx: int
         self.phbuf: bytes
         self.shbuf: bytes
 
@@ -151,11 +155,11 @@ class ELF:
         if self.bitness == 32:
             e_phoff, e_shoff = struct.unpack_from(self.endian + "II", self.file_header, 0x1C)
             self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x2A)
-            self.e_shentsize, self.e_shnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x2E)
+            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(self.endian + "HHH", self.file_header, 0x2E)
         elif self.bitness == 64:
             e_phoff, e_shoff = struct.unpack_from(self.endian + "QQ", self.file_header, 0x20)
             self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x36)
-            self.e_shentsize, self.e_shnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x3A)
+            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(self.endian + "HHH", self.file_header, 0x3A)
         else:
             raise NotImplementedError()
 
@@ -364,6 +368,10 @@ class ELF:
                 yield self.parse_section_header(i)
             except ValueError:
                 continue
+
+    @property
+    def shstrtab(self) -> Shdr:
+        return self.parse_section_header(self.e_shstrndx)
 
     @property
     def linker(self):
@@ -816,6 +824,48 @@ def guess_os_from_sh_notes(elf: ELF) -> Optional[OS]:
     return None
 
 
+def guess_os_from_ident_directive(elf: ELF) -> Optional[OS]:
+    # GCC inserts the GNU version via an .ident directive
+    # that gets stored in a section named ".comment".
+    # look at the version and recognize common OSes.
+    #
+    # assume the GCC version matches the target OS version,
+    # which I guess could be wrong during cross-compilation?
+    # therefore, don't rely on this if possible.
+    #
+    # https://stackoverflow.com/q/6263425
+    # https://gcc.gnu.org/onlinedocs/cpp/Other-Directives.html
+
+    SHT_PROGBITS = 0x1
+    for shdr in elf.section_headers:
+        if shdr.type != SHT_PROGBITS:
+            continue
+
+        if shdr.get_name(elf) != ".comment":
+            continue
+
+        try:
+            comment = shdr.buf.decode("utf-8")
+        except ValueError:
+            continue
+
+        if "GCC:" not in comment:
+            continue
+
+        logger.debug(".ident: %s", comment)
+
+        # these values come from our testfiles, like:
+        # rg -a "GCC: " tests/data/
+        if "Debian" in comment:
+            return OS.LINUX
+        elif "Ubuntu" in comment:
+            return OS.LINUX
+        elif "Red Hat" in comment:
+            return OS.LINUX
+
+    return None
+
+
 def guess_os_from_linker(elf: ELF) -> Optional[OS]:
     # search for recognizable dynamic linkers (interpreters)
     # for example, on linux, we see file paths like: /lib64/ld-linux-x86-64.so.2
@@ -851,8 +901,10 @@ def guess_os_from_abi_versions_needed(elf: ELF) -> Optional[OS]:
                 return OS.HURD
 
             else:
-                # we don't have any good guesses based on versions needed
-                pass
+                # in practice, Hurd isn't a common/viable OS,
+                # so this is almost certain to be Linux,
+                # so lets just make that guess.
+                return OS.LINUX
 
     return None
 
@@ -928,6 +980,13 @@ def detect_elf_os(f) -> str:
         sh_notes_guess = None
 
     try:
+        ident_guess = guess_os_from_ident_directive(elf)
+        logger.debug("guess: .ident: %s", ident_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from .ident directive: %s", e)
+        ident_guess = None
+
+    try:
         linker_guess = guess_os_from_linker(elf)
         logger.debug("guess: linker: %s", linker_guess)
     except Exception as e:
@@ -959,6 +1018,10 @@ def detect_elf_os(f) -> str:
 
     if osabi_guess:
         ret = osabi_guess
+
+    elif ident_guess:
+        # we don't trust this too much due to non-cross-compilation assumptions
+        ret = ident_guess
 
     elif ph_notes_guess:
         ret = ph_notes_guess
