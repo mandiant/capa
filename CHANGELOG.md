@@ -23,7 +23,7 @@
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
 
-### New Rules (36)
+### New Rules (39)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -60,6 +60,9 @@
 - lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
 - nursery/enumerate-files-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
 - nursery/get-mac-address-in-dotnet moritz.raabe@mandiant.com michael.hunhoff@mandiant.com echernofsky@google.com
+- nursery/get-current-process-command-line william.ballenthin@mandiant.com
+- nursery/get-current-process-file-path william.ballenthin@mandiant.com
+- nursery/hook-routines-via-dlsym-rtld_next william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
