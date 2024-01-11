@@ -109,7 +109,7 @@ class Shdr:
         )
 
     def get_name(self, elf: "ELF") -> str:
-        return elf.shstrtab.buf[self.name:].partition(b"\x00")[0].decode("ascii")
+        return elf.shstrtab.buf[self.name :].partition(b"\x00")[0].decode("ascii")
 
 
 class ELF:
@@ -155,11 +155,15 @@ class ELF:
         if self.bitness == 32:
             e_phoff, e_shoff = struct.unpack_from(self.endian + "II", self.file_header, 0x1C)
             self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x2A)
-            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(self.endian + "HHH", self.file_header, 0x2E)
+            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(
+                self.endian + "HHH", self.file_header, 0x2E
+            )
         elif self.bitness == 64:
             e_phoff, e_shoff = struct.unpack_from(self.endian + "QQ", self.file_header, 0x20)
             self.e_phentsize, self.e_phnum = struct.unpack_from(self.endian + "HH", self.file_header, 0x36)
-            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(self.endian + "HHH", self.file_header, 0x3A)
+            self.e_shentsize, self.e_shnum, self.e_shstrndx = struct.unpack_from(
+                self.endian + "HHH", self.file_header, 0x3A
+            )
         else:
             raise NotImplementedError()
 
