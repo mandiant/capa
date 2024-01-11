@@ -70,6 +70,7 @@
 - binja: improve function call site detection @xusheng6
 - binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
+- elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
 
 ### capa explorer IDA Pro plugin
 
