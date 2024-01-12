@@ -16,7 +16,7 @@ import pathlib
 from typing import Any, Dict, List
 from contextlib import suppress
 
-from ghidra.app.cmd.label import CreateNamespacesCmd
+from ghidra.app.cmd.label import AddLabelCmd, CreateNamespacesCmd
 from ghidra.program.model.symbol import Namespace, SourceType, SymbolType
 
 import capa
@@ -34,6 +34,29 @@ def add_bookmark(addr, txt, category="CapaExplorer"):
     currentProgram().getBookmarkManager().setBookmark(addr, "Info", category, txt)  # type: ignore [name-defined] # noqa: F821
 
 
+def create_namespace(namespace_str):
+    """create new Ghidra namespace for each capa namespace"""
+
+    cmd = CreateNamespacesCmd(namespace_str, SourceType.USER_DEFINED)
+    cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
+    return cmd.getNamespace()
+
+
+def create_label(ghidra_addr, name, capa_namespace):
+    """custom label cmd to overlay symbols under capa-generated namespaces"""
+
+    # create SymbolType.LABEL at addr under Ghidra's Global scope
+    cmd = AddLabelCmd(ghidra_addr, name, True, SourceType.USER_DEFINED)
+    cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
+
+    try:
+        cmd.getSymbol().setNamespace(capa_namespace)
+        return
+    except RuntimeError:  # DuplicateNameError
+        # duplicate features within same scope/ namespace
+        return
+
+
 class CapaMatchData:
     def __init__(
         self, namespace, scope, capability, locations, node, attack: List[Dict[Any, Any]], mbc: List[Dict[Any, Any]]
@@ -46,54 +69,51 @@ class CapaMatchData:
         self.attack = attack
         self.mbc = mbc
 
-    def recurse_node(self, node_dict):
-        """pull match descriptions by recursing node dicts"""
+    def recurse_node(self, node_data):
+        """pull match descriptions by recursing node dicts
 
-        if not node_dict:
-            # mismatched key, skip
+        Note: all final returned data should be type str or None
+        """
+
+        if node_data is None or node_data == {}:
+            # mismatched key or empty node dict, skip
             # ex. {'type':'subscope', 'scope':'basic block'}
             return ""
 
-        if isinstance(node_dict, int):
+        if isinstance(node_data, int):
             # Number operands, usually parameters or immediates
             # {'type':'number', 'number':80}
             # hex() will cast this int to a str type
-            return hex(node_dict)
+            return hex(node_data)
 
-        if isinstance(node_dict, str):
+        if isinstance(node_data, str):
             # expect the "description" key's string value
             # {'description':'PEB->OSMajorVersion'}
-            return node_dict
+            return node_data
 
-        if "description" in node_dict:
-            return node_dict.get("description")
+        if "description" in node_data:
+            return node_data.get("description")
         else:
             # if no "description" key, the "type" key's value is the
             # expected key.
             # ex. {'type':'api', 'api':'RegisterServiceCtrlHandler'}
-            return self.recurse_node(node_dict.get(node_dict.get("type")))
-
-    def create_namespace(self):
-        """create new ghidra namespace for each capa namespace"""
-
-        cmd = CreateNamespacesCmd(self.namespace, SourceType.USER_DEFINED)
-        cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
-        return cmd.getNamespace()
+            return self.recurse_node(node_data.get(node_data.get("type")))
 
     def tag_functions(self):
-        """create function tags for capabilities"""
+        """create function tags & bookmarks for MITRE ATT&CK & MBC mappings"""
 
         # self.locations[0] will always be the largest
         # scoped offset yielded i.e. closest to an entrypoint
         addr = toAddr(hex(self.locations[0]))  # type: ignore [name-defined] # noqa: F821
         func = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
 
-        # bookmark Mitre ATT&CK tactics & MBC @ function scope
-        if func:
+        # bookmark & tag MITRE ATT&CK tactics & MBC @ function scope
+        if func is not None:
             func.addTag(self.capability)
+
             for item in self.attack:
                 attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
-                add_bookmark(addr, attack_txt, "CapaExplorer::Mitre ATT&CK")
+                add_bookmark(addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
 
             for item in self.mbc:
                 mbc_txt = item.get("objective") + Namespace.DELIMITER + item.get("id")
@@ -101,44 +121,50 @@ class CapaMatchData:
 
     def bookmark_locations(self):
         """bookmark & label findings at all scopes"""
+        namespace = create_namespace(self.namespace)
+        description = self.capability.replace(" ", "-")
         symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
-        name_space = self.create_namespace()
 
-        for addr in self.locations:
-            label_name = self.capability.replace(" ", "-")
-            ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
+        # handle function main scope of matched rule
+        # these will typically contain further matches within
+        if self.scope == "function" and len(self.locations) > 1:
+            # bookmark with capability as description
+            ghidra_addr = toAddr(hex(self.locations[0]))  # type: ignore [name-defined] # noqa: F821
+            add_bookmark(ghidra_addr, description)
 
-            add_bookmark(ghidra_addr, label_name)
-
-            # avoid renaming user-defined functions
-            # to namespace/rule names, since they
-            # may contain matches for many rules at this scope
-            is_function = False
-            for sym in symbol_table.getSymbols(ghidra_addr):
+            # classify new label under capa-generated namespace
+            sym = symbol_table.getPrimarySymbol(ghidra_addr)
+            if sym is not None:
                 if sym.getSymbolType() == SymbolType.FUNCTION:
-                    is_function = True
-                    label_name = sym.getName()
-                    # label to classify function under capa-generated namespace
-                    createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                    func_ns = create_namespace(self.namespace + Namespace.DELIMITER + sym.getName())
 
-            if is_function:
-                # skip re-labelling a function
-                continue
+                    # parse the corresponding nodes, and sub-label matched features
+                    # under the encompassing function(s)
+                    for addr in self.locations[1:]:
+                        # skip duplicate addr
+                        if addr == self.locations[0]:
+                            continue
 
-            # greedily create labels at basic block & insn scopes
-            node_to_parse = self.node[self.locations.index(addr)]
-            if node_to_parse:
-                label_name = self.recurse_node(node_to_parse)
+                        ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
 
-                if not label_name:
-                    continue
+                        # classify matched extracted features under Ghidra-generated scope
+                        node_to_parse = self.node[self.locations.index(addr)]
+                        if node_to_parse != {}:
+                            label_name = self.recurse_node(node_to_parse).replace(" ", "-")
+                            if label_name != "":
+                                create_label(ghidra_addr, label_name, func_ns)
+        # handle non-function scoped rules by
+        # resolving its encompassing function's entrypoint
+        else:
+            for addr in self.locations:
+                ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
 
-                label_name = label_name.replace(" ", "-")
-                createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
-                continue
-
-            # handle first address of match
-            createLabel(ghidra_addr, label_name, name_space, True, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                # create Ghidra-scoped labels @ basic block/ insn scopes
+                node_to_parse = self.node[self.locations.index(addr)]
+                if node_to_parse != {}:
+                    label_name = self.recurse_node(node_to_parse).replace(" ", "-")
+                    if label_name != "":
+                        create_label(ghidra_addr, label_name, namespace)
 
 
 def get_capabilities():
@@ -187,54 +213,53 @@ def get_locations(match_dict):
 def parse_json(capa_data):
     """Parse json produced by capa"""
 
-    rules = capa_data["rules"]
-    for rule in capa_data.get("rules", {}).keys():
+    for rule, capability in capa_data.get("rules", {}).items():
         # loosely coupled location & node data lists
-        this_locs = []
-        this_node: List[Dict] = []
+        locs = []
+        node: List[Dict] = []
 
         # dict data of currently matched rule
-        this_capability = rules[rule]
-        meta = this_capability["meta"]
+        meta = capability["meta"]
 
-        # get Mitre ATT&CK and MBC
+        # get MITRE ATT&CK and MBC
         # avoid passing NoneTypes
-        this_attack = meta.get("attack")
-        if not this_attack:
-            this_attack = []
-        this_mbc = meta.get("mbc")
-        if not this_mbc:
-            this_mbc = []
+        attack = meta.get("attack")
+        if attack is None:
+            attack = []
+        mbc = meta.get("mbc")
+        if mbc is None:
+            mbc = []
 
         # scope match for the rule
-        this_scope = meta["scopes"].get("static")
+        scope = meta["scopes"].get("static")
         with suppress(KeyError):
-            # always grab first location of match
-            this_locs.append(this_capability["matches"][0][0]["value"])
+            # always grab first location of match at the highest scope
+            locs.append(capability["matches"][0][0]["value"])
             # align node data
-            this_node.append({})
+            node.append({})
 
+        fmt_rule = Namespace.DELIMITER + rule.replace(" ", "-")
         if "namespace" in meta:
             # split into list to help define child namespaces
             # this requires the correct delimiter used by Ghidra
-            # Ex. 'communication/named-pipe/create' -> capa::communication::named-pipe::create
+            # Ex. 'communication/named-pipe/create/create pipe' -> capa::communication::named-pipe::create::create-pipe
             namespace_str = Namespace.DELIMITER.join(meta["namespace"].split("/"))
-            this_namespace = "capa" + Namespace.DELIMITER + namespace_str
+            namespace = "capa" + Namespace.DELIMITER + namespace_str + fmt_rule
+        else:
             # lib rules via the official rules repo will not contain data
             # for the "namespaces" key, so format using rule itself
-        else:
-            lib_str = "capa" + Namespace.DELIMITER + "lib" + Namespace.DELIMITER
-            this_namespace = lib_str + rule.replace(" ", "-")
+            # Ex. 'contain loop' -> capa::lib::contain-loop
+            namespace = "capa" + Namespace.DELIMITER + "lib" + fmt_rule
 
         # recurse to find all locations
         # grab second dict, containing additional matches
-        # and node data
-        matches = this_capability["matches"][0][1]
+        # at lower scopes and node data
+        matches = capability["matches"][0][1]
         for m in get_locations(matches):
-            this_locs.append(m[0])
-            this_node.append(m[1])
+            locs.append(m[0])
+            node.append(m[1])
 
-        yield CapaMatchData(this_namespace, this_scope, rule, this_locs, this_node, this_attack, this_mbc)
+        yield CapaMatchData(namespace, scope, rule, locs, node, attack, mbc)
 
 
 def main():
@@ -242,11 +267,11 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
 
     if isRunningHeadless():  # type: ignore [name-defined] # noqa: F821
-        logger.error("unsupported ghidra execution mode")
+        logger.error("unsupported Ghidra execution mode")
         return capa.main.E_UNSUPPORTED_GHIDRA_EXECUTION_MODE
 
     if not capa.ghidra.helpers.is_supported_ghidra_version():
-        logger.error("unsupported ghidra version")
+        logger.error("unsupported Ghidra version")
         return capa.main.E_UNSUPPORTED_GHIDRA_VERSION
 
     if not capa.ghidra.helpers.is_supported_file_type():
@@ -261,7 +286,7 @@ def main():
     # if the 'rules' key contains no values, then there were no matches
     # found
     capa_data = json.loads(get_capabilities())
-    if not capa_data.get("rules"):
+    if capa_data.get("rules") is None:
         logger.info("capa explorer found no matches")
         popup("capa explorer found no matches.")  # type: ignore [name-defined] # noqa: F821
         return capa.main.E_EMPTY_REPORT
@@ -270,7 +295,7 @@ def main():
         item.tag_functions()
         item.bookmark_locations()
     logger.info("capa explorer analysis complete")
-    popup("""capa explorer analysis complete.\nPlease see results in the Bookmarks and Namespaces section of the Symbol Tree Window.""")  # type: ignore [name-defined] # noqa: F821
+    popup("capa explorer analysis complete.\nPlease see results in the Bookmarks and Namespaces section of the Symbol Tree Window.")  # type: ignore [name-defined] # noqa: F821
     return 0
 
 
@@ -281,5 +306,5 @@ if __name__ == "__main__":
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
     exit_code = main()
     if exit_code != 0:
-        popup("Capa Explorer encountered errors during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
+        popup("capa explorer encountered errors during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
     sys.exit(exit_code)
