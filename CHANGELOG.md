@@ -75,6 +75,7 @@
 ### capa explorer IDA Pro plugin
 
 ### Development
+- update ATT&CK/MBC data for linting #1932 @mr-tz
 
 ### Raw diffs
 - [capa v6.1.0...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
