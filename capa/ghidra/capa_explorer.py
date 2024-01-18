@@ -141,33 +141,33 @@ class CapaMatchData:
                     if sym.getSymbolType() == SymbolType.FUNCTION:
                         create_label(ghidra_addr, sym.getName(), capa_namespace)
 
-                        # parse the corresponding nodes, and label subscope matched features
-                        # under the encompassing function(s)
-                        for sub_match in self.matches.get(addr):
-                            for loc, node in sub_match.items():
-                                sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
-                                if sub_ghidra_addr == ghidra_addr:
-                                    # skip duplicates
-                                    continue
+                    # parse the corresponding nodes, and label subscope matched features
+                    # under the encompassing function(s)
+                    for sub_match in self.matches.get(addr):
+                        for loc, node in sub_match.items():
+                            sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
+                            if sub_ghidra_addr == ghidra_addr:
+                                # skip duplicates
+                                continue
 
-                                # classify matched extracted features under Ghidra Global scope
-                                if node != {}:
-                                    label_name = self.recurse_node(node).replace(" ", "-")
-                                    if label_name != "":
-                                        add_bookmark(sub_ghidra_addr, label_name)
-
-                                        label_name = "capa_LAB_" + label_name + "_" + sub_ghidra_addr.toString().upper()
-                                        createLabel(sub_ghidra_addr, label_name, False, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                            # classify matched extracted features under Ghidra Global scope
+                            if node != {}:
+                                label_name = self.recurse_node(node).replace(" ", "-")
+                                if label_name != "":
+                                    label_name = "capa_LAB_" + label_name + "_" + sub_ghidra_addr.toString().upper()
+                                    createLabel(sub_ghidra_addr, label_name, False, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
         else:
-            # main match is not function scoped here
+            # resolve the encompassing function for the capa namespace
             for addr in self.matches.keys():
                 ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
-                # filter global/file scope matches
-                if addr > currentProgram().getImageBase().getOffset():  # type: ignore [name-defined] # noqa: F821
-                    # basic block match
-                    create_label(ghidra_addr, self.capability.replace(" ", "-"), capa_namespace)
 
-                # create Ghidra-scoped labels @ insn scopes
+                # basic block / insn scoped matches
+                # Ex. See "Create Process on Windows" Rule
+                func = getFunctionContaining(ghidra_addr)  # type: ignore [name-defined] # noqa: F821
+                if func is not None:
+                    create_label(func.getEntryPoint(), func.getName(), capa_namespace)
+
+                # create subscope labels in Ghidra's global scope
                 for sub_match in self.matches.get(addr):
                     for loc, node in sub_match.items():
                         sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
@@ -175,10 +175,23 @@ class CapaMatchData:
                         if node != {}:
                             label_name = self.recurse_node(node).replace(" ", "-")
                             if label_name != "":
-                                add_bookmark(sub_ghidra_addr, label_name)
-
-                                label_name = "capa_LAB_" + label_name + "_" + sub_ghidra_addr.toString().upper()
-                                createLabel(sub_ghidra_addr, label_name, False, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                                if func is not None:
+                                    label_name = "capa_LAB_" + label_name + "_" + sub_ghidra_addr.toString().upper()
+                                    createLabel(sub_ghidra_addr, label_name, False, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                                else:
+                                    # this would be a global/file scoped main match
+                                    # try to resolve the encompassing function via the subscope match, instead
+                                    sub_func = getFunctionContaining(sub_ghidra_addr)  # type: ignore [name-defined] # noqa: F821
+                                    if sub_func is not None:
+                                        label_name = "capa_LAB_" + label_name + "_" + sub_ghidra_addr.toString().upper()
+                                        # place function in capa namespace & create the subscope match label in Ghidra's global namespace
+                                        create_label(sub_func.getEntryPoint(), sub_func.getName(), capa_namespace)
+                                        createLabel(sub_ghidra_addr, label_name, False, SourceType.USER_DEFINED)  # type: ignore [name-defined] # noqa: F821
+                                    else:
+                                        # addr is in some other file section like .data
+                                        # represent this location with a label symbol under the capa namespace
+                                        # Ex. See "Reference Base64 String" rule
+                                        create_label(sub_ghidra_addr, label_name, capa_namespace)
 
 
 def get_capabilities():
