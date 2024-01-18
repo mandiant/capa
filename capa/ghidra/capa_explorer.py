@@ -125,7 +125,7 @@ class CapaMatchData:
                     add_bookmark(addr, mbc_txt, "CapaExplorer::MBC")
 
     def label_matches(self):
-        """bookmark & label findings at all scopes"""
+        """label findings at all scopes and place functions in capa-generated namespaces"""
         capa_namespace = create_namespace(self.namespace)
         symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
 
