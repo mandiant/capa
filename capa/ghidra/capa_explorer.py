@@ -115,14 +115,15 @@ class CapaMatchData:
             # bookmark & tag MITRE ATT&CK tactics & MBC @ function scope
             if func is not None:
                 func.addTag(self.capability)
+                func_addr = func.getEntryPoint()
 
                 for item in self.attack:
                     attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
-                    add_bookmark(addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
+                    add_bookmark(func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
 
                 for item in self.mbc:
                     mbc_txt = item.get("objective") + Namespace.DELIMITER + item.get("id")
-                    add_bookmark(addr, mbc_txt, "CapaExplorer::MBC")
+                    add_bookmark(func_addr, mbc_txt, "CapaExplorer::MBC")
 
     def label_matches(self):
         """label findings at all scopes and place functions in capa-generated namespaces"""
