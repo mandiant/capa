@@ -100,9 +100,9 @@ def get_viv_extractor(path: Path):
     sigpaths = [
         CD / "data" / "sigs" / "test_aulldiv.pat",
         CD / "data" / "sigs" / "test_aullrem.pat.gz",
-        CD.parent / "sigs" / "1_flare_msvc_rtf_32_64.sig",
-        CD.parent / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
-        CD.parent / "sigs" / "3_flare_common_libs.sig",
+        CD.parent / "capa" / "sigs" / "1_flare_msvc_rtf_32_64.sig",
+        CD.parent / "capa" / "sigs" / "2_flare_msvc_atlmfc_32_64.sig",
+        CD.parent / "capa" / "sigs" / "3_flare_common_libs.sig",
     ]
 
     if "raw32" in path.name:

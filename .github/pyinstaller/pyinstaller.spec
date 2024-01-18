@@ -18,7 +18,7 @@ a = Analysis(
         # this gets invoked from the directory of the spec file,
         # i.e. ./.github/pyinstaller
         ("../../rules", "rules"),
-        ("../../sigs", "sigs"),
+        ("../../capa/sigs", "sigs"),
         ("../../cache", "cache"),
         # capa.render.default uses tabulate that depends on wcwidth.
         # it seems wcwidth uses a json file `version.json`

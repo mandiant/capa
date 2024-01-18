@@ -1,4 +1,4 @@
-# capa/sigs
+# capa FLIRT signatures
 
 This directory contains FLIRT signatures that capa uses to identify library functions.
 Typically, capa will ignore library functions, which reduces false positives and improves runtime.

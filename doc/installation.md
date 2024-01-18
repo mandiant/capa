@@ -35,12 +35,6 @@ $ unzip v4.0.0.zip
 $ capa -r /path/to/capa-rules suspicious.exe
 ```
 
-This technique also doesn't set up the default library identification [signatures](https://github.com/mandiant/capa/tree/master/sigs). You can pass the signature directory using the `-s` argument.
-For example, to run capa with both a rule path and a signature path:
-```console
-$ capa -s /path/to/capa-sigs suspicious.exe
-```
-
 Alternatively, see Method 3 below.
 
 ### 2. Use capa

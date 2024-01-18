@@ -214,7 +214,7 @@ def get_default_signatures() -> List[Path]:
     """
     compute a list of file system paths to the default FLIRT signatures.
     """
-    sigs_path = get_default_root() / "sigs"
+    sigs_path = get_default_root() / "capa" / "sigs"
     logger.debug("signatures path: %s", sigs_path)
 
     ret = []
@@ -962,7 +962,7 @@ def handle_common_args(args):
             )
             logger.debug("-" * 80)
 
-            sigs_path = get_default_root() / "sigs"
+            sigs_path = get_default_root() / "capa" / "sigs"
 
             if not sigs_path.exists():
                 logger.error(
