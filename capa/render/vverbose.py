@@ -22,6 +22,9 @@ import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.render.default import width
+from capa.capabilities.extract_domain_names import verbose_extract_domains_and_ips
+from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -458,6 +461,27 @@ def render_rules(ostream, doc: rd.ResultDocument):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
+def get_extractor_from_doc(doc: rd.ResultDocument) -> FeatureExtractor:
+    return doc.meta.analysis.extractor
+
+
+def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
+    extractor = get_extractor_from_doc(doc)
+
+    rows = []
+    for domain_or_ip in verbose_extract_domains_and_ips(extractor, doc):
+        rows.append(domain_or_ip)
+
+    if rows:
+        max_length = max(len(i) for i in rows) + 1
+        ostream.write(
+            tabulate.tabulate(rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline")
+        )
+        ostream.write("\n")
+    else:
+        ostream.writeln(rutils.bold("No web domains or IP addresses found"))
+
+
 def render_vverbose(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
@@ -465,6 +489,9 @@ def render_vverbose(doc: rd.ResultDocument):
     ostream.write("\n")
 
     render_rules(ostream, doc)
+    ostream.write("\n")
+
+    render_domain_and_ip(ostream, doc)
     ostream.write("\n")
 
     return ostream.getvalue()
