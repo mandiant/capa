@@ -37,6 +37,7 @@ from capa.render.default import width
 from capa.capabilities.extract_domain_names import verbose_extract_domains_and_ips
 from capa.features.extractors.base_extractor import FeatureExtractor
 
+
 def format_address(address: frz.Address) -> str:
     if address.type == frz.AddressType.ABSOLUTE:
         assert isinstance(address.value, int)
@@ -332,7 +333,9 @@ def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
     if rows:
         max_length = max(len(i) for i in rows) + 1
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline"
+            )
         )
         ostream.write("\n")
     else:

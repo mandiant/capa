@@ -19,7 +19,6 @@ from capa.render.utils import StringIO
 from capa.capabilities.extract_domain_names import default_extract_domain_names
 from capa.features.extractors.base_extractor import FeatureExtractor
 
-
 tabulate.PRESERVE_WHITESPACE = True
 
 
@@ -214,7 +213,9 @@ def render_domain_and_ip(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         max_length = max(len(i) for i in rows) + 1
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline"
+            )
         )
         ostream.write("\n")
     else:

@@ -1,6 +1,6 @@
 import re
-import ipaddress
 import socket
+import ipaddress
 from typing import List, Iterator, Generator
 from pathlib import Path
 
@@ -94,11 +94,11 @@ def verbose_extract_domains_and_ips(extractor: FeatureExtractor, doc: ResultDocu
     domain_and_ip_counts = dict(domain_counts.items() + ip_counts.items())
 
     for string, total_occurrances in domain_and_ip_counts:
-        if is_ip_addr(string) == True:
+        if is_ip_addr(string):
             yield formatted_ip_verbose(extractor, file, string, total_occurrances)
         else:
             yield formatted_domain_verbose(extractor, file, string, total_occurrances)
-        
+
 
 def is_ip_addr(string: str) -> bool:
     try:
@@ -106,7 +106,7 @@ def is_ip_addr(string: str) -> bool:
         return True
     except ValueError:
         return False
-    
+
 
 def formatted_ip_verbose(extractor: FeatureExtractor, file: Path, string: str, total_occurrances: int) -> str:
     """same as 'formatted_domain_verbose' but without 'ip_address_statement'"""
@@ -172,7 +172,7 @@ def get_domain_functions(extractor: FeatureExtractor, file: Path, domain_or_ip: 
     """
     api_functions = []
 
-    # if we don't '+ 1' below, we may miss network management functions 
+    # if we don't '+ 1' below, we may miss network management functions
     # in the last loop through 'yielded_caller_func_static/dynamic'
     occurrances = occurrances_in_file(file, domain_or_ip) + 1
 
@@ -181,10 +181,10 @@ def get_domain_functions(extractor: FeatureExtractor, file: Path, domain_or_ip: 
             caller_func = yielded_caller_func_static(extractor, domain_or_ip, file, 0)
         except NotImplementedError:  # if StaticExtractor methods are not implemented, we call DynamicExtractor yielder
             caller_func = yielded_caller_func_dynamic(extractor, domain_or_ip, file, 0)
-            
-        if caller_func == None:
+
+        if not caller_func:
             continue
-            
+
         api_functions.append(caller_func)
         occurrances = occurrances - 1
 
@@ -222,21 +222,20 @@ def yielded_caller_func_static(
                     continue
 
                 # if the yielded function is not a network protocol function
-                # (e.g., "Https," "Ftp," etc.), we ask if the yielded function 
+                # (e.g., "Https," "Ftp," etc.), we ask if the yielded function
                 # is passed to other functions that are network protocol functions
                 else:
                     try:
                         # when we do 'start_position = addr', we ignore 'function_name' when it occurs
                         # before 'feature' (i.e., before 'addr')
                         yield from yielded_caller_func_dynamic(extractor, function_name, file, addr)
-                    
+
                     except StopIteration:
                         yield None
 
 
-
 def get_function_name(func: FunctionHandle, file: Path) -> str:
-    """    
+    """
     helper function for 'yielded_caller_func_static,' not used in yielded_caller_func_dynamic
 
     args:
@@ -271,7 +270,7 @@ def yielded_caller_func_dynamic(
     """
     we look into an extractor to see what APIs operate on a web domain
 
-    examines calling context of web domains and yields any functions that 
+    examines calling context of web domains and yields any functions that
     operate on them. next, recursively examines calling contexts of yielded
     functions and yields additional network management functions
     (e.g., "HttpOpenRequestA", "FtpGetFileA", etc.).
@@ -290,18 +289,18 @@ def yielded_caller_func_dynamic(
                         # yield the function operating on the web domain
                         api_name = extractor.extract_call_features(ph, th, ch)[0][0]
                         yield api_name
-                        
+
                         if any(["Http", "Https", "Ftp"]) in api_name:
                             continue
 
                         # if the yielded function is not a network protocol function
-                        # (e.g., "Https," "Ftp," etc.), we ask if the yielded function 
+                        # (e.g., "Https," "Ftp," etc.), we ask if the yielded function
                         # is passed to other functions that are network protocol functions
                         else:
                             try:
                                 # when we do 'start_position = addr', we ignore 'function_name' when it occurs
                                 # before 'feature' (i.e., before 'addr')
                                 yield from yielded_caller_func_dynamic(extractor, api_name, file, addr)
-                            
+
                             except StopIteration:
                                 yield None

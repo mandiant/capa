@@ -1,6 +1,8 @@
-from capa.capabilities.extract_domain_names import is_ip_addr
+from typing import List
 
 import fixtures
+
+from capa.capabilities.extract_domain_names import is_ip_addr
 
 
 @fixtures.parameterize(
@@ -31,8 +33,7 @@ import fixtures
         ("2001:db8::123.123.123.123"),
         ("::1234:5678:91.123.4.56"),
         ("::1234:5678:1.2.3.4"),
-        ("2001:db8::1234:5678:5.6.7.8")
-        ("0:0:0:0:0:0:0:0"),  # Valid IPv4 addresses here on down
+        ("2001:db8::1234:5678:5.6.7.8")("0:0:0:0:0:0:0:0"),  # Valid IPv4 addresses here on down
         ("2001:0db8:85a3:0000:0000:8a2e:0370:G334"),
         ("2001:db8:a0b:12f0:0000:0000:0000::0001"),
         ("2001:db8:a0b:12f0::1:2:3:4:5"),
@@ -82,4 +83,3 @@ def test_is_ip_addr(strings: List[str]):
     assert not is_ip_addr(strings)  # "::1:2:3:4:5:6:7:8"
     assert not is_ip_addr(strings)  # "2001:db8:a0b:12f0:g:h:i:j"
     assert not is_ip_addr(strings)  # "1234567890:1234:5678:90ab:cdef:1234:5678:90ab"
-    

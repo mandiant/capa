@@ -475,7 +475,9 @@ def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
     if rows:
         max_length = max(len(i) for i in rows) + 1
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows, headers=[width("Web domains and IP addresses", max_length)], tablefmt="mixed_outline"
+            )
         )
         ostream.write("\n")
     else:
