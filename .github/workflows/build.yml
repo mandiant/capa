@@ -57,15 +57,15 @@ jobs:
       - name: Build standalone executable
         run: pyinstaller --log-level DEBUG .github/pyinstaller/pyinstaller.spec
       - name: Does it run (PE)?
-        run: dist/capa "tests/data/Practical Malware Analysis Lab 01-01.dll_"
+        run: dist/capa -d "tests/data/Practical Malware Analysis Lab 01-01.dll_"
       - name: Does it run (Shellcode)?
-        run: dist/capa "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
+        run: dist/capa -d "tests/data/499c2a85f6e8142c3f48d4251c9c7cd6.raw32"
       - name: Does it run (ELF)?
-        run: dist/capa "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
+        run: dist/capa -d "tests/data/7351f8a40c5450557b24622417fc478d.elf_"
       - name: Does it run (CAPE)?
         run: |
           7z e "tests/data/dynamic/cape/v2.2/d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
-          dist/capa "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json"
+          dist/capa -d "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json"
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: ${{ matrix.asset_name }}
