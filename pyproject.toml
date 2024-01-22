@@ -56,8 +56,9 @@ dynamic = ["version"]
 [tool.setuptools.dynamic]
 version = {attr = "capa.version.__version__"}
 
-[tool.setuptools]
-packages = ["capa"]
+[tool.setuptools.packages.find]
+include = ["capa*"]
+namespaces = false
 
 [project.optional-dependencies]
 dev = [
