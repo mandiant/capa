@@ -22,8 +22,9 @@
 
 ## v7.0.0-beta
 This is the beta release of capa v7.0 which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
-shoutout to @colton-gabertan and @yelhamer for their amazing contributions.
+shoutout to @colton-gabertan and @yelhamer for their amazing work.
 
+Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, and @xusheng6.
 ### New Features
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
