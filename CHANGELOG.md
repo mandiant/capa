@@ -46,7 +46,7 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
 
-### New Rules (39)
+### New Rules (41)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -86,6 +86,8 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - nursery/get-current-process-command-line william.ballenthin@mandiant.com
 - nursery/get-current-process-file-path william.ballenthin@mandiant.com
 - nursery/hook-routines-via-dlsym-rtld_next william.ballenthin@mandiant.com
+- nursery/linked-against-hp-socket still@teamt5.org
+- host-interaction/process/inject/process-ghostly-hollowing sara.rincon@mandiant.com
 
 ### Bug Fixes
 - ghidra: fix `ints_to_bytes` performance #1761 @mike-hunhoff
