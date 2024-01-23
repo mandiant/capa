@@ -194,7 +194,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             "    namespace: <insert_namespace>",
             "    authors:",
             f"      - {author}",
-            f"    scopes:",
+            "    scopes:",
             f"      static: {scope}",
             "      dynamic: unspecified",
             "    references:",
