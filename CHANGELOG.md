@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- output IP addresses and domain names #1907 @aaronatp
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
   - add call scope #771 @yelhamer

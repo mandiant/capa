@@ -16,6 +16,7 @@ import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.render.utils import StringIO
+from capa.capabilities.extract_domain_and_ip import default_extract_domain_names
 
 tabulate.PRESERVE_WHITESPACE = True
 
@@ -197,6 +198,34 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
         ostream.write("\n")
 
 
+def render_domain_and_ip(doc: rd.ResultDocument, ostream: StringIO):
+    """
+    example::
+        +------------------------------+
+        | IP addresses and web domains |
+        |------------------------------+
+        | google.com                   |
+        | 192.123.232.08               |
+        | my-w3bs1te.net               |
+        | maliciooous.r4ndom-site.uhoh |
+        | whoops.net                   |
+        +------------------------------+
+    """
+    rows = []
+    for domain_or_ip in default_extract_domain_names(doc):
+        rows.append(domain_or_ip)
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(
+                {"IP addresses and web domains": rows}, headers=["keys"], tablefmt="mixed_outline",
+            )
+        )
+        ostream.write("\n")
+    else:
+        ostream.writeln(rutils.bold("No web domains or IP addresses found"))
+
+
 def render_default(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
@@ -207,6 +236,8 @@ def render_default(doc: rd.ResultDocument):
     render_mbc(doc, ostream)
     ostream.write("\n")
     render_capabilities(doc, ostream)
+    render_domain_and_ip(doc, ostream)
+    ostream.write("\n")
 
     return ostream.getvalue()
 
