@@ -156,7 +156,7 @@ def log_unsupported_format_error():
 
 def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
-    logger.error("Input file is not a valid CAPE report: %s", error)
+    logger.error(" Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
     logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
     logger.error(

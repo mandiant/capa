@@ -24,7 +24,7 @@
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
 
-### New Rules (39)
+### New Rules (41)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -64,6 +64,8 @@
 - nursery/get-current-process-command-line william.ballenthin@mandiant.com
 - nursery/get-current-process-file-path william.ballenthin@mandiant.com
 - nursery/hook-routines-via-dlsym-rtld_next william.ballenthin@mandiant.com
+- nursery/linked-against-hp-socket still@teamt5.org
+- host-interaction/process/inject/process-ghostly-hollowing sara.rincon@mandiant.com
 -
 
 ### Bug Fixes
@@ -72,6 +74,7 @@
 - binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
 - elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
+- fix setuptools package discovery #1886 @gmacon @mr-tz
 
 ### capa explorer IDA Pro plugin
 
