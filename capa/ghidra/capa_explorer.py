@@ -44,18 +44,20 @@ def create_namespace(namespace_str):
 def create_label(ghidra_addr, name, capa_namespace):
     """custom label cmd to overlay symbols under capa-generated namespaces"""
 
+    # prevent duplicate labels under the same capa-generated namespace
+    symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
+    for sym in symbol_table.getSymbols(ghidra_addr):
+        if sym.getName(True) == capa_namespace.getName(True) + Namespace.DELIMITER + name:
+            return
+
     # create SymbolType.LABEL at addr
     # prioritize capa-generated namespace (duplicate match @ new addr), else put under global Ghidra one (new match)
     cmd = AddLabelCmd(ghidra_addr, name, True, SourceType.USER_DEFINED)
     cmd.applyTo(currentProgram())  # type: ignore [name-defined] # noqa: F821
 
     # assign new match overlay label to capa-generated namespace
-    try:
-        cmd.getSymbol().setNamespace(capa_namespace)
-        return
-    except RuntimeError:  # DuplicateNameError
-        # duplicate features within same scope/ namespace
-        return
+    cmd.getSymbol().setNamespace(capa_namespace)
+    return
 
 
 class CapaMatchData:
@@ -78,6 +80,9 @@ class CapaMatchData:
     def bookmark_functions(self):
         """create bookmarks for MITRE ATT&CK & MBC mappings"""
 
+        if self.attack == [] and self.mbc == []:
+            return
+
         for key in self.matches.keys():
             addr = toAddr(hex(key))  # type: ignore [name-defined] # noqa: F821
             func = getFunctionContaining(addr)  # type: ignore [name-defined] # noqa: F821
@@ -86,13 +91,21 @@ class CapaMatchData:
             if func is not None:
                 func_addr = func.getEntryPoint()
 
-                for item in self.attack:
-                    attack_txt = item.get("tactic") + Namespace.DELIMITER + item.get("id")
-                    add_bookmark(func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
+                if self.attack != []:
+                    for item in self.attack:
+                        attack_txt = ""
+                        for part in item.get("parts", {}):
+                            attack_txt = attack_txt + part + Namespace.DELIMITER
+                        attack_txt = attack_txt + item.get("id", {})
+                        add_bookmark(func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
 
-                for item in self.mbc:
-                    mbc_txt = item.get("objective") + Namespace.DELIMITER + item.get("id")
-                    add_bookmark(func_addr, mbc_txt, "CapaExplorer::MBC")
+                if self.mbc != []:
+                    for item in self.mbc:
+                        mbc_txt = ""
+                        for part in item.get("parts", {}):
+                            mbc_txt = mbc_txt + part + Namespace.DELIMITER
+                        mbc_txt = mbc_txt + item.get("id", {})
+                        add_bookmark(func_addr, mbc_txt, "CapaExplorer::MBC")
 
     def set_plate_comment(self, ghidra_addr):
         """set plate comments at matched functions"""
@@ -150,16 +163,17 @@ class CapaMatchData:
                                 # skip duplicates
                                 continue
 
-                            # classify matched extracted features under Ghidra Global scope
+                            # precomment subscope matches under the function
                             if node != {}:
                                 for sub_type, description in parse_node(node):
                                     self.set_pre_comment(sub_ghidra_addr, sub_type, description)
         else:
             # resolve the encompassing function for the capa namespace
+            # of non-function scoped main matches
             for addr in self.matches.keys():
                 ghidra_addr = toAddr(hex(addr))  # type: ignore [name-defined] # noqa: F821
 
-                # basic block / insn scoped matches
+                # basic block / insn scoped main matches
                 # Ex. See "Create Process on Windows" Rule
                 func = getFunctionContaining(ghidra_addr)  # type: ignore [name-defined] # noqa: F821
                 if func is not None:
@@ -167,18 +181,20 @@ class CapaMatchData:
                     create_label(func_addr, func.getName(), capa_namespace)
                     self.set_plate_comment(func_addr)
 
-                # create subscope labels in Ghidra's global scope
+                # create subscope match precomments
                 for sub_match in self.matches.get(addr):
                     for loc, node in sub_match.items():
                         sub_ghidra_addr = toAddr(hex(loc))  # type: ignore [name-defined] # noqa: F821
 
                         if node != {}:
                             if func is not None:
+                                # basic block/ insn scope under resolved function
                                 for sub_type, description in parse_node(node):
                                     self.set_pre_comment(sub_ghidra_addr, sub_type, description)
                             else:
                                 # this would be a global/file scoped main match
                                 # try to resolve the encompassing function via the subscope match, instead
+                                # Ex. "run as service" rule
                                 sub_func = getFunctionContaining(sub_ghidra_addr)  # type: ignore [name-defined] # noqa: F821
                                 if sub_func is not None:
                                     sub_func_addr = sub_func.getEntryPoint()
@@ -192,7 +208,11 @@ class CapaMatchData:
                                     # represent this location with a label symbol under the capa namespace
                                     # Ex. See "Reference Base64 String" rule
                                     for sub_type, description in parse_node(node):
-                                        create_label(sub_ghidra_addr, description, capa_namespace)
+                                        # in many cases, these will be ghidra-labeled data, so just add the existing
+                                        # label symbol to the capa namespace
+                                        for sym in symbol_table.getSymbols(sub_ghidra_addr):
+                                            if sym.getSymbolType() == SymbolType.LABEL:
+                                                sym.setNamespace(capa_namespace)
                                         self.set_pre_comment(sub_ghidra_addr, sub_type, description)
 
 
@@ -243,8 +263,10 @@ def parse_node(node_data):
     """pull match descriptions and sub features by parsing node dicts"""
 
     node = node_data.get(node_data.get("type"))
+
     if "description" in node:
         yield "description", node.get("description")
+
     data = node.get(node.get("type"))
     if isinstance(data, (str, int)):
         feat_type = node.get("type")
@@ -331,7 +353,6 @@ def main():
 
     # capa_data will always contain {'meta':..., 'rules':...}
     # if the 'rules' key contains no values, then there were no matches
-    # found
     capa_data = json.loads(get_capabilities())
     if capa_data.get("rules") is None:
         logger.info("capa explorer found no matches")
