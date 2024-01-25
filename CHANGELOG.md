@@ -73,6 +73,7 @@
 - binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
 - elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
+- elf: better detect ELF OS via Android dependencies #1947 @williballenthin
 - fix setuptools package discovery #1886 @gmacon @mr-tz
 
 ### capa explorer IDA Pro plugin
