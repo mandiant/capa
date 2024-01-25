@@ -78,7 +78,7 @@ def run_headless():
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=True):
         logger.info("capa encountered warnings during analysis")
@@ -128,7 +128,7 @@ def run_ui():
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")

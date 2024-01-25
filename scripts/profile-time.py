@@ -97,7 +97,7 @@ def main(argv=None):
         return -1
 
     try:
-        sig_paths = capa.main.get_signatures(args.signatures)
+        sig_paths = capa.loader.get_signatures(args.signatures)
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -107,7 +107,7 @@ def main(argv=None):
     ):
         extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
     else:
-        extractor = capa.main.get_extractor(
+        extractor = capa.loader.get_extractor(
             args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
         )
 

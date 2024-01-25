@@ -363,7 +363,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         format_ = capa.helpers.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
-    extractor = capa.main.get_extractor(
+    extractor = capa.loader.get_extractor(
         nice_path, format_, OS_AUTO, capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
     )
 

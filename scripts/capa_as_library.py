@@ -173,14 +173,14 @@ def capa_details(rules_path: Path, file_path: Path, output_format="dictionary"):
     rules = capa.rules.get_rules([rules_path])
 
     # extract features and find capabilities
-    extractor = capa.main.get_extractor(
+    extractor = capa.loader.get_extractor(
         file_path, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], False, disable_progress=True
     )
     capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, counts)
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, counts)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     capa_output: Any = False
 

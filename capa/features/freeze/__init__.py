@@ -21,6 +21,7 @@ from pydantic import Field, BaseModel, ConfigDict
 # https://github.com/mandiant/capa/issues/1699
 from typing_extensions import TypeAlias
 
+import capa.loader
 import capa.helpers
 import capa.version
 import capa.features.file
@@ -686,9 +687,9 @@ def main(argv=None):
     args = parser.parse_args(args=argv)
     capa.main.handle_common_args(args)
 
-    sigpaths = capa.main.get_signatures(args.signatures)
+    sigpaths = capa.loader.get_signatures(args.signatures)
 
-    extractor = capa.main.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
+    extractor = capa.loader.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
 
     Path(args.output).write_bytes(dump(extractor))
 

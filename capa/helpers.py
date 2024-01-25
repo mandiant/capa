@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import json
 import inspect
 import logging
@@ -201,3 +202,11 @@ def log_unsupported_runtime_error():
         " If you're seeing this message on the command line, please ensure you're running a supported Python version."
     )
     logger.error("-" * 80)
+
+
+def is_running_standalone() -> bool:
+    """
+    are we running from a PyInstaller'd executable?
+    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
+    """
+    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")

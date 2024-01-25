@@ -163,7 +163,7 @@ def main(argv=None):
         return -1
 
     try:
-        sig_paths = capa.main.get_signatures(args.signatures)
+        sig_paths = capa.loader.get_signatures(args.signatures)
     except IOError as e:
         logger.error("%s", str(e))
         return -1
@@ -176,7 +176,7 @@ def main(argv=None):
         should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
         try:
-            extractor = capa.main.get_extractor(
+            extractor = capa.loader.get_extractor(
                 args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
             )
             assert isinstance(extractor, StaticFeatureExtractor)
@@ -189,8 +189,8 @@ def main(argv=None):
 
     capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.main.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     if capa.capabilities.common.has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary

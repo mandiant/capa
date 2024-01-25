@@ -775,7 +775,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                     meta.analysis.feature_counts = counts["feature_counts"]
                     meta.analysis.library_functions = counts["library_functions"]
-                    meta.analysis.layout = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
+                    meta.analysis.layout = capa.loader.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False

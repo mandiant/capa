@@ -110,7 +110,7 @@ def get_capa_results(args):
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
     logger.info("computing capa results for: %s", path)
     try:
-        extractor = capa.main.get_extractor(
+        extractor = capa.loader.get_extractor(
             path, format, os_, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
         )
     except capa.exceptions.UnsupportedFormatError:
@@ -139,8 +139,8 @@ def get_capa_results(args):
 
     capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta = capa.main.collect_metadata([], path, format, os_, [], extractor, counts)
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata([], path, format, os_, [], extractor, counts)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
     return {"path": path, "status": "ok", "ok": doc.model_dump()}
@@ -168,7 +168,7 @@ def main(argv=None):
             return -1
 
         try:
-            sig_paths = capa.main.get_signatures(args.signatures)
+            sig_paths = capa.loader.get_signatures(args.signatures)
         except IOError as e:
             logger.error("%s", str(e))
             return -1
