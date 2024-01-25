@@ -16,10 +16,11 @@ from pathlib import Path
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format, FORMAT_BINEXPORT2
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
 
@@ -81,15 +82,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
-    return format_
-
-
-def get_auto_format(path: Path) -> str:
-    format_ = get_format(path)
-    if format_ == FORMAT_UNKNOWN:
-        format_ = get_format_from_extension(path)
-    if format_ == FORMAT_UNKNOWN:
-        raise UnsupportedFormatError()
+    elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
+        format_ = FORMAT_BINEXPORT2
     return format_
 
 
@@ -110,6 +104,15 @@ def get_format(sample: Path) -> str:
         return feature.value
 
     return FORMAT_UNKNOWN
+
+
+def get_auto_format(path: Path) -> str:
+    format_ = get_format(path)
+    if format_ == FORMAT_UNKNOWN:
+        format_ = get_format_from_extension(path)
+    if format_ == FORMAT_UNKNOWN:
+        raise UnsupportedFormatError()
+    return format_
 
 
 @contextlib.contextmanager

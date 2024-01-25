@@ -407,9 +407,10 @@ class Bytes(Feature):
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
+ARCH_AARCH64 = "aarch64"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY, ARCH_AARCH64)
 
 
 class Arch(Feature):
@@ -457,6 +458,7 @@ VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
 FORMAT_AUTO = "auto"
 FORMAT_SC32 = "sc32"
 FORMAT_SC64 = "sc64"
+FORMAT_BINEXPORT2 = "binexport2"
 FORMAT_CAPE = "cape"
 STATIC_FORMATS = {
     FORMAT_SC32,
@@ -464,6 +466,7 @@ STATIC_FORMATS = {
     FORMAT_PE,
     FORMAT_ELF,
     FORMAT_DOTNET,
+    FORMAT_BINEXPORT2,
 }
 DYNAMIC_FORMATS = {
     FORMAT_CAPE,
