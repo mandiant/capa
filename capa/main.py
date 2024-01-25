@@ -292,7 +292,7 @@ def get_extractor(
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.load(Path(input_path).open(encoding="utf-8"))
+        report = json.loads(input_path.read_text(encoding="utf-8"))
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif backend == BACKEND_DOTNET:
@@ -378,21 +378,21 @@ def get_extractor(
         raise ValueError("unexpected backend: " + backend)
 
 
-def get_file_extractors(input: Path, input_format: str) -> List[FeatureExtractor]:
+def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
 
     if input_format == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input))
-        file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input))
+        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
+        file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input))
+        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input_file))
 
     elif input_format == FORMAT_CAPE:
-        report = json.load(Path(input).open(encoding="utf-8"))
+        report = json.loads(input_file.read_text(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors
@@ -563,7 +563,7 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
 
 def collect_metadata(
     argv: List[str],
-    sample_path: Path,
+    input_path: Path,
     input_format: str,
     os_: str,
     rules_path: List[Path],
@@ -601,7 +601,7 @@ def collect_metadata(
             md5=md5,
             sha1=sha1,
             sha256=sha256,
-            path=Path(sample_path).resolve().as_posix(),
+            path=input_path.resolve().as_posix(),
         ),
         analysis=get_sample_analysis(
             input_format,
@@ -780,7 +780,7 @@ def install_common_args(parser, wanted=None):
     args:
       parser (argparse.ArgumentParser): a parser to update in place, adding common arguments.
       wanted (Set[str]): collection of arguments to opt-into, including:
-        - "input": required positional argument to input file.
+        - "input_file": required positional argument to input file.
         - "format": flag to override file format.
         - "os": flag to override file operating system.
         - "backend": flag to override analysis backend.
@@ -814,16 +814,16 @@ def install_common_args(parser, wanted=None):
     #
     # arguments that may be opted into:
     #
-    #   - input
+    #   - input_file
     #   - format
     #   - os
     #   - rules
     #   - tag
     #
 
-    if "input" in wanted:
+    if "input_file" in wanted:
         parser.add_argument(
-            "input",
+            "input_file",
             type=str,
             help="path to file to analyze",
         )
@@ -983,8 +983,8 @@ def handle_common_args(args):
     if not args.debug:
         sys.excepthook = simple_message_exception_handler  # type: ignore[assignment]
 
-    if hasattr(args, "input"):
-        args.input = Path(args.input)
+    if hasattr(args, "input_file"):
+        args.input_file = Path(args.input_file)
 
     if hasattr(args, "rules"):
         rules_paths: List[Path] = []
@@ -1056,7 +1056,7 @@ def ensure_input_exists_from_args(args):
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     try:
-        _ = get_file_taste(args.input)
+        _ = get_file_taste(args.input_file)
     except IOError as e:
         # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
         # handle the IOError separately and reach into the args
@@ -1083,9 +1083,9 @@ def get_input_format_from_args(args) -> str:
         return format
 
     try:
-        return get_auto_format(args.input)
+        return get_auto_format(args.input_file)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
+        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         log_unsupported_format_error()
@@ -1134,7 +1134,7 @@ def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
     if backend == BACKEND_CAPE:
         return None
     else:
-        return args.input
+        return args.input_file
 
 
 def get_os_from_args(args, backend) -> str:
@@ -1224,12 +1224,12 @@ def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtrac
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
     try:
-        return get_file_extractors(args.input, input_format)
+        return get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
+        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
         return E_CORRUPT_FILE
     except (ELFError, OverflowError) as e:
-        logger.error("Input file '%s' is not a valid ELF file: %s", args.input, str(e))
+        logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
         return E_CORRUPT_FILE
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
@@ -1263,10 +1263,10 @@ def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
-            logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
+            logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
         except (ELFError, OverflowError) as e:
-            logger.error("Input file '%s' is not a valid ELF file: %s", args.input, str(e))
+            logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
 
         # file limitations that rely on non-file scope won't be detected here.
@@ -1293,7 +1293,7 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
     """
     if input_format == FORMAT_FREEZE:
         # freeze format deserializes directly into an extractor
-        return frz.load(Path(args.input).read_bytes())
+        return frz.load(args.input_file.read_bytes())
     else:
         # all other formats we must create an extractor,
         # such as viv, binary ninja, etc. workspaces
@@ -1321,7 +1321,7 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
         #  https://github.com/mandiant/capa/issues/1813
         try:
             return get_extractor(
-                args.input,
+                args.input_file,
                 input_format,
                 os_,
                 backend,
@@ -1383,7 +1383,7 @@ def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"input", "format", "backend", "os", "signatures", "rules", "tag"})
+    install_common_args(parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
 
@@ -1403,7 +1403,7 @@ def main(argv: Optional[List[str]] = None):
 
     if input_format == FORMAT_RESULT:
         # result document directly parses into meta, capabilities
-        result_doc = capa.render.result_document.ResultDocument.from_file(Path(args.input))
+        result_doc = capa.render.result_document.ResultDocument.from_file(args.input_file)
         meta, capabilities = result_doc.to_capa()
 
     else:
@@ -1420,7 +1420,7 @@ def main(argv: Optional[List[str]] = None):
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta = collect_metadata(argv, args.input, input_format, os, args.rules, extractor, counts)
+        meta = collect_metadata(argv, args.input_file, input_format, os, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
         if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
