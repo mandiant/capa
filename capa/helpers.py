@@ -27,10 +27,11 @@ from capa.features.common import (
     FORMAT_FREEZE,
     FORMAT_UNKNOWN,
     Format,
-)
+), FORMAT_BINEXPORT2
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
@@ -105,15 +106,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = get_format_from_report(sample)
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
-    return format_
-
-
-def get_auto_format(path: Path) -> str:
-    format_ = get_format(path)
-    if format_ == FORMAT_UNKNOWN:
-        format_ = get_format_from_extension(path)
-    if format_ == FORMAT_UNKNOWN:
-        raise UnsupportedFormatError()
+    elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
+        format_ = FORMAT_BINEXPORT2
     return format_
 
 
@@ -134,6 +128,15 @@ def get_format(sample: Path) -> str:
         return feature.value
 
     return FORMAT_UNKNOWN
+
+
+def get_auto_format(path: Path) -> str:
+    format_ = get_format(path)
+    if format_ == FORMAT_UNKNOWN:
+        format_ = get_format_from_extension(path)
+    if format_ == FORMAT_UNKNOWN:
+        raise UnsupportedFormatError()
+    return format_
 
 
 @contextlib.contextmanager
