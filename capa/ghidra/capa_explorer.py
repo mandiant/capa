@@ -363,7 +363,7 @@ def main():
         item.bookmark_functions()
         item.label_matches()
     logger.info("capa explorer analysis complete")
-    popup("capa explorer analysis complete.\nPlease see results in the Bookmarks and Namespaces section of the Symbol Tree Window.")  # type: ignore [name-defined] # noqa: F821
+    popup("capa explorer analysis complete.\nPlease see results in the Bookmarks Window and Namespaces section of the Symbol Tree Window.")  # type: ignore [name-defined] # noqa: F821
     return 0
 
 
