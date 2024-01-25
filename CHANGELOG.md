@@ -22,6 +22,7 @@
 - protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
+- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
 
 ### New Rules (41)
 
