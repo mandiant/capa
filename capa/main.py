@@ -281,7 +281,7 @@ def get_extractor(
     sigpaths: List[Path],
     should_save_workspace=False,
     disable_progress=False,
-    sample_path: Optional[Path]=None,
+    sample_path: Optional[Path] = None,
 ) -> FeatureExtractor:
     """
     raises:
@@ -580,7 +580,9 @@ def collect_metadata(
     extractor_arch = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Arch)]
     extractor_os = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.OS)]
 
-    input_format = str(extractor_format[0]) if extractor_format else "unknown" if input_format == FORMAT_AUTO else input_format
+    input_format = (
+        str(extractor_format[0]) if extractor_format else "unknown" if input_format == FORMAT_AUTO else input_format
+    )
     arch = str(extractor_arch[0]) if extractor_arch else "unknown"
     os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
 
@@ -918,6 +920,7 @@ def install_common_args(parser, wanted=None):
 
 class ShouldExitError(Exception):
     """raised when a main-related routine indicates the program should exit."""
+
     def __init__(self, status_code: int):
         self.status_code = status_code
 
@@ -1159,7 +1162,7 @@ def get_os_from_args(args, backend) -> str:
     return get_os(sample_path)
 
 
-def get_rules_from_args(args) -> str:
+def get_rules_from_args(args) -> RuleSet:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1227,10 +1230,10 @@ def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtrac
         return get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
         logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
-        return E_CORRUPT_FILE
+        raise ShouldExitError(E_CORRUPT_FILE) from e
     except (ELFError, OverflowError) as e:
         logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
-        return E_CORRUPT_FILE
+        raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
@@ -1413,14 +1416,17 @@ def main(argv: Optional[List[str]] = None):
         try:
             backend = get_backend_from_args(args, input_format)
             sample_path = get_sample_path_from_args(args, backend)
-            os = get_os(sample_path)
+            if sample_path is None:
+                os_ = "unknown"
+            else:
+                os_ = get_os(sample_path)
             extractor = get_extractor_from_args(args, input_format, backend)
         except ShouldExitError as e:
             return e.status_code
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta = collect_metadata(argv, args.input_file, input_format, os, args.rules, extractor, counts)
+        meta = collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
         meta.analysis.layout = compute_layout(rules, extractor, capabilities)
 
         if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
