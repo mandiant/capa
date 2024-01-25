@@ -1023,10 +1023,6 @@ def detect_elf_os(f) -> str:
     if osabi_guess:
         ret = osabi_guess
 
-    elif ident_guess:
-        # we don't trust this too much due to non-cross-compilation assumptions
-        ret = ident_guess
-
     elif ph_notes_guess:
         ret = ph_notes_guess
 
