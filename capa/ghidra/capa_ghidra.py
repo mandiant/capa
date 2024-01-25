@@ -69,7 +69,7 @@ def run_headless():
     rules_path = pathlib.Path(args.rules)
 
     logger.debug("rule path: %s", rules_path)
-    rules = capa.main.get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
@@ -119,7 +119,7 @@ def run_ui():
     rules_path: pathlib.Path = pathlib.Path(rules_dir)
     logger.info("running capa using rules from %s", str(rules_path))
 
-    rules = capa.main.get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()

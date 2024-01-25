@@ -636,7 +636,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
-            return capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
+            return capa.rules.get_rules([rule_path], on_load_rule=on_load_rule)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
             return None

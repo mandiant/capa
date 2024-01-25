@@ -43,7 +43,7 @@ def format_address(addr: capa.features.address.Address) -> str:
 
 
 def get_rules_feature_set(rules_path) -> Set[Feature]:
-    ruleset = capa.main.get_rules(rules_path)
+    ruleset = capa.rules.get_rules(rules_path)
     rules_feature_set: Set[Feature] = set()
     for _, rule in ruleset.rules.items():
         rules_feature_set.update(rule.extract_all_features())

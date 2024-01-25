@@ -19,7 +19,7 @@ import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Callable, Optional
+from typing import Any, Set, Dict, List, Optional
 from pathlib import Path
 
 import halo
@@ -49,7 +49,7 @@ import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
-from capa.rules import Rule, RuleSet
+from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.helpers import (
     get_file_taste,
@@ -396,108 +396,6 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors
-
-
-def is_nursery_rule_path(path: Path) -> bool:
-    """
-    The nursery is a spot for rules that have not yet been fully polished.
-    For example, they may not have references to public example of a technique.
-    Yet, we still want to capture and report on their matches.
-    The nursery is currently a subdirectory of the rules directory with that name.
-
-    When nursery rules are loaded, their metadata section should be updated with:
-      `nursery=True`.
-    """
-    return "nursery" in path.parts
-
-
-def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
-    """
-    collect all rule file paths, including those in subdirectories.
-    """
-    rule_file_paths = []
-    for rule_path in rule_paths:
-        if not rule_path.exists():
-            raise IOError(f"rule path {rule_path} does not exist or cannot be accessed")
-
-        if rule_path.is_file():
-            rule_file_paths.append(rule_path)
-        elif rule_path.is_dir():
-            logger.debug("reading rules from directory %s", rule_path)
-            for root, _, files in os.walk(rule_path):
-                if ".git" in root:
-                    # the .github directory contains CI config in capa-rules
-                    # this includes some .yml files
-                    # these are not rules
-                    # additionally, .git has files that are not .yml and generate the warning
-                    # skip those too
-                    continue
-                for file in files:
-                    if not file.endswith(".yml"):
-                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
-                            # expect to see .git* files, readme.md, format.md, and maybe a .git directory
-                            # other things maybe are rules, but are mis-named.
-                            logger.warning("skipping non-.yml file: %s", file)
-                        continue
-                    rule_file_paths.append(Path(root) / file)
-    return rule_file_paths
-
-
-# TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
-RulePath = Path
-
-
-def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
-    return
-
-
-def get_rules(
-    rule_paths: List[RulePath],
-    cache_dir=None,
-    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
-) -> RuleSet:
-    """
-    args:
-      rule_paths: list of paths to rules files or directories containing rules files
-      cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
-      on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
-    """
-    if cache_dir is None:
-        cache_dir = capa.rules.cache.get_default_cache_directory()
-    # rule_paths may contain directory paths,
-    # so search for file paths recursively.
-    rule_file_paths = collect_rule_file_paths(rule_paths)
-
-    # this list is parallel to `rule_file_paths`:
-    # rule_file_paths[i] corresponds to rule_contents[i].
-    rule_contents = [file_path.read_bytes() for file_path in rule_file_paths]
-
-    ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
-    if ruleset is not None:
-        return ruleset
-
-    rules: List[Rule] = []
-
-    total_rule_count = len(rule_file_paths)
-    for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
-        on_load_rule(path, i, total_rule_count)
-
-        try:
-            rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
-        except capa.rules.InvalidRule:
-            raise
-        else:
-            rule.meta["capa/path"] = path.as_posix()
-            rule.meta["capa/nursery"] = is_nursery_rule_path(path)
-
-            rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
-
-    ruleset = capa.rules.RuleSet(rules)
-
-    capa.rules.cache.cache_ruleset(cache_dir, ruleset)
-
-    return ruleset
 
 
 def get_signatures(sigs_path: Path) -> List[Path]:
@@ -1176,7 +1074,7 @@ def get_rules_from_args(args) -> RuleSet:
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = get_rules(args.rules, cache_dir=cache_dir)
+        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
@@ -1474,7 +1372,7 @@ def ida_main():
 
     rules_path = get_default_root() / "rules"
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
@@ -1508,7 +1406,7 @@ def ghidra_main():
 
     rules_path = get_default_root() / "rules"
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
 

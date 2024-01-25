@@ -1002,7 +1002,7 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.main.get_rules(args.rules)
+        rules = capa.rules.get_rules(args.rules)
         logger.info("successfully loaded %s rules", rules.source_rule_count)
         if args.tag:
             rules = rules.filter_rules_by_meta(args.tag)
