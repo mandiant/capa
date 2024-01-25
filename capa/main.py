@@ -73,7 +73,6 @@ from capa.features.common import (
     OS_MACOS,
     FORMAT_PE,
     FORMAT_ELF,
-    FORMAT_BINEXPORT2,
     OS_WINDOWS,
     FORMAT_AUTO,
     FORMAT_CAPE,
@@ -100,7 +99,6 @@ BACKEND_DOTNET = "dotnet"
 BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
-BACKEND_BINEXPORT2 = "binexport2"
 BACKEND_DEFAULT = "(default) use default backend for given file type"
 
 E_MISSING_RULES = 10
@@ -376,19 +374,6 @@ def get_extractor(
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, input_path, os_)
 
-    elif backend == BACKEND_BINEXPORT2:
-        import capa.features.extractors.binexport2
-        import capa.features.extractors.binexport2.extractor
-
-        be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
-        assert sample_path is not None
-        # we let BinExport support a wide array of Arch/OS/etc.
-        # it can be an intermediate representation for us.
-        # therefore, don't restrict format/arch/OS.
-        buf = sample_path.read_bytes()
-
-        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
-
     else:
         raise ValueError("unexpected backend: " + backend)
 
@@ -409,10 +394,6 @@ def get_file_extractors(input: Path, input_format: str) -> List[FeatureExtractor
     elif input_format == FORMAT_CAPE:
         report = json.load(Path(input).open(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
-
-    elif input_format == FORMAT_BINEXPORT2:
-        # TODO(wb): 1755
-        pass
 
     return file_extractors
 
@@ -873,7 +854,7 @@ def install_common_args(parser, wanted=None):
             "--backend",
             type=str,
             help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_BINJA, BACKEND_PEFILE, BACKEND_CAPE, BACKEND_BINEXPORT2),
+            choices=(BACKEND_VIV, BACKEND_BINJA, BACKEND_PEFILE, BACKEND_CAPE),
             default=BACKEND_DEFAULT,
         )
 
@@ -1129,9 +1110,6 @@ def get_backend_from_args(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    elif input_format == FORMAT_BINEXPORT2:
-        return BACKEND_BINEXPORT2
-
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
@@ -1153,12 +1131,7 @@ def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend == BACKEND_BINEXPORT2:
-        import capa.features.extractors.binexport2
-
-        be2 = capa.features.extractors.binexport2.get_binexport2(args.input)
-        return capa.features.extractors.binexport2.get_sample_from_binexport2(be2)
-    elif backend == BACKEND_CAPE:
+    if backend == BACKEND_CAPE:
         return None
     else:
         return args.input
