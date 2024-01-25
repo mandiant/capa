@@ -1045,6 +1045,11 @@ def detect_elf_os(f) -> str:
     elif symtab_guess:
         ret = symtab_guess
 
+    elif ident_guess:
+        # at the bottom because we don't trust this too much
+        # due to potential for bugs with cross-compilation.
+        ret = ident_guess
+
     return ret.value if ret is not None else "unknown"
 
 
