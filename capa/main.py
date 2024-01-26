@@ -404,8 +404,12 @@ def handle_common_args(args):
         if args.rules == [RULES_PATH_DEFAULT_STRING]:
             logger.debug("-" * 80)
             logger.debug(" Using default embedded rules.")
-            logger.debug(" To provide your own rules, use the form `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug(" To provide your own rules, use the form:")
+            logger.debug("")
+            logger.debug("     `capa.exe -r ./path/to/rules/  /path/to/mal.exe`.")
+            logger.debug("")
             logger.debug(" You can see the current default rule set here:")
+            logger.debug("")
             logger.debug("     https://github.com/mandiant/capa-rules")
             logger.debug("-" * 80)
 
@@ -438,9 +442,9 @@ def handle_common_args(args):
         if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
             logger.debug("-" * 80)
             logger.debug(" Using default embedded signatures.")
-            logger.debug(
-                " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
-            )
+            logger.debug(" To provide your own signatures, use the form:")
+            logger.debug("")
+            logger.debug("     capa.exe --signature ./path/to/signatures/  /path/to/mal.exe")
             logger.debug("-" * 80)
 
             sigs_path = get_default_root() / "sigs"
