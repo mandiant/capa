@@ -39,6 +39,7 @@ import tqdm.contrib.logging
 import capa.main
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.helpers
 import capa.features.insn
 import capa.capabilities.common
@@ -364,7 +365,13 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
 
     logger.debug("analyzing sample: %s", nice_path)
     extractor = capa.loader.get_extractor(
-        nice_path, format_, OS_AUTO, capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
+        nice_path,
+        format_,
+        OS_AUTO,
+        capa.main.BACKEND_VIV,
+        DEFAULT_SIGNATURES,
+        should_save_workspace=False,
+        disable_progress=True,
     )
 
     capabilities, _ = capa.capabilities.common.find_capabilities(ctx.rules, extractor, disable_progress=True)
@@ -990,7 +997,11 @@ def main(argv=None):
         help="Enable thorough linting - takes more time, but does a better job",
     )
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
+
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     if args.debug:
         logging.getLogger("capa").setLevel(logging.DEBUG)
@@ -1002,16 +1013,9 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.rules.get_rules(args.rules)
-        logger.info("successfully loaded %s rules", rules.source_rule_count)
-        if args.tag:
-            rules = rules.filter_rules_by_meta(args.tag)
-            logger.debug("selected %s rules", len(rules))
-            for i, r in enumerate(rules.rules, 1):
-                logger.debug(" %d. %s", i, r)
-    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-        logger.error("%s", str(e))
-        return -1
+        rules = capa.main.get_rules_from_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     logger.info("collecting potentially referenced samples")
     samples_path = Path(args.samples)
