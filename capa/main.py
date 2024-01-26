@@ -613,7 +613,7 @@ def get_rules_from_cli(args) -> RuleSet:
         len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
     )
 
-    if hasattr(args, "tag"):
+    if hasattr(args, "tag") and args.tag:
         rules = rules.filter_rules_by_meta(args.tag)
         logger.debug("selected %d rules", len(rules))
         for i, r in enumerate(rules.rules, 1):
