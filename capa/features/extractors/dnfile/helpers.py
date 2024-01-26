@@ -131,10 +131,14 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
             # remove get_/set_ from MemberRef name
             member_ref_name = member_ref_name[4:]
 
+        typerefnamespace, typerefname = resolve_nested_typeref_name(
+            member_ref.Class.row_index, member_ref.Class.row, pe
+        )
+
         yield DnType(
             token,
-            member_ref.Class.row.TypeName,
-            namespace=member_ref.Class.row.TypeNamespace,
+            typerefname,
+            namespace=typerefnamespace,
             member=member_ref_name,
             access=access,
         )
@@ -188,6 +192,8 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             MethodList (index into MethodDef table; it marks the first of a contiguous run of Methods owned by this Type)
     """
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
+
     accessor_map: Dict[int, str] = {}
     for methoddef, methoddef_access in get_dotnet_methoddef_property_accessors(pe):
         accessor_map[methoddef] = methoddef_access
@@ -211,7 +217,9 @@ def get_dotnet_managed_methods(pe: dnfile.dnPE) -> Iterator[DnType]:
                 # remove get_/set_
                 method_name = method_name[4:]
 
-            yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=method_name, access=access)
+            typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
+
+            yield DnType(token, typedefname, namespace=typedefnamespace, member=method_name, access=access)
 
 
 def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
@@ -225,6 +233,8 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             TypeNamespace (index into String heap)
             FieldList (index into Field table; it marks the first of a contiguous run of Fields owned by this Type)
     """
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
+
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
@@ -235,8 +245,11 @@ def get_dotnet_fields(pe: dnfile.dnPE) -> Iterator[DnType]:
             if field.row is None:
                 logger.debug("TypeDef[0x%X] FieldList[0x%X] row is None", rid, idx)
                 continue
+
+            typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
+
             token: int = calculate_dotnet_token_value(field.table.number, field.row_index)
-            yield DnType(token, typedef.TypeName, namespace=typedef.TypeNamespace, member=field.row.Name)
+            yield DnType(token, typedefname, namespace=typedefnamespace, member=field.row.Name)
 
 
 def get_dotnet_managed_method_bodies(pe: dnfile.dnPE) -> Iterator[Tuple[int, CilMethodBody]]:
@@ -300,19 +313,119 @@ def get_dotnet_unmanaged_imports(pe: dnfile.dnPE) -> Iterator[DnUnmanagedMethod]
         yield DnUnmanagedMethod(token, module, method)
 
 
+def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int) -> Optional[dnfile.base.MDTableRow]:
+    assert pe.net is not None
+    assert pe.net.mdtables is not None
+
+    if row_index - 1 <= 0:
+        return None
+
+    try:
+        table = pe.net.mdtables.tables.get(table_index, [])
+        return table[row_index - 1]
+    except IndexError:
+        return None
+
+
+def resolve_nested_typedef_name(
+    nested_class_table: dict, index: int, typedef: dnfile.mdtable.TypeDefRow, pe: dnfile.dnPE
+) -> Tuple[str, Tuple[str, ...]]:
+    """Resolves all nested TypeDef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
+
+    if index in nested_class_table:
+        typedef_name = []
+        name = typedef.TypeName
+
+        # Append the current typedef name
+        typedef_name.append(name)
+
+        while nested_class_table[index] in nested_class_table:
+            # Iterate through the typedef table to resolve the nested name
+            table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeDef.number, nested_class_table[index])
+            if table_row is None:
+                return typedef.TypeNamespace, tuple(typedef_name[::-1])
+
+            name = table_row.TypeName
+            typedef_name.append(name)
+            index = nested_class_table[index]
+
+        # Document the root enclosing details
+        table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeDef.number, nested_class_table[index])
+        if table_row is None:
+            return typedef.TypeNamespace, tuple(typedef_name[::-1])
+
+        enclosing_name = table_row.TypeName
+        typedef_name.append(enclosing_name)
+
+        return table_row.TypeNamespace, tuple(typedef_name[::-1])
+
+    else:
+        return typedef.TypeNamespace, (typedef.TypeName,)
+
+
+def resolve_nested_typeref_name(
+    index: int, typeref: dnfile.mdtable.TypeRefRow, pe: dnfile.dnPE
+) -> Tuple[str, Tuple[str, ...]]:
+    """Resolves all nested TypeRef class names. Returns the namespace as a str and the nested TypeRef name as a tuple"""
+    # If the ResolutionScope decodes to a typeRef type then it is nested
+    if isinstance(typeref.ResolutionScope.table, dnfile.mdtable.TypeRef):
+        typeref_name = []
+        name = typeref.TypeName
+        # Not appending the current typeref name to avoid potential duplicate
+
+        # Validate index
+        table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeRef.number, index)
+        if table_row is None:
+            return typeref.TypeNamespace, (typeref.TypeName,)
+
+        while isinstance(table_row.ResolutionScope.table, dnfile.mdtable.TypeRef):
+            # Iterate through the typeref table to resolve the nested name
+            typeref_name.append(name)
+            name = table_row.TypeName
+            table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeRef.number, table_row.ResolutionScope.row_index)
+            if table_row is None:
+                return typeref.TypeNamespace, tuple(typeref_name[::-1])
+
+        # Document the root enclosing details
+        typeref_name.append(table_row.TypeName)
+
+        return table_row.TypeNamespace, tuple(typeref_name[::-1])
+
+    else:
+        return typeref.TypeNamespace, (typeref.TypeName,)
+
+
+def get_dotnet_nested_class_table_index(pe: dnfile.dnPE) -> Dict[int, int]:
+    """Build index for EnclosingClass based off the NestedClass row index in the nestedclass table"""
+    nested_class_table = {}
+
+    # Used to find nested classes in typedef
+    for _, nestedclass in iter_dotnet_table(pe, dnfile.mdtable.NestedClass.number):
+        assert isinstance(nestedclass, dnfile.mdtable.NestedClassRow)
+        nested_class_table[nestedclass.NestedClass.row_index] = nestedclass.EnclosingClass.row_index
+
+    return nested_class_table
+
+
 def get_dotnet_types(pe: dnfile.dnPE) -> Iterator[DnType]:
     """get .NET types from TypeDef and TypeRef tables"""
+    nested_class_table = get_dotnet_nested_class_table_index(pe)
+
     for rid, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
 
+        typedefnamespace, typedefname = resolve_nested_typedef_name(nested_class_table, rid, typedef, pe)
+
         typedef_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeDef.number, rid)
-        yield DnType(typedef_token, typedef.TypeName, namespace=typedef.TypeNamespace)
+        yield DnType(typedef_token, typedefname, namespace=typedefnamespace)
 
     for rid, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
 
+        typerefnamespace, typerefname = resolve_nested_typeref_name(typeref.ResolutionScope.row_index, typeref, pe)
+
         typeref_token: int = calculate_dotnet_token_value(dnfile.mdtable.TypeRef.number, rid)
-        yield DnType(typeref_token, typeref.TypeName, namespace=typeref.TypeNamespace)
+        yield DnType(typeref_token, typerefname, namespace=typerefnamespace)
 
 
 def calculate_dotnet_token_value(table: int, rid: int) -> int:

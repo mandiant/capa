@@ -128,6 +128,14 @@ class CapeExtractor(DynamicFeatureExtractor):
         if cr.info.version not in TESTED_VERSIONS:
             logger.warning("CAPE version '%s' not tested/supported yet", cr.info.version)
 
+        # TODO(mr-tz): support more file types
+        # https://github.com/mandiant/capa/issues/1933
+        if "PE" not in cr.target.file.type:
+            logger.error(
+                "capa currently only supports PE target files, this target file's type is: '%s'.\nPlease report this at: https://github.com/mandiant/capa/issues/1933",
+                cr.target.file.type,
+            )
+
         # observed in 2.4-CAPE reports from capesandbox.com
         if cr.static is None and cr.target.file.pe is not None:
             cr.static = Static()

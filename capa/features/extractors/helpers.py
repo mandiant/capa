@@ -50,9 +50,10 @@ def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
       - CreateFile
       - ws2_32.#1
 
-    note that since capa v7 only `import` features include DLL names:
+    note that since capa v7 only `import` features and APIs called via ordinal include DLL names:
       - kernel32.CreateFileA
       - kernel32.CreateFile
+      - ws2_32.#1
 
     for `api` features dll names are good for documentation but not used during matching
     """
@@ -63,7 +64,7 @@ def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
     dll = dll[0:-4] if dll.endswith(".dll") else dll
     dll = dll[0:-4] if dll.endswith(".drv") else dll
 
-    if include_dll:
+    if include_dll or is_ordinal(symbol):
         # ws2_32.#1
         # kernel32.CreateFileA
         yield f"{dll}.{symbol}"
@@ -72,11 +73,11 @@ def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
         # CreateFileA
         yield symbol
 
-        if include_dll:
-            # kernel32.CreateFile
-            yield f"{dll}.{symbol[:-1]}"
-
         if is_aw_function(symbol):
+            if include_dll:
+                # kernel32.CreateFile
+                yield f"{dll}.{symbol[:-1]}"
+
             # CreateFile
             yield symbol[:-1]
 
