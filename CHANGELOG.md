@@ -6,6 +6,9 @@
 
 ### Breaking Changes
 
+- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
+- move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
+
 ### New Rules (0)
 
 -
@@ -45,7 +48,6 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
-- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
 
 ### New Rules (41)
 
