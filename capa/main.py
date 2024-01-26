@@ -128,6 +128,9 @@ def get_default_root() -> Path:
     under PyInstaller, this comes from _MEIPASS.
     under source, this is the root directory of the project.
     """
+    # we only expect capa.main to be packaged within PyInstaller,
+    # so we don't put this in a more common place, like capa.helpers.
+
     if capa.helpers.is_running_standalone():
         # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
         # its injected by pyinstaller.

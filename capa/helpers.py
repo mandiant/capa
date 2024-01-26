@@ -221,4 +221,9 @@ def is_running_standalone() -> bool:
     are we running from a PyInstaller'd executable?
     if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
     """
+    # typically we only expect capa.main to be packaged via PyInstaller.
+    # therefore, this *should* be in capa.main; however,
+    # the Binary Ninja extractor uses this to resolve the BN API code,
+    # so we keep this in a common area.
+    # generally, other library code should not use this function.
     return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
