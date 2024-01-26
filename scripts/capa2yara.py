@@ -723,16 +723,30 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Capa to YARA rule converter")
-    parser.add_argument("rules", type=str, help="Path to rules")
-    parser.add_argument("--private", "-p", action="store_true", help="Create private rules", default=False)
     capa.main.install_common_args(parser, wanted={"tag"})
+    parser.add_argument("--private", "-p", action="store_true", help="Create private rules", default=False)
+    parser.add_argument("rules", type=str, help="Path to rules directory")
     args = parser.parse_args(args=argv)
 
+    # don't use capa.main.handle_common_args
+    # because it expects a different format for the --rules argument
+
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
+
     try:
-        capa.main.handle_common_args(args)
-        rules = capa.main.get_rules_from_cli(args)
-    except capa.main.ShouldExitError as e:
-        return e.status_code
+        rules = capa.rules.get_rules([Path(args.rules)])
+        logger.info("successfully loaded %s rules", len(rules))
+    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+        logger.error("%s", str(e))
+        return -1
 
     namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
 

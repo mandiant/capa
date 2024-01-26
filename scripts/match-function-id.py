@@ -62,6 +62,7 @@ import capa.engine
 import capa.helpers
 import capa.features
 import capa.features.freeze
+from capa.loader import BACKEND_VIV
 
 logger = logging.getLogger("capa.match-function-id")
 
@@ -71,7 +72,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="FLIRT match each function")
-    capa.main.install_common_args(parser, wanted={"input_file", "signatures"})
+    capa.main.install_common_args(parser, wanted={"input_file", "signatures", "format"})
     parser.add_argument(
         "-F",
         "--function",
@@ -84,35 +85,40 @@ def main(argv=None):
         capa.main.handle_common_args(args)
         capa.main.ensure_input_exists_from_cli(args)
         input_format = capa.main.get_input_format_from_cli(args)
-        backend = capa.main.get_backend_from_cli(args, input_format)
-        sig_paths = capa.main.get_signatures_from_cli(args, input_format, backend)
+        sig_paths = capa.main.get_signatures_from_cli(args, input_format, BACKEND_VIV)
     except capa.main.ShouldExitError as e:
         return e.status_code
 
     analyzers = []
     for sigpath in sig_paths:
-        sigs = viv_utils.flirt.load_flirt_signature(sigpath)
+        sigs = viv_utils.flirt.load_flirt_signature(str(sigpath))
 
         with capa.main.timing("flirt: compiling sigs"):
             matcher = flirt.compile(sigs)
 
-        analyzer = viv_utils.flirt.FlirtFunctionAnalyzer(matcher, sigpath)
+        analyzer = viv_utils.flirt.FlirtFunctionAnalyzer(matcher, str(sigpath))
         logger.debug("registering viv function analyzer: %s", repr(analyzer))
         analyzers.append(analyzer)
 
-    vw = viv_utils.getWorkspace(args.sample, analyze=True, should_save=False)
+    vw = viv_utils.getWorkspace(str(args.input_file), analyze=True, should_save=False)
 
     functions = vw.getFunctions()
     if args.function:
         functions = [args.function]
 
+    seen = set()
     for function in functions:
         logger.debug("matching function: 0x%04x", function)
         for analyzer in analyzers:
             viv_utils.flirt.match_function_flirt_signatures(analyzer.matcher, vw, function)
             name = viv_utils.get_function_name(vw, function)
             if name:
-                print(f"0x{function:04x}: {name}")
+                key = (function, name)
+                if key in seen:
+                    continue
+                else:
+                    print(f"0x{function:04x}: {name}")
+                    seen.add(key)
 
     return 0
 
