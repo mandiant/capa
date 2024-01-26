@@ -135,7 +135,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
     this is the responsibility of the caller.
     """
 
-    # lazy import enables us to not require viv if user wants SMDA, for example.
+    # lazy import enables us to not require viv if user wants another backend.
     import viv_utils
     import viv_utils.flirt
 
