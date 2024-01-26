@@ -35,7 +35,6 @@ import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
 import capa.features.common
-import capa.features.freeze as frz
 import capa.render.vverbose
 import capa.features.extractors
 import capa.render.result_document
@@ -48,7 +47,7 @@ import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_PEFILE
+from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
 from capa.helpers import (
     get_file_taste,
     get_auto_format,
@@ -521,6 +520,9 @@ def get_backend_from_args(args, input_format: str) -> str:
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
+    elif input_format == FORMAT_FREEZE:
+        return BACKEND_FREEZE
+
     else:
         return BACKEND_VIV
 
@@ -699,57 +701,53 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if input_format == FORMAT_FREEZE:
-        # freeze format deserializes directly into an extractor
-        return frz.load(args.input_file.read_bytes())
-    else:
-        # all other formats we must create an extractor,
-        # such as viv, binary ninja, etc. workspaces
-        # and use those for extracting.
+    # all other formats we must create an extractor,
+    # such as viv, binary ninja, etc. workspaces
+    # and use those for extracting.
 
-        try:
-            sig_paths = []
-            if backend != BACKEND_VIV:
-                logger.debug("skipping library code matching: only supported by the vivisect backend")
-            elif input_format != FORMAT_PE:
-                logger.debug("skipping library code matching: signatures only supports PE files")
-            else:
-                sig_paths = capa.loader.get_signatures(args.signatures)
-        except IOError as e:
-            logger.error("%s", str(e))
-            raise ShouldExitError(E_INVALID_SIG) from e
+    try:
+        sig_paths = []
+        if backend != BACKEND_VIV:
+            logger.debug("skipping library code matching: only supported by the vivisect backend")
+        elif input_format != FORMAT_PE:
+            logger.debug("skipping library code matching: signatures only supports PE files")
+        else:
+            sig_paths = capa.loader.get_signatures(args.signatures)
+    except IOError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_INVALID_SIG) from e
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-        os_ = get_os_from_args(args, backend)
-        sample_path = get_sample_path_from_args(args, backend)
+    os_ = get_os_from_args(args, backend)
+    sample_path = get_sample_path_from_args(args, backend)
 
-        # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
-        #  see same code and show-features above examples
-        #  https://github.com/mandiant/capa/issues/1813
-        try:
-            return capa.loader.get_extractor(
-                args.input_file,
-                input_format,
-                os_,
-                backend,
-                sig_paths,
-                should_save_workspace=should_save_workspace,
-                disable_progress=args.quiet or args.debug,
-                sample_path=sample_path,
-            )
-        except UnsupportedFormatError as e:
-            if input_format == FORMAT_CAPE:
-                log_unsupported_cape_report_error(str(e))
-            else:
-                log_unsupported_format_error()
-            raise ShouldExitError(E_INVALID_FILE_TYPE) from e
-        except UnsupportedArchError as e:
-            log_unsupported_arch_error()
-            raise ShouldExitError(E_INVALID_FILE_ARCH) from e
-        except UnsupportedOSError as e:
-            log_unsupported_os_error()
-            raise ShouldExitError(E_INVALID_FILE_OS) from e
+    # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
+    #  see same code and show-features above examples
+    #  https://github.com/mandiant/capa/issues/1813
+    try:
+        return capa.loader.get_extractor(
+            args.input_file,
+            input_format,
+            os_,
+            backend,
+            sig_paths,
+            should_save_workspace=should_save_workspace,
+            disable_progress=args.quiet or args.debug,
+            sample_path=sample_path,
+        )
+    except UnsupportedFormatError as e:
+        if input_format == FORMAT_CAPE:
+            log_unsupported_cape_report_error(str(e))
+        else:
+            log_unsupported_format_error()
+        raise ShouldExitError(E_INVALID_FILE_TYPE) from e
+    except UnsupportedArchError as e:
+        log_unsupported_arch_error()
+        raise ShouldExitError(E_INVALID_FILE_ARCH) from e
+    except UnsupportedOSError as e:
+        log_unsupported_os_error()
+        raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
 def main(argv: Optional[List[str]] = None):

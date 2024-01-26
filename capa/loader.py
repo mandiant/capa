@@ -64,6 +64,7 @@ BACKEND_DOTNET = "dotnet"
 BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
+BACKEND_FREEZE = "freeze"
 
 
 def is_supported_format(sample: Path) -> bool:
@@ -264,6 +265,9 @@ def get_extractor(
                 logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
 
         return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, input_path, os_)
+
+    elif backend == BACKEND_FREEZE:
+        return frz.load(input_path.read_bytes())
 
     else:
         raise ValueError("unexpected backend: " + backend)
