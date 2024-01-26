@@ -196,7 +196,7 @@ def get_extractor(
 
     elif backend == BACKEND_BINJA:
         import capa.helpers
-        from capa.features.extractors.binaryninja.find_binja_api import find_binja_path
+        from capa.features.extractors.binja.find_binja_api import find_binja_path
 
         # When we are running as a standalone executable, we cannot directly import binaryninja
         # We need to fist find the binja API installation path and add it into sys.path
@@ -214,7 +214,7 @@ def get_extractor(
                 + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
             )
 
-        import capa.features.extractors.binaryninja.extractor
+        import capa.features.extractors.binja.extractor
 
         if input_format not in (FORMAT_SC32, FORMAT_SC64):
             if not is_supported_format(input_path):
@@ -231,7 +231,7 @@ def get_extractor(
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
 
-        return capa.features.extractors.binaryninja.extractor.BinjaFeatureExtractor(bv)
+        return capa.features.extractors.binja.extractor.BinjaFeatureExtractor(bv)
 
     elif backend == BACKEND_PEFILE:
         import capa.features.extractors.pefile
