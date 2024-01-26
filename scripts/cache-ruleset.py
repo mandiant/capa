@@ -35,7 +35,6 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Cache ruleset.")
-    capa.main.install_common_args(parser)
     capa.main.install_common_args(parser, wanted={"rules"})
     parser.add_argument("cache", type=str, help="Path to cache directory")
     args = parser.parse_args(args=argv)
