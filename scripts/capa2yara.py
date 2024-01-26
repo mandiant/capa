@@ -730,7 +730,7 @@ def main(argv=None):
 
     try:
         capa.main.handle_common_args(args)
-        rules = capa.main.get_rules_from_args(args)
+        rules = capa.main.get_rules_from_cli(args)
     except capa.main.ShouldExitError as e:
         return e.status_code
 

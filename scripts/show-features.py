@@ -105,16 +105,16 @@ def main(argv=None):
 
     try:
         capa.main.handle_common_args(args)
-        capa.main.ensure_input_exists_from_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
 
         if args.function and args.backend == "pefile":
             print("pefile backend does not support extracting function features")
             return -1
 
-        input_format = capa.main.get_input_format_from_args(args)
+        input_format = capa.main.get_input_format_from_cli(args)
 
-        backend = capa.main.get_backend_from_args(args, input_format)
-        extractor = capa.main.get_extractor_from_args(args, input_format, backend)
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
     except capa.main.ShouldExitError as e:
         return e.status_code
 

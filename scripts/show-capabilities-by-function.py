@@ -144,16 +144,16 @@ def main(argv=None):
 
     try:
         capa.main.handle_common_args(args)
-        capa.main.ensure_input_exists_from_args(args)
-        input_format = capa.main.get_input_format_from_args(args)
-        rules = capa.main.get_rules_from_args(args)
-        backend = capa.main.get_backend_from_args(args, input_format)
-        sample_path = capa.main.get_sample_path_from_args(args, backend)
+        capa.main.ensure_input_exists_from_cli(args)
+        input_format = capa.main.get_input_format_from_cli(args)
+        rules = capa.main.get_rules_from_cli(args)
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        sample_path = capa.main.get_sample_path_from_cli(args, backend)
         if sample_path is None:
             os_ = "unknown"
         else:
             os_ = capa.loader.get_os(sample_path)
-        extractor = capa.main.get_extractor_from_args(args, input_format, backend)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
     except capa.main.ShouldExitError as e:
         return e.status_code
 

@@ -1013,7 +1013,7 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.main.get_rules_from_args(args)
+        rules = capa.main.get_rules_from_cli(args)
     except capa.main.ShouldExitError as e:
         return e.status_code
 

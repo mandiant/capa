@@ -41,7 +41,7 @@ def main(argv=None):
 
         try:
             capa.main.handle_common_args(args)
-            capa.main.ensure_input_exists_from_args(args)
+            capa.main.ensure_input_exists_from_cli(args)
         except capa.main.ShouldExitError as e:
             return e.status_code
 

@@ -318,11 +318,12 @@ def install_common_args(parser, wanted=None):
 #
 # Other scripts may use this routines, but should also prefer to invoke them
 # directly within `main()`, not within library code.
+# Library code should *not* call these functions.
 #
 # These main routines may raise `ShouldExitError` to indicate the program
 # ...should exit. Its a tiny step away from doing `sys.exit()` directly.
 # I'm not sure if we should just do that. In the meantime, programs should
-# handle `ShoudlExitError` and pass the status code to `sys.exit()`.
+# handle `ShouldExitError` and pass the status code to `sys.exit()`.
 #
 
 
@@ -458,7 +459,7 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def ensure_input_exists_from_args(args):
+def ensure_input_exists_from_cli(args):
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -475,7 +476,7 @@ def ensure_input_exists_from_args(args):
         raise ShouldExitError(E_MISSING_FILE) from e
 
 
-def get_input_format_from_args(args) -> str:
+def get_input_format_from_cli(args) -> str:
     """
     Determine the format of the input file.
 
@@ -503,7 +504,7 @@ def get_input_format_from_args(args) -> str:
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def get_backend_from_args(args, input_format: str) -> str:
+def get_backend_from_cli(args, input_format: str) -> str:
     """
     Determine the backend that should be used for the given input file.
     Respects an override provided by the user, otherwise, use a good default.
@@ -531,7 +532,7 @@ def get_backend_from_args(args, input_format: str) -> str:
         return BACKEND_VIV
 
 
-def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
+def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     """
     Determine the path to the underlying sample, if it exists.
 
@@ -551,7 +552,7 @@ def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
         return args.input_file
 
 
-def get_os_from_args(args, backend) -> str:
+def get_os_from_cli(args, backend) -> str:
     """
     Determine the OS for the given sample.
     Respects an override provided by the user, otherwise, use heuristics and
@@ -567,13 +568,13 @@ def get_os_from_args(args, backend) -> str:
     if args.os:
         return args.os
 
-    sample_path = get_sample_path_from_args(args, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
     if sample_path is None:
         return "unknown"
     return capa.loader.get_os(sample_path)
 
 
-def get_rules_from_args(args) -> RuleSet:
+def get_rules_from_cli(args) -> RuleSet:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -621,7 +622,7 @@ def get_rules_from_args(args) -> RuleSet:
     return rules
 
 
-def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtractor]:
+def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtractor]:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -660,7 +661,7 @@ def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtrac
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[FeatureExtractor]) -> bool:
+def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: List[FeatureExtractor]) -> bool:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -695,7 +696,7 @@ def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[
     return found_file_limitation
 
 
-def get_signatures_from_args(args, input_format: str, backend: str) -> List[Path]:
+def get_signatures_from_cli(args, input_format: str, backend: str) -> List[Path]:
     if backend != BACKEND_VIV:
         logger.debug("skipping library code matching: only supported by the vivisect backend")
         return []
@@ -711,7 +712,7 @@ def get_signatures_from_args(args, input_format: str, backend: str) -> List[Path
         raise ShouldExitError(E_INVALID_SIG) from e
 
 
-def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExtractor:
+def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtractor:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -721,12 +722,12 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    sig_paths = get_signatures_from_args(args, input_format, backend)
+    sig_paths = get_signatures_from_cli(args, input_format, backend)
 
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-    os_ = get_os_from_args(args, backend)
-    sample_path = get_sample_path_from_args(args, backend)
+    os_ = get_os_from_cli(args, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
 
     # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
     #  see same code and show-features above examples
@@ -801,11 +802,11 @@ def main(argv: Optional[List[str]] = None):
 
     try:
         handle_common_args(args)
-        ensure_input_exists_from_args(args)
-        input_format = get_input_format_from_args(args)
-        rules = get_rules_from_args(args)
-        file_extractors = get_file_extractors_from_args(args, input_format)
-        found_file_limitation = find_file_limitations_from_args(args, rules, file_extractors)
+        ensure_input_exists_from_cli(args)
+        input_format = get_input_format_from_cli(args)
+        rules = get_rules_from_cli(args)
+        file_extractors = get_file_extractors_from_cli(args, input_format)
+        found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
         return e.status_code
 
@@ -823,13 +824,13 @@ def main(argv: Optional[List[str]] = None):
         # and use that to extract meta and capabilities
 
         try:
-            backend = get_backend_from_args(args, input_format)
-            sample_path = get_sample_path_from_args(args, backend)
+            backend = get_backend_from_cli(args, input_format)
+            sample_path = get_sample_path_from_cli(args, backend)
             if sample_path is None:
                 os_ = "unknown"
             else:
                 os_ = capa.loader.get_os(sample_path)
-            extractor = get_extractor_from_args(args, input_format, backend)
+            extractor = get_extractor_from_cli(args, input_format, backend)
         except ShouldExitError as e:
             return e.status_code
 
