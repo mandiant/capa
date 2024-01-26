@@ -86,7 +86,7 @@ repos:
         -   "--config"
         -   ".github/flake8.ini"
         -   "--extend-exclude"
-        -   "capa/render/proto/capa_pb2.py"
+        -   "capa/render/proto/capa_pb2.py,capa/features/extractors/binexport2/binexport_pb2.py"
         -   "capa/"
         -   "scripts/"
         -   "tests/"
