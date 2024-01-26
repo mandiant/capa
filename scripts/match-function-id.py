@@ -71,40 +71,26 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="FLIRT match each function")
-    parser.add_argument("sample", type=str, help="Path to sample to analyze")
+    capa.main.install_common_args(parser, wanted={"input_file", "signatures"})
     parser.add_argument(
         "-F",
         "--function",
         type=lambda x: int(x, 0x10),
         help="match a specific function by VA, rather than add functions",
     )
-    parser.add_argument(
-        "--signature",
-        action="append",
-        dest="signatures",
-        type=str,
-        default=[],
-        help="use the given signatures to identify library functions, file system paths to .sig/.pat files.",
-    )
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debugging output on STDERR")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     args = parser.parse_args(args=argv)
 
-    if args.quiet:
-        logging.basicConfig(level=logging.ERROR)
-        logging.getLogger().setLevel(logging.ERROR)
-    elif args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
-
-    # disable vivisect-related logging, it's verbose and not relevant for capa users
-    capa.main.set_vivisect_log_level(logging.CRITICAL)
+    try:
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_args(args)
+        input_format = capa.main.get_input_format_from_args(args)
+        backend = capa.main.get_backend_from_args(args, input_format)
+        sig_paths = capa.main.get_signatures_from_args(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     analyzers = []
-    for sigpath in args.signatures:
+    for sigpath in sig_paths:
         sigs = viv_utils.flirt.load_flirt_signature(sigpath)
 
         with capa.main.timing("flirt: compiling sigs"):
@@ -123,7 +109,8 @@ def main(argv=None):
     for function in functions:
         logger.debug("matching function: 0x%04x", function)
         for analyzer in analyzers:
-            name = viv_utils.flirt.match_function_flirt_signatures(analyzer.matcher, vw, function)
+            viv_utils.flirt.match_function_flirt_signatures(analyzer.matcher, vw, function)
+            name = viv_utils.get_function_name(vw, function)
             if name:
                 print(f"0x{function:04x}: {name}")
 

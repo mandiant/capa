@@ -55,13 +55,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import os
 import sys
 import logging
 import argparse
 import collections
 from typing import Dict
-from pathlib import Path
 
 import colorama
 
@@ -76,10 +74,7 @@ import capa.render.verbose
 import capa.features.freeze
 import capa.capabilities.common
 import capa.render.result_document as rd
-from capa.helpers import get_file_taste
-from capa.features.common import FORMAT_AUTO
 from capa.features.freeze import Address
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor
 
 logger = logging.getLogger("capa.show-capabilities-by-function")
 
@@ -142,67 +137,37 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-    capa.main.install_common_args(parser, wanted={"format", "os", "backend", "sample", "signatures", "rules", "tag"})
+    capa.main.install_common_args(
+        parser, wanted={"format", "os", "backend", "input_file", "signatures", "rules", "tag"}
+    )
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
     try:
-        taste = get_file_taste(Path(args.sample))
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    try:
-        rules = capa.rules.get_rules(args.rules)
-        logger.info("successfully loaded %s rules", len(rules))
-        if args.tag:
-            rules = rules.filter_rules_by_meta(args.tag)
-            logger.info("selected %s rules", len(rules))
-    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-        logger.error("%s", str(e))
-        return -1
-
-    try:
-        sig_paths = capa.loader.get_signatures(args.signatures)
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    if (args.format == "freeze") or (args.format == FORMAT_AUTO and capa.features.freeze.is_freeze(taste)):
-        format_ = "freeze"
-        extractor: FeatureExtractor = capa.features.freeze.load(Path(args.sample).read_bytes())
-    else:
-        format_ = args.format
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
-
-        try:
-            extractor = capa.loader.get_extractor(
-                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
-            )
-            assert isinstance(extractor, StaticFeatureExtractor)
-        except capa.exceptions.UnsupportedFormatError:
-            capa.helpers.log_unsupported_format_error()
-            return -1
-        except capa.exceptions.UnsupportedRuntimeError:
-            capa.helpers.log_unsupported_runtime_error()
-            return -1
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_args(args)
+        input_format = capa.main.get_input_format_from_args(args)
+        rules = capa.main.get_rules_from_args(args)
+        backend = capa.main.get_backend_from_args(args, input_format)
+        sample_path = capa.main.get_sample_path_from_args(args, backend)
+        if sample_path is None:
+            os_ = "unknown"
+        else:
+            os_ = capa.loader.get_os(sample_path)
+        extractor = capa.main.get_extractor_from_args(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor)
 
-    meta = capa.loader.collect_metadata(argv, args.sample, format_, args.os, args.rules, extractor, counts)
+    meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
     meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     if capa.capabilities.common.has_file_limitation(rules, capabilities):
         # bail if capa encountered file limitation e.g. a packed binary
         # do show the output in verbose mode, though.
         if not (args.verbose or args.vverbose or args.json):
-            return -1
+            return capa.main.E_FILE_LIMITATION
 
-    # colorama will detect:
-    #  - when on Windows console, and fixup coloring, and
-    #  - when not an interactive session, and disable coloring
-    # renderers should use coloring and assume it will be stripped out if necessary.
-    colorama.init()
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
     print(render_matches_by_function(doc))
     colorama.deinit()

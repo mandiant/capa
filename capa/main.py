@@ -684,6 +684,22 @@ def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[
     return found_file_limitation
 
 
+def get_signatures_from_args(args, input_format: str, backend: str) -> List[Path]:
+    if backend != BACKEND_VIV:
+        logger.debug("skipping library code matching: only supported by the vivisect backend")
+        return []
+
+    if input_format != FORMAT_PE:
+        logger.debug("skipping library code matching: signatures only supports PE files")
+        return []
+
+    try:
+        return capa.loader.get_signatures(args.signatures)
+    except IOError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_INVALID_SIG) from e
+
+
 def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExtractor:
     """
     args:
@@ -694,21 +710,7 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    # all other formats we must create an extractor,
-    # such as viv, binary ninja, etc. workspaces
-    # and use those for extracting.
-
-    try:
-        sig_paths = []
-        if backend != BACKEND_VIV:
-            logger.debug("skipping library code matching: only supported by the vivisect backend")
-        elif input_format != FORMAT_PE:
-            logger.debug("skipping library code matching: signatures only supports PE files")
-        else:
-            sig_paths = capa.loader.get_signatures(args.signatures)
-    except IOError as e:
-        logger.error("%s", str(e))
-        raise ShouldExitError(E_INVALID_SIG) from e
+    sig_paths = get_signatures_from_args(args, input_format, backend)
 
     should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
