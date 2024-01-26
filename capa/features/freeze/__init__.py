@@ -682,14 +682,18 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="save capa features to a file")
-    capa.main.install_common_args(parser, {"sample", "format", "backend", "os", "signatures"})
+    capa.main.install_common_args(parser, {"input_file", "format", "backend", "os", "signatures"})
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
-    sigpaths = capa.loader.get_signatures(args.signatures)
-
-    extractor = capa.loader.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
+    try:
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_args(args)
+        input_format = capa.main.get_input_format_from_args(args)
+        backend = capa.main.get_backend_from_args(args, input_format)
+        extractor = capa.main.get_extractor_from_args(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     Path(args.output).write_bytes(dump(extractor))
 
