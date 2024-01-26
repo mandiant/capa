@@ -217,16 +217,6 @@ def install_common_args(parser, wanted=None):
         help="enable ANSI color codes in results, default: only during interactive session",
     )
 
-    #
-    # arguments that may be opted into:
-    #
-    #   - input_file
-    #   - format
-    #   - os
-    #   - rules
-    #   - tag
-    #
-
     if "input_file" in wanted:
         parser.add_argument(
             "input_file",
