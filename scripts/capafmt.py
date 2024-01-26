@@ -30,7 +30,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Capa rule formatter.")
-    capa.main.install_common_args(parser, wanted={})
+    capa.main.install_common_args(parser)
     parser.add_argument("path", type=str, help="Path to rule to format")
     parser.add_argument(
         "-i",

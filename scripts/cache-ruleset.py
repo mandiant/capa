@@ -36,15 +36,14 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Cache ruleset.")
     capa.main.install_common_args(parser)
-    parser.add_argument("rules", type=str, action="append", help="Path to rules")
+    capa.main.install_common_args(parser, wanted={"rules"})
     parser.add_argument("cache", type=str, help="Path to cache directory")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
-    if args.debug:
-        logging.getLogger("capa").setLevel(logging.DEBUG)
-    else:
-        logging.getLogger("capa").setLevel(logging.ERROR)
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     try:
         cache_dir = Path(args.cache)

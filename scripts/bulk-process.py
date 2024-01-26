@@ -212,9 +212,7 @@ def main(argv=None):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                doc = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(
-                    exclude_none=True
-                )
+                doc = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(exclude_none=True)
                 results[result["path"]] = json.loads(doc)
 
             else:

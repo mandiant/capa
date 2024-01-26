@@ -265,7 +265,7 @@ def install_common_args(parser, wanted=None):
             type=str,
             choices=[f[0] for f in backends],
             default=BACKEND_AUTO,
-            help=f"select backend, {backend_help}"
+            help=f"select backend, {backend_help}",
         )
 
     if "os" in wanted:
