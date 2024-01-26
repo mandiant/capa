@@ -866,6 +866,8 @@ def guess_os_from_ident_directive(elf: ELF) -> Optional[OS]:
             return OS.LINUX
         elif "Red Hat" in comment:
             return OS.LINUX
+        elif "Android" in comment:
+            return OS.ANDROID
 
     return None
 
@@ -920,6 +922,8 @@ def guess_os_from_needed_dependencies(elf: ELF) -> Optional[OS]:
         if needed.startswith("libhurduser.so"):
             return OS.HURD
         if needed.startswith("libandroid.so"):
+            return OS.ANDROID
+        if needed.startswith("liblog.so"):
             return OS.ANDROID
 
     return None
@@ -1023,10 +1027,6 @@ def detect_elf_os(f) -> str:
     if osabi_guess:
         ret = osabi_guess
 
-    elif ident_guess:
-        # we don't trust this too much due to non-cross-compilation assumptions
-        ret = ident_guess
-
     elif ph_notes_guess:
         ret = ph_notes_guess
 
@@ -1044,6 +1044,11 @@ def detect_elf_os(f) -> str:
 
     elif symtab_guess:
         ret = symtab_guess
+
+    elif ident_guess:
+        # at the bottom because we don't trust this too much
+        # due to potential for bugs with cross-compilation.
+        ret = ident_guess
 
     return ret.value if ret is not None else "unknown"
 

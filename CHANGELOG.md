@@ -3,6 +3,29 @@
 ## master (unreleased)
 
 ### New Features
+
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.0.0-beta...master](https://github.com/mandiant/capa/compare/v7.0.0-beta...master)
+- [capa-rules v7.0.0-beta...master](https://github.com/mandiant/capa-rules/compare/v7.0.0-beta...master)
+
+## v7.0.0-beta
+This is the beta release of capa v7.0 which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
+shoutout to @colton-gabertan and @yelhamer for their amazing work.
+
+Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, and @xusheng6.
+### New Features
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
   - add call scope #771 @yelhamer
@@ -66,7 +89,6 @@
 - nursery/hook-routines-via-dlsym-rtld_next william.ballenthin@mandiant.com
 - nursery/linked-against-hp-socket still@teamt5.org
 - host-interaction/process/inject/process-ghostly-hollowing sara.rincon@mandiant.com
--
 
 ### Bug Fixes
 - ghidra: fix `ints_to_bytes` performance #1761 @mike-hunhoff
@@ -74,6 +96,7 @@
 - binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
 - elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
+- elf: better detect ELF OS via Android dependencies #1947 @williballenthin
 - fix setuptools package discovery #1886 @gmacon @mr-tz
 
 ### capa explorer IDA Pro plugin
@@ -81,9 +104,21 @@
 ### Development
 - update ATT&CK/MBC data for linting #1932 @mr-tz
 
+#### Developer Notes
+With this new release, many classes and concepts have been split up into static (mostly identical to the
+prior implementations) and dynamic ones. For example, the legacy FeatureExtractor class has been renamed to
+StaticFeatureExtractor and the DynamicFeatureExtractor has been added.
+
+Starting from version 7.0, we have moved the component responsible for feature extractor from main to a new
+capabilities' module. Now, users wishing to utilize capa’s feature extraction abilities should use that module instead
+of importing the relevant logic from the main file.
+
+For sandbox-based feature extractors, we are using Pydantic models. Contributions of more models for other sandboxes
+are very welcome!
+
 ### Raw diffs
-- [capa v6.1.0...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
-- [capa-rules v6.1.0...master](https://github.com/mandiant/capa-rules/compare/v6.1.0...master)
+- [capa v6.1.0...v7.0.0-beta](https://github.com/mandiant/capa/compare/v6.1.0...v7.0.0-beta)
+- [capa-rules v6.1.0...v7.0.0-beta](https://github.com/mandiant/capa-rules/compare/v6.1.0...v7.0.0-beta)
 
 ## v6.1.0
 
