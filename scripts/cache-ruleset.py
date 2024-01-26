@@ -40,15 +40,23 @@ def main(argv=None):
     parser.add_argument("cache", type=str, help="Path to cache directory")
     args = parser.parse_args(args=argv)
 
-    try:
-        capa.main.handle_common_args(args)
-    except capa.main.ShouldExitError as e:
-        return e.status_code
+    # don't use capa.main.handle_common_args
+    # because it expects a different format for the --rules argument
+
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
 
     try:
         cache_dir = Path(args.cache)
         cache_dir.mkdir(parents=True, exist_ok=True)
-        rules = capa.rules.get_rules(args.rules, cache_dir)
+        rules = capa.rules.get_rules([Path(args.rules)], cache_dir)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
