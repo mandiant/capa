@@ -48,6 +48,7 @@ from capa.features.common import (
     FORMAT_SC32,
     FORMAT_SC64,
     FORMAT_DOTNET,
+    FORMAT_BINEXPORT2,
 )
 from capa.features.address import Address
 from capa.features.extractors.base_extractor import (
@@ -65,6 +66,7 @@ BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
 BACKEND_CAPE = "cape"
 BACKEND_FREEZE = "freeze"
+BACKEND_BINEXPORT2 = "binexport2"
 
 
 def is_supported_format(sample: Path) -> bool:
@@ -269,6 +271,16 @@ def get_extractor(
     elif backend == BACKEND_FREEZE:
         return frz.load(input_path.read_bytes())
 
+    elif backend == BACKEND_BINEXPORT2:
+        import capa.features.extractors.binexport2
+        import capa.features.extractors.binexport2.extractor
+
+        be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
+        assert sample_path is not None
+        buf = sample_path.read_bytes()
+
+        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
+
     else:
         raise ValueError("unexpected backend: " + backend)
 
@@ -289,6 +301,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     elif input_format == FORMAT_CAPE:
         report = json.loads(input_file.read_text(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
+
+    elif input_format == FORMAT_BINEXPORT2:
+        # pick pefile/elffile from sample path, after detection
+        # TODO(wb): 1755
+        pass
 
     return file_extractors
 

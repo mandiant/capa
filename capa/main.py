@@ -47,7 +47,15 @@ import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
+from capa.loader import (
+    BACKEND_VIV,
+    BACKEND_CAPE,
+    BACKEND_BINJA,
+    BACKEND_DOTNET,
+    BACKEND_FREEZE,
+    BACKEND_PEFILE,
+    BACKEND_BINEXPORT2,
+)
 from capa.helpers import (
     get_file_taste,
     get_auto_format,
@@ -78,6 +86,7 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    FORMAT_BINEXPORT2,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
@@ -255,6 +264,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
             (BACKEND_DOTNET, ".NET"),
+            (BACKEND_BINEXPORT2, "BinExport2"),
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
         ]
@@ -532,6 +542,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     elif input_format == FORMAT_FREEZE:
         return BACKEND_FREEZE
 
+    elif input_format == FORMAT_BINEXPORT2:
+        return BACKEND_BINEXPORT2
+
     else:
         return BACKEND_VIV
 
@@ -733,9 +746,6 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
 
-    # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
-    #  see same code and show-features above examples
-    #  https://github.com/mandiant/capa/issues/1813
     try:
         return capa.loader.get_extractor(
             args.input_file,
