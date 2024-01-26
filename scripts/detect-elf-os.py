@@ -17,8 +17,8 @@ import logging
 import argparse
 import contextlib
 from typing import BinaryIO
-from pathlib import Path
 
+import capa.main
 import capa.helpers
 import capa.features.extractors.elf
 
@@ -36,28 +36,16 @@ def main(argv=None):
             argv = sys.argv[1:]
 
         parser = argparse.ArgumentParser(description="Detect the underlying OS for the given ELF file")
-        parser.add_argument("sample", type=str, help="path to ELF file")
-
-        logging_group = parser.add_argument_group("logging arguments")
-
-        logging_group.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
-        logging_group.add_argument(
-            "-q", "--quiet", action="store_true", help="disable all status output except fatal errors"
-        )
-
+        capa.main.install_common_args(parser, wanted={"input_file"})
         args = parser.parse_args(args=argv)
 
-        if args.quiet:
-            logging.basicConfig(level=logging.WARNING)
-            logging.getLogger().setLevel(logging.WARNING)
-        elif args.debug:
-            logging.basicConfig(level=logging.DEBUG)
-            logging.getLogger().setLevel(logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-            logging.getLogger().setLevel(logging.INFO)
+        try:
+            capa.main.handle_common_args(args)
+            capa.main.ensure_input_exists_from_cli(args)
+        except capa.main.ShouldExitError as e:
+            return e.status_code
 
-        f = Path(args.sample).open("rb")
+        f = args.input_file.open("rb")
 
     with contextlib.closing(f):
         try:

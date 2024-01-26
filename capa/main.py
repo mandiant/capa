@@ -11,26 +11,23 @@ See the License for the specific language governing permissions and limitations 
 import io
 import os
 import sys
-import json
 import time
 import logging
 import argparse
-import datetime
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Callable, Optional
+from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-import halo
 import colorama
 from pefile import PEFormatError
-from typing_extensions import assert_never
 from elftools.common.exceptions import ELFError
 
 import capa.perf
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.helpers
 import capa.version
 import capa.render.json
@@ -38,7 +35,6 @@ import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
 import capa.features.common
-import capa.features.freeze as frz
 import capa.render.vverbose
 import capa.features.extractors
 import capa.render.result_document
@@ -49,8 +45,9 @@ import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
-from capa.rules import Rule, RuleSet
+from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
 from capa.helpers import (
     get_file_taste,
     get_auto_format,
@@ -73,7 +70,6 @@ from capa.features.common import (
     OS_MACOS,
     FORMAT_PE,
     FORMAT_ELF,
-    FORMAT_BINEXPORT2,
     OS_WINDOWS,
     FORMAT_AUTO,
     FORMAT_CAPE,
@@ -83,25 +79,12 @@ from capa.features.common import (
     FORMAT_FREEZE,
     FORMAT_RESULT,
 )
-from capa.features.address import Address
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
-from capa.features.extractors.base_extractor import (
-    SampleHashes,
-    FeatureExtractor,
-    StaticFeatureExtractor,
-    DynamicFeatureExtractor,
-)
+from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
-
-BACKEND_VIV = "vivisect"
-BACKEND_DOTNET = "dotnet"
-BACKEND_BINJA = "binja"
-BACKEND_PEFILE = "pefile"
-BACKEND_CAPE = "cape"
-BACKEND_BINEXPORT2 = "binexport2"
-BACKEND_DEFAULT = "(default) use default backend for given file type"
+BACKEND_AUTO = "auto"
 
 E_MISSING_RULES = 10
 E_MISSING_FILE = 11
@@ -139,73 +122,16 @@ def set_vivisect_log_level(level):
     logging.getLogger("Elf").setLevel(level)
 
 
-def is_supported_format(sample: Path) -> bool:
-    """
-    Return if this is a supported file based on magic header values
-    """
-    taste = sample.open("rb").read(0x100)
-
-    return len(list(capa.features.extractors.common.extract_format(taste))) == 1
-
-
-def is_supported_arch(sample: Path) -> bool:
-    buf = sample.read_bytes()
-
-    return len(list(capa.features.extractors.common.extract_arch(buf))) == 1
-
-
-def get_arch(sample: Path) -> str:
-    buf = sample.read_bytes()
-
-    for feature, _ in capa.features.extractors.common.extract_arch(buf):
-        assert isinstance(feature.value, str)
-        return feature.value
-
-    return "unknown"
-
-
-def is_supported_os(sample: Path) -> bool:
-    buf = sample.read_bytes()
-
-    return len(list(capa.features.extractors.common.extract_os(buf))) == 1
-
-
-def get_os(sample: Path) -> str:
-    buf = sample.read_bytes()
-
-    for feature, _ in capa.features.extractors.common.extract_os(buf):
-        assert isinstance(feature.value, str)
-        return feature.value
-
-    return "unknown"
-
-
-def get_meta_str(vw):
-    """
-    Return workspace meta information string
-    """
-    meta = []
-    for k in ["Format", "Platform", "Architecture"]:
-        if k in vw.metadata:
-            meta.append(f"{k.lower()}: {vw.metadata[k]}")
-    return f"{', '.join(meta)}, number of functions: {len(vw.getFunctions())}"
-
-
-def is_running_standalone() -> bool:
-    """
-    are we running from a PyInstaller'd executable?
-    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
-    """
-    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
-
-
 def get_default_root() -> Path:
     """
     get the file system path to the default resources directory.
     under PyInstaller, this comes from _MEIPASS.
     under source, this is the root directory of the project.
     """
-    if is_running_standalone():
+    # we only expect capa.main to be packaged within PyInstaller,
+    # so we don't put this in a more common place, like capa.helpers.
+
+    if capa.helpers.is_running_standalone():
         # pylance/mypy don't like `sys._MEIPASS` because this isn't standard.
         # its injected by pyinstaller.
         # so we'll fetch this attribute dynamically.
@@ -228,542 +154,6 @@ def get_default_signatures() -> List[Path]:
             ret.append(file)
 
     return ret
-
-
-def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
-    """
-    load the program at the given path into a vivisect workspace using the given format.
-    also apply the given FLIRT signatures.
-
-    supported formats:
-      - pe
-      - elf
-      - shellcode 32-bit
-      - shellcode 64-bit
-      - auto
-
-    this creates and analyzes the workspace; however, it does *not* save the workspace.
-    this is the responsibility of the caller.
-    """
-
-    # lazy import enables us to not require viv if user wants SMDA, for example.
-    import viv_utils
-    import viv_utils.flirt
-
-    logger.debug("generating vivisect workspace for: %s", path)
-    if input_format == FORMAT_AUTO:
-        if not is_supported_format(path):
-            raise UnsupportedFormatError()
-
-        # don't analyze, so that we can add our Flirt function analyzer first.
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format in {FORMAT_PE, FORMAT_ELF}:
-        vw = viv_utils.getWorkspace(str(path), analyze=False, should_save=False)
-    elif input_format == FORMAT_SC32:
-        # these are not analyzed nor saved.
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="i386", analyze=False)
-    elif input_format == FORMAT_SC64:
-        vw = viv_utils.getShellcodeWorkspaceFromFile(str(path), arch="amd64", analyze=False)
-    else:
-        raise ValueError("unexpected format: " + input_format)
-
-    viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
-
-    vw.analyze()
-
-    logger.debug("%s", get_meta_str(vw))
-    return vw
-
-
-def get_extractor(
-    input_path: Path,
-    input_format: str,
-    os_: str,
-    backend: str,
-    sigpaths: List[Path],
-    should_save_workspace=False,
-    disable_progress=False,
-    sample_path: Optional[Path]=None,
-) -> FeatureExtractor:
-    """
-    raises:
-      UnsupportedFormatError
-      UnsupportedArchError
-      UnsupportedOSError
-    """
-    if backend == BACKEND_CAPE:
-        import capa.features.extractors.cape.extractor
-
-        report = json.load(Path(input_path).open(encoding="utf-8"))
-        return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
-
-    elif backend == BACKEND_DOTNET:
-        import capa.features.extractors.dnfile.extractor
-
-        if input_format not in (FORMAT_PE, FORMAT_DOTNET):
-            raise UnsupportedFormatError()
-
-        return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(input_path)
-
-    elif backend == BACKEND_BINJA:
-        from capa.features.extractors.binaryninja.find_binja_api import find_binja_path
-
-        # When we are running as a standalone executable, we cannot directly import binaryninja
-        # We need to fist find the binja API installation path and add it into sys.path
-        if is_running_standalone():
-            bn_api = find_binja_path()
-            if bn_api.exists():
-                sys.path.append(str(bn_api))
-
-        try:
-            import binaryninja
-            from binaryninja import BinaryView
-        except ImportError:
-            raise RuntimeError(
-                "Cannot import binaryninja module. Please install the Binary Ninja Python API first: "
-                + "https://docs.binary.ninja/dev/batch.html#install-the-api)."
-            )
-
-        import capa.features.extractors.binaryninja.extractor
-
-        if input_format not in (FORMAT_SC32, FORMAT_SC64):
-            if not is_supported_format(input_path):
-                raise UnsupportedFormatError()
-
-            if not is_supported_arch(input_path):
-                raise UnsupportedArchError()
-
-            if os_ == OS_AUTO and not is_supported_os(input_path):
-                raise UnsupportedOSError()
-
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            bv: BinaryView = binaryninja.load(str(input_path))
-            if bv is None:
-                raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
-
-        return capa.features.extractors.binaryninja.extractor.BinjaFeatureExtractor(bv)
-
-    elif backend == BACKEND_PEFILE:
-        import capa.features.extractors.pefile
-
-        return capa.features.extractors.pefile.PefileFeatureExtractor(input_path)
-
-    elif backend == BACKEND_VIV:
-        import capa.features.extractors.viv.extractor
-
-        if input_format not in (FORMAT_SC32, FORMAT_SC64):
-            if not is_supported_format(input_path):
-                raise UnsupportedFormatError()
-
-            if not is_supported_arch(input_path):
-                raise UnsupportedArchError()
-
-            if os_ == OS_AUTO and not is_supported_os(input_path):
-                raise UnsupportedOSError()
-
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
-            vw = get_workspace(input_path, input_format, sigpaths)
-
-            if should_save_workspace:
-                logger.debug("saving workspace")
-                try:
-                    vw.saveWorkspace()
-                except IOError:
-                    # see #168 for discussion around how to handle non-writable directories
-                    logger.info("source directory is not writable, won't save intermediate workspace")
-            else:
-                logger.debug("CAPA_SAVE_WORKSPACE unset, not saving workspace")
-
-        return capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, input_path, os_)
-
-    elif backend == BACKEND_BINEXPORT2:
-        import capa.features.extractors.binexport2
-        import capa.features.extractors.binexport2.extractor
-
-        be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
-        assert sample_path is not None
-        # we let BinExport support a wide array of Arch/OS/etc.
-        # it can be an intermediate representation for us.
-        # therefore, don't restrict format/arch/OS.
-        buf = sample_path.read_bytes()
-
-        return capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
-
-    else:
-        raise ValueError("unexpected backend: " + backend)
-
-
-def get_file_extractors(input: Path, input_format: str) -> List[FeatureExtractor]:
-    file_extractors: List[FeatureExtractor] = []
-
-    if input_format == FORMAT_PE:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input))
-
-    elif input_format == FORMAT_DOTNET:
-        file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input))
-        file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input))
-
-    elif input_format == FORMAT_ELF:
-        file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input))
-
-    elif input_format == FORMAT_CAPE:
-        report = json.load(Path(input).open(encoding="utf-8"))
-        file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
-
-    elif input_format == FORMAT_BINEXPORT2:
-        # TODO(wb): 1755
-        pass
-
-    return file_extractors
-
-
-def is_nursery_rule_path(path: Path) -> bool:
-    """
-    The nursery is a spot for rules that have not yet been fully polished.
-    For example, they may not have references to public example of a technique.
-    Yet, we still want to capture and report on their matches.
-    The nursery is currently a subdirectory of the rules directory with that name.
-
-    When nursery rules are loaded, their metadata section should be updated with:
-      `nursery=True`.
-    """
-    return "nursery" in path.parts
-
-
-def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
-    """
-    collect all rule file paths, including those in subdirectories.
-    """
-    rule_file_paths = []
-    for rule_path in rule_paths:
-        if not rule_path.exists():
-            raise IOError(f"rule path {rule_path} does not exist or cannot be accessed")
-
-        if rule_path.is_file():
-            rule_file_paths.append(rule_path)
-        elif rule_path.is_dir():
-            logger.debug("reading rules from directory %s", rule_path)
-            for root, _, files in os.walk(rule_path):
-                if ".git" in root:
-                    # the .github directory contains CI config in capa-rules
-                    # this includes some .yml files
-                    # these are not rules
-                    # additionally, .git has files that are not .yml and generate the warning
-                    # skip those too
-                    continue
-                for file in files:
-                    if not file.endswith(".yml"):
-                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
-                            # expect to see .git* files, readme.md, format.md, and maybe a .git directory
-                            # other things maybe are rules, but are mis-named.
-                            logger.warning("skipping non-.yml file: %s", file)
-                        continue
-                    rule_file_paths.append(Path(root) / file)
-    return rule_file_paths
-
-
-# TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
-RulePath = Path
-
-
-def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
-    return
-
-
-def get_rules(
-    rule_paths: List[RulePath],
-    cache_dir=None,
-    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
-) -> RuleSet:
-    """
-    args:
-      rule_paths: list of paths to rules files or directories containing rules files
-      cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
-      on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
-    """
-    if cache_dir is None:
-        cache_dir = capa.rules.cache.get_default_cache_directory()
-    # rule_paths may contain directory paths,
-    # so search for file paths recursively.
-    rule_file_paths = collect_rule_file_paths(rule_paths)
-
-    # this list is parallel to `rule_file_paths`:
-    # rule_file_paths[i] corresponds to rule_contents[i].
-    rule_contents = [file_path.read_bytes() for file_path in rule_file_paths]
-
-    ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
-    if ruleset is not None:
-        return ruleset
-
-    rules: List[Rule] = []
-
-    total_rule_count = len(rule_file_paths)
-    for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
-        on_load_rule(path, i, total_rule_count)
-
-        try:
-            rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
-        except capa.rules.InvalidRule:
-            raise
-        else:
-            rule.meta["capa/path"] = path.as_posix()
-            rule.meta["capa/nursery"] = is_nursery_rule_path(path)
-
-            rules.append(rule)
-            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
-
-    ruleset = capa.rules.RuleSet(rules)
-
-    capa.rules.cache.cache_ruleset(cache_dir, ruleset)
-
-    return ruleset
-
-
-def get_signatures(sigs_path: Path) -> List[Path]:
-    if not sigs_path.exists():
-        raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
-
-    paths: List[Path] = []
-    if sigs_path.is_file():
-        paths.append(sigs_path)
-    elif sigs_path.is_dir():
-        logger.debug("reading signatures from directory %s", sigs_path.resolve())
-        for file in sigs_path.rglob("*"):
-            if file.is_file() and file.suffix.lower() in (".pat", ".pat.gz", ".sig"):
-                paths.append(file)
-
-    # Convert paths to their absolute and normalized forms
-    paths = [path.resolve().absolute() for path in paths]
-
-    # load signatures in deterministic order: the alphabetic sorting of filename.
-    # this means that `0_sigs.pat` loads before `1_sigs.pat`.
-    paths = sorted(paths, key=lambda path: path.name)
-
-    for path in paths:
-        logger.debug("found signature file: %s", path)
-
-    return paths
-
-
-def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
-    if isinstance(extractor, StaticFeatureExtractor):
-        return rdoc.StaticAnalysis(
-            format=format_,
-            arch=arch,
-            os=os_,
-            extractor=extractor.__class__.__name__,
-            rules=tuple(rules_path),
-            base_address=frz.Address.from_capa(extractor.get_base_address()),
-            layout=rdoc.StaticLayout(
-                functions=(),
-                # this is updated after capabilities have been collected.
-                # will look like:
-                #
-                # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
-            ),
-            feature_counts=counts["feature_counts"],
-            library_functions=counts["library_functions"],
-        )
-    elif isinstance(extractor, DynamicFeatureExtractor):
-        return rdoc.DynamicAnalysis(
-            format=format_,
-            arch=arch,
-            os=os_,
-            extractor=extractor.__class__.__name__,
-            rules=tuple(rules_path),
-            layout=rdoc.DynamicLayout(
-                processes=(),
-            ),
-            feature_counts=counts["feature_counts"],
-        )
-    else:
-        raise ValueError("invalid extractor type")
-
-
-def collect_metadata(
-    argv: List[str],
-    sample_path: Path,
-    input_format: str,
-    os_: str,
-    rules_path: List[Path],
-    extractor: FeatureExtractor,
-    counts: dict,
-) -> rdoc.Metadata:
-    # if it's a binary sample we hash it, if it's a report
-    # we fetch the hashes from the report
-    sample_hashes: SampleHashes = extractor.get_sample_hashes()
-    md5, sha1, sha256 = sample_hashes.md5, sample_hashes.sha1, sample_hashes.sha256
-
-    global_feats = list(extractor.extract_global_features())
-    extractor_format = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Format)]
-    extractor_arch = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.Arch)]
-    extractor_os = [f.value for (f, _) in global_feats if isinstance(f, capa.features.common.OS)]
-
-    input_format = str(extractor_format[0]) if extractor_format else "unknown" if input_format == FORMAT_AUTO else input_format
-    arch = str(extractor_arch[0]) if extractor_arch else "unknown"
-    os_ = str(extractor_os[0]) if extractor_os else "unknown" if os_ == OS_AUTO else os_
-
-    if isinstance(extractor, StaticFeatureExtractor):
-        meta_class: type = rdoc.StaticMetadata
-    elif isinstance(extractor, DynamicFeatureExtractor):
-        meta_class = rdoc.DynamicMetadata
-    else:
-        assert_never(extractor)
-
-    rules = tuple(r.resolve().absolute().as_posix() for r in rules_path)
-
-    return meta_class(
-        timestamp=datetime.datetime.now(),
-        version=capa.version.__version__,
-        argv=tuple(argv) if argv else None,
-        sample=rdoc.Sample(
-            md5=md5,
-            sha1=sha1,
-            sha256=sha256,
-            path=Path(sample_path).resolve().as_posix(),
-        ),
-        analysis=get_sample_analysis(
-            input_format,
-            arch,
-            os_,
-            extractor,
-            rules,
-            counts,
-        ),
-    )
-
-
-def compute_dynamic_layout(rules, extractor: DynamicFeatureExtractor, capabilities: MatchResults) -> rdoc.DynamicLayout:
-    """
-    compute a metadata structure that links threads
-    to the processes in which they're found.
-
-    only collect the threads at which some rule matched.
-    otherwise, we may pollute the json document with
-    a large amount of un-referenced data.
-    """
-    assert isinstance(extractor, DynamicFeatureExtractor)
-
-    matched_calls: Set[Address] = set()
-
-    def result_rec(result: capa.features.common.Result):
-        for loc in result.locations:
-            if isinstance(loc, capa.features.address.DynamicCallAddress):
-                matched_calls.add(loc)
-        for child in result.children:
-            result_rec(child)
-
-    for matches in capabilities.values():
-        for _, result in matches:
-            result_rec(result)
-
-    names_by_process: Dict[Address, str] = {}
-    names_by_call: Dict[Address, str] = {}
-
-    matched_processes: Set[Address] = set()
-    matched_threads: Set[Address] = set()
-
-    threads_by_process: Dict[Address, List[Address]] = {}
-    calls_by_thread: Dict[Address, List[Address]] = {}
-
-    for p in extractor.get_processes():
-        threads_by_process[p.address] = []
-
-        for t in extractor.get_threads(p):
-            calls_by_thread[t.address] = []
-
-            for c in extractor.get_calls(p, t):
-                if c.address in matched_calls:
-                    names_by_call[c.address] = extractor.get_call_name(p, t, c)
-                    calls_by_thread[t.address].append(c.address)
-
-            if calls_by_thread[t.address]:
-                matched_threads.add(t.address)
-                threads_by_process[p.address].append(t.address)
-
-        if threads_by_process[p.address]:
-            matched_processes.add(p.address)
-            names_by_process[p.address] = extractor.get_process_name(p)
-
-    layout = rdoc.DynamicLayout(
-        processes=tuple(
-            rdoc.ProcessLayout(
-                address=frz.Address.from_capa(p),
-                name=names_by_process[p],
-                matched_threads=tuple(
-                    rdoc.ThreadLayout(
-                        address=frz.Address.from_capa(t),
-                        matched_calls=tuple(
-                            rdoc.CallLayout(
-                                address=frz.Address.from_capa(c),
-                                name=names_by_call[c],
-                            )
-                            for c in calls_by_thread[t]
-                            if c in matched_calls
-                        ),
-                    )
-                    for t in threads
-                    if t in matched_threads
-                )  # this object is open to extension in the future,
-                # such as with the function name, etc.
-            )
-            for p, threads in threads_by_process.items()
-            if p in matched_processes
-        )
-    )
-
-    return layout
-
-
-def compute_static_layout(rules, extractor: StaticFeatureExtractor, capabilities) -> rdoc.StaticLayout:
-    """
-    compute a metadata structure that links basic blocks
-    to the functions in which they're found.
-
-    only collect the basic blocks at which some rule matched.
-    otherwise, we may pollute the json document with
-    a large amount of un-referenced data.
-    """
-    functions_by_bb: Dict[Address, Address] = {}
-    bbs_by_function: Dict[Address, List[Address]] = {}
-    for f in extractor.get_functions():
-        bbs_by_function[f.address] = []
-        for bb in extractor.get_basic_blocks(f):
-            functions_by_bb[bb.address] = f.address
-            bbs_by_function[f.address].append(bb.address)
-
-    matched_bbs = set()
-    for rule_name, matches in capabilities.items():
-        rule = rules[rule_name]
-        if capa.rules.Scope.BASIC_BLOCK in rule.scopes:
-            for addr, _ in matches:
-                assert addr in functions_by_bb
-                matched_bbs.add(addr)
-
-    layout = rdoc.StaticLayout(
-        functions=tuple(
-            rdoc.FunctionLayout(
-                address=frz.Address.from_capa(f),
-                matched_basic_blocks=tuple(
-                    rdoc.BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in bbs if bb in matched_bbs
-                )  # this object is open to extension in the future,
-                # such as with the function name, etc.
-            )
-            for f, bbs in bbs_by_function.items()
-            if len([bb for bb in bbs if bb in matched_bbs]) > 0
-        )
-    )
-
-    return layout
-
-
-def compute_layout(rules, extractor, capabilities) -> rdoc.Layout:
-    if isinstance(extractor, StaticFeatureExtractor):
-        return compute_static_layout(rules, extractor, capabilities)
-    elif isinstance(extractor, DynamicFeatureExtractor):
-        return compute_dynamic_layout(rules, extractor, capabilities)
-    else:
-        raise ValueError("extractor must be either a static or dynamic extracotr")
 
 
 def simple_message_exception_handler(exctype, value: BaseException, traceback: TracebackType):
@@ -799,7 +189,7 @@ def install_common_args(parser, wanted=None):
     args:
       parser (argparse.ArgumentParser): a parser to update in place, adding common arguments.
       wanted (Set[str]): collection of arguments to opt-into, including:
-        - "input": required positional argument to input file.
+        - "input_file": required positional argument to input file.
         - "format": flag to override file format.
         - "os": flag to override file operating system.
         - "backend": flag to override analysis backend.
@@ -830,19 +220,9 @@ def install_common_args(parser, wanted=None):
         help="enable ANSI color codes in results, default: only during interactive session",
     )
 
-    #
-    # arguments that may be opted into:
-    #
-    #   - input
-    #   - format
-    #   - os
-    #   - rules
-    #   - tag
-    #
-
-    if "input" in wanted:
+    if "input_file" in wanted:
         parser.add_argument(
-            "input",
+            "input_file",
             type=str,
             help="path to file to analyze",
         )
@@ -859,6 +239,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
+
         parser.add_argument(
             "-f",
             "--format",
@@ -868,13 +249,23 @@ def install_common_args(parser, wanted=None):
         )
 
     if "backend" in wanted:
+        backends = [
+            (BACKEND_AUTO, "(default) detect apppropriate backend automatically"),
+            (BACKEND_VIV, "vivisect"),
+            (BACKEND_PEFILE, "pefile (file features only)"),
+            (BACKEND_BINJA, "Binary Ninja"),
+            (BACKEND_DOTNET, ".NET"),
+            (BACKEND_FREEZE, "capa freeze"),
+            (BACKEND_CAPE, "CAPE"),
+        ]
+        backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
             "-b",
             "--backend",
             type=str,
-            help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_BINJA, BACKEND_PEFILE, BACKEND_CAPE, BACKEND_BINEXPORT2),
-            default=BACKEND_DEFAULT,
+            choices=[f[0] for f in backends],
+            default=BACKEND_AUTO,
+            help=f"select backend, {backend_help}",
         )
 
     if "os" in wanted:
@@ -927,16 +318,18 @@ def install_common_args(parser, wanted=None):
 #
 # Other scripts may use this routines, but should also prefer to invoke them
 # directly within `main()`, not within library code.
+# Library code should *not* call these functions.
 #
 # These main routines may raise `ShouldExitError` to indicate the program
 # ...should exit. Its a tiny step away from doing `sys.exit()` directly.
 # I'm not sure if we should just do that. In the meantime, programs should
-# handle `ShoudlExitError` and pass the status code to `sys.exit()`.
+# handle `ShouldExitError` and pass the status code to `sys.exit()`.
 #
 
 
 class ShouldExitError(Exception):
     """raised when a main-related routine indicates the program should exit."""
+
     def __init__(self, status_code: int):
         self.status_code = status_code
 
@@ -1002,8 +395,8 @@ def handle_common_args(args):
     if not args.debug:
         sys.excepthook = simple_message_exception_handler  # type: ignore[assignment]
 
-    if hasattr(args, "input"):
-        args.input = Path(args.input)
+    if hasattr(args, "input_file"):
+        args.input_file = Path(args.input_file)
 
     if hasattr(args, "rules"):
         rules_paths: List[Path] = []
@@ -1066,7 +459,7 @@ def handle_common_args(args):
         args.signatures = sigs_path
 
 
-def ensure_input_exists_from_args(args):
+def ensure_input_exists_from_cli(args):
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1075,7 +468,7 @@ def ensure_input_exists_from_args(args):
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     try:
-        _ = get_file_taste(args.input)
+        _ = get_file_taste(args.input_file)
     except IOError as e:
         # per our research there's not a programmatic way to render the IOError with non-ASCII filename unless we
         # handle the IOError separately and reach into the args
@@ -1083,7 +476,7 @@ def ensure_input_exists_from_args(args):
         raise ShouldExitError(E_MISSING_FILE) from e
 
 
-def get_input_format_from_args(args) -> str:
+def get_input_format_from_cli(args) -> str:
     """
     Determine the format of the input file.
 
@@ -1096,22 +489,22 @@ def get_input_format_from_args(args) -> str:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    format = args.format
+    format_ = args.format
 
-    if format != FORMAT_AUTO:
-        return format
+    if format_ != FORMAT_AUTO:
+        return format_
 
     try:
-        return get_auto_format(args.input)
+        return get_auto_format(args.input_file)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
+        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
         raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         log_unsupported_format_error()
         raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def get_backend_from_args(args, input_format: str) -> str:
+def get_backend_from_cli(args, input_format: str) -> str:
     """
     Determine the backend that should be used for the given input file.
     Respects an override provided by the user, otherwise, use a good default.
@@ -1123,23 +516,23 @@ def get_backend_from_args(args, input_format: str) -> str:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if args.backend != BACKEND_DEFAULT:
+    if args.backend != BACKEND_AUTO:
         return args.backend
 
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
-    elif input_format == FORMAT_BINEXPORT2:
-        return BACKEND_BINEXPORT2
-
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
+
+    elif input_format == FORMAT_FREEZE:
+        return BACKEND_FREEZE
 
     else:
         return BACKEND_VIV
 
 
-def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
+def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     """
     Determine the path to the underlying sample, if it exists.
 
@@ -1153,18 +546,13 @@ def get_sample_path_from_args(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend == BACKEND_BINEXPORT2:
-        import capa.features.extractors.binexport2
-
-        be2 = capa.features.extractors.binexport2.get_binexport2(args.input)
-        return capa.features.extractors.binexport2.get_sample_from_binexport2(be2)
-    elif backend == BACKEND_CAPE:
+    if backend == BACKEND_CAPE:
         return None
     else:
-        return args.input
+        return args.input_file
 
 
-def get_os_from_args(args, backend) -> str:
+def get_os_from_cli(args, backend) -> str:
     """
     Determine the OS for the given sample.
     Respects an override provided by the user, otherwise, use heuristics and
@@ -1180,13 +568,13 @@ def get_os_from_args(args, backend) -> str:
     if args.os:
         return args.os
 
-    sample_path = get_sample_path_from_args(args, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
     if sample_path is None:
         return "unknown"
-    return get_os(sample_path)
+    return capa.loader.get_os(sample_path)
 
 
-def get_rules_from_args(args) -> str:
+def get_rules_from_cli(args) -> RuleSet:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1195,12 +583,12 @@ def get_rules_from_args(args) -> str:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
     try:
-        if is_running_standalone() and args.is_default_rules:
+        if capa.helpers.is_running_standalone() and args.is_default_rules:
             cache_dir = get_default_root() / "cache"
         else:
             cache_dir = capa.rules.cache.get_default_cache_directory()
 
-        rules = get_rules(args.rules, cache_dir=cache_dir)
+        rules = capa.rules.get_rules(args.rules, cache_dir=cache_dir)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         logger.error(
@@ -1225,7 +613,7 @@ def get_rules_from_args(args) -> str:
         len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
     )
 
-    if args.tag:
+    if hasattr(args, "tag") and args.tag:
         rules = rules.filter_rules_by_meta(args.tag)
         logger.debug("selected %d rules", len(rules))
         for i, r in enumerate(rules.rules, 1):
@@ -1234,7 +622,7 @@ def get_rules_from_args(args) -> str:
     return rules
 
 
-def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtractor]:
+def get_file_extractors_from_cli(args, input_format: str) -> List[FeatureExtractor]:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1251,13 +639,13 @@ def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtrac
     # this pass can inspect multiple file extractors, e.g., dotnet and pe to identify
     # various limitations
     try:
-        return get_file_extractors(args.input, input_format)
+        return capa.loader.get_file_extractors(args.input_file, input_format)
     except PEFormatError as e:
-        logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
-        return E_CORRUPT_FILE
+        logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
+        raise ShouldExitError(E_CORRUPT_FILE) from e
     except (ELFError, OverflowError) as e:
-        logger.error("Input file '%s' is not a valid ELF file: %s", args.input, str(e))
-        return E_CORRUPT_FILE
+        logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
+        raise ShouldExitError(E_CORRUPT_FILE) from e
     except UnsupportedFormatError as e:
         if input_format == FORMAT_CAPE:
             log_unsupported_cape_report_error(str(e))
@@ -1273,7 +661,7 @@ def get_file_extractors_from_args(args, input_format: str) -> List[FeatureExtrac
             raise ShouldExitError(E_INVALID_FILE_TYPE) from e
 
 
-def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[FeatureExtractor]) -> bool:
+def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: List[FeatureExtractor]) -> bool:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1290,10 +678,10 @@ def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[
         try:
             pure_file_capabilities, _ = find_file_capabilities(rules, file_extractor, {})
         except PEFormatError as e:
-            logger.error("Input file '%s' is not a valid PE file: %s", args.input, str(e))
+            logger.error("Input file '%s' is not a valid PE file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
         except (ELFError, OverflowError) as e:
-            logger.error("Input file '%s' is not a valid ELF file: %s", args.input, str(e))
+            logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
 
         # file limitations that rely on non-file scope won't be detected here.
@@ -1308,7 +696,23 @@ def find_file_limitations_from_args(args, rules: RuleSet, file_extractors: List[
     return found_file_limitation
 
 
-def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExtractor:
+def get_signatures_from_cli(args, input_format: str, backend: str) -> List[Path]:
+    if backend != BACKEND_VIV:
+        logger.debug("skipping library code matching: only supported by the vivisect backend")
+        return []
+
+    if input_format != FORMAT_PE:
+        logger.debug("skipping library code matching: signatures only supports PE files")
+        return []
+
+    try:
+        return capa.loader.get_signatures(args.signatures)
+    except IOError as e:
+        logger.error("%s", str(e))
+        raise ShouldExitError(E_INVALID_SIG) from e
+
+
+def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtractor:
     """
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -1318,57 +722,39 @@ def get_extractor_from_args(args, input_format: str, backend: str) -> FeatureExt
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if input_format == FORMAT_FREEZE:
-        # freeze format deserializes directly into an extractor
-        return frz.load(Path(args.input).read_bytes())
-    else:
-        # all other formats we must create an extractor,
-        # such as viv, binary ninja, etc. workspaces
-        # and use those for extracting.
+    sig_paths = get_signatures_from_cli(args, input_format, backend)
 
-        try:
-            sig_paths = []
-            if backend != BACKEND_VIV:
-                logger.debug("skipping library code matching: only supported by the vivisect backend")
-            elif input_format != FORMAT_PE:
-                logger.debug("skipping library code matching: signatures only supports PE files")
-            else:
-                sig_paths = get_signatures(args.signatures)
-        except IOError as e:
-            logger.error("%s", str(e))
-            raise ShouldExitError(E_INVALID_SIG) from e
+    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
 
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
+    os_ = get_os_from_cli(args, backend)
+    sample_path = get_sample_path_from_cli(args, backend)
 
-        os_ = get_os_from_args(args, backend)
-        sample_path = get_sample_path_from_args(args, backend)
-
-        # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
-        #  see same code and show-features above examples
-        #  https://github.com/mandiant/capa/issues/1813
-        try:
-            return get_extractor(
-                args.input,
-                input_format,
-                os_,
-                backend,
-                sig_paths,
-                should_save_workspace=should_save_workspace,
-                disable_progress=args.quiet or args.debug,
-                sample_path=sample_path,
-            )
-        except UnsupportedFormatError as e:
-            if input_format == FORMAT_CAPE:
-                log_unsupported_cape_report_error(str(e))
-            else:
-                log_unsupported_format_error()
-            raise ShouldExitError(E_INVALID_FILE_TYPE) from e
-        except UnsupportedArchError as e:
-            log_unsupported_arch_error()
-            raise ShouldExitError(E_INVALID_FILE_ARCH) from e
-        except UnsupportedOSError as e:
-            log_unsupported_os_error()
-            raise ShouldExitError(E_INVALID_FILE_OS) from e
+    # TODO(mr-tz): this should be wrapped and refactored as it's tedious to update everywhere
+    #  see same code and show-features above examples
+    #  https://github.com/mandiant/capa/issues/1813
+    try:
+        return capa.loader.get_extractor(
+            args.input_file,
+            input_format,
+            os_,
+            backend,
+            sig_paths,
+            should_save_workspace=should_save_workspace,
+            disable_progress=args.quiet or args.debug,
+            sample_path=sample_path,
+        )
+    except UnsupportedFormatError as e:
+        if input_format == FORMAT_CAPE:
+            log_unsupported_cape_report_error(str(e))
+        else:
+            log_unsupported_format_error()
+        raise ShouldExitError(E_INVALID_FILE_TYPE) from e
+    except UnsupportedArchError as e:
+        log_unsupported_arch_error()
+        raise ShouldExitError(E_INVALID_FILE_ARCH) from e
+    except UnsupportedOSError as e:
+        log_unsupported_os_error()
+        raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
 def main(argv: Optional[List[str]] = None):
@@ -1410,17 +796,17 @@ def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"input", "format", "backend", "os", "signatures", "rules", "tag"})
+    install_common_args(parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
 
     try:
         handle_common_args(args)
-        ensure_input_exists_from_args(args)
-        input_format = get_input_format_from_args(args)
-        rules = get_rules_from_args(args)
-        file_extractors = get_file_extractors_from_args(args, input_format)
-        found_file_limitation = find_file_limitations_from_args(args, rules, file_extractors)
+        ensure_input_exists_from_cli(args)
+        input_format = get_input_format_from_cli(args)
+        rules = get_rules_from_cli(args)
+        file_extractors = get_file_extractors_from_cli(args, input_format)
+        found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
         return e.status_code
 
@@ -1430,7 +816,7 @@ def main(argv: Optional[List[str]] = None):
 
     if input_format == FORMAT_RESULT:
         # result document directly parses into meta, capabilities
-        result_doc = capa.render.result_document.ResultDocument.from_file(Path(args.input))
+        result_doc = capa.render.result_document.ResultDocument.from_file(args.input_file)
         meta, capabilities = result_doc.to_capa()
 
     else:
@@ -1438,17 +824,20 @@ def main(argv: Optional[List[str]] = None):
         # and use that to extract meta and capabilities
 
         try:
-            backend = get_backend_from_args(args, input_format)
-            sample_path = get_sample_path_from_args(args, backend)
-            os = get_os(sample_path)
-            extractor = get_extractor_from_args(args, input_format, backend)
+            backend = get_backend_from_cli(args, input_format)
+            sample_path = get_sample_path_from_cli(args, backend)
+            if sample_path is None:
+                os_ = "unknown"
+            else:
+                os_ = capa.loader.get_os(sample_path)
+            extractor = get_extractor_from_cli(args, input_format, backend)
         except ShouldExitError as e:
             return e.status_code
 
         capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
-        meta = collect_metadata(argv, args.input, input_format, os, args.rules, extractor, counts)
-        meta.analysis.layout = compute_layout(rules, extractor, capabilities)
+        meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
+        meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
         if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
             # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
@@ -1495,7 +884,7 @@ def ida_main():
 
     rules_path = get_default_root() / "rules"
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ida.helpers.collect_metadata([rules_path])
 
@@ -1529,7 +918,7 @@ def ghidra_main():
 
     rules_path = get_default_root() / "rules"
     logger.debug("rule path: %s", rules_path)
-    rules = get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
 

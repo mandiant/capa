@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import json
 import inspect
 import logging
@@ -16,13 +17,24 @@ from pathlib import Path
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format, FORMAT_BINEXPORT2
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_CAPE,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_DOTNET,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+    FORMAT_BINEXPORT2,
+    Format,
+)
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
+EXTENSIONS_FREEZE = "frz"
 
 logger = logging.getLogger("capa")
 
@@ -82,8 +94,19 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_FREEZE):
+        format_ = FORMAT_FREEZE
     elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
         format_ = FORMAT_BINEXPORT2
+    return format_
+
+
+def get_auto_format(path: Path) -> str:
+    format_ = get_format(path)
+    if format_ == FORMAT_UNKNOWN:
+        format_ = get_format_from_extension(path)
+    if format_ == FORMAT_UNKNOWN:
+        raise UnsupportedFormatError()
     return format_
 
 
@@ -104,15 +127,6 @@ def get_format(sample: Path) -> str:
         return feature.value
 
     return FORMAT_UNKNOWN
-
-
-def get_auto_format(path: Path) -> str:
-    format_ = get_format(path)
-    if format_ == FORMAT_UNKNOWN:
-        format_ = get_format_from_extension(path)
-    if format_ == FORMAT_UNKNOWN:
-        raise UnsupportedFormatError()
-    return format_
 
 
 @contextlib.contextmanager
@@ -204,3 +218,16 @@ def log_unsupported_runtime_error():
         " If you're seeing this message on the command line, please ensure you're running a supported Python version."
     )
     logger.error("-" * 80)
+
+
+def is_running_standalone() -> bool:
+    """
+    are we running from a PyInstaller'd executable?
+    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
+    """
+    # typically we only expect capa.main to be packaged via PyInstaller.
+    # therefore, this *should* be in capa.main; however,
+    # the Binary Ninja extractor uses this to resolve the BN API code,
+    # so we keep this in a common area.
+    # generally, other library code should not use this function.
+    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")
