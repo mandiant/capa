@@ -84,7 +84,7 @@ from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeat
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
-BACKEND_DEFAULT = "(default) use default backend for given file type"
+BACKEND_AUTO = "auto"
 
 E_MISSING_RULES = 10
 E_MISSING_FILE = 11
@@ -239,6 +239,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
+
         parser.add_argument(
             "-f",
             "--format",
@@ -248,13 +249,23 @@ def install_common_args(parser, wanted=None):
         )
 
     if "backend" in wanted:
+        backends = [
+            (BACKEND_AUTO, "(default) detect apppropriate backend automatically"),
+            (BACKEND_VIV, "vivisect"),
+            (BACKEND_PEFILE, "pefile (file features only)"),
+            (BACKEND_BINJA, "Binary Ninja"),
+            (BACKEND_DOTNET, ".NET"),
+            (BACKEND_FREEZE, "capa freeze"),
+            (BACKEND_CAPE, "CAPE"),
+        ]
+        backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
             "-b",
             "--backend",
             type=str,
-            help="select the backend to use",
-            choices=(BACKEND_VIV, BACKEND_BINJA, BACKEND_PEFILE, BACKEND_CAPE),
-            default=BACKEND_DEFAULT,
+            choices=[f[0] for f in backends],
+            default=BACKEND_AUTO,
+            help=f"select backend, {backend_help}"
         )
 
     if "os" in wanted:
@@ -504,7 +515,7 @@ def get_backend_from_args(args, input_format: str) -> str:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if args.backend != BACKEND_DEFAULT:
+    if args.backend != BACKEND_AUTO:
         return args.backend
 
     if input_format == FORMAT_CAPE:
@@ -601,7 +612,7 @@ def get_rules_from_args(args) -> RuleSet:
         len(list(filter(lambda r: not (r.is_subscope_rule()), rules.rules.values()))),
     )
 
-    if args.tag:
+    if hasattr(args, "tag"):
         rules = rules.filter_rules_by_meta(args.tag)
         logger.debug("selected %d rules", len(rules))
         for i, r in enumerate(rules.rules, 1):
