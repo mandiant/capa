@@ -6,12 +6,11 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import logging
-from typing import Tuple, Iterator, Any
+from typing import Tuple, Iterator
 
-from capa.features.common import Feature, Arch, ARCH_AARCH64
-from capa.features.address import Address, NO_ADDRESS
+from capa.features.common import ARCH_AARCH64, Arch, Feature
+from capa.features.address import NO_ADDRESS, Address
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-
 
 logger = logging.getLogger(__name__)
 

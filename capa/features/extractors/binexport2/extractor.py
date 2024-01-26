@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator, Any
+from typing import Any, List, Tuple, Iterator
 
 import capa.features.extractors.elf
 import capa.features.extractors.binexport2.file
@@ -22,7 +22,6 @@ from capa.features.extractors.base_extractor import (
     FunctionHandle,
     StaticFeatureExtractor,
 )
-
 
 # TODO(wb): 1755
 TODOType = Any
