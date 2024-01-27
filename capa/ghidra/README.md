@@ -4,8 +4,6 @@
 
 The Ghidra feature extractor is an application of the FLARE team's open-source project, Ghidrathon, to integrate capa with Ghidra using Python 3. capa is a framework that uses a well-defined collection of rules to identify capabilities in a program. You can run capa against a PE file, ELF file, or shellcode and it tells you what it thinks the program can do. For example, it might suggest that the program is a backdoor, can install services, or relies on HTTP to communicate. The Ghidra feature extractor can be used to run capa analysis on your Ghidra databases without needing access to the original binary file.
 
-<img src="/doc/img/ghidra_script_mngr_output.png">
-
 ## Getting Started
 
 ### Installation
@@ -18,7 +16,7 @@ Please ensure that you have the following dependencies installed before continui
 | Python | `>= 3.8` | https://www.python.org/downloads |
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
 
-In order to run capa using using Ghidra, you must install capa as a library, obtain the official capa rules that match the capa version you have installed, and configure the Python 3 script [capa_ghidra.py](/capa/ghidra/capa_ghidra.py). You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
+In order to run capa using using Ghidra, you must install capa as a library, obtain the official capa rules that match the capa version you have installed, and configure the Python 3 scripts [capa_explorer.py](capa/ghidra/capa_explorer.py) and [capa_ghidra.py](/capa/ghidra/capa_ghidra.py). You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
 
 1. Install capa and its dependencies from PyPI using the following command:
 ```bash
@@ -32,19 +30,19 @@ OR
 $ capa --version
 ```
 
-3. Copy [capa_ghidra.py](/capa/ghidra/capa_ghidra.py) to your `$USER_HOME/ghidra_scripts` directory or manually add `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager.
+3. Copy [capa_explorer.py](capa/ghidra/capa_explorer.py) and [capa_ghidra.py](/capa/ghidra/capa_ghidra.py) to your `$USER_HOME/ghidra_scripts` directory or manually add `</paths/to/scripts.py/>` to the Ghidra Script Manager.
 
 ## Usage
 
-After completing the installation steps you can execute `capa_ghidra.py` using the Ghidra Script Manager or Headless Analyzer.
+After completing the installation steps you can execute `capa_explorer.py` using the Ghidra Script Manager to integrate capa's results with Ghidra's UI. `capa_ghidra.py` is designed to be ran with both the Ghidra Script Manager and Headless Analyzer for capa's normal reports.  
 
 ### Ghidra Script Manager
 
-To execute `capa_ghidra.py` using the Ghidra Script Manager, first open the Ghidra Script Manager by navigating to `Window > Script Manager` in the Ghidra Code Browser. Next, locate `capa_ghidra.py` by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search funtionality. Finally, double-click `capa_ghidra.py` to execute the script. If you don't see `capa_ghidra.py`, make sure you have copied the script to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/ghidra_capa.py/>` to the Ghidra Script Manager
+To execute `capa_explorer.py` using the Ghidra Script Manager, first open the Ghidra Script Manager by navigating to `Window > Script Manager` in the Ghidra Code Browser. Next, locate `capa_explorer.py` by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search funtionality. Finally, double-click `capa_explorer.py` to execute the script. If you don't see `capa_explorer.py`, make sure you have copied the script to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/capa_explorer.py/>` to the Ghidra Script Manager.
 
-When executed, `capa_ghidra.py` asks you to provide your capa rules directory and preferred output format. `capa_ghidra.py` supports `default`, `verbose`, and `vverbose` output formats when executed from the Ghidra Script Manager. `capa_ghidra.py` writes output to the Ghidra Console Window.
+When executed, `capa_explorer.py` asks you to provide your capa rules directory. `capa_ghidra.py` may be ran in the same manner and supports `default`, `verbose`, and `vverbose` output formats when executed from the Ghidra Script Manager. `capa_ghidra.py` writes output to the Ghidra Console Window. `capa_explorer.py` will integrate results directly into the Ghidra project via labels, namespaces, comments, and bookmarks.
 
-#### Example
+### Using `capa_ghidra.py`
 
 The following is an example of running `capa_ghidra.py` using the Ghidra Script Manager:
 
@@ -56,6 +54,26 @@ Choosing output format:
 
 Viewing results in Ghidra Console Window:
 <img src="/doc/img/ghidra_script_mngr_output.png">
+
+### Interpreting `capa_explorer.py` Results
+
+By invoking capa analysis via `capa_explorer.py`, this script will take the results and import them directly into the Ghidra project. In the Symbol Tree Window, under the Namespaces section, you can find the matched rules as well as the corresponding functions that contain the extracted features.
+
+Namespaces & Labeled Functions:
+
+![image](https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492)
+
+Labeled functions may be clicked on from the Symbol Tree Window in order to hop straight to these sections of code in the Disassembly Listing and Decompilation views. Plate comments will be found above the function symbol, containing each matched rule for that function. Throughout the listing and decompilation views, you will also find pre-comments that highlight extracted features and the rules they correspond to.
+
+Commented Matches and Subscoped Features:
+
+![image](https://github.com/mandiant/capa/assets/66766340/bb2b4170-7fd4-45fc-8c7b-ff8f2e2f101b)
+
+This script will also create Bookmarks on functions that may be categorized under the MITRE ATT&CK Framework as well as the Malware Behavior Catalog (MBC). These may be found via the Bookmarks Window, and the Labels may also be double clicked to align the Disassembly Listing and Decompilation views. 
+
+MITRE ATT&CK & MBC Bookmarks:
+
+![image](https://github.com/mandiant/capa/assets/66766340/7f9a66a9-7be7-4223-91c6-4b8fc4651336)
 
 ### Ghidra Headless Analyzer
 
