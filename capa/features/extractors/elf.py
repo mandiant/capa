@@ -303,6 +303,9 @@ class ELF:
         98: "TPC",
         99: "SNP1K",
         100: "ST200",
+        # https://www.sco.com/developers/gabi/latest/ch4.eheader.html
+        183: "aarch64",
+        243: "riscv",
     }
 
     @property
