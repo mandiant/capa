@@ -567,6 +567,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
         return None
     elif backend == BACKEND_BINEXPORT2:
         import capa.features.extractors.binexport2
+
         be2 = capa.features.extractors.binexport2.get_binexport2(args.input_file)
         return capa.features.extractors.binexport2.get_sample_from_binexport2(be2)
     else:

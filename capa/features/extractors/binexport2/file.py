@@ -5,42 +5,66 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
+import logging
+from typing import Tuple, Iterator
 
-from typing import Any, Tuple, Iterator
+import pefile
+from elftools.elf.elffile import ELFFile
 
+import capa.features.common
+import capa.features.extractors.common
+import capa.features.extractors.pefile
+import capa.features.extractors.elffile
 from capa.features.common import Feature
 from capa.features.address import Address
+from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
-# TODO(wb): 1755
-TODOType = Any
-
-
-def extract_file_export_names(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+logger = logging.getLogger(__name__)
 
 
-def extract_file_import_names(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+def extract_file_export_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+    if buf.startswith(capa.features.extractors.common.MATCH_PE):
+        pe = pefile.PE(data=buf)
+        yield from capa.features.extractors.pefile.extract_file_export_names(pe)
+    elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
+        elf = ELFFile(io.BytesIO(buf))
+        yield from capa.features.extractors.elffile.extract_file_export_names(elf)
+    else:
+        logger.warning("unsupported format")
 
 
-def extract_file_section_names(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+def extract_file_import_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+    if buf.startswith(capa.features.extractors.common.MATCH_PE):
+        pe = pefile.PE(data=buf)
+        yield from capa.features.extractors.pefile.extract_file_import_names(pe)
+    elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
+        elf = ELFFile(io.BytesIO(buf))
+        yield from capa.features.extractors.elffile.extract_file_import_names(elf)
+    else:
+        logger.warning("unsupported format")
 
 
-def extract_file_strings(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+def extract_file_section_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+    if buf.startswith(capa.features.extractors.common.MATCH_PE):
+        pe = pefile.PE(data=buf)
+        yield from capa.features.extractors.pefile.extract_file_section_names(pe)
+    elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
+        elf = ELFFile(io.BytesIO(buf))
+        yield from capa.features.extractors.elffile.extract_file_section_names(elf)
+    else:
+        logger.warning("unsupported format")
 
 
-def extract_file_format(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+def extract_file_strings(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_file_strings(buf)
 
 
-def extract_features(be2: TODOType, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+def extract_file_format(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
+    yield from capa.features.extractors.common.extract_format(buf)
+
+
+def extract_features(be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
     """extract file features"""
     for file_handler in FILE_HANDLERS:
         for feature, addr in file_handler(be2, buf):
