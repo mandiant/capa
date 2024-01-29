@@ -8,9 +8,9 @@
 from typing import Any, List, Tuple, Iterator
 
 import capa.features.extractors.elf
+import capa.features.extractors.common
 import capa.features.extractors.binexport2.file
 import capa.features.extractors.binexport2.insn
-import capa.features.extractors.binexport2.global_
 import capa.features.extractors.binexport2.function
 import capa.features.extractors.binexport2.basicblock
 from capa.features.common import Feature
@@ -22,20 +22,19 @@ from capa.features.extractors.base_extractor import (
     FunctionHandle,
     StaticFeatureExtractor,
 )
+from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
-# TODO(wb): 1755
-TODOType = Any
 
 
 class BinExport2FeatureExtractor(StaticFeatureExtractor):
-    def __init__(self, be2: TODOType, buf: TODOType):
+    def __init__(self, be2: BinExport2, buf: bytes):
         super().__init__(hashes=SampleHashes.from_bytes(buf))
         self.be2 = be2
         self.buf = buf
         self.global_features: List[Tuple[Feature, Address]] = []
-        self.global_features.extend(capa.features.extractors.binexport2.file.extract_file_format(self.be2, self.buf))
-        self.global_features.extend(capa.features.extractors.binexport2.global_.extract_os(self.be2))
-        self.global_features.extend(capa.features.extractors.binexport2.global_.extract_arch(self.be2))
+        self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))
+        self.global_features.extend(list(capa.features.extractors.common.extract_os(self.buf)))
+        self.global_features.extend(list(capa.features.extractors.common.extract_arch(self.buf)))
 
     def get_base_address(self):
         # TODO(wb): 1755
