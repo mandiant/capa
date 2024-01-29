@@ -36,20 +36,27 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description="Cache ruleset.")
     capa.main.install_common_args(parser)
-    parser.add_argument("rules", type=str, action="append", help="Path to rules")
+    parser.add_argument("rules", type=str, help="Path to rules directory")
     parser.add_argument("cache", type=str, help="Path to cache directory")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
-    if args.debug:
-        logging.getLogger("capa").setLevel(logging.DEBUG)
+    # don't use capa.main.handle_common_args
+    # because it expects a different format for the --rules argument
+
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
     else:
-        logging.getLogger("capa").setLevel(logging.ERROR)
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
 
     try:
         cache_dir = Path(args.cache)
         cache_dir.mkdir(parents=True, exist_ok=True)
-        rules = capa.main.get_rules(args.rules, cache_dir)
+        rules = capa.rules.get_rules([Path(args.rules)], cache_dir)
         logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))

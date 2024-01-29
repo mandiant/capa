@@ -6,6 +6,9 @@
 
 ### Breaking Changes
 
+- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
+- move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
+
 ### New Rules (0)
 
 -

@@ -723,35 +723,32 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Capa to YARA rule converter")
-    parser.add_argument("rules", type=str, help="Path to rules")
-    parser.add_argument("--private", "-p", action="store_true", help="Create private rules", default=False)
     capa.main.install_common_args(parser, wanted={"tag"})
-
+    parser.add_argument("--private", "-p", action="store_true", help="Create private rules", default=False)
+    parser.add_argument("rules", type=str, help="Path to rules directory")
     args = parser.parse_args(args=argv)
-    make_priv = args.private
 
-    if args.verbose:
-        level = logging.DEBUG
-    elif args.quiet:
-        level = logging.ERROR
+    # don't use capa.main.handle_common_args
+    # because it expects a different format for the --rules argument
+
+    if args.quiet:
+        logging.basicConfig(level=logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
+    elif args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
     else:
-        level = logging.INFO
-
-    logging.basicConfig(level=level)
-    logging.getLogger("capa2yara").setLevel(level)
+        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
 
     try:
-        rules = capa.main.get_rules([Path(args.rules)])
-        namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
-        logger.info("successfully loaded %d rules (including subscope rules which will be ignored)", len(rules))
-        if args.tag:
-            rules = rules.filter_rules_by_meta(args.tag)
-            logger.debug("selected %d rules", len(rules))
-            for i, r in enumerate(rules.rules, 1):
-                logger.debug(" %d. %s", i, r)
+        rules = capa.rules.get_rules([Path(args.rules)])
+        logger.info("successfully loaded %s rules", len(rules))
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error("%s", str(e))
         return -1
+
+    namespaces = capa.rules.index_rules_by_namespace(list(rules.rules.values()))
 
     output_yar(
         "// Rules from Mandiant's https://github.com/mandiant/capa-rules converted to YARA using https://github.com/mandiant/capa/blob/master/scripts/capa2yara.py by Arnim Rupp"
@@ -780,10 +777,10 @@ def main(argv=None):
         cround += 1
         logger.info("doing convert_rules(), round: %d", cround)
         num_rules = len(converted_rules)
-        count_incomplete += convert_rules(rules, namespaces, cround, make_priv)
+        count_incomplete += convert_rules(rules, namespaces, cround, args.private)
 
     # one last round to collect all unconverted rules
-    count_incomplete += convert_rules(rules, namespaces, 9000, make_priv)
+    count_incomplete += convert_rules(rules, namespaces, 9000, args.private)
 
     stats = "\n// converted rules              : " + str(len(converted_rules))
     stats += "\n//   among those are incomplete : " + str(count_incomplete)

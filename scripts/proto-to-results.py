@@ -36,6 +36,7 @@ import logging
 import argparse
 from pathlib import Path
 
+import capa.main
 import capa.render.json
 import capa.render.proto
 import capa.render.proto.capa_pb2
@@ -49,28 +50,16 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Convert a capa protobuf result document into the JSON format")
+    capa.main.install_common_args(parser)
     parser.add_argument(
         "pb", type=str, help="path to protobuf result document file, produced by `proto-from-results.py`"
     )
-
-    logging_group = parser.add_argument_group("logging arguments")
-
-    logging_group.add_argument("-d", "--debug", action="store_true", help="enable debugging output on STDERR")
-    logging_group.add_argument(
-        "-q", "--quiet", action="store_true", help="disable all status output except fatal errors"
-    )
-
     args = parser.parse_args(args=argv)
 
-    if args.quiet:
-        logging.basicConfig(level=logging.WARNING)
-        logging.getLogger().setLevel(logging.WARNING)
-    elif args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     pb = Path(args.pb).read_bytes()
 

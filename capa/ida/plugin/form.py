@@ -636,7 +636,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
-            return capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
+            return capa.rules.get_rules([rule_path], on_load_rule=on_load_rule)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
             return None
@@ -775,7 +775,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                     meta.analysis.feature_counts = counts["feature_counts"]
                     meta.analysis.library_functions = counts["library_functions"]
-                    meta.analysis.layout = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
+                    meta.analysis.layout = capa.loader.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
