@@ -13,6 +13,7 @@ Proto files generated via protobuf v24.4:
 import os
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -42,3 +43,22 @@ def get_sample_from_binexport2(be2: BinExport2) -> Path:
         return path
     else:
         raise ValueError("cannot find sample")
+
+
+@dataclass
+class FunctionContext:
+    be2: BinExport2
+    function_index: int
+
+
+@dataclass
+class BasicBlockContext:
+    be2: BinExport2
+    basic_block_index: int
+
+
+@dataclass
+class InstructionContext:
+    be2: BinExport2
+    instruction_index: int
+

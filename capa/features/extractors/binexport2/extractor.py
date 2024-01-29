@@ -23,6 +23,7 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext
 
 
 class BinExport2FeatureExtractor(StaticFeatureExtractor):
@@ -31,9 +32,9 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.be2 = be2
         self.buf = buf
 
-        self.address_by_instruction_index: List[int] = []
+        self.address_by_instruction_index: Dict[int, int] = {}
         self.flow_graph_index_by_function_index: Dict[int, int] = {}
-        self.function_by_address: Dict[int, int] = {}
+        self.function_index_by_address: Dict[int, int] = {}
 
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))
@@ -44,8 +45,11 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self._index_basic_blocks_by_function()
 
     def get_base_address(self):
-        # TODO(wb): 1755
-        return AbsoluteVirtualAddress(0x0)
+        # TODO: assume the lowest address is the base address.
+        # this works as long as BinExport doesn't record other
+        # libraries mapped into memory.
+        base_address = min(map(lambda s: s.address, self.be2.section))
+        return AbsoluteVirtualAddress(base_address)
 
     def extract_global_features(self):
         yield from self.global_features
@@ -56,13 +60,17 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         for function_index in self.flow_graph_index_by_function_index.keys():
             vertex = self.be2.call_graph.vertex[function_index]
-            yield FunctionHandle(AbsoluteVirtualAddress(vertex.address), inner=function_index)
+            yield FunctionHandle(
+                AbsoluteVirtualAddress(vertex.address), 
+                inner=FunctionContext(self.be2, function_index)
+            )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.function.extract_features(fh)
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
-        flow_graph_index = self.flow_graph_index_by_function_index[fh.inner]
+        fhi: FunctionContext = fh.inner
+        flow_graph_index = self.flow_graph_index_by_function_index[fhi.function_index]
         flow_graph = self.be2.flow_graph[flow_graph_index]
 
         for basic_block_index in flow_graph.basic_block_index:
@@ -71,7 +79,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 address=AbsoluteVirtualAddress(
                     self.address_by_instruction_index[bb.instruction_index[0].begin_index]
                 ),
-                inner=basic_block_index,
+                inner=BasicBlockContext(self.be2, basic_block_index)
             )
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -79,11 +87,12 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         yield from ()
 
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
-        bb: BinExport2.BasicBlock = self.be2.basic_block[bbh.inner]
-        for i in range(bb.instruction_index[0].begin_index, bb.instruction_index[0].end_index):
+        bbi: BasicBlockContext = bbh.inner
+        bb: BinExport2.BasicBlock = self.be2.basic_block[bbi.basic_block_index]
+        for instruction_index in range(bb.instruction_index[0].begin_index, bb.instruction_index[0].end_index):
             yield InsnHandle(
-                address=AbsoluteVirtualAddress(self.address_by_instruction_index[i]),
-                inner=i,
+                address=AbsoluteVirtualAddress(self.address_by_instruction_index[instruction_index]),
+                inner=InstructionContext(self.be2, instruction_index),
             )
 
     def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):
@@ -92,7 +101,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def _index_instruction_addresses(self):
         address = 0
         next_address = 0
-        for instruction in self.be2.instruction:
+        for instruction_index, instruction in enumerate(self.be2.instruction):
             if instruction.HasField("address"):
                 address = instruction.address
                 next_address = address + len(instruction.raw_bytes)
@@ -100,7 +109,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 address = next_address
                 next_address += len(instruction.raw_bytes)
 
-            self.address_by_instruction_index.append(address)
+            self.address_by_instruction_index[instruction_index] = address
 
     def _index_basic_blocks_by_function(self):
         function_index_from_address = {}
