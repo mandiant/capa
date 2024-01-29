@@ -746,6 +746,9 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
     os_ = get_os_from_cli(args, backend)
     sample_path = get_sample_path_from_cli(args, backend)
 
+    logger.debug("format:  %s", input_format)
+    logger.debug("backend: %s", backend)
+
     try:
         return capa.loader.get_extractor(
             args.input_file,
