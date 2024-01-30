@@ -38,7 +38,12 @@ After completing the installation steps you can execute `capa_explorer.py` using
 
 ### Ghidra Script Manager
 
-To execute `capa_explorer.py` using the Ghidra Script Manager, first open the Ghidra Script Manager by navigating to `Window > Script Manager` in the Ghidra Code Browser. Next, locate `capa_explorer.py` by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search funtionality. Finally, double-click `capa_explorer.py` to execute the script. If you don't see `capa_explorer.py`, make sure you have copied the script to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/capa_explorer.py/>` to the Ghidra Script Manager.
+Use the following steps to execute `capa_explorer.py` and `capa_ghidra.py` using Ghidra's Script Manager:
+1. Open the Ghidra Script Manager by navigating to `Window > Script Manager`
+2. Locate `capa_explorer.py` and `capa_ghidra.py` by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search functionality
+3. Double-click `capa_explorer.py` or `capa_ghidra.py` to execute the script
+
+If you don't see `capa_explorer.py` and `capa_ghidra.py` make sure you have copied these scripts to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/scripts>` to the Ghidra Script Manager.
 
 When executed, `capa_explorer.py` asks you to provide your capa rules directory. `capa_ghidra.py` may be ran in the same manner and supports `default`, `verbose`, and `vverbose` output formats when executed from the Ghidra Script Manager. `capa_ghidra.py` writes output to the Ghidra Console Window. `capa_explorer.py` will integrate results directly into the Ghidra project via labels, namespaces, comments, and bookmarks.
 
