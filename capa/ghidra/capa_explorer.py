@@ -240,7 +240,7 @@ def get_capabilities():
     capabilities, counts = capa.main.find_capabilities(rules, extractor, True)
 
     if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
-        popup("Capa Explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
+        popup("capa explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 
     return capa.render.json.render(meta, rules, capabilities)
