@@ -223,10 +223,10 @@ def main(argv=None):
                 if callees_by_vertex_index[vertex_index] or callers_by_vertex_index[vertex_index]:
                     o.writeln("xrefs:")
 
-                    for caller_index in callees_by_vertex_index[vertex_index]:
+                    for caller_index in callers_by_vertex_index[vertex_index]:
                         o.writeln(f"  ← {get_function_name_by_vertex(be2, caller_index)}")
 
-                    for callee_index in callers_by_vertex_index[vertex_index]:
+                    for callee_index in callees_by_vertex_index[vertex_index]:
                         o.writeln(f"  → {get_function_name_by_vertex(be2, callee_index)}")
 
                 if vertex.address not in flow_graph_index_by_address:
