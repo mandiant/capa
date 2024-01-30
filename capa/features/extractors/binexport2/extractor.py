@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import List, Tuple, Iterator, Dict
+from typing import Dict, List, Tuple, Iterator
 
 import capa.features.extractors.elf
 import capa.features.extractors.common
@@ -15,6 +15,7 @@ import capa.features.extractors.binexport2.function
 import capa.features.extractors.binexport2.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext
 from capa.features.extractors.base_extractor import (
     BBHandle,
     InsnHandle,
@@ -23,7 +24,6 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext, InstructionContext
 
 
 class BinExport2FeatureExtractor(StaticFeatureExtractor):
@@ -44,6 +44,12 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self._index_instruction_addresses()
         self._index_basic_blocks_by_function()
 
+        print("base address", hex(self.get_base_address()))
+        ba = self.get_base_address()
+        for v in self.be2.call_graph.vertex:
+            if v.mangled_name:
+                print(hex(v.address - ba), v.mangled_name)
+
     def get_base_address(self):
         # TODO: assume the lowest address is the base address.
         # this works as long as BinExport doesn't record other
@@ -61,8 +67,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         for function_index in self.flow_graph_index_by_function_index.keys():
             vertex = self.be2.call_graph.vertex[function_index]
             yield FunctionHandle(
-                AbsoluteVirtualAddress(vertex.address), 
-                inner=FunctionContext(self.be2, function_index)
+                AbsoluteVirtualAddress(vertex.address), inner=FunctionContext(self.be2, function_index)
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -76,10 +81,8 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         for basic_block_index in flow_graph.basic_block_index:
             bb = self.be2.basic_block[basic_block_index]
             yield BBHandle(
-                address=AbsoluteVirtualAddress(
-                    self.address_by_instruction_index[bb.instruction_index[0].begin_index]
-                ),
-                inner=BasicBlockContext(self.be2, basic_block_index)
+                address=AbsoluteVirtualAddress(self.address_by_instruction_index[bb.instruction_index[0].begin_index]),
+                inner=BasicBlockContext(self.be2, basic_block_index),
             )
 
     def extract_basic_block_features(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -97,7 +100,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
 
     def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):
         yield from capa.features.extractors.binexport2.insn.extract_features(fh, bbh, ih)
- 
+
     def _index_instruction_addresses(self):
         address = 0
         next_address = 0
@@ -119,7 +122,9 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
 
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
             basic_block_entry_point = self.be2.basic_block[flow_graph.entry_basic_block_index]
-            basic_block_address = self.address_by_instruction_index[basic_block_entry_point.instruction_index[0].begin_index]
+            basic_block_address = self.address_by_instruction_index[
+                basic_block_entry_point.instruction_index[0].begin_index
+            ]
 
             if basic_block_address not in function_index_from_address:
                 continue

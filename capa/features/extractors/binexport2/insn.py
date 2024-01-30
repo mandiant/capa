@@ -7,14 +7,48 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
+from capa.features.insn import API
 from capa.features.common import Feature
-from capa.features.address import Address
+from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 
 
-def extract_insn_api_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+
+    insn = be2.instruction[ii.instruction_index]
+    mnem = be2.mnemonic[insn.mnemonic_index]
+
+    if mnem.name not in ("call", "jmp", "BL"):
+        return
+
+    if not insn.call_target:
+        return
+
+    address = insn.call_target[0]
+    print(hex(insn.address), "->", hex(address))
+
+    for vertex in be2.call_graph.vertex:
+        # TODO: need an index here
+        if vertex.address != address:
+            continue
+
+        if not vertex.mangled_name:
+            continue
+
+        yield API(name=vertex.mangled_name), AbsoluteVirtualAddress(address)
+
+        if not vertex.HasField("library_index"):
+            continue
+
+        library = be2.library[vertex.library_index]
+        lib_name = library.name.split("\\")[-1].split(".")[0]
+
+        yield API(name=f"{lib_name}.{vertex.mangled_name}"), AbsoluteVirtualAddress(address)
 
 
 def extract_insn_number_features(
