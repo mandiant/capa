@@ -64,16 +64,15 @@ Example::
     insn: 0x10001027: mnemonic(shl)
     ...
 """
-import os
 import sys
 import logging
 import argparse
 from typing import Tuple
-from pathlib import Path
 
 import capa.main
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.helpers
 import capa.features
 import capa.exceptions
@@ -81,17 +80,9 @@ import capa.render.verbose as v
 import capa.features.freeze
 import capa.features.address
 import capa.features.extractors.pefile
-from capa.helpers import get_auto_format, log_unsupported_runtime_error
+from capa.helpers import assert_never
 from capa.features.insn import API, Number
-from capa.features.common import (
-    FORMAT_AUTO,
-    FORMAT_CAPE,
-    FORMAT_FREEZE,
-    DYNAMIC_FORMATS,
-    String,
-    Feature,
-    is_global_feature,
-)
+from capa.features.common import String, Feature, is_global_feature
 from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor, DynamicFeatureExtractor
 
 logger = logging.getLogger("capa.show-features")
@@ -106,56 +97,33 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa extracts from the given sample")
-    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "backend"})
+    capa.main.install_common_args(parser, wanted={"input_file", "format", "os", "signatures", "backend"})
 
     parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
     parser.add_argument("-P", "--process", type=str, help="Show features for specific process name")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
-
-    if args.function and args.backend == "pefile":
-        print("pefile backend does not support extracting function features")
-        return -1
 
     try:
-        _ = capa.helpers.get_file_taste(Path(args.sample))
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
 
-    try:
-        sig_paths = capa.main.get_signatures(args.signatures)
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    format_ = args.format if args.format != FORMAT_AUTO else get_auto_format(args.sample)
-    if format_ == FORMAT_FREEZE:
-        # this should be moved above the previous if clause after implementing
-        # feature freeze for the dynamic analysis flavor
-        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
-    else:
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
-        try:
-            extractor = capa.main.get_extractor(
-                args.sample, format_, args.os, args.backend, sig_paths, should_save_workspace
-            )
-        except capa.exceptions.UnsupportedFormatError as e:
-            if format_ == FORMAT_CAPE:
-                capa.helpers.log_unsupported_cape_report_error(str(e))
-            else:
-                capa.helpers.log_unsupported_format_error()
-            return -1
-        except capa.exceptions.UnsupportedRuntimeError:
-            log_unsupported_runtime_error()
+        if args.function and args.backend == "pefile":
+            print("pefile backend does not support extracting function features")
             return -1
 
-    if format_ in DYNAMIC_FORMATS:
-        assert isinstance(extractor, DynamicFeatureExtractor)
+        input_format = capa.main.get_input_format_from_cli(args)
+
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
+
+    if isinstance(extractor, DynamicFeatureExtractor):
         print_dynamic_analysis(extractor, args)
-    else:
-        assert isinstance(extractor, StaticFeatureExtractor)
+    elif isinstance(extractor, StaticFeatureExtractor):
         print_static_analysis(extractor, args)
+    else:
+        assert_never(extractor)
 
     return 0
 
