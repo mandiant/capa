@@ -45,7 +45,7 @@ Use the following steps to execute `capa_explorer.py` and `capa_ghidra.py` using
 
 If you don't see `capa_explorer.py` and `capa_ghidra.py` make sure you have copied these scripts to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/scripts>` to the Ghidra Script Manager.
 
-When executed, `capa_explorer.py` asks you to provide your capa rules directory. `capa_ghidra.py` may be ran in the same manner and supports `default`, `verbose`, and `vverbose` output formats when executed from the Ghidra Script Manager. `capa_ghidra.py` writes output to the Ghidra Console Window. `capa_explorer.py` will integrate results directly into the Ghidra project via labels, namespaces, comments, and bookmarks.
+Both scripts ask you to provide the path of your capa rules directory. `capa_ghidra.py` also asks you to select `default`, `verbose`, and `vverbose` output formats used when writing output to the Ghidra Console Window.
 
 ### Using `capa_ghidra.py`
 
