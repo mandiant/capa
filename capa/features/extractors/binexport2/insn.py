@@ -7,11 +7,12 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from capa.features.insn import API
+from capa.features.insn import API, Number
 from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.address import Address
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
+from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -41,7 +42,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         if not vertex.HasField("mangled_name"):
             continue
 
-        yield API(vertex.mangled_name), AbsoluteVirtualAddress(call_target_address)
+        yield API(vertex.mangled_name), ih.address
 
         if vertex.HasField("library_index"):
             # BUG: this seems to be incorrect
@@ -49,14 +50,46 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             library_name = library.name
             if library_name.endswith(".so"):
                 library_name = library_name.rpartition(".so")[0]
-            yield API(f"{library_name}.{vertex.mangled_name}"), AbsoluteVirtualAddress(call_target_address)
+            yield API(f"{library_name}.{vertex.mangled_name}"), ih.address
 
 
 def extract_insn_number_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+
+    instruction = be2.instruction[ii.instruction_index]
+
+    for operand_index in instruction.operand_index:
+        operand = be2.operand[operand_index]
+
+        if len(operand.expression_index) != 2:
+            # we only care about immediate constants,
+            # which have a two expression node:
+            #
+            # - type: SIZE_PREFIX
+            #   symbol: "b8"
+            # - type: IMMEDIATE_INT
+            #   immediate: 20588728364
+            #   parent_index: 0
+            continue
+
+        expression0 = be2.expression[operand.expression_index[0]]
+        expression1 = be2.expression[operand.expression_index[1]]
+
+        if BinExport2.Expression.Type.SIZE_PREFIX != expression0.type:
+            continue
+
+        if BinExport2.Expression.Type.IMMEDIATE_INT != expression1.type:
+            continue
+
+        value = expression1.immediate
+        # TODO: skip small numbers
+        # TODO: skip mapped pointers
+        yield Number(value), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
