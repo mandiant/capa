@@ -74,7 +74,7 @@ Comments:
 
 ![image](https://github.com/mandiant/capa/assets/66766340/bb2b4170-7fd4-45fc-8c7b-ff8f2e2f101b)
 
-This script will also create Bookmarks on functions that may be categorized under the MITRE ATT&CK Framework as well as the Malware Behavior Catalog (MBC). These may be found via the Bookmarks Window, and the Labels may also be double clicked to align the Disassembly Listing and Decompilation views. 
+Bookmarks are added for capa matches that are categorized under the MITRE ATT&CK Framework and Malware Behavior Catalog (MBC). These may be found and navigated using Ghidra's Bookmarks Window.
 
 MITRE ATT&CK & MBC Bookmarks:
 
