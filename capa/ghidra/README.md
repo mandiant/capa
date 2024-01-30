@@ -62,7 +62,7 @@ Viewing results in Ghidra Console Window:
 
 ### Using `capa_explorer.py`
 
-By invoking capa analysis via `capa_explorer.py`, this script will take the results and import them directly into the Ghidra project. In the Symbol Tree Window, under the Namespaces section, you can find the matched rules as well as the corresponding functions that contain the extracted features.
+`capa_explorer.py` integrates capa results directly with Ghidra. In the Symbol Tree Window, under the Namespaces section, you can find the matched rules as well as the corresponding functions that contain the matched features.
 
 Namespaces & Labeled Functions:
 
