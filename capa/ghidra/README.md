@@ -16,7 +16,7 @@ Please ensure that you have the following dependencies installed before continui
 | Python | `>= 3.8` | https://www.python.org/downloads |
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
 
-In order to run capa using using Ghidra, you must install capa as a library, obtain the official capa rules that match the capa version you have installed, and configure the Python 3 scripts [capa_explorer.py](capa/ghidra/capa_explorer.py) and [capa_ghidra.py](/capa/ghidra/capa_ghidra.py). You can do this by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
+You can run capa in Ghidra by completing the following steps using the Python 3 interpreter that you have configured for your Ghidrathon installation:
 
 1. Install capa and its dependencies from PyPI using the following command:
 ```bash
