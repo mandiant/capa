@@ -61,4 +61,3 @@ class BasicBlockContext:
 class InstructionContext:
     be2: BinExport2
     instruction_index: int
-
