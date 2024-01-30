@@ -15,40 +15,42 @@ from capa.features.extractors.base_extractor import BBHandle, InsnHandle, Functi
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+    from capa.features.extractors.binexport2.extractor import BinExport2Analysis
+
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
     be2 = fhi.be2
+    idx = fhi.idx
+    analysis: BinExport2Analysis = fhi.analysis
 
-    insn = be2.instruction[ii.instruction_index]
-    mnem = be2.mnemonic[insn.mnemonic_index]
+    instruction = be2.instruction[ii.instruction_index]
 
-    if mnem.name not in ("call", "jmp", "BL"):
+    if not instruction.call_target:
         return
 
-    if not insn.call_target:
-        return
+    for call_target_address in instruction.call_target:
+        if call_target_address in analysis.thunks:
+            call_target_name = analysis.thunks[call_target_address]
+            yield API(call_target_name), AbsoluteVirtualAddress(call_target_address)
 
-    address = insn.call_target[0]
-    print(hex(insn.address), "->", hex(address))
-
-    for vertex in be2.call_graph.vertex:
-        # TODO: need an index here
-        if vertex.address != address:
+        if call_target_address not in idx.vertex_index_by_address:
             continue
 
-        if not vertex.mangled_name:
+        vertex_index = idx.vertex_index_by_address[call_target_address]
+        vertex = be2.call_graph.vertex[vertex_index]
+        if not vertex.HasField("mangled_name"):
             continue
 
-        yield API(name=vertex.mangled_name), AbsoluteVirtualAddress(address)
+        yield API(vertex.mangled_name), AbsoluteVirtualAddress(call_target_address)
 
-        if not vertex.HasField("library_index"):
-            continue
-
-        library = be2.library[vertex.library_index]
-        lib_name = library.name.split("\\")[-1].split(".")[0]
-
-        yield API(name=f"{lib_name}.{vertex.mangled_name}"), AbsoluteVirtualAddress(address)
+        if vertex.HasField("library_index"):
+            # BUG: this seems to be incorrect
+            library = be2.library[vertex.library_index]
+            library_name = library.name
+            if library_name.endswith(".so"):
+                library_name = library_name.rpartition(".so")[0]
+            yield API(f"{library_name}.{vertex.mangled_name}"), AbsoluteVirtualAddress(call_target_address)
 
 
 def extract_insn_number_features(
