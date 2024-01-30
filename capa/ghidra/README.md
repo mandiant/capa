@@ -76,7 +76,7 @@ Comments:
 
 Bookmarks are added for capa matches that are categorized under the MITRE ATT&CK Framework and Malware Behavior Catalog (MBC). These may be found and navigated using Ghidra's Bookmarks Window.
 
-MITRE ATT&CK & MBC Bookmarks:
+MITRE ATT&CK & MBC bookmarks:
 
 ![image](https://github.com/mandiant/capa/assets/66766340/7f9a66a9-7be7-4223-91c6-4b8fc4651336)
 
