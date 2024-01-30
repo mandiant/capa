@@ -31,13 +31,12 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 
     for call_target_address in instruction.call_target:
         if call_target_address in analysis.thunks:
-            call_target_name = analysis.thunks[call_target_address]
-            yield API(call_target_name), AbsoluteVirtualAddress(call_target_address)
-
-        if call_target_address not in idx.vertex_index_by_address:
+            vertex_index = analysis.thunks[call_target_address]
+        elif call_target_address not in idx.vertex_index_by_address:
             continue
+        else:
+            vertex_index = idx.vertex_index_by_address[call_target_address]
 
-        vertex_index = idx.vertex_index_by_address[call_target_address]
         vertex = be2.call_graph.vertex[vertex_index]
         if not vertex.HasField("mangled_name"):
             continue

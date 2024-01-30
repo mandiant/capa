@@ -35,8 +35,8 @@ class BinExport2Analysis:
         self.idx = idx
         self.buf = buf
 
-        # from virtual address to import name
-        self.thunks: Dict[int, str] = {}
+        # from virtual address to call graph vertex representing the import
+        self.thunks: Dict[int, int] = {}
 
     def _find_got_thunks(self):
         if self.be2.meta_information.architecture_name != "aarch64":
@@ -75,18 +75,21 @@ class BinExport2Analysis:
 
             maybe_thunk_basic_block = self.be2.basic_block[maybe_thunk_flow_graph.entry_basic_block_index]
             if len(list(self.idx.instruction_indices(maybe_thunk_basic_block))) != 4:
+                # thunk should look like these four instructions.
                 # fstat:
                 # 000008b0  adrp    x16, 0x11000
                 # 000008b4  ldr     x17, [x16, #0xf88]  {fstat}
                 # 000008b8  add     x16, x16, #0xf88  {fstat}
                 # 000008bc  br      x17
+                # which relies on the disassembler to recognize the target of the call/br
+                # to go to the GOT/external symbol.
                 continue
 
             thunk_address = maybe_thunk_address
             thunk_name = vertex.mangled_name
             logger.debug("found GOT thunk: 0x%x -> %s", thunk_address, thunk_name)
 
-            self.thunks[thunk_address] = thunk_name
+            self.thunks[thunk_address] = vertex_index
 
 
 class BinExport2FeatureExtractor(StaticFeatureExtractor):
