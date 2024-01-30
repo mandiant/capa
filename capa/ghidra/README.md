@@ -68,7 +68,7 @@ Namespaces & Labeled Functions:
 
 ![image](https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492)
 
-Labeled functions may be clicked on from the Symbol Tree Window in order to hop straight to these sections of code in the Disassembly Listing and Decompilation views. Plate comments will be found above the function symbol, containing each matched rule for that function. Throughout the listing and decompilation views, you will also find pre-comments that highlight extracted features and the rules they correspond to.
+Labeled functions may be clicked in the Symbol Tree Window to navigate the Disassembly Listing and Decompilation windows to the function locations. A comment listing each matched capa rule is inserted at the beginning of the function and a comment for each matched capa feature is added at the matched address within the function. These comments can be viewed using both the Disassembly Listing and Decompilation windows.
 
 Commented Matches and Subscoped Features:
 
