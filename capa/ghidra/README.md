@@ -34,7 +34,7 @@ $ capa --version
 
 ## Usage
 
-After completing the installation steps you can execute `capa_explorer.py` using the Ghidra Script Manager to integrate capa's results with Ghidra's UI. `capa_ghidra.py` is designed to be ran with both the Ghidra Script Manager and Headless Analyzer for capa's normal reports.  
+After completing the installation steps you can execute `capa_explorer.py` and `capa_ghidra.py` using the Ghidra Script Manager. You can also execute `capa_ghidra.py` using Ghidra's Headless Analyzer.
 
 ### Ghidra Script Manager
 
