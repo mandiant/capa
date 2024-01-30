@@ -304,7 +304,6 @@ def parse_json(capa_data):
         meta = capability["meta"]
 
         # get MITRE ATT&CK and MBC
-        # avoid passing NoneTypes
         attack = meta.get("attack")
         if attack is None:
             attack = []
