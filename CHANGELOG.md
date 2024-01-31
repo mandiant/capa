@@ -102,6 +102,7 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
 - elf: better detect ELF OS via Android dependencies #1947 @williballenthin
 - fix setuptools package discovery #1886 @gmacon @mr-tz
+- remove unnecessary scripts/vivisect-py2-vs-py3.sh file #1949 @JCoonradt
 
 ### capa explorer IDA Pro plugin
 
