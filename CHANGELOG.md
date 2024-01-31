@@ -4,7 +4,11 @@
 
 ### New Features
 
+- 
+
 ### Breaking Changes
+
+- 
 
 ### New Rules (0)
 
@@ -29,6 +33,7 @@ Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkoju
 ### New Features
 
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
+- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
   - add call scope #771 @yelhamer
   - add thread scope #1517 @yelhamer
@@ -49,6 +54,7 @@ Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkoju
 - extractor: ignore DLL name for api features #1815 @mr-tz
 - main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
 - move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
+- proto: add `package` declaration #1960 @larchchen
 
 ### New Rules (41)
 
@@ -101,6 +107,7 @@ Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkoju
 - elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
 - elf: better detect ELF OS via Android dependencies #1947 @williballenthin
 - fix setuptools package discovery #1886 @gmacon @mr-tz
+- remove unnecessary scripts/vivisect-py2-vs-py3.sh file #1949 @JCoonradt
 
 ### capa explorer IDA Pro plugin
 - various integration updates and minor bug fixes

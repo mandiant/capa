@@ -178,11 +178,8 @@ def main(args: argparse.Namespace) -> None:
         data["mbc"] = MbcExtractor().run()
 
     logging.info("Writing results to %s", args.output)
-    try:
-        with Path(args.output).open("w", encoding="utf-8") as jf:
-            json.dump(data, jf, indent=2)
-    except BaseException as e:
-        logging.error("Exception encountered when writing results: %s", e)
+    with Path(args.output).open("w", encoding="utf-8") as jf:
+        json.dump(data, jf, indent=2)
 
 
 if __name__ == "__main__":
