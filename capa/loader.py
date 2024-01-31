@@ -285,7 +285,7 @@ def get_extractor(
         raise ValueError("unexpected backend: " + backend)
 
 
-def _get_binexport2_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
+def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
     # I'm not sure this is where this logic should live, but it works for now.
     # we'll keep this a "private" routine until we're sure.
     import capa.features.extractors.binexport2
@@ -323,7 +323,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     elif input_format == FORMAT_BINEXPORT2:
-        file_extractors = _get_binexport2_file_extractors(input_file, input_format)
+        file_extractors = _get_binexport2_file_extractors(input_file)
 
     return file_extractors
 

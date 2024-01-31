@@ -7,7 +7,8 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from capa.features.insn import API, Number, Mnemonic, OperandNumber
+import capa.features.extractors.helpers
+from capa.features.insn import API, Number, Mnemonic, OperandNumber, Bytes
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
@@ -106,8 +107,31 @@ def extract_insn_number_features(
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+    idx = fhi.idx
+
+    instruction_index = ii.instruction_index
+
+    if instruction_index in idx.data_reference_index_by_source_instruction_index:
+        for data_reference_index in idx.data_reference_index_by_source_instruction_index[
+            instruction_index
+        ]:
+            data_reference = be2.data_reference[data_reference_index]
+            data_reference_address = data_reference.address
+
+            # TODO: read data
+            buf = b""
+
+            if capa.features.extractors.helpers.all_zeros(buf):
+                continue
+
+            if is_probably_string(buf):
+                pass
+            else:
+                yield Bytes(buf), ih.address
 
 
 def extract_insn_string_features(
