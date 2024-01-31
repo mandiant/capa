@@ -83,7 +83,7 @@ dev = [
     "black==24.1.1",
     "isort==5.13.2",
     "mypy==1.8.0",
-    "psutil==5.9.2",
+    "psutil==5.9.8",
     "stix2==3.0.1",
     "requests==2.31.0",
     "mypy-protobuf==3.5.0",
