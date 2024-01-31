@@ -7,9 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from capa.features.common import Feature
-from capa.features.address import Address
 from capa.features.insn import API, Number, OperandNumber
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -141,10 +141,24 @@ def extract_insn_mnemonic_features(
 def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     """extract functions calls from features
 
-    most relevant at the function scope, however, its most efficient to extract at the instruction scope
+    most relevant at the function scope;
+    however, its most efficient to extract at the instruction scope.
     """
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+
+    instruction = be2.instruction[ii.instruction_index]
+    if not instruction.call_target:
+        return
+
+    for call_target_address in instruction.call_target:
+        addr = AbsoluteVirtualAddress(call_target_address)
+        yield Characteristic("calls from"), addr
+
+        if fh.address == addr:
+            yield Characteristic("recursive call"), addr
 
 
 def extract_function_indirect_call_characteristic_features(
