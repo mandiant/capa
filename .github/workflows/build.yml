@@ -143,7 +143,7 @@ jobs:
       - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
         run: zip ${{ env.zip_name }} ${{ matrix.artifact_name }}
       - name: Upload ${{ env.zip_name }} to GH Release
-        uses: svenstaro/upload-release-action@2728235f7dc9ff598bd86ce3c274b74f802d2208 # v2
+        uses: svenstaro/upload-release-action@1beeb572c19a9242f4361f4cee78f8e0d9aec5df # v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN}}
           file: ${{ env.zip_name }}
