@@ -117,18 +117,22 @@ def extract_insn_number_features(
 class ReadMemoryError(ValueError): ...
 
 
-def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int) -> bytes:
+def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int, cache={}) -> bytes:
     base_address = min(map(lambda s: s.address, be2.section))
     rva = address - base_address
 
     try:
-        # TODO: cache the parsed file
-
         if sample_bytes.startswith(capa.features.extractors.common.MATCH_PE):
-            pe = pefile.PE(data=sample_bytes)
+            pe = cache.get("pe")
+            if not pe:
+                pe = pefile.PE(data=sample_bytes)
+                cache["pe"] = pe
             return pe.get_data(rva, size)
         elif sample_bytes.startswith(capa.features.extractors.common.MATCH_ELF):
-            elf = ELFFile(io.BytesIO(sample_bytes))
+            elf = cache.get("elf")
+            if not elf:
+                elf = ELFFile(io.BytesIO(sample_bytes))
+                cache["elf"] = elf
 
             # ELF segments are for runtime data,
             # ELF sections are for link-time data.
@@ -148,6 +152,8 @@ def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int) -
 
                     segment_offset = rva - segment_rva
                     return segment_data[segment_offset : segment_offset + size]
+
+            raise ReadMemoryError("address not mapped")
         else:
             logger.warning("unsupported format")
             raise ReadMemoryError("unsupported file format")
@@ -176,7 +182,7 @@ def extract_insn_bytes_features(
             data_reference_address = data_reference.address
 
             # at end of segment then there might be an overrun here.
-            buf = read_memory(be2, sample_bytes, data_reference_address, 0x100)
+            buf = read_memory(be2, sample_bytes, data_reference_address, 0x100, cache=fh.ctx)
 
             if capa.features.extractors.helpers.all_zeros(buf):
                 continue
