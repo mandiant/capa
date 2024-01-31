@@ -40,7 +40,10 @@ def get_rule_path():
     [
         pytest.param("capa2yara.py", [get_rules_path()]),
         pytest.param("capafmt.py", [get_rule_path()]),
-        # not testing lint.py as it runs regularly anyway
+        # testing some variations of linter script
+        pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
+        # `create directory` rule has native and .NET example PEs
+        pytest.param("lint.py", ["--thorough", "-t", "create directory", get_rules_path()]),
         pytest.param("match-function-id.py", [get_file_path()]),
         pytest.param("show-capabilities-by-function.py", [get_file_path()]),
         pytest.param("show-features.py", [get_file_path()]),
