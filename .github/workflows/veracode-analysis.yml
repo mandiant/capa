@@ -31,7 +31,12 @@ jobs:
     steps:
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it and copies all sources into ZIP file for submitting for analysis. Replace this section with your applications build steps
-    - uses: actions/checkout@v3
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       with:
         repository: ''
 
@@ -41,7 +46,7 @@ jobs:
     - run: curl --silent --show-error --fail -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
     - run: unzip -o pipeline-scan-LATEST.zip
 
-    - uses: actions/setup-java@main
+    - uses: actions/setup-java@7a445ee88d4e23b52c33fdc7601e40278616c7f8 # main
       with:
         java-version: 8
         distribution: 'temurin'
@@ -52,7 +57,7 @@ jobs:
       uses: veracode/veracode-pipeline-scan-results-to-sarif@37a60a38fedd7712b5e7bdfd41cc6bf5843a6791
       with:
         pipeline-results-json: results.json
-    - uses: github/codeql-action/upload-sarif@v2
+    - uses: github/codeql-action/upload-sarif@2f93e4319b2f04a2efc38fa7f78bd681bc3f7b2f # v2.23.2
       with:
         # Path to SARIF file relative to the root of the repository
         sarif_file: veracode-results.sarif

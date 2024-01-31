@@ -17,6 +17,11 @@ jobs:
     env:
       NO_CHANGELOG: '[x] No CHANGELOG update needed'
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
     - name: Get changed files
       id: files
       uses: Ana06/get-changed-files@e0c398b7065a8d84700c471b6afc4116d1ba4e96 # v2.2.0

@@ -13,9 +13,14 @@ jobs:
         python-version: ["3.11"]
 
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
 
-      - uses: pypa/gh-action-pip-audit@v1.0.8
+      - name: Check out repository code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - uses: pypa/gh-action-pip-audit@d499194be74aeb3bc7dbed3a224a87e1831132c7 # v1.0.8
         with:
           inputs: .
