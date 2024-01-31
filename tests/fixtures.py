@@ -106,11 +106,11 @@ def get_viv_extractor(path: Path):
     ]
 
     if "raw32" in path.name:
-        vw = capa.main.get_workspace(path, "sc32", sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
     elif "raw64" in path.name:
-        vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        vw = capa.main.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
     extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
     fixup_viv(path, extractor)
