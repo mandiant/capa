@@ -10,8 +10,7 @@ import abc
 
 class Address(abc.ABC):
     @abc.abstractmethod
-    def __eq__(self, other):
-        ...
+    def __eq__(self, other): ...
 
     @abc.abstractmethod
     def __lt__(self, other):
@@ -41,6 +40,79 @@ class AbsoluteVirtualAddress(int, Address):
 
     def __hash__(self):
         return int.__hash__(self)
+
+
+class ProcessAddress(Address):
+    """an address of a process in a dynamic execution trace"""
+
+    def __init__(self, pid: int, ppid: int = 0):
+        assert ppid >= 0
+        assert pid > 0
+        self.ppid = ppid
+        self.pid = pid
+
+    def __repr__(self):
+        return "process(%s%s)" % (
+            f"ppid: {self.ppid}, " if self.ppid > 0 else "",
+            f"pid: {self.pid}",
+        )
+
+    def __hash__(self):
+        return hash((self.ppid, self.pid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ProcessAddress)
+        return (self.ppid, self.pid) == (other.ppid, other.pid)
+
+    def __lt__(self, other):
+        assert isinstance(other, ProcessAddress)
+        return (self.ppid, self.pid) < (other.ppid, other.pid)
+
+
+class ThreadAddress(Address):
+    """addresses a thread in a dynamic execution trace"""
+
+    def __init__(self, process: ProcessAddress, tid: int):
+        assert tid >= 0
+        self.process = process
+        self.tid = tid
+
+    def __repr__(self):
+        return f"{self.process}, thread(tid: {self.tid})"
+
+    def __hash__(self):
+        return hash((self.process, self.tid))
+
+    def __eq__(self, other):
+        assert isinstance(other, ThreadAddress)
+        return (self.process, self.tid) == (other.process, other.tid)
+
+    def __lt__(self, other):
+        assert isinstance(other, ThreadAddress)
+        return (self.process, self.tid) < (other.process, other.tid)
+
+
+class DynamicCallAddress(Address):
+    """addesses a call in a dynamic execution trace"""
+
+    def __init__(self, thread: ThreadAddress, id: int):
+        assert id >= 0
+        self.thread = thread
+        self.id = id
+
+    def __repr__(self):
+        return f"{self.thread}, call(id: {self.id})"
+
+    def __hash__(self):
+        return hash((self.thread, self.id))
+
+    def __eq__(self, other):
+        assert isinstance(other, DynamicCallAddress)
+        return (self.thread, self.id) == (other.thread, other.id)
+
+    def __lt__(self, other):
+        assert isinstance(other, DynamicCallAddress)
+        return (self.thread, self.id) < (other.thread, other.id)
 
 
 class RelativeVirtualAddress(int, Address):

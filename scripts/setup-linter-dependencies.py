@@ -47,7 +47,7 @@ from typing import Dict, List
 from pathlib import Path
 
 import requests
-from stix2 import Filter, MemoryStore, AttackPattern  # type: ignore
+from stix2 import Filter, MemoryStore, AttackPattern
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
@@ -178,11 +178,8 @@ def main(args: argparse.Namespace) -> None:
         data["mbc"] = MbcExtractor().run()
 
     logging.info("Writing results to %s", args.output)
-    try:
-        with Path(args.output).open("w", encoding="utf-8") as jf:
-            json.dump(data, jf, indent=2)
-    except BaseException as e:
-        logging.error("Exception encountered when writing results: %s", e)
+    with Path(args.output).open("w", encoding="utf-8") as jf:
+        json.dump(data, jf, indent=2)
 
 
 if __name__ == "__main__":

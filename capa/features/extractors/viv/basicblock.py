@@ -140,7 +140,7 @@ def is_printable_ascii(chars: bytes) -> bool:
 
 
 def is_printable_utf16le(chars: bytes) -> bool:
-    if all(c == b"\x00" for c in chars[1::2]):
+    if all(c == 0x0 for c in chars[1::2]):
         return is_printable_ascii(chars[::2])
     return False
 

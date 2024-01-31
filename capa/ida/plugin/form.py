@@ -25,6 +25,7 @@ import capa.version
 import capa.ida.helpers
 import capa.render.json
 import capa.features.common
+import capa.capabilities.common
 import capa.render.result_document
 import capa.features.extractors.ida.extractor
 from capa.rules import Rule
@@ -635,7 +636,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
-            return capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
+            return capa.rules.get_rules([rule_path], on_load_rule=on_load_rule)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
             return None
@@ -768,13 +769,13 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                 try:
                     meta = capa.ida.helpers.collect_metadata([Path(settings.user[CAPA_SETTINGS_RULE_PATH])])
-                    capabilities, counts = capa.main.find_capabilities(
+                    capabilities, counts = capa.capabilities.common.find_capabilities(
                         ruleset, self.feature_extractor, disable_progress=True
                     )
 
                     meta.analysis.feature_counts = counts["feature_counts"]
                     meta.analysis.library_functions = counts["library_functions"]
-                    meta.analysis.layout = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
+                    meta.analysis.layout = capa.loader.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
@@ -810,7 +811,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file type warnings during analysis")
 
-                    if capa.main.has_file_limitation(ruleset, capabilities, is_standalone=False):
+                    if capa.capabilities.common.has_file_limitation(ruleset, capabilities, is_standalone=False):
                         capa.ida.helpers.inform_user_ida_ui("capa encountered file limitation warnings during analysis")
                 except Exception as e:
                     logger.exception("Failed to check for file limitations (error: %s)", e)
@@ -931,9 +932,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box("verifying cached results")
 
                     try:
-                        results: Optional[
-                            capa.render.result_document.ResultDocument
-                        ] = capa.ida.helpers.load_and_verify_cached_results()
+                        results: Optional[capa.render.result_document.ResultDocument] = (
+                            capa.ida.helpers.load_and_verify_cached_results()
+                        )
                     except Exception as e:
                         capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results, reanalyzing program")
                         logger.exception("Failed to verify cached results (error: %s)", e)
@@ -1072,9 +1073,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
-            self.set_view_status_label(
-                f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]} ({settings.user[CAPA_SETTINGS_RULE_PATH]} rules)"
-            )
+            self.set_view_status_label(f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]}")
         except Exception as e:
             logger.exception("Failed to render views (error: %s)", e)
             return False
@@ -1192,10 +1191,13 @@ class CapaExplorerForm(idaapi.PluginForm):
             return
 
         is_match: bool = False
-        if self.rulegen_current_function is not None and rule.scope in (
-            capa.rules.Scope.FUNCTION,
-            capa.rules.Scope.BASIC_BLOCK,
-            capa.rules.Scope.INSTRUCTION,
+        if self.rulegen_current_function is not None and any(
+            s in rule.scopes
+            for s in (
+                capa.rules.Scope.FUNCTION,
+                capa.rules.Scope.BASIC_BLOCK,
+                capa.rules.Scope.INSTRUCTION,
+            )
         ):
             try:
                 _, func_matches, bb_matches, insn_matches = self.rulegen_feature_cache.find_code_capabilities(
@@ -1205,13 +1207,13 @@ class CapaExplorerForm(idaapi.PluginForm):
                 self.set_rulegen_status(f"Failed to create function rule matches from rule set ({e})")
                 return
 
-            if rule.scope == capa.rules.Scope.FUNCTION and rule.name in func_matches:
+            if capa.rules.Scope.FUNCTION in rule.scopes and rule.name in func_matches:
                 is_match = True
-            elif rule.scope == capa.rules.Scope.BASIC_BLOCK and rule.name in bb_matches:
+            elif capa.rules.Scope.BASIC_BLOCK in rule.scopes and rule.name in bb_matches:
                 is_match = True
-            elif rule.scope == capa.rules.Scope.INSTRUCTION and rule.name in insn_matches:
+            elif capa.rules.Scope.INSTRUCTION in rule.scopes and rule.name in insn_matches:
                 is_match = True
-        elif rule.scope == capa.rules.Scope.FILE:
+        elif capa.rules.Scope.FILE in rule.scopes:
             try:
                 _, file_matches = self.rulegen_feature_cache.find_file_capabilities(ruleset)
             except Exception as e:
@@ -1320,10 +1322,17 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No rule to save.")
             return
 
-        path = Path(self.ask_user_capa_rule_file())
-        if not path.exists():
+        rule_file_path = self.ask_user_capa_rule_file()
+        if not rule_file_path:
+            # dialog canceled
             return
 
+        path = Path(rule_file_path)
+        if not path.parent.exists():
+            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            return
+
+        logger.info("Saving rule to %s.", path)
         write_file(path, s)
 
     def slot_checkbox_limit_by_changed(self, state):

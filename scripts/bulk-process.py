@@ -36,7 +36,7 @@ example:
 usage:
 
     usage: bulk-process.py [-h] [-r RULES] [-d] [-q] [-n PARALLELISM] [--no-mp]
-                           input
+                           input_directory
 
     detect capabilities in programs.
 
@@ -62,7 +62,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import os
 import sys
 import json
 import logging
@@ -74,9 +73,10 @@ from pathlib import Path
 import capa
 import capa.main
 import capa.rules
+import capa.loader
 import capa.render.json
+import capa.capabilities.common
 import capa.render.result_document as rd
-from capa.features.common import OS_AUTO
 
 logger = logging.getLogger("capa")
 
@@ -86,11 +86,8 @@ def get_capa_results(args):
     run capa against the file at the given path, using the given rules.
 
     args is a tuple, containing:
-      rules (capa.rules.RuleSet): the rules to match
-      signatures (List[str]): list of file system paths to signature files
-      format (str): the name of the sample file format
-      os (str): the name of the operating system
-      path (str): the file system path to the sample to process
+      rules, signatures, format, backend, os, input_file
+    as provided via the CLI arguments.
 
     args is a tuple because i'm not quite sure how to unpack multiple arguments using `map`.
 
@@ -105,46 +102,58 @@ def get_capa_results(args):
       meta (dict): the meta analysis results
       capabilities (dict): the matched capabilities and their result objects
     """
-    rules, sigpaths, format, os_, path = args
-    should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
-    logger.info("computing capa results for: %s", path)
+    rules, signatures, format_, backend, os_, input_file = args
+
+    parser = argparse.ArgumentParser(description="detect capabilities in programs.")
+    capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os", "backend", "input_file"})
+    argv = [
+        "--signatures",
+        signatures,
+        "--format",
+        format_,
+        "--backend",
+        backend,
+        "--os",
+        os_,
+        input_file,
+    ]
+    if rules:
+        argv += ["--rules", rules]
+    args = parser.parse_args(args=argv)
+
     try:
-        extractor = capa.main.get_extractor(
-            path, format, os_, capa.main.BACKEND_VIV, sigpaths, should_save_workspace, disable_progress=True
-        )
-    except capa.main.UnsupportedFormatError:
-        # i'm 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
+        input_format = capa.main.get_input_format_from_cli(args)
+        rules = capa.main.get_rules_from_cli(args)
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        sample_path = capa.main.get_sample_path_from_cli(args, backend)
+        if sample_path is None:
+            os_ = "unknown"
+        else:
+            os_ = capa.loader.get_os(sample_path)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        # i'm not 100% sure if multiprocessing will reliably raise exceptions across process boundaries.
         # so instead, return an object with explicit success/failure status.
         #
         # if success, then status=ok, and results found in property "ok"
         # if error, then status=error, and human readable message in property "error"
-        return {
-            "path": path,
-            "status": "error",
-            "error": f"input file does not appear to be a PE file: {path}",
-        }
-    except capa.main.UnsupportedRuntimeError:
-        return {
-            "path": path,
-            "status": "error",
-            "error": "unsupported runtime or Python interpreter",
-        }
+        return {"path": input_file, "status": "error", "error": str(e), "status_code": e.status_code}
     except Exception as e:
         return {
-            "path": path,
+            "path": input_file,
             "status": "error",
             "error": f"unexpected error: {e}",
         }
 
-    meta = capa.main.collect_metadata([], path, format, os_, [], extractor)
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata(argv, args.input_file, format_, os_, [], extractor, counts)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     doc = rd.ResultDocument.from_capa(meta, rules, capabilities)
-    return {"path": path, "status": "ok", "ok": doc.model_dump()}
+    return {"path": input_file, "status": "ok", "ok": doc.model_dump()}
 
 
 def main(argv=None):
@@ -152,30 +161,16 @@ def main(argv=None):
         argv = sys.argv[1:]
 
         parser = argparse.ArgumentParser(description="detect capabilities in programs.")
-        capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os"})
-        parser.add_argument("input", type=str, help="Path to directory of files to recursively analyze")
+        capa.main.install_common_args(parser, wanted={"rules", "signatures", "format", "os", "backend"})
+        parser.add_argument("input_directory", type=str, help="Path to directory of files to recursively analyze")
         parser.add_argument(
             "-n", "--parallelism", type=int, default=multiprocessing.cpu_count(), help="parallelism factor"
         )
         parser.add_argument("--no-mp", action="store_true", help="disable subprocesses")
         args = parser.parse_args(args=argv)
-        capa.main.handle_common_args(args)
-
-        try:
-            rules = capa.main.get_rules(args.rules)
-            logger.info("successfully loaded %s rules", len(rules))
-        except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-            logger.error("%s", str(e))
-            return -1
-
-        try:
-            sig_paths = capa.main.get_signatures(args.signatures)
-        except IOError as e:
-            logger.error("%s", str(e))
-            return -1
 
         samples = []
-        for file in Path(args.input).rglob("*"):
+        for file in Path(args.input_directory).rglob("*"):
             samples.append(file)
 
         cpu_count = multiprocessing.cpu_count()
@@ -204,18 +199,22 @@ def main(argv=None):
             logger.debug("using process mapper")
             mapper = pmap
 
+        rules = args.rules
+        if rules == [capa.main.RULES_PATH_DEFAULT_STRING]:
+            rules = None
+
         results = {}
         for result in mapper(
             get_capa_results,
-            [(rules, sig_paths, "pe", OS_AUTO, sample) for sample in samples],
+            [(rules, args.signatures, args.format, args.backend, args.os, str(sample)) for sample in samples],
             parallelism=args.parallelism,
         ):
             if result["status"] == "error":
                 logger.warning(result["error"])
             elif result["status"] == "ok":
-                results[result["path"].as_posix()] = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(
-                    exclude_none=True
-                )
+                doc = rd.ResultDocument.model_validate(result["ok"]).model_dump_json(exclude_none=True)
+                results[result["path"]] = json.loads(doc)
+
             else:
                 raise ValueError(f"unexpected status: {result['status']}")
 

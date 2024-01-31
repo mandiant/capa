@@ -28,6 +28,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+
 import logging
 import binascii
 from pathlib import Path
@@ -90,7 +91,7 @@ def main():
             continue
         if rule.meta.is_subscope_rule:
             continue
-        if rule.meta.scope != capa.rules.Scope.FUNCTION:
+        if rule.meta.scopes.static == capa.rules.Scope.FUNCTION:
             continue
 
         ns = rule.meta.namespace
