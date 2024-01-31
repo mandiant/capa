@@ -285,6 +285,26 @@ def get_extractor(
         raise ValueError("unexpected backend: " + backend)
 
 
+def _get_binexport2_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
+    # I'm not sure this is where this logic should live, but it works for now.
+    # we'll keep this a "private" routine until we're sure.
+    import capa.features.extractors.binexport2
+
+    be2 = capa.features.extractors.binexport2.get_binexport2(input_file)
+    sample_path = capa.features.extractors.binexport2.get_sample_from_binexport2(input_file, be2)
+
+    with sample_path.open("rb") as f:
+        taste = f.read()
+
+    if taste.startswith(capa.features.extractors.common.MATCH_PE):
+        return get_file_extractors(sample_path, FORMAT_PE)
+    elif taste.startswith(capa.features.extractors.common.MATCH_ELF):
+        return get_file_extractors(sample_path, FORMAT_ELF)
+    else:
+        logger.warning("unsupported format")
+        return []
+
+
 def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
 
@@ -303,9 +323,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     elif input_format == FORMAT_BINEXPORT2:
-        # pick pefile/elffile from sample path, after detection
-        # TODO(wb): 1755
-        pass
+        file_extractors = _get_binexport2_file_extractors(input_file, input_format)
 
     return file_extractors
 

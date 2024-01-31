@@ -112,7 +112,7 @@ def main(argv=None):
                     o.writeln(f"demangled: {vertex.demangled_name}")
 
                 if vertex.HasField("library_index"):
-                    # BUG: this seems to be incorrect
+                    # TODO(williballenthin): this seems to be incorrect
                     library = be2.library[vertex.library_index]
                     o.writeln(f"library:   [{vertex.library_index}] {library.name}")
 
