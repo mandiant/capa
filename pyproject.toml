@@ -41,7 +41,7 @@ dependencies = [
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
-    "networkx==3.1",
+    "networkx==3.2.1",
     "ruamel.yaml==0.18.5",
     "vivisect==1.1.1",
     "pefile==2023.2.7",
