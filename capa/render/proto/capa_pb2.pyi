@@ -1,793 +1,1849 @@
-from google.protobuf.internal import containers as _containers
-from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
-
-ADDRESSTYPE_ABSOLUTE: AddressType
-ADDRESSTYPE_CALL: AddressType
-ADDRESSTYPE_DN_TOKEN: AddressType
-ADDRESSTYPE_DN_TOKEN_OFFSET: AddressType
-ADDRESSTYPE_FILE: AddressType
-ADDRESSTYPE_NO_ADDRESS: AddressType
-ADDRESSTYPE_PROCESS: AddressType
-ADDRESSTYPE_RELATIVE: AddressType
-ADDRESSTYPE_THREAD: AddressType
-ADDRESSTYPE_UNSPECIFIED: AddressType
-DESCRIPTOR: _descriptor.FileDescriptor
-FLAVOR_DYNAMIC: Flavor
-FLAVOR_STATIC: Flavor
-FLAVOR_UNSPECIFIED: Flavor
-SCOPE_BASIC_BLOCK: Scope
-SCOPE_CALL: Scope
-SCOPE_FILE: Scope
-SCOPE_FUNCTION: Scope
-SCOPE_INSTRUCTION: Scope
-SCOPE_PROCESS: Scope
-SCOPE_THREAD: Scope
-SCOPE_UNSPECIFIED: Scope
-
-class APIFeature(_message.Message):
-    __slots__ = ["api", "description", "type"]
-    API_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    api: str
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., api: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class Address(_message.Message):
-    __slots__ = ["ppid_pid", "ppid_pid_tid", "ppid_pid_tid_id", "token_offset", "type", "v"]
-    PPID_PID_FIELD_NUMBER: _ClassVar[int]
-    PPID_PID_TID_FIELD_NUMBER: _ClassVar[int]
-    PPID_PID_TID_ID_FIELD_NUMBER: _ClassVar[int]
-    TOKEN_OFFSET_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    V_FIELD_NUMBER: _ClassVar[int]
-    ppid_pid: Ppid_Pid
-    ppid_pid_tid: Ppid_Pid_Tid
-    ppid_pid_tid_id: Ppid_Pid_Tid_Id
-    token_offset: Token_Offset
-    type: AddressType
-    v: Integer
-    def __init__(self, type: _Optional[_Union[AddressType, str]] = ..., v: _Optional[_Union[Integer, _Mapping]] = ..., token_offset: _Optional[_Union[Token_Offset, _Mapping]] = ..., ppid_pid: _Optional[_Union[Ppid_Pid, _Mapping]] = ..., ppid_pid_tid: _Optional[_Union[Ppid_Pid_Tid, _Mapping]] = ..., ppid_pid_tid_id: _Optional[_Union[Ppid_Pid_Tid_Id, _Mapping]] = ...) -> None: ...
-
-class Addresses(_message.Message):
-    __slots__ = ["address"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    address: _containers.RepeatedCompositeFieldContainer[Address]
-    def __init__(self, address: _Optional[_Iterable[_Union[Address, _Mapping]]] = ...) -> None: ...
-
-class Analysis(_message.Message):
-    __slots__ = ["arch", "base_address", "extractor", "feature_counts", "format", "layout", "library_functions", "os", "rules"]
-    ARCH_FIELD_NUMBER: _ClassVar[int]
-    BASE_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    EXTRACTOR_FIELD_NUMBER: _ClassVar[int]
-    FEATURE_COUNTS_FIELD_NUMBER: _ClassVar[int]
-    FORMAT_FIELD_NUMBER: _ClassVar[int]
-    LAYOUT_FIELD_NUMBER: _ClassVar[int]
-    LIBRARY_FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    OS_FIELD_NUMBER: _ClassVar[int]
-    RULES_FIELD_NUMBER: _ClassVar[int]
-    arch: str
-    base_address: Address
-    extractor: str
-    feature_counts: FeatureCounts
-    format: str
-    layout: Layout
-    library_functions: _containers.RepeatedCompositeFieldContainer[LibraryFunction]
-    os: str
-    rules: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, format: _Optional[str] = ..., arch: _Optional[str] = ..., os: _Optional[str] = ..., extractor: _Optional[str] = ..., rules: _Optional[_Iterable[str]] = ..., base_address: _Optional[_Union[Address, _Mapping]] = ..., layout: _Optional[_Union[Layout, _Mapping]] = ..., feature_counts: _Optional[_Union[FeatureCounts, _Mapping]] = ..., library_functions: _Optional[_Iterable[_Union[LibraryFunction, _Mapping]]] = ...) -> None: ...
-
-class ArchFeature(_message.Message):
-    __slots__ = ["arch", "description", "type"]
-    ARCH_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    arch: str
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., arch: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class AttackSpec(_message.Message):
-    __slots__ = ["id", "parts", "subtechnique", "tactic", "technique"]
-    ID_FIELD_NUMBER: _ClassVar[int]
-    PARTS_FIELD_NUMBER: _ClassVar[int]
-    SUBTECHNIQUE_FIELD_NUMBER: _ClassVar[int]
-    TACTIC_FIELD_NUMBER: _ClassVar[int]
-    TECHNIQUE_FIELD_NUMBER: _ClassVar[int]
-    id: str
-    parts: _containers.RepeatedScalarFieldContainer[str]
-    subtechnique: str
-    tactic: str
-    technique: str
-    def __init__(self, parts: _Optional[_Iterable[str]] = ..., tactic: _Optional[str] = ..., technique: _Optional[str] = ..., subtechnique: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
-
-class BasicBlockFeature(_message.Message):
-    __slots__ = ["description", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class BasicBlockLayout(_message.Message):
-    __slots__ = ["address"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ...) -> None: ...
-
-class BytesFeature(_message.Message):
-    __slots__ = ["bytes", "description", "type"]
-    BYTES_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    bytes: str
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., bytes: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class CallLayout(_message.Message):
-    __slots__ = ["address", "name"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    name: str
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., name: _Optional[str] = ...) -> None: ...
-
-class CharacteristicFeature(_message.Message):
-    __slots__ = ["characteristic", "description", "type"]
-    CHARACTERISTIC_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    characteristic: str
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., characteristic: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class ClassFeature(_message.Message):
-    __slots__ = ["class_", "description", "type"]
-    CLASS__FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    class_: str
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., class_: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class CompoundStatement(_message.Message):
-    __slots__ = ["description", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class DynamicAnalysis(_message.Message):
-    __slots__ = ["arch", "extractor", "feature_counts", "format", "layout", "os", "rules"]
-    ARCH_FIELD_NUMBER: _ClassVar[int]
-    EXTRACTOR_FIELD_NUMBER: _ClassVar[int]
-    FEATURE_COUNTS_FIELD_NUMBER: _ClassVar[int]
-    FORMAT_FIELD_NUMBER: _ClassVar[int]
-    LAYOUT_FIELD_NUMBER: _ClassVar[int]
-    OS_FIELD_NUMBER: _ClassVar[int]
-    RULES_FIELD_NUMBER: _ClassVar[int]
-    arch: str
-    extractor: str
-    feature_counts: DynamicFeatureCounts
-    format: str
-    layout: DynamicLayout
-    os: str
-    rules: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, format: _Optional[str] = ..., arch: _Optional[str] = ..., os: _Optional[str] = ..., extractor: _Optional[str] = ..., rules: _Optional[_Iterable[str]] = ..., layout: _Optional[_Union[DynamicLayout, _Mapping]] = ..., feature_counts: _Optional[_Union[DynamicFeatureCounts, _Mapping]] = ...) -> None: ...
-
-class DynamicFeatureCounts(_message.Message):
-    __slots__ = ["file", "processes"]
-    FILE_FIELD_NUMBER: _ClassVar[int]
-    PROCESSES_FIELD_NUMBER: _ClassVar[int]
-    file: int
-    processes: _containers.RepeatedCompositeFieldContainer[ProcessFeatureCount]
-    def __init__(self, file: _Optional[int] = ..., processes: _Optional[_Iterable[_Union[ProcessFeatureCount, _Mapping]]] = ...) -> None: ...
-
-class DynamicLayout(_message.Message):
-    __slots__ = ["processes"]
-    PROCESSES_FIELD_NUMBER: _ClassVar[int]
-    processes: _containers.RepeatedCompositeFieldContainer[ProcessLayout]
-    def __init__(self, processes: _Optional[_Iterable[_Union[ProcessLayout, _Mapping]]] = ...) -> None: ...
-
-class ExportFeature(_message.Message):
-    __slots__ = ["description", "export", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    EXPORT_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    export: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., export: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class FeatureCounts(_message.Message):
-    __slots__ = ["file", "functions"]
-    FILE_FIELD_NUMBER: _ClassVar[int]
-    FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    file: int
-    functions: _containers.RepeatedCompositeFieldContainer[FunctionFeatureCount]
-    def __init__(self, file: _Optional[int] = ..., functions: _Optional[_Iterable[_Union[FunctionFeatureCount, _Mapping]]] = ...) -> None: ...
-
-class FeatureNode(_message.Message):
-    __slots__ = ["api", "arch", "basic_block", "bytes", "characteristic", "class_", "export", "format", "function_name", "import_", "match", "mnemonic", "namespace", "number", "offset", "operand_number", "operand_offset", "os", "property_", "regex", "section", "string", "substring", "type"]
-    API_FIELD_NUMBER: _ClassVar[int]
-    ARCH_FIELD_NUMBER: _ClassVar[int]
-    BASIC_BLOCK_FIELD_NUMBER: _ClassVar[int]
-    BYTES_FIELD_NUMBER: _ClassVar[int]
-    CHARACTERISTIC_FIELD_NUMBER: _ClassVar[int]
-    CLASS__FIELD_NUMBER: _ClassVar[int]
-    EXPORT_FIELD_NUMBER: _ClassVar[int]
-    FORMAT_FIELD_NUMBER: _ClassVar[int]
-    FUNCTION_NAME_FIELD_NUMBER: _ClassVar[int]
-    IMPORT__FIELD_NUMBER: _ClassVar[int]
-    MATCH_FIELD_NUMBER: _ClassVar[int]
-    MNEMONIC_FIELD_NUMBER: _ClassVar[int]
-    NAMESPACE_FIELD_NUMBER: _ClassVar[int]
-    NUMBER_FIELD_NUMBER: _ClassVar[int]
-    OFFSET_FIELD_NUMBER: _ClassVar[int]
-    OPERAND_NUMBER_FIELD_NUMBER: _ClassVar[int]
-    OPERAND_OFFSET_FIELD_NUMBER: _ClassVar[int]
-    OS_FIELD_NUMBER: _ClassVar[int]
-    PROPERTY__FIELD_NUMBER: _ClassVar[int]
-    REGEX_FIELD_NUMBER: _ClassVar[int]
-    SECTION_FIELD_NUMBER: _ClassVar[int]
-    STRING_FIELD_NUMBER: _ClassVar[int]
-    SUBSTRING_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    api: APIFeature
-    arch: ArchFeature
-    basic_block: BasicBlockFeature
-    bytes: BytesFeature
-    characteristic: CharacteristicFeature
-    class_: ClassFeature
-    export: ExportFeature
-    format: FormatFeature
-    function_name: FunctionNameFeature
-    import_: ImportFeature
-    match: MatchFeature
-    mnemonic: MnemonicFeature
-    namespace: NamespaceFeature
-    number: NumberFeature
-    offset: OffsetFeature
-    operand_number: OperandNumberFeature
-    operand_offset: OperandOffsetFeature
-    os: OSFeature
-    property_: PropertyFeature
-    regex: RegexFeature
-    section: SectionFeature
-    string: StringFeature
-    substring: SubstringFeature
-    type: str
-    def __init__(self, type: _Optional[str] = ..., os: _Optional[_Union[OSFeature, _Mapping]] = ..., arch: _Optional[_Union[ArchFeature, _Mapping]] = ..., format: _Optional[_Union[FormatFeature, _Mapping]] = ..., match: _Optional[_Union[MatchFeature, _Mapping]] = ..., characteristic: _Optional[_Union[CharacteristicFeature, _Mapping]] = ..., export: _Optional[_Union[ExportFeature, _Mapping]] = ..., import_: _Optional[_Union[ImportFeature, _Mapping]] = ..., section: _Optional[_Union[SectionFeature, _Mapping]] = ..., function_name: _Optional[_Union[FunctionNameFeature, _Mapping]] = ..., substring: _Optional[_Union[SubstringFeature, _Mapping]] = ..., regex: _Optional[_Union[RegexFeature, _Mapping]] = ..., string: _Optional[_Union[StringFeature, _Mapping]] = ..., class_: _Optional[_Union[ClassFeature, _Mapping]] = ..., namespace: _Optional[_Union[NamespaceFeature, _Mapping]] = ..., api: _Optional[_Union[APIFeature, _Mapping]] = ..., property_: _Optional[_Union[PropertyFeature, _Mapping]] = ..., number: _Optional[_Union[NumberFeature, _Mapping]] = ..., bytes: _Optional[_Union[BytesFeature, _Mapping]] = ..., offset: _Optional[_Union[OffsetFeature, _Mapping]] = ..., mnemonic: _Optional[_Union[MnemonicFeature, _Mapping]] = ..., operand_number: _Optional[_Union[OperandNumberFeature, _Mapping]] = ..., operand_offset: _Optional[_Union[OperandOffsetFeature, _Mapping]] = ..., basic_block: _Optional[_Union[BasicBlockFeature, _Mapping]] = ...) -> None: ...
-
-class FormatFeature(_message.Message):
-    __slots__ = ["description", "format", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    FORMAT_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    format: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., format: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class FunctionFeatureCount(_message.Message):
-    __slots__ = ["address", "count"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    COUNT_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    count: int
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., count: _Optional[int] = ...) -> None: ...
-
-class FunctionLayout(_message.Message):
-    __slots__ = ["address", "matched_basic_blocks"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    MATCHED_BASIC_BLOCKS_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    matched_basic_blocks: _containers.RepeatedCompositeFieldContainer[BasicBlockLayout]
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., matched_basic_blocks: _Optional[_Iterable[_Union[BasicBlockLayout, _Mapping]]] = ...) -> None: ...
-
-class FunctionNameFeature(_message.Message):
-    __slots__ = ["description", "function_name", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    FUNCTION_NAME_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    function_name: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., function_name: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class ImportFeature(_message.Message):
-    __slots__ = ["description", "import_", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    IMPORT__FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    import_: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., import_: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class Integer(_message.Message):
-    __slots__ = ["i", "u"]
-    I_FIELD_NUMBER: _ClassVar[int]
-    U_FIELD_NUMBER: _ClassVar[int]
-    i: int
-    u: int
-    def __init__(self, u: _Optional[int] = ..., i: _Optional[int] = ...) -> None: ...
-
-class Layout(_message.Message):
-    __slots__ = ["functions"]
-    FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    functions: _containers.RepeatedCompositeFieldContainer[FunctionLayout]
-    def __init__(self, functions: _Optional[_Iterable[_Union[FunctionLayout, _Mapping]]] = ...) -> None: ...
-
-class LibraryFunction(_message.Message):
-    __slots__ = ["address", "name"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    name: str
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., name: _Optional[str] = ...) -> None: ...
-
-class MBCSpec(_message.Message):
-    __slots__ = ["behavior", "id", "method", "objective", "parts"]
-    BEHAVIOR_FIELD_NUMBER: _ClassVar[int]
-    ID_FIELD_NUMBER: _ClassVar[int]
-    METHOD_FIELD_NUMBER: _ClassVar[int]
-    OBJECTIVE_FIELD_NUMBER: _ClassVar[int]
-    PARTS_FIELD_NUMBER: _ClassVar[int]
-    behavior: str
-    id: str
-    method: str
-    objective: str
-    parts: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, parts: _Optional[_Iterable[str]] = ..., objective: _Optional[str] = ..., behavior: _Optional[str] = ..., method: _Optional[str] = ..., id: _Optional[str] = ...) -> None: ...
-
-class MaecMetadata(_message.Message):
-    __slots__ = ["analysis_conclusion", "analysis_conclusion_ov", "malware_category", "malware_category_ov", "malware_family"]
-    ANALYSIS_CONCLUSION_FIELD_NUMBER: _ClassVar[int]
-    ANALYSIS_CONCLUSION_OV_FIELD_NUMBER: _ClassVar[int]
-    MALWARE_CATEGORY_FIELD_NUMBER: _ClassVar[int]
-    MALWARE_CATEGORY_OV_FIELD_NUMBER: _ClassVar[int]
-    MALWARE_FAMILY_FIELD_NUMBER: _ClassVar[int]
-    analysis_conclusion: str
-    analysis_conclusion_ov: str
-    malware_category: str
-    malware_category_ov: str
-    malware_family: str
-    def __init__(self, analysis_conclusion: _Optional[str] = ..., analysis_conclusion_ov: _Optional[str] = ..., malware_family: _Optional[str] = ..., malware_category: _Optional[str] = ..., malware_category_ov: _Optional[str] = ...) -> None: ...
-
-class Match(_message.Message):
-    __slots__ = ["captures", "children", "feature", "locations", "statement", "success"]
-    class CapturesEntry(_message.Message):
-        __slots__ = ["key", "value"]
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: Addresses
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[Addresses, _Mapping]] = ...) -> None: ...
-    CAPTURES_FIELD_NUMBER: _ClassVar[int]
-    CHILDREN_FIELD_NUMBER: _ClassVar[int]
-    FEATURE_FIELD_NUMBER: _ClassVar[int]
-    LOCATIONS_FIELD_NUMBER: _ClassVar[int]
-    STATEMENT_FIELD_NUMBER: _ClassVar[int]
-    SUCCESS_FIELD_NUMBER: _ClassVar[int]
-    captures: _containers.MessageMap[str, Addresses]
-    children: _containers.RepeatedCompositeFieldContainer[Match]
-    feature: FeatureNode
-    locations: _containers.RepeatedCompositeFieldContainer[Address]
-    statement: StatementNode
-    success: bool
-    def __init__(self, success: bool = ..., statement: _Optional[_Union[StatementNode, _Mapping]] = ..., feature: _Optional[_Union[FeatureNode, _Mapping]] = ..., children: _Optional[_Iterable[_Union[Match, _Mapping]]] = ..., locations: _Optional[_Iterable[_Union[Address, _Mapping]]] = ..., captures: _Optional[_Mapping[str, Addresses]] = ...) -> None: ...
-
-class MatchFeature(_message.Message):
-    __slots__ = ["description", "match", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    MATCH_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    match: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., match: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class Metadata(_message.Message):
-    __slots__ = ["analysis", "argv", "dynamic_analysis", "flavor", "sample", "static_analysis", "timestamp", "version"]
-    ANALYSIS_FIELD_NUMBER: _ClassVar[int]
-    ARGV_FIELD_NUMBER: _ClassVar[int]
-    DYNAMIC_ANALYSIS_FIELD_NUMBER: _ClassVar[int]
-    FLAVOR_FIELD_NUMBER: _ClassVar[int]
-    SAMPLE_FIELD_NUMBER: _ClassVar[int]
-    STATIC_ANALYSIS_FIELD_NUMBER: _ClassVar[int]
-    TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
-    VERSION_FIELD_NUMBER: _ClassVar[int]
-    analysis: Analysis
-    argv: _containers.RepeatedScalarFieldContainer[str]
-    dynamic_analysis: DynamicAnalysis
-    flavor: Flavor
-    sample: Sample
-    static_analysis: StaticAnalysis
-    timestamp: str
-    version: str
-    def __init__(self, timestamp: _Optional[str] = ..., version: _Optional[str] = ..., argv: _Optional[_Iterable[str]] = ..., sample: _Optional[_Union[Sample, _Mapping]] = ..., analysis: _Optional[_Union[Analysis, _Mapping]] = ..., flavor: _Optional[_Union[Flavor, str]] = ..., static_analysis: _Optional[_Union[StaticAnalysis, _Mapping]] = ..., dynamic_analysis: _Optional[_Union[DynamicAnalysis, _Mapping]] = ...) -> None: ...
-
-class MnemonicFeature(_message.Message):
-    __slots__ = ["description", "mnemonic", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    MNEMONIC_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    mnemonic: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., mnemonic: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class NamespaceFeature(_message.Message):
-    __slots__ = ["description", "namespace", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    NAMESPACE_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    namespace: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., namespace: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class Number(_message.Message):
-    __slots__ = ["f", "i", "u"]
-    F_FIELD_NUMBER: _ClassVar[int]
-    I_FIELD_NUMBER: _ClassVar[int]
-    U_FIELD_NUMBER: _ClassVar[int]
-    f: float
-    i: int
-    u: int
-    def __init__(self, u: _Optional[int] = ..., i: _Optional[int] = ..., f: _Optional[float] = ...) -> None: ...
-
-class NumberFeature(_message.Message):
-    __slots__ = ["description", "number", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    NUMBER_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    number: Number
-    type: str
-    def __init__(self, type: _Optional[str] = ..., number: _Optional[_Union[Number, _Mapping]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class OSFeature(_message.Message):
-    __slots__ = ["description", "os", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    OS_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    os: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., os: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class OffsetFeature(_message.Message):
-    __slots__ = ["description", "offset", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    OFFSET_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    offset: Integer
-    type: str
-    def __init__(self, type: _Optional[str] = ..., offset: _Optional[_Union[Integer, _Mapping]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class OperandNumberFeature(_message.Message):
-    __slots__ = ["description", "index", "operand_number", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    INDEX_FIELD_NUMBER: _ClassVar[int]
-    OPERAND_NUMBER_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    index: int
-    operand_number: Integer
-    type: str
-    def __init__(self, type: _Optional[str] = ..., index: _Optional[int] = ..., operand_number: _Optional[_Union[Integer, _Mapping]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class OperandOffsetFeature(_message.Message):
-    __slots__ = ["description", "index", "operand_offset", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    INDEX_FIELD_NUMBER: _ClassVar[int]
-    OPERAND_OFFSET_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    index: int
-    operand_offset: Integer
-    type: str
-    def __init__(self, type: _Optional[str] = ..., index: _Optional[int] = ..., operand_offset: _Optional[_Union[Integer, _Mapping]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class Pair_Address_Match(_message.Message):
-    __slots__ = ["address", "match"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    MATCH_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    match: Match
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., match: _Optional[_Union[Match, _Mapping]] = ...) -> None: ...
-
-class Ppid_Pid(_message.Message):
-    __slots__ = ["pid", "ppid"]
-    PID_FIELD_NUMBER: _ClassVar[int]
-    PPID_FIELD_NUMBER: _ClassVar[int]
-    pid: Integer
-    ppid: Integer
-    def __init__(self, ppid: _Optional[_Union[Integer, _Mapping]] = ..., pid: _Optional[_Union[Integer, _Mapping]] = ...) -> None: ...
-
-class Ppid_Pid_Tid(_message.Message):
-    __slots__ = ["pid", "ppid", "tid"]
-    PID_FIELD_NUMBER: _ClassVar[int]
-    PPID_FIELD_NUMBER: _ClassVar[int]
-    TID_FIELD_NUMBER: _ClassVar[int]
-    pid: Integer
-    ppid: Integer
-    tid: Integer
-    def __init__(self, ppid: _Optional[_Union[Integer, _Mapping]] = ..., pid: _Optional[_Union[Integer, _Mapping]] = ..., tid: _Optional[_Union[Integer, _Mapping]] = ...) -> None: ...
-
-class Ppid_Pid_Tid_Id(_message.Message):
-    __slots__ = ["id", "pid", "ppid", "tid"]
-    ID_FIELD_NUMBER: _ClassVar[int]
-    PID_FIELD_NUMBER: _ClassVar[int]
-    PPID_FIELD_NUMBER: _ClassVar[int]
-    TID_FIELD_NUMBER: _ClassVar[int]
-    id: Integer
-    pid: Integer
-    ppid: Integer
-    tid: Integer
-    def __init__(self, ppid: _Optional[_Union[Integer, _Mapping]] = ..., pid: _Optional[_Union[Integer, _Mapping]] = ..., tid: _Optional[_Union[Integer, _Mapping]] = ..., id: _Optional[_Union[Integer, _Mapping]] = ...) -> None: ...
-
-class ProcessFeatureCount(_message.Message):
-    __slots__ = ["address", "count"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    COUNT_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    count: int
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., count: _Optional[int] = ...) -> None: ...
-
-class ProcessLayout(_message.Message):
-    __slots__ = ["address", "matched_threads", "name"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    MATCHED_THREADS_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    matched_threads: _containers.RepeatedCompositeFieldContainer[ThreadLayout]
-    name: str
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., matched_threads: _Optional[_Iterable[_Union[ThreadLayout, _Mapping]]] = ..., name: _Optional[str] = ...) -> None: ...
-
-class PropertyFeature(_message.Message):
-    __slots__ = ["access", "description", "property_", "type"]
-    ACCESS_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    PROPERTY__FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    access: str
-    description: str
-    property_: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., property_: _Optional[str] = ..., access: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class RangeStatement(_message.Message):
-    __slots__ = ["child", "description", "max", "min", "type"]
-    CHILD_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    MAX_FIELD_NUMBER: _ClassVar[int]
-    MIN_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    child: FeatureNode
-    description: str
-    max: int
-    min: int
-    type: str
-    def __init__(self, type: _Optional[str] = ..., min: _Optional[int] = ..., max: _Optional[int] = ..., child: _Optional[_Union[FeatureNode, _Mapping]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class RegexFeature(_message.Message):
-    __slots__ = ["description", "regex", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    REGEX_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    regex: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., regex: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class ResultDocument(_message.Message):
-    __slots__ = ["meta", "rules"]
-    class RulesEntry(_message.Message):
-        __slots__ = ["key", "value"]
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: RuleMatches
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[RuleMatches, _Mapping]] = ...) -> None: ...
-    META_FIELD_NUMBER: _ClassVar[int]
-    RULES_FIELD_NUMBER: _ClassVar[int]
-    meta: Metadata
-    rules: _containers.MessageMap[str, RuleMatches]
-    def __init__(self, meta: _Optional[_Union[Metadata, _Mapping]] = ..., rules: _Optional[_Mapping[str, RuleMatches]] = ...) -> None: ...
-
-class RuleMatches(_message.Message):
-    __slots__ = ["matches", "meta", "source"]
-    MATCHES_FIELD_NUMBER: _ClassVar[int]
-    META_FIELD_NUMBER: _ClassVar[int]
-    SOURCE_FIELD_NUMBER: _ClassVar[int]
-    matches: _containers.RepeatedCompositeFieldContainer[Pair_Address_Match]
-    meta: RuleMetadata
-    source: str
-    def __init__(self, meta: _Optional[_Union[RuleMetadata, _Mapping]] = ..., source: _Optional[str] = ..., matches: _Optional[_Iterable[_Union[Pair_Address_Match, _Mapping]]] = ...) -> None: ...
-
-class RuleMetadata(_message.Message):
-    __slots__ = ["attack", "authors", "description", "examples", "is_subscope_rule", "lib", "maec", "mbc", "name", "namespace", "references", "scope", "scopes"]
-    ATTACK_FIELD_NUMBER: _ClassVar[int]
-    AUTHORS_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    EXAMPLES_FIELD_NUMBER: _ClassVar[int]
-    IS_SUBSCOPE_RULE_FIELD_NUMBER: _ClassVar[int]
-    LIB_FIELD_NUMBER: _ClassVar[int]
-    MAEC_FIELD_NUMBER: _ClassVar[int]
-    MBC_FIELD_NUMBER: _ClassVar[int]
-    NAMESPACE_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    REFERENCES_FIELD_NUMBER: _ClassVar[int]
-    SCOPES_FIELD_NUMBER: _ClassVar[int]
-    SCOPE_FIELD_NUMBER: _ClassVar[int]
-    attack: _containers.RepeatedCompositeFieldContainer[AttackSpec]
-    authors: _containers.RepeatedScalarFieldContainer[str]
-    description: str
-    examples: _containers.RepeatedScalarFieldContainer[str]
-    is_subscope_rule: bool
-    lib: bool
-    maec: MaecMetadata
-    mbc: _containers.RepeatedCompositeFieldContainer[MBCSpec]
-    name: str
-    namespace: str
-    references: _containers.RepeatedScalarFieldContainer[str]
-    scope: Scope
-    scopes: Scopes
-    def __init__(self, name: _Optional[str] = ..., namespace: _Optional[str] = ..., authors: _Optional[_Iterable[str]] = ..., scope: _Optional[_Union[Scope, str]] = ..., attack: _Optional[_Iterable[_Union[AttackSpec, _Mapping]]] = ..., mbc: _Optional[_Iterable[_Union[MBCSpec, _Mapping]]] = ..., references: _Optional[_Iterable[str]] = ..., examples: _Optional[_Iterable[str]] = ..., description: _Optional[str] = ..., lib: bool = ..., maec: _Optional[_Union[MaecMetadata, _Mapping]] = ..., is_subscope_rule: bool = ..., scopes: _Optional[_Union[Scopes, _Mapping]] = ...) -> None: ...
-
-class Sample(_message.Message):
-    __slots__ = ["md5", "path", "sha1", "sha256"]
-    MD5_FIELD_NUMBER: _ClassVar[int]
-    PATH_FIELD_NUMBER: _ClassVar[int]
-    SHA1_FIELD_NUMBER: _ClassVar[int]
-    SHA256_FIELD_NUMBER: _ClassVar[int]
-    md5: str
-    path: str
-    sha1: str
-    sha256: str
-    def __init__(self, md5: _Optional[str] = ..., sha1: _Optional[str] = ..., sha256: _Optional[str] = ..., path: _Optional[str] = ...) -> None: ...
-
-class Scopes(_message.Message):
-    __slots__ = ["dynamic", "static"]
-    DYNAMIC_FIELD_NUMBER: _ClassVar[int]
-    STATIC_FIELD_NUMBER: _ClassVar[int]
-    dynamic: Scope
-    static: Scope
-    def __init__(self, static: _Optional[_Union[Scope, str]] = ..., dynamic: _Optional[_Union[Scope, str]] = ...) -> None: ...
-
-class SectionFeature(_message.Message):
-    __slots__ = ["description", "section", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    SECTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    section: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., section: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class SomeStatement(_message.Message):
-    __slots__ = ["count", "description", "type"]
-    COUNT_FIELD_NUMBER: _ClassVar[int]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    count: int
-    description: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., count: _Optional[int] = ..., description: _Optional[str] = ...) -> None: ...
-
-class StatementNode(_message.Message):
-    __slots__ = ["compound", "range", "some", "subscope", "type"]
-    COMPOUND_FIELD_NUMBER: _ClassVar[int]
-    RANGE_FIELD_NUMBER: _ClassVar[int]
-    SOME_FIELD_NUMBER: _ClassVar[int]
-    SUBSCOPE_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    compound: CompoundStatement
-    range: RangeStatement
-    some: SomeStatement
-    subscope: SubscopeStatement
-    type: str
-    def __init__(self, type: _Optional[str] = ..., range: _Optional[_Union[RangeStatement, _Mapping]] = ..., some: _Optional[_Union[SomeStatement, _Mapping]] = ..., subscope: _Optional[_Union[SubscopeStatement, _Mapping]] = ..., compound: _Optional[_Union[CompoundStatement, _Mapping]] = ...) -> None: ...
-
-class StaticAnalysis(_message.Message):
-    __slots__ = ["arch", "base_address", "extractor", "feature_counts", "format", "layout", "library_functions", "os", "rules"]
-    ARCH_FIELD_NUMBER: _ClassVar[int]
-    BASE_ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    EXTRACTOR_FIELD_NUMBER: _ClassVar[int]
-    FEATURE_COUNTS_FIELD_NUMBER: _ClassVar[int]
-    FORMAT_FIELD_NUMBER: _ClassVar[int]
-    LAYOUT_FIELD_NUMBER: _ClassVar[int]
-    LIBRARY_FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    OS_FIELD_NUMBER: _ClassVar[int]
-    RULES_FIELD_NUMBER: _ClassVar[int]
-    arch: str
-    base_address: Address
-    extractor: str
-    feature_counts: StaticFeatureCounts
-    format: str
-    layout: StaticLayout
-    library_functions: _containers.RepeatedCompositeFieldContainer[LibraryFunction]
-    os: str
-    rules: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, format: _Optional[str] = ..., arch: _Optional[str] = ..., os: _Optional[str] = ..., extractor: _Optional[str] = ..., rules: _Optional[_Iterable[str]] = ..., base_address: _Optional[_Union[Address, _Mapping]] = ..., layout: _Optional[_Union[StaticLayout, _Mapping]] = ..., feature_counts: _Optional[_Union[StaticFeatureCounts, _Mapping]] = ..., library_functions: _Optional[_Iterable[_Union[LibraryFunction, _Mapping]]] = ...) -> None: ...
-
-class StaticFeatureCounts(_message.Message):
-    __slots__ = ["file", "functions"]
-    FILE_FIELD_NUMBER: _ClassVar[int]
-    FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    file: int
-    functions: _containers.RepeatedCompositeFieldContainer[FunctionFeatureCount]
-    def __init__(self, file: _Optional[int] = ..., functions: _Optional[_Iterable[_Union[FunctionFeatureCount, _Mapping]]] = ...) -> None: ...
-
-class StaticLayout(_message.Message):
-    __slots__ = ["functions"]
-    FUNCTIONS_FIELD_NUMBER: _ClassVar[int]
-    functions: _containers.RepeatedCompositeFieldContainer[FunctionLayout]
-    def __init__(self, functions: _Optional[_Iterable[_Union[FunctionLayout, _Mapping]]] = ...) -> None: ...
-
-class StringFeature(_message.Message):
-    __slots__ = ["description", "string", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    STRING_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    string: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., string: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class SubscopeStatement(_message.Message):
-    __slots__ = ["description", "scope", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    SCOPE_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    scope: Scope
-    type: str
-    def __init__(self, type: _Optional[str] = ..., scope: _Optional[_Union[Scope, str]] = ..., description: _Optional[str] = ...) -> None: ...
-
-class SubstringFeature(_message.Message):
-    __slots__ = ["description", "substring", "type"]
-    DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    SUBSTRING_FIELD_NUMBER: _ClassVar[int]
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    description: str
-    substring: str
-    type: str
-    def __init__(self, type: _Optional[str] = ..., substring: _Optional[str] = ..., description: _Optional[str] = ...) -> None: ...
-
-class ThreadLayout(_message.Message):
-    __slots__ = ["address", "matched_calls"]
-    ADDRESS_FIELD_NUMBER: _ClassVar[int]
-    MATCHED_CALLS_FIELD_NUMBER: _ClassVar[int]
-    address: Address
-    matched_calls: _containers.RepeatedCompositeFieldContainer[CallLayout]
-    def __init__(self, address: _Optional[_Union[Address, _Mapping]] = ..., matched_calls: _Optional[_Iterable[_Union[CallLayout, _Mapping]]] = ...) -> None: ...
-
-class Token_Offset(_message.Message):
-    __slots__ = ["offset", "token"]
-    OFFSET_FIELD_NUMBER: _ClassVar[int]
-    TOKEN_FIELD_NUMBER: _ClassVar[int]
-    offset: int
-    token: Integer
-    def __init__(self, token: _Optional[_Union[Integer, _Mapping]] = ..., offset: _Optional[int] = ...) -> None: ...
-
-class AddressType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = []
-
-class Flavor(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = []
-
-class Scope(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = []
+"""
+@generated by mypy-protobuf.  Do not edit manually!
+isort:skip_file
+"""
+import builtins
+import collections.abc
+import google.protobuf.descriptor
+import google.protobuf.internal.containers
+import google.protobuf.internal.enum_type_wrapper
+import google.protobuf.message
+import sys
+import typing
+
+if sys.version_info >= (3, 10):
+    import typing as typing_extensions
+else:
+    import typing_extensions
+
+DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
+
+class _AddressType:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _AddressTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_AddressType.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    ADDRESSTYPE_UNSPECIFIED: _AddressType.ValueType  # 0
+    ADDRESSTYPE_ABSOLUTE: _AddressType.ValueType  # 1
+    ADDRESSTYPE_RELATIVE: _AddressType.ValueType  # 2
+    ADDRESSTYPE_FILE: _AddressType.ValueType  # 3
+    ADDRESSTYPE_DN_TOKEN: _AddressType.ValueType  # 4
+    ADDRESSTYPE_DN_TOKEN_OFFSET: _AddressType.ValueType  # 5
+    ADDRESSTYPE_NO_ADDRESS: _AddressType.ValueType  # 6
+    ADDRESSTYPE_PROCESS: _AddressType.ValueType  # 7
+    ADDRESSTYPE_THREAD: _AddressType.ValueType  # 8
+    ADDRESSTYPE_CALL: _AddressType.ValueType  # 9
+
+class AddressType(_AddressType, metaclass=_AddressTypeEnumTypeWrapper): ...
+
+ADDRESSTYPE_UNSPECIFIED: AddressType.ValueType  # 0
+ADDRESSTYPE_ABSOLUTE: AddressType.ValueType  # 1
+ADDRESSTYPE_RELATIVE: AddressType.ValueType  # 2
+ADDRESSTYPE_FILE: AddressType.ValueType  # 3
+ADDRESSTYPE_DN_TOKEN: AddressType.ValueType  # 4
+ADDRESSTYPE_DN_TOKEN_OFFSET: AddressType.ValueType  # 5
+ADDRESSTYPE_NO_ADDRESS: AddressType.ValueType  # 6
+ADDRESSTYPE_PROCESS: AddressType.ValueType  # 7
+ADDRESSTYPE_THREAD: AddressType.ValueType  # 8
+ADDRESSTYPE_CALL: AddressType.ValueType  # 9
+global___AddressType = AddressType
+
+class _Flavor:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _FlavorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Flavor.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    FLAVOR_UNSPECIFIED: _Flavor.ValueType  # 0
+    FLAVOR_STATIC: _Flavor.ValueType  # 1
+    FLAVOR_DYNAMIC: _Flavor.ValueType  # 2
+
+class Flavor(_Flavor, metaclass=_FlavorEnumTypeWrapper): ...
+
+FLAVOR_UNSPECIFIED: Flavor.ValueType  # 0
+FLAVOR_STATIC: Flavor.ValueType  # 1
+FLAVOR_DYNAMIC: Flavor.ValueType  # 2
+global___Flavor = Flavor
+
+class _Scope:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _ScopeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Scope.ValueType], builtins.type):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    SCOPE_UNSPECIFIED: _Scope.ValueType  # 0
+    SCOPE_FILE: _Scope.ValueType  # 1
+    SCOPE_FUNCTION: _Scope.ValueType  # 2
+    SCOPE_BASIC_BLOCK: _Scope.ValueType  # 3
+    SCOPE_INSTRUCTION: _Scope.ValueType  # 4
+    SCOPE_PROCESS: _Scope.ValueType  # 5
+    SCOPE_THREAD: _Scope.ValueType  # 6
+    SCOPE_CALL: _Scope.ValueType  # 7
+
+class Scope(_Scope, metaclass=_ScopeEnumTypeWrapper): ...
+
+SCOPE_UNSPECIFIED: Scope.ValueType  # 0
+SCOPE_FILE: Scope.ValueType  # 1
+SCOPE_FUNCTION: Scope.ValueType  # 2
+SCOPE_BASIC_BLOCK: Scope.ValueType  # 3
+SCOPE_INSTRUCTION: Scope.ValueType  # 4
+SCOPE_PROCESS: Scope.ValueType  # 5
+SCOPE_THREAD: Scope.ValueType  # 6
+SCOPE_CALL: Scope.ValueType  # 7
+global___Scope = Scope
+
+@typing_extensions.final
+class APIFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    API_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    api: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        api: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "api", b"api", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___APIFeature = APIFeature
+
+@typing_extensions.final
+class Address(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    V_FIELD_NUMBER: builtins.int
+    TOKEN_OFFSET_FIELD_NUMBER: builtins.int
+    PPID_PID_FIELD_NUMBER: builtins.int
+    PPID_PID_TID_FIELD_NUMBER: builtins.int
+    PPID_PID_TID_ID_FIELD_NUMBER: builtins.int
+    type: global___AddressType.ValueType
+    @property
+    def v(self) -> global___Integer: ...
+    @property
+    def token_offset(self) -> global___Token_Offset: ...
+    @property
+    def ppid_pid(self) -> global___Ppid_Pid: ...
+    @property
+    def ppid_pid_tid(self) -> global___Ppid_Pid_Tid: ...
+    @property
+    def ppid_pid_tid_id(self) -> global___Ppid_Pid_Tid_Id: ...
+    def __init__(
+        self,
+        *,
+        type: global___AddressType.ValueType = ...,
+        v: global___Integer | None = ...,
+        token_offset: global___Token_Offset | None = ...,
+        ppid_pid: global___Ppid_Pid | None = ...,
+        ppid_pid_tid: global___Ppid_Pid_Tid | None = ...,
+        ppid_pid_tid_id: global___Ppid_Pid_Tid_Id | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "v", b"v", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["ppid_pid", b"ppid_pid", "ppid_pid_tid", b"ppid_pid_tid", "ppid_pid_tid_id", b"ppid_pid_tid_id", "token_offset", b"token_offset", "type", b"type", "v", b"v", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["v", "token_offset", "ppid_pid", "ppid_pid_tid", "ppid_pid_tid_id"] | None: ...
+
+global___Address = Address
+
+@typing_extensions.final
+class Analysis(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FORMAT_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    EXTRACTOR_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    BASE_ADDRESS_FIELD_NUMBER: builtins.int
+    LAYOUT_FIELD_NUMBER: builtins.int
+    FEATURE_COUNTS_FIELD_NUMBER: builtins.int
+    LIBRARY_FUNCTIONS_FIELD_NUMBER: builtins.int
+    format: builtins.str
+    arch: builtins.str
+    os: builtins.str
+    extractor: builtins.str
+    @property
+    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def base_address(self) -> global___Address: ...
+    @property
+    def layout(self) -> global___Layout: ...
+    @property
+    def feature_counts(self) -> global___FeatureCounts: ...
+    @property
+    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def __init__(
+        self,
+        *,
+        format: builtins.str = ...,
+        arch: builtins.str = ...,
+        os: builtins.str = ...,
+        extractor: builtins.str = ...,
+        rules: collections.abc.Iterable[builtins.str] | None = ...,
+        base_address: global___Address | None = ...,
+        layout: global___Layout | None = ...,
+        feature_counts: global___FeatureCounts | None = ...,
+        library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
+
+global___Analysis = Analysis
+
+@typing_extensions.final
+class ArchFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    arch: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        arch: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "arch", b"arch", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___ArchFeature = ArchFeature
+
+@typing_extensions.final
+class AttackSpec(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PARTS_FIELD_NUMBER: builtins.int
+    TACTIC_FIELD_NUMBER: builtins.int
+    TECHNIQUE_FIELD_NUMBER: builtins.int
+    SUBTECHNIQUE_FIELD_NUMBER: builtins.int
+    ID_FIELD_NUMBER: builtins.int
+    @property
+    def parts(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    tactic: builtins.str
+    technique: builtins.str
+    subtechnique: builtins.str
+    id: builtins.str
+    def __init__(
+        self,
+        *,
+        parts: collections.abc.Iterable[builtins.str] | None = ...,
+        tactic: builtins.str = ...,
+        technique: builtins.str = ...,
+        subtechnique: builtins.str = ...,
+        id: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["id", b"id", "parts", b"parts", "subtechnique", b"subtechnique", "tactic", b"tactic", "technique", b"technique"]) -> None: ...
+
+global___AttackSpec = AttackSpec
+
+@typing_extensions.final
+class BasicBlockFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___BasicBlockFeature = BasicBlockFeature
+
+@typing_extensions.final
+class BasicBlockLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address"]) -> None: ...
+
+global___BasicBlockLayout = BasicBlockLayout
+
+@typing_extensions.final
+class BytesFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    BYTES_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    bytes: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        bytes: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "bytes", b"bytes", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___BytesFeature = BytesFeature
+
+@typing_extensions.final
+class CharacteristicFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    CHARACTERISTIC_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    characteristic: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        characteristic: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "characteristic", b"characteristic", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___CharacteristicFeature = CharacteristicFeature
+
+@typing_extensions.final
+class ClassFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    CLASS__FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    class_: builtins.str
+    """class is protected Python keyword"""
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        class_: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "class_", b"class_", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___ClassFeature = ClassFeature
+
+@typing_extensions.final
+class CompoundStatement(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___CompoundStatement = CompoundStatement
+
+@typing_extensions.final
+class DynamicAnalysis(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FORMAT_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    EXTRACTOR_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    LAYOUT_FIELD_NUMBER: builtins.int
+    FEATURE_COUNTS_FIELD_NUMBER: builtins.int
+    format: builtins.str
+    arch: builtins.str
+    os: builtins.str
+    extractor: builtins.str
+    @property
+    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def layout(self) -> global___DynamicLayout: ...
+    @property
+    def feature_counts(self) -> global___DynamicFeatureCounts: ...
+    def __init__(
+        self,
+        *,
+        format: builtins.str = ...,
+        arch: builtins.str = ...,
+        os: builtins.str = ...,
+        extractor: builtins.str = ...,
+        rules: collections.abc.Iterable[builtins.str] | None = ...,
+        layout: global___DynamicLayout | None = ...,
+        feature_counts: global___DynamicFeatureCounts | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "os", b"os", "rules", b"rules"]) -> None: ...
+
+global___DynamicAnalysis = DynamicAnalysis
+
+@typing_extensions.final
+class DynamicFeatureCounts(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FILE_FIELD_NUMBER: builtins.int
+    PROCESSES_FIELD_NUMBER: builtins.int
+    file: builtins.int
+    @property
+    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessFeatureCount]: ...
+    def __init__(
+        self,
+        *,
+        file: builtins.int = ...,
+        processes: collections.abc.Iterable[global___ProcessFeatureCount] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["file", b"file", "processes", b"processes"]) -> None: ...
+
+global___DynamicFeatureCounts = DynamicFeatureCounts
+
+@typing_extensions.final
+class DynamicLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PROCESSES_FIELD_NUMBER: builtins.int
+    @property
+    def processes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ProcessLayout]: ...
+    def __init__(
+        self,
+        *,
+        processes: collections.abc.Iterable[global___ProcessLayout] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["processes", b"processes"]) -> None: ...
+
+global___DynamicLayout = DynamicLayout
+
+@typing_extensions.final
+class ExportFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    EXPORT_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    export: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        export: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "export", b"export", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___ExportFeature = ExportFeature
+
+@typing_extensions.final
+class FeatureCounts(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FILE_FIELD_NUMBER: builtins.int
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    file: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def __init__(
+        self,
+        *,
+        file: builtins.int = ...,
+        functions: collections.abc.Iterable[global___FunctionFeatureCount] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["file", b"file", "functions", b"functions"]) -> None: ...
+
+global___FeatureCounts = FeatureCounts
+
+@typing_extensions.final
+class FeatureNode(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    FORMAT_FIELD_NUMBER: builtins.int
+    MATCH_FIELD_NUMBER: builtins.int
+    CHARACTERISTIC_FIELD_NUMBER: builtins.int
+    EXPORT_FIELD_NUMBER: builtins.int
+    IMPORT__FIELD_NUMBER: builtins.int
+    SECTION_FIELD_NUMBER: builtins.int
+    FUNCTION_NAME_FIELD_NUMBER: builtins.int
+    SUBSTRING_FIELD_NUMBER: builtins.int
+    REGEX_FIELD_NUMBER: builtins.int
+    STRING_FIELD_NUMBER: builtins.int
+    CLASS__FIELD_NUMBER: builtins.int
+    NAMESPACE_FIELD_NUMBER: builtins.int
+    API_FIELD_NUMBER: builtins.int
+    PROPERTY__FIELD_NUMBER: builtins.int
+    NUMBER_FIELD_NUMBER: builtins.int
+    BYTES_FIELD_NUMBER: builtins.int
+    OFFSET_FIELD_NUMBER: builtins.int
+    MNEMONIC_FIELD_NUMBER: builtins.int
+    OPERAND_NUMBER_FIELD_NUMBER: builtins.int
+    OPERAND_OFFSET_FIELD_NUMBER: builtins.int
+    BASIC_BLOCK_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    @property
+    def os(self) -> global___OSFeature: ...
+    @property
+    def arch(self) -> global___ArchFeature: ...
+    @property
+    def format(self) -> global___FormatFeature: ...
+    @property
+    def match(self) -> global___MatchFeature: ...
+    @property
+    def characteristic(self) -> global___CharacteristicFeature: ...
+    @property
+    def export(self) -> global___ExportFeature: ...
+    @property
+    def import_(self) -> global___ImportFeature:
+        """import is Python keyword"""
+    @property
+    def section(self) -> global___SectionFeature: ...
+    @property
+    def function_name(self) -> global___FunctionNameFeature: ...
+    @property
+    def substring(self) -> global___SubstringFeature: ...
+    @property
+    def regex(self) -> global___RegexFeature: ...
+    @property
+    def string(self) -> global___StringFeature: ...
+    @property
+    def class_(self) -> global___ClassFeature: ...
+    @property
+    def namespace(self) -> global___NamespaceFeature: ...
+    @property
+    def api(self) -> global___APIFeature: ...
+    @property
+    def property_(self) -> global___PropertyFeature:
+        """property is a Python top-level decorator name"""
+    @property
+    def number(self) -> global___NumberFeature: ...
+    @property
+    def bytes(self) -> global___BytesFeature: ...
+    @property
+    def offset(self) -> global___OffsetFeature: ...
+    @property
+    def mnemonic(self) -> global___MnemonicFeature: ...
+    @property
+    def operand_number(self) -> global___OperandNumberFeature: ...
+    @property
+    def operand_offset(self) -> global___OperandOffsetFeature: ...
+    @property
+    def basic_block(self) -> global___BasicBlockFeature: ...
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        os: global___OSFeature | None = ...,
+        arch: global___ArchFeature | None = ...,
+        format: global___FormatFeature | None = ...,
+        match: global___MatchFeature | None = ...,
+        characteristic: global___CharacteristicFeature | None = ...,
+        export: global___ExportFeature | None = ...,
+        import_: global___ImportFeature | None = ...,
+        section: global___SectionFeature | None = ...,
+        function_name: global___FunctionNameFeature | None = ...,
+        substring: global___SubstringFeature | None = ...,
+        regex: global___RegexFeature | None = ...,
+        string: global___StringFeature | None = ...,
+        class_: global___ClassFeature | None = ...,
+        namespace: global___NamespaceFeature | None = ...,
+        api: global___APIFeature | None = ...,
+        property_: global___PropertyFeature | None = ...,
+        number: global___NumberFeature | None = ...,
+        bytes: global___BytesFeature | None = ...,
+        offset: global___OffsetFeature | None = ...,
+        mnemonic: global___MnemonicFeature | None = ...,
+        operand_number: global___OperandNumberFeature | None = ...,
+        operand_offset: global___OperandOffsetFeature | None = ...,
+        basic_block: global___BasicBlockFeature | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["api", b"api", "arch", b"arch", "basic_block", b"basic_block", "bytes", b"bytes", "characteristic", b"characteristic", "class_", b"class_", "export", b"export", "feature", b"feature", "format", b"format", "function_name", b"function_name", "import_", b"import_", "match", b"match", "mnemonic", b"mnemonic", "namespace", b"namespace", "number", b"number", "offset", b"offset", "operand_number", b"operand_number", "operand_offset", b"operand_offset", "os", b"os", "property_", b"property_", "regex", b"regex", "section", b"section", "string", b"string", "substring", b"substring", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["feature", b"feature"]) -> typing_extensions.Literal["os", "arch", "format", "match", "characteristic", "export", "import_", "section", "function_name", "substring", "regex", "string", "class_", "namespace", "api", "property_", "number", "bytes", "offset", "mnemonic", "operand_number", "operand_offset", "basic_block"] | None: ...
+
+global___FeatureNode = FeatureNode
+
+@typing_extensions.final
+class FormatFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    FORMAT_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    format: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        format: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "format", b"format", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___FormatFeature = FormatFeature
+
+@typing_extensions.final
+class FunctionFeatureCount(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    COUNT_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    count: builtins.int
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        count: builtins.int = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "count", b"count"]) -> None: ...
+
+global___FunctionFeatureCount = FunctionFeatureCount
+
+@typing_extensions.final
+class FunctionLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCHED_BASIC_BLOCKS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def matched_basic_blocks(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___BasicBlockLayout]: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        matched_basic_blocks: collections.abc.Iterable[global___BasicBlockLayout] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_basic_blocks", b"matched_basic_blocks"]) -> None: ...
+
+global___FunctionLayout = FunctionLayout
+
+@typing_extensions.final
+class FunctionNameFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    FUNCTION_NAME_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    function_name: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        function_name: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "function_name", b"function_name", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___FunctionNameFeature = FunctionNameFeature
+
+@typing_extensions.final
+class ImportFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    IMPORT__FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    import_: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        import_: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "import_", b"import_", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___ImportFeature = ImportFeature
+
+@typing_extensions.final
+class Layout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def __init__(
+        self,
+        *,
+        functions: collections.abc.Iterable[global___FunctionLayout] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["functions", b"functions"]) -> None: ...
+
+global___Layout = Layout
+
+@typing_extensions.final
+class LibraryFunction(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    name: builtins.str
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        name: builtins.str = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "name", b"name"]) -> None: ...
+
+global___LibraryFunction = LibraryFunction
+
+@typing_extensions.final
+class MBCSpec(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PARTS_FIELD_NUMBER: builtins.int
+    OBJECTIVE_FIELD_NUMBER: builtins.int
+    BEHAVIOR_FIELD_NUMBER: builtins.int
+    METHOD_FIELD_NUMBER: builtins.int
+    ID_FIELD_NUMBER: builtins.int
+    @property
+    def parts(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    objective: builtins.str
+    behavior: builtins.str
+    method: builtins.str
+    id: builtins.str
+    def __init__(
+        self,
+        *,
+        parts: collections.abc.Iterable[builtins.str] | None = ...,
+        objective: builtins.str = ...,
+        behavior: builtins.str = ...,
+        method: builtins.str = ...,
+        id: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["behavior", b"behavior", "id", b"id", "method", b"method", "objective", b"objective", "parts", b"parts"]) -> None: ...
+
+global___MBCSpec = MBCSpec
+
+@typing_extensions.final
+class MaecMetadata(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ANALYSIS_CONCLUSION_FIELD_NUMBER: builtins.int
+    ANALYSIS_CONCLUSION_OV_FIELD_NUMBER: builtins.int
+    MALWARE_FAMILY_FIELD_NUMBER: builtins.int
+    MALWARE_CATEGORY_FIELD_NUMBER: builtins.int
+    MALWARE_CATEGORY_OV_FIELD_NUMBER: builtins.int
+    analysis_conclusion: builtins.str
+    analysis_conclusion_ov: builtins.str
+    malware_family: builtins.str
+    malware_category: builtins.str
+    malware_category_ov: builtins.str
+    def __init__(
+        self,
+        *,
+        analysis_conclusion: builtins.str = ...,
+        analysis_conclusion_ov: builtins.str = ...,
+        malware_family: builtins.str = ...,
+        malware_category: builtins.str = ...,
+        malware_category_ov: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis_conclusion", b"analysis_conclusion", "analysis_conclusion_ov", b"analysis_conclusion_ov", "malware_category", b"malware_category", "malware_category_ov", b"malware_category_ov", "malware_family", b"malware_family"]) -> None: ...
+
+global___MaecMetadata = MaecMetadata
+
+@typing_extensions.final
+class Match(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing_extensions.final
+    class CapturesEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        @property
+        def value(self) -> global___Addresses: ...
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: global___Addresses | None = ...,
+        ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["value", b"value"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    SUCCESS_FIELD_NUMBER: builtins.int
+    STATEMENT_FIELD_NUMBER: builtins.int
+    FEATURE_FIELD_NUMBER: builtins.int
+    CHILDREN_FIELD_NUMBER: builtins.int
+    LOCATIONS_FIELD_NUMBER: builtins.int
+    CAPTURES_FIELD_NUMBER: builtins.int
+    success: builtins.bool
+    @property
+    def statement(self) -> global___StatementNode: ...
+    @property
+    def feature(self) -> global___FeatureNode: ...
+    @property
+    def children(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Match]: ...
+    @property
+    def locations(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Address]: ...
+    @property
+    def captures(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___Addresses]: ...
+    def __init__(
+        self,
+        *,
+        success: builtins.bool = ...,
+        statement: global___StatementNode | None = ...,
+        feature: global___FeatureNode | None = ...,
+        children: collections.abc.Iterable[global___Match] | None = ...,
+        locations: collections.abc.Iterable[global___Address] | None = ...,
+        captures: collections.abc.Mapping[builtins.str, global___Addresses] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["feature", b"feature", "node", b"node", "statement", b"statement"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["captures", b"captures", "children", b"children", "feature", b"feature", "locations", b"locations", "node", b"node", "statement", b"statement", "success", b"success"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["node", b"node"]) -> typing_extensions.Literal["statement", "feature"] | None: ...
+
+global___Match = Match
+
+@typing_extensions.final
+class MatchFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    MATCH_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    match: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        match: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "match", b"match", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___MatchFeature = MatchFeature
+
+@typing_extensions.final
+class Metadata(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TIMESTAMP_FIELD_NUMBER: builtins.int
+    VERSION_FIELD_NUMBER: builtins.int
+    ARGV_FIELD_NUMBER: builtins.int
+    SAMPLE_FIELD_NUMBER: builtins.int
+    ANALYSIS_FIELD_NUMBER: builtins.int
+    FLAVOR_FIELD_NUMBER: builtins.int
+    STATIC_ANALYSIS_FIELD_NUMBER: builtins.int
+    DYNAMIC_ANALYSIS_FIELD_NUMBER: builtins.int
+    timestamp: builtins.str
+    """iso8601 format, like: 2019-01-01T00:00:00Z"""
+    version: builtins.str
+    @property
+    def argv(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def sample(self) -> global___Sample: ...
+    @property
+    def analysis(self) -> global___Analysis:
+        """deprecated in v7.0.
+        use analysis2 instead.
+        """
+    flavor: global___Flavor.ValueType
+    @property
+    def static_analysis(self) -> global___StaticAnalysis:
+        """use analysis2 instead of analysis (deprecated in v7.0)."""
+    @property
+    def dynamic_analysis(self) -> global___DynamicAnalysis: ...
+    def __init__(
+        self,
+        *,
+        timestamp: builtins.str = ...,
+        version: builtins.str = ...,
+        argv: collections.abc.Iterable[builtins.str] | None = ...,
+        sample: global___Sample | None = ...,
+        analysis: global___Analysis | None = ...,
+        flavor: global___Flavor.ValueType = ...,
+        static_analysis: global___StaticAnalysis | None = ...,
+        dynamic_analysis: global___DynamicAnalysis | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "analysis2", b"analysis2", "dynamic_analysis", b"dynamic_analysis", "sample", b"sample", "static_analysis", b"static_analysis"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["analysis", b"analysis", "analysis2", b"analysis2", "argv", b"argv", "dynamic_analysis", b"dynamic_analysis", "flavor", b"flavor", "sample", b"sample", "static_analysis", b"static_analysis", "timestamp", b"timestamp", "version", b"version"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["analysis2", b"analysis2"]) -> typing_extensions.Literal["static_analysis", "dynamic_analysis"] | None: ...
+
+global___Metadata = Metadata
+
+@typing_extensions.final
+class MnemonicFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    MNEMONIC_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    mnemonic: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        mnemonic: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "mnemonic", b"mnemonic", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___MnemonicFeature = MnemonicFeature
+
+@typing_extensions.final
+class NamespaceFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    NAMESPACE_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    namespace: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        namespace: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "namespace", b"namespace", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___NamespaceFeature = NamespaceFeature
+
+@typing_extensions.final
+class NumberFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    NUMBER_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    @property
+    def number(self) -> global___Number:
+        """this can be positive (range: u64), negative (range: i64), or a double."""
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        number: global___Number | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "number", b"number"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "number", b"number", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___NumberFeature = NumberFeature
+
+@typing_extensions.final
+class OSFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    os: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        os: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "os", b"os", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___OSFeature = OSFeature
+
+@typing_extensions.final
+class OffsetFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    OFFSET_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    @property
+    def offset(self) -> global___Integer:
+        """offset can be negative"""
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        offset: global___Integer | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "offset", b"offset"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "offset", b"offset", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___OffsetFeature = OffsetFeature
+
+@typing_extensions.final
+class OperandNumberFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    INDEX_FIELD_NUMBER: builtins.int
+    OPERAND_NUMBER_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    index: builtins.int
+    @property
+    def operand_number(self) -> global___Integer:
+        """this can be positive (range: u64), negative (range: i64), or a double."""
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        index: builtins.int = ...,
+        operand_number: global___Integer | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "operand_number", b"operand_number"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_number", b"operand_number", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___OperandNumberFeature = OperandNumberFeature
+
+@typing_extensions.final
+class OperandOffsetFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    INDEX_FIELD_NUMBER: builtins.int
+    OPERAND_OFFSET_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    index: builtins.int
+    @property
+    def operand_offset(self) -> global___Integer: ...
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        index: builtins.int = ...,
+        operand_offset: global___Integer | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "operand_offset", b"operand_offset"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "index", b"index", "operand_offset", b"operand_offset", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___OperandOffsetFeature = OperandOffsetFeature
+
+@typing_extensions.final
+class ProcessFeatureCount(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    COUNT_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    count: builtins.int
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        count: builtins.int = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "count", b"count"]) -> None: ...
+
+global___ProcessFeatureCount = ProcessFeatureCount
+
+@typing_extensions.final
+class ProcessLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCHED_THREADS_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def matched_threads(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ThreadLayout]: ...
+    name: builtins.str
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        matched_threads: collections.abc.Iterable[global___ThreadLayout] | None = ...,
+        name: builtins.str = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_threads", b"matched_threads", "name", b"name"]) -> None: ...
+
+global___ProcessLayout = ProcessLayout
+
+@typing_extensions.final
+class PropertyFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    PROPERTY__FIELD_NUMBER: builtins.int
+    ACCESS_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    property_: builtins.str
+    """property is a Python top-level decorator name"""
+    access: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        property_: builtins.str = ...,
+        access: builtins.str | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_access", b"_access", "_description", b"_description", "access", b"access", "description", b"description", "property_", b"property_", "type", b"type"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_access", b"_access"]) -> typing_extensions.Literal["access"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___PropertyFeature = PropertyFeature
+
+@typing_extensions.final
+class RangeStatement(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    MIN_FIELD_NUMBER: builtins.int
+    MAX_FIELD_NUMBER: builtins.int
+    CHILD_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    min: builtins.int
+    max: builtins.int
+    @property
+    def child(self) -> global___FeatureNode:
+        """reusing FeatureNode here to avoid duplication and list all features OSFeature, ArchFeature, ... again."""
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        min: builtins.int = ...,
+        max: builtins.int = ...,
+        child: global___FeatureNode | None = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "child", b"child", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "child", b"child", "description", b"description", "max", b"max", "min", b"min", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___RangeStatement = RangeStatement
+
+@typing_extensions.final
+class RegexFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    REGEX_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    regex: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        regex: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "regex", b"regex", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___RegexFeature = RegexFeature
+
+@typing_extensions.final
+class ResultDocument(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    @typing_extensions.final
+    class RulesEntry(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        KEY_FIELD_NUMBER: builtins.int
+        VALUE_FIELD_NUMBER: builtins.int
+        key: builtins.str
+        @property
+        def value(self) -> global___RuleMatches: ...
+        def __init__(
+            self,
+            *,
+            key: builtins.str = ...,
+            value: global___RuleMatches | None = ...,
+        ) -> None: ...
+        def HasField(self, field_name: typing_extensions.Literal["value", b"value"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing_extensions.Literal["key", b"key", "value", b"value"]) -> None: ...
+
+    META_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    @property
+    def meta(self) -> global___Metadata: ...
+    @property
+    def rules(self) -> google.protobuf.internal.containers.MessageMap[builtins.str, global___RuleMatches]: ...
+    def __init__(
+        self,
+        *,
+        meta: global___Metadata | None = ...,
+        rules: collections.abc.Mapping[builtins.str, global___RuleMatches] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["meta", b"meta"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["meta", b"meta", "rules", b"rules"]) -> None: ...
+
+global___ResultDocument = ResultDocument
+
+@typing_extensions.final
+class RuleMatches(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    META_FIELD_NUMBER: builtins.int
+    SOURCE_FIELD_NUMBER: builtins.int
+    MATCHES_FIELD_NUMBER: builtins.int
+    @property
+    def meta(self) -> global___RuleMetadata: ...
+    source: builtins.str
+    @property
+    def matches(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Pair_Address_Match]: ...
+    def __init__(
+        self,
+        *,
+        meta: global___RuleMetadata | None = ...,
+        source: builtins.str = ...,
+        matches: collections.abc.Iterable[global___Pair_Address_Match] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["meta", b"meta"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["matches", b"matches", "meta", b"meta", "source", b"source"]) -> None: ...
+
+global___RuleMatches = RuleMatches
+
+@typing_extensions.final
+class RuleMetadata(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    NAME_FIELD_NUMBER: builtins.int
+    NAMESPACE_FIELD_NUMBER: builtins.int
+    AUTHORS_FIELD_NUMBER: builtins.int
+    SCOPE_FIELD_NUMBER: builtins.int
+    ATTACK_FIELD_NUMBER: builtins.int
+    MBC_FIELD_NUMBER: builtins.int
+    REFERENCES_FIELD_NUMBER: builtins.int
+    EXAMPLES_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    LIB_FIELD_NUMBER: builtins.int
+    MAEC_FIELD_NUMBER: builtins.int
+    IS_SUBSCOPE_RULE_FIELD_NUMBER: builtins.int
+    SCOPES_FIELD_NUMBER: builtins.int
+    name: builtins.str
+    namespace: builtins.str
+    @property
+    def authors(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    scope: global___Scope.ValueType
+    """deprecated in v7.0.
+    use scopes instead.
+    """
+    @property
+    def attack(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___AttackSpec]: ...
+    @property
+    def mbc(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___MBCSpec]: ...
+    @property
+    def references(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def examples(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    description: builtins.str
+    lib: builtins.bool
+    @property
+    def maec(self) -> global___MaecMetadata: ...
+    is_subscope_rule: builtins.bool
+    @property
+    def scopes(self) -> global___Scopes:
+        """use scopes over scope (deprecated in v7.0)."""
+    def __init__(
+        self,
+        *,
+        name: builtins.str = ...,
+        namespace: builtins.str = ...,
+        authors: collections.abc.Iterable[builtins.str] | None = ...,
+        scope: global___Scope.ValueType = ...,
+        attack: collections.abc.Iterable[global___AttackSpec] | None = ...,
+        mbc: collections.abc.Iterable[global___MBCSpec] | None = ...,
+        references: collections.abc.Iterable[builtins.str] | None = ...,
+        examples: collections.abc.Iterable[builtins.str] | None = ...,
+        description: builtins.str = ...,
+        lib: builtins.bool = ...,
+        maec: global___MaecMetadata | None = ...,
+        is_subscope_rule: builtins.bool = ...,
+        scopes: global___Scopes | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["maec", b"maec", "scopes", b"scopes"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["attack", b"attack", "authors", b"authors", "description", b"description", "examples", b"examples", "is_subscope_rule", b"is_subscope_rule", "lib", b"lib", "maec", b"maec", "mbc", b"mbc", "name", b"name", "namespace", b"namespace", "references", b"references", "scope", b"scope", "scopes", b"scopes"]) -> None: ...
+
+global___RuleMetadata = RuleMetadata
+
+@typing_extensions.final
+class Sample(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    MD5_FIELD_NUMBER: builtins.int
+    SHA1_FIELD_NUMBER: builtins.int
+    SHA256_FIELD_NUMBER: builtins.int
+    PATH_FIELD_NUMBER: builtins.int
+    md5: builtins.str
+    sha1: builtins.str
+    sha256: builtins.str
+    path: builtins.str
+    def __init__(
+        self,
+        *,
+        md5: builtins.str = ...,
+        sha1: builtins.str = ...,
+        sha256: builtins.str = ...,
+        path: builtins.str = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["md5", b"md5", "path", b"path", "sha1", b"sha1", "sha256", b"sha256"]) -> None: ...
+
+global___Sample = Sample
+
+@typing_extensions.final
+class Scopes(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    STATIC_FIELD_NUMBER: builtins.int
+    DYNAMIC_FIELD_NUMBER: builtins.int
+    static: global___Scope.ValueType
+    dynamic: global___Scope.ValueType
+    def __init__(
+        self,
+        *,
+        static: global___Scope.ValueType | None = ...,
+        dynamic: global___Scope.ValueType | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_dynamic", b"_dynamic", "_static", b"_static", "dynamic", b"dynamic", "static", b"static"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_dynamic", b"_dynamic"]) -> typing_extensions.Literal["dynamic"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_static", b"_static"]) -> typing_extensions.Literal["static"] | None: ...
+
+global___Scopes = Scopes
+
+@typing_extensions.final
+class SectionFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    SECTION_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    section: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        section: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "section", b"section", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___SectionFeature = SectionFeature
+
+@typing_extensions.final
+class SomeStatement(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    COUNT_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    count: builtins.int
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        count: builtins.int = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "count", b"count", "description", b"description", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___SomeStatement = SomeStatement
+
+@typing_extensions.final
+class StatementNode(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    RANGE_FIELD_NUMBER: builtins.int
+    SOME_FIELD_NUMBER: builtins.int
+    SUBSCOPE_FIELD_NUMBER: builtins.int
+    COMPOUND_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    @property
+    def range(self) -> global___RangeStatement: ...
+    @property
+    def some(self) -> global___SomeStatement: ...
+    @property
+    def subscope(self) -> global___SubscopeStatement: ...
+    @property
+    def compound(self) -> global___CompoundStatement: ...
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        range: global___RangeStatement | None = ...,
+        some: global___SomeStatement | None = ...,
+        subscope: global___SubscopeStatement | None = ...,
+        compound: global___CompoundStatement | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["compound", b"compound", "range", b"range", "some", b"some", "statement", b"statement", "subscope", b"subscope", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["statement", b"statement"]) -> typing_extensions.Literal["range", "some", "subscope", "compound"] | None: ...
+
+global___StatementNode = StatementNode
+
+@typing_extensions.final
+class StaticAnalysis(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FORMAT_FIELD_NUMBER: builtins.int
+    ARCH_FIELD_NUMBER: builtins.int
+    OS_FIELD_NUMBER: builtins.int
+    EXTRACTOR_FIELD_NUMBER: builtins.int
+    RULES_FIELD_NUMBER: builtins.int
+    BASE_ADDRESS_FIELD_NUMBER: builtins.int
+    LAYOUT_FIELD_NUMBER: builtins.int
+    FEATURE_COUNTS_FIELD_NUMBER: builtins.int
+    LIBRARY_FUNCTIONS_FIELD_NUMBER: builtins.int
+    format: builtins.str
+    arch: builtins.str
+    os: builtins.str
+    extractor: builtins.str
+    @property
+    def rules(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]: ...
+    @property
+    def base_address(self) -> global___Address: ...
+    @property
+    def layout(self) -> global___StaticLayout: ...
+    @property
+    def feature_counts(self) -> global___StaticFeatureCounts: ...
+    @property
+    def library_functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___LibraryFunction]: ...
+    def __init__(
+        self,
+        *,
+        format: builtins.str = ...,
+        arch: builtins.str = ...,
+        os: builtins.str = ...,
+        extractor: builtins.str = ...,
+        rules: collections.abc.Iterable[builtins.str] | None = ...,
+        base_address: global___Address | None = ...,
+        layout: global___StaticLayout | None = ...,
+        feature_counts: global___StaticFeatureCounts | None = ...,
+        library_functions: collections.abc.Iterable[global___LibraryFunction] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["base_address", b"base_address", "feature_counts", b"feature_counts", "layout", b"layout"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["arch", b"arch", "base_address", b"base_address", "extractor", b"extractor", "feature_counts", b"feature_counts", "format", b"format", "layout", b"layout", "library_functions", b"library_functions", "os", b"os", "rules", b"rules"]) -> None: ...
+
+global___StaticAnalysis = StaticAnalysis
+
+@typing_extensions.final
+class StaticFeatureCounts(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FILE_FIELD_NUMBER: builtins.int
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    file: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionFeatureCount]: ...
+    def __init__(
+        self,
+        *,
+        file: builtins.int = ...,
+        functions: collections.abc.Iterable[global___FunctionFeatureCount] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["file", b"file", "functions", b"functions"]) -> None: ...
+
+global___StaticFeatureCounts = StaticFeatureCounts
+
+@typing_extensions.final
+class StaticLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FUNCTIONS_FIELD_NUMBER: builtins.int
+    @property
+    def functions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FunctionLayout]: ...
+    def __init__(
+        self,
+        *,
+        functions: collections.abc.Iterable[global___FunctionLayout] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["functions", b"functions"]) -> None: ...
+
+global___StaticLayout = StaticLayout
+
+@typing_extensions.final
+class StringFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    STRING_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    string: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        string: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "string", b"string", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___StringFeature = StringFeature
+
+@typing_extensions.final
+class SubscopeStatement(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    SCOPE_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    scope: global___Scope.ValueType
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        scope: global___Scope.ValueType = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "scope", b"scope", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___SubscopeStatement = SubscopeStatement
+
+@typing_extensions.final
+class SubstringFeature(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TYPE_FIELD_NUMBER: builtins.int
+    SUBSTRING_FIELD_NUMBER: builtins.int
+    DESCRIPTION_FIELD_NUMBER: builtins.int
+    type: builtins.str
+    substring: builtins.str
+    description: builtins.str
+    def __init__(
+        self,
+        *,
+        type: builtins.str = ...,
+        substring: builtins.str = ...,
+        description: builtins.str | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["_description", b"_description", "description", b"description", "substring", b"substring", "type", b"type"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["_description", b"_description"]) -> typing_extensions.Literal["description"] | None: ...
+
+global___SubstringFeature = SubstringFeature
+
+@typing_extensions.final
+class CallLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    NAME_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    name: builtins.str
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        name: builtins.str = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "name", b"name"]) -> None: ...
+
+global___CallLayout = CallLayout
+
+@typing_extensions.final
+class ThreadLayout(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCHED_CALLS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def matched_calls(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CallLayout]: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        matched_calls: collections.abc.Iterable[global___CallLayout] | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "matched_calls", b"matched_calls"]) -> None: ...
+
+global___ThreadLayout = ThreadLayout
+
+@typing_extensions.final
+class Addresses(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Address]: ...
+    def __init__(
+        self,
+        *,
+        address: collections.abc.Iterable[global___Address] | None = ...,
+    ) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address"]) -> None: ...
+
+global___Addresses = Addresses
+
+@typing_extensions.final
+class Pair_Address_Match(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    ADDRESS_FIELD_NUMBER: builtins.int
+    MATCH_FIELD_NUMBER: builtins.int
+    @property
+    def address(self) -> global___Address: ...
+    @property
+    def match(self) -> global___Match: ...
+    def __init__(
+        self,
+        *,
+        address: global___Address | None = ...,
+        match: global___Match | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["address", b"address", "match", b"match"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["address", b"address", "match", b"match"]) -> None: ...
+
+global___Pair_Address_Match = Pair_Address_Match
+
+@typing_extensions.final
+class Token_Offset(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    TOKEN_FIELD_NUMBER: builtins.int
+    OFFSET_FIELD_NUMBER: builtins.int
+    @property
+    def token(self) -> global___Integer: ...
+    offset: builtins.int
+    """offset is always >= 0"""
+    def __init__(
+        self,
+        *,
+        token: global___Integer | None = ...,
+        offset: builtins.int = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["token", b"token"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["offset", b"offset", "token", b"token"]) -> None: ...
+
+global___Token_Offset = Token_Offset
+
+@typing_extensions.final
+class Ppid_Pid(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid"]) -> None: ...
+
+global___Ppid_Pid = Ppid_Pid
+
+@typing_extensions.final
+class Ppid_Pid_Tid(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    TID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    @property
+    def tid(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+        tid: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+
+global___Ppid_Pid_Tid = Ppid_Pid_Tid
+
+@typing_extensions.final
+class Ppid_Pid_Tid_Id(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    PPID_FIELD_NUMBER: builtins.int
+    PID_FIELD_NUMBER: builtins.int
+    TID_FIELD_NUMBER: builtins.int
+    ID_FIELD_NUMBER: builtins.int
+    @property
+    def ppid(self) -> global___Integer: ...
+    @property
+    def pid(self) -> global___Integer: ...
+    @property
+    def tid(self) -> global___Integer: ...
+    @property
+    def id(self) -> global___Integer: ...
+    def __init__(
+        self,
+        *,
+        ppid: global___Integer | None = ...,
+        pid: global___Integer | None = ...,
+        tid: global___Integer | None = ...,
+        id: global___Integer | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["id", b"id", "pid", b"pid", "ppid", b"ppid", "tid", b"tid"]) -> None: ...
+
+global___Ppid_Pid_Tid_Id = Ppid_Pid_Tid_Id
+
+@typing_extensions.final
+class Integer(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    U_FIELD_NUMBER: builtins.int
+    I_FIELD_NUMBER: builtins.int
+    u: builtins.int
+    i: builtins.int
+    def __init__(
+        self,
+        *,
+        u: builtins.int = ...,
+        i: builtins.int = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["i", b"i", "u", b"u", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["u", "i"] | None: ...
+
+global___Integer = Integer
+
+@typing_extensions.final
+class Number(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    U_FIELD_NUMBER: builtins.int
+    I_FIELD_NUMBER: builtins.int
+    F_FIELD_NUMBER: builtins.int
+    u: builtins.int
+    i: builtins.int
+    f: builtins.float
+    def __init__(
+        self,
+        *,
+        u: builtins.int = ...,
+        i: builtins.int = ...,
+        f: builtins.float = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["f", b"f", "i", b"i", "u", b"u", "value", b"value"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["value", b"value"]) -> typing_extensions.Literal["u", "i", "f"] | None: ...
+
+global___Number = Number
