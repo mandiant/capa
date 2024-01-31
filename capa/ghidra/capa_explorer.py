@@ -23,6 +23,7 @@ import capa.main
 import capa.rules
 import capa.render.json
 import capa.ghidra.helpers
+import capa.capabilities.common
 import capa.features.extractors.ghidra.extractor
 
 logger = logging.getLogger("capa_explorer")
@@ -233,13 +234,13 @@ def get_capabilities():
     rules_path: pathlib.Path = pathlib.Path(rules_dir)
     logger.info("running capa using rules from %s", str(rules_path))
 
-    rules = capa.main.get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, True)
 
-    if capa.main.has_file_limitation(rules, capabilities, is_standalone=False):
+    if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=False):
         popup("capa explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 
