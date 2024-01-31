@@ -104,10 +104,10 @@ class BinExport2Index:
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
             for basic_block_index in flow_graph.basic_block_index:
                 basic_block = self.be2.basic_block[basic_block_index]
-                for instruction_index in self.instruction_indices(basic_block):
-                    basic_block_address = self.instruction_address_by_index[instruction_index]
-                    self.basic_block_index_by_address[basic_block_address] = basic_block_index
-                    self.basic_block_address_by_index[basic_block_index] = basic_block_address
+                first_instruction_index = next(self.instruction_indices(basic_block))
+                basic_block_address = self.instruction_address_by_index[first_instruction_index]
+                self.basic_block_index_by_address[basic_block_address] = basic_block_index
+                self.basic_block_address_by_index[basic_block_index] = basic_block_address
 
             entry_basic_block = self.be2.basic_block[flow_graph.entry_basic_block_index]
             entry_instruction_index = next(self.instruction_indices(entry_basic_block))
