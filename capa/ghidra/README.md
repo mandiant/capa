@@ -79,7 +79,7 @@ To execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/mast
 1. `<ghidra_project_path>`: path to Ghidra project
 2. `<ghidra_project_name>`: name of Ghidra Project
 3. `-process <sample_name>`: name of sample `<sample_name>`
-4. `-ScriptPath <capa_ghidra_path>`: OPTIONAL argument specifying path absolute path of [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py)
+4. `-ScriptPath <capa_ghidra_path>`: OPTIONAL argument specifying the absolute path of [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py)
 5. `-PostScript capa_ghidra.py`: execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) as post-analysis script
 6. `"<capa_args>"`: single, quoted string containing capa arguments that must specify capa rules directory and output format, e.g. `"<capa_rules_path> --verbose"`. [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) supports `default`, `verbose`, `vverbose` and `json` formats when executed using the Ghidra Headless Analyzer. [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) writes output to the console window used to execute the Ghidra `analyzeHeadless` script.
 
