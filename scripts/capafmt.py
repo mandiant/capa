@@ -14,11 +14,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+
 import sys
 import logging
 import argparse
 from pathlib import Path
 
+import capa.main
 import capa.rules
 
 logger = logging.getLogger("capafmt")
@@ -29,6 +31,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Capa rule formatter.")
+    capa.main.install_common_args(parser)
     parser.add_argument("path", type=str, help="Path to rule to format")
     parser.add_argument(
         "-i",
@@ -37,8 +40,6 @@ def main(argv=None):
         dest="in_place",
         help="Format the rule in place, otherwise, write formatted rule to STDOUT",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
-    parser.add_argument("-q", "--quiet", action="store_true", help="Disable all output but errors")
     parser.add_argument(
         "-c",
         "--check",
@@ -47,15 +48,10 @@ def main(argv=None):
     )
     args = parser.parse_args(args=argv)
 
-    if args.verbose:
-        level = logging.DEBUG
-    elif args.quiet:
-        level = logging.ERROR
-    else:
-        level = logging.INFO
-
-    logging.basicConfig(level=level)
-    logging.getLogger("capafmt").setLevel(level)
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     rule = capa.rules.Rule.from_yaml_file(args.path, use_ruamel=True)
     reformatted_rule = rule.to_yaml()

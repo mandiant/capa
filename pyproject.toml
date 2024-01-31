@@ -36,8 +36,8 @@ dependencies = [
     "pyyaml==6.0.1",
     "tabulate==0.9.0",
     "colorama==0.4.6",
-    "termcolor==2.3.0",
-    "wcwidth==0.2.12",
+    "termcolor==2.4.0",
+    "wcwidth==0.2.13",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
     "halo==0.0.31",
@@ -49,25 +49,26 @@ dependencies = [
     "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.5.2",
-    "protobuf==4.23.4",
+    "protobuf==4.25.1",
 ]
 dynamic = ["version"]
 
 [tool.setuptools.dynamic]
 version = {attr = "capa.version.__version__"}
 
-[tool.setuptools]
-packages = ["capa"]
+[tool.setuptools.packages.find]
+include = ["capa*"]
+namespaces = false
 
 [project.optional-dependencies]
 dev = [
     "pre-commit==3.5.0",
-    "pytest==7.4.3",
+    "pytest==8.0.0",
     "pytest-sugar==0.9.7",
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
-    "flake8==6.1.0",
-    "flake8-bugbear==23.11.26",
+    "flake8==7.0.0",
+    "flake8-bugbear==24.1.17",
     "flake8-encodings==0.5.1",
     "flake8-comprehensions==3.14.0",
     "flake8-logging-format==0.9.0",
@@ -78,10 +79,10 @@ dev = [
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "isort==5.12.0",
-    "ruff==0.1.6",
-    "black==23.11.0",
-    "isort==5.11.4",
-    "mypy==1.7.1",
+    "ruff==0.1.14",
+    "black==24.1.1",
+    "isort==5.13.2",
+    "mypy==1.8.0",
     "psutil==5.9.2",
     "stix2==3.0.1",
     "requests==2.31.0",
@@ -91,13 +92,14 @@ dev = [
     "types-colorama==0.4.15.12",
     "types-PyYAML==6.0.12.11",
     "types-tabulate==0.9.0.3",
-    "types-termcolor==1.1.4",
-    "types-psutil==5.8.23",
+    "types-termcolor==1.1.6.2",
+    "types-psutil==5.9.5.17",
     "types-protobuf==4.24.0.1",
+    "types_requests==2.31.0.20240125",
 ]
 build = [
-    "pyinstaller==6.2.0",
-    "setuptools==69.0.2",
+    "pyinstaller==6.3.0",
+    "setuptools==69.0.3",
     "build==1.0.3"
 ]
 

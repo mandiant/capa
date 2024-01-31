@@ -9,6 +9,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+
 import json
 import zlib
 import logging
@@ -21,6 +22,7 @@ from pydantic import Field, BaseModel, ConfigDict
 # https://github.com/mandiant/capa/issues/1699
 from typing_extensions import TypeAlias
 
+import capa.loader
 import capa.helpers
 import capa.version
 import capa.features.file
@@ -681,14 +683,18 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="save capa features to a file")
-    capa.main.install_common_args(parser, {"sample", "format", "backend", "os", "signatures"})
+    capa.main.install_common_args(parser, {"input_file", "format", "backend", "os", "signatures"})
     parser.add_argument("output", type=str, help="Path to output file")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
-    sigpaths = capa.main.get_signatures(args.signatures)
-
-    extractor = capa.main.get_extractor(args.sample, args.format, args.os, args.backend, sigpaths, False)
+    try:
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
+        input_format = capa.main.get_input_format_from_cli(args)
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     Path(args.output).write_bytes(dump(extractor))
 

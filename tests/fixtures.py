@@ -106,11 +106,11 @@ def get_viv_extractor(path: Path):
     ]
 
     if "raw32" in path.name:
-        vw = capa.main.get_workspace(path, "sc32", sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, "sc32", sigpaths=sigpaths)
     elif "raw64" in path.name:
-        vw = capa.main.get_workspace(path, "sc64", sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, "sc64", sigpaths=sigpaths)
     else:
-        vw = capa.main.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
+        vw = capa.loader.get_workspace(path, FORMAT_AUTO, sigpaths=sigpaths)
     vw.saveWorkspace()
     extractor = capa.features.extractors.viv.extractor.VivisectFeatureExtractor(vw, path, OS_AUTO)
     fixup_viv(path, extractor)
@@ -141,10 +141,11 @@ def get_pefile_extractor(path: Path):
     return extractor
 
 
-def get_dotnetfile_extractor(path: Path):
-    import capa.features.extractors.dotnetfile
+@lru_cache(maxsize=1)
+def get_dnfile_extractor(path: Path):
+    import capa.features.extractors.dnfile.extractor
 
-    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
+    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -153,10 +154,10 @@ def get_dotnetfile_extractor(path: Path):
 
 
 @lru_cache(maxsize=1)
-def get_dnfile_extractor(path: Path):
-    import capa.features.extractors.dnfile.extractor
+def get_dotnetfile_extractor(path: Path):
+    import capa.features.extractors.dotnetfile
 
-    extractor = capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
+    extractor = capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(path)
 
     # overload the extractor so that the fixture exposes `extractor.path`
     setattr(extractor, "path", path.as_posix())
@@ -392,6 +393,10 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
     elif name.startswith("1038a2"):
         return CD / "data" / "1038a23daad86042c66bfe6c9d052d27048de9653bde5750dc0f240c792d9ac8.elf_"
+    elif name.startswith("nested_typedef"):
+        return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
+    elif name.startswith("nested_typeref"):
+        return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
@@ -1271,6 +1276,114 @@ FEATURE_PRESENCE_TESTS_DOTNET = sorted(
             capa.features.insn.Property(
                 "System.Runtime.CompilerServices.AsyncTaskMethodBuilder::Task", access=FeatureAccess.READ
             ),  # MemberRef method
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer0/myclass_inner0_1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_1"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("mynamespace.myclass_outer1/myclass_inner1_0/myclass_inner_inner"),
+            True,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner_inner"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner1_0"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner1_1"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner0_0"),
+            False,
+        ),
+        (
+            "nested_typedef",
+            "file",
+            capa.features.common.Class("myclass_inner0_1"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.OS.Build/VERSION::SdkInt"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.Media.Image/Plane::Buffer"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.Provider.Telephony/Sent/Sent::ContentUri"),
+            True,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Android.OS.Build::SdkInt"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Plane::Buffer"),
+            False,
+        ),
+        (
+            "nested_typeref",
+            "file",
+            capa.features.file.Import("Sent::ContentUri"),
             False,
         ),
     ],

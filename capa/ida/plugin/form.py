@@ -636,7 +636,7 @@ class CapaExplorerForm(idaapi.PluginForm):
                 if ida_kernwin.user_cancelled():
                     raise UserCancelledError("user cancelled")
 
-            return capa.main.get_rules([rule_path], on_load_rule=on_load_rule)
+            return capa.rules.get_rules([rule_path], on_load_rule=on_load_rule)
         except UserCancelledError:
             logger.info("User cancelled analysis.")
             return None
@@ -775,7 +775,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
                     meta.analysis.feature_counts = counts["feature_counts"]
                     meta.analysis.library_functions = counts["library_functions"]
-                    meta.analysis.layout = capa.main.compute_layout(ruleset, self.feature_extractor, capabilities)
+                    meta.analysis.layout = capa.loader.compute_layout(ruleset, self.feature_extractor, capabilities)
                 except UserCancelledError:
                     logger.info("User cancelled analysis.")
                     return False
@@ -932,9 +932,9 @@ class CapaExplorerForm(idaapi.PluginForm):
                     update_wait_box("verifying cached results")
 
                     try:
-                        results: Optional[
-                            capa.render.result_document.ResultDocument
-                        ] = capa.ida.helpers.load_and_verify_cached_results()
+                        results: Optional[capa.render.result_document.ResultDocument] = (
+                            capa.ida.helpers.load_and_verify_cached_results()
+                        )
                     except Exception as e:
                         capa.ida.helpers.inform_user_ida_ui("Failed to verify cached results, reanalyzing program")
                         logger.exception("Failed to verify cached results (error: %s)", e)
@@ -1073,9 +1073,7 @@ class CapaExplorerForm(idaapi.PluginForm):
 
             self.view_rulegen_features.load_features(all_file_features, all_function_features)
 
-            self.set_view_status_label(
-                f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]} ({settings.user[CAPA_SETTINGS_RULE_PATH]} rules)"
-            )
+            self.set_view_status_label(f"capa rules: {settings.user[CAPA_SETTINGS_RULE_PATH]}")
         except Exception as e:
             logger.exception("Failed to render views (error: %s)", e)
             return False
@@ -1324,10 +1322,17 @@ class CapaExplorerForm(idaapi.PluginForm):
             idaapi.info("No rule to save.")
             return
 
-        path = Path(self.ask_user_capa_rule_file())
-        if not path.exists():
+        rule_file_path = self.ask_user_capa_rule_file()
+        if not rule_file_path:
+            # dialog canceled
             return
 
+        path = Path(rule_file_path)
+        if not path.parent.exists():
+            logger.warning("Failed to save file: parent directory '%s' does not exist.", path.parent)
+            return
+
+        logger.info("Saving rule to %s.", path)
         write_file(path, s)
 
     def slot_checkbox_limit_by_changed(self, state):

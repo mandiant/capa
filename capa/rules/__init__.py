@@ -7,9 +7,8 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import io
+import os
 import re
-import gzip
-import json
 import uuid
 import codecs
 import logging
@@ -27,7 +26,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Iterator, Optional
+from typing import Any, Set, Dict, List, Tuple, Union, Callable, Iterator, Optional
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -39,11 +38,13 @@ import capa.perf
 import capa.engine as ceng
 import capa.features
 import capa.optimizer
+import capa.features.com
 import capa.features.file
 import capa.features.insn
 import capa.features.common
 import capa.features.basicblock
 from capa.engine import Statement, FeatureSet
+from capa.features.com import ComType
 from capa.features.common import MAX_BYTES_FEATURE_SIZE, Feature
 from capa.features.address import Address
 
@@ -328,42 +329,16 @@ def ensure_feature_valid_for_scopes(scopes: Scopes, feature: Union[Feature, Stat
             raise InvalidRule(f"feature {feature} not supported for scopes {scopes}")
 
 
-class ComType(Enum):
-    CLASS = "class"
-    INTERFACE = "interface"
-
-
-# COM data source https://github.com/stevemk14ebr/COM-Code-Helper/tree/master
-VALID_COM_TYPES = {
-    ComType.CLASS: {"db_path": "assets/classes.json.gz", "prefix": "CLSID_"},
-    ComType.INTERFACE: {"db_path": "assets/interfaces.json.gz", "prefix": "IID_"},
-}
-
-
-@lru_cache(maxsize=None)
-def load_com_database(com_type: ComType) -> Dict[str, List[str]]:
-    com_db_path: Path = capa.main.get_default_root() / VALID_COM_TYPES[com_type]["db_path"]
-
-    if not com_db_path.exists():
-        raise IOError(f"COM database path '{com_db_path}' does not exist or cannot be accessed")
-
-    try:
-        with gzip.open(com_db_path, "rb") as gzfile:
-            return json.loads(gzfile.read().decode("utf-8"))
-    except Exception as e:
-        raise IOError(f"Error loading COM database from '{com_db_path}'") from e
-
-
-def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Or:
-    com_db = load_com_database(com_type)
-    guid_strings: Optional[List[str]] = com_db.get(com_name)
-    if guid_strings is None or len(guid_strings) == 0:
+def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Statement:
+    com_db = capa.features.com.load_com_database(com_type)
+    guids: Optional[List[str]] = com_db.get(com_name)
+    if not guids:
         logger.error(" %s doesn't exist in COM %s database", com_name, com_type)
         raise InvalidRule(f"'{com_name}' doesn't exist in COM {com_type} database")
 
-    com_features: List = []
-    for guid_string in guid_strings:
-        hex_chars = guid_string.replace("-", "")
+    com_features: List[Feature] = []
+    for guid in guids:
+        hex_chars = guid.replace("-", "")
         h = [hex_chars[i : i + 2] for i in range(0, len(hex_chars), 2)]
         reordered_hex_pairs = [
             h[3],
@@ -384,9 +359,10 @@ def translate_com_feature(com_name: str, com_type: ComType) -> ceng.Or:
             h[15],
         ]
         guid_bytes = bytes.fromhex("".join(reordered_hex_pairs))
-        prefix = VALID_COM_TYPES[com_type]["prefix"]
-        com_features.append(capa.features.common.StringFactory(guid_string, f"{prefix+com_name} as GUID string"))
-        com_features.append(capa.features.common.Bytes(guid_bytes, f"{prefix+com_name} as bytes"))
+        prefix = capa.features.com.COM_PREFIXES[com_type]
+        symbol = prefix + com_name
+        com_features.append(capa.features.common.String(guid, f"{symbol} as GUID string"))
+        com_features.append(capa.features.common.Bytes(guid_bytes, f"{symbol} as bytes"))
     return ceng.Or(com_features)
 
 
@@ -596,9 +572,15 @@ def pop_statement_description_entry(d):
 
 
 def trim_dll_part(api: str) -> str:
+    # ordinal imports, like ws2_32.#1, keep dll
+    if ".#" in api:
+        return api
+
     # kernel32.CreateFileA
     if api.count(".") == 1:
-        api = api.split(".")[1]
+        if "::" not in api:
+            # skip System.Convert::FromBase64String
+            api = api.split(".")[1]
     return api
 
 
@@ -818,11 +800,13 @@ def build_statements(d, scopes: Scopes):
         return feature
 
     elif key.startswith("com/"):
-        com_type = str(key[len("com/") :]).upper()
-        if com_type not in [item.name for item in ComType]:
-            raise InvalidRule(f"unexpected COM type: {com_type}")
+        com_type_name = str(key[len("com/") :])
+        try:
+            com_type = ComType(com_type_name)
+        except ValueError:
+            raise InvalidRule(f"unexpected COM type: {com_type_name}")
         value, description = parse_description(d[key], key, d.get("description"))
-        return translate_com_feature(value, ComType[com_type])
+        return translate_com_feature(value, com_type)
 
     else:
         Feature = parse_feature(key)
@@ -1708,3 +1692,105 @@ class RuleSet:
         matches.update(hard_matches)
 
         return (features3, matches)
+
+
+def is_nursery_rule_path(path: Path) -> bool:
+    """
+    The nursery is a spot for rules that have not yet been fully polished.
+    For example, they may not have references to public example of a technique.
+    Yet, we still want to capture and report on their matches.
+    The nursery is currently a subdirectory of the rules directory with that name.
+
+    When nursery rules are loaded, their metadata section should be updated with:
+      `nursery=True`.
+    """
+    return "nursery" in path.parts
+
+
+def collect_rule_file_paths(rule_paths: List[Path]) -> List[Path]:
+    """
+    collect all rule file paths, including those in subdirectories.
+    """
+    rule_file_paths = []
+    for rule_path in rule_paths:
+        if not rule_path.exists():
+            raise IOError(f"rule path {rule_path} does not exist or cannot be accessed")
+
+        if rule_path.is_file():
+            rule_file_paths.append(rule_path)
+        elif rule_path.is_dir():
+            logger.debug("reading rules from directory %s", rule_path)
+            for root, _, files in os.walk(rule_path):
+                if ".git" in root:
+                    # the .github directory contains CI config in capa-rules
+                    # this includes some .yml files
+                    # these are not rules
+                    # additionally, .git has files that are not .yml and generate the warning
+                    # skip those too
+                    continue
+                for file in files:
+                    if not file.endswith(".yml"):
+                        if not (file.startswith(".git") or file.endswith((".git", ".md", ".txt"))):
+                            # expect to see .git* files, readme.md, format.md, and maybe a .git directory
+                            # other things maybe are rules, but are mis-named.
+                            logger.warning("skipping non-.yml file: %s", file)
+                        continue
+                    rule_file_paths.append(Path(root) / file)
+    return rule_file_paths
+
+
+# TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
+RulePath = Path
+
+
+def on_load_rule_default(_path: RulePath, i: int, _total: int) -> None:
+    return
+
+
+def get_rules(
+    rule_paths: List[RulePath],
+    cache_dir=None,
+    on_load_rule: Callable[[RulePath, int, int], None] = on_load_rule_default,
+) -> RuleSet:
+    """
+    args:
+      rule_paths: list of paths to rules files or directories containing rules files
+      cache_dir: directory to use for caching rules, or will use the default detected cache directory if None
+      on_load_rule: callback to invoke before a rule is loaded, use for progress or cancellation
+    """
+    if cache_dir is None:
+        cache_dir = capa.rules.cache.get_default_cache_directory()
+    # rule_paths may contain directory paths,
+    # so search for file paths recursively.
+    rule_file_paths = collect_rule_file_paths(rule_paths)
+
+    # this list is parallel to `rule_file_paths`:
+    # rule_file_paths[i] corresponds to rule_contents[i].
+    rule_contents = [file_path.read_bytes() for file_path in rule_file_paths]
+
+    ruleset = capa.rules.cache.load_cached_ruleset(cache_dir, rule_contents)
+    if ruleset is not None:
+        return ruleset
+
+    rules: List[Rule] = []
+
+    total_rule_count = len(rule_file_paths)
+    for i, (path, content) in enumerate(zip(rule_file_paths, rule_contents)):
+        on_load_rule(path, i, total_rule_count)
+
+        try:
+            rule = capa.rules.Rule.from_yaml(content.decode("utf-8"))
+        except capa.rules.InvalidRule:
+            raise
+        else:
+            rule.meta["capa/path"] = path.as_posix()
+            rule.meta["capa/nursery"] = is_nursery_rule_path(path)
+
+            rules.append(rule)
+            logger.debug("loaded rule: '%s' with scope: %s", rule.name, rule.scopes)
+
+    ruleset = capa.rules.RuleSet(rules)
+
+    capa.rules.cache.cache_ruleset(cache_dir, ruleset)
+
+    return ruleset

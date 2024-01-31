@@ -45,7 +45,7 @@ MATCH_RESULT = b'{"meta":'
 MATCH_JSON_OBJECT = b'{"'
 
 
-def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
+def extract_file_strings(buf: bytes, **kwargs) -> Iterator[Tuple[String, Address]]:
     """
     extract ASCII and UTF-16 LE strings from file
     """
@@ -56,7 +56,7 @@ def extract_file_strings(buf, **kwargs) -> Iterator[Tuple[String, Address]]:
         yield String(s.s), FileOffsetAddress(s.offset)
 
 
-def extract_format(buf) -> Iterator[Tuple[Feature, Address]]:
+def extract_format(buf: bytes) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(MATCH_PE):
         yield Format(FORMAT_PE), NO_ADDRESS
     elif buf.startswith(MATCH_ELF):

@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import json
 import inspect
 import logging
@@ -16,12 +17,22 @@ from pathlib import Path
 import tqdm
 
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import FORMAT_PE, FORMAT_CAPE, FORMAT_SC32, FORMAT_SC64, FORMAT_DOTNET, FORMAT_UNKNOWN, Format
+from capa.features.common import (
+    FORMAT_PE,
+    FORMAT_CAPE,
+    FORMAT_SC32,
+    FORMAT_SC64,
+    FORMAT_DOTNET,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+    Format,
+)
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
 EXTENSIONS_DYNAMIC = ("json", "json_")
 EXTENSIONS_ELF = "elf_"
+EXTENSIONS_FREEZE = "frz"
 
 logger = logging.getLogger("capa")
 
@@ -81,6 +92,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = FORMAT_SC64
     elif sample.name.endswith(EXTENSIONS_DYNAMIC):
         format_ = get_format_from_report(sample)
+    elif sample.name.endswith(EXTENSIONS_FREEZE):
+        format_ = FORMAT_FREEZE
     return format_
 
 
@@ -96,13 +109,13 @@ def get_auto_format(path: Path) -> str:
 def get_format(sample: Path) -> str:
     # imported locally to avoid import cycle
     from capa.features.extractors.common import extract_format
-    from capa.features.extractors.dnfile_ import DnfileFeatureExtractor
+    from capa.features.extractors.dotnetfile import DotnetFileFeatureExtractor
 
     buf = sample.read_bytes()
 
     for feature, _ in extract_format(buf):
         if feature == Format(FORMAT_PE):
-            dnfile_extractor = DnfileFeatureExtractor(sample)
+            dnfile_extractor = DotnetFileFeatureExtractor(sample)
             if dnfile_extractor.is_dotnet_file():
                 feature = Format(FORMAT_DOTNET)
 
@@ -156,7 +169,7 @@ def log_unsupported_format_error():
 
 def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
-    logger.error("Input file is not a valid CAPE report: %s", error)
+    logger.error(" Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
     logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
     logger.error(
@@ -201,3 +214,16 @@ def log_unsupported_runtime_error():
         " If you're seeing this message on the command line, please ensure you're running a supported Python version."
     )
     logger.error("-" * 80)
+
+
+def is_running_standalone() -> bool:
+    """
+    are we running from a PyInstaller'd executable?
+    if so, then we'll be able to access `sys._MEIPASS` for the packaged resources.
+    """
+    # typically we only expect capa.main to be packaged via PyInstaller.
+    # therefore, this *should* be in capa.main; however,
+    # the Binary Ninja extractor uses this to resolve the BN API code,
+    # so we keep this in a common area.
+    # generally, other library code should not use this function.
+    return hasattr(sys, "frozen") and hasattr(sys, "_MEIPASS")

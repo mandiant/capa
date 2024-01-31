@@ -48,7 +48,7 @@ def find_overlapping_rules(new_rule_path, rules_path):
     overlapping_rules = []
 
     # capa.rules.RuleSet stores all rules in given paths
-    ruleset = capa.main.get_rules(rules_path)
+    ruleset = capa.rules.get_rules(rules_path)
 
     for rule_name, rule in ruleset.rules.items():
         rule_features = rule.extract_all_features()
