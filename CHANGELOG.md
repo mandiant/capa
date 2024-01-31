@@ -4,6 +4,8 @@
 
 ### New Features
 
+- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
+
 ### Breaking Changes
 
 - main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
