@@ -55,7 +55,7 @@ OR
 $ capa --version
 ```
 
-3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) and [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) to your `$USER_HOME/ghidra_scripts` directory or manually add `</paths/to/scripts>` to the Ghidra Script Manager.
+3. Copy [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) and [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) to your `$USER_HOME/ghidra_scripts` directory or manually add the absolute path of each script to the Ghidra Script Manager.
 
 ## Usage
 
@@ -68,42 +68,39 @@ Use the following steps to execute [capa_explorer.py](https://raw.githubusercont
 2. Locate [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) and [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) by selecting the `Python 3 > capa` category or using the Ghidra Script Manager search functionality
 3. Double-click [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) or [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) to execute the script
 
-If you don't see [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) and [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) make sure you have copied these scripts to your `$USER_HOME/ghidra_scripts` directory or manually added `</path/to/scripts>` to the Ghidra Script Manager.
+If you don't see [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) and [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) make sure you have copied these scripts to your `$USER_HOME/ghidra_scripts` directory or manually added the absolute path of each script to the Ghidra Script Manager.
 
 Both scripts ask you to provide the path of your capa rules directory. [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) also asks you to select `default`, `verbose`, and `vverbose` output formats used when writing output to the Ghidra Console Window.
 
 ### Ghidra Headless Analyzer
 
-To execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) using the Ghidra Headless Analyzer, you can use the Ghidra `analyzeHeadless` script located in your `$GHIDRA_HOME/support` directory. You will need to provide the following arguments to the Ghidra `analyzeHeadless` script:
+To execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) using the Ghidra Headless Analyzer, you can use the Ghidra `analyzeHeadless` script located in your `<ghidra_install_path>/support` directory. You will need to provide the following arguments to the Ghidra `analyzeHeadless` script:
 
 1. `<ghidra_project_path>`: path to Ghidra project
 2. `<ghidra_project_name>`: name of Ghidra Project
 3. `-process <sample_name>`: name of sample `<sample_name>`
-4. `-ScriptPath <capa_ghidra_path>`: OPTIONAL argument specifying path `<capa_ghidra_path>` to [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py)
-5. `-PostScript capa_ghidra.py`: executes [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) as post-analysis script
+4. `-ScriptPath <capa_ghidra_path>`: OPTIONAL argument specifying path absolute path of [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py)
+5. `-PostScript capa_ghidra.py`: execute [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) as post-analysis script
 6. `"<capa_args>"`: single, quoted string containing capa arguments that must specify capa rules directory and output format, e.g. `"<capa_rules_path> --verbose"`. [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) supports `default`, `verbose`, `vverbose` and `json` formats when executed using the Ghidra Headless Analyzer. [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) writes output to the console window used to execute the Ghidra `analyzeHeadless` script.
-7. `-processor <languageID>`: required ONLY if sample `<sample_name>` is shellcode. More information on specifying the `<languageID>` can be found in the `$GHIDRA_HOME/support/analyzeHeadlessREADME.html` documentation.
 
 The following is an example of combining these arguments into a single `analyzeHeadless` script command:
 
 ```
-$GHIDRA_HOME/support/analyzeHeadless <ghidra_project_path> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "/path/to/capa/rules/ --verbose"
+<ghidra_install_path>/support/analyzeHeadless <ghidra_project_path> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "<capa_rules_path> --verbose"
 ```
 
-You may also want to run capa against a sample that you have not yet imported into your Ghidra project. The following is an example of importing a sample and running `capa_ghidra.py` using a single `analyzeHeadless` script command:
+You may also want to run capa against a sample that you have not yet imported into your Ghidra project. The following is an example of importing a sample and running [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) using a single `analyzeHeadless` script command:
 
 ```
-$GHIDRA_HOME/support/analyzeHeadless </path/to/ghidra/project/> <ghidra_project_name> -Import </path/to/sample> -PostScript capa_ghidra.py "/path/to/capa/rules/ --verbose"
+<ghidra_install_path>/support/analyzeHeadless <ghidra_project_path> <ghidra_project_name> -Import <sample_path> -PostScript capa_ghidra.py "<capa_rules_path> --verbose"
 ```
 
-You can also provide `capa_ghidra.py` the single argument `"help"` to view supported arguments when running the script using the Ghidra Headless Analyzer:
+You can also provide [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) the single argument `"help"` to view supported arguments when running the script using the Ghidra Headless Analyzer:
 ```
-$GHIDRA_HOME/support/analyzeHeadless </path/to/ghidra/project/> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "help"
+<ghidra_install_path>/support/analyzeHeadless <ghidra_project_path> <ghidra_project_name> -process <sample_name> -PostScript capa_ghidra.py "help"
 ```
 
-#### Example
-
-The following is an example of running `capa_ghidra.py` against a shellcode sample using the Ghidra `analyzeHeadless` script:
+The following is an example of running [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) against a shellcode sample using the Ghidra `analyzeHeadless` script:
 ```
 $ analyzeHeadless /home/wumbo/Desktop/ghidra_projects/ capa_test -process 499c2a85f6e8142c3f48d4251c9c7cd6.raw32 -processor x86:LE:32:default -PostScript capa_ghidra.py "/home/wumbo/capa/rules -vv"
 [...]
