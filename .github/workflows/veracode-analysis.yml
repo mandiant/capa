@@ -46,7 +46,7 @@ jobs:
     - run: curl --silent --show-error --fail -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
     - run: unzip -o pipeline-scan-LATEST.zip
 
-    - uses: actions/setup-java@7a445ee88d4e23b52c33fdc7601e40278616c7f8 # main
+    - uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # main
       with:
         java-version: 8
         distribution: 'temurin'
