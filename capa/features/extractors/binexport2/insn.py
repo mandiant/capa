@@ -5,15 +5,23 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import io
+import logging
 from typing import Tuple, Iterator
 
+import pefile
+from elftools.elf.elffile import ELFFile
+
 import capa.features.extractors.helpers
-from capa.features.insn import API, Number, Mnemonic, OperandNumber, Bytes
-from capa.features.common import Feature, Characteristic
+import capa.features.extractors.strings
+from capa.features.insn import API, Number, Mnemonic, OperandNumber
+from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+
+logger = logging.getLogger(__name__)
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -106,7 +114,100 @@ def extract_insn_number_features(
         yield OperandNumber(i, value), ih.address
 
 
-def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
+class ReadMemoryError(ValueError): ...
+
+
+def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int) -> bytes:
+    base_address = min(map(lambda s: s.address, be2.section))
+    rva = address - base_address
+
+    try:
+        # TODO: cache the parsed file
+
+        if sample_bytes.startswith(capa.features.extractors.common.MATCH_PE):
+            pe = pefile.PE(data=sample_bytes)
+            return pe.get_data(rva, size)
+        elif sample_bytes.startswith(capa.features.extractors.common.MATCH_ELF):
+            elf = ELFFile(io.BytesIO(sample_bytes))
+
+            # ELF segments are for runtime data,
+            # ELF sections are for link-time data.
+            for segment in elf.iter_segments():
+                # assume p_align is consistent with addresses here.
+                # otherwise, should harden this loader.
+                segment_rva = segment.header.p_vaddr
+                segment_size = segment.header.p_memsz
+                if segment_rva <= rva < segment_rva + segment_size:
+                    segment_data = segment.data()
+
+                    # pad the section with NULLs
+                    # assume page alignment is already handled.
+                    # might need more hardening here.
+                    if len(segment_data) < segment_size:
+                        segment_data += b"\x00" * (segment_size - len(segment_data))
+
+                    segment_offset = rva - segment_rva
+                    return segment_data[segment_offset : segment_offset + size]
+        else:
+            logger.warning("unsupported format")
+            raise ReadMemoryError("unsupported file format")
+    except Exception as e:
+        # TODO: remove logging message here
+        logger.warning("failed to read memory: %s", e, exc_info=True)
+
+        raise ReadMemoryError("failed to read memory: " + str(e)) from e
+
+
+def extract_insn_bytes_features(
+    fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
+) -> Iterator[Tuple[Feature, Address]]:
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+    sample_bytes = fhi.sample_bytes
+    idx = fhi.idx
+
+    instruction_index = ii.instruction_index
+
+    if instruction_index in idx.data_reference_index_by_source_instruction_index:
+        for data_reference_index in idx.data_reference_index_by_source_instruction_index[instruction_index]:
+            data_reference = be2.data_reference[data_reference_index]
+            data_reference_address = data_reference.address
+
+            # at end of segment then there might be an overrun here.
+            buf = read_memory(be2, sample_bytes, data_reference_address, 0x100)
+
+            if capa.features.extractors.helpers.all_zeros(buf):
+                continue
+
+            is_string = False
+
+            # note: we *always* break after the first iteration
+            for s in capa.features.extractors.strings.extract_ascii_strings(buf):
+                if s.offset != 0:
+                    break
+
+                yield String(s.s), ih.address
+                is_string = True
+                break
+
+            # note: we *always* break after the first iteration
+            for s in capa.features.extractors.strings.extract_unicode_strings(buf):
+                if s.offset != 0:
+                    break
+
+                yield String(s.s), ih.address
+                is_string = True
+                break
+
+            if not is_string:
+                yield Bytes(buf), ih.address
+
+
+def extract_insn_string_features(
+    fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
+) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
@@ -115,30 +216,12 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     instruction_index = ii.instruction_index
 
-    if instruction_index in idx.data_reference_index_by_source_instruction_index:
-        for data_reference_index in idx.data_reference_index_by_source_instruction_index[
-            instruction_index
-        ]:
-            data_reference = be2.data_reference[data_reference_index]
-            data_reference_address = data_reference.address
-
-            # TODO: read data
-            buf = b""
-
-            if capa.features.extractors.helpers.all_zeros(buf):
-                continue
-
-            if is_probably_string(buf):
-                pass
-            else:
-                yield Bytes(buf), ih.address
-
-
-def extract_insn_string_features(
-    fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    if instruction_index in idx.string_reference_index_by_source_instruction_index:
+        for string_reference_index in idx.string_reference_index_by_source_instruction_index[instruction_index]:
+            string_reference = be2.string_reference[string_reference_index]
+            string_index = string_reference.string_table_index
+            string = be2.string_table[string_index]
+            yield String(string), ih.address
 
 
 def extract_insn_offset_features(

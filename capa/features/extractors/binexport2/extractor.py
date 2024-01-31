@@ -127,7 +127,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
             flow_graph_address = self.idx.basic_block_address_by_index[entry_basic_block_index]
             yield FunctionHandle(
                 AbsoluteVirtualAddress(flow_graph_address),
-                inner=FunctionContext(self.be2, self.idx, self.analysis, flow_graph_index),
+                inner=FunctionContext(self.buf, self.be2, self.idx, self.analysis, flow_graph_index),
             )
 
     def extract_function_features(self, fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:

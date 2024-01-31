@@ -202,6 +202,7 @@ class BinExport2Index:
 
 @dataclass
 class FunctionContext:
+    sample_bytes: bytes
     be2: BinExport2
     idx: BinExport2Index
     # TODO: typing
