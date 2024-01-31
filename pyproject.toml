@@ -48,7 +48,7 @@ dependencies = [
     "pyelftools==0.30",
     "dnfile==0.14.1",
     "dncil==1.0.2",
-    "pydantic==2.5.2",
+    "pydantic==2.6.0",
     "protobuf==4.25.2",
 ]
 dynamic = ["version"]
