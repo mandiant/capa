@@ -30,7 +30,7 @@ jobs:
         git tag $name -m "https://github.com/mandiant/capa/releases/$name"
         # TODO update branch name-major=${name%%.*}
     - name: Push tag to capa-rules
-      uses: ad-m/github-push-action@0fafdd62b84042d49ec0cb92d9cac7f7ce4ec79e # master
+      uses: ad-m/github-push-action@fcea09907c44d7a7a3331c9c04080d55d87c95fe # master
       with:
         repository: mandiant/capa-rules
         github_token: ${{ secrets.CAPA_TOKEN }}
