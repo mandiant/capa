@@ -482,7 +482,7 @@ def compute_dynamic_layout(
                     )
                     for t in threads
                     if t in matched_threads
-                )  # this object is open to extension in the future,
+                ),  # this object is open to extension in the future,
                 # such as with the function name, etc.
             )
             for p, threads in threads_by_process.items()
@@ -524,7 +524,7 @@ def compute_static_layout(rules: RuleSet, extractor: StaticFeatureExtractor, cap
                 address=frz.Address.from_capa(f),
                 matched_basic_blocks=tuple(
                     rdoc.BasicBlockLayout(address=frz.Address.from_capa(bb)) for bb in bbs if bb in matched_bbs
-                )  # this object is open to extension in the future,
+                ),  # this object is open to extension in the future,
                 # such as with the function name, etc.
             )
             for f, bbs in bbs_by_function.items()
