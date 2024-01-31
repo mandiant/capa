@@ -11,6 +11,7 @@ Proto files generated via protobuf v24.4:
     protoc --python_out=. --mypy_out=. binexport2.proto
 """
 import os
+import hashlib
 import logging
 from typing import Any, Dict, List, Iterator
 from pathlib import Path
@@ -28,23 +29,47 @@ def get_binexport2(sample: Path) -> BinExport2:
     return be2
 
 
-def get_sample_from_binexport2(be2: BinExport2) -> Path:
-    # also search in same directory as input
-    # for files with the given sha256,
-    # starting with files with a similar prefix as given.
-    # TODO(wb): 1755
+def compute_common_prefix_length(m: str, n: str) -> int:
+    # ensure #m < #n
+    if len(n) < len(m):
+        m, n = n, m
 
-    # $CAPA_SAMPLE_DIR/<sha256>
+    for i, c in enumerate(m):
+        if n[i] != c:
+            return i
+
+    return len(m)
+
+
+def get_sample_from_binexport2(input_file: Path, be2: BinExport2) -> Path:
+    """attempt to find the sample file, given a BinExport2 file.
+
+    searches in the same directory as the BinExport2 file, and then
+    in $CAPA_SAMPLES_DIR.
+    """
+
+    def filename_similarity_key(p: Path):
+        # note closure over input_file.
+        # sort first by length of common prefix, then by name (for stability)
+        return (compute_common_prefix_length(p.name, input_file.name), p.name)
+
+    wanted_sha256 = be2.meta_information.executable_id.lower()
+
+    input_directory = input_file.parent
+    siblings = [p for p in input_directory.iterdir() if p.is_file()]
+    siblings.sort(key=filename_similarity_key, reverse=True)
+    for sibling in siblings:
+        if hashlib.sha256(sibling.read_bytes()).hexdigest().lower() == wanted_sha256:
+            return sibling
+
     base = Path(os.environ.get("CAPA_SAMPLES_DIR", "."))
+    candidates = [p for p in base.iterdir() if p.is_file()]
+    candidates.sort(key=filename_similarity_key, reverse=True)
+    for candidate in candidates:
+        if hashlib.sha256(candidate.read_bytes()).hexdigest().lower() == wanted_sha256:
+            return candidate
 
-    sha256 = be2.meta_information.executable_id.lower()
-
-    logger.debug("searching for sample in: %s", base)
-    path = base / sha256
-    if path.exists():
-        return path
-    else:
-        raise ValueError("cannot find sample")
+    raise ValueError("cannot find sample")
 
 
 class BinExport2Index:
