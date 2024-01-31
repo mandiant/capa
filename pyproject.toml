@@ -79,7 +79,7 @@ dev = [
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "isort==5.13.2",
-    "ruff==0.1.14",
+    "ruff==0.1.15",
     "black==24.1.1",
     "isort==5.13.2",
     "mypy==1.8.0",
