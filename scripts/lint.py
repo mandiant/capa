@@ -364,11 +364,17 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         format_ = capa.helpers.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
+
+    # function object to store backend attribute used by get_backend_from_cli
+    fake_args = lambda: None
+    fake_args.backend = capa.main.BACKEND_AUTO
+    backend = capa.main.get_backend_from_cli(fake_args, format_)
+
     extractor = capa.loader.get_extractor(
         nice_path,
         format_,
         OS_AUTO,
-        capa.main.BACKEND_VIV,
+        backend,
         DEFAULT_SIGNATURES,
         should_save_workspace=False,
         disable_progress=True,
