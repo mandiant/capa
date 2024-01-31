@@ -175,6 +175,17 @@ def main(argv=None):
                                         data_reference_address = data_reference.address
                                         data_references += f"⇥ data {hex(data_reference_address)} "
 
+                                string_references = ""
+                                if instruction_index in idx.string_reference_index_by_source_instruction_index:
+                                    string_references = " "
+                                    for (
+                                        string_reference_index
+                                    ) in idx.string_reference_index_by_source_instruction_index[instruction_index]:
+                                        string_reference = be2.string_reference[string_reference_index]
+                                        string_index = string_reference.string_table_index
+                                        string = be2.string_table[string_index]
+                                        string_references += f'⇥ string "{string}" '
+
                                 comments = ""
                                 if instruction.comment_index:
                                     comments = " "
@@ -184,7 +195,7 @@ def main(argv=None):
                                         comments += f"; {BinExport2.Comment.Type.Name(comment.type)} {comment_string} "
 
                                 o.writeln(
-                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{call_targets}{data_references}{comments}"
+                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{call_targets}{data_references}{string_references}{comments}"
                                 )
 
                             does_fallthrough = False

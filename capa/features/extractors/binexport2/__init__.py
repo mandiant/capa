@@ -95,6 +95,7 @@ class BinExport2Index:
 
         self.data_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
         self.data_reference_index_by_target_address: Dict[int, List[int]] = defaultdict(list)
+        self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
 
         self._index_vertex_edges()
         self._index_instruction_addresses()
@@ -102,6 +103,7 @@ class BinExport2Index:
         self._index_flow_graph_edges()
         self._index_call_graph_vertices()
         self._index_data_references()
+        self._index_string_references()
 
     def _index_vertex_edges(self):
         for edge in self.be2.call_graph.edge:
@@ -163,6 +165,12 @@ class BinExport2Index:
                 data_reference_index
             )
             self.data_reference_index_by_target_address[data_reference.address].append(data_reference_index)
+
+    def _index_string_references(self):
+        for string_reference_index, string_reference in enumerate(self.be2.string_reference):
+            self.string_reference_index_by_source_instruction_index[string_reference.instruction_index].append(
+                string_reference_index
+            )
 
     @staticmethod
     def instruction_indices(basic_block: BinExport2.BasicBlock) -> Iterator[int]:
