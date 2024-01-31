@@ -83,35 +83,78 @@ def extract_insn_number_features(
     for i, operand_index in enumerate(instruction.operand_index):
         operand = be2.operand[operand_index]
 
-        if len(operand.expression_index) != 2:
-            # we only care about immediate constants,
-            # which have a two expression node:
+        if len(operand.expression_index) == 1:
+            # Ghidra extracts everything as a SYMBOL today,
+            # which is very wrong.
+            #
+            # temporarily, we'll have to try to guess at the interpretation.
+            # TODO: report this bug.
+            expression0 = be2.expression[operand.expression_index[0]]
+
+            if BinExport2.Expression.Type.SYMBOL != expression0.type:
+                continue
+
+            if expression0.symbol.startswith("#0x"):
+                # like:
+                # - type: SYMBOL
+                #   symbol: "#0xffffffff"
+                try:
+                    value = int(expression0.symbol[len("#") :], 0x10)
+                except ValueError:
+                    # failed to parse as integer
+                    continue
+
+            elif expression0.symbol.startswith("0x"):
+                # like:
+                # - type: SYMBOL
+                #   symbol: "0x1000"
+                try:
+                    value = int(expression0.symbol, 0x10)
+                except ValueError:
+                    # failed to parse as integer
+                    continue
+
+            else:
+                continue
+
+            # TODO: maybe if the base address is 0, disable this check.
+            # Otherwise we miss numbers smaller than the image size.
+            if is_address_mapped(be2, value):
+                continue
+
+            yield Number(value), ih.address
+            yield OperandNumber(i, value), ih.address
+
+        elif len(operand.expression_index) == 2:
+            # from BinDetego,
+            # we get the following pattern for immediate constants:
             #
             # - type: SIZE_PREFIX
             #   symbol: "b8"
             # - type: IMMEDIATE_INT
             #   immediate: 20588728364
             #   parent_index: 0
+
+            expression0 = be2.expression[operand.expression_index[0]]
+            expression1 = be2.expression[operand.expression_index[1]]
+
+            if BinExport2.Expression.Type.SIZE_PREFIX != expression0.type:
+                continue
+
+            if BinExport2.Expression.Type.IMMEDIATE_INT != expression1.type:
+                continue
+
+            value = expression1.immediate
+
+            # TODO: skip small numbers?
+
+            if is_address_mapped(be2, value):
+                continue
+
+            yield Number(value), ih.address
+            yield OperandNumber(i, value), ih.address
+        else:
             continue
-
-        expression0 = be2.expression[operand.expression_index[0]]
-        expression1 = be2.expression[operand.expression_index[1]]
-
-        if BinExport2.Expression.Type.SIZE_PREFIX != expression0.type:
-            continue
-
-        if BinExport2.Expression.Type.IMMEDIATE_INT != expression1.type:
-            continue
-
-        value = expression1.immediate
-
-        # TODO: skip small numbers?
-
-        if is_address_mapped(be2, value):
-            continue
-
-        yield Number(value), ih.address
-        yield OperandNumber(i, value), ih.address
 
 
 class ReadMemoryError(ValueError): ...
