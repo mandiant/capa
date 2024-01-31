@@ -309,9 +309,8 @@ class InvalidAttckOrMbcTechnique(Lint):
             with data_path.open("rb") as fd:
                 self.data = json.load(fd)
             self.enabled_frameworks = self.data.keys()
-        except BaseException:
-            # If linter-data.json is not present, or if an error happen
-            # we log an error and lint nothing.
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            # linter-data.json missing, or JSON error: log an error and skip this lint
             logger.warning(
                 "Could not load 'scripts/linter-data.json'. The att&ck and mbc information will not be linted."
             )
