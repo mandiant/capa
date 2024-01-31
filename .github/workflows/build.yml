@@ -44,7 +44,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout capa
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
       - name: Set up Python ${{ matrix.python_version }}
@@ -143,7 +143,7 @@ jobs:
       - name: Zip ${{ matrix.artifact_name }} into ${{ env.zip_name }}
         run: zip ${{ env.zip_name }} ${{ matrix.artifact_name }}
       - name: Upload ${{ env.zip_name }} to GH Release
-        uses: svenstaro/upload-release-action@2728235f7dc9ff598bd86ce3c274b74f802d2208 # v2
+        uses: svenstaro/upload-release-action@1beeb572c19a9242f4361f4cee78f8e0d9aec5df # v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN}}
           file: ${{ env.zip_name }}
