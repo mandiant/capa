@@ -19,3 +19,7 @@ class UnsupportedArchError(ValueError):
 
 class UnsupportedOSError(ValueError):
     pass
+
+
+class EmptyReportError(ValueError):
+    pass

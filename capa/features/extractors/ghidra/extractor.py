@@ -14,13 +14,31 @@ import capa.features.extractors.ghidra.function
 import capa.features.extractors.ghidra.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, FeatureExtractor
+from capa.features.extractors.base_extractor import (
+    BBHandle,
+    InsnHandle,
+    SampleHashes,
+    FunctionHandle,
+    StaticFeatureExtractor,
+)
 
 
-class GhidraFeatureExtractor(FeatureExtractor):
+class GhidraFeatureExtractor(StaticFeatureExtractor):
     def __init__(self):
-        super().__init__()
         import capa.features.extractors.ghidra.helpers as ghidra_helpers
+
+        super().__init__(
+            SampleHashes(
+                md5=capa.ghidra.helpers.get_file_md5(),
+                # ghidra doesn't expose this hash.
+                # https://ghidra.re/ghidra_docs/api/ghidra/program/model/listing/Program.html
+                #
+                # the hashes are stored in the database, not computed on the fly,
+                # so its probably not trivial to add SHA1.
+                sha1="",
+                sha256=capa.ghidra.helpers.get_file_sha256(),
+            )
+        )
 
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(capa.features.extractors.ghidra.file.extract_file_format())

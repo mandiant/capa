@@ -6,8 +6,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import gzip
 import json
 import textwrap
+from pathlib import Path
 
 import fixtures
 
@@ -34,7 +36,9 @@ def test_main_single_rule(z9324d_extractor, tmpdir):
         rule:
             meta:
                 name: test rule
-                scope: file
+                scopes:
+                    static: file
+                    dynamic: file
                 authors:
                   - test
             features:
@@ -95,7 +99,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: file rule
-                            scope: file
+                            scopes:
+                                static: file
+                                dynamic: process
                         features:
                           - characteristic: embedded pe
                     """
@@ -107,7 +113,9 @@ def test_ruleset():
                     rule:
                         meta:
                             name: function rule
-                            scope: function
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                           - characteristic: tight loop
                     """
@@ -119,267 +127,91 @@ def test_ruleset():
                     rule:
                         meta:
                             name: basic block rule
-                            scope: basic block
+                            scopes:
+                                static: basic block
+                                dynamic: process
                         features:
                           - characteristic: nzxor
                     """
                 )
             ),
-        ]
-    )
-    assert len(rules.file_rules) == 1
-    assert len(rules.function_rules) == 1
-    assert len(rules.basic_block_rules) == 1
-
-
-def test_match_across_scopes_file_function(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            # this rule should match on a function (0x4073F0)
             capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     """
                     rule:
                         meta:
-                            name: install service
-                            scope: function
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a:0x4073F0
+                            name: process rule
+                            scopes:
+                                static: file
+                                dynamic: process
                         features:
-                            - and:
-                                - api: advapi32.OpenSCManagerA
-                                - api: advapi32.CreateServiceA
-                                - api: advapi32.StartServiceA
+                          - string: "explorer.exe"
                     """
                 )
             ),
-            # this rule should match on a file feature
             capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     """
-                    rule:
-                        meta:
-                            name: .text section
-                            scope: file
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a
-                        features:
-                            - section: .text
-                    """
+                        rule:
+                            meta:
+                                name: thread rule
+                                scopes:
+                                    static: function
+                                    dynamic: thread
+                            features:
+                              - api: RegDeleteKey
+                        """
                 )
             ),
-            # this rule should match on earlier rule matches:
-            #  - install service, with function scope
-            #  - .text section, with file scope
             capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     """
                     rule:
                         meta:
-                            name: .text section and install service
-                            scope: file
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a
-                        features:
-                            - and:
-                              - match: install service
-                              - match: .text section
-                    """
-                )
-            ),
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "install service" in capabilities
-    assert ".text section" in capabilities
-    assert ".text section and install service" in capabilities
-
-
-def test_match_across_scopes(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            # this rule should match on a basic block (including at least 0x403685)
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: tight loop
-                            scope: basic block
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a:0x403685
-                        features:
-                          - characteristic: tight loop
-                    """
-                )
-            ),
-            # this rule should match on a function (0x403660)
-            # based on API, as well as prior basic block rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: kill thread loop
-                            scope: function
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a:0x403660
+                            name: test call subscope
+                            scopes:
+                                static: basic block
+                                dynamic: thread
                         features:
                           - and:
-                            - api: kernel32.TerminateThread
-                            - api: kernel32.CloseHandle
-                            - match: tight loop
+                            - string: "explorer.exe"
+                            - call:
+                              - api: HttpOpenRequestW
                     """
                 )
             ),
-            # this rule should match on a file feature and a prior function rule match
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: kill thread program
-                            scope: file
-                            examples:
-                              - 9324d1a8ae37a36ae560c37448c9705a
-                        features:
-                          - and:
-                            - section: .text
-                            - match: kill thread loop
-                    """
-                )
-            ),
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "tight loop" in capabilities
-    assert "kill thread loop" in capabilities
-    assert "kill thread program" in capabilities
-
-
-def test_subscope_bb_rules(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
             capa.rules.Rule.from_yaml(
                 textwrap.dedent(
                     """
                     rule:
                         meta:
                             name: test rule
-                            scope: function
+                            scopes:
+                                static: instruction
+                                dynamic: call
                         features:
-                            - and:
-                                - basic block:
-                                    - characteristic: tight loop
+                          - and:
+                            - or:
+                              - api: socket
+                              - and:
+                                - os: linux
+                                - mnemonic: syscall
+                                - number: 41 = socket()
+                            - number: 6 = IPPROTO_TCP
+                            - number: 1 = SOCK_STREAM
+                            - number: 2 = AF_INET
                     """
                 )
-            )
+            ),
         ]
     )
-    # tight loop at 0x403685
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "test rule" in capabilities
-
-
-def test_byte_matching(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                        meta:
-                            name: byte match test
-                            scope: function
-                        features:
-                            - and:
-                                - bytes: ED 24 9E F4 52 A9 07 47 55 8E E1 AB 30 8E 23 61
-                    """
-                )
-            )
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "byte match test" in capabilities
-
-
-def test_count_bb(z9324d_extractor):
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                      meta:
-                        name: count bb
-                        namespace: test
-                        scope: function
-                      features:
-                        - and:
-                          - count(basic blocks): 1 or more
-                    """
-                )
-            )
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "count bb" in capabilities
-
-
-def test_instruction_scope(z9324d_extractor):
-    # .text:004071A4 68 E8 03 00 00          push    3E8h
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                      meta:
-                        name: push 1000
-                        namespace: test
-                        scope: instruction
-                      features:
-                        - and:
-                          - mnemonic: push
-                          - number: 1000
-                    """
-                )
-            )
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "push 1000" in capabilities
-    assert 0x4071A4 in {result[0] for result in capabilities["push 1000"]}
-
-
-def test_instruction_subscope(z9324d_extractor):
-    # .text:00406F60                         sub_406F60 proc near
-    # [...]
-    # .text:004071A4 68 E8 03 00 00          push    3E8h
-    rules = capa.rules.RuleSet(
-        [
-            capa.rules.Rule.from_yaml(
-                textwrap.dedent(
-                    """
-                    rule:
-                      meta:
-                        name: push 1000 on i386
-                        namespace: test
-                        scope: function
-                      features:
-                        - and:
-                          - arch: i386
-                          - instruction:
-                            - mnemonic: push
-                            - number: 1000
-                    """
-                )
-            )
-        ]
-    )
-    capabilities, meta = capa.main.find_capabilities(rules, z9324d_extractor)
-    assert "push 1000 on i386" in capabilities
-    assert 0x406F60 in {result[0] for result in capabilities["push 1000 on i386"]}
+    assert len(rules.file_rules) == 2
+    assert len(rules.function_rules) == 2
+    assert len(rules.basic_block_rules) == 2
+    assert len(rules.instruction_rules) == 1
+    assert len(rules.process_rules) == 4
+    assert len(rules.thread_rules) == 2
+    assert len(rules.call_rules) == 2
 
 
 def test_fix262(pma16_01_extractor, capsys):
@@ -468,3 +300,59 @@ def test_main_rd():
     assert capa.main.main([path, "-j"]) == 0
     assert capa.main.main([path, "-q"]) == 0
     assert capa.main.main([path]) == 0
+
+
+def extract_cape_report(tmp_path: Path, gz: Path) -> Path:
+    report = tmp_path / "report.json"
+    report.write_bytes(gzip.decompress(gz.read_bytes()))
+    return report
+
+
+def test_main_cape1(tmp_path):
+    path = extract_cape_report(tmp_path, fixtures.get_data_path_by_name("0000a657"))
+
+    # TODO(williballenthin): use default rules set
+    # https://github.com/mandiant/capa/pull/1696
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "create-or-open-registry-key.yml").write_text(
+        textwrap.dedent(
+            """
+        rule:
+          meta:
+            name: create or open registry key
+            authors:
+              - testing
+            scopes:
+              static: instruction
+              dynamic: call
+          features:
+            - or:
+              - api: advapi32.RegOpenKey
+              - api: advapi32.RegOpenKeyEx
+              - api: advapi32.RegCreateKey
+              - api: advapi32.RegCreateKeyEx
+              - api: advapi32.RegOpenCurrentUser
+              - api: advapi32.RegOpenKeyTransacted
+              - api: advapi32.RegOpenUserClassesRoot
+              - api: advapi32.RegCreateKeyTransacted
+              - api: ZwOpenKey
+              - api: ZwOpenKeyEx
+              - api: ZwCreateKey
+              - api: ZwOpenKeyTransacted
+              - api: ZwOpenKeyTransactedEx
+              - api: ZwCreateKeyTransacted
+              - api: NtOpenKey
+              - api: NtCreateKey
+              - api: SHRegOpenUSKey
+              - api: SHRegCreateUSKey
+              - api: RtlCreateRegistryKey
+    """
+        )
+    )
+
+    assert capa.main.main([str(path), "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-q", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-j", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-v", "-r", str(rules)]) == 0
+    assert capa.main.main([str(path), "-vv", "-r", str(rules)]) == 0

@@ -20,9 +20,11 @@ def test_rule_scope_instruction():
             rule:
                 meta:
                     name: test rule
-                    scope: instruction
+                    scopes:
+                        static: instruction
+                        dynamic: unsupported
                 features:
-                  - and:
+                - and:
                     - mnemonic: mov
                     - arch: i386
                     - os: windows
@@ -37,7 +39,9 @@ def test_rule_scope_instruction():
                 rule:
                     meta:
                         name: test rule
-                        scope: instruction
+                        scopes:
+                            static: instruction
+                            dynamic: unsupported
                     features:
                         - characteristic: embedded pe
                 """
@@ -54,7 +58,9 @@ def test_rule_subscope_instruction():
                     rule:
                         meta:
                             name: test rule
-                            scope: function
+                            scopes:
+                                static: function
+                                dynamic: process
                         features:
                         - and:
                             - instruction:
@@ -83,7 +89,9 @@ def test_scope_instruction_implied_and():
             rule:
                 meta:
                     name: test rule
-                    scope: function
+                    scopes:
+                        static: function
+                        dynamic: process
                 features:
                   - and:
                     - instruction:
@@ -102,7 +110,9 @@ def test_scope_instruction_description():
             rule:
                 meta:
                     name: test rule
-                    scope: function
+                    scopes:
+                        static: function
+                        dynamic: process
                 features:
                   - and:
                     - instruction:
@@ -120,7 +130,9 @@ def test_scope_instruction_description():
             rule:
                 meta:
                     name: test rule
-                    scope: function
+                    scopes:
+                        static: function
+                        dynamic: process
                 features:
                   - and:
                     - instruction:

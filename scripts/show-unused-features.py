@@ -8,13 +8,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import os
 import sys
 import typing
 import logging
 import argparse
 from typing import Set, Tuple
-from pathlib import Path
 from collections import Counter
 
 import tabulate
@@ -31,9 +29,8 @@ import capa.features.freeze
 import capa.features.address
 import capa.features.extractors.pefile
 import capa.features.extractors.base_extractor
-from capa.helpers import log_unsupported_runtime_error
-from capa.features.common import Feature
-from capa.features.extractors.base_extractor import FunctionHandle
+from capa.features.common import FORMAT_FREEZE, Feature
+from capa.features.extractors.base_extractor import FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger("show-unused-features")
 
@@ -42,17 +39,16 @@ def format_address(addr: capa.features.address.Address) -> str:
     return v.format_address(capa.features.freeze.Address.from_capa((addr)))
 
 
-def get_rules_feature_set(rules_path) -> Set[Feature]:
-    ruleset = capa.main.get_rules(rules_path)
+def get_rules_feature_set(rules: capa.rules.RuleSet) -> Set[Feature]:
     rules_feature_set: Set[Feature] = set()
-    for _, rule in ruleset.rules.items():
+    for _, rule in rules.rules.items():
         rules_feature_set.update(rule.extract_all_features())
 
     return rules_feature_set
 
 
 def get_file_features(
-    functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.FeatureExtractor
+    functions: Tuple[FunctionHandle, ...], extractor: capa.features.extractors.base_extractor.StaticFeatureExtractor
 ) -> typing.Counter[Feature]:
     feature_map: typing.Counter[Feature] = Counter()
 
@@ -106,44 +102,25 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     parser = argparse.ArgumentParser(description="Show the features that capa doesn't have rules for yet")
-    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "backend", "rules"})
-
+    capa.main.install_common_args(parser, wanted={"format", "os", "input_file", "signatures", "backend", "rules"})
     parser.add_argument("-F", "--function", type=str, help="Show features for specific function")
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
     if args.function and args.backend == "pefile":
         print("pefile backend does not support extracting function features")
         return -1
 
     try:
-        taste = capa.helpers.get_file_taste(Path(args.sample))
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
+        rules = capa.main.get_rules_from_cli(args)
+        input_format = capa.main.get_input_format_from_cli(args)
+        backend = capa.main.get_backend_from_cli(args, input_format)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
-    try:
-        sig_paths = capa.main.get_signatures(args.signatures)
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    if (args.format == "freeze") or (
-        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
-    ):
-        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
-    else:
-        should_save_workspace = os.environ.get("CAPA_SAVE_WORKSPACE") not in ("0", "no", "NO", "n", None)
-        try:
-            extractor = capa.main.get_extractor(
-                args.sample, args.format, args.os, args.backend, sig_paths, should_save_workspace
-            )
-        except capa.exceptions.UnsupportedFormatError:
-            capa.helpers.log_unsupported_format_error()
-            return -1
-        except capa.exceptions.UnsupportedRuntimeError:
-            log_unsupported_runtime_error()
-            return -1
+    assert isinstance(extractor, StaticFeatureExtractor), "only static analysis supported today"
 
     feature_map: typing.Counter[Feature] = Counter()
 
@@ -157,7 +134,7 @@ def main(argv=None):
         function_handles = tuple(extractor.get_functions())
 
     if args.function:
-        if args.format == "freeze":
+        if input_format == FORMAT_FREEZE:
             function_handles = tuple(filter(lambda fh: fh.address == args.function, function_handles))
         else:
             function_handles = tuple(filter(lambda fh: format_address(fh.address) == args.function, function_handles))
@@ -172,7 +149,7 @@ def main(argv=None):
 
     feature_map.update(get_file_features(function_handles, extractor))
 
-    rules_feature_set = get_rules_feature_set(args.rules)
+    rules_feature_set = get_rules_feature_set(rules)
 
     print_unused_features(feature_map, rules_feature_set)
     return 0
@@ -204,7 +181,8 @@ def ida_main():
     feature_map.update(get_file_features(function_handles, extractor))
 
     rules_path = capa.main.get_default_root() / "rules"
-    rules_feature_set = get_rules_feature_set([rules_path])
+    rules = capa.rules.get_rules([rules_path])
+    rules_feature_set = get_rules_feature_set(rules)
 
     print_unused_features(feature_map, rules_feature_set)
 

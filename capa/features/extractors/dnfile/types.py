@@ -6,15 +6,17 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Optional
+from typing import Tuple, Optional
 
 
 class DnType:
-    def __init__(self, token: int, class_: str, namespace: str = "", member: str = "", access: Optional[str] = None):
+    def __init__(
+        self, token: int, class_: Tuple[str, ...], namespace: str = "", member: str = "", access: Optional[str] = None
+    ):
         self.token: int = token
         self.access: Optional[str] = access
         self.namespace: str = namespace
-        self.class_: str = class_
+        self.class_: Tuple[str, ...] = class_
 
         if member == ".ctor":
             member = "ctor"
@@ -42,9 +44,13 @@ class DnType:
         return str(self)
 
     @staticmethod
-    def format_name(class_: str, namespace: str = "", member: str = ""):
+    def format_name(class_: Tuple[str, ...], namespace: str = "", member: str = ""):
+        if len(class_) > 1:
+            class_str = "/".join(class_)  # Concat items in tuple, separated by a "/"
+        else:
+            class_str = "".join(class_)  # Convert tuple to str
         # like File::OpenRead
-        name: str = f"{class_}::{member}" if member else class_
+        name: str = f"{class_str}::{member}" if member else class_str
         if namespace:
             # like System.IO.File::OpenRead
             name = f"{namespace}.{name}"

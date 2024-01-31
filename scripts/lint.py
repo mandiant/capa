@@ -13,6 +13,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
+
 import gc
 import os
 import re
@@ -39,8 +40,10 @@ import tqdm.contrib.logging
 import capa.main
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.helpers
 import capa.features.insn
+import capa.capabilities.common
 from capa.rules import Rule, RuleSet
 from capa.features.common import OS_AUTO, String, Feature, Substring
 from capa.render.result_document import RuleMetadata
@@ -151,20 +154,74 @@ class NamespaceDoesntMatchRulePath(Lint):
         return rule.meta["namespace"] not in get_normpath(rule.meta["capa/path"])
 
 
-class MissingScope(Lint):
-    name = "missing scope"
-    recommendation = "Add meta.scope so that the scope is explicit (defaults to `function`)"
+class MissingScopes(Lint):
+    name = "missing scopes"
+    recommendation = (
+        "Add meta.scopes with both the static (meta.scopes.static) and dynamic (meta.scopes.dynamic) scopes"
+    )
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return "scope" not in rule.meta
+        return "scopes" not in rule.meta
 
 
-class InvalidScope(Lint):
-    name = "invalid scope"
-    recommendation = "Use only file, function, basic block, or instruction rule scopes"
+class MissingStaticScope(Lint):
+    name = "missing static scope"
+    recommendation = (
+        "Add a static scope for the rule (file, function, basic block, instruction, or unspecified/unsupported)"
+    )
 
     def check_rule(self, ctx: Context, rule: Rule):
-        return rule.meta.get("scope") not in ("file", "function", "basic block", "instruction")
+        return "static" not in rule.meta.get("scopes")
+
+
+class MissingDynamicScope(Lint):
+    name = "missing dynamic scope"
+    recommendation = "Add a dynamic scope for the rule (file, process, thread, call, or unspecified/unsupported)"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return "dynamic" not in rule.meta.get("scopes")
+
+
+class InvalidStaticScope(Lint):
+    name = "invalid static scope"
+    recommendation = (
+        "For the static scope, use either: file, function, basic block, instruction, or unspecified/unsupported"
+    )
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return rule.meta.get("scopes").get("static") not in (
+            "file",
+            "function",
+            "basic block",
+            "instruction",
+            "unspecified",
+            "unsupported",
+        )
+
+
+class InvalidDynamicScope(Lint):
+    name = "invalid static scope"
+    recommendation = "For the dynamic scope, use either: file, process, thread, call, or unspecified/unsupported"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return rule.meta.get("scopes").get("dynamic") not in (
+            "file",
+            "process",
+            "thread",
+            "call",
+            "unspecified",
+            "unsupported",
+        )
+
+
+class InvalidScopes(Lint):
+    name = "invalid scopes"
+    recommendation = "At least one scope (static or dynamic) must be specified"
+
+    def check_rule(self, ctx: Context, rule: Rule):
+        return (rule.meta.get("scopes").get("static") in ("unspecified", "unsupported")) and (
+            rule.meta.get("scopes").get("dynamic") in ("unspecified", "unsupported")
+        )
 
 
 class MissingAuthors(Lint):
@@ -252,9 +309,8 @@ class InvalidAttckOrMbcTechnique(Lint):
             with data_path.open("rb") as fd:
                 self.data = json.load(fd)
             self.enabled_frameworks = self.data.keys()
-        except BaseException:
-            # If linter-data.json is not present, or if an error happen
-            # we log an error and lint nothing.
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            # linter-data.json missing, or JSON error: log an error and skip this lint
             logger.warning(
                 "Could not load 'scripts/linter-data.json'. The att&ck and mbc information will not be linted."
             )
@@ -305,14 +361,20 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
     elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
         format_ = "sc64"
     else:
-        format_ = capa.main.get_auto_format(nice_path)
+        format_ = capa.helpers.get_auto_format(nice_path)
 
     logger.debug("analyzing sample: %s", nice_path)
-    extractor = capa.main.get_extractor(
-        nice_path, format_, OS_AUTO, capa.main.BACKEND_VIV, DEFAULT_SIGNATURES, False, disable_progress=True
+    extractor = capa.loader.get_extractor(
+        nice_path,
+        format_,
+        OS_AUTO,
+        capa.main.BACKEND_VIV,
+        DEFAULT_SIGNATURES,
+        should_save_workspace=False,
+        disable_progress=True,
     )
 
-    capabilities, _ = capa.main.find_capabilities(ctx.rules, extractor, disable_progress=True)
+    capabilities, _ = capa.capabilities.common.find_capabilities(ctx.rules, extractor, disable_progress=True)
     # mypy doesn't seem to be happy with the MatchResults type alias & set(...keys())?
     # so we ignore a few types here.
     capabilities = set(capabilities.keys())  # type: ignore
@@ -700,14 +762,18 @@ def lint_name(ctx: Context, rule: Rule):
     return run_lints(NAME_LINTS, ctx, rule)
 
 
-SCOPE_LINTS = (
-    MissingScope(),
-    InvalidScope(),
+SCOPES_LINTS = (
+    MissingScopes(),
+    MissingStaticScope(),
+    MissingDynamicScope(),
+    InvalidStaticScope(),
+    InvalidDynamicScope(),
+    InvalidScopes(),
 )
 
 
 def lint_scope(ctx: Context, rule: Rule):
-    return run_lints(SCOPE_LINTS, ctx, rule)
+    return run_lints(SCOPES_LINTS, ctx, rule)
 
 
 META_LINTS = (
@@ -931,7 +997,11 @@ def main(argv=None):
         help="Enable thorough linting - takes more time, but does a better job",
     )
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
+
+    try:
+        capa.main.handle_common_args(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     if args.debug:
         logging.getLogger("capa").setLevel(logging.DEBUG)
@@ -943,16 +1013,9 @@ def main(argv=None):
     time0 = time.time()
 
     try:
-        rules = capa.main.get_rules(args.rules)
-        logger.info("successfully loaded %s rules", rules.source_rule_count)
-        if args.tag:
-            rules = rules.filter_rules_by_meta(args.tag)
-            logger.debug("selected %s rules", len(rules))
-            for i, r in enumerate(rules.rules, 1):
-                logger.debug(" %d. %s", i, r)
-    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
-        logger.error("%s", str(e))
-        return -1
+        rules = capa.main.get_rules_from_cli(args)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     logger.info("collecting potentially referenced samples")
     samples_path = Path(args.samples)
