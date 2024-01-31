@@ -8,7 +8,6 @@
 
 ### Breaking Changes
 
-- 
 
 ### New Rules (0)
 
