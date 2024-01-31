@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from capa.features.insn import API, Number, OperandNumber
+from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
@@ -134,8 +134,15 @@ def extract_insn_nzxor_characteristic_features(
 def extract_insn_mnemonic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.be2
+
+    instruction = be2.instruction[ii.instruction_index]
+    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    mnemonic_name = mnemonic.name.lower()
+    yield Mnemonic(mnemonic_name), ih.address
 
 
 def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
