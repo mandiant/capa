@@ -45,6 +45,7 @@ import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
 import capa.features.extractors.pefile
+import capa.features.extractors.dexfile
 import capa.features.extractors.elffile
 import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
@@ -72,6 +73,7 @@ from capa.features.common import (
     OS_LINUX,
     OS_MACOS,
     FORMAT_PE,
+    FORMAT_DEX,
     FORMAT_ELF,
     OS_WINDOWS,
     FORMAT_AUTO,
@@ -307,6 +309,11 @@ def get_extractor(
 
         return capa.features.extractors.dnfile.extractor.DnfileFeatureExtractor(path)
 
+    elif format_ == FORMAT_DEX:
+        import capa.features.extractors.dexfile
+
+        return capa.features.extractors.dexfile.DexFeatureExtractor(path, code_analysis=True)
+
     elif backend == BACKEND_BINJA:
         from capa.features.extractors.binja.find_binja_api import find_binja_path
 
@@ -374,6 +381,9 @@ def get_file_extractors(sample: Path, format_: str) -> List[FeatureExtractor]:
 
     elif format_ == capa.features.common.FORMAT_ELF:
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(sample))
+
+    elif format_ == capa.features.common.FORMAT_DEX:
+        file_extractors.append(capa.features.extractors.dexfile.DexFeatureExtractor(sample, code_analysis=False))
 
     elif format_ == FORMAT_CAPE:
         report = json.load(Path(sample).open(encoding="utf-8"))
@@ -797,6 +807,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_PE, "Windows PE file"),
             (FORMAT_DOTNET, ".NET PE file"),
             (FORMAT_ELF, "Executable and Linkable Format"),
+            (FORMAT_DEX, "Android DEX file"),
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),

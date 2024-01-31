@@ -409,7 +409,9 @@ ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
+# dex
+ARCH_DALVIK = "dalvik"
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY, ARCH_DALVIK)
 
 
 class Arch(Feature):
@@ -421,10 +423,11 @@ class Arch(Feature):
 OS_WINDOWS = "windows"
 OS_LINUX = "linux"
 OS_MACOS = "macos"
+OS_ANDROID = "android"
 # dotnet
 OS_ANY = "any"
 VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
-VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
+VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY, OS_ANDROID})
 # internal only, not to be used in rules
 OS_AUTO = "auto"
 
@@ -452,7 +455,8 @@ class OS(Feature):
 FORMAT_PE = "pe"
 FORMAT_ELF = "elf"
 FORMAT_DOTNET = "dotnet"
-VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET)
+FORMAT_DEX = "dex"
+VALID_FORMAT = (FORMAT_PE, FORMAT_ELF, FORMAT_DOTNET, FORMAT_DEX)
 # internal only, not to be used in rules
 FORMAT_AUTO = "auto"
 FORMAT_SC32 = "sc32"
@@ -464,6 +468,7 @@ STATIC_FORMATS = {
     FORMAT_PE,
     FORMAT_ELF,
     FORMAT_DOTNET,
+    FORMAT_DEX,
 }
 DYNAMIC_FORMATS = {
     FORMAT_CAPE,
