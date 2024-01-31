@@ -7,9 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Tuple, Iterator
 
-from capa.features.insn import API, Number
 from capa.features.common import Feature
 from capa.features.address import Address
+from capa.features.insn import API, Number, OperandNumber
 from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -71,7 +71,7 @@ def extract_insn_number_features(
 
     instruction = be2.instruction[ii.instruction_index]
 
-    for operand_index in instruction.operand_index:
+    for i, operand_index in enumerate(instruction.operand_index):
         operand = be2.operand[operand_index]
 
         if len(operand.expression_index) != 2:
@@ -102,6 +102,7 @@ def extract_insn_number_features(
             continue
 
         yield Number(value), ih.address
+        yield OperandNumber(i, value), ih.address
 
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
