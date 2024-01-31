@@ -53,7 +53,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             yield API(f"{library_name}.{vertex.mangled_name}"), ih.address
 
 
-def probe_memory(be2: BinExport2, address: int) -> bool:
+def is_address_mapped(be2: BinExport2, address: int) -> bool:
     """return True if the given address is mapped"""
     for section in be2.section:
         if section.address <= address < section.address + section.size:
@@ -95,9 +95,10 @@ def extract_insn_number_features(
             continue
 
         value = expression1.immediate
-        # TODO: skip small numbers
 
-        if probe_memory(be2, value):
+        # TODO: skip small numbers?
+
+        if is_address_mapped(be2, value):
             continue
 
         yield Number(value), ih.address
