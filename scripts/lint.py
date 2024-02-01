@@ -358,16 +358,13 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
 
     logger.debug("analyzing sample: %s", nice_path)
 
-    format_ = capa.helpers.get_auto_format(nice_path)
-
-    # use format to determine one of the various backends (e.g. vivisect, dotnet, cape)
-    # create object to store backend attribute used by get_backend_from_cli
-    # TODO(mr-tz): refactor to avoid this hack
-    #  https://github.com/mandiant/capa/issues/1965
-    class FakeArgs:
-        backend = capa.main.BACKEND_AUTO
-
-    backend = capa.main.get_backend_from_cli(FakeArgs, format_)
+    args = argparse.Namespace(
+        input_file=nice_path,
+        format=capa.main.FORMAT_AUTO,
+        backend=capa.main.BACKEND_AUTO
+    )
+    format_ = capa.main.get_input_format_from_cli(args)
+    backend = capa.main.get_backend_from_cli(args, format_)
 
     extractor = capa.loader.get_extractor(
         nice_path,
