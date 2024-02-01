@@ -14,6 +14,8 @@
 
 ### Bug Fixes
 
+- fix potentially circular import errors #1969 @williballenthin
+
 ### capa explorer IDA Pro plugin
 
 ### Development
