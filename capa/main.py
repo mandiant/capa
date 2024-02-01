@@ -178,12 +178,13 @@ def simple_message_exception_handler(exctype, value: BaseException, traceback: T
     """
 
     if exctype is KeyboardInterrupt:
-        print("KeyboardInterrupt detected, program terminated")
+        print("KeyboardInterrupt detected, program terminated", file=sys.stderr)
     else:
         print(
             f"Unexpected exception raised: {exctype}. Please run capa in debug mode (-d/--debug) "
             + "to see the stack trace. Please also report your issue on the capa GitHub page so we "
-            + "can improve the code! (https://github.com/mandiant/capa/issues)"
+            + "can improve the code! (https://github.com/mandiant/capa/issues)",
+            file=sys.stderr,
         )
 
 
