@@ -356,19 +356,18 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
         return ctx.capabilities_by_sample[path]
 
-    if nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
-        format_ = "sc32"
-    elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
-        format_ = "sc64"
-    else:
-        format_ = capa.helpers.get_auto_format(nice_path)
-
     logger.debug("analyzing sample: %s", nice_path)
 
-    # function object to store backend attribute used by get_backend_from_cli
-    fake_args = lambda: None
-    fake_args.backend = capa.main.BACKEND_AUTO
-    backend = capa.main.get_backend_from_cli(fake_args, format_)
+    format_ = capa.helpers.get_auto_format(nice_path)
+
+    # use format to determine one of the various backends (e.g. vivisect, dotnet, cape)
+    # create object to store backend attribute used by get_backend_from_cli
+    # TODO(mr-tz): refactor to avoid this hack
+    #  https://github.com/mandiant/capa/issues/1965
+    class FakeArgs:
+        backend = capa.main.BACKEND_AUTO
+
+    backend = capa.main.get_backend_from_cli(FakeArgs, format_)
 
     extractor = capa.loader.get_extractor(
         nice_path,
