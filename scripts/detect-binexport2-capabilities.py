@@ -85,6 +85,12 @@ def main(argv=None):
         #         sig_paths=[],
         #         sample_path=sample_path,
         #     )
+        #
+        # or even more concisely:
+        #
+        #     be2 = capa.features.extractors.binexport2.get_binexport2(input_path)
+        #     buf = sample_path.read_bytes()
+        #     extractor = capa.features.extractors.binexport2.extractor.BinExport2FeatureExtractor(be2, buf)
     except capa.main.ShouldExitError as e:
         return e.status_code
 
