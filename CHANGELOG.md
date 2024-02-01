@@ -26,7 +26,7 @@
 This is the v7.0.0 release of capa which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
 shoutout to our GSoC contributors @colton-gabertan and @yelhamer for their amazing work.
 
-Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, and @xusheng6.
+Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, @larchchen, @JCoonradt, and @xusheng6.
 
 ### New Features
 
