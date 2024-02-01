@@ -4,13 +4,9 @@
 
 ### New Features
 
-- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
 
 ### Breaking Changes
 
-- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
-- move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
-- proto: add `package` declaration #1960 @larchchen
 
 ### New Rules (0)
 
@@ -23,16 +19,19 @@
 ### Development
 
 ### Raw diffs
-- [capa v7.0.0-beta...master](https://github.com/mandiant/capa/compare/v7.0.0-beta...master)
-- [capa-rules v7.0.0-beta...master](https://github.com/mandiant/capa-rules/compare/v7.0.0-beta...master)
+- [capa v7.0.0...master](https://github.com/mandiant/capa/compare/v7.0.0...master)
+- [capa-rules v7.0.0...master](https://github.com/mandiant/capa-rules/compare/v7.0.0...master)
 
-## v7.0.0-beta
-This is the beta release of capa v7.0 which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
-shoutout to @colton-gabertan and @yelhamer for their amazing work.
+## v7.0.0
+This is the v7.0.0 release of capa which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
+shoutout to our GSoC contributors @colton-gabertan and @yelhamer for their amazing work.
 
-Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, and @xusheng6.
+Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, @larchchen, @JCoonradt, and @xusheng6.
+
 ### New Features
+
 - add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
+- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
 - add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
   - add call scope #771 @yelhamer
   - add thread scope #1517 @yelhamer
@@ -51,6 +50,9 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
 - update freeze format to v3, adding support for dynamic analysis @williballenthin
 - extractor: ignore DLL name for api features #1815 @mr-tz
+- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
+- move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
+- proto: add `package` declaration #1960 @larchchen
 
 ### New Rules (41)
 
@@ -106,6 +108,7 @@ Also a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojus
 - remove unnecessary scripts/vivisect-py2-vs-py3.sh file #1949 @JCoonradt
 
 ### capa explorer IDA Pro plugin
+- various integration updates and minor bug fixes
 
 ### Development
 - update ATT&CK/MBC data for linting #1932 @mr-tz
@@ -122,9 +125,17 @@ of importing the relevant logic from the main file.
 For sandbox-based feature extractors, we are using Pydantic models. Contributions of more models for other sandboxes
 are very welcome!
 
+With this release we've reorganized the logic found in `main()` to localize logic and ease readability and ease changes
+and integrations. The new "main routines" are expected to be used only within main functions, either capa main or
+related scripts. These functions should not be invoked from library code.
+
+Beyond copying code around, we've refined the handling of the input file/format/backend. The logic for picking the
+format and backend is more consistent. We've documented that the input file is not necessarily the sample itself
+(cape/freeze/etc.) inputs are not actually the sample.
+
 ### Raw diffs
-- [capa v6.1.0...v7.0.0-beta](https://github.com/mandiant/capa/compare/v6.1.0...v7.0.0-beta)
-- [capa-rules v6.1.0...v7.0.0-beta](https://github.com/mandiant/capa-rules/compare/v6.1.0...v7.0.0-beta)
+- [capa v6.1.0...v7.0.0](https://github.com/mandiant/capa/compare/v6.1.0...v7.0.0)
+- [capa-rules v6.1.0...v7.0.0](https://github.com/mandiant/capa-rules/compare/v6.1.0...v7.0.0)
 
 ## v6.1.0
 
