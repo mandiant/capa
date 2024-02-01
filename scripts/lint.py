@@ -358,11 +358,7 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
 
     logger.debug("analyzing sample: %s", nice_path)
 
-    args = argparse.Namespace(
-        input_file=nice_path,
-        format=capa.main.FORMAT_AUTO,
-        backend=capa.main.BACKEND_AUTO
-    )
+    args = argparse.Namespace(input_file=nice_path, format=capa.main.FORMAT_AUTO, backend=capa.main.BACKEND_AUTO)
     format_ = capa.main.get_input_format_from_cli(args)
     backend = capa.main.get_backend_from_cli(args, format_)
 
