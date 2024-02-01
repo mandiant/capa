@@ -356,19 +356,17 @@ def get_sample_capabilities(ctx: Context, path: Path) -> Set[str]:
         logger.debug("found cached results: %s: %d capabilities", nice_path, len(ctx.capabilities_by_sample[path]))
         return ctx.capabilities_by_sample[path]
 
-    if nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_32):
-        format_ = "sc32"
-    elif nice_path.name.endswith(capa.helpers.EXTENSIONS_SHELLCODE_64):
-        format_ = "sc64"
-    else:
-        format_ = capa.helpers.get_auto_format(nice_path)
-
     logger.debug("analyzing sample: %s", nice_path)
+
+    args = argparse.Namespace(input_file=nice_path, format=capa.main.FORMAT_AUTO, backend=capa.main.BACKEND_AUTO)
+    format_ = capa.main.get_input_format_from_cli(args)
+    backend = capa.main.get_backend_from_cli(args, format_)
+
     extractor = capa.loader.get_extractor(
         nice_path,
         format_,
         OS_AUTO,
-        capa.main.BACKEND_VIV,
+        backend,
         DEFAULT_SIGNATURES,
         should_save_workspace=False,
         disable_progress=True,
@@ -656,16 +654,6 @@ class FeatureNtdllNtoskrnlApi(Lint):
         return False
 
 
-class FormatLineFeedEOL(Lint):
-    name = "line(s) end with CRLF (\\r\\n)"
-    recommendation = "convert line endings to LF (\\n) for example using dos2unix"
-
-    def check_rule(self, ctx: Context, rule: Rule):
-        if len(rule.definition.split("\r\n")) > 0:
-            return False
-        return True
-
-
 class FormatSingleEmptyLineEOF(Lint):
     name = "EOF format"
     recommendation = "end file with a single empty line"
@@ -681,16 +669,14 @@ class FormatIncorrect(Lint):
     recommendation_template = "use scripts/capafmt.py or adjust as follows\n{:s}"
 
     def check_rule(self, ctx: Context, rule: Rule):
-        actual = rule.definition
+        # EOL depends on Git and our .gitattributes defines text=auto (Git handles files it thinks is best)
+        # we prefer LF only, but enforcing across OSs seems tedious and unnecessary
+        actual = rule.definition.replace("\r\n", "\n")
         expected = capa.rules.Rule.from_yaml(rule.definition, use_ruamel=True).to_yaml()
 
         if actual != expected:
             diff = difflib.ndiff(actual.splitlines(1), expected.splitlines(True))
             recommendation_template = self.recommendation_template
-            if "\r\n" in actual:
-                recommendation_template = (
-                    self.recommendation_template + "\nplease make sure that the file uses LF (\\n) line endings only"
-                )
             self.recommendation = recommendation_template.format("".join(diff))
             return True
 
@@ -804,7 +790,6 @@ def lint_features(ctx: Context, rule: Rule):
 
 
 FORMAT_LINTS = (
-    FormatLineFeedEOL(),
     FormatSingleEmptyLineEOF(),
     FormatStringQuotesIncorrect(),
     FormatIncorrect(),
