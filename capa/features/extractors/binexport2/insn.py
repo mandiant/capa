@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import io
 import logging
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 
 import pefile
 from elftools.elf.elffile import ELFFile
@@ -17,7 +17,7 @@ import capa.features.extractors.strings
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import FunctionContext, InstructionContext
+from capa.features.extractors.binexport2 import AnalysisContext, FunctionContext, BasicBlockContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -30,9 +30,9 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
-    idx = fhi.idx
-    analysis: BinExport2Analysis = fhi.analysis
+    be2 = fhi.ctx.be2
+    idx = fhi.ctx.idx
+    analysis: BinExport2Analysis = fhi.ctx.analysis
 
     instruction = be2.instruction[ii.instruction_index]
 
@@ -64,10 +64,50 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 
 def is_address_mapped(be2: BinExport2, address: int) -> bool:
     """return True if the given address is mapped"""
-    for section in be2.section:
-        if section.address <= address < section.address + section.size:
-            return True
-    return False
+    sections_with_perms = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, be2.section)
+    return any(section.address <= address < section.address + section.size for section in sections_with_perms)
+
+
+###############################################################################
+#
+# begin Ghidra symbol madness ("gsm").
+#
+# This is a "temporary" section of code to deal with
+#   https://github.com/google/binexport/issues/78
+# because Ghidra exports all operands as a single SYMBOL expression node.
+#
+# Use references to `_is_ghidra_symbol_madness` to remove all this up later.
+
+
+def _is_ghidra_symbol_madness(be2: BinExport2, instruction_index: int) -> bool:
+    instruction = be2.instruction[instruction_index]
+    for operand_index in instruction.operand_index:
+        operand = be2.operand[operand_index]
+
+        if len(operand.expression_index) != 1:
+            return False
+
+        expression0 = be2.expression[operand.expression_index[0]]
+
+        if BinExport2.Expression.Type.SYMBOL != expression0.type:
+            return False
+
+    return True
+
+
+def _gsm_get_instruction_operand(be2: BinExport2, instruction_index: int, operand_index: int) -> str:
+    """since Ghidra represents all operands as a single string, just fetch that."""
+    instruction = be2.instruction[instruction_index]
+    operand = be2.operand[instruction.operand_index[operand_index]]
+    assert len(operand.expression_index) == 1
+    expression = be2.expression[operand.expression_index[0]]
+    assert expression.type == BinExport2.Expression.Type.SYMBOL
+    return expression.symbol
+
+
+# end Ghidra symbol madness.
+#
+###############################################################################
 
 
 def extract_insn_number_features(
@@ -76,54 +116,47 @@ def extract_insn_number_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
+    be2 = fhi.ctx.be2
+    analysis = fhi.ctx.analysis
 
-    instruction = be2.instruction[ii.instruction_index]
+    instruction_index = ii.instruction_index
+    instruction = be2.instruction[instruction_index]
+
+    _is_gsm = _is_ghidra_symbol_madness(be2, instruction_index)
 
     for i, operand_index in enumerate(instruction.operand_index):
         operand = be2.operand[operand_index]
 
-        if len(operand.expression_index) == 1:
-            # Ghidra extracts everything as a SYMBOL today,
-            # which is very wrong.
-            #
+        if len(operand.expression_index) == 1 and _is_gsm:
             # temporarily, we'll have to try to guess at the interpretation.
-            # TODO: report this bug.
-            expression0 = be2.expression[operand.expression_index[0]]
+            symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
 
-            if BinExport2.Expression.Type.SYMBOL != expression0.type:
-                continue
-
-            if expression0.symbol.startswith("#0x"):
+            if symbol.startswith("#0x"):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "#0xffffffff"
                 try:
-                    value = int(expression0.symbol[len("#") :], 0x10)
+                    value = int(symbol[len("#") :], 0x10)
                 except ValueError:
                     # failed to parse as integer
                     continue
 
-            elif expression0.symbol.startswith("0x"):
+                # handling continues below at label: has a value
+
+            elif symbol.startswith("0x"):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "0x1000"
                 try:
-                    value = int(expression0.symbol, 0x10)
+                    value = int(symbol, 0x10)
                 except ValueError:
                     # failed to parse as integer
                     continue
 
+                # handling continues below at label: has a value
+
             else:
                 continue
-
-            # TODO: maybe if the base address is 0, disable this check.
-            # Otherwise we miss numbers smaller than the image size.
-            if is_address_mapped(be2, value):
-                continue
-
-            yield Number(value), ih.address
-            yield OperandNumber(i, value), ih.address
 
         elif len(operand.expression_index) == 2:
             # from BinDetego,
@@ -146,23 +179,32 @@ def extract_insn_number_features(
 
             value = expression1.immediate
 
-            # TODO: skip small numbers?
+            # handling continues below at label: has a value
 
+        else:
+            continue
+
+        # label: has a value
+
+        if analysis.base_address != 0x0:
+            # When the image is mapped at 0x0,
+            #  then its hard to tell if numbers are pointers or numbers.
+            # So be a little less conservative here.
             if is_address_mapped(be2, value):
                 continue
 
-            yield Number(value), ih.address
-            yield OperandNumber(i, value), ih.address
-        else:
+        if is_address_mapped(be2, value):
             continue
+
+        yield Number(value), ih.address
+        yield OperandNumber(i, value), ih.address
 
 
 class ReadMemoryError(ValueError): ...
 
 
-def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int, cache={}) -> bytes:
-    base_address = min(map(lambda s: s.address, be2.section))
-    rva = address - base_address
+def read_memory(ctx: AnalysisContext, sample_bytes: bytes, address: int, size: int, cache) -> bytes:
+    rva = address - ctx.analysis.base_address
 
     try:
         if sample_bytes.startswith(capa.features.extractors.common.MATCH_PE):
@@ -207,51 +249,106 @@ def read_memory(be2: BinExport2, sample_bytes: bytes, address: int, size: int, c
         raise ReadMemoryError("failed to read memory: " + str(e)) from e
 
 
-def extract_insn_bytes_features(
-    fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
-) -> Iterator[Tuple[Feature, Address]]:
+def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
+    bbi: BasicBlockContext = bbh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
-    sample_bytes = fhi.sample_bytes
-    idx = fhi.idx
+    ctx = fhi.ctx
+    be2 = fhi.ctx.be2
+    sample_bytes = fhi.ctx.sample_bytes
+    idx = fhi.ctx.idx
 
+    basic_block_index = bbi.basic_block_index
     instruction_index = ii.instruction_index
+
+    reference_addresses: List[int] = []
 
     if instruction_index in idx.data_reference_index_by_source_instruction_index:
         for data_reference_index in idx.data_reference_index_by_source_instruction_index[instruction_index]:
             data_reference = be2.data_reference[data_reference_index]
             data_reference_address = data_reference.address
 
-            # at end of segment then there might be an overrun here.
-            buf = read_memory(be2, sample_bytes, data_reference_address, 0x100, cache=fh.ctx)
+            reference_addresses.append(data_reference_address)
 
-            if capa.features.extractors.helpers.all_zeros(buf):
-                continue
+    if (not reference_addresses) and _is_ghidra_symbol_madness(be2, instruction_index):
+        instruction = be2.instruction[ii.instruction_index]
+        mnemonic = be2.mnemonic[instruction.mnemonic_index]
+        mnemonic_name = mnemonic.name.lower()
 
-            is_string = False
+        if mnemonic_name == "adrp":
+            # Look for sequence like:
+            #
+            #     adrp x2, 0x1000     ; fetch global anchor address, relocatable
+            #     add  x2, x2, #0x3c  ; offset into global data of string
+            #
+            # to resolve 0x103c at the address of the adrp instruction.
+            # Ideally, the underlying disassembler would do this (IDA, Ghidra, etc.)
+            #  and use a data reference.
+            # However, the Ghidra exporter doesn't do this today.
 
-            # note: we *always* break after the first iteration
-            for s in capa.features.extractors.strings.extract_ascii_strings(buf):
-                if s.offset != 0:
-                    break
+            # get the first operand register name and then second operand number,
+            # then find the next add instruction that references the register,
+            # fetching the third operand number.
 
-                yield String(s.s), ih.address
-                is_string = True
+            assert len(instruction.operand_index) == 2
+            register_name = _gsm_get_instruction_operand(be2, instruction_index, 0)
+            page_address = int(_gsm_get_instruction_operand(be2, instruction_index, 1), 0x10)
+
+            basic_block = be2.basic_block[basic_block_index]
+
+            scanning_active = False
+            for scanning_instruction_index in idx.instruction_indices(basic_block):
+                if not scanning_active:
+                    # the given instruction not encountered yet
+                    if scanning_instruction_index == instruction_index:
+                        scanning_active = True
+                else:
+                    scanning_instruction = be2.instruction[scanning_instruction_index]
+                    scanning_mnemonic = be2.mnemonic[scanning_instruction.mnemonic_index]
+                    scanning_mnemonic_name = scanning_mnemonic.name.lower()
+                    if scanning_mnemonic_name != "add":
+                        continue
+
+                    if _gsm_get_instruction_operand(be2, scanning_instruction_index, 0) != register_name:
+                        continue
+
+                    if _gsm_get_instruction_operand(be2, scanning_instruction_index, 1) != register_name:
+                        continue
+
+                    page_offset = int(_gsm_get_instruction_operand(be2, scanning_instruction_index, 2).strip("#"), 0x10)
+                    reference_address = page_address + page_offset
+                    reference_addresses.append(reference_address)
+
+    for reference_address in reference_addresses:
+        # at end of segment then there might be an overrun here.
+        buf = read_memory(ctx, sample_bytes, reference_address, 0x100, fh.ctx)
+
+        if capa.features.extractors.helpers.all_zeros(buf):
+            continue
+
+        is_string = False
+
+        # note: we *always* break after the first iteration
+        for s in capa.features.extractors.strings.extract_ascii_strings(buf):
+            if s.offset != 0:
                 break
 
-            # note: we *always* break after the first iteration
-            for s in capa.features.extractors.strings.extract_unicode_strings(buf):
-                if s.offset != 0:
-                    break
+            yield String(s.s), ih.address
+            is_string = True
+            break
 
-                yield String(s.s), ih.address
-                is_string = True
+        # note: we *always* break after the first iteration
+        for s in capa.features.extractors.strings.extract_unicode_strings(buf):
+            if s.offset != 0:
                 break
 
-            if not is_string:
-                yield Bytes(buf), ih.address
+            yield String(s.s), ih.address
+            is_string = True
+            break
+
+        if not is_string:
+            yield Bytes(buf), ih.address
 
 
 def extract_insn_string_features(
@@ -260,8 +357,8 @@ def extract_insn_string_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
-    idx = fhi.idx
+    be2 = fhi.ctx.be2
+    idx = fhi.ctx.idx
 
     instruction_index = ii.instruction_index
 
@@ -293,7 +390,7 @@ def extract_insn_mnemonic_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
+    be2 = fhi.ctx.be2
 
     instruction = be2.instruction[ii.instruction_index]
     mnemonic = be2.mnemonic[instruction.mnemonic_index]
@@ -310,7 +407,7 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.be2
+    be2 = fhi.ctx.be2
 
     instruction = be2.instruction[ii.instruction_index]
     if not instruction.call_target:

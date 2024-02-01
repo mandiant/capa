@@ -13,11 +13,12 @@ Proto files generated via protobuf v24.4:
 import os
 import hashlib
 import logging
-from typing import Any, Dict, List, Iterator
+from typing import Dict, List, Iterator
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
 
+import capa.features.extractors.common
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
@@ -200,13 +201,91 @@ class BinExport2Index:
         return self.get_function_name_by_vertex(vertex_index)
 
 
+class BinExport2Analysis:
+    def __init__(self, be2: BinExport2, idx: BinExport2Index, buf: bytes):
+        self.be2 = be2
+        self.idx = idx
+        self.buf = buf
+
+        # from virtual address to call graph vertex representing the import
+        self.thunks: Dict[int, int] = {}
+        self.base_address: int = 0
+
+        self._find_got_thunks()
+        self._find_base_address()
+
+    def _find_got_thunks(self):
+        if self.be2.meta_information.architecture_name != "aarch64":
+            logger.debug("skipping GOT thunk analysis on non-aarch64")
+            return
+
+        if not self.buf.startswith(capa.features.extractors.common.MATCH_ELF):
+            logger.debug("skipping GOT thunk analysis on non-ELF")
+            return
+
+        for vertex_index, vertex in enumerate(self.be2.call_graph.vertex):
+            if not vertex.HasField("address"):
+                continue
+
+            if not vertex.HasField("mangled_name"):
+                continue
+
+            if BinExport2.CallGraph.Vertex.Type.IMPORTED != vertex.type:
+                continue
+
+            if len(self.idx.callers_by_vertex_index[vertex_index]) != 1:
+                # find imports with a single caller,
+                # which should be the thunk
+                continue
+
+            maybe_thunk_vertex_index = self.idx.callers_by_vertex_index[vertex_index][0]
+            maybe_thunk_vertex = self.be2.call_graph.vertex[maybe_thunk_vertex_index]
+            maybe_thunk_address = maybe_thunk_vertex.address
+
+            maybe_thunk_flow_graph_index = self.idx.flow_graph_index_by_address[maybe_thunk_address]
+            maybe_thunk_flow_graph = self.be2.flow_graph[maybe_thunk_flow_graph_index]
+
+            if len(maybe_thunk_flow_graph.basic_block_index) != 1:
+                # should have a single basic block
+                continue
+
+            maybe_thunk_basic_block = self.be2.basic_block[maybe_thunk_flow_graph.entry_basic_block_index]
+            if len(list(self.idx.instruction_indices(maybe_thunk_basic_block))) != 4:
+                # thunk should look like these four instructions.
+                # fstat:
+                # 000008b0  adrp    x16, 0x11000
+                # 000008b4  ldr     x17, [x16, #0xf88]  {fstat}
+                # 000008b8  add     x16, x16, #0xf88  {fstat}
+                # 000008bc  br      x17
+                # which relies on the disassembler to recognize the target of the call/br
+                # to go to the GOT/external symbol.
+                continue
+
+            thunk_address = maybe_thunk_address
+            thunk_name = vertex.mangled_name
+            logger.debug("found GOT thunk: 0x%x -> %s", thunk_address, thunk_name)
+
+            self.thunks[thunk_address] = vertex_index
+
+    def _find_base_address(self):
+        sections_with_perms = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, self.be2.section)
+        # assume the lowest address is the base address.
+        # this works as long as BinExport doesn't record other
+        # libraries mapped into memory.
+        self.base_address = min(s.address for s in sections_with_perms)
+
+
 @dataclass
-class FunctionContext:
+class AnalysisContext:
     sample_bytes: bytes
     be2: BinExport2
     idx: BinExport2Index
-    # TODO: typing
-    analysis: Any
+    analysis: BinExport2Analysis
+
+
+@dataclass
+class FunctionContext:
+    ctx: AnalysisContext
     flow_graph_index: int
 
 
