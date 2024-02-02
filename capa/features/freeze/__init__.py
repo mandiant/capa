@@ -22,7 +22,6 @@ from pydantic import Field, BaseModel, ConfigDict
 # https://github.com/mandiant/capa/issues/1699
 from typing_extensions import TypeAlias
 
-import capa.loader
 import capa.helpers
 import capa.version
 import capa.features.file
