@@ -82,6 +82,7 @@ class BinExport2Index:
 
         # note: flow graph != call graph (vertex)
         self.flow_graph_index_by_address: Dict[int, int] = {}
+        self.flow_graph_address_by_index: Dict[int, int] = {}
         self.basic_block_index_by_address: Dict[int, int] = {}
         self.basic_block_address_by_index: Dict[int, int] = {}
         self.instruction_index_by_address: Dict[int, int] = {}
@@ -142,6 +143,7 @@ class BinExport2Index:
             entry_instruction_address = self.instruction_address_by_index[entry_instruction_index]
             function_address = entry_instruction_address
             self.flow_graph_index_by_address[function_address] = flow_graph_index
+            self.flow_graph_address_by_index[flow_graph_index] = function_address
 
     def _index_flow_graph_edges(self):
         for flow_graph in self.be2.flow_graph:
