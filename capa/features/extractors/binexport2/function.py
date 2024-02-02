@@ -8,25 +8,40 @@
 from typing import Tuple, Iterator
 
 from capa.features.file import FunctionName
-from capa.features.common import Feature
-from capa.features.address import Address
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext
 from capa.features.extractors.base_extractor import FunctionHandle
 
 
 def extract_function_calls_to(fh: FunctionHandle):
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+
+    be2 = fhi.ctx.be2
+    idx = fhi.ctx.idx
+
+    flow_graph_index = fhi.flow_graph_index
+    flow_graph_address = idx.flow_graph_address_by_index[flow_graph_index]
+    vertex_index = idx.vertex_index_by_address[flow_graph_address]
+
+    for caller_index in idx.callers_by_vertex_index[vertex_index]:
+        caller = be2.call_graph.vertex[caller_index]
+        caller_address = caller.address
+        yield Characteristic("calls to"), AbsoluteVirtualAddress(caller_address)
 
 
 def extract_function_loop(fh: FunctionHandle):
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
 
+    be2 = fhi.ctx.be2
 
-def extract_recursive_call(fh: FunctionHandle):
-    # TODO(wb): 1755
-    yield from ()
+    flow_graph_index = fhi.flow_graph_index
+    flow_graph = be2.flow_graph[flow_graph_index]
+
+    for edge in flow_graph.edge:
+        if edge.is_back_edge:
+            yield Characteristic("loop"), fh.address
+            break
 
 
 def extract_function_name(fh: FunctionHandle):
@@ -57,4 +72,4 @@ def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
             yield feature, addr
 
 
-FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_recursive_call, extract_function_name)
+FUNCTION_HANDLERS = (extract_function_calls_to, extract_function_loop, extract_function_name)
