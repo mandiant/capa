@@ -408,9 +408,6 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     be2 = fhi.ctx.be2
 
     instruction = be2.instruction[ii.instruction_index]
-    if not instruction.call_target:
-        return
-
     for call_target_address in instruction.call_target:
         addr = AbsoluteVirtualAddress(call_target_address)
         yield Characteristic("calls from"), addr

@@ -6,20 +6,25 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Any, Tuple, Iterator
+from typing import Tuple, Iterator
 
-from capa.features.common import Feature
-from capa.features.address import Address
+from capa.features.common import Feature, Characteristic
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
+from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
-
-# TODO(wb): 1755
-TODOType = Any
 
 
 def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    fhi: FunctionContext = fh.inner
+    bbi: BasicBlockContext = bbh.inner
+
+    idx = fhi.ctx.idx
+
+    basic_block_index = bbi.basic_block_index
+    if basic_block_index in idx.target_edges_by_basic_block_index[basic_block_index]:
+        basic_block_address = idx.basic_block_address_by_index[basic_block_index]
+        yield Characteristic("tight loop"), AbsoluteVirtualAddress(basic_block_address)
 
 
 def extract_features(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
