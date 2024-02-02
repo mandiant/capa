@@ -321,8 +321,11 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
                     reference_addresses.append(reference_address)
 
     for reference_address in reference_addresses:
-        # at end of segment then there might be an overrun here.
-        buf = read_memory(ctx, sample_bytes, reference_address, 0x100, fh.ctx)
+        try:
+            # at end of segment then there might be an overrun here.
+            buf = read_memory(ctx, sample_bytes, reference_address, 0x100, fh.ctx)
+        except ReadMemoryError:
+            continue
 
         if capa.features.extractors.helpers.all_zeros(buf):
             continue
