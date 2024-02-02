@@ -25,14 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
-    from capa.features.extractors.binexport2.extractor import BinExport2Analysis
-
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
     be2 = fhi.ctx.be2
     idx = fhi.ctx.idx
-    analysis: BinExport2Analysis = fhi.ctx.analysis
+    analysis = fhi.ctx.analysis
 
     instruction = be2.instruction[ii.instruction_index]
 
@@ -243,9 +241,6 @@ def read_memory(ctx: AnalysisContext, sample_bytes: bytes, address: int, size: i
             logger.warning("unsupported format")
             raise ReadMemoryError("unsupported file format")
     except Exception as e:
-        # TODO: remove logging message here
-        logger.warning("failed to read memory: %s", e, exc_info=True)
-
         raise ReadMemoryError("failed to read memory: " + str(e)) from e
 
 
