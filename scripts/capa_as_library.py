@@ -15,10 +15,12 @@ from pathlib import Path
 import capa.main
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.features
 import capa.render.json
 import capa.render.utils as rutils
 import capa.render.default
+import capa.capabilities.common
 import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.features.common import OS_AUTO, FORMAT_AUTO
@@ -167,22 +169,19 @@ def render_dictionary(doc: rd.ResultDocument) -> Dict[str, Any]:
 
 
 # ==== render dictionary helpers
-def capa_details(rules_path: Path, file_path: Path, output_format="dictionary"):
+def capa_details(rules_path: Path, input_file: Path, output_format="dictionary"):
     # load rules from disk
-    rules = capa.main.get_rules([rules_path])
+    rules = capa.rules.get_rules([rules_path])
 
     # extract features and find capabilities
-    extractor = capa.main.get_extractor(
-        file_path, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], False, disable_progress=True
+    extractor = capa.loader.get_extractor(
+        input_file, FORMAT_AUTO, OS_AUTO, capa.main.BACKEND_VIV, [], should_save_workspace=False, disable_progress=True
     )
-    capabilities, counts = capa.main.find_capabilities(rules, extractor, disable_progress=True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
 
     # collect metadata (used only to make rendering more complete)
-    meta = capa.main.collect_metadata([], file_path, FORMAT_AUTO, OS_AUTO, [rules_path], extractor)
-
-    meta.analysis.feature_counts = counts["feature_counts"]
-    meta.analysis.library_functions = counts["library_functions"]
-    meta.analysis.layout = capa.main.compute_layout(rules, extractor, capabilities)
+    meta = capa.loader.collect_metadata([], input_file, FORMAT_AUTO, OS_AUTO, [rules_path], extractor, counts)
+    meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
 
     capa_output: Any = False
 
@@ -208,7 +207,7 @@ if __name__ == "__main__":
     RULES_PATH = capa.main.get_default_root() / "rules"
 
     parser = argparse.ArgumentParser(description="Extract capabilities from a file")
-    parser.add_argument("file", help="file to extract capabilities from")
+    parser.add_argument("input_file", help="file to extract capabilities from")
     parser.add_argument("--rules", help="path to rules directory", default=RULES_PATH)
     parser.add_argument(
         "--output", help="output format", choices=["dictionary", "json", "texttable"], default="dictionary"
@@ -216,5 +215,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.rules != RULES_PATH:
         args.rules = Path(args.rules)
-    print(capa_details(args.rules, Path(args.file), args.output))
+    print(capa_details(args.rules, Path(args.input_file), args.output))
     sys.exit(0)

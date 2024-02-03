@@ -43,7 +43,8 @@
       "T1598": "Phishing for Information",
       "T1598.001": "Phishing for Information::Spearphishing Service",
       "T1598.002": "Phishing for Information::Spearphishing Attachment",
-      "T1598.003": "Phishing for Information::Spearphishing Link"
+      "T1598.003": "Phishing for Information::Spearphishing Link",
+      "T1598.004": "Phishing for Information::Spearphishing Voice"
     },
     "Resource Development": {
       "T1583": "Acquire Infrastructure",
@@ -111,7 +112,9 @@
       "T1566": "Phishing",
       "T1566.001": "Phishing::Spearphishing Attachment",
       "T1566.002": "Phishing::Spearphishing Link",
-      "T1566.003": "Phishing::Spearphishing via Service"
+      "T1566.003": "Phishing::Spearphishing via Service",
+      "T1566.004": "Phishing::Spearphishing Voice",
+      "T1659": "Content Injection"
     },
     "Execution": {
       "T1047": "Windows Management Instrumentation",
@@ -175,6 +178,7 @@
       "T1098.003": "Account Manipulation::Additional Cloud Roles",
       "T1098.004": "Account Manipulation::SSH Authorized Keys",
       "T1098.005": "Account Manipulation::Device Registration",
+      "T1098.006": "Account Manipulation::Additional Container Cluster Roles",
       "T1133": "External Remote Services",
       "T1136": "Create Account",
       "T1136.001": "Create Account::Local Account",
@@ -264,7 +268,8 @@
       "T1574.010": "Hijack Execution Flow::Services File Permissions Weakness",
       "T1574.011": "Hijack Execution Flow::Services Registry Permissions Weakness",
       "T1574.012": "Hijack Execution Flow::COR_PROFILER",
-      "T1574.013": "Hijack Execution Flow::KernelCallbackTable"
+      "T1574.013": "Hijack Execution Flow::KernelCallbackTable",
+      "T1653": "Power Settings"
     },
     "Privilege Escalation": {
       "T1037": "Boot or Logon Initialization Scripts",
@@ -298,6 +303,13 @@
       "T1078.002": "Valid Accounts::Domain Accounts",
       "T1078.003": "Valid Accounts::Local Accounts",
       "T1078.004": "Valid Accounts::Cloud Accounts",
+      "T1098": "Account Manipulation",
+      "T1098.001": "Account Manipulation::Additional Cloud Credentials",
+      "T1098.002": "Account Manipulation::Additional Email Delegate Permissions",
+      "T1098.003": "Account Manipulation::Additional Cloud Roles",
+      "T1098.004": "Account Manipulation::SSH Authorized Keys",
+      "T1098.005": "Account Manipulation::Device Registration",
+      "T1098.006": "Account Manipulation::Additional Container Cluster Roles",
       "T1134": "Access Token Manipulation",
       "T1134.001": "Access Token Manipulation::Token Impersonation/Theft",
       "T1134.002": "Access Token Manipulation::Create Process with Token",
@@ -349,6 +361,7 @@
       "T1548.002": "Abuse Elevation Control Mechanism::Bypass User Account Control",
       "T1548.003": "Abuse Elevation Control Mechanism::Sudo and Sudo Caching",
       "T1548.004": "Abuse Elevation Control Mechanism::Elevated Execution with Prompt",
+      "T1548.005": "Abuse Elevation Control Mechanism::Temporary Elevated Cloud Access",
       "T1574": "Hijack Execution Flow",
       "T1574.001": "Hijack Execution Flow::DLL Search Order Hijacking",
       "T1574.002": "Hijack Execution Flow::DLL Side-Loading",
@@ -379,6 +392,7 @@
       "T1027.009": "Obfuscated Files or Information::Embedded Payloads",
       "T1027.010": "Obfuscated Files or Information::Command Obfuscation",
       "T1027.011": "Obfuscated Files or Information::Fileless Storage",
+      "T1027.012": "Obfuscated Files or Information::LNK Icon Smuggling",
       "T1036": "Masquerading",
       "T1036.001": "Masquerading::Invalid Code Signature",
       "T1036.002": "Masquerading::Right-to-Left Override",
@@ -388,6 +402,7 @@
       "T1036.006": "Masquerading::Space after Filename",
       "T1036.007": "Masquerading::Double File Extension",
       "T1036.008": "Masquerading::Masquerade File Type",
+      "T1036.009": "Masquerading::Break Process Trees",
       "T1055": "Process Injection",
       "T1055.001": "Process Injection::Dynamic-link Library Injection",
       "T1055.002": "Process Injection::Portable Executable Injection",
@@ -475,6 +490,7 @@
       "T1548.002": "Abuse Elevation Control Mechanism::Bypass User Account Control",
       "T1548.003": "Abuse Elevation Control Mechanism::Sudo and Sudo Caching",
       "T1548.004": "Abuse Elevation Control Mechanism::Elevated Execution with Prompt",
+      "T1548.005": "Abuse Elevation Control Mechanism::Temporary Elevated Cloud Access",
       "T1550": "Use Alternate Authentication Material",
       "T1550.001": "Use Alternate Authentication Material::Application Access Token",
       "T1550.002": "Use Alternate Authentication Material::Pass the Hash",
@@ -503,10 +519,11 @@
       "T1562.004": "Impair Defenses::Disable or Modify System Firewall",
       "T1562.006": "Impair Defenses::Indicator Blocking",
       "T1562.007": "Impair Defenses::Disable or Modify Cloud Firewall",
-      "T1562.008": "Impair Defenses::Disable Cloud Logs",
+      "T1562.008": "Impair Defenses::Disable or Modify Cloud Logs",
       "T1562.009": "Impair Defenses::Safe Mode Boot",
       "T1562.010": "Impair Defenses::Downgrade Attack",
       "T1562.011": "Impair Defenses::Spoof Security Alerting",
+      "T1562.012": "Impair Defenses::Disable or Modify Linux Audit System",
       "T1564": "Hide Artifacts",
       "T1564.001": "Hide Artifacts::Hidden Files and Directories",
       "T1564.002": "Hide Artifacts::Hidden Users",
@@ -518,6 +535,7 @@
       "T1564.008": "Hide Artifacts::Email Hiding Rules",
       "T1564.009": "Hide Artifacts::Resource Forking",
       "T1564.010": "Hide Artifacts::Process Argument Spoofing",
+      "T1564.011": "Hide Artifacts::Ignore Process Interrupts",
       "T1574": "Hijack Execution Flow",
       "T1574.001": "Hijack Execution Flow::DLL Search Order Hijacking",
       "T1574.002": "Hijack Execution Flow::DLL Side-Loading",
@@ -536,6 +554,7 @@
       "T1578.002": "Modify Cloud Compute Infrastructure::Create Cloud Instance",
       "T1578.003": "Modify Cloud Compute Infrastructure::Delete Cloud Instance",
       "T1578.004": "Modify Cloud Compute Infrastructure::Revert Cloud Instance",
+      "T1578.005": "Modify Cloud Compute Infrastructure::Modify Cloud Compute Configurations",
       "T1599": "Network Boundary Bridging",
       "T1599.001": "Network Boundary Bridging::Network Address Translation Traversal",
       "T1600": "Weaken Encryption",
@@ -548,7 +567,8 @@
       "T1612": "Build Image on Host",
       "T1620": "Reflective Code Loading",
       "T1622": "Debugger Evasion",
-      "T1647": "Plist File Modification"
+      "T1647": "Plist File Modification",
+      "T1656": "Impersonation"
     },
     "Credential Access": {
       "T1003": "OS Credential Dumping",
@@ -591,6 +611,7 @@
       "T1555.003": "Credentials from Password Stores::Credentials from Web Browsers",
       "T1555.004": "Credentials from Password Stores::Windows Credential Manager",
       "T1555.005": "Credentials from Password Stores::Password Managers",
+      "T1555.006": "Credentials from Password Stores::Cloud Secrets Management Stores",
       "T1556": "Modify Authentication Process",
       "T1556.001": "Modify Authentication Process::Domain Controller Authentication",
       "T1556.002": "Modify Authentication Process::Password Filter DLL",
@@ -621,6 +642,7 @@
       "T1012": "Query Registry",
       "T1016": "System Network Configuration Discovery",
       "T1016.001": "System Network Configuration Discovery::Internet Connection Discovery",
+      "T1016.002": "System Network Configuration Discovery::Wi-Fi Discovery",
       "T1018": "Remote System Discovery",
       "T1033": "System Owner/User Discovery",
       "T1040": "Network Sniffing",
@@ -659,7 +681,8 @@
       "T1615": "Group Policy Discovery",
       "T1619": "Cloud Storage Object Discovery",
       "T1622": "Debugger Evasion",
-      "T1652": "Device Driver Discovery"
+      "T1652": "Device Driver Discovery",
+      "T1654": "Log Enumeration"
     },
     "Lateral Movement": {
       "T1021": "Remote Services",
@@ -670,6 +693,7 @@
       "T1021.005": "Remote Services::VNC",
       "T1021.006": "Remote Services::Windows Remote Management",
       "T1021.007": "Remote Services::Cloud Services",
+      "T1021.008": "Remote Services::Direct Cloud VM Connections",
       "T1072": "Software Deployment Tools",
       "T1080": "Taint Shared Content",
       "T1091": "Replication Through Removable Media",
@@ -763,7 +787,8 @@
       "T1572": "Protocol Tunneling",
       "T1573": "Encrypted Channel",
       "T1573.001": "Encrypted Channel::Symmetric Cryptography",
-      "T1573.002": "Encrypted Channel::Asymmetric Cryptography"
+      "T1573.002": "Encrypted Channel::Asymmetric Cryptography",
+      "T1659": "Content Injection"
     },
     "Exfiltration": {
       "T1011": "Exfiltration Over Other Network Medium",
@@ -783,7 +808,8 @@
       "T1567": "Exfiltration Over Web Service",
       "T1567.001": "Exfiltration Over Web Service::Exfiltration to Code Repository",
       "T1567.002": "Exfiltration Over Web Service::Exfiltration to Cloud Storage",
-      "T1567.003": "Exfiltration Over Web Service::Exfiltration to Text Storage Sites"
+      "T1567.003": "Exfiltration Over Web Service::Exfiltration to Text Storage Sites",
+      "T1567.004": "Exfiltration Over Web Service::Exfiltration Over Webhook"
     },
     "Impact": {
       "T1485": "Data Destruction",
@@ -811,7 +837,8 @@
       "T1565": "Data Manipulation",
       "T1565.001": "Data Manipulation::Stored Data Manipulation",
       "T1565.002": "Data Manipulation::Transmitted Data Manipulation",
-      "T1565.003": "Data Manipulation::Runtime Data Manipulation"
+      "T1565.003": "Data Manipulation::Runtime Data Manipulation",
+      "T1657": "Financial Theft"
     }
   },
   "mbc": {

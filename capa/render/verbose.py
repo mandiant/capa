@@ -22,7 +22,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 """
-import enum
+
+from typing import cast
 
 import tabulate
 
@@ -54,13 +55,92 @@ def format_address(address: frz.Address) -> str:
         assert isinstance(token, int)
         assert isinstance(offset, int)
         return f"token({capa.helpers.hex(token)})+{capa.helpers.hex(offset)}"
+    elif address.type == frz.AddressType.PROCESS:
+        assert isinstance(address.value, tuple)
+        ppid, pid = address.value
+        assert isinstance(ppid, int)
+        assert isinstance(pid, int)
+        return f"process{{pid:{pid}}}"
+    elif address.type == frz.AddressType.THREAD:
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid = address.value
+        assert isinstance(ppid, int)
+        assert isinstance(pid, int)
+        assert isinstance(tid, int)
+        return f"process{{pid:{pid},tid:{tid}}}"
+    elif address.type == frz.AddressType.CALL:
+        assert isinstance(address.value, tuple)
+        ppid, pid, tid, id_ = address.value
+        return f"process{{pid:{pid},tid:{tid},call:{id_}}}"
     elif address.type == frz.AddressType.NO_ADDRESS:
         return "global"
     else:
         raise ValueError("unexpected address type")
 
 
-def render_meta(ostream, doc: rd.ResultDocument):
+def _get_process_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    for p in layout.processes:
+        if p.address == addr:
+            return p.name
+
+    raise ValueError("name not found for process", addr)
+
+
+def _get_call_name(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    thread = frz.Address.from_capa(call.thread)
+    process = frz.Address.from_capa(call.thread.process)
+
+    # danger: O(n**3)
+    for p in layout.processes:
+        if p.address == process:
+            for t in p.matched_threads:
+                if t.address == thread:
+                    for c in t.matched_calls:
+                        if c.address == addr:
+                            return c.name
+    raise ValueError("name not found for call", addr)
+
+
+def render_process(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    process = addr.to_capa()
+    assert isinstance(process, capa.features.address.ProcessAddress)
+    name = _get_process_name(layout, addr)
+    return f"{name}{{pid:{process.pid}}}"
+
+
+def render_thread(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    thread = addr.to_capa()
+    assert isinstance(thread, capa.features.address.ThreadAddress)
+    name = _get_process_name(layout, frz.Address.from_capa(thread.process))
+    return f"{name}{{pid:{thread.process.pid},tid:{thread.tid}}}"
+
+
+def render_call(layout: rd.DynamicLayout, addr: frz.Address) -> str:
+    call = addr.to_capa()
+    assert isinstance(call, capa.features.address.DynamicCallAddress)
+
+    pname = _get_process_name(layout, frz.Address.from_capa(call.thread.process))
+    cname = _get_call_name(layout, addr)
+
+    fname, _, rest = cname.partition("(")
+    args, _, rest = rest.rpartition(")")
+
+    s = []
+    s.append(f"{fname}(")
+    for arg in args.split(", "):
+        s.append(f"  {arg},")
+    s.append(f"){rest}")
+
+    newline = "\n"
+    return (
+        f"{pname}{{pid:{call.thread.process.pid},tid:{call.thread.tid},call:{call.id}}}\n{rutils.mute(newline.join(s))}"
+    )
+
+
+def render_static_meta(ostream, meta: rd.StaticMetadata):
     """
     like:
 
@@ -73,34 +153,88 @@ def render_meta(ostream, doc: rd.ResultDocument):
         os                   windows
         format               pe
         arch                 amd64
+        analysis             static
         extractor            VivisectFeatureExtractor
         base address         0x10000000
         rules                (embedded rules)
         function count       42
         total feature count  1918
     """
+
     rows = [
-        ("md5", doc.meta.sample.md5),
-        ("sha1", doc.meta.sample.sha1),
-        ("sha256", doc.meta.sample.sha256),
-        ("path", doc.meta.sample.path),
-        ("timestamp", doc.meta.timestamp),
-        ("capa version", doc.meta.version),
-        ("os", doc.meta.analysis.os),
-        ("format", doc.meta.analysis.format),
-        ("arch", doc.meta.analysis.arch),
-        ("extractor", doc.meta.analysis.extractor),
-        ("base address", format_address(doc.meta.analysis.base_address)),
-        ("rules", "\n".join(doc.meta.analysis.rules)),
-        ("function count", len(doc.meta.analysis.feature_counts.functions)),
-        ("library function count", len(doc.meta.analysis.library_functions)),
+        ("md5", meta.sample.md5),
+        ("sha1", meta.sample.sha1),
+        ("sha256", meta.sample.sha256),
+        ("path", meta.sample.path),
+        ("timestamp", meta.timestamp),
+        ("capa version", meta.version),
+        ("os", meta.analysis.os),
+        ("format", meta.analysis.format),
+        ("arch", meta.analysis.arch),
+        ("analysis", meta.flavor.value),
+        ("extractor", meta.analysis.extractor),
+        ("base address", format_address(meta.analysis.base_address)),
+        ("rules", "\n".join(meta.analysis.rules)),
+        ("function count", len(meta.analysis.feature_counts.functions)),
+        ("library function count", len(meta.analysis.library_functions)),
         (
             "total feature count",
-            doc.meta.analysis.feature_counts.file + sum(f.count for f in doc.meta.analysis.feature_counts.functions),
+            meta.analysis.feature_counts.file + sum(f.count for f in meta.analysis.feature_counts.functions),
         ),
     ]
 
     ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+
+
+def render_dynamic_meta(ostream, meta: rd.DynamicMetadata):
+    """
+    like:
+
+        md5                  84882c9d43e23d63b82004fae74ebb61
+        sha1                 c6fb3b50d946bec6f391aefa4e54478cf8607211
+        sha256               5eced7367ed63354b4ed5c556e2363514293f614c2c2eb187273381b2ef5f0f9
+        path                 /tmp/packed-report,jspn
+        timestamp            2023-07-17T10:17:05.796933
+        capa version         0.0.0
+        os                   windows
+        format               pe
+        arch                 amd64
+        extractor            CAPEFeatureExtractor
+        rules                (embedded rules)
+        process count        42
+        total feature count  1918
+    """
+
+    rows = [
+        ("md5", meta.sample.md5),
+        ("sha1", meta.sample.sha1),
+        ("sha256", meta.sample.sha256),
+        ("path", meta.sample.path),
+        ("timestamp", meta.timestamp),
+        ("capa version", meta.version),
+        ("os", meta.analysis.os),
+        ("format", meta.analysis.format),
+        ("arch", meta.analysis.arch),
+        ("analysis", meta.flavor.value),
+        ("extractor", meta.analysis.extractor),
+        ("rules", "\n".join(meta.analysis.rules)),
+        ("process count", len(meta.analysis.feature_counts.processes)),
+        (
+            "total feature count",
+            meta.analysis.feature_counts.file + sum(p.count for p in meta.analysis.feature_counts.processes),
+        ),
+    ]
+
+    ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
+
+
+def render_meta(osstream, doc: rd.ResultDocument):
+    if doc.meta.flavor == rd.Flavor.STATIC:
+        render_static_meta(osstream, cast(rd.StaticMetadata, doc.meta))
+    elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+        render_dynamic_meta(osstream, cast(rd.DynamicMetadata, doc.meta))
+    else:
+        raise ValueError("invalid meta analysis")
 
 
 def render_rules(ostream, doc: rd.ResultDocument):
@@ -126,25 +260,55 @@ def render_rules(ostream, doc: rd.ResultDocument):
         had_match = True
 
         rows = []
-        for key in ("namespace", "description", "scope"):
-            v = getattr(rule.meta, key)
-            if not v:
-                continue
 
-            if isinstance(v, list) and len(v) == 1:
-                v = v[0]
+        ns = rule.meta.namespace
+        if ns:
+            rows.append(("namespace", ns))
 
-            if isinstance(v, enum.Enum):
-                v = v.value
+        desc = rule.meta.description
+        if desc:
+            rows.append(("description", desc))
 
-            rows.append((key, v))
+        if doc.meta.flavor == rd.Flavor.STATIC:
+            scope = rule.meta.scopes.static
+        elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+            scope = rule.meta.scopes.dynamic
+        else:
+            raise ValueError("invalid meta analysis")
+        if scope:
+            rows.append(("scope", scope.value))
 
-        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
-        rows.insert(1, ("prevalence", prevalence))
-
-        if rule.meta.scope != capa.rules.FILE_SCOPE:
+        if capa.rules.Scope.FILE not in rule.meta.scopes:
             locations = [m[0] for m in doc.rules[rule.meta.name].matches]
-            rows.append(("matches", "\n".join(map(format_address, locations))))
+            lines = []
+
+            if doc.meta.flavor == rd.Flavor.STATIC:
+                lines = [format_address(loc) for loc in locations]
+            elif doc.meta.flavor == rd.Flavor.DYNAMIC:
+                assert rule.meta.scopes.dynamic is not None
+                assert isinstance(doc.meta.analysis.layout, rd.DynamicLayout)
+
+                if rule.meta.scopes.dynamic == capa.rules.Scope.PROCESS:
+                    lines = [render_process(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.THREAD:
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in locations]
+                elif rule.meta.scopes.dynamic == capa.rules.Scope.CALL:
+                    # because we're only in verbose mode, we won't show the full call details (name, args, retval)
+                    # we'll only show the details of the thread in which the calls are found.
+                    # so select the thread locations and render those.
+                    thread_locations = set()
+                    for loc in locations:
+                        cloc = loc.to_capa()
+                        assert isinstance(cloc, capa.features.address.DynamicCallAddress)
+                        thread_locations.add(frz.Address.from_capa(cloc.thread))
+
+                    lines = [render_thread(doc.meta.analysis.layout, loc) for loc in thread_locations]
+                else:
+                    capa.helpers.assert_never(rule.meta.scopes.dynamic)
+            else:
+                capa.helpers.assert_never(doc.meta.flavor)
+
+            rows.append(("matches", "\n".join(lines)))
 
         ostream.writeln(tabulate.tabulate(rows, tablefmt="plain"))
         ostream.write("\n")

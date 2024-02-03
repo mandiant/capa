@@ -41,38 +41,50 @@ def is_ordinal(symbol: str) -> bool:
     return False
 
 
-def generate_symbols(dll: str, symbol: str) -> Iterator[str]:
+def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
     """
     for a given dll and symbol name, generate variants.
     we over-generate features to make matching easier.
     these include:
-      - kernel32.CreateFileA
-      - kernel32.CreateFile
       - CreateFileA
       - CreateFile
+      - ws2_32.#1
+
+    note that since capa v7 only `import` features and APIs called via ordinal include DLL names:
+      - kernel32.CreateFileA
+      - kernel32.CreateFile
+      - ws2_32.#1
+
+    for `api` features dll names are good for documentation but not used during matching
     """
     # normalize dll name
     dll = dll.lower()
 
-    # kernel32.CreateFileA
-    yield f"{dll}.{symbol}"
+    # trim extensions observed in dynamic traces
+    dll = dll[0:-4] if dll.endswith(".dll") else dll
+    dll = dll[0:-4] if dll.endswith(".drv") else dll
+
+    if include_dll or is_ordinal(symbol):
+        # ws2_32.#1
+        # kernel32.CreateFileA
+        yield f"{dll}.{symbol}"
 
     if not is_ordinal(symbol):
         # CreateFileA
         yield symbol
 
-    if is_aw_function(symbol):
-        # kernel32.CreateFile
-        yield f"{dll}.{symbol[:-1]}"
+        if is_aw_function(symbol):
+            if include_dll:
+                # kernel32.CreateFile
+                yield f"{dll}.{symbol[:-1]}"
 
-        if not is_ordinal(symbol):
             # CreateFile
             yield symbol[:-1]
 
 
 def reformat_forwarded_export_name(forwarded_name: str) -> str:
     """
-    a forwarded export has a DLL name/path an symbol name.
+    a forwarded export has a DLL name/path and symbol name.
     we want the former to be lowercase, and the latter to be verbatim.
     """
 

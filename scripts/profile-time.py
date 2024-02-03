@@ -41,7 +41,6 @@ import timeit
 import logging
 import argparse
 import subprocess
-from pathlib import Path
 
 import tqdm
 import tabulate
@@ -50,10 +49,12 @@ import capa.main
 import capa.perf
 import capa.rules
 import capa.engine
+import capa.loader
 import capa.helpers
 import capa.features
 import capa.features.common
 import capa.features.freeze
+import capa.capabilities.common
 
 logger = logging.getLogger("capa.profile")
 
@@ -73,48 +74,28 @@ def main(argv=None):
         label += " (dirty)"
 
     parser = argparse.ArgumentParser(description="Profile capa performance")
-    capa.main.install_common_args(parser, wanted={"format", "os", "sample", "signatures", "rules"})
-
+    capa.main.install_common_args(parser, wanted={"format", "os", "input_file", "signatures", "rules"})
     parser.add_argument("--number", type=int, default=3, help="batch size of profile collection")
     parser.add_argument("--repeat", type=int, default=30, help="batch count of profile collection")
     parser.add_argument("--label", type=str, default=label, help="description of the profile collection")
-
     args = parser.parse_args(args=argv)
-    capa.main.handle_common_args(args)
 
     try:
-        taste = capa.helpers.get_file_taste(Path(args.sample))
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    try:
+        capa.main.handle_common_args(args)
+        capa.main.ensure_input_exists_from_cli(args)
+        input_format = capa.main.get_input_format_from_cli(args)
+        backend = capa.main.get_backend_from_cli(args, input_format)
         with capa.main.timing("load rules"):
-            rules = capa.main.get_rules(args.rules)
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    try:
-        sig_paths = capa.main.get_signatures(args.signatures)
-    except IOError as e:
-        logger.error("%s", str(e))
-        return -1
-
-    if (args.format == "freeze") or (
-        args.format == capa.features.common.FORMAT_AUTO and capa.features.freeze.is_freeze(taste)
-    ):
-        extractor = capa.features.freeze.load(Path(args.sample).read_bytes())
-    else:
-        extractor = capa.main.get_extractor(
-            args.sample, args.format, args.os, capa.main.BACKEND_VIV, sig_paths, should_save_workspace=False
-        )
+            rules = capa.main.get_rules_from_cli(args)
+        extractor = capa.main.get_extractor_from_cli(args, input_format, backend)
+    except capa.main.ShouldExitError as e:
+        return e.status_code
 
     with tqdm.tqdm(total=args.number * args.repeat, leave=False) as pbar:
 
         def do_iteration():
             capa.perf.reset()
-            capa.main.find_capabilities(rules, extractor, disable_progress=True)
+            capa.capabilities.common.find_capabilities(rules, extractor, disable_progress=True)
             pbar.update(1)
 
         samples = timeit.repeat(do_iteration, number=args.number, repeat=args.repeat)

@@ -10,11 +10,13 @@ import json
 import logging
 import datetime
 import collections
+from enum import Enum
 from typing import Dict, List, Tuple, Union, Literal, Optional
 from pathlib import Path
 from functools import lru_cache
 
 from pydantic import Field, BaseModel, ConfigDict
+from typing_extensions import TypeAlias
 
 import capa.main
 import capa.rules
@@ -52,8 +54,31 @@ class FunctionLayout(Model):
     matched_basic_blocks: Tuple[BasicBlockLayout, ...]
 
 
-class Layout(Model):
+class CallLayout(Model):
+    address: frz.Address
+    name: str
+
+
+class ThreadLayout(Model):
+    address: frz.Address
+    matched_calls: Tuple[CallLayout, ...]
+
+
+class ProcessLayout(Model):
+    address: frz.Address
+    name: str
+    matched_threads: Tuple[ThreadLayout, ...]
+
+
+class StaticLayout(Model):
     functions: Tuple[FunctionLayout, ...]
+
+
+class DynamicLayout(Model):
+    processes: Tuple[ProcessLayout, ...]
+
+
+Layout: TypeAlias = Union[StaticLayout, DynamicLayout]
 
 
 class LibraryFunction(Model):
@@ -66,21 +91,52 @@ class FunctionFeatureCount(Model):
     count: int
 
 
-class FeatureCounts(Model):
+class ProcessFeatureCount(Model):
+    address: frz.Address
+    count: int
+
+
+class StaticFeatureCounts(Model):
     file: int
     functions: Tuple[FunctionFeatureCount, ...]
 
 
-class Analysis(Model):
+class DynamicFeatureCounts(Model):
+    file: int
+    processes: Tuple[ProcessFeatureCount, ...]
+
+
+FeatureCounts: TypeAlias = Union[StaticFeatureCounts, DynamicFeatureCounts]
+
+
+class StaticAnalysis(Model):
     format: str
     arch: str
     os: str
     extractor: str
     rules: Tuple[str, ...]
     base_address: frz.Address
-    layout: Layout
-    feature_counts: FeatureCounts
+    layout: StaticLayout
+    feature_counts: StaticFeatureCounts
     library_functions: Tuple[LibraryFunction, ...]
+
+
+class DynamicAnalysis(Model):
+    format: str
+    arch: str
+    os: str
+    extractor: str
+    rules: Tuple[str, ...]
+    layout: DynamicLayout
+    feature_counts: DynamicFeatureCounts
+
+
+Analysis: TypeAlias = Union[StaticAnalysis, DynamicAnalysis]
+
+
+class Flavor(str, Enum):
+    STATIC = "static"
+    DYNAMIC = "dynamic"
 
 
 class Metadata(Model):
@@ -88,7 +144,18 @@ class Metadata(Model):
     version: str
     argv: Optional[Tuple[str, ...]]
     sample: Sample
+    flavor: Flavor
     analysis: Analysis
+
+
+class StaticMetadata(Metadata):
+    flavor: Flavor = Flavor.STATIC
+    analysis: StaticAnalysis
+
+
+class DynamicMetadata(Metadata):
+    flavor: Flavor = Flavor.DYNAMIC
+    analysis: DynamicAnalysis
 
 
 class CompoundStatementType:
@@ -98,8 +165,7 @@ class CompoundStatementType:
     OPTIONAL = "optional"
 
 
-class StatementModel(FrozenModel):
-    ...
+class StatementModel(FrozenModel): ...
 
 
 class CompoundStatement(StatementModel):
@@ -160,7 +226,7 @@ def statement_from_capa(node: capa.engine.Statement) -> Statement:
             description=node.description,
             min=node.min,
             max=node.max,
-            child=frz.feature_from_capa(node.child),
+            child=frzf.feature_from_capa(node.child),
         )
 
     elif isinstance(node, capa.engine.Subscope):
@@ -186,7 +252,7 @@ def node_from_capa(node: Union[capa.engine.Statement, capa.engine.Feature]) -> N
         return StatementNode(statement=statement_from_capa(node))
 
     elif isinstance(node, capa.engine.Feature):
-        return FeatureNode(feature=frz.feature_from_capa(node))
+        return FeatureNode(feature=frzf.feature_from_capa(node))
 
     else:
         assert_never(node)
@@ -313,9 +379,11 @@ class Match(FrozenModel):
                     # e.g. `contain loop/30c4c78e29bf4d54894fc74f664c62e8` -> `basic block`
                     #
                     # note! replace `node`
+                    # subscopes cannot have both a static and dynamic scope set
+                    assert None in (rule.scopes.static, rule.scopes.dynamic)
                     node = StatementNode(
                         statement=SubscopeStatement(
-                            scope=rule.meta["scope"],
+                            scope=rule.scopes.static or rule.scopes.dynamic,
                         )
                     )
 
@@ -540,7 +608,7 @@ class RuleMetadata(FrozenModel):
     namespace: Optional[str] = None
     prevalence: str = "unknown"
     authors: Tuple[str, ...]
-    scope: capa.rules.Scope
+    scopes: capa.rules.Scopes
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
     mbc: Tuple[MBCSpec, ...]
     references: Tuple[str, ...]
@@ -558,7 +626,7 @@ class RuleMetadata(FrozenModel):
             namespace=rule.meta.get("namespace"),
             prevalence=load_rules_prevalence().get(rule.meta.get("name"), "unknown"),
             authors=rule.meta.get("authors"),
-            scope=capa.rules.Scope(rule.meta.get("scope")),
+            scopes=capa.rules.Scopes.from_dict(rule.meta.get("scopes")),
             attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),
             mbc=tuple(map(MBCSpec.from_str, rule.meta.get("mbc", []))),
             references=rule.meta.get("references", []),
@@ -617,9 +685,9 @@ class ResultDocument(FrozenModel):
         return ResultDocument(meta=meta, rules=rule_matches)
 
     def to_capa(self) -> Tuple[Metadata, Dict]:
-        capabilities: Dict[
-            str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
-        ] = collections.defaultdict(list)
+        capabilities: Dict[str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]] = (
+            collections.defaultdict(list)
+        )
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
         rules_by_name = {

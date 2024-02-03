@@ -3,16 +3,71 @@
 ## master (unreleased)
 
 ### New Features
-- ghidra: add Ghidra feature extractor and supporting code #1770 @colton-gabertan
-- ghidra: add entry script helping users run capa against a loaded Ghidra database #1767 @mike-hunhoff
-- binja: add support for forwarded exports #1646 @xusheng6
-- binja: add support for symtab names #1504 @xusheng6
-- add com class/interface features #322 @Aayush-goel-04
-- Show prevalence of rules in the output #520 @Aayush-Goel-04
+
 
 ### Breaking Changes
 
-### New Rules (19)
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
+- [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
+
+## v7.0.1
+
+This release fixes a circular import error when using capa as a library.
+
+### Bug Fixes
+
+- fix potentially circular import errors #1969 @williballenthin
+
+### Raw diffs
+- [capa v7.0.0...v7.0.1](https://github.com/mandiant/capa/compare/v7.0.0...v7.0.1)
+- [capa-rules v7.0.0...v7.0.1](https://github.com/mandiant/capa-rules/compare/v7.0.0...v7.0.1)
+
+## v7.0.0
+This is the v7.0.0 release of capa which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
+shoutout to our GSoC contributors @colton-gabertan and @yelhamer for their amazing work.
+
+Also, a big thanks to the other contributors: @aaronatp, @Aayush-Goel-04, @bkojusner, @doomedraven, @ruppde, @larchchen, @JCoonradt, and @xusheng6.
+
+### New Features
+
+- add Ghidra backend #1770 #1767 @colton-gabertan @mike-hunhoff
+- add Ghidra UI integration #1734 @colton-gabertan @mike-hunhoff
+- add dynamic analysis via CAPE sandbox reports #48 #1535 @yelhamer
+  - add call scope #771 @yelhamer
+  - add thread scope #1517 @yelhamer
+  - add process scope #1517 @yelhamer
+  - rules: change `meta.scope` to `meta.scopes` @yelhamer
+  - protobuf: add `Metadata.flavor` @williballenthin
+- binja: add support for forwarded exports #1646 @xusheng6
+- binja: add support for symtab names #1504 @xusheng6
+- add com class/interface features #322 @Aayush-goel-04
+- dotnet: emit enclosing class information for nested classes #1780 #1913 @bkojusner @mike-hunhoff
+
+### Breaking Changes
+
+- remove the `SCOPE_*` constants in favor of the `Scope` enum #1764 @williballenthin
+- protobuf: deprecate `RuleMetadata.scope` in favor of `RuleMetadata.scopes` @williballenthin
+- protobuf: deprecate `Metadata.analysis` in favor of `Metadata.analysis2` that is dynamic analysis aware @williballenthin
+- update freeze format to v3, adding support for dynamic analysis @williballenthin
+- extractor: ignore DLL name for api features #1815 @mr-tz
+- main: introduce wrapping routines within main for working with CLI args #1813 @williballenthin
+- move functions from `capa.main` to new `capa.loader` namespace #1821 @williballenthin
+- proto: add `package` declaration #1960 @larchchen
+
+### New Rules (41)
 
 - nursery/get-ntoskrnl-base-address @mr-tz
 - host-interaction/network/connectivity/set-tcp-connection-state @johnk3r
@@ -33,21 +88,67 @@
 - host-interaction/process/inject/allocate-or-change-rwx-memory @mr-tz
 - lib/allocate-or-change-rw-memory 0x534a@mailbox.org @mr-tz
 - lib/change-memory-protection @mr-tz
--
+- anti-analysis/anti-av/patch-antimalware-scan-interface-function jakub.jozwiak@mandiant.com
+- executable/dotnet-singlefile/bundled-with-dotnet-single-file-deployment sara.rincon@mandiant.com
+- internal/limitation/file/internal-dotnet-single-file-deployment-limitation sara.rincon@mandiant.com
+- data-manipulation/encoding/encode-data-using-add-xor-sub-operations jakub.jozwiak@mandiant.com
+- nursery/access-camera-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/capture-microphone-audio-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/capture-screenshot-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/check-for-incoming-call-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/check-for-outgoing-call-in-dotnet-on-android michael.hunhoff@mandiant.com
+- nursery/compiled-with-xamarin michael.hunhoff@mandiant.com
+- nursery/get-os-version-in-dotnet-on-android michael.hunhoff@mandiant.com
+- data-manipulation/compression/create-cabinet-on-windows michael.hunhoff@mandiant.com jakub.jozwiak@mandiant.com
+- data-manipulation/compression/extract-cabinet-on-windows jakub.jozwiak@mandiant.com
+- lib/create-file-decompression-interface-context-on-windows jakub.jozwiak@mandiant.com
+- nursery/enumerate-files-in-dotnet moritz.raabe@mandiant.com anushka.virgaonkar@mandiant.com
+- nursery/get-mac-address-in-dotnet moritz.raabe@mandiant.com michael.hunhoff@mandiant.com echernofsky@google.com
+- nursery/get-current-process-command-line william.ballenthin@mandiant.com
+- nursery/get-current-process-file-path william.ballenthin@mandiant.com
+- nursery/hook-routines-via-dlsym-rtld_next william.ballenthin@mandiant.com
+- nursery/linked-against-hp-socket still@teamt5.org
+- host-interaction/process/inject/process-ghostly-hollowing sara.rincon@mandiant.com
 
 ### Bug Fixes
-- ghidra: fix ints_to_bytes performance #1761 @mike-hunhoff
+- ghidra: fix `ints_to_bytes` performance #1761 @mike-hunhoff
 - binja: improve function call site detection @xusheng6
-- binja: use binaryninja.load to open files @xusheng6
+- binja: use `binaryninja.load` to open files @xusheng6
 - binja: bump binja version to 3.5 #1789 @xusheng6
+- elf: better detect ELF OS via GCC .ident directives #1928 @williballenthin
+- elf: better detect ELF OS via Android dependencies #1947 @williballenthin
+- fix setuptools package discovery #1886 @gmacon @mr-tz
+- remove unnecessary scripts/vivisect-py2-vs-py3.sh file #1949 @JCoonradt
 
 ### capa explorer IDA Pro plugin
+- various integration updates and minor bug fixes
 
 ### Development
+- update ATT&CK/MBC data for linting #1932 @mr-tz
+
+#### Developer Notes
+With this new release, many classes and concepts have been split up into static (mostly identical to the
+prior implementations) and dynamic ones. For example, the legacy FeatureExtractor class has been renamed to
+StaticFeatureExtractor and the DynamicFeatureExtractor has been added.
+
+Starting from version 7.0, we have moved the component responsible for feature extractor from main to a new
+capabilities' module. Now, users wishing to utilize capa’s feature extraction abilities should use that module instead
+of importing the relevant logic from the main file.
+
+For sandbox-based feature extractors, we are using Pydantic models. Contributions of more models for other sandboxes
+are very welcome!
+
+With this release we've reorganized the logic found in `main()` to localize logic and ease readability and ease changes
+and integrations. The new "main routines" are expected to be used only within main functions, either capa main or
+related scripts. These functions should not be invoked from library code.
+
+Beyond copying code around, we've refined the handling of the input file/format/backend. The logic for picking the
+format and backend is more consistent. We've documented that the input file is not necessarily the sample itself
+(cape/freeze/etc.) inputs are not actually the sample.
 
 ### Raw diffs
-- [capa v6.1.0...master](https://github.com/mandiant/capa/compare/v6.1.0...master)
-- [capa-rules v6.1.0...master](https://github.com/mandiant/capa-rules/compare/v6.1.0...master)
+- [capa v6.1.0...v7.0.0](https://github.com/mandiant/capa/compare/v6.1.0...v7.0.0)
+- [capa-rules v6.1.0...v7.0.0](https://github.com/mandiant/capa-rules/compare/v6.1.0...v7.0.0)
 
 ## v6.1.0
 

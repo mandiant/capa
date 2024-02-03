@@ -1,0 +1,21 @@
+name: PIP audit
+
+on:
+  schedule:
+  - cron: '0 8 * * 1'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - uses: pypa/gh-action-pip-audit@v1.0.8
+        with:
+          inputs: .
