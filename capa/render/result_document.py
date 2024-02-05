@@ -5,9 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import gzip
-import json
-import logging
 import datetime
 import collections
 from enum import Enum
@@ -23,6 +20,7 @@ import capa.engine
 import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
+import capa.render.rules_prevalence
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
@@ -164,7 +162,8 @@ class CompoundStatementType:
     OPTIONAL = "optional"
 
 
-class StatementModel(FrozenModel): ...
+class StatementModel(FrozenModel):
+    ...
 
 
 class CompoundStatement(StatementModel):
@@ -593,13 +592,7 @@ def load_rules_prevalence() -> Dict[str, str]:
     Note:
         Prevalence levels can be one of the following: "common", "rare"
     """
-    CD = capa.main.get_default_root()
-    file = CD / "assets" / "rules_prevalence_data" / "rules_prevalence.json.gz"
-    if not file.exists():
-        logging.getLogger("capa").warning("Rules prevalence db was not found. Prevalence data will not be available.")
-        return {}
-    with gzip.open(file, "rb") as gzfile:
-        return json.loads(gzfile.read().decode("utf-8"))
+    return capa.render.rules_prevalence.RULES_PREVALENCE
 
 
 class RuleMetadata(FrozenModel):
@@ -684,9 +677,9 @@ class ResultDocument(FrozenModel):
         return ResultDocument(meta=meta, rules=rule_matches)
 
     def to_capa(self) -> Tuple[Metadata, Dict]:
-        capabilities: Dict[str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]] = (
-            collections.defaultdict(list)
-        )
+        capabilities: Dict[
+            str, List[Tuple[capa.features.address.Address, capa.features.common.Result]]
+        ] = collections.defaultdict(list)
 
         # this doesn't quite work because we don't have the rule source for rules that aren't matched.
         rules_by_name = {
