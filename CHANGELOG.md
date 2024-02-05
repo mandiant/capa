@@ -8,8 +8,9 @@
 ### Breaking Changes
 
 
-### New Rules (0)
+### New Rules (1)
 
+- impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
