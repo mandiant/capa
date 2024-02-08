@@ -1,4 +1,4 @@
-# Integrate capa results with Ghidra UI
+# Run capa against loaded Ghidra database and render results in Ghidra UI
 # @author Colton Gabertan (gabertan.colton@gmail.com)
 # @category Python 3.capa
 
