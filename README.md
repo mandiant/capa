@@ -260,7 +260,9 @@ capa explorer helps you identify interesting areas of a program and build new ca
 
 ![capa + IDA Pro integration](https://github.com/mandiant/capa/blob/master/doc/img/explorer_expanded.png)
 
-If you use Ghidra, you can use the Python 3 [Ghidra feature extractor](/capa/ghidra/). This integration enables capa to extract features directly from your Ghidra database, which can help you identify capabilities in programs that you analyze using Ghidra.
+If you use Ghidra, then you can use the [capa + Ghidra integration](/capa/ghidra/) to run capa's analysis directly on your Ghidra database and render the results in Ghidra's user interface.
+
+<img src="https://github.com/mandiant/capa/assets/66766340/eeae33f4-99d4-42dc-a5e8-4c1b8c661492" width=300>
 
 # further information
 ## capa
