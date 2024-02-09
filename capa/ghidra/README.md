@@ -6,9 +6,6 @@
 
 [capa](https://github.com/mandiant/capa) is the FLARE team’s open-source tool that detects capabilities in executable files. [Ghidra](https://github.com/NationalSecurityAgency/ghidra) is an open-source software reverse engineering framework created and maintained by the National Security Agency Research Directorate. capa + Ghidra brings capa’s detection capabilities directly to Ghidra’s user interface helping speed up your reverse engineering tasks by identifying what parts of a program suggest interesting behavior, such as setting a registry value. You can execute the included Python 3 scripts [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) or [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) to run capa’s analysis and view the results in Ghidra. You may be asking yourself, “Python 3 scripts in Ghidra?”. You read that correctly. This integration is written entirely in Python 3 and relies on [Ghidrathon]( https://github.com/mandiant/ghidrathon), an open source Ghidra extension that adds Python 3 scripting to Ghidra.
 
-Check out:
-* The overview in our initial blog
-
 ## UI Integration
 [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) renders capa results in Ghidra's UI to help you quickly navigate them. This includes adding matched functions to Ghidra’s Symbol Tree and Bookmarks windows and adding comments to functions that indicate matched capabilities and features. You can execute this script using Ghidra’s Script Manager window.
 
