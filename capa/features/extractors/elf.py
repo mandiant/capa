@@ -57,6 +57,9 @@ class OS(str, Enum):
     SYLLABLE = "syllable"
     NACL = "nacl"
     ANDROID = "android"
+    DRAGONFLYBSD = "dragonfly BSD"
+    ILLUMOS = "illumos"
+    ZOS = "z/os"
 
 
 # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
@@ -955,6 +958,26 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
     return None
 
 
+def get_go_buildinfo_data(elf: ELF) -> Optional[bytes]:
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".go.buildinfo":
+            logger.debug("go buildinfo: found section .go.buildinfo")
+            return shdr.buf
+
+    PT_LOAD = 0x1
+    PF_X = 1
+    PF_W = 2
+    for phdr in elf.program_headers:
+        if phdr.type != PT_LOAD:
+            continue
+
+        if (phdr.flags & (PF_X | PF_W)) == PF_W:
+            logger.debug("go buildinfo: found data segment")
+            return phdr.buf
+
+    return None
+
+
 def read_data(elf: ELF, rva: int, size: int) -> Optional[bytes]:
     # ELF segments are for runtime data,
     # ELF sections are for link-time data.
@@ -973,6 +996,165 @@ def read_data(elf: ELF, rva: int, size: int) -> Optional[bytes]:
             return segment_data[segment_offset : segment_offset + size]
 
     return None
+
+
+def read_go_slice(elf: ELF, rva: int) -> Optional[bytes]:
+    if elf.bitness == 32:
+        struct_size = 8
+        struct_format = elf.endian + "II"
+    elif elf.bitness == 64:
+        struct_size = 16
+        struct_format = elf.endian + "QQ"
+    else:
+        raise ValueError("invalid psize")
+
+    struct_buf = read_data(elf, rva, struct_size)
+    if not struct_buf:
+        return None
+
+    addr, length = struct.unpack_from(struct_format, struct_buf, 0)
+
+    return read_data(elf, addr, length)
+
+
+def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
+    """
+    In a binary compiled by Go, the buildinfo structure may contain
+    metadata about the build environment, including the configured
+    GOOS, which specifies the target operating system.
+
+    Search for and parse the buildinfo structure,
+    which may be found in the .go.buildinfo section,
+    and often contains this metadata inline. Otherwise,
+    follow a few byte slices to the relevant information.
+
+    This strategy is derived from GoReSym.
+    """
+    buf = get_go_buildinfo_data(elf)
+    if not buf:
+        logger.debug("go buildinfo: no buildinfo section")
+        return None
+
+    assert isinstance(buf, bytes)
+
+    # The build info blob left by the linker is identified by
+    # a 16-byte header, consisting of:
+    #  - buildInfoMagic (14 bytes),
+    #  - the binary's pointer size (1 byte), and
+    #  - whether the binary is big endian (1 byte).
+    #
+    # Then:
+    #  - virtual address to Go string: runtime.buildVersion
+    #  - virtual address to Go string: runtime.modinfo
+    #
+    #  On 32-bit platforms, the last 8 bytes are unused.
+    #
+    #  If the endianness has the 2 bit set, then the pointers are zero,
+    #  and the 32-byte header is followed by varint-prefixed string data
+    #  for the two string values we care about.
+    # https://github.com/mandiant/GoReSym/blob/0860a1b1b4f3495e9fb7e71eb4386bf3e0a7c500/buildinfo/buildinfo.go#L185-L193
+    BUILDINFO_MAGIC = b"\xFF Go buildinf:"
+
+    try:
+        index = buf.index(BUILDINFO_MAGIC)
+    except ValueError:
+        logger.debug("go buildinfo: no buildinfo magic")
+        return None
+
+    psize, flags = struct.unpack_from("<bb", buf, index + len(BUILDINFO_MAGIC))
+    assert psize in (4, 8)
+    is_big_endian = flags & 0b01
+    has_inline_strings = flags & 0b10
+    logger.debug("go buildinfo: psize: %d big endian: %s inline: %s", psize, is_big_endian, has_inline_strings)
+
+    GOOS_TO_OS = {
+        b"aix": OS.AIX,
+        b"android": OS.ANDROID,
+        b"dragonfly": OS.DRAGONFLYBSD,
+        b"freebsd": OS.FREEBSD,
+        b"hurd": OS.HURD,
+        b"illumos": OS.ILLUMOS,
+        b"linux": OS.LINUX,
+        b"netbsd": OS.NETBSD,
+        b"openbsd": OS.OPENBSD,
+        b"solaris": OS.SOLARIS,
+        b"zos": OS.ZOS,
+        b"windows": None,  # PE format
+        b"plan9": None,  # a.out format
+        b"ios": None,  # Mach-O format
+        b"darwin": None,  # Mach-O format
+        b"nacl": None,  # dropped in GO 1.14
+        b"js": None,
+    }
+
+    if has_inline_strings:
+        # common path
+        #
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 02}
+        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 02}
+
+        # If present, the GOOS key will be found within
+        # the current buildinfo data region.
+        #
+        # Brute force the k-v pair, like `GOOS=linux`,
+        # rather than try to parse the data, which would be fragile.
+        for key, os in GOOS_TO_OS.items():
+            if (b"GOOS=" + key) in buf:
+                logger.debug("go buildinfo: found os: %s", os)
+                return os
+    else:
+        # uncommon path
+
+        info_format = {
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 00}
+            # like: 71e617e5cc7fda89bf67422ff60f437e9d54622382c5ed6ff31f75e601f9b22e
+            # modinfo doesn't have GOOS
+            (4, False): "<II",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 00}
+            # like: 93d3b3e2a904c6c909e20f2f76c3c2e8d0c81d535eb46e5493b5701f461816c3
+            # modinfo doesn't have GOOS
+            (8, False): "<QQ",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 01}
+            # no matches
+            (4, True): ">II",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 01}
+            # like: d44ba497964050c0e3dd2a192c511e4c3c4f17717f0322a554d64b797ee4690a
+            # modinfo doesn't have GOOS
+            (8, True): ">QQ",
+        }
+
+        build_version_address, modinfo_address = struct.unpack_from(
+            info_format[(psize, is_big_endian)], buf, index + 0x10
+        )
+        logger.debug("go buildinfo: build version address: 0x%x", build_version_address)
+        logger.debug("go buildinfo: modinfo address: 0x%x", modinfo_address)
+
+        build_version = read_go_slice(elf, build_version_address)
+        if build_version:
+            logger.debug("go buildinfo: build version: %s", build_version.decode("utf-8"))
+
+        modinfo = read_go_slice(elf, modinfo_address)
+        if modinfo:
+            if modinfo[-0x11] == ord("\n"):
+                # Strip module framing: sentinel strings delimiting the module info.
+                # These are cmd/go/internal/modload/build.infoStart and infoEnd.
+                # Which should probably be:
+                # 	infoStart, _ = hex.DecodeString("3077af0c9274080241e1c107e6d618e6")
+                #   infoEnd, _   = hex.DecodeString("f932433186182072008242104116d8f2")
+                modinfo = modinfo[0x10:-0x10]
+            logger.debug("go buildinfo: modinfo: %s", modinfo.decode("utf-8"))
+
+        if not modinfo:
+            return None
+
+        for key, os in GOOS_TO_OS.items():
+            # Brute force the k-v pair, like `GOOS=linux`,
+            # rather than try to parse the data, which would be fragile.
+            if (b"GOOS=" + key) in modinfo:
+                logger.debug("go buildinfo: found os: %s", os)
+                return os
+
+        return None
 
 
 def detect_elf_os(f) -> str:
@@ -1041,6 +1223,13 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from symbol table: %s", e)
         symtab_guess = None
 
+    try:
+        goos_guess = guess_os_from_go_buildinfo(elf)
+        logger.debug("guess: Go buildinfo: %s", goos_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from Go buildinfo: %s", e)
+        goos_guess = None
+
     ret = None
 
     if osabi_guess:
@@ -1063,6 +1252,9 @@ def detect_elf_os(f) -> str:
 
     elif symtab_guess:
         ret = symtab_guess
+
+    elif goos_guess:
+        ret = goos_guess
 
     elif ident_guess:
         # at the bottom because we don't trust this too much
