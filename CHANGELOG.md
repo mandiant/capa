@@ -8,9 +8,14 @@
 ### Breaking Changes
 
 
-### New Rules (1)
+### New Rules (6)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
+- host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
+- host-interaction/driver/unload-driver moritz.raabe@mandiant.com
+- nursery/get-disk-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/get-volume-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
