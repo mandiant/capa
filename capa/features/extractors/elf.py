@@ -1163,7 +1163,7 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
                 logger.debug("go buildinfo: found os: %s", os)
                 return os
 
-        return None
+    return None
 
 
 def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
