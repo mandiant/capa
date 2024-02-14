@@ -15,6 +15,8 @@
 
 ### Bug Fixes
 
+- do some imports closer to where they are used #1810 @williballenthin
+
 
 ### capa explorer IDA Pro plugin
 
