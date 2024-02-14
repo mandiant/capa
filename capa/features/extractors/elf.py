@@ -60,6 +60,7 @@ class OS(str, Enum):
     DRAGONFLYBSD = "dragonfly BSD"
     ILLUMOS = "illumos"
     ZOS = "z/os"
+    UNIX = "unix"
 
 
 # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
@@ -958,6 +959,14 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
     return None
 
 
+def is_go_binary(elf: ELF) -> bool:
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".note.go.buildid":
+            logger.debug("go buildinfo: found section .note.go.buildid")
+            return True
+    return False
+
+
 def get_go_buildinfo_data(elf: ELF) -> Optional[bytes]:
     for shdr in elf.section_headers:
         if shdr.get_name(elf) == ".go.buildinfo":
@@ -1157,6 +1166,190 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
         return None
 
 
+def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
+    """
+    In a binary compiled by Go, runtime metadata may contain
+    references to the source filenames, including the
+    src/runtime/os_* files, whose name indicates the
+    target operating system.
+
+    Confirm the given ELF seems to be built by Go,
+    and then look for strings that look like
+    Go source filenames.
+
+    This strategy is derived from GoReSym.
+    """
+    if not is_go_binary(elf):
+        return None
+
+    for phdr in elf.program_headers:
+        NEEDLE_OS = b"/src/runtime/os_"
+        try:
+            index = phdr.buf.index(NEEDLE_OS)
+        except ValueError:
+            continue
+
+        rest = phdr.buf[index + len(NEEDLE_OS) : index + len(NEEDLE_OS) + 32]
+        filename = rest.partition(b".go")[0].decode("utf-8")
+        logger.debug("go source: filename: /src/runtime/os_%s.go", filename)
+
+        # via: https://cs.opensource.google/go/go/+/master:src/runtime/;bpv=1;bpt=0
+        # candidates today:
+        #   - aix
+        #   - android
+        #   - darwin
+        #   - darwin_arm64
+        #   - dragonfly
+        #   - freebsd
+        #   - freebsd2
+        #   - freebsd_amd64
+        #   - freebsd_arm
+        #   - freebsd_arm64
+        #   - freebsd_noauxv
+        #   - freebsd_riscv64
+        #   - illumos
+        #   - js
+        #   - linux
+        #   - linux_arm
+        #   - linux_arm64
+        #   - linux_be64
+        #   - linux_generic
+        #   - linux_loong64
+        #   - linux_mips64x
+        #   - linux_mipsx
+        #   - linux_noauxv
+        #   - linux_novdso
+        #   - linux_ppc64x
+        #   - linux_riscv64
+        #   - linux_s390x
+        #   - linux_x86
+        #   - netbsd
+        #   - netbsd_386
+        #   - netbsd_amd64
+        #   - netbsd_arm
+        #   - netbsd_arm64
+        #   - nonopenbsd
+        #   - only_solaris
+        #   - openbsd
+        #   - openbsd_arm
+        #   - openbsd_arm64
+        #   - openbsd_libc
+        #   - openbsd_mips64
+        #   - openbsd_syscall
+        #   - openbsd_syscall1
+        #   - openbsd_syscall2
+        #   - plan9
+        #   - plan9_arm
+        #   - solaris
+        #   - unix
+        #   - unix_nonlinux
+        #   - wasip1
+        #   - wasm
+        #   - windows
+        #   - windows_arm
+        #   - windows_arm64
+
+        OS_FILENAME_TO_OS = {
+            "aix": OS.AIX,
+            "android": OS.ANDROID,
+            "dragonfly": OS.DRAGONFLYBSD,
+            "freebsd": OS.FREEBSD,
+            "freebsd2": OS.FREEBSD,
+            "freebsd_": OS.FREEBSD,
+            "illumos": OS.ILLUMOS,
+            "linux": OS.LINUX,
+            "netbsd": OS.NETBSD,
+            "only_solaris": OS.SOLARIS,
+            "openbsd": OS.OPENBSD,
+            "solaris": OS.SOLARIS,
+            "unix_nonlinux": OS.UNIX,
+        }
+
+        for prefix, os in OS_FILENAME_TO_OS.items():
+            if filename.startswith(prefix):
+                return os
+
+    for phdr in elf.program_headers:
+        NEEDLE_RT0 = b"/src/runtime/rt0_"
+        try:
+            index = phdr.buf.index(NEEDLE_RT0)
+        except ValueError:
+            continue
+
+        rest = phdr.buf[index + len(NEEDLE_RT0) : index + len(NEEDLE_RT0) + 32]
+        filename = rest.partition(b".s")[0].decode("utf-8")
+        logger.debug("go source: filename: /src/runtime/rt0_%s.s", filename)
+
+        # via: https://cs.opensource.google/go/go/+/master:src/runtime/;bpv=1;bpt=0
+        # candidates today:
+        #   - aix_ppc64
+        #   - android_386
+        #   - android_amd64
+        #   - android_arm
+        #   - android_arm64
+        #   - darwin_amd64
+        #   - darwin_arm64
+        #   - dragonfly_amd64
+        #   - freebsd_386
+        #   - freebsd_amd64
+        #   - freebsd_arm
+        #   - freebsd_arm64
+        #   - freebsd_riscv64
+        #   - illumos_amd64
+        #   - ios_amd64
+        #   - ios_arm64
+        #   - js_wasm
+        #   - linux_386
+        #   - linux_amd64
+        #   - linux_arm
+        #   - linux_arm64
+        #   - linux_loong64
+        #   - linux_mips64x
+        #   - linux_mipsx
+        #   - linux_ppc64
+        #   - linux_ppc64le
+        #   - linux_riscv64
+        #   - linux_s390x
+        #   - netbsd_386
+        #   - netbsd_amd64
+        #   - netbsd_arm
+        #   - netbsd_arm64
+        #   - openbsd_386
+        #   - openbsd_amd64
+        #   - openbsd_arm
+        #   - openbsd_arm64
+        #   - openbsd_mips64
+        #   - openbsd_ppc64
+        #   - openbsd_riscv64
+        #   - plan9_386
+        #   - plan9_amd64
+        #   - plan9_arm
+        #   - solaris_amd64
+        #   - wasip1_wasm
+        #   - windows_386
+        #   - windows_amd64
+        #   - windows_arm
+        #   - windows_arm64
+
+        RT0_FILENAME_TO_OS = {
+            "aix": OS.AIX,
+            "android": OS.ANDROID,
+            "dragonfly": OS.DRAGONFLYBSD,
+            "freebsd": OS.FREEBSD,
+            "illumos": OS.ILLUMOS,
+            "linux": OS.LINUX,
+            "netbsd": OS.NETBSD,
+            "openbsd": OS.OPENBSD,
+            "solaris": OS.SOLARIS,
+        }
+
+        for prefix, os in RT0_FILENAME_TO_OS.items():
+            if filename.startswith(prefix):
+                return os
+
+    return None
+
+
 def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO, GHIDRAIO]
@@ -1230,6 +1423,13 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from Go buildinfo: %s", e)
         goos_guess = None
 
+    try:
+        gosrc_guess = guess_os_from_go_source(elf)
+        logger.debug("guess: Go source: %s", gosrc_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from Go source path: %s", e)
+        gosrc_guess = None
+
     ret = None
 
     if osabi_guess:
@@ -1255,6 +1455,11 @@ def detect_elf_os(f) -> str:
 
     elif goos_guess:
         ret = goos_guess
+
+    elif gosrc_guess:
+        # prefer goos_guess to this method,
+        # which is just string interpretation.
+        ret = gosrc_guess
 
     elif ident_guess:
         # at the bottom because we don't trust this too much
