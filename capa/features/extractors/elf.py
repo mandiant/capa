@@ -955,6 +955,26 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
     return None
 
 
+def read_data(elf: ELF, rva: int, size: int) -> Optional[bytes]:
+    # ELF segments are for runtime data,
+    # ELF sections are for link-time data.
+    # So we want to read Program Headers/Segments.
+    for phdr in elf.program_headers:
+        if phdr.vaddr <= rva < phdr.vaddr + phdr.memsz:
+            segment_data = phdr.buf
+
+            # pad the section with NULLs
+            # assume page alignment is already handled.
+            # might need more hardening here.
+            if len(segment_data) < phdr.memsz:
+                segment_data += b"\x00" * (phdr.memsz - len(segment_data))
+
+            segment_offset = rva - phdr.vaddr
+            return segment_data[segment_offset : segment_offset + size]
+
+    return None
+
+
 def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO, GHIDRAIO]
