@@ -3,6 +3,7 @@
 ## master (unreleased)
 
 ### New Features
+- ELF: detect OS from statically-linked Go binaries #1978 @williballenthin
 
 
 ### Breaking Changes
