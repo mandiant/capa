@@ -1,4 +1,4 @@
-# Run capa against loaded Ghidra database
+# Run capa against loaded Ghidra database and render results in Ghidra Console window
 # @author Mike Hunhoff (mehunhoff@google.com)
 # @category Python 3.capa
 

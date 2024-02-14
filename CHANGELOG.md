@@ -8,21 +8,35 @@
 ### Breaking Changes
 
 
-### New Rules (0)
+### New Rules (1)
 
+- impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
 
-- fix potentially circular import errors #1969 @williballenthin
+- do some imports closer to where they are used #1810 @williballenthin
+
 
 ### capa explorer IDA Pro plugin
 
 ### Development
 
 ### Raw diffs
-- [capa v7.0.0...master](https://github.com/mandiant/capa/compare/v7.0.0...master)
-- [capa-rules v7.0.0...master](https://github.com/mandiant/capa-rules/compare/v7.0.0...master)
+- [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
+- [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
+
+## v7.0.1
+
+This release fixes a circular import error when using capa as a library.
+
+### Bug Fixes
+
+- fix potentially circular import errors #1969 @williballenthin
+
+### Raw diffs
+- [capa v7.0.0...v7.0.1](https://github.com/mandiant/capa/compare/v7.0.0...v7.0.1)
+- [capa-rules v7.0.0...v7.0.1](https://github.com/mandiant/capa-rules/compare/v7.0.0...v7.0.1)
 
 ## v7.0.0
 This is the v7.0.0 release of capa which was mainly worked on during the Google Summer of Code (GSoC) 2023. A huge
