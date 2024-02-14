@@ -1058,7 +1058,6 @@ class Rule:
         import ruamel.yaml
 
         # use ruamel to enable nice formatting
-
         # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
         y = ruamel.yaml.YAML(typ="rt")
 
