@@ -80,6 +80,8 @@ class Phdr:
     paddr: int
     filesz: int
     buf: bytes
+    flags: int
+    memsz: int
 
 
 @dataclass
@@ -314,24 +316,23 @@ class ELF:
         phent_offset = i * self.e_phentsize
         phent = self.phbuf[phent_offset : phent_offset + self.e_phentsize]
 
-        (p_type,) = struct.unpack_from(self.endian + "I", phent, 0x0)
-        logger.debug("ph:p_type: 0x%04x", p_type)
-
         if self.bitness == 32:
-            p_offset, p_vaddr, p_paddr, p_filesz = struct.unpack_from(self.endian + "IIII", phent, 0x4)
+            p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags = struct.unpack_from(
+                self.endian + "IIIIIII", phent, 0x0
+            )
         elif self.bitness == 64:
-            p_offset, p_vaddr, p_paddr, p_filesz = struct.unpack_from(self.endian + "QQQQ", phent, 0x8)
+            p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz = struct.unpack_from(
+                self.endian + "IIQQQQQ", phent, 0x0
+            )
         else:
             raise NotImplementedError()
-
-        logger.debug("ph:p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
 
         self.f.seek(p_offset)
         buf = self.f.read(p_filesz)
         if len(buf) != p_filesz:
             raise ValueError("failed to read program header content")
 
-        return Phdr(p_type, p_offset, p_vaddr, p_paddr, p_filesz, buf)
+        return Phdr(p_type, p_offset, p_vaddr, p_paddr, p_filesz, buf, p_flags, p_memsz)
 
     @property
     def program_headers(self):
@@ -355,8 +356,6 @@ class ELF:
             )
         else:
             raise NotImplementedError()
-
-        logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
 
         self.f.seek(sh_offset)
         buf = self.f.read(sh_size)
