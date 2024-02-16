@@ -31,9 +31,6 @@ import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.pefile
-import capa.features.extractors.elffile
-import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
@@ -278,17 +275,30 @@ def get_extractor(
 def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
 
+    # we use lazy importing here to avoid eagerly loading dependencies
+    # that some specialized environments may not have,
+    # e.g., those that run capa without vivisect.
+
     if input_format == FORMAT_PE:
+        import capa.features.extractors.pefile
+
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_DOTNET:
+        import capa.features.extractors.pefile
+        import capa.features.extractors.dotnetfile
+
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
         file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_ELF:
+        import capa.features.extractors.elffile
+
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input_file))
 
     elif input_format == FORMAT_CAPE:
+        import capa.features.extractors.cape.extractor
+
         report = json.loads(input_file.read_text(encoding="utf-8"))
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 

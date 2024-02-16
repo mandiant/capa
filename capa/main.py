@@ -40,11 +40,6 @@ import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.pefile
-import capa.features.extractors.elffile
-import capa.features.extractors.dotnetfile
-import capa.features.extractors.base_extractor
-import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
