@@ -1416,6 +1416,7 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from symbol table: %s", e)
         symtab_guess = None
 
+<<<<<<< Updated upstream
     try:
         goos_guess = guess_os_from_go_buildinfo(elf)
         logger.debug("guess: Go buildinfo: %s", goos_guess)
@@ -1430,6 +1431,16 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from Go source path: %s", e)
         gosrc_guess = None
 
+||||||| Stash base
+=======
+    try:
+        vdso_guess = guess_os_from_vdso_strings(elf)
+        logger.debug("guess: vdso strings: %s", vdso_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from vdso strings: %s", e)
+        symtab_guess = None
+
+>>>>>>> Stashed changes
     ret = None
 
     if osabi_guess:
@@ -1465,6 +1476,11 @@ def detect_elf_os(f) -> str:
         # at the bottom because we don't trust this too much
         # due to potential for bugs with cross-compilation.
         ret = ident_guess
+
+    elif vdso_guess:
+        # at the bottom because this is just scanning strings,
+        # which isn't very authoritative.
+        ret = vdso_guess
 
     return ret.value if ret is not None else "unknown"
 

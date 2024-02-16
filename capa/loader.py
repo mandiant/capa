@@ -158,6 +158,8 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 
+    vw.delFuncAnalysisModule("vivisect.analysis.generic.symswitchcase")
+
     vw.analyze()
 
     logger.debug("%s", get_meta_str(vw))
