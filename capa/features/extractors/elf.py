@@ -1183,13 +1183,14 @@ def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
         return None
 
     for phdr in elf.program_headers:
+        buf = phdr.buf
         NEEDLE_OS = b"/src/runtime/os_"
         try:
-            index = phdr.buf.index(NEEDLE_OS)
+            index = buf.index(NEEDLE_OS)
         except ValueError:
             continue
 
-        rest = phdr.buf[index + len(NEEDLE_OS) : index + len(NEEDLE_OS) + 32]
+        rest = buf[index + len(NEEDLE_OS) : index + len(NEEDLE_OS) + 32]
         filename = rest.partition(b".go")[0].decode("utf-8")
         logger.debug("go source: filename: /src/runtime/os_%s.go", filename)
 
@@ -1270,13 +1271,14 @@ def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
                 return os
 
     for phdr in elf.program_headers:
+        buf = phdr.buf
         NEEDLE_RT0 = b"/src/runtime/rt0_"
         try:
-            index = phdr.buf.index(NEEDLE_RT0)
+            index = buf.index(NEEDLE_RT0)
         except ValueError:
             continue
 
-        rest = phdr.buf[index + len(NEEDLE_RT0) : index + len(NEEDLE_RT0) + 32]
+        rest = buf[index + len(NEEDLE_RT0) : index + len(NEEDLE_RT0) + 32]
         filename = rest.partition(b".s")[0].decode("utf-8")
         logger.debug("go source: filename: /src/runtime/rt0_%s.s", filename)
 
@@ -1350,6 +1352,92 @@ def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
     return None
 
 
+def guess_os_from_vdso_strings(elf: ELF) -> Optional[OS]:
+    """
+    The "vDSO" (virtual dynamic shared object) is a small shared
+    library that the kernel automatically maps into the address space
+    of all user-space applications.
+
+    Some statically linked executables include small dynamic linker
+    routines that finds these vDSO symbols, using the ASCII
+    symbol name and version. We can therefore recognize the pairs
+    (symbol, version) to guess the binary targets Linux.
+    """
+    for phdr in elf.program_headers:
+        buf = phdr.buf
+
+        # We don't really use the arch, but its interesting for documentation
+        # I suppose we could restrict the arch here to what's in the ELF header,
+        # but that's even more work. Let's see if this is sufficient.
+        for arch, symbol, version in (
+            # via: https://man7.org/linux/man-pages/man7/vdso.7.html
+            ("arm", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("arm", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("aarch64", b"__kernel_rt_sigreturn", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_gettimeofday", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_clock_gettime", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_clock_getres", b"LINUX_2.6.39"),
+            ("mips", b"__kernel_gettimeofday", b"LINUX_2.6"),
+            ("mips", b"__kernel_clock_gettime", b"LINUX_2.6"),
+            ("ia64", b"__kernel_sigtramp", b"LINUX_2.5"),
+            ("ia64", b"__kernel_syscall_via_break", b"LINUX_2.5"),
+            ("ia64", b"__kernel_syscall_via_epc", b"LINUX_2.5"),
+            ("ppc/32", b"__kernel_clock_getres", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_clock_gettime", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_clock_gettime64", b"LINUX_5.11"),
+            ("ppc/32", b"__kernel_datapage_offset", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_get_syscall_map", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_get_tbfreq", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_getcpu", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_gettimeofday", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sigtramp_rt32", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sigtramp32", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sync_dicache", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sync_dicache_p5", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_clock_getres", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_clock_gettime", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_datapage_offset", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_get_syscall_map", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_get_tbfreq", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_getcpu", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_gettimeofday", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sigtramp_rt64", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sync_dicache", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sync_dicache_p5", b"LINUX_2.6.15"),
+            ("riscv", b"__vdso_rt_sigreturn", b"LINUX_4.15"),
+            ("riscv", b"__vdso_gettimeofday", b"LINUX_4.15"),
+            ("riscv", b"__vdso_clock_gettime", b"LINUX_4.15"),
+            ("riscv", b"__vdso_clock_getres", b"LINUX_4.15"),
+            ("riscv", b"__vdso_getcpu", b"LINUX_4.15"),
+            ("riscv", b"__vdso_flush_icache", b"LINUX_4.15"),
+            ("s390", b"__kernel_clock_getres", b"LINUX_2.6.29"),
+            ("s390", b"__kernel_clock_gettime", b"LINUX_2.6.29"),
+            ("s390", b"__kernel_gettimeofday", b"LINUX_2.6.29"),
+            ("superh", b"__kernel_rt_sigreturn", b"LINUX_2.6"),
+            ("superh", b"__kernel_sigreturn", b"LINUX_2.6"),
+            ("superh", b"__kernel_vsyscall", b"LINUX_2.6"),
+            ("i386", b"__kernel_sigreturn", b"LINUX_2.5"),
+            ("i386", b"__kernel_rt_sigreturn", b"LINUX_2.5"),
+            ("i386", b"__kernel_vsyscall", b"LINUX_2.5"),
+            ("i386", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("i386", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("i386", b"__vdso_time", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_getcpu", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_time", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_getcpu", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_time", b"LINUX_2.6"),
+        ):
+            if symbol in buf and version in buf:
+                logger.debug("vdso string: %s %s %s", arch, symbol.decode("ascii"), version.decode("ascii"))
+                return OS.LINUX
+
+    return None
+
+
 def detect_elf_os(f) -> str:
     """
     f: type Union[BinaryIO, IDAIO, GHIDRAIO]
@@ -1416,7 +1504,6 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from symbol table: %s", e)
         symtab_guess = None
 
-<<<<<<< Updated upstream
     try:
         goos_guess = guess_os_from_go_buildinfo(elf)
         logger.debug("guess: Go buildinfo: %s", goos_guess)
@@ -1431,8 +1518,6 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from Go source path: %s", e)
         gosrc_guess = None
 
-||||||| Stash base
-=======
     try:
         vdso_guess = guess_os_from_vdso_strings(elf)
         logger.debug("guess: vdso strings: %s", vdso_guess)
@@ -1440,7 +1525,6 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from vdso strings: %s", e)
         symtab_guess = None
 
->>>>>>> Stashed changes
     ret = None
 
     if osabi_guess:
