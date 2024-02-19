@@ -751,8 +751,8 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 
 
 def main(argv: Optional[List[str]] = None):
-    if sys.version_info < (3, 8):
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
+    if sys.version_info < (3, 9):
+        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.9+")
 
     if argv is None:
         argv = sys.argv[1:]
