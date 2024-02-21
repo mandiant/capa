@@ -191,14 +191,10 @@ def get_binja_extractor(path: Path):
 
 @lru_cache(maxsize=1)
 def get_cape_extractor(path):
-    import gzip
-    import json
-
+    from capa.helpers import load_json_from_path
     from capa.features.extractors.cape.extractor import CapeExtractor
 
-    with gzip.open(path, "r") as compressed_report:
-        report_json = compressed_report.read()
-        report = json.loads(report_json)
+    report = load_json_from_path(path)
 
     return CapeExtractor.from_report(report)
 

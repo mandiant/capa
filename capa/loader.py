@@ -180,7 +180,7 @@ def get_extractor(
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_path.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_path)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif backend == BACKEND_DOTNET:
@@ -297,7 +297,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     elif input_format == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_file.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_file)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors

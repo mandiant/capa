@@ -70,13 +70,21 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_report(sample: Path) -> str:
+def load_json_from_path(json_path: Path):
     import gzip
 
-    with gzip.open(sample, "r") as compressed_report:
-        report_json = compressed_report.read()
-        report = json.loads(report_json)
+    with gzip.open(json_path, "r") as compressed_report:
+        try:
+            report_json = compressed_report.read()
+        except gzip.BadGzipFile:
+            report = json.load(json_path.open(encoding="utf-8"))
+        else:
+            report = json.loads(report_json)
+    return report
 
+
+def get_format_from_report(sample: Path) -> str:
+    report = load_json_from_path(sample)
     if "CAPE" in report:
         return FORMAT_CAPE
 
