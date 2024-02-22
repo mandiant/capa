@@ -27,6 +27,8 @@
 
 ### Development
 
+- add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
+
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
 - [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)

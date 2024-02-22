@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
+import gzip
 import json
 import inspect
 import logging
@@ -71,8 +72,6 @@ def assert_never(value) -> NoReturn:
 
 
 def load_json_from_path(json_path: Path):
-    import gzip
-
     with gzip.open(json_path, "r") as compressed_report:
         try:
             report_json = compressed_report.read()

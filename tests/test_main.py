@@ -356,3 +356,13 @@ def test_main_cape1(tmp_path):
     assert capa.main.main([str(path), "-j", "-r", str(rules)]) == 0
     assert capa.main.main([str(path), "-v", "-r", str(rules)]) == 0
     assert capa.main.main([str(path), "-vv", "-r", str(rules)]) == 0
+
+
+def test_main_cape_gzip():
+    # tests successful execution of .json.gz
+    path = str(fixtures.get_data_path_by_name("0000a657"))
+    assert capa.main.main([path, "-vv"]) == 0
+    assert capa.main.main([path, "-v"]) == 0
+    assert capa.main.main([path, "-j"]) == 0
+    assert capa.main.main([path, "-q"]) == 0
+    assert capa.main.main([path]) == 0
