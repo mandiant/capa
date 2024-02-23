@@ -27,6 +27,8 @@
 
 ### Development
 
+- ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
+
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
 - [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
