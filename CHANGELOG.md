@@ -27,6 +27,7 @@
 
 ### Development
 
+- ci: Fix PR review in the changelog check GH action #2004 @Ana06
 - ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
 
 ### Raw diffs
