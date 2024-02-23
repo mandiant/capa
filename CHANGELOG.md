@@ -27,6 +27,7 @@
 
 ### Development
 
+- ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 
 ### Raw diffs
