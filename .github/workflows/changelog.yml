@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Get changed files
       id: files
-      uses: Ana06/get-changed-files@e0c398b7065a8d84700c471b6afc4116d1ba4e96 # v2.2.0
+      uses: Ana06/get-changed-files@25f79e676e7ea1868813e21465014798211fad8c # v2.3.0
     - name: check changelog updated
       id: changelog_updated
       env:
