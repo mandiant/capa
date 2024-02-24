@@ -153,11 +153,10 @@ jobs:
       matrix:
         python-version: ["3.8", "3.11"]
         java-version: ["17"]
-        gradle-version: ["7.3"]
-        ghidra-version: ["10.3"]
+        ghidra-version: ["11.0.1"]
         public-version: ["PUBLIC_20230510"] # for ghidra releases
-        jep-version: ["4.1.1"]
-        ghidrathon-version: ["3.0.0"]
+        jep-version: ["4.2.0"]
+        ghidrathon-version: ["4.0.0"]
     steps:
     - name: Checkout capa with submodules
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -172,10 +171,6 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java-version }}
-    - name: Set up Gradle ${{ matrix.gradle-version }} 
-      uses: gradle/gradle-build-action@40b6781dcdec2762ad36556682ac74e31030cfe2 # v2.5.1
-      with:
-        gradle-version: ${{ matrix.gradle-version }}
     - name: Install Jep ${{ matrix.jep-version }} 
       run : pip install jep==${{ matrix.jep-version }}
     - name: Install Ghidra ${{ matrix.ghidra-version }} 
@@ -186,10 +181,11 @@ jobs:
     - name: Install Ghidrathon
       run : |
         mkdir ./.github/ghidrathon
-        curl -o ./.github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip "https://codeload.github.com/mandiant/Ghidrathon/zip/refs/tags/v${{ matrix.ghidrathon-version }}"
-        unzip .github/ghidrathon/ghidrathon-${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
-        gradle -p ./.github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/ -PGHIDRA_INSTALL_DIR=$(pwd)/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
-        unzip .github/ghidrathon/Ghidrathon-${{ matrix.ghidrathon-version }}/dist/*.zip -d .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/Ghidra/Extensions
+        wget "https://github.com/mandiant/Ghidrathon/releases/download/v${{matrix.ghidrathon-version}}/Ghidrathon-v{{matrix.ghidrathon-version}}.zip" -O ./.github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip
+        unzip .github/ghidrathon/ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidrathon/
+        python -m pip install -r .github/ghidrathon/requirements.txt
+        python .github/ghidrathon/ghidrathon_configure.py $(pwd)/.github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC
+        unzip .github/ghidrathon/Ghidrathon-v${{ matrix.ghidrathon-version }}.zip -d .github/ghidra/ghidra_${{ matrix.ghidra-version }}_PUBLIC/Ghidra/Extensions
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
