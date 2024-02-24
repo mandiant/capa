@@ -24,6 +24,7 @@
 
 
 ### capa explorer IDA Pro plugin
+- replace deprecated IDA API find_binary with bin_search #1606 @s-ff
 
 ### Development
 

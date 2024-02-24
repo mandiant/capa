@@ -13,6 +13,7 @@ import idaapi
 import idautils
 import ida_bytes
 import ida_segment
+import ida_nalt
 
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
@@ -26,15 +27,19 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
         end: max virtual address
         seq: bytes to search e.g. b"\x01\x03"
     """
+    patterns = ida_bytes.compiled_binpat_vec_t()
+    encoding = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)
+
     seqstr = " ".join([f"{b:02x}" for b in seq])
-    while True:
-        # TODO(mike-hunhoff): find_binary is deprecated. Please use ida_bytes.bin_search() instead.
-        # https://github.com/mandiant/capa/issues/1606
-        ea = idaapi.find_binary(start, end, seqstr, 0, idaapi.SEARCH_DOWN)
-        if ea == idaapi.BADADDR:
-            break
-        start = ea + 1
-        yield ea
+    err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, encoding)
+
+    if not err:
+        while True:
+            ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+            if ea == idaapi.BADADDR:
+                break
+            start = ea + 1
+            yield ea
 
 
 def get_functions(
