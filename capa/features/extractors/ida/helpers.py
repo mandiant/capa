@@ -10,10 +10,10 @@ from typing import Any, Dict, Tuple, Iterator, Optional
 
 import idc
 import idaapi
+import ida_nalt
 import idautils
 import ida_bytes
 import ida_segment
-import ida_nalt
 
 from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
