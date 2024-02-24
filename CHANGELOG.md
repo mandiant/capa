@@ -29,7 +29,7 @@
 
 - ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
 - ci: use rules number badge stored in our bot gist and generated using `schneegans/dynamic-badges-action` #2001 capa-rules#882 @Ana06
-
+- ci: update github workflows to use latest release of ghidra and ghidrathon for ghirda tests #1976 @psahithireddy
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
 - [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
