@@ -34,7 +34,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, encoding)
 
     if not err:
-		while True:
+        while True:
 			ea  = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
 			if ea == idaapi.BADADDR:
 				break
