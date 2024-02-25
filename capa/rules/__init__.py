@@ -31,7 +31,6 @@ from dataclasses import asdict, dataclass
 
 import yaml
 import pydantic
-import ruamel.yaml
 import yaml.parser
 
 import capa.perf
@@ -1053,8 +1052,12 @@ class Rule:
 
     @staticmethod
     def _get_ruamel_yaml_parser():
-        # use ruamel to enable nice formatting
+        # we use lazy importing here to avoid eagerly loading dependencies
+        # that some specialized environments may not have,
+        # e.g., those that run capa without ruamel.
+        import ruamel.yaml
 
+        # use ruamel to enable nice formatting
         # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
         y = ruamel.yaml.YAML(typ="rt")
 

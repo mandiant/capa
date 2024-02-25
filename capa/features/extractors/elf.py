@@ -10,10 +10,11 @@ import logging
 import itertools
 import collections
 from enum import Enum
-from typing import Set, Dict, List, Tuple, BinaryIO, Iterator, Optional
+from typing import TYPE_CHECKING, Set, Dict, List, Tuple, BinaryIO, Iterator, Optional
 from dataclasses import dataclass
 
-import Elf  # from vivisect
+if TYPE_CHECKING:
+    import Elf  # from vivisect
 
 logger = logging.getLogger(__name__)
 
@@ -724,7 +725,7 @@ class SymTab:
         yield from self.symbols
 
     @classmethod
-    def from_viv(cls, elf: Elf.Elf) -> Optional["SymTab"]:
+    def from_viv(cls, elf: "Elf.Elf") -> Optional["SymTab"]:
         endian = "<" if elf.getEndian() == 0 else ">"
         bitness = elf.bits
 

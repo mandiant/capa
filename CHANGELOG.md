@@ -8,17 +8,27 @@
 ### Breaking Changes
 
 
-### New Rules (1)
+### New Rules (6)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
+- host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
+- host-interaction/driver/unload-driver moritz.raabe@mandiant.com
+- nursery/get-disk-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/get-volume-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
+
+- do some imports closer to where they are used #1810 @williballenthin
 
 
 ### capa explorer IDA Pro plugin
 
 ### Development
+
+- ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
+- ci: use rules number badge stored in our bot gist and generated using `schneegans/dynamic-badges-action` #2001 capa-rules#882 @Ana06
 
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
