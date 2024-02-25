@@ -4,6 +4,7 @@
 
 ### New Features
 
+- add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 
 ### Breaking Changes
 
