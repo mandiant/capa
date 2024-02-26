@@ -33,13 +33,15 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     seqstr = " ".join([f"{b:02x}" for b in seq])
     err = ida_bytes.parse_binpat_str(patterns, 0, seqstr, 16, encoding)
 
-    if not err:
-        while True:
-            ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
-            if ea == idaapi.BADADDR:
-                break
-            start = ea + 1
-            yield ea
+    if err:
+        return
+
+    while True:
+        ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+        if ea == idaapi.BADADDR:
+            break
+        start = ea + 1
+        yield ea
 
 
 def get_functions(
