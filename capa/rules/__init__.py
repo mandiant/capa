@@ -152,14 +152,6 @@ class Scopes:
         if scopes_["dynamic"] == "unsupported":
             scopes_["dynamic"] = None
 
-        # unspecified is used to indicate a rule is yet to be migrated.
-        # TODO(williballenthin): this scope term should be removed once all rules have been migrated.
-        # https://github.com/mandiant/capa/issues/1747
-        if scopes_["static"] == "unspecified":
-            scopes_["static"] = None
-        if scopes_["dynamic"] == "unspecified":
-            scopes_["dynamic"] = None
-
         if (not scopes_["static"]) and (not scopes_["dynamic"]):
             raise InvalidRule("invalid scopes value. At least one scope must be specified")
 
@@ -849,7 +841,7 @@ class Rule:
         """
         fetch the names of rules this rule relies upon.
         these are only the direct dependencies; a user must
-         compute the transitive dependency graph themself, if they want it.
+        compute the transitive dependency graph themself, if they want it.
 
         Args:
           namespaces(Dict[str, List[Rule]]): mapping from namespace name to rules in it.
@@ -1230,9 +1222,11 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
     rules_by_name = {rule.name: rule for rule in rules}
     wanted = {rule_name}
 
-    def rec(rule):
+    def rec(rule: Rule):
         wanted.add(rule.name)
         for dep in rule.get_dependencies(namespaces):
+            if dep in wanted:
+                continue
             rec(rules_by_name[dep])
 
     rec(rules_by_name[rule_name])
@@ -1602,7 +1596,6 @@ class RuleSet:
         apply tag-based rule filter assuming that all required rules are loaded
         can be used to specify selected rules vs. providing a rules child directory where capa cannot resolve
         dependencies from unknown paths
-        TODO handle circular dependencies?
         TODO support -t=metafield <k>
         """
         rules = list(self.rules.values())
