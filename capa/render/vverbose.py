@@ -48,7 +48,7 @@ def hanging_indent(s: str, indent: int) -> str:
 def render_locations(ostream, layout: rd.Layout, locations: Iterable[frz.Address], indent: int):
     import capa.render.verbose as v
 
-    # its possible to have an empty locations array here,
+    # it's possible to have an empty locations array here,
     # such as when we're in MODE_FAILURE and showing the logic
     # under a `not` statement (which will have no matched locations).
     locations = sorted(locations)

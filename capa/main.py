@@ -246,7 +246,7 @@ def install_common_args(parser, wanted=None):
 
     if "backend" in wanted:
         backends = [
-            (BACKEND_AUTO, "(default) detect apppropriate backend automatically"),
+            (BACKEND_AUTO, "(default) detect appropriate backend automatically"),
             (BACKEND_VIV, "vivisect"),
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
@@ -317,7 +317,7 @@ def install_common_args(parser, wanted=None):
 # Library code should *not* call these functions.
 #
 # These main routines may raise `ShouldExitError` to indicate the program
-# ...should exit. Its a tiny step away from doing `sys.exit()` directly.
+# ...should exit. It's a tiny step away from doing `sys.exit()` directly.
 # I'm not sure if we should just do that. In the meantime, programs should
 # handle `ShouldExitError` and pass the status code to `sys.exit()`.
 #

@@ -24,7 +24,7 @@ Comments are added at the beginning of matched functions indicating matched capa
 
 ### Bookmarks
 
-Bookmarks are added to functions that matched a capabilitiy that is mapped to a MITRE ATT&CK and/or Malware Behavior Catalog (MBC) technique. You can view these bookmarks in Ghidra's Bookmarks window.
+Bookmarks are added to functions that matched a capability that is mapped to a MITRE ATT&CK and/or Malware Behavior Catalog (MBC) technique. You can view these bookmarks in Ghidra's Bookmarks window.
 <div align="center">
     <img src="https://github.com/mandiant/capa/assets/66766340/7f9a66a9-7be7-4223-91c6-4b8fc4651336" width=825>
 </div>

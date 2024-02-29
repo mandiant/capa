@@ -65,7 +65,7 @@ def find_thread_capabilities(
     features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the call scope.
-    # might be found at different calls, thats ok.
+    # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
     for ch in extractor.get_calls(ph, th):
@@ -103,11 +103,11 @@ def find_process_capabilities(
     process_features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the basic threads.
-    # might be found at different threads, thats ok.
+    # might be found at different threads, that's ok.
     thread_matches: MatchResults = collections.defaultdict(list)
 
     # matches found at the call scope.
-    # might be found at different calls, thats ok.
+    # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
     for th in extractor.get_threads(ph):

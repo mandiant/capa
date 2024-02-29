@@ -764,7 +764,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
             node = self.make_child_node_from_feature(parent, parse_yaml_line(line.strip()))
 
-            # append our new node in case its a parent for another node
+            # append our new node in case it's a parent for another node
             if node:
                 stack.append(node)
 

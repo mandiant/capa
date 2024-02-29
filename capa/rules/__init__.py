@@ -867,14 +867,14 @@ class Rule:
                 # we'll give precedence to namespaces, and then assume if that does work,
                 #  that it must be a rule name.
                 #
-                # we don't expect any collisions between namespaces and rule names, but its possible.
+                # we don't expect any collisions between namespaces and rule names, but it's possible.
                 # most likely would be collision between top level namespace (e.g. `host-interaction`) and rule name.
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
                 if statement.value in namespaces:
                     # matches a namespace, so take precedence and don't even check rule names.
                     deps.update(r.name for r in namespaces[statement.value])
                 else:
-                    # not a namespace, assume its a rule name.
+                    # not a namespace, assume it's a rule name.
                     assert isinstance(statement.value, str)
                     deps.add(statement.value)
 
@@ -934,7 +934,7 @@ class Rule:
 
             # now recurse to other nodes in the logic tree.
             # note: we cannot recurse into the subscope sub-tree,
-            #  because its been replaced by a `match` statement.
+            #  because it's been replaced by a `match` statement.
             for child in statement.get_children():
                 yield from self._extract_subscope_rules_rec(child)
 
@@ -1224,7 +1224,7 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
     """
     from the given collection of rules, select a rule and its dependencies (transitively).
     """
-    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    # we evaluate `rules` multiple times, so if it's a generator, realize it into a list.
     rules = list(rules)
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
@@ -1257,7 +1257,7 @@ def ensure_rule_dependencies_are_met(rules: List[Rule]) -> None:
     raises:
       InvalidRule: if a dependency is not met.
     """
-    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    # we evaluate `rules` multiple times, so if it's a generator, realize it into a list.
     rules = list(rules)
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
@@ -1304,7 +1304,7 @@ def topologically_order_rules(rules: List[Rule]) -> List[Rule]:
 
     assumes that the rule dependency graph is a DAG.
     """
-    # we evaluate `rules` multiple times, so if its a generator, realize it into a list.
+    # we evaluate `rules` multiple times, so if it's a generator, realize it into a list.
     rules = list(rules)
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
@@ -1465,7 +1465,7 @@ class RuleSet:
                     #
                     # they're global, so if they match at one location in a file,
                     # they'll match at every location in a file.
-                    # so thats not helpful to decide how to downselect.
+                    # so that's not helpful to decide how to downselect.
                     #
                     # and, a global rule will never be the sole selector in a rule.
                     pass
@@ -1535,10 +1535,10 @@ class RuleSet:
             rec(rule_name, root)
 
         # if a rule has a hard feature,
-        # dont consider it easy, and therefore,
+        # don't consider it easy, and therefore,
         # don't index any of its features.
         #
-        # otherwise, its an easy rule, and index its features
+        # otherwise, it's an easy rule, and index its features
         for rules_with_feature in rules_by_feature.values():
             rules_with_feature.difference_update(rules_with_hard_features)
         easy_rules_by_feature = rules_by_feature
