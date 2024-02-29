@@ -7,17 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import string
-import struct
 from typing import Tuple, Iterator
 
-from binaryninja import Function, Settings
+from binaryninja import Function
 from binaryninja import BasicBlock as BinjaBasicBlock
 from binaryninja import (
     BinaryView,
     SymbolType,
     RegisterValueType,
     VariableSourceType,
-    MediumLevelILSetVar,
     MediumLevelILOperation,
     MediumLevelILBasicBlock,
     MediumLevelILInstruction,
@@ -28,11 +26,6 @@ from capa.features.address import Address
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.helpers import MIN_STACKSTRING_LEN
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
-
-use_const_outline: bool = False
-settings: Settings = Settings()
-if settings.contains("analysis.outlining.builtins") and settings.get_bool("analysis.outlining.builtins"):
-    use_const_outline = True
 
 
 def get_printable_len_ascii(s: bytes) -> int:
@@ -65,7 +58,7 @@ def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
 
     addr = target.value.value
     sym = bv.get_symbol_at(addr)
-    if not sym or sym.type != SymbolType.LibraryFunctionSymbol:
+    if not sym or sym.type not in [SymbolType.LibraryFunctionSymbol, SymbolType.SymbolicFunctionSymbol]:
         return 0
 
     if sym.name not in ["__builtin_strncpy", "__builtin_strcpy", "__builtin_wcscpy"]:
@@ -91,52 +84,6 @@ def get_stack_string_len(f: Function, il: MediumLevelILInstruction) -> int:
     return max(get_printable_len_ascii(bytes(s)), get_printable_len_wide(bytes(s)))
 
 
-def get_printable_len(il: MediumLevelILSetVar) -> int:
-    """Return string length if all operand bytes are ascii or utf16-le printable"""
-    width = il.dest.type.width
-    value = il.src.value.value
-
-    if width == 1:
-        chars = struct.pack("<B", value & 0xFF)
-    elif width == 2:
-        chars = struct.pack("<H", value & 0xFFFF)
-    elif width == 4:
-        chars = struct.pack("<I", value & 0xFFFFFFFF)
-    elif width == 8:
-        chars = struct.pack("<Q", value & 0xFFFFFFFFFFFFFFFF)
-    else:
-        return 0
-
-    def is_printable_ascii(chars_: bytes):
-        return all(c < 127 and chr(c) in string.printable for c in chars_)
-
-    def is_printable_utf16le(chars_: bytes):
-        if all(c == 0x00 for c in chars_[1::2]):
-            return is_printable_ascii(chars_[::2])
-
-    if is_printable_ascii(chars):
-        return width
-
-    if is_printable_utf16le(chars):
-        return width // 2
-
-    return 0
-
-
-def is_mov_imm_to_stack(il: MediumLevelILInstruction) -> bool:
-    """verify instruction moves immediate onto stack"""
-    if il.operation != MediumLevelILOperation.MLIL_SET_VAR:
-        return False
-
-    if il.src.operation != MediumLevelILOperation.MLIL_CONST:
-        return False
-
-    if il.dest.source_type != VariableSourceType.StackVariableSourceType:
-        return False
-
-    return True
-
-
 def bb_contains_stackstring(f: Function, bb: MediumLevelILBasicBlock) -> bool:
     """check basic block for stackstring indicators
 
@@ -144,14 +91,10 @@ def bb_contains_stackstring(f: Function, bb: MediumLevelILBasicBlock) -> bool:
     """
     count = 0
     for il in bb:
-        if use_const_outline:
-            count += get_stack_string_len(f, il)
-        else:
-            if is_mov_imm_to_stack(il):
-                count += get_printable_len(il)
+        count += get_stack_string_len(f, il)
+        if count > MIN_STACKSTRING_LEN:
+            return True
 
-    if count > MIN_STACKSTRING_LEN:
-        return True
     return False
 
 
