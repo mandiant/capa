@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "The FLARE Team"
+  given-names: ""
+  orcid: ""
+title: "Capa , a tool to identify program capabilities in executables and sandbox traces."
+version: 7.0.1
+doi: 10.5281/zenodo.1234
+date-released: 2020-07-16
+url: "https://github.com/mandiant/capa"
+  
