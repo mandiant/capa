@@ -1223,10 +1223,10 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
     wanted = {rule_name}
 
     def rec(rule: Rule):
-        wanted.add(rule.name)
         for dep in rule.get_dependencies(namespaces):
             if dep in wanted:
-                continue
+                raise InvalidRule(f'rule "{rule.name}" has circular dependency')
+            wanted.add(dep)
             rec(rules_by_name[dep])
 
     rec(rules_by_name[rule_name])
