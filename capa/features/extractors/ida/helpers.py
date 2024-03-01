@@ -19,7 +19,7 @@ from capa.features.address import AbsoluteVirtualAddress
 from capa.features.extractors.base_extractor import FunctionHandle
 
 IDA_BYTES_PATTERNS = ida_bytes.compiled_binpat_vec_t()
-IDA_NALT_ENCODING  = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B) # use one byte-per-character encoding
+IDA_NALT_ENCODING = ida_nalt.get_default_encoding_idx(ida_nalt.BPU_1B)  # use one byte-per-character encoding
 
 def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
     """yield all ea of a given byte sequence
@@ -37,7 +37,7 @@ def find_byte_sequence(start: int, end: int, seq: bytes) -> Iterator[int]:
         return
 
     while True:
-        ea = ida_bytes.bin_search(start, end, patterns, ida_bytes.BIN_SEARCH_FORWARD)
+        ea = ida_bytes.bin_search(start, end, IDA_BYTES_PATTERNS, ida_bytes.BIN_SEARCH_FORWARD)
         if ea == idaapi.BADADDR:
             break
         start = ea + 1
