@@ -28,8 +28,9 @@
 
 ### Development
 
-- ci: update github workflows to use latest version for depricated actions (checkout, setup-python, upload-artifact, download-artifact) #1967 @sjha2048
+- ci: Fix PR review in the changelog check GH action #2004 @Ana06
 - ci: use rules number badge stored in our bot gist and generated using `schneegans/dynamic-badges-action` #2001 capa-rules#882 @Ana06
+- ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
 
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
