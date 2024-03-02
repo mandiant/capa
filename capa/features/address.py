@@ -93,7 +93,7 @@ class ThreadAddress(Address):
 
 
 class DynamicCallAddress(Address):
-    """addesses a call in a dynamic execution trace"""
+    """addresses a call in a dynamic execution trace"""
 
     def __init__(self, thread: ThreadAddress, id: int):
         assert id >= 0

@@ -206,7 +206,7 @@ class ELF:
         15: OS.AROS,
         16: OS.FENIXOS,
         17: OS.CLOUD,
-        # 53: "SORTFIX",      # i can't find any reference to this OS, i dont think it exists
+        # 53: "SORTFIX",      # i can't find any reference to this OS, i don't think it exists
         # 64: "ARM_AEABI",    # not an OS
         # 97: "ARM",          # not an OS
         # 255: "STANDALONE",  # not an OS

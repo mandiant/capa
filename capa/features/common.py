@@ -227,7 +227,7 @@ class Substring(String):
             if self.value in feature.value:
                 matches[feature.value].update(locations)
                 if short_circuit:
-                    # we found one matching string, thats sufficient to match.
+                    # we found one matching string, that's sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
@@ -322,7 +322,7 @@ class Regex(String):
             if self.re.search(feature.value):
                 matches[feature.value].update(locations)
                 if short_circuit:
-                    # we found one matching string, thats sufficient to match.
+                    # we found one matching string, that's sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
