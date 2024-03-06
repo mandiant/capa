@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
+import gzip
 import json
 import inspect
 import logging
@@ -30,7 +31,7 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_DYNAMIC = ("json", "json_")
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -70,9 +71,19 @@ def assert_never(value) -> NoReturn:
     assert False, f"Unhandled value: {value} ({type(value).__name__})"  # noqa: B011
 
 
-def get_format_from_report(sample: Path) -> str:
-    report = json.load(sample.open(encoding="utf-8"))
+def load_json_from_path(json_path: Path):
+    with gzip.open(json_path, "r") as compressed_report:
+        try:
+            report_json = compressed_report.read()
+        except gzip.BadGzipFile:
+            report = json.load(json_path.open(encoding="utf-8"))
+        else:
+            report = json.loads(report_json)
+    return report
 
+
+def get_format_from_report(sample: Path) -> str:
+    report = load_json_from_path(sample)
     if "CAPE" in report:
         return FORMAT_CAPE
 
