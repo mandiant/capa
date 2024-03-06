@@ -475,40 +475,6 @@ def test_meta_scope_keywords():
             )
         )
 
-    # its also ok to specify "unspecified"
-    for static_scope in static_scopes:
-        _ = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                f"""
-                rule:
-                    meta:
-                        name: test rule
-                        scopes:
-                            static: {static_scope}
-                            dynamic: unspecified
-                    features:
-                        - or:
-                            - format: pe
-                """
-            )
-        )
-    for dynamic_scope in dynamic_scopes:
-        _ = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                f"""
-                rule:
-                    meta:
-                        name: test rule
-                        scopes:
-                            static: unspecified
-                            dynamic: {dynamic_scope}
-                    features:
-                        - or:
-                            - format: pe
-                """
-            )
-        )
-
     # but at least one scope must be specified
     with pytest.raises(capa.rules.InvalidRule):
         _ = capa.rules.Rule.from_yaml(
@@ -534,22 +500,6 @@ def test_meta_scope_keywords():
                         scopes:
                             static: unsupported
                             dynamic: unsupported
-                    features:
-                        - or:
-                            - format: pe
-                """
-            )
-        )
-    with pytest.raises(capa.rules.InvalidRule):
-        _ = capa.rules.Rule.from_yaml(
-            textwrap.dedent(
-                """
-                rule:
-                    meta:
-                        name: test rule
-                        scopes:
-                            static: unspecified
-                            dynamic: unspecified
                     features:
                         - or:
                             - format: pe
@@ -1627,3 +1577,42 @@ def test_invalid_com_features():
                 """
             )
         )
+
+
+def test_circular_dependency():
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
+                        lib: true
+                    features:
+                    - or:
+                        - match: test rule 2
+                        - api: kernel32.VirtualAlloc
+                """
+            )
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
+                        lib: true
+                    features:
+                        - match: test rule 1
+                """
+            )
+        ),
+    ]
+    with pytest.raises(capa.rules.InvalidRule):
+        list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
