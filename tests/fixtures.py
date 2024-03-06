@@ -775,7 +775,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         ("kernel32", "file", capa.features.file.Export("lstrlenW"), True),
         ("kernel32", "file", capa.features.file.Export("nope"), False),
         # forwarded export
-        ("ea2876", "file", capa.features.file.Export("version.GetFileVersionInfoA"), True),
+        ("ea2876", "file", capa.features.file.Export("vresion.GetFileVersionInfoA"), True),
         # file/imports
         ("mimikatz", "file", capa.features.file.Import("advapi32.CryptSetHashParam"), True),
         ("mimikatz", "file", capa.features.file.Import("CryptSetHashParam"), True),
