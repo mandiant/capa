@@ -1577,3 +1577,42 @@ def test_invalid_com_features():
                 """
             )
         )
+
+
+def test_circular_dependency():
+    rules = [
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule 1
+                        scopes:
+                            static: function
+                            dynamic: process
+                        lib: true
+                    features:
+                    - or:
+                        - match: test rule 2
+                        - api: kernel32.VirtualAlloc
+                """
+            )
+        ),
+        capa.rules.Rule.from_yaml(
+            textwrap.dedent(
+                """
+                rule:
+                    meta:
+                        name: test rule 2
+                        scopes:
+                            static: function
+                            dynamic: process
+                        lib: true
+                    features:
+                        - match: test rule 1
+                """
+            )
+        ),
+    ]
+    with pytest.raises(capa.rules.InvalidRule):
+        list(capa.rules.get_rules_and_dependencies(rules, rules[0].name))
