@@ -10,6 +10,7 @@ import collections
 from enum import Enum
 from typing import Dict, List, Tuple, Union, Literal, Optional
 from pathlib import Path
+from functools import lru_cache
 
 from pydantic import Field, BaseModel, ConfigDict
 from typing_extensions import TypeAlias
@@ -19,6 +20,7 @@ import capa.engine
 import capa.features.common
 import capa.features.freeze as frz
 import capa.features.address
+import capa.render.rules_prevalence
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
@@ -569,9 +571,33 @@ class MaecMetadata(FrozenModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
 
+@lru_cache(maxsize=None)
+def load_rules_prevalence() -> Dict[str, str]:
+    """
+    Load and return a dictionary containing prevalence information for rules defined in capa.
+
+    Returns:
+        Dict[str, str]: A dictionary where keys are rule names, and values are prevalence levels.
+
+    Example:
+        {
+            "capture screenshot": "rare",
+            "send data": "common",
+            "receive and write data from server to client": "common",
+            "resolve DNS": "common",
+            "reference HTTP User-Agent string": "rare"
+        }
+
+    Note:
+        Prevalence levels can be one of the following: "common", "rare"
+    """
+    return capa.render.rules_prevalence.RULES_PREVALENCE
+
+
 class RuleMetadata(FrozenModel):
     name: str
     namespace: Optional[str] = None
+    prevalence: str = "unknown"
     authors: Tuple[str, ...]
     scopes: capa.rules.Scopes
     attack: Tuple[AttackSpec, ...] = Field(alias="att&ck")
@@ -589,6 +615,7 @@ class RuleMetadata(FrozenModel):
         return cls(
             name=rule.meta.get("name"),
             namespace=rule.meta.get("namespace"),
+            prevalence=load_rules_prevalence().get(rule.meta.get("name"), "unknown"),
             authors=rule.meta.get("authors"),
             scopes=capa.rules.Scopes.from_dict(rule.meta.get("scopes")),
             attack=tuple(map(AttackSpec.from_str, rule.meta.get("att&ck", []))),

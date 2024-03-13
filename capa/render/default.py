@@ -7,6 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import collections
+from typing import Dict
 
 import tabulate
 
@@ -73,19 +74,30 @@ def find_subrule_matches(doc: rd.ResultDocument):
 
 def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
     """
+    render capabilities sorted by:
+      - prevalence (rare to unknown)
+      - namespace (alphabetical)
+
     example::
 
-        +-------------------------------------------------------+-------------------------------------------------+
-        | CAPABILITY                                            | NAMESPACE                                       |
-        |-------------------------------------------------------+-------------------------------------------------|
-        | check for OutputDebugString error (2 matches)         | anti-analysis/anti-debugging/debugger-detection |
-        | read and send data from client to server              | c2/file-transfer                                |
-        | ...                                                   | ...                                             |
-        +-------------------------------------------------------+-------------------------------------------------+
+        +-------------------------------------------------------+-------------------------------------------------+------------+
+        | CAPABILITY                                            | NAMESPACE                                       | PREVALENCE |
+        |-------------------------------------------------------+-------------------------------------------------|------------|
+        | check for OutputDebugString error (2 matches)         | anti-analysis/anti-debugging/debugger-detection | rare       |
+        | ...                                                   | ...                                             | ...        |
+        |-------------------------------------------------------|-------------------------------------------------|------------|
+        | read and send data from client to server              | c2/file-transfer                                | common     |
+        | ...                                                   | ...                                             | ...        |
+        +-------------------------------------------------------+-------------------------------------------------+------------+
     """
     subrule_matches = find_subrule_matches(doc)
 
-    rows = []
+    # seperate rules based on their prevalence
+    common: Dict[str, str] = {"capability": "", "namespace": "", "prevalence": ""}
+    had_common = False
+    rare: Dict[str, str] = {"capability": "", "namespace": "", "prevalence": ""}
+    had_rare = False
+
     for rule in rutils.capability_rules(doc):
         if rule.meta.name in subrule_matches:
             # rules that are also matched by other rules should not get rendered by default.
@@ -98,11 +110,34 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
             capability = rutils.bold(rule.meta.name)
         else:
             capability = f"{rutils.bold(rule.meta.name)} ({count} matches)"
-        rows.append((capability, rule.meta.namespace))
+
+        namespace = rule.meta.namespace if rule.meta.namespace is not None else ""
+        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
+
+        if "rare" in prevalence:
+            rare["capability"] += capability + "\n"
+            rare["namespace"] += namespace + "\n"
+            rare["prevalence"] += prevalence + "\n"
+            had_rare = True
+        else:
+            common["capability"] += capability + "\n"
+            common["namespace"] += namespace + "\n"
+            common["prevalence"] += prevalence + "\n"
+            had_common = True
+
+    rows = []
+    if had_rare:
+        rows.append((rare["capability"], rare["namespace"], rare["prevalence"]))
+    if had_common:
+        rows.append((common["capability"], common["namespace"], common["prevalence"]))
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows,
+                headers=[width("Capability", 50), width("Namespace", 50), width("Prevalence", 10)],
+                tablefmt="mixed_grid",
+            )
         )
         ostream.write("\n")
     else:
