@@ -359,9 +359,23 @@ def main():
         popup("capa explorer found no matches.")  # type: ignore [name-defined] # noqa: F821
         return capa.main.E_EMPTY_REPORT
 
-    for item in parse_json(capa_data):
-        item.bookmark_functions()
-        item.label_matches()
+    user_choice = askChoice(  # type: ignore [name-defined] # noqa: F821
+        "Choose b/w bookmarks & comments", "preferred action:", ["bookmarks", "comments", "both", "none"], "both")
+		
+		
+    if user_choice == "bookmarks":
+        for item in parse_json(capa_data):
+            item.bookmark_functions()
+    elif user_choice == "comments":
+        for item in parse_json(capa_data):
+            item.label_matches()
+    elif user_choice == "both":
+        for item in parse_json(capa_data):
+            item.bookmark_functions()
+            item.label_matches()
+    else:
+        pass
+    
     logger.info("capa explorer analysis complete")
     popup("capa explorer analysis complete.\nPlease see results in the Bookmarks Window and Namespaces section of the Symbol Tree Window.")  # type: ignore [name-defined] # noqa: F821
     return 0
