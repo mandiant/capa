@@ -48,7 +48,10 @@ def create_label(ghidra_addr, name, capa_namespace):
     # prevent duplicate labels under the same capa-generated namespace
     symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
     for sym in symbol_table.getSymbols(ghidra_addr):
-        if sym.getName(True) == capa_namespace.getName(True) + Namespace.DELIMITER + name:
+        if (
+            sym.getName(True)
+            == capa_namespace.getName(True) + Namespace.DELIMITER + name
+        ):
             return
 
     # create SymbolType.LABEL at addr
@@ -98,7 +101,9 @@ class CapaMatchData:
                         for part in item.get("parts", {}):
                             attack_txt = attack_txt + part + Namespace.DELIMITER
                         attack_txt = attack_txt + item.get("id", {})
-                        add_bookmark(func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK")
+                        add_bookmark(
+                            func_addr, attack_txt, "CapaExplorer::MITRE ATT&CK"
+                        )
 
                 if self.mbc != []:
                     for item in self.mbc:
@@ -127,11 +132,28 @@ class CapaMatchData:
         """set pre comments at subscoped matches of main rules"""
         comment = getPreComment(ghidra_addr)  # type: ignore [name-defined] # noqa: F821
         if comment is None:
-            comment = "capa: " + sub_type + "(" + description + ")" + ' matched in "' + self.capability + '"\n'
+            comment = (
+                "capa: "
+                + sub_type
+                + "("
+                + description
+                + ")"
+                + ' matched in "'
+                + self.capability
+                + '"\n'
+            )
             setPreComment(ghidra_addr, comment)  # type: ignore [name-defined] # noqa: F821
         elif self.capability not in comment:
             comment = (
-                comment + "capa: " + sub_type + "(" + description + ")" + ' matched in "' + self.capability + '"\n'
+                comment
+                + "capa: "
+                + sub_type
+                + "("
+                + description
+                + ")"
+                + ' matched in "'
+                + self.capability
+                + '"\n'
             )
             setPreComment(ghidra_addr, comment)  # type: ignore [name-defined] # noqa: F821
         else:
@@ -167,7 +189,9 @@ class CapaMatchData:
                             # precomment subscope matches under the function
                             if node != {}:
                                 for sub_type, description in parse_node(node):
-                                    self.set_pre_comment(sub_ghidra_addr, sub_type, description)
+                                    self.set_pre_comment(
+                                        sub_ghidra_addr, sub_type, description
+                                    )
         else:
             # resolve the encompassing function for the capa namespace
             # of non-function scoped main matches
@@ -191,7 +215,9 @@ class CapaMatchData:
                             if func is not None:
                                 # basic block/ insn scope under resolved function
                                 for sub_type, description in parse_node(node):
-                                    self.set_pre_comment(sub_ghidra_addr, sub_type, description)
+                                    self.set_pre_comment(
+                                        sub_ghidra_addr, sub_type, description
+                                    )
                             else:
                                 # this would be a global/file scoped main match
                                 # try to resolve the encompassing function via the subscope match, instead
@@ -200,10 +226,16 @@ class CapaMatchData:
                                 if sub_func is not None:
                                     sub_func_addr = sub_func.getEntryPoint()
                                     # place function in capa namespace & create the subscope match label in Ghidra's global namespace
-                                    create_label(sub_func_addr, sub_func.getName(), capa_namespace)
+                                    create_label(
+                                        sub_func_addr,
+                                        sub_func.getName(),
+                                        capa_namespace,
+                                    )
                                     self.set_plate_comment(sub_func_addr)
                                     for sub_type, description in parse_node(node):
-                                        self.set_pre_comment(sub_ghidra_addr, sub_type, description)
+                                        self.set_pre_comment(
+                                            sub_ghidra_addr, sub_type, description
+                                        )
                                 else:
                                     # addr is in some other file section like .data
                                     # represent this location with a label symbol under the capa namespace
@@ -211,10 +243,14 @@ class CapaMatchData:
                                     for sub_type, description in parse_node(node):
                                         # in many cases, these will be ghidra-labeled data, so just add the existing
                                         # label symbol to the capa namespace
-                                        for sym in symbol_table.getSymbols(sub_ghidra_addr):
+                                        for sym in symbol_table.getSymbols(
+                                            sub_ghidra_addr
+                                        ):
                                             if sym.getSymbolType() == SymbolType.LABEL:
                                                 sym.setNamespace(capa_namespace)
-                                        self.set_pre_comment(sub_ghidra_addr, sub_type, description)
+                                        self.set_pre_comment(
+                                            sub_ghidra_addr, sub_type, description
+                                        )
 
 
 def get_capabilities():
@@ -238,9 +274,13 @@ def get_capabilities():
     meta = capa.ghidra.helpers.collect_metadata([rules_path])
     extractor = capa.features.extractors.ghidra.extractor.GhidraFeatureExtractor()
 
-    capabilities, counts = capa.capabilities.common.find_capabilities(rules, extractor, True)
+    capabilities, counts = capa.capabilities.common.find_capabilities(
+        rules, extractor, True
+    )
 
-    if capa.capabilities.common.has_file_limitation(rules, capabilities, is_standalone=False):
+    if capa.capabilities.common.has_file_limitation(
+        rules, capabilities, is_standalone=False
+    ):
         popup("capa explorer encountered warnings during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
         logger.info("capa encountered warnings during analysis")
 
@@ -360,9 +400,12 @@ def main():
         return capa.main.E_EMPTY_REPORT
 
     user_choice = askChoice(  # type: ignore [name-defined] # noqa: F821
-        "Choose b/w bookmarks & comments", "preferred action:", ["bookmarks", "comments", "both", "none"], "both"
+        "Choose b/w bookmarks & comments",
+        "preferred action:",
+        ["bookmarks", "comments", "both", "none"],
+        "both",
     )
-	
+
     if user_choice == "bookmarks":
         for item in parse_json(capa_data):
             item.bookmark_functions()
@@ -375,7 +418,7 @@ def main():
             item.label_matches()
     else:
         pass
-    
+
     logger.info("capa explorer analysis complete")
     popup("capa explorer analysis complete.\nPlease see results in the Bookmarks Window and Namespaces section of the Symbol Tree Window.")  # type: ignore [name-defined] # noqa: F821
     return 0
@@ -385,7 +428,9 @@ if __name__ == "__main__":
     if sys.version_info < (3, 8):
         from capa.exceptions import UnsupportedRuntimeError
 
-        raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
+        raise UnsupportedRuntimeError(
+            "This version of capa can only be used with Python 3.8+"
+        )
     exit_code = main()
     if exit_code != 0:
         popup("capa explorer encountered errors during analysis. Please check the console output for more information.")  # type: ignore [name-defined] # noqa: F821
