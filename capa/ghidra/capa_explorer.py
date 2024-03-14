@@ -360,8 +360,9 @@ def main():
         return capa.main.E_EMPTY_REPORT
 
     user_choice = askChoice(  # type: ignore [name-defined] # noqa: F821
-        "Choose b/w bookmarks & comments", "preferred action:", ["bookmarks", "comments", "both", "none"], "both")
-		
+        "Choose b/w bookmarks & comments", "preferred action:", ["bookmarks", "comments", "both", "none"], "both"
+    )
+	
     if user_choice == "bookmarks":
         for item in parse_json(capa_data):
             item.bookmark_functions()
