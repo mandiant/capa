@@ -1,6 +1,7 @@
 # Change Log
 
 ## master (unreleased)
+- Refactor format in `extractors/dotnetfile.py` #2022 @samadpls
 
 ### New Features
 
