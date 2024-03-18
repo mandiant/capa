@@ -193,6 +193,11 @@ class BinExport2Index:
         if vertex.HasField("demangled_name"):
             name = vertex.demangled_name
 
+        if vertex.HasField("library_index"):
+            library = self.be2.library[vertex.library_index]
+            if library.HasField("name"):
+                name = f"{library.name}!{name}"
+
         return name
 
     def get_function_name_by_address(self, address: int) -> str:
