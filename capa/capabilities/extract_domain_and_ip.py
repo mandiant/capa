@@ -55,7 +55,7 @@ def is_valid_domain(string: str) -> bool:
             "bin",
             "scr",
             "exf",
-        ]  # add more to this list
+        ]  # TODO: add more to this list
 
         top_level_domain = string.split(".")[-1]
         for invalid in invalid_list:
