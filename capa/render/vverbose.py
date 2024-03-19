@@ -22,6 +22,7 @@ import capa.render.result_document as rd
 import capa.features.freeze.features as frzf
 from capa.rules import RuleSet
 from capa.engine import MatchResults
+from capa.capabilities.extract_domain_and_ip import verbose_extract_domain_and_ip
 
 logger = logging.getLogger(__name__)
 
@@ -458,6 +459,58 @@ def render_rules(ostream, doc: rd.ResultDocument):
         ostream.writeln(rutils.bold("no capabilities found"))
 
 
+def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
+    """
+    example::
+        +-----------------------------------------------------------+
+        | IP addresses and web domains                              |
+        |-----------------------------------------------------------+
+        | google.com                                                |
+        |    |----IP address:                                       |
+        |            |----192.0.0.1                                 |
+        |    |----Functions used to communicate with google.com:    |
+        |            |----InternetConnectA                          |
+        |            |----HttpOpenRequestA                          |
+        |            |----FtpGetFileA                               |
+        |    |----3 occurrances                                     |
+        |                                                           |                                                                          |
+        | 192.123.232.08                                            |
+        |    |----Functions used to communicate with 192.123.232.08:|
+        |            |----...                                       |
+        |                                                           |
+        +-----------------------------------------------------------+
+    """
+    rows = []
+    for domain_or_ip in verbose_extract_domain_and_ip(doc):
+        for i in domain_or_ip.split("\n"):
+            rows.append(i)
+
+    max_line = 0
+    for item in rows:
+        for new_line in item.split("\n"):
+            if len(new_line) > max_line:
+                max_line = len(new_line)
+
+    white_spaces = " " * ceil(1 / 3 * max_line)
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(
+                {white_spaces + "IP addresses and web domains" + white_spaces: rows},
+                headers=[white_spaces + "IP addresses and web domains" + white_spaces],
+                tablefmt="mixed_outline",
+            )
+        )
+        ostream.write("\n")
+    else:
+        ostream.writeln(rutils.bold("No web domains or IP addresses found"))
+
+
+def ceil(num):
+    if isinstance(num, float):
+        return int(num - 0.5) + 1
+
+
 def render_vverbose(doc: rd.ResultDocument):
     ostream = rutils.StringIO()
 
@@ -465,6 +518,9 @@ def render_vverbose(doc: rd.ResultDocument):
     ostream.write("\n")
 
     render_rules(ostream, doc)
+    ostream.write("\n")
+
+    render_domain_and_ip(ostream, doc)
     ostream.write("\n")
 
     return ostream.getvalue()
