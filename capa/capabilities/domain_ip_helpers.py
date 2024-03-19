@@ -30,25 +30,45 @@ def get_file_path(doc: ResultDocument) -> Path:
 def get_sigpaths_from_doc(doc: ResultDocument):
     import capa.loader
 
+    logger.debug("enter get_sigpaths_from_doc")
+
     if doc.meta.argv:
+        logger.debug("enter  if doc.meta.argv")
         try:
+            logger.debug("enter try block")
+            logger.debug(f"doc.meta.argv == {list(doc.meta.argv)}")
             if "-s" in list(doc.meta.argv):
+                logger.debug("enter -s")
                 idx = doc.meta.argv.index("-s")
+                logger.debug("got -s idx")
                 sigpath = Path(doc.meta.argv[idx + 1])
+                logger.debug("got -s sigpath1")
                 if "./" in str(sigpath):
+                    logger.debug("in -s ./")
                     fixed_str = str(sigpath).split("./")[1]
+                    logger.debug("got -s fixed_str")
                     sigpath = Path(fixed_str)
+                    logger.debug("got -s sigpath2")
 
             elif "--signatures" in list(doc.meta.argv):
+                logger.debug("enter --signatures")
                 idx = doc.meta.argv.index("--signatures")
+                logger.debug("got --signatures idx")
                 sigpath = Path(doc.meta.argv[idx + 1])
+                logger.debug("got --signatures sigpath1")
                 if "./" in str(sigpath):
+                    logger.debug("in --signatures ./ block")
                     fixed_str = str(sigpath).split("./")[1]
+                    logger.debug("got --signatures fixed_str")
                     sigpath = Path(fixed_str)
+                    logger.debug("got --signatures sigpath2")
 
             else:
+                logger.debug("enter else block")
                 sigpath = "(embedded)"  # type: ignore
+                logger.debug("got else sigpath")
 
+            logger.debug("attempt capa.loader.get_signatures(sigpath)")
             return capa.loader.get_signatures(sigpath)
 
         except AttributeError:
