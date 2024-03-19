@@ -31,7 +31,6 @@ from dataclasses import asdict, dataclass
 
 import yaml
 import pydantic
-import ruamel.yaml
 import yaml.parser
 
 import capa.perf
@@ -151,14 +150,6 @@ class Scopes:
         if scopes_["static"] == "unsupported":
             scopes_["static"] = None
         if scopes_["dynamic"] == "unsupported":
-            scopes_["dynamic"] = None
-
-        # unspecified is used to indicate a rule is yet to be migrated.
-        # TODO(williballenthin): this scope term should be removed once all rules have been migrated.
-        # https://github.com/mandiant/capa/issues/1747
-        if scopes_["static"] == "unspecified":
-            scopes_["static"] = None
-        if scopes_["dynamic"] == "unspecified":
             scopes_["dynamic"] = None
 
         if (not scopes_["static"]) and (not scopes_["dynamic"]):
@@ -850,7 +841,7 @@ class Rule:
         """
         fetch the names of rules this rule relies upon.
         these are only the direct dependencies; a user must
-         compute the transitive dependency graph themself, if they want it.
+        compute the transitive dependency graph themself, if they want it.
 
         Args:
           namespaces(Dict[str, List[Rule]]): mapping from namespace name to rules in it.
@@ -1053,8 +1044,12 @@ class Rule:
 
     @staticmethod
     def _get_ruamel_yaml_parser():
-        # use ruamel to enable nice formatting
+        # we use lazy importing here to avoid eagerly loading dependencies
+        # that some specialized environments may not have,
+        # e.g., those that run capa without ruamel.
+        import ruamel.yaml
 
+        # use ruamel to enable nice formatting
         # we use the ruamel.yaml parser because it supports roundtripping of documents with comments.
         y = ruamel.yaml.YAML(typ="rt")
 
@@ -1226,11 +1221,17 @@ def get_rules_and_dependencies(rules: List[Rule], rule_name: str) -> Iterator[Ru
     namespaces = index_rules_by_namespace(rules)
     rules_by_name = {rule.name: rule for rule in rules}
     wanted = {rule_name}
+    visited = set()
 
-    def rec(rule):
+    def rec(rule: Rule):
         wanted.add(rule.name)
+        visited.add(rule.name)
+
         for dep in rule.get_dependencies(namespaces):
+            if dep in visited:
+                raise InvalidRule(f'rule "{dep}" has a circular dependency')
             rec(rules_by_name[dep])
+        visited.remove(rule.name)
 
     rec(rules_by_name[rule_name])
 
@@ -1599,7 +1600,6 @@ class RuleSet:
         apply tag-based rule filter assuming that all required rules are loaded
         can be used to specify selected rules vs. providing a rules child directory where capa cannot resolve
         dependencies from unknown paths
-        TODO handle circular dependencies?
         TODO support -t=metafield <k>
         """
         rules = list(self.rules.values())

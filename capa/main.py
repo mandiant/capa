@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -40,11 +40,6 @@ import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.pefile
-import capa.features.extractors.elffile
-import capa.features.extractors.dotnetfile
-import capa.features.extractors.base_extractor
-import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE

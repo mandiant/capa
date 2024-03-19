@@ -32,7 +32,7 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "tqdm==4.66.1",
+    "tqdm==4.66.2",
     "pyyaml==6.0.1",
     "tabulate==0.9.0",
     "colorama==0.4.6",
@@ -64,11 +64,11 @@ namespaces = false
 dev = [
     "pre-commit==3.5.0",
     "pytest==8.0.0",
-    "pytest-sugar==0.9.7",
+    "pytest-sugar==1.0.0",
     "pytest-instafail==0.5.0",
     "pytest-cov==4.1.0",
     "flake8==7.0.0",
-    "flake8-bugbear==24.1.17",
+    "flake8-bugbear==24.2.6",
     "flake8-encodings==0.5.1",
     "flake8-comprehensions==3.14.0",
     "flake8-logging-format==0.9.0",
@@ -78,7 +78,7 @@ dev = [
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.1.14",
+    "ruff==0.2.1",
     "black==24.1.1",
     "isort==5.13.2",
     "mypy==1.8.0",
@@ -97,7 +97,7 @@ dev = [
     "types-protobuf==4.23.0.3",
 ]
 build = [
-    "pyinstaller==6.3.0",
+    "pyinstaller==6.4.0",
     "setuptools==69.0.3",
     "build==1.0.3"
 ]

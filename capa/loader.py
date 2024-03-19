@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
-import json
 import logging
 import datetime
 from typing import Set, Dict, List, Optional
@@ -31,9 +30,6 @@ import capa.features.extractors
 import capa.render.result_document
 import capa.render.result_document as rdoc
 import capa.features.extractors.common
-import capa.features.extractors.pefile
-import capa.features.extractors.elffile
-import capa.features.extractors.dotnetfile
 import capa.features.extractors.base_extractor
 import capa.features.extractors.cape.extractor
 from capa.rules import RuleSet
@@ -183,7 +179,7 @@ def get_extractor(
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_path.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_path)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif backend == BACKEND_DOTNET:
@@ -276,18 +272,31 @@ def get_extractor(
 def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtractor]:
     file_extractors: List[FeatureExtractor] = []
 
+    # we use lazy importing here to avoid eagerly loading dependencies
+    # that some specialized environments may not have,
+    # e.g., those that run capa without vivisect.
+
     if input_format == FORMAT_PE:
+        import capa.features.extractors.pefile
+
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_DOTNET:
+        import capa.features.extractors.pefile
+        import capa.features.extractors.dotnetfile
+
         file_extractors.append(capa.features.extractors.pefile.PefileFeatureExtractor(input_file))
         file_extractors.append(capa.features.extractors.dotnetfile.DotnetFileFeatureExtractor(input_file))
 
     elif input_format == FORMAT_ELF:
+        import capa.features.extractors.elffile
+
         file_extractors.append(capa.features.extractors.elffile.ElfFeatureExtractor(input_file))
 
     elif input_format == FORMAT_CAPE:
-        report = json.loads(input_file.read_text(encoding="utf-8"))
+        import capa.features.extractors.cape.extractor
+
+        report = capa.helpers.load_json_from_path(input_file)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors

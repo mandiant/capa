@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - name: "The FLARE Team"
+title: "capa, a tool to identify capabilities in programs and sandbox traces."
+date-released: 2020-07-16
+url: "https://github.com/mandiant/capa"
+
