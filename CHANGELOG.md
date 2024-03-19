@@ -4,6 +4,7 @@
 
 ### New Features
 
+- extracts and prints web domains/IP addresses and potential WinAPI networking functions @aaronatp
 
 ### Breaking Changes
 

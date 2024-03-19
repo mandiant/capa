@@ -263,11 +263,9 @@ def networking_functions_statement(doc: ResultDocument, domain_or_ip: str):
     api_functions = get_domain_or_ip_caller_functions(doc, domain_or_ip)
 
     if len(api_functions) == 0:
-        statement = (
-            f"{domain_or_ip} occurs but no functions found that use it.\n"
+        statement = (f"{domain_or_ip} occurs but no functions found that use it.\n"
             "         If you think this is a mistake, please open an issue on\n"
-            "         the capa GitHub page (https://github.com/mandiant/capa)\n"
-        )
+            "         the capa GitHub page (https://github.com/mandiant/capa)\n")
         return statement
 
     elif len(api_functions) == 1:
