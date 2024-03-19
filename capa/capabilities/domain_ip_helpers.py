@@ -29,6 +29,7 @@ def get_file_path(doc: ResultDocument) -> Path:
 
 def get_sigpaths_from_doc(doc: ResultDocument):
     import capa.loader
+    from capa.main import get_default_root
 
     logger.debug("enter get_sigpaths_from_doc")
 
@@ -65,7 +66,7 @@ def get_sigpaths_from_doc(doc: ResultDocument):
 
             else:
                 logger.debug("enter else block")
-                sigpath = "(embedded)"  # type: ignore
+                sigpath = get_default_root() / "sigs"
                 logger.debug("got else sigpath")
 
             logger.debug("attempt capa.loader.get_signatures(sigpath)")
