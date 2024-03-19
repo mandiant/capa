@@ -1,6 +1,8 @@
 # Change Log
 
 ## master (unreleased)
+### capa explorer user-option for choosing comments/bookmarks 
+- add function in capa explorer to let users choose if they want comments/bookmarks #1977 @Atlas-64
 
 ### New Features
 
