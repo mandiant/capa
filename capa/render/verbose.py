@@ -350,7 +350,8 @@ def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
             if len(new_line) > max_line:
                 max_line = len(new_line)
 
-    white_spaces = " " * ceil(1 / 3 * max_line)
+    if max_line > 0:
+        white_spaces = " " * ceil(1 / 3 * max_line)
 
     if rows:
         ostream.write(
@@ -365,9 +366,8 @@ def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
         ostream.writeln(rutils.bold("No web domains or IP addresses found"))
 
 
-def ceil(num):
-    if isinstance(num, float):
-        return int(num - 0.5) + 1
+def ceil(num: float) -> int:
+    return int(num - 0.5) + 1
 
 
 def render_verbose(doc: rd.ResultDocument):
