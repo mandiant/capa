@@ -21,6 +21,7 @@ BACKEND_VIV = "vivisect"
 BACKEND_DOTNET = "dotnet"
 BACKEND_BINJA = "binja"
 BACKEND_PEFILE = "pefile"
+BACKEND_CAPE = "cape"
 
 
 def get_file_path(doc: ResultDocument) -> Path:
@@ -88,7 +89,7 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
     os = doc.meta.analysis.os
 
     _ = get_auto_format(get_file_path(doc))
-    if format == FORMAT_CAPE:
+    if format == BACKEND_CAPE:
         report = capa.helpers.load_json_from_path(path)
         return CapeExtractor.from_report(report)
     elif _ == BACKEND_VIV:
