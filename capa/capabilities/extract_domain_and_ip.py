@@ -280,13 +280,6 @@ def networking_functions_statement(doc: ResultDocument, domain_or_ip: str):
 
         return statement
 
-    else:
-        raise LengthError("'api_functions' contains unexpected data!")
-
-
-class LengthError(BaseException):
-    pass
-
 
 def get_domain_or_ip_caller_functions(doc: ResultDocument, domain_or_ip: str) -> List[str]:
     """
@@ -295,7 +288,7 @@ def get_domain_or_ip_caller_functions(doc: ResultDocument, domain_or_ip: str) ->
     returns:
       List[str]: list of functions that operate on the 'domain_or_ip' string
     """
-    return [ caller_func for caller_func in yield_caller_funcs(doc, domain_or_ip)]
+    return [caller_func for caller_func in yield_caller_funcs(doc, domain_or_ip)]
 
 
 def yield_caller_funcs(doc: ResultDocument, domain_or_ip: str) -> Generator[str, None, None]:
