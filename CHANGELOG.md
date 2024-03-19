@@ -1,7 +1,7 @@
 # Change Log
 
 ## master (unreleased)
-- Refactor format in `extractors/dotnetfile.py` #2022 @samadpls
+- Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
 
 ### New Features
 
