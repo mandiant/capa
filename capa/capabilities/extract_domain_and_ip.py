@@ -55,10 +55,10 @@ def is_valid_domain(string: str) -> bool:
             "bin",
             "scr",
             "exf",
-        ]  # TODO: add more to this list
+        ]  # TODO (aaronatp): add more to this list  # noqa: T003
 
         top_level_domain = string.split(".")[-1]
-        for invalid in invalid_list:
+        for invalid in invalid_list:  # noqa: SIM111
             if top_level_domain == invalid:
                 return False
 
@@ -264,8 +264,8 @@ def networking_functions_statement(doc: ResultDocument, domain_or_ip: str):
 
     if len(api_functions) == 0:
         statement = (
-            f"{domain_or_ip} occurs but no functions found that use it.\n"
-            "         If you think this is a mistake, please open an issue on\n"
+            f"{domain_or_ip} occurs but no functions found that use it.\n"  # noqa: NIC002
+            "         If you think this is a mistake, please open an issue on\n"  # noqa: NIC002
             "         the capa GitHub page (https://github.com/mandiant/capa)\n"
         )
         return statement
@@ -282,6 +282,13 @@ def networking_functions_statement(doc: ResultDocument, domain_or_ip: str):
 
         return statement
 
+    else:
+        raise LengthError("'api_functions' contains unexpected data!")
+
+
+class LengthError(BaseException):
+    pass
+
 
 def get_domain_or_ip_caller_functions(doc: ResultDocument, domain_or_ip: str) -> List[str]:
     """
@@ -290,7 +297,7 @@ def get_domain_or_ip_caller_functions(doc: ResultDocument, domain_or_ip: str) ->
     returns:
       List[str]: list of functions that operate on the 'domain_or_ip' string
     """
-    return [caller_func for caller_func in yield_caller_funcs(doc, domain_or_ip)]
+    return list(yield_caller_funcs(doc, domain_or_ip))
 
 
 def yield_caller_funcs(doc: ResultDocument, domain_or_ip: str) -> Generator[str, None, None]:
