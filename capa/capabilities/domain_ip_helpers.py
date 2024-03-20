@@ -11,12 +11,7 @@ from pathlib import Path
 
 from capa.helpers import get_auto_format
 from capa.exceptions import UnsupportedFormatError
-from capa.features.common import (
-    FORMAT_CAPE,
-    FORMAT_DOTNET,
-    FORMAT_FREEZE,
-    FORMAT_UNKNOWN,
-)
+from capa.features.common import FORMAT_CAPE, FORMAT_DOTNET, FORMAT_FREEZE, FORMAT_UNKNOWN
 from capa.render.result_document import ResultDocument
 from capa.features.extractors.base_extractor import FeatureExtractor
 
