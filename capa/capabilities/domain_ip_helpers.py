@@ -9,11 +9,9 @@
 import logging
 from pathlib import Path
 
-from capa.helpers import get_auto_format
-from capa.features.common import FORMAT_CAPE
+from capa.features.common import FORMAT_AUTO, FORMAT_CAPE, FORMAT_DOTNET, FORMAT_FREEZE
 from capa.render.result_document import ResultDocument
 from capa.features.extractors.base_extractor import FeatureExtractor
-from capa.features.extractors.cape.extractor import CapeExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -82,30 +80,43 @@ def get_sigpaths_from_doc(doc: ResultDocument):
 
 
 def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
-    import capa.loader
+    from capa.loader import (
+        BACKEND_VIV,
+        BACKEND_CAPE,
+        BACKEND_DOTNET,
+        BACKEND_FREEZE,
+        get_extractor,
+    )
 
     path = get_file_path(doc)
-    format = doc.meta.analysis.format
     os = doc.meta.analysis.os
 
-    _ = get_auto_format(get_file_path(doc))
-    if format == BACKEND_CAPE:
-        report = capa.helpers.load_json_from_path(path)
-        return CapeExtractor.from_report(report)
-    elif _ == BACKEND_VIV:
+    args = doc.meta.argv
+    for i in range(len(args)):
+        if args[i] == any(['-f', '--format']):
+            format = args[i + 1]
+        else:
+            format = FORMAT_AUTO
+
+    for i in range(len(args)):
+        if args[i] == any(['-b', '--backend']):
+            backend = args[i + 1]
+            break
+        elif format == FORMAT_CAPE:
+            backend = BACKEND_CAPE
+        elif format == FORMAT_DOTNET:
+            backend = BACKEND_DOTNET
+        elif format == FORMAT_FREEZE:
+            backend = BACKEND_FREEZE
+        else:
+            backend = ''
+    
+    if backend == '':
         backend = BACKEND_VIV
-    elif _ == BACKEND_PEFILE:
-        backend = BACKEND_PEFILE
-    elif _ == BACKEND_BINJA:
-        backend = BACKEND_BINJA
-    elif _ == BACKEND_DOTNET:
-        backend = BACKEND_DOTNET
-    else:
-        backend = BACKEND_VIV  # according to main.py this is the default
 
     sigpath = get_sigpaths_from_doc(doc)
 
-    return capa.loader.get_extractor(
+    return get_extractor(
         input_path=path,
         input_format=format,
         os_=os,
