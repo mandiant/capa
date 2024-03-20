@@ -1,12 +1,12 @@
 # Frequently Asked Questions
 ## Why does capa trigger my Antivirus? Is the tool safe to use?
-capa's purpose is to analyse the capabilities of a potentially malicious application or file. In order to do that, it needs to contain parts of the data it's designed to detect as a basis of comparison.
-The release version of capa is packaged with embedded rules to detect common malware functionality. These rules contain similar features to malware and may cause alerts.
+The purpose of `capa` is to analyse the capabilities of a potentially malicious application or file. To achieve this, it needs to include portions of the data it is designed to detect as a basis for comparison.
+The release version of capa comes with embedded rules designed to detect common malware functionality. These rules possess similar features to malware and may trigger alerts.
 Additionally, Antivirus and Endpoint Detection and Response (EDR) products may alert on the way capa is packaged using PyInstaller.
 
 ## How can I ensure that capa is a benign program?
-We recommedn you only download releases from this repository's Release page. Alternatively, you can build capa yourself or use the other Python installation methods. This project is open source so that everyone can be certain of the project's transparency.
-For additinal peace of mind you can use VirusTotal to analyze unknown files against many Antivirus products, sandboxes, and other analysis tools (capa itself runs in VirusTotal).
+We recommend downloading releases only from this repository's Release page. Alternatively, you can build capa yourself or use other Python installation methods. This project is open-source, ensuring transparency for everyone involved.
+For additional peace of mind, you can utilize VirusTotal to analyze unknown files against numerous antivirus products, sandboxes, and other analysis tools. It's worth noting that capa itself operates within VirusTotal.
 
 ### Understanding VirusTotal output
 VirusTotal tests files against a large number of Antivirus engines and sandboxes. There's often little insight into Antivirus detections, but you can further inspect dynamic analysis results produced by sandboxes.
