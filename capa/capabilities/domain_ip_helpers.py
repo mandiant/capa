@@ -9,17 +9,18 @@
 import logging
 from pathlib import Path
 
-from capa.features.common import FORMAT_AUTO, FORMAT_CAPE, FORMAT_DOTNET, FORMAT_FREEZE
+from capa.helpers import get_auto_format
+from capa.exceptions import UnsupportedFormatError
+from capa.features.common import (
+    FORMAT_CAPE,
+    FORMAT_DOTNET,
+    FORMAT_FREEZE,
+    FORMAT_UNKNOWN,
+)
 from capa.render.result_document import ResultDocument
 from capa.features.extractors.base_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
-
-BACKEND_VIV = "vivisect"
-BACKEND_DOTNET = "dotnet"
-BACKEND_BINJA = "binja"
-BACKEND_PEFILE = "pefile"
-BACKEND_CAPE = "cape"
 
 
 def get_file_path(doc: ResultDocument) -> Path:
@@ -30,88 +31,75 @@ def get_sigpaths_from_doc(doc: ResultDocument):
     import capa.loader
     from capa.main import get_default_root
 
-    logger.debug("enter get_sigpaths_from_doc")
-
     if doc.meta.argv:
-        logger.debug("enter  if doc.meta.argv")
         try:
-            logger.debug("enter try block")
-            logger.debug(f"doc.meta.argv == {list(doc.meta.argv)}")
             if "-s" in list(doc.meta.argv):
-                logger.debug("enter -s")
                 idx = doc.meta.argv.index("-s")
-                logger.debug("got -s idx")
                 sigpath = Path(doc.meta.argv[idx + 1])
-                logger.debug("got -s sigpath1")
                 if "./" in str(sigpath):
-                    logger.debug("in -s ./")
                     fixed_str = str(sigpath).split("./")[1]
-                    logger.debug("got -s fixed_str")
                     sigpath = Path(fixed_str)
-                    logger.debug("got -s sigpath2")
 
             elif "--signatures" in list(doc.meta.argv):
-                logger.debug("enter --signatures")
                 idx = doc.meta.argv.index("--signatures")
-                logger.debug("got --signatures idx")
                 sigpath = Path(doc.meta.argv[idx + 1])
-                logger.debug("got --signatures sigpath1")
                 if "./" in str(sigpath):
-                    logger.debug("in --signatures ./ block")
                     fixed_str = str(sigpath).split("./")[1]
-                    logger.debug("got --signatures fixed_str")
                     sigpath = Path(fixed_str)
-                    logger.debug("got --signatures sigpath2")
 
             else:
-                logger.debug("enter else block")
                 sigpath = get_default_root() / "sigs"
-                logger.debug("got else sigpath")
 
-            logger.debug("attempt capa.loader.get_signatures(sigpath)")
             return capa.loader.get_signatures(sigpath)
 
         except AttributeError:
             raise NotImplementedError("Confirm that argv is an attribute of doc.meta")
 
     else:
-        print("in 'get_sigpaths_from_doc', run in debug (-d) mode")
-        logger.debug("'doc.meta' has not attribute 'argv', this is probably a bad sign...")
+        logger.debug("'doc.meta' has not attribute 'argv'")
 
 
 def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
-    from capa.loader import (
-        BACKEND_VIV,
-        BACKEND_CAPE,
-        BACKEND_DOTNET,
-        BACKEND_FREEZE,
-        get_extractor,
-    )
+    # import here to avoid circular import
+    from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_DOTNET, BACKEND_FREEZE, get_extractor
 
     path = get_file_path(doc)
     os = doc.meta.analysis.os
 
-    args = doc.meta.argv
-    for i in range(len(args)):
-        if args[i] == any(['-f', '--format']):
-            format = args[i + 1]
-        else:
-            format = FORMAT_AUTO
+    if doc.meta.argv:
+        args = tuple(doc.meta.argv)
+    else:
+        CommandLineArgumentsError("Couldn't find command line arguments!")
 
     for i in range(len(args)):
-        if args[i] == any(['-b', '--backend']):
+        if args[i] == any(["-f", "--format"]):
+            format = args[i + 1]
+            break
+        else:
+            format = ""
+
+    if format == "":
+        format = get_auto_format(path)
+        if format == FORMAT_UNKNOWN:
+            raise UnsupportedFormatError(f"Couldn't get format for {path.name}")
+
+    for i in range(len(args)):
+        if args[i] == any(["-b", "--backend"]):
             backend = args[i + 1]
             break
         elif format == FORMAT_CAPE:
             backend = BACKEND_CAPE
+            break
         elif format == FORMAT_DOTNET:
             backend = BACKEND_DOTNET
+            break
         elif format == FORMAT_FREEZE:
             backend = BACKEND_FREEZE
+            break
         else:
-            backend = ''
-    
-    if backend == '':
+            backend = ""
+
+    if backend == "":
         backend = BACKEND_VIV
 
     sigpath = get_sigpaths_from_doc(doc)
@@ -123,3 +111,7 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
         backend=backend,
         sigpaths=sigpath,
     )
+
+
+class CommandLineArgumentsError(BaseException):
+    pass
