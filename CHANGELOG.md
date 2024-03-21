@@ -1,10 +1,12 @@
 # Change Log
 
 ## master (unreleased)
+- Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
 
 ### New Features
 
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
+- document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 
 ### Breaking Changes
 
@@ -27,6 +29,7 @@
 
 
 ### capa explorer IDA Pro plugin
+- replace deprecated IDA API find_binary with bin_search #1606 @s-ff
 
 ### Development
 
