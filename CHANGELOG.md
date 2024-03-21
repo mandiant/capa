@@ -24,6 +24,8 @@
 ### Bug Fixes
 
 - do some imports closer to where they are used #1810 @williballenthin
+- binja: fix and simplify stack string detection code after binja 4.0 @xusheng6
+- binja: add support for forwarded export #1646 @xusheng6
 
 
 ### capa explorer IDA Pro plugin
@@ -34,7 +36,9 @@
 - ci: Fix PR review in the changelog check GH action #2004 @Ana06
 - ci: use rules number badge stored in our bot gist and generated using `schneegans/dynamic-badges-action` #2001 capa-rules#882 @Ana06
 - ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
+- ci: update binja version to stable 4.0 #2016 @xusheng6
 - ci: update github workflows to reflect the latest ghidrathon installation and bumped up jep, ghidra versions  #2020 @psahithireddy
+
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
 - [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
