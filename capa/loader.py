@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,7 +6,6 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
-import json
 import logging
 import datetime
 from typing import Set, Dict, List, Optional
@@ -182,7 +181,7 @@ def get_extractor(
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_path.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_path)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif backend == BACKEND_DOTNET:
@@ -329,7 +328,11 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     elif input_format == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
+<<<<<<< HEAD
         report = json.loads(input_file.read_text(encoding="utf-8"))
+=======
+        report = capa.helpers.load_json_from_path(input_file)
+>>>>>>> master
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     elif input_format == FORMAT_BINEXPORT2:

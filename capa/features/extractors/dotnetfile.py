@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2022 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -49,8 +49,8 @@ logger = logging.getLogger(__name__)
 
 
 def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
-    yield Format(FORMAT_PE), NO_ADDRESS
     yield Format(FORMAT_DOTNET), NO_ADDRESS
+    yield Format(FORMAT_PE), NO_ADDRESS
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:

@@ -1,26 +1,46 @@
 # Change Log
 
 ## master (unreleased)
+- Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
 
 ### New Features
 
+- add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
+- document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 
 ### Breaking Changes
 
 
-### New Rules (1)
+### New Rules (6)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
+- host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
+- host-interaction/driver/unload-driver moritz.raabe@mandiant.com
+- nursery/get-disk-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/get-volume-information-via-ioctl william.ballenthin@mandiant.com
+- nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 -
 
 ### Bug Fixes
 
 - do some imports closer to where they are used #1810 @williballenthin
+<<<<<<< HEAD
+=======
+- binja: fix and simplify stack string detection code after binja 4.0 @xusheng6
+- binja: add support for forwarded export #1646 @xusheng6
+>>>>>>> master
 
 
 ### capa explorer IDA Pro plugin
+- replace deprecated IDA API find_binary with bin_search #1606 @s-ff
 
 ### Development
+
+- ci: Fix PR review in the changelog check GH action #2004 @Ana06
+- ci: use rules number badge stored in our bot gist and generated using `schneegans/dynamic-badges-action` #2001 capa-rules#882 @Ana06
+- ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
+- ci: update binja version to stable 4.0 #2016 @xusheng6
+- ci: update github workflows to reflect the latest ghidrathon installation and bumped up jep, ghidra versions  #2020 @psahithireddy
 
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)

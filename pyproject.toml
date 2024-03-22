@@ -74,12 +74,12 @@ dev = [
     "flake8-logging-format==0.9.0",
     "flake8-no-implicit-concat==0.3.5",
     "flake8-print==5.0.0",
-    "flake8-todos==0.3.0",
+    "flake8-todos==0.3.1",
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
     "ruff==0.2.1",
-    "black==24.1.1",
+    "black==24.3.0",
     "isort==5.13.2",
     "mypy==1.8.0",
     "psutil==5.9.2",
@@ -93,7 +93,7 @@ dev = [
     "types-tabulate==0.9.0.20240106",
     "types-termcolor==1.1.4",
     "types-psutil==5.8.23",
-    "types_requests==2.31.0.20240125",
+    "types_requests==2.31.0.20240311",
     "types-protobuf==4.23.0.3",
 ]
 build = [
