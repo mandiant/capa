@@ -332,7 +332,7 @@ def render_domain_and_ip(ostream: rutils.StringIO, doc: rd.ResultDocument):
         |            |----HttpOpenRequestA                          |
         |            |----FtpGetFileA                               |
         |    |----3 occurrances                                     |
-        |                                                           |                                                                          |
+        |                                                           |
         | 192.123.232.08                                            |
         |    |----Functions used to communicate with 192.123.232.08:|
         |            |----...                                       |
