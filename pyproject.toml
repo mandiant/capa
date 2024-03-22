@@ -93,7 +93,7 @@ dev = [
     "types-tabulate==0.9.0.20240106",
     "types-termcolor==1.1.4",
     "types-psutil==5.8.23",
-    "types_requests==2.31.0.20240125",
+    "types_requests==2.31.0.20240311",
     "types-protobuf==4.23.0.3",
 ]
 build = [
