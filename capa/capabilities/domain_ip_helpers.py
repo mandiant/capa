@@ -99,6 +99,12 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
 
     sigpath = get_sigpaths_from_doc(doc)
 
+    import capa.helpers
+
+    logger.debug(f"running standable == {capa.helpers.is_running_standalone}")
+
+    raise QuickExitError()
+
     return get_extractor(
         input_path=path,
         input_format=format,
@@ -109,4 +115,7 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
 
 
 class CommandLineArgumentsError(BaseException):
+    pass
+
+class QuickExitError(BaseException):
     pass
