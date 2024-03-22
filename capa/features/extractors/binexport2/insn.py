@@ -266,55 +266,6 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
             reference_addresses.append(data_reference_address)
 
-    if (not reference_addresses) and _is_ghidra_symbol_madness(be2, instruction_index):
-        instruction = be2.instruction[ii.instruction_index]
-        mnemonic = be2.mnemonic[instruction.mnemonic_index]
-        mnemonic_name = mnemonic.name.lower()
-
-        if mnemonic_name == "adrp":
-            # Look for sequence like:
-            #
-            #     adrp x2, 0x1000     ; fetch global anchor address, relocatable
-            #     add  x2, x2, #0x3c  ; offset into global data of string
-            #
-            # to resolve 0x103c at the address of the adrp instruction.
-            # Ideally, the underlying disassembler would do this (IDA, Ghidra, etc.)
-            #  and use a data reference.
-            # However, the Ghidra exporter doesn't do this today.
-
-            # get the first operand register name and then second operand number,
-            # then find the next add instruction that references the register,
-            # fetching the third operand number.
-
-            assert len(instruction.operand_index) == 2
-            register_name = _gsm_get_instruction_operand(be2, instruction_index, 0)
-            page_address = int(_gsm_get_instruction_operand(be2, instruction_index, 1), 0x10)
-
-            basic_block = be2.basic_block[basic_block_index]
-
-            scanning_active = False
-            for scanning_instruction_index in idx.instruction_indices(basic_block):
-                if not scanning_active:
-                    # the given instruction not encountered yet
-                    if scanning_instruction_index == instruction_index:
-                        scanning_active = True
-                else:
-                    scanning_instruction = be2.instruction[scanning_instruction_index]
-                    scanning_mnemonic = be2.mnemonic[scanning_instruction.mnemonic_index]
-                    scanning_mnemonic_name = scanning_mnemonic.name.lower()
-                    if scanning_mnemonic_name != "add":
-                        continue
-
-                    if _gsm_get_instruction_operand(be2, scanning_instruction_index, 0) != register_name:
-                        continue
-
-                    if _gsm_get_instruction_operand(be2, scanning_instruction_index, 1) != register_name:
-                        continue
-
-                    page_offset = int(_gsm_get_instruction_operand(be2, scanning_instruction_index, 2).strip("#"), 0x10)
-                    reference_address = page_address + page_offset
-                    reference_addresses.append(reference_address)
-
     for reference_address in reference_addresses:
         try:
             # at end of segment then there might be an overrun here.
