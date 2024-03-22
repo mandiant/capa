@@ -101,7 +101,7 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
 
     import capa.helpers
 
-    logger.debug(f"running standable == {capa.helpers.is_running_standalone}")
+    logger.debug(f"running standable == {capa.helpers.is_running_standalone()}")
 
     raise QuickExitError()
 
@@ -116,6 +116,7 @@ def get_extractor_from_doc(doc: ResultDocument) -> FeatureExtractor:
 
 class CommandLineArgumentsError(BaseException):
     pass
+
 
 class QuickExitError(BaseException):
     pass
