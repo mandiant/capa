@@ -93,7 +93,9 @@ def main(argv=None):
 
     with o.section("libraries"):
         for library in be2.library:
-            o.writeln(f"- {library.name:<12s} {'(static)' if library.is_static else ''}{(' at ' + hex(library.load_address)) if library.HasField('load_address') else ''}")
+            o.writeln(
+                f"- {library.name:<12s} {'(static)' if library.is_static else ''}{(' at ' + hex(library.load_address)) if library.HasField('load_address') else ''}"
+            )
         if not be2.library:
             o.writeln("(none)")
 
