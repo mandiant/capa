@@ -328,11 +328,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     elif input_format == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-<<<<<<< HEAD
-        report = json.loads(input_file.read_text(encoding="utf-8"))
-=======
         report = capa.helpers.load_json_from_path(input_file)
->>>>>>> master
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     elif input_format == FORMAT_BINEXPORT2:

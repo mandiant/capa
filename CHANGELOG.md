@@ -24,11 +24,8 @@
 ### Bug Fixes
 
 - do some imports closer to where they are used #1810 @williballenthin
-<<<<<<< HEAD
-=======
 - binja: fix and simplify stack string detection code after binja 4.0 @xusheng6
 - binja: add support for forwarded export #1646 @xusheng6
->>>>>>> master
 
 
 ### capa explorer IDA Pro plugin
