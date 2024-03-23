@@ -186,12 +186,11 @@ class CapaMatchData:
                                         # addr is in some other file section like .data
                                         # represent this location with a label symbol under the capa namespace
                                         # Ex. See "Reference Base64 String" rule
-                                        for sub_type, description in parse_node(node):
-                                            # in many cases, these will be ghidra-labeled data, so just add the existing
-                                            # label symbol to the capa namespace
-                                            for sym in symbol_table.getSymbols(sub_ghidra_addr):
-                                                if sym.getSymbolType() == SymbolType.LABEL:
-                                                    sym.setNamespace(capa_namespace)
+                                        # in many cases, these will be ghidra-labeled data, so just add the existing
+                                        # label symbol to the capa namespace
+                                        for sym in symbol_table.getSymbols(sub_ghidra_addr):
+                                            if sym.getSymbolType() == SymbolType.LABEL:
+                                                sym.setNamespace(capa_namespace)
         if comments:
             symbol_table = currentProgram().getSymbolTable()  # type: ignore [name-defined] # noqa: F821
             if self.scope == "function":
