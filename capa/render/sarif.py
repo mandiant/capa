@@ -7,7 +7,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
 import json
-from datetime import datetime
 
 from sarif_om import Tool, SarifLog, Run, ToolComponent
 from jschema_to_python.to_json import to_json
