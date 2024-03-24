@@ -2,6 +2,7 @@
 
 ## master (unreleased)
 - Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
+- Add SARIF output flags @reversingwithme
 
 ### New Features
 

@@ -31,6 +31,7 @@ import capa.loader
 import capa.helpers
 import capa.version
 import capa.render.json
+import capa.render.sarif
 import capa.rules.cache
 import capa.render.default
 import capa.render.verbose
@@ -791,6 +792,9 @@ def main(argv: Optional[List[str]] = None):
     )
     install_common_args(parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag"})
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
+    parser.add_argument("-k", "--sarif", action="store_true", help="emit SARIF instead of text")
+    parser.add_argument("-g", "--gsarif", action="store_true", help="emit ghidra-compatible SARIF instead of text")
+
     args = parser.parse_args(args=argv)
 
     try:
@@ -840,6 +844,11 @@ def main(argv: Optional[List[str]] = None):
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))
+    elif args.sarif:
+        print(capa.render.sarif.render(meta, rules, capabilities))
+    elif args.gsarif:
+        ghidra_compatibility = True
+        print(capa.render.sarif.render(meta, rules, capabilities, ghidra_compatibility))
     elif args.vverbose:
         print(capa.render.vverbose.render(meta, rules, capabilities))
     elif args.verbose:
