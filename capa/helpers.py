@@ -26,11 +26,13 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_UNKNOWN,
+    FORMAT_BINEXPORT2,
     Format,
 )
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
+EXTENSIONS_BINEXPORT2 = ("BinExport", "BinExport2")
 EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
@@ -105,6 +107,8 @@ def get_format_from_extension(sample: Path) -> str:
         format_ = get_format_from_report(sample)
     elif sample.name.endswith(EXTENSIONS_FREEZE):
         format_ = FORMAT_FREEZE
+    elif sample.name.endswith(EXTENSIONS_BINEXPORT2):
+        format_ = FORMAT_BINEXPORT2
     return format_
 
 
@@ -174,7 +178,8 @@ def log_unsupported_format_error():
     logger.error(" Input file does not appear to be a supported file.")
     logger.error(" ")
     logger.error(" See all supported file formats via capa's help output (-h).")
-    logger.error(" If you don't know the input file type, you can try using the `file` utility to guess it.")
+    logger.error(" If you don't know the input file type,")
+    logger.error(" you can try using the `file` utility to guess it.")
     logger.error("-" * 80)
 
 
@@ -182,10 +187,9 @@ def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
     logger.error(" Input file is not a valid CAPE report: %s", error)
     logger.error(" ")
-    logger.error(" capa currently only supports analyzing standard CAPE reports in JSON format.")
-    logger.error(
-        " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
-    )
+    logger.error(" capa currently only analyzes CAPE reports in JSON format.")
+    logger.error(" Please make sure your report file is in the")
+    logger.error(" standard format and contains both the static and dynamic sections.")
     logger.error("-" * 80)
 
 
@@ -201,9 +205,8 @@ def log_unsupported_os_error():
     logger.error("-" * 80)
     logger.error(" Input file does not appear to target a supported OS.")
     logger.error(" ")
-    logger.error(
-        " capa currently only supports analyzing executables for some operating systems (including Windows and Linux)."
-    )
+    logger.error(" capa currently only analyzes executables for some operating systems")
+    logger.error(" (including Windows and Linux).")
     logger.error("-" * 80)
 
 
@@ -221,9 +224,8 @@ def log_unsupported_runtime_error():
     logger.error(" ")
     logger.error(" capa supports running under Python 3.8 and higher.")
     logger.error(" ")
-    logger.error(
-        " If you're seeing this message on the command line, please ensure you're running a supported Python version."
-    )
+    logger.error(" If you're seeing this message on the command line,")
+    logger.error(" please ensure you're running a supported Python version.")
     logger.error("-" * 80)
 
 
