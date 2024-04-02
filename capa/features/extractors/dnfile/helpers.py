@@ -370,6 +370,7 @@ def resolve_nested_typeref_name(
     # If the ResolutionScope decodes to a typeRef type then it is nested
     if isinstance(typeref.ResolutionScope.table, dnfile.mdtable.TypeRef):
         typeref_name = []
+        typeref_tb = []
         name = typeref.TypeName
         # Not appending the current typeref name to avoid potential duplicate
 
@@ -380,10 +381,11 @@ def resolve_nested_typeref_name(
 
         while isinstance(table_row.ResolutionScope.table, dnfile.mdtable.TypeRef):
             # Iterate through the typeref table to resolve the nested name
+            typeref_tb.append(table_row)
             typeref_name.append(name)
             name = table_row.TypeName
             table_row = get_dotnet_table_row(pe, dnfile.mdtable.TypeRef.number, table_row.ResolutionScope.row_index)
-            if table_row is None:
+            if table_row is None or table_row in typeref_tb:
                 return typeref.TypeNamespace, tuple(typeref_name[::-1])
 
         # Document the root enclosing details
