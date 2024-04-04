@@ -422,10 +422,11 @@ class Arch(Feature):
 OS_WINDOWS = "windows"
 OS_LINUX = "linux"
 OS_MACOS = "macos"
+OS_ANDROID = "android"
 # dotnet
 OS_ANY = "any"
 VALID_OS = {os.value for os in capa.features.extractors.elf.OS}
-VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY})
+VALID_OS.update({OS_WINDOWS, OS_LINUX, OS_MACOS, OS_ANY, OS_ANDROID})
 # internal only, not to be used in rules
 OS_AUTO = "auto"
 
