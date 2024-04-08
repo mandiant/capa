@@ -186,7 +186,7 @@ def main(argv=None):
                                         string_reference = be2.string_reference[string_reference_index]
                                         string_index = string_reference.string_table_index
                                         string = be2.string_table[string_index]
-                                        string_references += f'⇥ string "{string}" '
+                                        string_references += f'⇥ string "{string.rstrip()}" '
 
                                 comments = ""
                                 if instruction.comment_index:
