@@ -100,9 +100,10 @@ class Mnemonic(Feature):
 
 
 # max number of operands to consider for a given instruction.
-# since we only support Intel and .NET, we can assume this is 3
+# for Intel and .NET, this is 3
 # which covers cases up to e.g. "vinserti128 ymm0,ymm0,ymm5,1"
-MAX_OPERAND_COUNT = 4
+# for ARM/aarch64, we assume 4
+MAX_OPERAND_COUNT = 5
 MAX_OPERAND_INDEX = MAX_OPERAND_COUNT - 1
 
 

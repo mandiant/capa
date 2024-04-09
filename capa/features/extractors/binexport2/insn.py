@@ -184,15 +184,15 @@ def extract_insn_number_features(
 
         # label: has a value
 
-        if analysis.base_address != 0x0:
+        if analysis.base_address == 0x0:
             # When the image is mapped at 0x0,
             #  then its hard to tell if numbers are pointers or numbers.
-            # So be a little less conservative here.
-            if is_address_mapped(be2, value):
-                continue
+            # TODO(mr): 1755 be a little less conservative otherwise?
 
-        if is_address_mapped(be2, value):
-            continue
+            # TODO(mr): 1755 this removes a lot of valid numbers, could check alignment and use additional heuristics
+            # if is_address_mapped(be2, value):
+            #     continue
+            pass
 
         yield Number(value), ih.address
         yield OperandNumber(i, value), ih.address

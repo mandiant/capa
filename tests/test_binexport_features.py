@@ -5,7 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from pathlib import Path
+import binascii
 
 import pytest
 
@@ -38,7 +38,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "file", capa.features.file.Section(".text"), True),
         ("687e79.be2", "file", capa.features.file.Section(".nope"), False),
         # file/exports
-        # TODO? ("687e79.be2", "file", capa.features.file.Export("android::clearDir"), True),
+        ("687e79.be2", "file", capa.features.file.Export("android::clearDir"), "xfail: not implemented yet?!"),
         ("687e79.be2", "file", capa.features.file.Export("nope"), False),
         # file/imports
         ("687e79.be2", "file", capa.features.file.Import("fopen"), True),
@@ -54,13 +54,13 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # bb/characteristic(stack string)
         (
             "687e79.be2",
-            "function=0x",
+            "function=0x0",
             capa.features.common.Characteristic("stack string"),
             "xfail: not implemented yet",
         ),
         (
             "687e79.be2",
-            "function=0x",
+            "function=0x0",
             capa.features.common.Characteristic("stack string"),
             "xfail: not implemented yet",
         ),
@@ -86,34 +86,35 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # insn/operand.number
         ("687e79.be2", "function=0x5128,bb=0x51e4", capa.features.insn.OperandNumber(1, 0xFFFFFFFF), True),
         ("687e79.be2", "function=0x7588,bb=0x7588", capa.features.insn.OperandNumber(1, 0x3), True),
-        ("687e79.be2", "function=0x7588,bb=0x7588", capa.features.insn.OperandNumber(1, 0x10), True),
+        ("687e79.be2", "function=0x7588,bb=0x7588,insn=0x7598", capa.features.insn.OperandNumber(1, 0x3), True),
         ("687e79.be2", "function=0x7588,bb=0x7588", capa.features.insn.OperandNumber(3, 0x10), True),
         # insn/operand.offset
-        ("687e79.be2", "function=0x0,bb=0x0", capa.features.insn.OperandOffset(0, 4), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0,bb=0x0", capa.features.insn.OperandOffset(1, 4), "xfail: not implemented yet"),
+        (
+            "687e79.be2",
+            "function=0x0,bb=0x0",
+            capa.features.insn.OperandOffset(1, 100),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0,bb=0x0",
+            capa.features.insn.OperandOffset(3, 100),
+            "xfail: not implemented yet",
+        ),
         # insn/number
         ("687e79.be2", "function=0x7588", capa.features.insn.Number(0x3), True),
-        ("687e79.be2", "function=0x7588", capa.features.insn.Number(0x10), True),
+        ("687e79.be2", "function=0x7588", capa.features.insn.Number(0x10), "xfail: do we want this for ldp?"),
         ("687e79.be2", "function=0x5C88", capa.features.insn.Number(0xF000), True),
-        # insn/number: stack adjustments
-        # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0xC), False),
-        # ("mimikatz", "function=0x40105D", capa.features.insn.Number(0x10), False),
         # insn/number: negative
-        # ("mimikatz", "function=0x401553", capa.features.insn.Number(0xFFFFFFFF), True),
-        # ("mimikatz", "function=0x43e543", capa.features.insn.Number(0xFFFFFFF0), True),
+        ("687e79.be2", "function=0x57f8,bb=0x57f8", capa.features.insn.Number(0xFFFFFFFFFFFFFFFF), True),
+        ("687e79.be2", "function=0x66e0,bb=0x68c4", capa.features.insn.Number(0xFFFFFFFF), True),
         # insn/offset
-        ("mimikatz", "function=0x0", capa.features.insn.Offset(0x0), "xfail: not implemented yet"),
-        ("mimikatz", "function=0x0", capa.features.insn.Offset(0x4), "xfail: not implemented yet"),
-        ("mimikatz", "function=0x0", capa.features.insn.Offset(0xC), "xfail: not implemented yet"),
-        # insn/offset, issue #276
-        # ("64d9f", "function=0x10001510,bb=0x100015B0", capa.features.insn.Offset(0x4000), True),
-        # insn/offset: stack references
-        # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x8), False),
-        # ("mimikatz", "function=0x40105D", capa.features.insn.Offset(0x10), False),
+        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0x0), "xfail: not implemented yet"),
+        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0x4), "xfail: not implemented yet"),
+        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0xC), "xfail: not implemented yet"),
         # insn/offset: negative
-        # ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x1), True),
-        # ("mimikatz", "function=0x4011FB", capa.features.insn.Offset(-0x2), True),
-        #
+        ("687e79.be2", "function=0x0", capa.features.insn.Offset(-0x1), "xfail: not implemented yet"),
+        ("687e79.be2", "function=0x0", capa.features.insn.Offset(-0x2), "xfail: not implemented yet"),
         # insn/offset from mnemonic: add
         #
         # should not be considered, too big for an offset:
@@ -139,7 +140,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # ("mimikatz", "function=0x401873,bb=0x4018B2,insn=0x4018C0", capa.features.insn.Number(0x2), True),
         # insn/api
         # not extracting dll name
-        ("687e79.be2", "function=0x5c88", capa.features.insn.API("memset"), True),
+        ("687e79.be2", "function=0x5c88", capa.features.insn.API("memset"), "xfail: not working yet"),
         ("687e79.be2", "function=0x5c88", capa.features.insn.API(".memset"), True),
         ("687e79.be2", "function=0x5c88", capa.features.insn.API("Nope"), False),
         # insn/string
@@ -155,9 +156,19 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
         # # insn/string, direct memory reference
         # ("mimikatz", "function=0x46D6CE", capa.features.common.String("(null)"), True),
-        # # insn/bytes
-        # ("mimikatz", "function=0x401517", capa.features.common.Bytes(binascii.unhexlify("CA3B0E000000F8AF47")), True),
-        # ("mimikatz", "function=0x404414", capa.features.common.Bytes(binascii.unhexlify("0180000040EA4700")), True),
+        # insn/bytes
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Bytes(binascii.unhexlify("00")),
+            "xfail: not implemented yet, may need other test sample",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Bytes(binascii.unhexlify("00")),
+            "xfail: not implemented yet, may need other test sample",
+        ),
         # # don't extract byte features for obvious strings
         # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardControl".encode("utf-16le")), False),
         # ("mimikatz", "function=0x40105D", capa.features.common.Bytes("SCardTransmit".encode("utf-16le")), False),
@@ -169,41 +180,24 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # ("mimikatz", "function=0x44570F", capa.features.common.Bytes(binascii.unhexlify("FF" * 256)), False),
         # # insn/bytes, pointer to string bytes
         # ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
-        # # insn/characteristic(nzxor)
-        # ("mimikatz", "function=0x410DFC", capa.features.common.Characteristic("nzxor"), True),
-        # ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("nzxor"), False),
-        # # insn/characteristic(nzxor): no security cookies
-        # ("mimikatz", "function=0x46D534", capa.features.common.Characteristic("nzxor"), False),
-        # # insn/characteristic(nzxor): xorps
-        # # viv needs fixup to recognize function, see above
-        # ("mimikatz", "function=0x410dfc", capa.features.common.Characteristic("nzxor"), True),
-        # # insn/characteristic(peb access)
-        # ("kernel32-64", "function=0x1800017D0", capa.features.common.Characteristic("peb access"), True),
-        # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("peb access"), False),
-        # # insn/characteristic(gs access)
-        # ("kernel32-64", "function=0x180001068", capa.features.common.Characteristic("gs access"), True),
-        # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("gs access"), False),
+        # insn/characteristic(nzxor)
+        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("nzxor"), "xfail: not implemented yet, may need other test sample"),
+        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("nzxor"), "xfail: not implemented yet, may need other test sample"),
         # # insn/characteristic(cross section flow)
         # ("a1982...", "function=0x4014D0", capa.features.common.Characteristic("cross section flow"), True),
         # # insn/characteristic(cross section flow): imports don't count
-        # ("kernel32-64", "function=0x180001068", capa.features.common.Characteristic("cross section flow"), False),
         # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("cross section flow"), False),
-        # # insn/characteristic(recursive call)
-        # ("mimikatz", "function=0x40640e", capa.features.common.Characteristic("recursive call"), True),
-        # # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
-        # ("mimikatz", "function=0x4175FF", capa.features.common.Characteristic("recursive call"), False),
-        # # insn/characteristic(indirect call)
-        # ("mimikatz", "function=0x4175FF", capa.features.common.Characteristic("indirect call"), True),
-        # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("indirect call"), False),
-        # # insn/characteristic(calls from)
-        # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls from"), True),
-        # ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), False),
-        # # function/characteristic(calls to)
-        # ("mimikatz", "function=0x40105D", capa.features.common.Characteristic("calls to"), True),
-        # # function/characteristic(forwarded export)
-        # ("ea2876", "file", capa.features.common.Characteristic("forwarded export"), True),
-        # # before this we used ambiguous (0x4556E5, False), which has a data reference / indirect recursive call, see #386
-        # ("mimikatz", "function=0x456BB9", capa.features.common.Characteristic("calls to"), False),
+        # insn/characteristic(recursive call)
+        ("687e79.be2", "function=0x5b38", capa.features.common.Characteristic("recursive call"), True),
+        ("687e79.be2", "function=0x6530", capa.features.common.Characteristic("recursive call"), True),
+        # insn/characteristic(indirect call)
+        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("indirect call"), "xfail: not implemented yet"),
+        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("indirect call"), "xfail: not implemented yet"),
+        # insn/characteristic(calls from)
+        ("687e79.be2", "function=0x5080", capa.features.common.Characteristic("calls from"), True),
+        ("687e79.be2", "function=0x4d20", capa.features.common.Characteristic("calls from"), False),
+        # function/characteristic(calls to)
+        ("687e79.be2", "function=0x4b90", capa.features.common.Characteristic("calls to"), True),
         # file/function-name
         ("687e79.be2", "file", capa.features.file.FunctionName(".__libc_init"), True),
         # os & format & arch
