@@ -50,6 +50,8 @@ dependencies = [
     "dncil==1.0.2",
     "pydantic==2.4.0",
     "protobuf==4.23.4",
+    "sarif_om==1.0.4",
+    "jschema_to_python==1.2.3"
 ]
 dynamic = ["version"]
 
