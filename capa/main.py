@@ -349,8 +349,9 @@ def handle_common_args(args):
       - rules: file system path to rule files.
       - signatures: file system path to signature files.
 
-    the following field may be added:
+    the following fields may be added:
       - is_default_rules: if the default rules were used.
+      - is_default_signatures: if the default signatures were used.
 
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -447,25 +448,11 @@ def handle_common_args(args):
 
     if hasattr(args, "signatures"):
         if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
-            logger.debug("-" * 80)
-            logger.debug(" Using default embedded signatures.")
-            logger.debug(" To provide your own signatures, use the form:")
-            logger.debug("")
-            logger.debug("     capa.exe --signature ./path/to/signatures/  /path/to/mal.exe")
-            logger.debug("-" * 80)
-
             sigs_path = get_default_root() / "sigs"
-
-            if not sigs_path.exists():
-                logger.error(
-                    "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
-                    + "Please install the signatures first: "
-                    + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
-                )
-                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
+            args.is_default_signatures = True
         else:
             sigs_path = Path(args.signatures)
-            logger.debug("using signatures path: %s", sigs_path)
+            args.is_default_signatures = False
 
         args.signatures = sigs_path
 
@@ -723,6 +710,24 @@ def get_signatures_from_cli(args, input_format: str, backend: str) -> List[Path]
     if input_format != FORMAT_PE:
         logger.debug("skipping library code matching: signatures only supports PE files")
         return []
+
+    if args.is_default_signatures:
+        logger.debug("-" * 80)
+        logger.debug(" Using default embedded signatures.")
+        logger.debug(
+            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+        )
+        logger.debug("-" * 80)
+
+        if not args.signatures.exists():
+            logger.error(
+                "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
+                + "Please install the signatures first: "
+                + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
+            )
+            raise IOError(f"signatures path {args.signatures} does not exist or cannot be accessed")
+    else:
+        logger.debug("using signatures path: %s", args.signatures)
 
     try:
         return capa.loader.get_signatures(args.signatures)
