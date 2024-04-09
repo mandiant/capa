@@ -52,7 +52,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         yield API(vertex.mangled_name), ih.address
 
         if vertex.HasField("library_index"):
-            # BUG: this seems to be incorrect
+            # TODO: this seems to be incorrect for Ghidra extractor
             library = be2.library[vertex.library_index]
             library_name = library.name
             if library_name.endswith(".so"):
@@ -246,7 +246,6 @@ def read_memory(ctx: AnalysisContext, sample_bytes: bytes, address: int, size: i
 
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
-    bbi: BasicBlockContext = bbh.inner
     ii: InstructionContext = ih.inner
 
     ctx = fhi.ctx
@@ -254,7 +253,6 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     sample_bytes = fhi.ctx.sample_bytes
     idx = fhi.ctx.idx
 
-    basic_block_index = bbi.basic_block_index
     instruction_index = ii.instruction_index
 
     reference_addresses: List[int] = []

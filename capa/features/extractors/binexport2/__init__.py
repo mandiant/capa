@@ -13,6 +13,7 @@ Proto files generated via protobuf v24.4:
 import os
 import hashlib
 import logging
+import contextlib
 from typing import Dict, List, Iterator
 from pathlib import Path
 from collections import defaultdict
@@ -60,23 +61,18 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2) -> Path:
     siblings = [p for p in input_directory.iterdir() if p.is_file()]
     siblings.sort(key=filename_similarity_key, reverse=True)
     for sibling in siblings:
-        try:
+        # e.g. with open IDA files in the same directory on Windows
+        with contextlib.suppress(PermissionError):
             if hashlib.sha256(sibling.read_bytes()).hexdigest().lower() == wanted_sha256:
                 return sibling
-        except PermissionError:
-            # e.g. with open IDA files in the same directory on Windows
-            pass
 
     base = Path(os.environ.get("CAPA_SAMPLES_DIR", "."))
     candidates = [p for p in base.iterdir() if p.is_file()]
     candidates.sort(key=filename_similarity_key, reverse=True)
     for candidate in candidates:
-        try:
+        with contextlib.suppress(PermissionError):
             if hashlib.sha256(candidate.read_bytes()).hexdigest().lower() == wanted_sha256:
                 return candidate
-        except PermissionError:
-            # e.g. with open IDA files in the same directory on Windows
-            pass
 
     raise ValueError("cannot find sample")
 

@@ -60,12 +60,13 @@ class Renderer:
 
 # internal to `render_operand`
 def _render_expression_tree(
-        be2: BinExport2, 
-        instruction: BinExport2.Instruction, 
-        operand: BinExport2.Operand, 
-        expression_tree: List[List[int]], 
-        tree_index: int, 
-        o: io.StringIO):
+    be2: BinExport2,
+    instruction: BinExport2.Instruction,
+    operand: BinExport2.Operand,
+    expression_tree: List[List[int]],
+    tree_index: int,
+    o: io.StringIO,
+):
 
     expression_index = operand.expression_index[tree_index]
     expression = be2.expression[expression_index]
@@ -150,11 +151,6 @@ def _render_expression_tree(
 def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand) -> str:
     o = io.StringIO()
 
-    # TODO
-    # for expression_index in operand.expression_index:
-    #     expression = be2.expression[expression_index]
-    #     print(f"{expression.parent_index if expression.HasField('parent_index') else 'null'} -> {expression_index} '{expression.symbol or hex(expression.immediate)}'")
-
     # The reconstructed expression tree layout, linking parent nodes to their children.
     #
     # There is one list of integers for each expression in the operand.
@@ -182,7 +178,7 @@ def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand
         children = []
 
         # scan all subsequent expressions, looking for those that have parent_index == current.expression_index
-        for j, candidate_index in enumerate(operand.expression_index[i + 1:]):
+        for j, candidate_index in enumerate(operand.expression_index[i + 1 :]):
             candidate = be2.expression[candidate_index]
 
             if candidate.parent_index == expression_index:
@@ -254,7 +250,7 @@ def main(argv=None):
                     o.writeln(f"demangled: {vertex.demangled_name}")
 
                 if vertex.HasField("library_index"):
-                    # TODO(williballenthin): this seems to be incorrect
+                    # TODO(williballenthin): this seems to be incorrect for Ghidra exporter
                     library = be2.library[vertex.library_index]
                     o.writeln(f"library:   [{vertex.library_index}] {library.name}")
 
