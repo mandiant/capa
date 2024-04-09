@@ -13,6 +13,7 @@ import sys
 import logging
 import argparse
 import contextlib
+from typing import List
 
 import capa.main
 import capa.features.extractors.binexport2
@@ -34,6 +35,9 @@ class Renderer:
         finally:
             self.indent -= 1
 
+    def write(self, s):
+        self.o.write(s)
+
     def writeln(self, s):
         self.o.write("  " * self.indent)
         self.o.write(s)
@@ -52,6 +56,142 @@ class Renderer:
 
     def getvalue(self):
         return self.o.getvalue()
+
+
+# internal to `render_operand`
+def _render_expression_tree(
+        be2: BinExport2, 
+        instruction: BinExport2.Instruction, 
+        operand: BinExport2.Operand, 
+        expression_tree: List[List[int]], 
+        tree_index: int, 
+        o: io.StringIO):
+
+    expression_index = operand.expression_index[tree_index]
+    expression = be2.expression[expression_index]
+    children_tree_indexes: List[int] = expression_tree[tree_index]
+
+    if expression.type == BinExport2.Expression.REGISTER:
+        o.write(expression.symbol)
+        assert len(children_tree_indexes) == 0
+        return
+
+    elif expression.type == BinExport2.Expression.SYMBOL:
+        o.write(expression.symbol)
+        assert len(children_tree_indexes) == 0
+        return
+
+    elif expression.type == BinExport2.Expression.IMMEDIATE_INT:
+        o.write(f"0x{expression.immediate:X}")
+        assert len(children_tree_indexes) == 0
+        return
+
+    elif expression.type == BinExport2.Expression.SIZE_PREFIX:
+        # like: b4
+        #
+        # We might want to use this occasionally, such as to disambiguate the
+        # size of MOVs into/out of memory. But I'm not sure when/where we need that yet.
+        #
+        # IDA spams this size prefix hint *everywhere*, so we can't rely on the exporter
+        # to provide it only when necessary.
+        assert len(children_tree_indexes) == 1
+        child_index = children_tree_indexes[0]
+        _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+        return
+
+    elif expression.type == BinExport2.Expression.OPERATOR:
+
+        if len(children_tree_indexes) == 1:
+            # prefix operator, like "ds:"
+            o.write(expression.symbol)
+            child_index = children_tree_indexes[0]
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+            return
+
+        elif len(children_tree_indexes) == 2:
+            # infix operator: like "+" in "ebp+10"
+            child_a = children_tree_indexes[0]
+            child_b = children_tree_indexes[1]
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_a, o)
+            o.write(expression.symbol)
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_b, o)
+            return
+
+        elif len(children_tree_indexes) == 3:
+            # infix operator: like "+" in "ebp+ecx+10"
+            child_a = children_tree_indexes[0]
+            child_b = children_tree_indexes[1]
+            child_c = children_tree_indexes[2]
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_a, o)
+            o.write(expression.symbol)
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_b, o)
+            o.write(expression.symbol)
+            _render_expression_tree(be2, instruction, operand, expression_tree, child_c, o)
+            return
+
+        else:
+            raise NotImplementedError(len(children_tree_indexes))
+
+    elif expression.type == BinExport2.Expression.DEREFERENCE:
+        o.write("[")
+        assert len(children_tree_indexes) == 1
+        child_index = children_tree_indexes[0]
+        _render_expression_tree(be2, instruction, operand, expression_tree, child_index, o)
+        o.write("]")
+        return
+
+    elif expression.type == BinExport2.Expression.IMMEDIATE_FLOAT:
+        raise NotImplementedError(expression.type)
+
+    else:
+        raise NotImplementedError(expression.type)
+
+
+def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand) -> str:
+    o = io.StringIO()
+
+    # TODO
+    # for expression_index in operand.expression_index:
+    #     expression = be2.expression[expression_index]
+    #     print(f"{expression.parent_index if expression.HasField('parent_index') else 'null'} -> {expression_index} '{expression.symbol or hex(expression.immediate)}'")
+
+    # The reconstructed expression tree layout, linking parent nodes to their children.
+    #
+    # There is one list of integers for each expression in the operand.
+    # These integers are indexes of other expressions in the same operand,
+    # which are the children of that expression.
+    #
+    # So:
+    #
+    #   [ [1, 3], [2], [], [4], [5], []]
+    #
+    # means the first expression has two children, at index 1 and 3,
+    # and the tree looks like:
+    #
+    #        0
+    #       / \
+    #      1   3
+    #      |   |
+    #      2   4
+    #          |
+    #          5
+    #
+    # Remember, these are the indices into the entries in operand.expression_index.
+    tree: List[List[int]] = []
+    for i, expression_index in enumerate(operand.expression_index):
+        children = []
+
+        # scan all subsequent expressions, looking for those that have parent_index == current.expression_index
+        for j, candidate_index in enumerate(operand.expression_index[i + 1:]):
+            candidate = be2.expression[candidate_index]
+
+            if candidate.parent_index == expression_index:
+                children.append(i + j + 1)
+
+        tree.append(children)
+
+    _render_expression_tree(be2, instruction, operand, tree, 0, o)
+    return o.getvalue()
 
 
 def main(argv=None):
@@ -160,6 +300,11 @@ def main(argv=None):
 
                                 mnemonic = be2.mnemonic[instruction.mnemonic_index]
 
+                                operands = []
+                                for operand_index in instruction.operand_index:
+                                    operand = be2.operand[operand_index]
+                                    operands.append(render_operand(be2, instruction, operand))
+
                                 call_targets = ""
                                 if instruction.call_target:
                                     call_targets = " "
@@ -197,7 +342,7 @@ def main(argv=None):
                                         comments += f"; {BinExport2.Comment.Type.Name(comment.type)} {comment_string} "
 
                                 o.writeln(
-                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{call_targets}{data_references}{string_references}{comments}"
+                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{', '.join(operands)}{call_targets}{data_references}{string_references}{comments}"
                                 )
 
                             does_fallthrough = False
