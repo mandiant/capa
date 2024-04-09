@@ -338,7 +338,7 @@ def main(argv=None):
                                         comments += f"; {BinExport2.Comment.Type.Name(comment.type)} {comment_string} "
 
                                 o.writeln(
-                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{', '.join(operands)}{call_targets}{data_references}{string_references}{comments}"
+                                    f"{hex(instruction_address)}  {mnemonic.name:<12s}{', '.join(operands):<14s}{call_targets}{data_references}{string_references}{comments}"
                                 )
 
                             does_fallthrough = False
