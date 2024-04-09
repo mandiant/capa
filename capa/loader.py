@@ -5,6 +5,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import os
 import sys
 import logging
 import datetime
@@ -287,7 +288,9 @@ def _get_binexport2_file_extractors(input_file: Path) -> List[FeatureExtractor]:
     import capa.features.extractors.binexport2
 
     be2 = capa.features.extractors.binexport2.get_binexport2(input_file)
-    sample_path = capa.features.extractors.binexport2.get_sample_from_binexport2(input_file, be2)
+    sample_path = capa.features.extractors.binexport2.get_sample_from_binexport2(
+        input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
+    )
 
     with sample_path.open("rb") as f:
         taste = f.read()

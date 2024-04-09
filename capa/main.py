@@ -553,7 +553,9 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
         import capa.features.extractors.binexport2
 
         be2 = capa.features.extractors.binexport2.get_binexport2(args.input_file)
-        return capa.features.extractors.binexport2.get_sample_from_binexport2(args.input_file, be2)
+        return capa.features.extractors.binexport2.get_sample_from_binexport2(
+            args.input_file, be2, [Path(os.environ.get("CAPA_SAMPLES_DIR", "."))]
+        )
     else:
         return args.input_file
 

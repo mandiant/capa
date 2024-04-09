@@ -10,7 +10,6 @@ Proto files generated via protobuf v24.4:
 
     protoc --python_out=. --mypy_out=. binexport2.proto
 """
-import os
 import hashlib
 import logging
 import contextlib
@@ -43,11 +42,10 @@ def compute_common_prefix_length(m: str, n: str) -> int:
     return len(m)
 
 
-def get_sample_from_binexport2(input_file: Path, be2: BinExport2) -> Path:
+def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: List[Path]) -> Path:
     """attempt to find the sample file, given a BinExport2 file.
 
-    searches in the same directory as the BinExport2 file, and then
-    in $CAPA_SAMPLES_DIR.
+    searches in the same directory as the BinExport2 file, and then in search_paths.
     """
 
     def filename_similarity_key(p: Path):
@@ -66,13 +64,13 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2) -> Path:
             if hashlib.sha256(sibling.read_bytes()).hexdigest().lower() == wanted_sha256:
                 return sibling
 
-    base = Path(os.environ.get("CAPA_SAMPLES_DIR", "."))
-    candidates = [p for p in base.iterdir() if p.is_file()]
-    candidates.sort(key=filename_similarity_key, reverse=True)
-    for candidate in candidates:
-        with contextlib.suppress(PermissionError):
-            if hashlib.sha256(candidate.read_bytes()).hexdigest().lower() == wanted_sha256:
-                return candidate
+    for search_path in search_paths:
+        candidates = [p for p in search_path.iterdir() if p.is_file()]
+        candidates.sort(key=filename_similarity_key, reverse=True)
+        for candidate in candidates:
+            with contextlib.suppress(PermissionError):
+                if hashlib.sha256(candidate.read_bytes()).hexdigest().lower() == wanted_sha256:
+                    return candidate
 
     raise ValueError("cannot find sample")
 
