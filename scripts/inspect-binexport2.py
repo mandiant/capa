@@ -10,16 +10,25 @@ See the License for the specific language governing permissions and limitations 
 """
 import io
 import sys
+import time
 import logging
 import argparse
 import contextlib
-from typing import List
+from typing import List, Dict, Optional
 
 import capa.main
 import capa.features.extractors.binexport2
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger("inspect-binexport2")
+
+
+@contextlib.contextmanager
+def timing(msg: str):
+    t0 = time.time()
+    yield
+    t1 = time.time()
+    logger.debug("perf: %s: %0.2fs", msg, t1 - t0)
 
 
 class Renderer:
@@ -204,8 +213,13 @@ def main(argv=None):
         return e.status_code
 
     o = Renderer(io.StringIO())
-    be2: BinExport2 = capa.features.extractors.binexport2.get_binexport2(args.input_file)
-    idx = capa.features.extractors.binexport2.BinExport2Index(be2)
+    with timing("loading BinExport2"):
+        be2: BinExport2 = capa.features.extractors.binexport2.get_binexport2(args.input_file)
+
+    with timing("indexing BinExport2"):
+        idx = capa.features.extractors.binexport2.BinExport2Index(be2)
+
+    t0 = time.time()
 
     with o.section("meta"):
         o.writeln(f"name:   {be2.meta_information.executable_name}")
@@ -374,7 +388,11 @@ def main(argv=None):
                 data_references += f"⇤ {hex(instruction_address)} "
             o.writeln(f"{hex(data_address)} {data_references}")
 
-    print(o.getvalue())
+    t1 = time.time()
+    logger.debug("perf: rendering BinExport2: %0.2fs", msg, t1 - t0)
+
+    with timing("writing BinExport2"):
+        print(o.getvalue())
 
 
 if __name__ == "__main__":
