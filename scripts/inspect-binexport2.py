@@ -14,7 +14,7 @@ import time
 import logging
 import argparse
 import contextlib
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 import capa.main
 import capa.features.extractors.binexport2
@@ -158,7 +158,11 @@ def _render_expression_tree(
 
 
 _OPERAND_CACHE: Dict[int, str] = {}
-def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand, index: Optional[int]=None) -> str:
+
+
+def render_operand(
+    be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand, index: Optional[int] = None
+) -> str:
     # For the mimikatz example file, there are 138k distinct operands.
     # Of those, only 11k are unique, which is less than 10% of the total.
     # The most common operands are seen 37k, 24k, 17k, 15k, 11k, ... times.
@@ -421,7 +425,7 @@ def main(argv=None):
             o.writeln(f"{hex(data_address)} {data_references}")
 
     t1 = time.time()
-    logger.debug("perf: rendering BinExport2: %0.2fs", msg, t1 - t0)
+    logger.debug("perf: rendering BinExport2: %0.2fs", t1 - t0)
 
     with timing("writing BinExport2"):
         print(o.getvalue())

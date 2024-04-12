@@ -8,7 +8,6 @@
 import binascii
 
 import pytest
-
 import fixtures
 
 import capa.features.file
@@ -181,8 +180,18 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # # insn/bytes, pointer to string bytes
         # ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
         # insn/characteristic(nzxor)
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("nzxor"), "xfail: not implemented yet, may need other test sample"),
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("nzxor"), "xfail: not implemented yet, may need other test sample"),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("nzxor"),
+            "xfail: not implemented yet, may need other test sample",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("nzxor"),
+            "xfail: not implemented yet, may need other test sample",
+        ),
         # # insn/characteristic(cross section flow)
         # ("a1982...", "function=0x4014D0", capa.features.common.Characteristic("cross section flow"), True),
         # # insn/characteristic(cross section flow): imports don't count
@@ -191,8 +200,18 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "function=0x5b38", capa.features.common.Characteristic("recursive call"), True),
         ("687e79.be2", "function=0x6530", capa.features.common.Characteristic("recursive call"), True),
         # insn/characteristic(indirect call)
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("indirect call"), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("indirect call"), "xfail: not implemented yet"),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("indirect call"),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("indirect call"),
+            "xfail: not implemented yet",
+        ),
         # insn/characteristic(calls from)
         ("687e79.be2", "function=0x5080", capa.features.common.Characteristic("calls from"), True),
         ("687e79.be2", "function=0x4d20", capa.features.common.Characteristic("calls from"), False),
