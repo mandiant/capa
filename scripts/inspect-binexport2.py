@@ -157,7 +157,33 @@ def _render_expression_tree(
         raise NotImplementedError(expression.type)
 
 
-def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand) -> str:
+_OPERAND_CACHE: Dict[int, str] = {}
+def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand: BinExport2.Operand, index: Optional[int]=None) -> str:
+    # For the mimikatz example file, there are 138k distinct operands.
+    # Of those, only 11k are unique, which is less than 10% of the total.
+    # The most common operands are seen 37k, 24k, 17k, 15k, 11k, ... times.
+    # In other words, the most common five operands account for 100k instances,
+    # which is around 75% of operand instances.
+    # Therefore, we expect caching to be fruitful, trading memory for CPU time.
+    #
+    # No caching:   6.045 s ± 0.164 s   [User: 5.916 s, System: 0.129 s]
+    # With caching: 4.259 s ±  0.161 s  [User: 4.141 s, System: 0.117 s]
+    #
+    # So we can save 30% of CPU time by caching operand rendering.
+    #
+    # Other measurements:
+    #
+    # perf: loading BinExport2:   0.06s
+    # perf: indexing BinExport2:  0.34s
+    # perf: rendering BinExport2: 1.96s
+    # perf: writing BinExport2:   1.13s
+    # ________________________________________________________
+    # Executed in    4.40 secs    fish           external
+    #    usr time    4.22 secs    0.00 micros    4.22 secs
+    #    sys time    0.18 secs  842.00 micros    0.18 secs
+    if index and index in _OPERAND_CACHE:
+        return _OPERAND_CACHE[index]
+
     o = io.StringIO()
 
     # The reconstructed expression tree layout, linking parent nodes to their children.
@@ -196,10 +222,16 @@ def render_operand(be2: BinExport2, instruction: BinExport2.Instruction, operand
         tree.append(children)
 
     _render_expression_tree(be2, instruction, operand, tree, 0, o)
-    return o.getvalue()
+    s = o.getvalue()
+
+    if index:
+        _OPERAND_CACHE[index] = s
+
+    return s
 
 
 def main(argv=None):
+
     if argv is None:
         argv = sys.argv[1:]
 
@@ -313,7 +345,7 @@ def main(argv=None):
                                 operands = []
                                 for operand_index in instruction.operand_index:
                                     operand = be2.operand[operand_index]
-                                    operands.append(render_operand(be2, instruction, operand))
+                                    operands.append(render_operand(be2, instruction, operand, index=operand_index))
 
                                 call_targets = ""
                                 if instruction.call_target:
