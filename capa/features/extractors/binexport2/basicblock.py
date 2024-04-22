@@ -22,7 +22,8 @@ def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[F
     idx = fhi.ctx.idx
 
     basic_block_index = bbi.basic_block_index
-    if basic_block_index in idx.target_edges_by_basic_block_index[basic_block_index]:
+    target_edges = idx.target_edges_by_basic_block_index[basic_block_index]
+    if basic_block_index in (e.target_basic_block_index for e in target_edges):
         basic_block_address = idx.basic_block_address_by_index[basic_block_index]
         yield Characteristic("tight loop"), AbsoluteVirtualAddress(basic_block_address)
 
