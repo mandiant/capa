@@ -54,7 +54,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             # TODO: this seems to be incorrect for Ghidra extractor
             library = be2.library[vertex.library_index]
             library_name = library.name
-                
+
             for name in capa.features.extractors.helpers.generate_symbols(library_name, function_name):
                 yield API(name), ih.address
         else:
@@ -177,7 +177,7 @@ def extract_insn_number_features(
             value = expression0.immediate
 
             # handling continues below at label: has a value
- 
+
         elif len(operand.expression_index) == 2:
             # from IDA, which provides a size hint for every operand,
             # we get the following pattern for immediate constants:
