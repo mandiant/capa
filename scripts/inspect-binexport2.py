@@ -416,14 +416,21 @@ def main(argv=None):
                 # appears to be code
                 continue
 
-            data_references = ""
+            data_references = []
             for data_reference_index in idx.data_reference_index_by_target_address[data_address]:
                 data_reference = be2.data_reference[data_reference_index]
                 instruction_index = data_reference.instruction_index
                 instruction_address = idx.instruction_address_by_index[instruction_index]
-                data_references += f"⇤ {hex(instruction_address)} "
-            o.writeln(f"{hex(data_address)} {data_references}")
+                data_references.append(instruction_address)
 
+            if not data_references:
+                continue
+
+            o.writeln(f"{hex(data_address)} ⇤ {hex(data_references[0])}")
+            for data_reference in data_references[1:]:
+                o.writeln(f"{' ' * len(hex(data_address))} ↖ {hex(data_reference)}")
+
+                
     t1 = time.time()
     logger.debug("perf: rendering BinExport2: %0.2fs", t1 - t0)
 
