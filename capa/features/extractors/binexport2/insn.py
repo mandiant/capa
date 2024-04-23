@@ -120,6 +120,13 @@ def extract_insn_number_features(
     instruction_index = ii.instruction_index
     instruction = be2.instruction[instruction_index]
 
+    # x86 / amd64
+    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    if mnemonic.name.lower().startswith("ret"):
+        # skip things like:
+        #   .text:0042250E retn 8
+        return
+
     _is_gsm = _is_ghidra_symbol_madness(be2, instruction_index)
 
     for i, operand_index in enumerate(instruction.operand_index):
