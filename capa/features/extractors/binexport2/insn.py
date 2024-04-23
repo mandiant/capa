@@ -163,8 +163,22 @@ def extract_insn_number_features(
             else:
                 continue
 
+        elif len(operand.expression_index) == 1:
+            # - type: IMMEDIATE_INT
+            #   immediate: 20588728364
+            #   parent_index: 0
+
+            expression0 = be2.expression[operand.expression_index[0]]
+
+            if BinExport2.Expression.Type.IMMEDIATE_INT != expression0.type:
+                continue
+
+            value = expression0.immediate
+
+            # handling continues below at label: has a value
+
         elif len(operand.expression_index) == 2:
-            # from BinDetego,
+            # from IDA, which provides a size hint for every operand,
             # we get the following pattern for immediate constants:
             #
             # - type: SIZE_PREFIX
