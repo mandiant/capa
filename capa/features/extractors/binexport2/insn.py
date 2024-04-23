@@ -49,15 +49,16 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         if not vertex.HasField("mangled_name"):
             continue
 
-        yield API(vertex.mangled_name), ih.address
-
+        function_name = vertex.mangled_name
         if vertex.HasField("library_index"):
             # TODO: this seems to be incorrect for Ghidra extractor
             library = be2.library[vertex.library_index]
             library_name = library.name
-            if library_name.endswith(".so"):
-                library_name = library_name.rpartition(".so")[0]
-            yield API(f"{library_name}.{vertex.mangled_name}"), ih.address
+                
+            for name in capa.features.extractors.helpers.generate_symbols(library_name, function_name):
+                yield API(name), ih.address
+        else:
+            yield API(function_name), ih.address
 
 
 def is_address_mapped(be2: BinExport2, address: int) -> bool:
@@ -176,7 +177,7 @@ def extract_insn_number_features(
             value = expression0.immediate
 
             # handling continues below at label: has a value
-
+ 
         elif len(operand.expression_index) == 2:
             # from IDA, which provides a size hint for every operand,
             # we get the following pattern for immediate constants:

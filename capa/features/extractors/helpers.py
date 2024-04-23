@@ -63,6 +63,7 @@ def generate_symbols(dll: str, symbol: str, include_dll=False) -> Iterator[str]:
     # trim extensions observed in dynamic traces
     dll = dll[0:-4] if dll.endswith(".dll") else dll
     dll = dll[0:-4] if dll.endswith(".drv") else dll
+    dll = dll[0:-3] if dll.endswith(".so") else dll
 
     if include_dll or is_ordinal(symbol):
         # ws2_32.#1
