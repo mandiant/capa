@@ -243,6 +243,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
+            (FORMAT_BINEXPORT2, "BinExport2"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
 
