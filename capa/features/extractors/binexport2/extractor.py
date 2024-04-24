@@ -65,7 +65,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def get_functions(self) -> Iterator[FunctionHandle]:
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
             entry_basic_block_index = flow_graph.entry_basic_block_index
-            flow_graph_address = self.idx.basic_block_address_by_index[entry_basic_block_index]
+            flow_graph_address = self.idx.get_basic_block_address(entry_basic_block_index)
             yield FunctionHandle(
                 AbsoluteVirtualAddress(flow_graph_address),
                 inner=FunctionContext(self.ctx, flow_graph_index),
@@ -80,7 +80,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         flow_graph = self.be2.flow_graph[flow_graph_index]
 
         for basic_block_index in flow_graph.basic_block_index:
-            basic_block_address = self.idx.basic_block_address_by_index[basic_block_index]
+            basic_block_address = self.idx.get_basic_block_address(basic_block_index)
             yield BBHandle(
                 address=AbsoluteVirtualAddress(basic_block_address),
                 inner=BasicBlockContext(basic_block_index),
@@ -92,8 +92,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def get_instructions(self, fh: FunctionHandle, bbh: BBHandle) -> Iterator[InsnHandle]:
         bbi: BasicBlockContext = bbh.inner
         basic_block: BinExport2.BasicBlock = self.be2.basic_block[bbi.basic_block_index]
-        for instruction_index in self.idx.instruction_indices(basic_block):
-            instruction_address = self.idx.instruction_address_by_index[instruction_index]
+        for instruction_index, _, instruction_address in self.idx.basic_block_instructions(basic_block):
             yield InsnHandle(
                 address=AbsoluteVirtualAddress(instruction_address),
                 inner=InstructionContext(instruction_index),

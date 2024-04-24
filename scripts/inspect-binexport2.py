@@ -326,7 +326,7 @@ def main(argv=None):
                     o.writeln("")
                     for basic_block_index in flow_graph.basic_block_index:
                         basic_block = be2.basic_block[basic_block_index]
-                        basic_block_address = idx.basic_block_address_by_index[basic_block_index]
+                        basic_block_address = idx.get_basic_block_address(basic_block_index)
 
                         with o.section(f"basic block {hex(basic_block_address)}"):
                             for edge in idx.target_edges_by_basic_block_index[basic_block_index]:
@@ -334,16 +334,15 @@ def main(argv=None):
                                     continue
 
                                 source_basic_block_index = edge.source_basic_block_index
-                                source_basic_block_address = idx.basic_block_address_by_index[source_basic_block_index]
+                                source_basic_block_address = idx.get_basic_block_address(source_basic_block_index)
 
                                 o.writeln(
                                     f"↓ {BinExport2.FlowGraph.Edge.Type.Name(edge.type)} basic block {hex(source_basic_block_address)}"
                                 )
 
-                            for instruction_index in idx.instruction_indices(basic_block):
-                                instruction = be2.instruction[instruction_index]
-                                instruction_address = idx.instruction_address_by_index[instruction_index]
-
+                            for instruction_index, instruction, instruction_address in idx.basic_block_instructions(
+                                basic_block
+                            ):
                                 mnemonic = be2.mnemonic[instruction.mnemonic_index]
 
                                 operands = []
@@ -402,7 +401,7 @@ def main(argv=None):
                                     back_edge = "↑"
 
                                 target_basic_block_index = edge.target_basic_block_index
-                                target_basic_block_address = idx.basic_block_address_by_index[target_basic_block_index]
+                                target_basic_block_address = idx.get_basic_block_address(target_basic_block_index)
                                 o.writeln(
                                     f"→ {BinExport2.FlowGraph.Edge.Type.Name(edge.type)} basic block {hex(target_basic_block_address)} {back_edge}"
                                 )
@@ -412,16 +411,18 @@ def main(argv=None):
 
     with o.section("data"):
         for data_address in sorted(idx.data_reference_index_by_target_address.keys()):
-            if data_address in idx.instruction_index_by_address:
-                # appears to be code
-                continue
+            # TODO(wb): re-enable this
+            # if data_address in idx.instruction_index_by_address:
+            #     # appears to be code
+            #     continue
 
-            data_xrefs = []
+            data_xrefs: List[int] = []
             for data_reference_index in idx.data_reference_index_by_target_address[data_address]:
                 data_reference = be2.data_reference[data_reference_index]
                 instruction_index = data_reference.instruction_index
-                instruction_address = idx.instruction_address_by_index[instruction_index]
-                data_xrefs.append(instruction_address)
+                # TODO(wb): uh-oh, how to reconstruct address?
+                # instruction_address = idx.instruction_address_by_index[instruction_index]
+                # data_xrefs.append(instruction_address)
 
             if not data_xrefs:
                 continue

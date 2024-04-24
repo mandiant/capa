@@ -13,7 +13,7 @@ Proto files generated via protobuf v24.4:
 import hashlib
 import logging
 import contextlib
-from typing import Dict, List, Iterator
+from typing import Dict, List, Tuple, Iterator
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
@@ -85,10 +85,6 @@ class BinExport2Index:
         # note: flow graph != call graph (vertex)
         self.flow_graph_index_by_address: Dict[int, int] = {}
         self.flow_graph_address_by_index: Dict[int, int] = {}
-        self.basic_block_index_by_address: Dict[int, int] = {}
-        self.basic_block_address_by_index: Dict[int, int] = {}
-        self.instruction_index_by_address: Dict[int, int] = {}
-        self.instruction_address_by_index: Dict[int, int] = {}
 
         # edges that come from the given basic block
         self.source_edges_by_basic_block_index: Dict[int, List[BinExport2.FlowGraph.Edge]] = defaultdict(list)
@@ -102,12 +98,18 @@ class BinExport2Index:
         self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
 
         self._index_vertex_edges()
-        self._index_instruction_addresses()
         self._index_flow_graph_nodes()
         self._index_flow_graph_edges()
         self._index_call_graph_vertices()
         self._index_data_references()
         self._index_string_references()
+
+    def get_basic_block_address(self, basic_block_index: int) -> int:
+        basic_block = self.be2.basic_block[basic_block_index]
+        first_instruction_index = next(self.instruction_indices(basic_block))
+        insn = self.be2.instruction[first_instruction_index]
+        assert insn.HasField("address"), "first insn in a basic block must have an explicit address"
+        return insn.address
 
     def _index_vertex_edges(self):
         for edge in self.be2.call_graph.edge:
@@ -119,31 +121,9 @@ class BinExport2Index:
             self.callers_by_vertex_index[edge.target_vertex_index].append(edge.source_vertex_index)
             self.callees_by_vertex_index[edge.source_vertex_index].append(edge.target_vertex_index)
 
-    def _index_instruction_addresses(self):
-        instruction_address = 0
-        for instruction_index, instruction in enumerate(self.be2.instruction):
-            if instruction.HasField("address"):
-                instruction_address = instruction.address
-
-            self.instruction_index_by_address[instruction_address] = instruction_index
-            self.instruction_address_by_index[instruction_index] = instruction_address
-
-            assert instruction.HasField("raw_bytes")
-            instruction_address += len(instruction.raw_bytes)
-
     def _index_flow_graph_nodes(self):
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
-            for basic_block_index in flow_graph.basic_block_index:
-                basic_block = self.be2.basic_block[basic_block_index]
-                first_instruction_index = next(self.instruction_indices(basic_block))
-                basic_block_address = self.instruction_address_by_index[first_instruction_index]
-                self.basic_block_index_by_address[basic_block_address] = basic_block_index
-                self.basic_block_address_by_index[basic_block_index] = basic_block_address
-
-            entry_basic_block = self.be2.basic_block[flow_graph.entry_basic_block_index]
-            entry_instruction_index = next(self.instruction_indices(entry_basic_block))
-            entry_instruction_address = self.instruction_address_by_index[entry_instruction_index]
-            function_address = entry_instruction_address
+            function_address = self.get_basic_block_address(flow_graph.entry_basic_block_index)
             self.flow_graph_index_by_address[function_address] = flow_graph_index
             self.flow_graph_address_by_index[flow_graph_index] = function_address
 
@@ -179,12 +159,33 @@ class BinExport2Index:
 
     @staticmethod
     def instruction_indices(basic_block: BinExport2.BasicBlock) -> Iterator[int]:
+        """
+        For a given basic block, enumerate the instruction indices.
+        """
         for index_range in basic_block.instruction_index:
             if not index_range.HasField("end_index"):
                 yield index_range.begin_index
                 continue
             else:
                 yield from range(index_range.begin_index, index_range.end_index)
+
+    def basic_block_instructions(
+        self, basic_block: BinExport2.BasicBlock
+    ) -> Iterator[Tuple[int, BinExport2.Instruction, int]]:
+        """
+        For a given basic block, enumerate the instruction indices,
+        the instruction instances, and their addresses.
+        """
+        instruction_address = 0
+        for instruction_index in self.instruction_indices(basic_block):
+            instruction = self.be2.instruction[instruction_index]
+            if instruction.HasField("address"):
+                instruction_address = instruction.address
+
+            yield instruction_index, instruction, instruction_address
+
+            assert instruction.HasField("raw_bytes")
+            instruction_address += len(instruction.raw_bytes)
 
     def get_function_name_by_vertex(self, vertex_index: int) -> str:
         vertex = self.be2.call_graph.vertex[vertex_index]
