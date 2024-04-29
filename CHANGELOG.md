@@ -11,7 +11,7 @@
 ### Breaking Changes
 
 
-### New Rules (7)
+### New Rules (8)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -20,6 +20,7 @@
 - nursery/get-volume-information-via-ioctl william.ballenthin@mandiant.com
 - nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 - data-manipulation/encryption/rc4/encrypt-data-using-rc4-via-systemfunction033 daniel.stepanic@elastic.co
+- anti-analysis/anti-forensic/self-deletion/self-delete-using-alternate-data-streams daniel.stepanic@elastic.co
 -
 
 ### Bug Fixes
