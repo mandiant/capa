@@ -97,7 +97,7 @@ dev = [
     "types-protobuf==4.23.0.3",
 ]
 build = [
-    "pyinstaller==6.4.0",
+    "pyinstaller==6.6.0",
     "setuptools==69.5.1",
     "build==1.2.1"
 ]
