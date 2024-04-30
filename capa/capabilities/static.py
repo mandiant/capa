@@ -66,7 +66,7 @@ def find_basic_block_capabilities(
     features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the instruction scope.
-    # might be found at different instructions, thats ok.
+    # might be found at different instructions, that's ok.
     insn_matches: MatchResults = collections.defaultdict(list)
 
     for insn in extractor.get_instructions(f, bb):
@@ -106,11 +106,11 @@ def find_code_capabilities(
     function_features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the basic block scope.
-    # might be found at different basic blocks, thats ok.
+    # might be found at different basic blocks, that's ok.
     bb_matches: MatchResults = collections.defaultdict(list)
 
     # matches found at the instruction scope.
-    # might be found at different instructions, thats ok.
+    # might be found at different instructions, that's ok.
     insn_matches: MatchResults = collections.defaultdict(list)
 
     for bb in extractor.get_basic_blocks(fh):
