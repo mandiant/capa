@@ -113,7 +113,7 @@ def extract_insn_api_features(fh: FunctionHandle, bb, ih: InsnHandle) -> Iterato
         if f.vw.metadata["Format"] == "elf":
             if "symtab" not in fh.ctx["cache"]:
                 # the symbol table gets stored as a function's attribute in order to avoid running
-                # this code everytime the call is made, thus preventing the computational overhead.
+                # this code every time the call is made, thus preventing the computational overhead.
                 try:
                     fh.ctx["cache"]["symtab"] = SymTab.from_viv(f.vw.parsedbin)
                 except Exception:
@@ -598,7 +598,7 @@ def extract_op_number_features(
 
     if f.vw.probeMemory(v, 1, envi.memory.MM_READ):
         # this is a valid address
-        # assume its not also a constant.
+        # assume it's not also a constant.
         return
 
     if insn.mnem == "add" and insn.opers[0].isReg() and insn.opers[0].reg == envi.archs.i386.regs.REG_ESP:

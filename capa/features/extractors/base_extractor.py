@@ -75,7 +75,7 @@ class BBHandle:
 
 @dataclass
 class InsnHandle:
-    """reference to a instruction recognized by a feature extractor.
+    """reference to an instruction recognized by a feature extractor.
 
     Attributes:
         address: the address of the instruction address.

@@ -260,7 +260,7 @@ def dereference_ptr(insn: ghidra.program.database.code.InstructionDB):
         if thfunc and thfunc.isThunk():
             return handle_thunk(to_deref)
         else:
-            # if it doesn't poin to a thunk, it's usually a jmp to a label
+            # if it doesn't point to a thunk, it's usually a jmp to a label
             return to_deref
     if not dat:
         return to_deref

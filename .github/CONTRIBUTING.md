@@ -57,7 +57,7 @@ When we make a significant decision in how we maintain the project and what we c
  we will document it in the [capa issues tracker](https://github.com/mandiant/capa/issues).
 This is the best place review our discussions about what/how/why we do things in the project.
 If you have a question, check to see if it is documented there.
-If it is *not* documented there, or you can't find an answer, please open a issue.
+If it is *not* documented there, or you can't find an answer, please open an issue.
 We'll link to existing issues when appropriate to keep discussions in one place.
 
 ## How Can I Contribute?
