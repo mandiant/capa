@@ -97,6 +97,10 @@ class BinExport2Index:
         self.data_reference_index_by_target_address: Dict[int, List[int]] = defaultdict(list)
         self.string_reference_index_by_source_instruction_index: Dict[int, List[int]] = defaultdict(list)
 
+        self.insn_address_by_index: Dict[int, int] = {}
+
+        # must index instructions first
+        self._index_insn_addresses()
         self._index_vertex_edges()
         self._index_flow_graph_nodes()
         self._index_flow_graph_edges()
@@ -104,12 +108,15 @@ class BinExport2Index:
         self._index_data_references()
         self._index_string_references()
 
+    def get_insn_address(self, insn_index: int) -> int:
+        assert insn_index in self.insn_address_by_index, f"insn must be indexed, missing {insn_index}"
+        return self.insn_address_by_index[insn_index]
+
     def get_basic_block_address(self, basic_block_index: int) -> int:
         basic_block = self.be2.basic_block[basic_block_index]
         first_instruction_index = next(self.instruction_indices(basic_block))
-        insn = self.be2.instruction[first_instruction_index]
-        assert insn.HasField("address"), "first insn in a basic block must have an explicit address"
-        return insn.address
+
+        return self.get_insn_address(first_instruction_index)
 
     def _index_vertex_edges(self):
         for edge in self.be2.call_graph.edge:
@@ -157,6 +164,24 @@ class BinExport2Index:
                 string_reference_index
             )
 
+    def _index_insn_addresses(self):
+        # see https://github.com/google/binexport/blob/39f6445c232bb5caf5c4a2a996de91dfa20c48e8/binexport.cc#L45
+        if len(self.be2.instruction) == 0:
+            return
+
+        assert self.be2.instruction[0].HasField("address"), "first insn must have explicit address"
+
+        addr = 0
+        next_addr = 0
+        for idx, insn in enumerate(self.be2.instruction):
+            if insn.HasField("address"):
+                addr = insn.address
+                next_addr = addr + len(insn.raw_bytes)
+            else:
+                addr = next_addr
+                next_addr += len(insn.raw_bytes)
+            self.insn_address_by_index[idx] = addr
+
     @staticmethod
     def instruction_indices(basic_block: BinExport2.BasicBlock) -> Iterator[int]:
         """
@@ -176,16 +201,11 @@ class BinExport2Index:
         For a given basic block, enumerate the instruction indices,
         the instruction instances, and their addresses.
         """
-        instruction_address = 0
         for instruction_index in self.instruction_indices(basic_block):
             instruction = self.be2.instruction[instruction_index]
-            if instruction.HasField("address"):
-                instruction_address = instruction.address
+            instruction_address = self.get_insn_address(instruction_index)
 
             yield instruction_index, instruction, instruction_address
-
-            assert instruction.HasField("raw_bytes")
-            instruction_address += len(instruction.raw_bytes)
 
     def get_function_name_by_vertex(self, vertex_index: int) -> str:
         vertex = self.be2.call_graph.vertex[vertex_index]
