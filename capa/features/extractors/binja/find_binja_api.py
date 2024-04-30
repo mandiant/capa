@@ -11,7 +11,7 @@ from pathlib import Path
 # When the script gets executed as a standalone executable (via PyInstaller), `import binaryninja` does not work because
 # we have excluded the binaryninja module in `pyinstaller.spec`. The trick here is to call the system Python and try
 # to find out the path of the binaryninja module that has been installed.
-# Note, including the binaryninja module in the `pyintaller.spec` would not work, since the binaryninja module tries to
+# Note, including the binaryninja module in the `pyinstaller.spec` would not work, since the binaryninja module tries to
 # find the binaryninja core e.g., `libbinaryninjacore.dylib`, using a relative path. And this does not work when the
 # binaryninja module is extracted by the PyInstaller.
 code = r"""

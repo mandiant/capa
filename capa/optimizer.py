@@ -44,7 +44,7 @@ def get_node_cost(node):
 
     else:
         # this should be all hash-lookup features.
-        # we give this a arbitrary weight of 1.
+        # we give this an arbitrary weight of 1.
         # the only thing more "important" than this is checking OS/Arch/Format.
         return 1
 

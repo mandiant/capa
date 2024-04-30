@@ -845,7 +845,7 @@ FEATURE_PRESENCE_TESTS = sorted(
         # should not be considered, relative to stack:
         #    .text:00401CF6 83 C4 10                add     esp, 10h
         ("mimikatz", "function=0x401CC7,bb=0x401CDE,insn=0x401CF6", capa.features.insn.Offset(0x10), False),
-        # yes, this is also a offset (imagine eax is a pointer):
+        # yes, this is also an offset (imagine eax is a pointer):
         #    .text:0040223C 83 C0 04                add     eax, 4
         ("mimikatz", "function=0x402203,bb=0x402221,insn=0x40223C", capa.features.insn.Offset(0x4), True),
         #

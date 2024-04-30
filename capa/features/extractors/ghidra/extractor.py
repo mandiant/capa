@@ -34,7 +34,7 @@ class GhidraFeatureExtractor(StaticFeatureExtractor):
                 # https://ghidra.re/ghidra_docs/api/ghidra/program/model/listing/Program.html
                 #
                 # the hashes are stored in the database, not computed on the fly,
-                # so its probably not trivial to add SHA1.
+                # so it's probably not trivial to add SHA1.
                 sha1="",
                 sha256=capa.ghidra.helpers.get_file_sha256(),
             )

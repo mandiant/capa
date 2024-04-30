@@ -382,7 +382,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
                 )  # type: ignore
-                # Mypy is unable to recognise `basic_block` as a argument due to alias
+                # Mypy is unable to recognise `basic_block` as an argument due to alias
                 for feature, addr in extractor.extract_basic_block_features(f, bb)
             ]
 
@@ -419,7 +419,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
                 features=tuple(ffeatures),
                 basic_blocks=basic_blocks,
             )  # type: ignore
-            # Mypy is unable to recognise `basic_blocks` as a argument due to alias
+            # Mypy is unable to recognise `basic_blocks` as an argument due to alias
         )
 
     features = StaticFeatures(
@@ -427,7 +427,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
         file=tuple(file_features),
         functions=tuple(function_features),
     )  # type: ignore
-    # Mypy is unable to recognise `global_` as a argument due to alias
+    # Mypy is unable to recognise `global_` as an argument due to alias
 
     freeze = Freeze(
         version=CURRENT_VERSION,
@@ -437,7 +437,7 @@ def dumps_static(extractor: StaticFeatureExtractor) -> str:
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
-    # Mypy is unable to recognise `base_address` as a argument due to alias
+    # Mypy is unable to recognise `base_address` as an argument due to alias
 
     return freeze.model_dump_json()
 
@@ -485,7 +485,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
                 )  # type: ignore
-                # Mypy is unable to recognise `basic_block` as a argument due to alias
+                # Mypy is unable to recognise `basic_block` as an argument due to alias
                 for feature, addr in extractor.extract_thread_features(p, t)
             ]
 
@@ -532,7 +532,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
         file=tuple(file_features),
         processes=tuple(process_features),
     )  # type: ignore
-    # Mypy is unable to recognise `global_` as a argument due to alias
+    # Mypy is unable to recognise `global_` as an argument due to alias
 
     # workaround around mypy issue: https://github.com/python/mypy/issues/1424
     get_base_addr = getattr(extractor, "get_base_addr", None)
@@ -546,7 +546,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
         extractor=Extractor(name=extractor.__class__.__name__),
         features=features,
     )  # type: ignore
-    # Mypy is unable to recognise `base_address` as a argument due to alias
+    # Mypy is unable to recognise `base_address` as an argument due to alias
 
     return freeze.model_dump_json()
 
