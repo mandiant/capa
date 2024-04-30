@@ -404,7 +404,7 @@ def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iter
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
-    extract_insn_bytes_features,
+    #extract_insn_bytes_features,
     extract_insn_string_features,
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
