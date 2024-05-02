@@ -306,7 +306,7 @@ class Match(FrozenModel):
     args:
       success: did the node match?
       node: the logic node or feature node.
-      children: any children of the logic node. not relevent for features, can be empty.
+      children: any children of the logic node. not relevant for features, can be empty.
       locations: where the feature matched. not relevant for logic nodes (except range), can be empty.
       captures: captured values from the string/regex feature, and the locations of those values.
     """

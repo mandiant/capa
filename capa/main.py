@@ -246,7 +246,7 @@ def install_common_args(parser, wanted=None):
 
     if "backend" in wanted:
         backends = [
-            (BACKEND_AUTO, "(default) detect apppropriate backend automatically"),
+            (BACKEND_AUTO, "(default) detect appropriate backend automatically"),
             (BACKEND_VIV, "vivisect"),
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
