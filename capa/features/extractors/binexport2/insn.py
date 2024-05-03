@@ -14,8 +14,9 @@ from elftools.elf.elffile import ELFFile
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
+import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
-from capa.features.common import Bytes, String, Feature, Characteristic
+from capa.features.common import THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import AnalysisContext, FunctionContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -24,31 +25,61 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 logger = logging.getLogger(__name__)
 
 
+def resolve_vertex_thunk_by_index(vertex_idx, ctx, thunk_depth=THUNK_CHAIN_DEPTH_DELTA):
+    curr_idx = vertex_idx
+    for _ in range(thunk_depth):
+        thunked_idx = ctx.idx.callees_by_vertex_index[curr_idx][0]
+        thunked_be2_vertex = ctx.be2.call_graph.vertex[thunked_idx]
+
+        if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+            thunked_be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+        ):
+            return thunked_idx
+
+        curr_idx = thunked_idx
+    return vertex_idx
+
+
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
     be2 = fhi.ctx.be2
-    idx = fhi.ctx.idx
-    analysis = fhi.ctx.analysis
+    be2_idx = fhi.ctx.idx
+    be2_insn = be2.instruction[ii.instruction_index]
 
-    instruction = be2.instruction[ii.instruction_index]
-
-    if not instruction.call_target:
+    if not be2_insn.call_target:
         return
 
-    for call_target_address in instruction.call_target:
-        if call_target_address in analysis.thunks:
-            vertex_index = analysis.thunks[call_target_address]
-        elif call_target_address not in idx.vertex_index_by_address:
-            continue
-        else:
-            vertex_index = idx.vertex_index_by_address[call_target_address]
-
-        vertex = be2.call_graph.vertex[vertex_index]
-        if not vertex.HasField("mangled_name"):
+    for addr in be2_insn.call_target:
+        if addr not in be2_idx.vertex_index_by_address:
+            # disassembler did not define function at address
+            logger.debug("0x%x is not a vertex", addr)
             continue
 
+        vertex_idx = be2_idx.vertex_index_by_address[addr]
+        be2_vertex = be2.call_graph.vertex[vertex_idx]
+
+        if capa.features.extractors.binexport2.helpers.is_vertex_type(
+            be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+        ):
+            vertex_idx = resolve_vertex_thunk_by_index(vertex_idx, fhi.ctx)
+            be2_vertex = be2.call_graph.vertex[vertex_idx]
+
+        if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+            be2_vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED
+        ):
+            continue
+
+        if not be2_vertex.HasField("mangled_name"):
+            logger.debug("vertex %d does not have mangled_name", vertex_idx)
+            continue
+
+        api_name = be2_vertex.mangled_name
+        yield API(api_name), ih.address
+
+    """
+        # TODO: re-enable pending https://github.com/google/binexport/issues/126#issuecomment-2074402906
         function_name = vertex.mangled_name
         if vertex.HasField("library_index"):
             # TODO: this seems to be incorrect for Ghidra extractor
@@ -59,6 +90,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
                 yield API(name), ih.address
         else:
             yield API(function_name), ih.address
+    """
 
 
 def is_address_mapped(be2: BinExport2, address: int) -> bool:
@@ -404,7 +436,7 @@ def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iter
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
-    #extract_insn_bytes_features,
+    # extract_insn_bytes_features,
     extract_insn_string_features,
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,

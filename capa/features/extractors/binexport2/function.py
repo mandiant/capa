@@ -49,8 +49,6 @@ def extract_function_name(fh: FunctionHandle):
 
     be2 = fhi.ctx.be2
     idx = fhi.ctx.idx
-    analysis = fhi.ctx.analysis
-
     flow_graph_index = fhi.flow_graph_index
 
     flow_graph_address = idx.flow_graph_address_by_index[flow_graph_index]
@@ -59,11 +57,6 @@ def extract_function_name(fh: FunctionHandle):
 
     if vertex.HasField("mangled_name"):
         yield FunctionName(vertex.mangled_name), fh.address
-    elif flow_graph_address in analysis.thunks:
-        thunk_vertex_index = analysis.thunks[flow_graph_address]
-        thunk_vertex = be2.call_graph.vertex[thunk_vertex_index]
-        if thunk_vertex.HasField("mangled_name"):
-            yield FunctionName(thunk_vertex.mangled_name), fh.address
 
 
 def extract_features(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
