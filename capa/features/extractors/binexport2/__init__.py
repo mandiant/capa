@@ -10,6 +10,7 @@ Proto files generated via protobuf v24.4:
 
     protoc --python_out=. --mypy_out=. binexport2.proto
 """
+import io
 import hashlib
 import logging
 import contextlib
@@ -17,6 +18,9 @@ from typing import Dict, List, Tuple, Iterator
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass
+
+from pefile import PE
+from elftools.elf.elffile import ELFFile
 
 import capa.features.extractors.common
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -306,11 +310,102 @@ class BinExport2Analysis:
 
 
 @dataclass
+class MemoryRegion:
+    # location of the bytes, potentially relative to a base address
+    address: int
+    buf: bytes
+
+    @property
+    def end(self) -> int:
+        return self.address + len(self.buf)
+
+    def contains(self, address: int) -> bool:
+        # note: address must be relative to any base address
+        return self.address <= address < self.end
+
+
+class ReadMemoryError(ValueError): ...
+
+
+class AddressNotMappedError(ReadMemoryError): ...
+
+
+@dataclass
+class AddressSpace:
+    base_address: int
+    memory_regions: Tuple[MemoryRegion, ...]
+
+    def read_memory(self, address: int, length: int) -> bytes:
+        rva = address - self.base_address
+        for region in self.memory_regions:
+            if region.contains(rva):
+                offset = rva - region.address
+                return region.buf[offset : offset + length]
+
+        raise AddressNotMappedError(address)
+
+    @classmethod
+    def from_pe(cls, pe: PE):
+        base_address = pe.OPTIONAL_HEADER.ImageBase
+
+        regions = []
+        for section in pe.sections:
+            address = section.VirtualAddress
+            size = section.Misc_VirtualSize
+            buf = section.get_data()
+
+            if len(buf) != size:
+                # pad the section with NULLs
+                # assume page alignment is already handled.
+                # might need more hardening here.
+                buf += b"\x00" * (size - len(buf))
+
+            regions.append(MemoryRegion(address, buf))
+
+        return cls(base_address, tuple(regions))
+
+    @classmethod
+    def from_elf(cls, elf: ELFFile):
+        regions = []
+
+        # ELF segments are for runtime data,
+        # ELF sections are for link-time data.
+        for segment in elf.iter_segments():
+            # assume p_align is consistent with addresses here.
+            # otherwise, should harden this loader.
+            segment_rva = segment.header.p_vaddr
+            segment_size = segment.header.p_memsz
+            segment_data = segment.data()
+
+            if len(segment_data) < segment_size:
+                # pad the section with NULLs
+                # assume page alignment is already handled.
+                # might need more hardening here.
+                segment_data += b"\x00" * (segment_size - len(segment_data))
+
+            regions.append(MemoryRegion(segment_rva, segment_data))
+
+        return cls(0, tuple(regions))
+
+    @classmethod
+    def from_buf(cls, buf: bytes):
+        if buf.startswith(capa.features.extractors.common.MATCH_PE):
+            pe = PE(data=buf)
+            return cls.from_pe(pe)
+        elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
+            elf = ELFFile(io.BytesIO(buf))
+            return cls.from_elf(elf)
+        else:
+            raise NotImplementedError("file format address space")
+
+
+@dataclass
 class AnalysisContext:
     sample_bytes: bytes
     be2: BinExport2
     idx: BinExport2Index
     analysis: BinExport2Analysis
+    address_space: AddressSpace
 
 
 @dataclass

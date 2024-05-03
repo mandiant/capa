@@ -5,19 +5,15 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import io
 import logging
 from typing import List, Tuple, Iterator
-
-import pefile
-from elftools.elf.elffile import ELFFile
 
 import capa.features.extractors.helpers
 import capa.features.extractors.strings
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import AnalysisContext, FunctionContext, InstructionContext
+from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -220,60 +216,14 @@ def extract_insn_number_features(
         yield OperandNumber(i, value), ih.address
 
 
-class ReadMemoryError(ValueError): ...
-
-
-def read_memory(ctx: AnalysisContext, sample_bytes: bytes, address: int, size: int, cache) -> bytes:
-    rva = address - ctx.analysis.base_address
-
-    try:
-        if sample_bytes.startswith(capa.features.extractors.common.MATCH_PE):
-            pe = cache.get("pe")
-            if not pe:
-                pe = pefile.PE(data=sample_bytes)
-                cache["pe"] = pe
-            return pe.get_data(rva, size)
-        elif sample_bytes.startswith(capa.features.extractors.common.MATCH_ELF):
-            elf = cache.get("elf")
-            if not elf:
-                elf = ELFFile(io.BytesIO(sample_bytes))
-                cache["elf"] = elf
-
-            # ELF segments are for runtime data,
-            # ELF sections are for link-time data.
-            for segment in elf.iter_segments():
-                # assume p_align is consistent with addresses here.
-                # otherwise, should harden this loader.
-                segment_rva = segment.header.p_vaddr
-                segment_size = segment.header.p_memsz
-                if segment_rva <= rva < segment_rva + segment_size:
-                    segment_data = segment.data()
-
-                    # pad the section with NULLs
-                    # assume page alignment is already handled.
-                    # might need more hardening here.
-                    if len(segment_data) < segment_size:
-                        segment_data += b"\x00" * (segment_size - len(segment_data))
-
-                    segment_offset = rva - segment_rva
-                    return segment_data[segment_offset : segment_offset + size]
-
-            raise ReadMemoryError("address not mapped")
-        else:
-            logger.warning("unsupported format")
-            raise ReadMemoryError("unsupported file format")
-    except Exception as e:
-        raise ReadMemoryError("failed to read memory: " + str(e)) from e
-
-
 def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
     ctx = fhi.ctx
-    be2 = fhi.ctx.be2
-    sample_bytes = fhi.ctx.sample_bytes
-    idx = fhi.ctx.idx
+    be2 = ctx.be2
+    idx = ctx.idx
+    address_space = ctx.address_space
 
     instruction_index = ii.instruction_index
 
@@ -288,9 +238,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     for reference_address in reference_addresses:
         try:
-            # at end of segment then there might be an overrun here.
-            buf = read_memory(ctx, sample_bytes, reference_address, 0x100, fh.ctx)
+            # if at end of segment then there might be an overrun here.
+            buf = address_space.read_memory(reference_address, 0x100)
         except ReadMemoryError:
+            logger.debug("failed to read memory: 0x%x", reference_address)
             continue
 
         if capa.features.extractors.helpers.all_zeros(buf):
@@ -404,7 +355,7 @@ def extract_features(f: FunctionHandle, bbh: BBHandle, insn: InsnHandle) -> Iter
 INSTRUCTION_HANDLERS = (
     extract_insn_api_features,
     extract_insn_number_features,
-    #extract_insn_bytes_features,
+    extract_insn_bytes_features,
     extract_insn_string_features,
     extract_insn_offset_features,
     extract_insn_nzxor_characteristic_features,
