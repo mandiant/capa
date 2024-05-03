@@ -44,9 +44,6 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
     be2_idx = fhi.ctx.idx
     be2_insn = be2.instruction[ii.instruction_index]
 
-    if not be2_insn.call_target:
-        return
-
     for addr in be2_insn.call_target:
         if addr not in be2_idx.vertex_index_by_address:
             # disassembler did not define function at address
