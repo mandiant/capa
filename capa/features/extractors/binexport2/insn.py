@@ -259,6 +259,10 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     instruction_index = ii.instruction_index
 
+    if instruction_index in idx.string_reference_index_by_source_instruction_index:
+        # disassembler already identified string reference from instruction
+        return
+
     reference_addresses: List[int] = []
 
     if instruction_index in idx.data_reference_index_by_source_instruction_index:
