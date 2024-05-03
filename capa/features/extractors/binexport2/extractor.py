@@ -12,6 +12,7 @@ import capa.features.extractors.elf
 import capa.features.extractors.common
 import capa.features.extractors.binexport2.file
 import capa.features.extractors.binexport2.insn
+import capa.features.extractors.binexport2.helpers
 import capa.features.extractors.binexport2.function
 import capa.features.extractors.binexport2.basicblock
 from capa.features.common import Feature
@@ -68,6 +69,16 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
             entry_basic_block_index = flow_graph.entry_basic_block_index
             flow_graph_address = self.idx.get_basic_block_address(entry_basic_block_index)
+
+            vertex_idx = self.idx.vertex_index_by_address[flow_graph_address]
+            be2_vertex = self.be2.call_graph.vertex[vertex_idx]
+
+            # skip thunks
+            if capa.features.extractors.binexport2.helpers.is_vertex_type(
+                be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+            ):
+                continue
+
             yield FunctionHandle(
                 AbsoluteVirtualAddress(flow_graph_address),
                 inner=FunctionContext(self.ctx, flow_graph_index),
