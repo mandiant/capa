@@ -17,6 +17,7 @@ import capa.features.extractors.binexport2.basicblock
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import (
+    AddressSpace,
     AnalysisContext,
     BinExport2Index,
     FunctionContext,
@@ -43,7 +44,8 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.buf = buf
         self.idx = BinExport2Index(self.be2)
         self.analysis = BinExport2Analysis(self.be2, self.idx, self.buf)
-        self.ctx = AnalysisContext(self.buf, self.be2, self.idx, self.analysis)
+        address_space = AddressSpace.from_buf(buf)
+        self.ctx = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
 
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))
