@@ -94,7 +94,7 @@ dev = [
     "types-termcolor==1.1.4",
     "types-psutil==5.8.23",
     "types_requests==2.31.0.20240311",
-    "types-protobuf==4.23.0.3",
+    "types-protobuf==5.26.0.20240422",
 ]
 build = [
     "pyinstaller==6.6.0",
