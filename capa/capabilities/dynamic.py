@@ -147,6 +147,7 @@ def find_dynamic_capabilities(
                 # to disable progress completely
                 def pbar(s, *args, **kwargs):
                     return s
+
             elif not sys.stderr.isatty():
                 # don't display progress bar when stderr is redirected to a file
                 def pbar(s, *args, **kwargs):
