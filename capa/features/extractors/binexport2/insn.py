@@ -12,7 +12,7 @@ import capa.features.extractors.helpers
 import capa.features.extractors.strings
 import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
-from capa.features.common import THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
+from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext, AnalysisContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
@@ -21,69 +21,37 @@ from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 logger = logging.getLogger(__name__)
 
 
-def resolve_vertex_thunk_by_index(ctx: AnalysisContext, vertex_idx: int, thunk_depth=THUNK_CHAIN_DEPTH_DELTA):
-    vertex = ctx.be2.call_graph.vertex[vertex_idx]
-    assert capa.features.extractors.binexport2.helpers.is_vertex_type(
-        vertex, BinExport2.CallGraph.Vertex.Type.THUNK
-    )
-
-    curr_idx = vertex_idx
-    for _ in range(thunk_depth):
-        # follow the chain of thunks one link
-        thunk_callees = ctx.idx.callees_by_vertex_index[curr_idx]
-
-        # if this doesn't hold, then it doesn't seem like this is a thunk,
-        # because either, len is:
-        #    0 and the thunk doesn't point to anything, or
-        #   >1 and the thunk may end up at many functions.
-        assert len(thunk_callees) == 1
-
-        thunked_idx = thunk_callees[0]
-        thunked_vertex = ctx.be2.call_graph.vertex[thunked_idx]
-
-        if not capa.features.extractors.binexport2.helpers.is_vertex_type(
-            thunked_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
-        ):
-            return thunked_idx
-
-        curr_idx = thunked_idx
-    return vertex_idx
-
-
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    ctx = fhi.ctx
-    be2 = ctx.be2
-    be2_idx = ctx.idx
-    be2_insn = be2.instruction[ii.instruction_index]
+    be2 = fhi.ctx.be2
+    be2_index = fhi.ctx.idx
+    be2_analysis = fhi.ctx.analysis
+    insn = be2.instruction[ii.instruction_index]
 
-    for addr in be2_insn.call_target:
-        if addr not in be2_idx.vertex_index_by_address:
+    for addr in insn.call_target:
+        if addr in be2_analysis.thunks:
+            addr = be2_analysis.thunks[addr]
+
+        if addr not in be2_index.vertex_index_by_address:
             # disassembler did not define function at address
             logger.debug("0x%x is not a vertex", addr)
             continue
 
-        vertex_idx = be2_idx.vertex_index_by_address[addr]
-        be2_vertex = be2.call_graph.vertex[vertex_idx]
-
-        if capa.features.extractors.binexport2.helpers.is_vertex_type(
-            be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
-        ):
-            vertex_idx = resolve_vertex_thunk_by_index(ctx, vertex_idx)
-            be2_vertex = be2.call_graph.vertex[vertex_idx]
+        vertex_idx = be2_index.vertex_index_by_address[addr]
+        vertex = be2.call_graph.vertex[vertex_idx]
 
         if not capa.features.extractors.binexport2.helpers.is_vertex_type(
-            be2_vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED
+            vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED
         ):
             continue
 
-        if not be2_vertex.HasField("mangled_name"):
+        if not vertex.HasField("mangled_name"):
             logger.debug("vertex %d does not have mangled_name", vertex_idx)
             continue
 
-        api_name = be2_vertex.mangled_name
+        api_name = vertex.mangled_name
         yield API(api_name), ih.address
 
     """

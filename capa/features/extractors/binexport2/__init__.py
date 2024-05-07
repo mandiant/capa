@@ -22,7 +22,9 @@ from dataclasses import dataclass
 from pefile import PE
 from elftools.elf.elffile import ELFFile
 
+import capa.features.common
 import capa.features.extractors.common
+import capa.features.extractors.binexport2.helpers
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
@@ -241,8 +243,10 @@ class BinExport2Analysis:
         self.idx = idx
         self.buf = buf
         self.base_address: int = 0
+        self.thunks: Dict[int, int] = {}
 
         self._find_base_address()
+        self._compute_thunks()
 
     def _find_base_address(self):
         sections_with_perms = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, self.be2.section)
@@ -250,6 +254,36 @@ class BinExport2Analysis:
         # this works as long as BinExport doesn't record other
         # libraries mapped into memory.
         self.base_address = min(s.address for s in sections_with_perms)
+
+    def _compute_thunks(self):
+        for addr, idx in self.idx.vertex_index_by_address.items():
+            vertex = self.be2.call_graph.vertex[idx]
+            if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+                vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+            ):
+                continue
+
+            curr_idx = idx
+            for _ in range(capa.features.common.THUNK_CHAIN_DEPTH_DELTA):
+                thunk_callees = self.idx.callees_by_vertex_index[curr_idx]
+                # if this doesn't hold, then it doesn't seem like this is a thunk,
+                # because either, len is:
+                #    0 and the thunk doesn't point to anything, or
+                #   >1 and the thunk may end up at many functions.
+                assert len(thunk_callees) == 1
+
+                thunked_idx = thunk_callees[0]
+                thunked_vertex = self.be2.call_graph.vertex[thunked_idx]
+
+                if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+                    thunked_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+                ):
+                    assert thunked_vertex.HasField("address")
+
+                    self.thunks[addr] = thunked_vertex.address
+                    break
+
+                curr_idx = thunked_idx
 
 
 @dataclass
