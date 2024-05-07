@@ -6,6 +6,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import logging
 import itertools
 import collections
@@ -144,6 +145,11 @@ def find_dynamic_capabilities(
             if disable_progress:
                 # do not use tqdm to avoid unnecessary side effects when caller intends
                 # to disable progress completely
+                def pbar(s, *args, **kwargs):
+                    return s
+
+            elif not sys.stderr.isatty():
+                # don't display progress bar when stderr is redirected to a file
                 def pbar(s, *args, **kwargs):
                     return s
 

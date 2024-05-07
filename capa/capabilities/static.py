@@ -6,6 +6,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import time
 import logging
 import itertools
@@ -156,6 +157,11 @@ def find_static_capabilities(
                 def pbar(s, *args, **kwargs):
                     return s
 
+            elif not sys.stderr.isatty():
+                # don't display progress bar when stderr is redirected to a file
+                def pbar(s, *args, **kwargs):
+                    return s
+
             functions = list(extractor.get_functions())
             n_funcs = len(functions)
 
@@ -182,9 +188,16 @@ def find_static_capabilities(
                 )
                 t1 = time.time()
 
-                match_count = sum(len(res) for res in function_matches.values())
-                match_count += sum(len(res) for res in bb_matches.values())
-                match_count += sum(len(res) for res in insn_matches.values())
+                match_count = 0
+                for name, matches_ in itertools.chain(
+                    function_matches.items(), bb_matches.items(), insn_matches.items()
+                ):
+                    # in practice, most matches are derived rules,
+                    # like "check OS version/5bf4c7f39fd4492cbed0f6dc7d596d49"
+                    # but when we log to the human, they really care about "real" rules.
+                    if not ruleset.rules[name].is_subscope_rule():
+                        match_count += len(matches_)
+
                 logger.debug(
                     "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
                     f.address,
@@ -213,7 +226,7 @@ def find_static_capabilities(
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     feature_counts.file = feature_count
 
-    matches = dict(
+    matches: MatchResults = dict(
         itertools.chain(
             # each rule exists in exactly one scope,
             # so there won't be any overlap among these following MatchResults,

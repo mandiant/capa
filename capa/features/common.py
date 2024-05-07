@@ -166,10 +166,10 @@ class Feature(abc.ABC):  # noqa: B024
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[Address]], **kwargs) -> Result:
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-        return Result(self in ctx, self, [], locations=ctx.get(self, set()))
+        return Result(self in features, self, [], locations=features.get(self, set()))
 
 
 class MatchedRule(Feature):
@@ -207,7 +207,7 @@ class Substring(String):
         super().__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.substring"] += 1
 
@@ -216,7 +216,7 @@ class Substring(String):
         matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
         assert isinstance(self.value, str)
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (String,)):
                 continue
 
@@ -299,7 +299,7 @@ class Regex(String):
                 f"invalid regular expression: {value} it should use Python syntax, try it at https://pythex.org"
             ) from exc
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.regex"] += 1
 
@@ -307,7 +307,7 @@ class Regex(String):
         # will unique the locations later on.
         matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (String,)):
                 continue
 
@@ -384,12 +384,12 @@ class Bytes(Feature):
         super().__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
 
         assert isinstance(self.value, bytes)
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (Bytes,)):
                 continue
 
@@ -436,11 +436,11 @@ class OS(Feature):
         super().__init__(value, description=description)
         self.name = "os"
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
 
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (OS,)):
                 continue
 

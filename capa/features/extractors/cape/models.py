@@ -230,7 +230,7 @@ class File(FlexibleModel):
     sha1: str
     sha256: str
     sha512: str
-    sha3_384: str
+    sha3_384: Optional[str] = None
     ssdeep: str
     # unsure why this would ever be "False"
     tlsh: Optional[Union[str, bool]] = None
@@ -398,7 +398,7 @@ class CapeReport(FlexibleModel):
     behavior: Behavior
 
     # post-processed results: payloads and extracted configs
-    CAPE: Optional[Cape] = None
+    CAPE: Optional[Union[Cape, List]] = None
     dropped: Optional[List[File]] = None
     procdump: Optional[List[ProcessFile]] = None
     procmemory: ListTODO
