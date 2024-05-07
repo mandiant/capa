@@ -183,14 +183,14 @@ def find_static_capabilities(
                 t1 = time.time()
 
                 match_count = 0
-                for name, matches in itertools.chain(
+                for name, matches_ in itertools.chain(
                     function_matches.items(), bb_matches.items(), insn_matches.items()
                 ):
                     # in practice, most matches are derived rules,
                     # like "check OS version/5bf4c7f39fd4492cbed0f6dc7d596d49"
                     # but when we log to the human, they really care about "real" rules.
                     if not ruleset.rules[name].is_subscope_rule():
-                        match_count += len(matches)
+                        match_count += len(matches_)
 
                 logger.debug(
                     "analyzed function 0x%x and extracted %d features, %d matches in %0.02fs",
@@ -220,7 +220,7 @@ def find_static_capabilities(
     all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
     feature_counts.file = feature_count
 
-    matches = dict(
+    matches: MatchResults = dict(
         itertools.chain(
             # each rule exists in exactly one scope,
             # so there won't be any overlap among these following MatchResults,
