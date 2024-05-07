@@ -14,21 +14,35 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import THUNK_CHAIN_DEPTH_DELTA, Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
+from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext, AnalysisContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
 
 
-def resolve_vertex_thunk_by_index(vertex_idx, ctx, thunk_depth=THUNK_CHAIN_DEPTH_DELTA):
+def resolve_vertex_thunk_by_index(ctx: AnalysisContext, vertex_idx: int, thunk_depth=THUNK_CHAIN_DEPTH_DELTA):
+    vertex = ctx.be2.call_graph.vertex[vertex_idx]
+    assert capa.features.extractors.binexport2.helpers.is_vertex_type(
+        vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+    )
+
     curr_idx = vertex_idx
     for _ in range(thunk_depth):
-        thunked_idx = ctx.idx.callees_by_vertex_index[curr_idx][0]
-        thunked_be2_vertex = ctx.be2.call_graph.vertex[thunked_idx]
+        # follow the chain of thunks one link
+        thunk_callees = ctx.idx.callees_by_vertex_index[curr_idx]
+
+        # if this doesn't hold, then it doesn't seem like this is a thunk,
+        # because either, len is:
+        #    0 and the thunk doesn't point to anything, or
+        #   >1 and the thunk may end up at many functions.
+        assert len(thunk_callees) == 1
+
+        thunked_idx = thunk_callees[0]
+        thunked_vertex = ctx.be2.call_graph.vertex[thunked_idx]
 
         if not capa.features.extractors.binexport2.helpers.is_vertex_type(
-            thunked_be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+            thunked_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
         ):
             return thunked_idx
 
@@ -40,8 +54,9 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
-    be2_idx = fhi.ctx.idx
+    ctx = fhi.ctx
+    be2 = ctx.be2
+    be2_idx = ctx.idx
     be2_insn = be2.instruction[ii.instruction_index]
 
     for addr in be2_insn.call_target:
@@ -56,7 +71,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         if capa.features.extractors.binexport2.helpers.is_vertex_type(
             be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
         ):
-            vertex_idx = resolve_vertex_thunk_by_index(vertex_idx, fhi.ctx)
+            vertex_idx = resolve_vertex_thunk_by_index(ctx, vertex_idx)
             be2_vertex = be2.call_graph.vertex[vertex_idx]
 
         if not capa.features.extractors.binexport2.helpers.is_vertex_type(
