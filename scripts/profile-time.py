@@ -110,10 +110,7 @@ def main(argv=None):
 
     print(
         tabulate.tabulate(
-            [
-                (counter, humanize.intcomma(count))
-                for counter, count in capa.perf.counters.most_common()
-            ],
+            [(counter, humanize.intcomma(count)) for counter, count in capa.perf.counters.most_common()],
             headers=["feature class", "evaluation count"],
             tablefmt="github",
         )
