@@ -126,7 +126,7 @@ function @ 0x4011C0
 ...
 ```
 
-Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox reports for dynamic capabilty extraction.
+Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox reports for dynamic capability extraction.
 In order to use this, you first submit your sample to CAPE for analysis, and then run capa against the generated report (JSON).
 
 Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:
