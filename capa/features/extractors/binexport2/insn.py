@@ -14,7 +14,7 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext, AnalysisContext
+from capa.features.extractors.binexport2 import AnalysisContext, FunctionContext, ReadMemoryError, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
