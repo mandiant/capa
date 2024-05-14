@@ -9,11 +9,13 @@
 import io
 import os
 import re
+import copy
 import uuid
 import codecs
 import logging
 import binascii
 import collections
+import dataclasses
 from enum import Enum
 from pathlib import Path
 
@@ -1365,32 +1367,52 @@ class RuleSet:
 
         rules = capa.optimizer.optimize_rules(rules)
 
-        self.file_rules = self._get_rules_for_scope(rules, Scope.FILE)
-        self.process_rules = self._get_rules_for_scope(rules, Scope.PROCESS)
-        self.thread_rules = self._get_rules_for_scope(rules, Scope.THREAD)
-        self.call_rules = self._get_rules_for_scope(rules, Scope.CALL)
-        self.function_rules = self._get_rules_for_scope(rules, Scope.FUNCTION)
-        self.basic_block_rules = self._get_rules_for_scope(rules, Scope.BASIC_BLOCK)
-        self.instruction_rules = self._get_rules_for_scope(rules, Scope.INSTRUCTION)
+        scopes = (
+            Scope.FILE,
+            Scope.PROCESS,
+            Scope.THREAD,
+            Scope.CALL,
+            Scope.FUNCTION,
+            Scope.BASIC_BLOCK,
+            Scope.INSTRUCTION,
+        )
+
         self.rules = {rule.name: rule for rule in rules}
         self.rules_by_namespace = index_rules_by_namespace(rules)
+        self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
 
         # unstable
-        (self._easy_file_rules_by_feature, self._hard_file_rules) = self._index_rules_by_feature(self.file_rules)
-        (self._easy_process_rules_by_feature, self._hard_process_rules) = self._index_rules_by_feature(
-            self.process_rules
-        )
-        (self._easy_thread_rules_by_feature, self._hard_thread_rules) = self._index_rules_by_feature(self.thread_rules)
-        (self._easy_call_rules_by_feature, self._hard_call_rules) = self._index_rules_by_feature(self.call_rules)
-        (self._easy_function_rules_by_feature, self._hard_function_rules) = self._index_rules_by_feature(
-            self.function_rules
-        )
-        (self._easy_basic_block_rules_by_feature, self._hard_basic_block_rules) = self._index_rules_by_feature(
-            self.basic_block_rules
-        )
-        (self._easy_instruction_rules_by_feature, self._hard_instruction_rules) = self._index_rules_by_feature(
-            self.instruction_rules
-        )
+        self._feature_indexes_by_scopes = {
+            scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope]) for scope in scopes
+        }
+
+    @property
+    def file_rules(self):
+        return self.rules_by_scope[Scope.FILE]
+
+    @property
+    def process_rules(self):
+        return self.rules_by_scope[Scope.PROCESS]
+
+    @property
+    def thread_rules(self):
+        return self.rules_by_scope[Scope.THREAD]
+
+    @property
+    def call_rules(self):
+        return self.rules_by_scope[Scope.CALL]
+
+    @property
+    def function_rules(self):
+        return self.rules_by_scope[Scope.FUNCTION]
+
+    @property
+    def basic_block_rules(self):
+        return self.rules_by_scope[Scope.BASIC_BLOCK]
+
+    @property
+    def instruction_rules(self):
+        return self.rules_by_scope[Scope.INSTRUCTION]
 
     def __len__(self):
         return len(self.rules)
@@ -1402,123 +1424,186 @@ class RuleSet:
         return rulename in self.rules
 
     @staticmethod
-    def _index_rules_by_feature(rules) -> Tuple[Dict[Feature, Set[str]], List[str]]:
-        """
-        split the given rules into two structures:
-          - "easy rules" are indexed by feature,
-            such that you can quickly find the rules that contain a given feature.
-          - "hard rules" are those that contain substring/regex/bytes features or match statements.
-            these continue to be ordered topologically.
+    def _score_number(v: int) -> int:
+        if -0x8000 <= v <= 0x8000:
+            return 3
 
-        a rule evaluator can use the "easy rule" index to restrict the
-        candidate rules that might match a given set of features.
+        if 0xFFFF_FF00 <= v <= 0xFFFF_FFFF:
+            return 3
 
-        at this time, a rule evaluator can't do anything special with
-        the "hard rules". it must still do a full top-down match of each
-        rule, in topological order.
+        return 7
 
-        this does not index global features, because these are not selective, and
-        won't be used as the sole feature used to match.
-        """
+    @staticmethod
+    def _score_feature(scores_by_rule: Dict[str, int], node: capa.features.common.Feature) -> int:
+        if isinstance(
+            node,
+            capa.features.common.MatchedRule,
+        ):
+            if node.value in scores_by_rule:
+                # other rule must match before this one, in same scope.
+                # use score from that rule, which will have already been processed.
+                return scores_by_rule[node.value]
+            else:
+                # scores_by_rule only contains rules for the current scope
+                # so the requested rule must be from a smaller scope
+                # and we can assume the feature will exist.
+                #
+                # We don't know what the score should be, unfortunately.
+                # Could try to thread that through. Use "5" in the meantime.
+                return 5
 
-        # we'll do a couple phases:
-        #
-        #  1. recursively visit all nodes in all rules,
-        #    a. indexing all features
-        #    b. recording the types of features found per rule
-        #  2. compute the easy and hard rule sets
-        #  3. remove hard rules from the rules-by-feature index
-        #  4. construct the topologically ordered list of hard rules
-        rules_with_easy_features: Set[str] = set()
-        rules_with_hard_features: Set[str] = set()
+        elif capa.features.common.is_global_feature(node):
+            # we don't want to index global features
+            # because they're not very selective.
+            # they also don't stand on their own - there's always some other logic.
+            return 0
+
+        elif isinstance(node, (capa.features.insn.Number, capa.features.insn.OperandNumber)):
+            v = node.value
+            assert isinstance(v, int)
+            return RuleSet._score_number(v)
+
+        C = node.__class__
+        return {
+            # Scanning features (non-hashable)
+            # These are the non-hashable features.
+            # We can't use these for quick matching.
+            capa.features.common.Substring: 0,
+            capa.features.common.Regex: 0,
+            capa.features.common.Bytes: 0,
+            # hashable features
+            capa.features.common.Characteristic: 4,
+            capa.features.common.String: 9,
+            capa.features.common.Class: 5,
+            capa.features.common.Namespace: 5,
+            capa.features.insn.API: 8,
+            capa.features.insn.Property: 5,
+            capa.features.insn.Offset: 4,
+            capa.features.insn.Mnemonic: 2,
+            capa.features.insn.OperandOffset: 4,
+            capa.features.basicblock.BasicBlock: 1,
+            capa.features.file.Export: 7,
+            capa.features.file.Import: 5,
+            capa.features.file.Section: 5,
+            capa.features.file.FunctionName: 5,
+        }[C]
+
+    @dataclass
+    class RuleFeatureIndex:
+        rules_by_feature: Dict[Feature, Set[str]] = dataclasses.field(default=dict)
+        string_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
+        bytes_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
+
+    @staticmethod
+    def _index_rules_by_feature(scope: Scope, rules: List[Rule]) -> RuleFeatureIndex:
         rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
+        scores_by_rule: Dict[str, int] = {}
 
-        def rec(rule_name: str, node: Union[Feature, Statement]):
+        # note closure over scores_by_rule
+        def rec(
+            rule_name: str, node: Union[Feature, Statement]
+        ) -> Union[None, Tuple[int, Feature], Tuple[int, Set[Feature]]]:
             """
-            walk through a rule's logic tree, indexing the easy and hard rules,
-            and the features referenced by easy rules.
+            Walk through a rule's logic tree, picking the features to use for indexing,
+            returning the feature and an associated score.
+            The higher the score, the more selective the feature is expected to be.
+            The score is only used internally, to pick the best fetaure from within
+             and AND block.
             """
-            if isinstance(
-                node,
-                (
-                    # these are the "hard features"
-                    # substring: scanning feature
-                    capa.features.common.Substring,
-                    # regex: scanning feature
-                    capa.features.common.Regex,
-                    # bytes: scanning feature
-                    capa.features.common.Bytes,
-                    # match: dependency on another rule,
-                    # which we have to evaluate first,
-                    # and is therefore tricky.
-                    capa.features.common.MatchedRule,
-                ),
-            ):
-                # hard feature: requires scan or match lookup
-                rules_with_hard_features.add(rule_name)
-            elif isinstance(node, capa.features.common.Feature):
-                if capa.features.common.is_global_feature(node):
-                    # we don't want to index global features
-                    # because they're not very selective.
-                    #
-                    # they're global, so if they match at one location in a file,
-                    # they'll match at every location in a file.
-                    # so that's not helpful to decide how to downselect.
-                    #
-                    # and, a global rule will never be the sole selector in a rule.
-                    pass
-                else:
-                    # easy feature: hash lookup
-                    rules_with_easy_features.add(rule_name)
-                    rules_by_feature[node].add(rule_name)
-            elif isinstance(node, (ceng.Not)):
-                # `not:` statements are tricky to deal with.
-                #
-                # first, features found under a `not:` should not be indexed,
-                # because they're not wanted to be found.
-                # second, `not:` can be nested under another `not:`, or two, etc.
-                # third, `not:` at the root or directly under an `or:`
-                # means the rule will match against *anything* not specified there,
-                # which is a difficult set of things to compute and index.
-                #
-                # so, if a rule has a `not:` statement, its hard.
-                # as of writing, this is an uncommon statement, with only 6 instances in 740 rules.
-                rules_with_hard_features.add(rule_name)
+
+            if isinstance(node, (ceng.Not)):
+                # we don't index features within NOT blocks
+                return None
+
             elif isinstance(node, (ceng.Some)) and node.count == 0:
-                # `optional:` and `0 or more:` are tricky to deal with.
-                #
                 # when a subtree is optional, it may match, but not matching
                 # doesn't have any impact either.
                 # now, our rule authors *should* not put this under `or:`
                 # and this is checked by the linter,
-                # but this could still happen (e.g. private rule set without linting)
-                # and would be hard to trace down.
-                #
-                # so better to be safe than sorry and consider this a hard case.
-                rules_with_hard_features.add(rule_name)
+                return None
+
             elif isinstance(node, (ceng.Range)) and node.min == 0:
-                # `count(foo): 0 or more` are tricky to deal with.
-                # because the min is 0,
-                # this subtree *can* match just about any feature
-                # (except the given one)
-                # which is a difficult set of things to compute and index.
-                rules_with_hard_features.add(rule_name)
+                # `count(foo): 0 or more` is just like an optional block,
+                # because the min is 0, this subtree *can* match just about any feature.
+                return None
+
+            elif isinstance(node, capa.features.common.Feature) and capa.features.common.is_global_feature(node):
+                # we don't want to index global features
+                # because they're not very selective.
+                # they also don't stand on their own - there's always some other logic.
+                return None
+
+            elif isinstance(node, capa.features.common.Feature):
+                return (RuleSet._score_feature(scores_by_rule, node), node)
+
             elif isinstance(node, (ceng.Range)):
-                rec(rule_name, node.child)
-            elif isinstance(node, (ceng.And, ceng.Or, ceng.Some)):
+                # feature is found N times
+                return rec(rule_name, node.child)
+
+            elif isinstance(node, ceng.And):
+                scores = []
                 for child in node.children:
-                    rec(rule_name, child)
+                    try:
+                        score = rec(rule_name, child)
+                    except AssertionError as e:
+                        # if one branch isn't possible to index,
+                        # thats ok, we can require a different one to match
+                        logger.warning("and: swallowing: %s: %s", e, rule_name)
+                        continue
+
+                    if not score:
+                        continue
+
+                    scores.append(score)
+
+                # otherwise we can't index this rule
+                assert len(scores) > 0
+
+                def and_score_key(item):
+                    # order by score, then fewest number of features.
+                    # TODO(wb): minimize number of features? play with this.
+                    score, features = item
+
+                    if isinstance(features, set):
+                        return (score, -len(features))
+                    else:
+                        return (score, -1)
+
+                scores.sort(key=and_score_key, reverse=True)
+
+                # pick the best feature
+                return scores[0]
+
+            elif isinstance(node, (ceng.Or, ceng.Some)):
+                min_score = 10000000  # assume this is larger than any score
+                features = set()
+
+                for child in node.children:
+                    item = rec(rule_name, child)
+                    assert item is not None, "can't index OR branch"
+
+                    score, feature = item
+
+                    min_score = min(min_score, score)
+
+                    if isinstance(feature, set):
+                        features.update(feature)
+                    else:
+                        features.add(feature)
+
+                return min_score, features
+
             elif isinstance(node, ceng.Statement):
-                # unhandled type of statement.
-                # this should only happen if a new subtype of `Statement`
+                # Unhandled type of statement.
+                # This should only happen if a new subtype of `Statement`
                 # has since been added to capa.
                 #
-                # ideally, we'd like to use mypy for exhaustiveness checking
+                # Ideally, we'd like to use mypy for exhaustiveness checking
                 # for all the subtypes of `Statement`.
-                # but, as far as i can tell, mypy does not support this type
+                # But, as far as I can tell, mypy does not support this type
                 # of checking.
                 #
-                # in a way, this makes some intuitive sense:
+                # In a way, this makes some intuitive sense:
                 # the set of subtypes of type A is unbounded,
                 # because any user might come along and create a new subtype B,
                 # so mypy can't reason about this set of types.
@@ -1527,28 +1612,71 @@ class RuleSet:
                 # programming error
                 assert_never(node)
 
+        string_rules: Dict[str, List[Feature]] = {}
+        bytes_rules: Dict[str, List[Feature]] = {}
+
         for rule in rules:
             rule_name = rule.meta["name"]
+
             root = rule.statement
-            rec(rule_name, root)
+            try:
+                item = rec(rule_name, root)
+            except AssertionError as e:
+                logger.warning("fail: %s: %s", e, rule_name)
+                continue
 
-        # if a rule has a hard feature,
-        # don't consider it easy, and therefore,
-        # don't index any of its features.
-        #
-        # otherwise, its an easy rule, and index its features
-        for rules_with_feature in rules_by_feature.values():
-            rules_with_feature.difference_update(rules_with_hard_features)
-        easy_rules_by_feature = rules_by_feature
+            if item is None:
+                logger.warning("fail: can't index rule: %s", rule_name)
+                continue
+            assert item is not None, "can't index rule"
 
-        # `rules` is already topologically ordered,
-        # so extract our hard set into the topological ordering.
-        hard_rules = []
-        for rule in rules:
-            if rule.meta["name"] in rules_with_hard_features:
-                hard_rules.append(rule.meta["name"])
+            score, feature = item
 
-        return (easy_rules_by_feature, hard_rules)
+            if isinstance(feature, set):
+                features = feature
+            else:
+                features = {feature}
+
+            string_features = [
+                feature
+                for feature in features
+                if isinstance(feature, (capa.features.common.Substring, capa.features.common.Regex))
+            ]
+            bytes_features = [feature for feature in features if isinstance(feature, capa.features.common.Bytes)]
+            hashable_features = [
+                feature
+                for feature in features
+                if not isinstance(
+                    feature, (capa.features.common.Substring, capa.features.common.Regex, capa.features.common.Bytes)
+                )
+            ]
+
+            logger.debug("indexing: features: %d, score: %d, rule: %s", len(features), score, rule_name)
+            scores_by_rule[rule_name] = score
+            for feature in features:
+                logger.debug("        : [%d] %s", RuleSet._score_feature(scores_by_rule, feature), feature)
+
+            if string_features:
+                string_rules[rule_name] = string_features
+
+            if bytes_features:
+                bytes_rules[rule_name] = bytes_features
+
+            for feature in hashable_features:
+                rules_by_feature[feature].add(rule_name)
+
+        logger.debug("indexing: %d features indexed for scope %s", len(rules_by_feature), scope)
+        logger.debug("indexing: %d indexed features are shared by more than 3 rules",
+                     len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]))
+        logger.debug("indexing: %d scanning string features, %d scanning bytes features",
+                     len(string_rules), len(bytes_rules))
+
+        # TODO(wb): remember, when evaluating candidates, make sure
+        # to do it in topological order, so match statements work.
+
+        # TODO(wb): remember, as rule matches are found,
+        # the candidates must be extended again, to account for match statements.
+        return RuleSet.RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> List[Rule]:
@@ -1625,74 +1753,92 @@ class RuleSet:
         this routine should act just like `capa.engine.match`,
         except that it may be more performant.
         """
-        easy_rules_by_feature = {}
-        if scope == Scope.FILE:
-            easy_rules_by_feature = self._easy_file_rules_by_feature
-            hard_rule_names = self._hard_file_rules
-        elif scope == Scope.PROCESS:
-            easy_rules_by_feature = self._easy_process_rules_by_feature
-            hard_rule_names = self._hard_process_rules
-        elif scope == Scope.THREAD:
-            easy_rules_by_feature = self._easy_thread_rules_by_feature
-            hard_rule_names = self._hard_thread_rules
-        elif scope == Scope.CALL:
-            easy_rules_by_feature = self._easy_call_rules_by_feature
-            hard_rule_names = self._hard_call_rules
-        elif scope == Scope.FUNCTION:
-            easy_rules_by_feature = self._easy_function_rules_by_feature
-            hard_rule_names = self._hard_function_rules
-        elif scope == Scope.BASIC_BLOCK:
-            easy_rules_by_feature = self._easy_basic_block_rules_by_feature
-            hard_rule_names = self._hard_basic_block_rules
-        elif scope == Scope.INSTRUCTION:
-            easy_rules_by_feature = self._easy_instruction_rules_by_feature
-            hard_rule_names = self._hard_instruction_rules
-        else:
-            assert_never(scope)
+
+        feature_index = self._feature_indexes_by_scopes[scope]
+        rules = self.rules_by_scope[scope]
+        rules_by_name = {rule.name: rule for rule in rules}
+        # topologic location of rule given its name
+        rule_index_by_rule_name = {rule.name: i for i, rule in enumerate(rules)}
+
+        def resort_rules_topologically(rules: List[Rule]):
+            # note closure over `rule_index_by_rule_name`
+            rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
         candidate_rule_names = set()
         for feature in features:
-            easy_rule_names = easy_rules_by_feature.get(feature)
-            if easy_rule_names:
-                candidate_rule_names.update(easy_rule_names)
+            candidate_rule_names.update(feature_index.rules_by_feature.get(feature, ()))
+
+        if feature_index.string_rules:
+            string_features = {}
+            for feature, locations in features.items():
+                if isinstance(feature, capa.features.common.String):
+                    string_features[feature] = locations
+
+            if string_features:
+                for rule_name, wanted_strings in feature_index.string_rules.items():
+                    for wanted_string in wanted_strings:
+                        if wanted_string.evaluate(string_features):
+                            candidate_rule_names.add(rule_name)
+
+        if feature_index.bytes_rules:
+            bytes_features = {}
+            for feature, locations in features.items():
+                if isinstance(feature, capa.features.common.Bytes):
+                    bytes_features[feature] = locations
+
+            if bytes_features:
+                for rule_name, wanted_bytess in feature_index.bytes_rules.items():
+                    for wanted_bytes in wanted_bytess:
+                        if wanted_bytes.evaluate(bytes_features):
+                            candidate_rule_names.add(rule_name)
+
+        # logger.debug("perf: match: %s: %s: %d features, %d candidate rules",
+        #              scope, addr, len(features), len(candidate_rule_names))
 
         # first, match against the set of rules that have at least one
         # feature shared with our feature set.
         candidate_rules = [self.rules[name] for name in candidate_rule_names]
-        features2, easy_matches = ceng.match(candidate_rules, features, addr)
+        resort_rules_topologically(candidate_rules)
 
-        # note that we've stored the updated feature set in `features2`.
-        # this contains a superset of the features in `features`;
-        # it contains additional features for any easy rule matches.
-        # we'll pass this feature set to hard rule matching, since one
-        # of those rules might rely on an easy rule match.
         #
-        # the updated feature set from hard matching will go into `features3`.
-        # this is a superset of `features2` is a superset of `features`.
-        # ultimately, this is what we'll return to the caller.
+        # The following is derived from ceng.match
+        # extended to interact with candidate_rules upon rule match.
         #
-        # in each case, we could have assigned the updated feature set back to `features`,
-        # but this is slightly more explicit how we're tracking the data.
+        results: MatchResults = collections.defaultdict(list)
 
-        # now, match against (topologically ordered) list of rules
-        # that we can't really make any guesses about.
-        # these are rules with hard features, like substring/regex/bytes and match statements.
-        hard_rules = [self.rules[name] for name in hard_rule_names]
-        features3, hard_matches = ceng.match(hard_rules, features2, addr)
+        # copy features so that we can modify it
+        # without affecting the caller (keep this function pure)
+        #
+        # note: copy doesn't notice this is a defaultdict, so we'll recreate that manually.
+        features = collections.defaultdict(set, copy.copy(features))
 
-        # note that above, we probably are skipping matching a bunch of
-        # rules that definitely would never hit.
-        # specifically, "easy rules" that don't share any features with
-        # feature set.
+        while candidate_rules:
+            rule = candidate_rules.pop(0)
+            res = rule.evaluate(features, short_circuit=True)
+            if res:
+                # we first matched the rule with short circuiting enabled.
+                # this is much faster than without short circuiting.
+                # however, we want to collect all results thoroughly,
+                # so once we've found a match quickly,
+                # go back and capture results without short circuiting.
+                res = rule.evaluate(features, short_circuit=False)
 
-        # MatchResults doesn't technically have an .update() method
-        # but a dict does.
-        matches = {}  # type: ignore
-        matches.update(easy_matches)
-        matches.update(hard_matches)
+                # sanity check
+                assert bool(res) is True
 
-        return (features3, matches)
+                results[rule.name].append((addr, res))
+                # we need to update the current `features`
+                # because subsequent iterations of this loop may use newly added features,
+                # such as rule or namespace matches.
+                ceng.index_rule_matches(features, rule, [addr])
 
+                new_candidates = feature_index.rules_by_feature.get(capa.features.common.MatchedRule(rule.name), ())
+                if new_candidates:
+                    candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
+                    resort_rules_topologically(candidate_rules)
+
+        return (features, results)
+        
 
 def is_nursery_rule_path(path: Path) -> bool:
     """
