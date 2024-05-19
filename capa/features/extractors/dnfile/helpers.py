@@ -9,13 +9,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Tuple, Union, Iterator, Optional
+from typing import Dict, Iterator, Optional, Tuple, Union
 
 import dnfile
 from dncil.cil.body import CilMethodBody
-from dncil.cil.error import MethodBodyFormatError
-from dncil.clr.token import Token, StringToken, InvalidToken
 from dncil.cil.body.reader import CilMethodBodyReaderBase
+from dncil.cil.error import MethodBodyFormatError
+from dncil.clr.token import InvalidToken, StringToken, Token
 
 from capa.features.common import FeatureAccess
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
@@ -119,14 +119,14 @@ def get_dotnet_managed_imports(pe: dnfile.dnPE) -> Iterator[DnType]:
         access: Optional[str]
 
         # assume .NET imports starting with get_/set_ are used to access a property
-        if str(member_ref.Name).startswith("get_"):
+        member_ref_name: str = str(member_ref.Name)
+        if member_ref_name.startswith("get_"):
             access = FeatureAccess.READ
-        elif str(member_ref.Name).startswith("set_"):
+        elif member_ref_name.startswith("set_"):
             access = FeatureAccess.WRITE
         else:
             access = None
 
-        member_ref_name: str = str(member_ref.Name)
         if member_ref_name.startswith(("get_", "set_")):
             # remove get_/set_ from MemberRef name
             member_ref_name = member_ref_name[4:]
