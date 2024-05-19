@@ -9,13 +9,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Iterator, Optional, Tuple, Union
+from typing import Dict, Tuple, Union, Iterator, Optional
 
 import dnfile
 from dncil.cil.body import CilMethodBody
-from dncil.cil.body.reader import CilMethodBodyReaderBase
 from dncil.cil.error import MethodBodyFormatError
-from dncil.clr.token import InvalidToken, StringToken, Token
+from dncil.clr.token import Token, StringToken, InvalidToken
+from dncil.cil.body.reader import CilMethodBodyReaderBase
 
 from capa.features.common import FeatureAccess
 from capa.features.extractors.dnfile.types import DnType, DnUnmanagedMethod
