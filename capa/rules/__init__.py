@@ -1666,10 +1666,13 @@ class RuleSet:
                 rules_by_feature[feature].add(rule_name)
 
         logger.debug("indexing: %d features indexed for scope %s", len(rules_by_feature), scope)
-        logger.debug("indexing: %d indexed features are shared by more than 3 rules",
-                     len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]))
-        logger.debug("indexing: %d scanning string features, %d scanning bytes features",
-                     len(string_rules), len(bytes_rules))
+        logger.debug(
+            "indexing: %d indexed features are shared by more than 3 rules",
+            len([feature for feature, rules in rules_by_feature.items() if len(rules) > 3]),
+        )
+        logger.debug(
+            "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
+        )
 
         # TODO(wb): remember, when evaluating candidates, make sure
         # to do it in topological order, so match statements work.
@@ -1756,7 +1759,6 @@ class RuleSet:
 
         feature_index = self._feature_indexes_by_scopes[scope]
         rules = self.rules_by_scope[scope]
-        rules_by_name = {rule.name: rule for rule in rules}
         # topologic location of rule given its name
         rule_index_by_rule_name = {rule.name: i for i, rule in enumerate(rules)}
 
@@ -1804,7 +1806,7 @@ class RuleSet:
         # The following is derived from ceng.match
         # extended to interact with candidate_rules upon rule match.
         #
-        results: MatchResults = collections.defaultdict(list)
+        results: ceng.MatchResults = collections.defaultdict(list)
 
         # copy features so that we can modify it
         # without affecting the caller (keep this function pure)
@@ -1838,7 +1840,7 @@ class RuleSet:
                     resort_rules_topologically(candidate_rules)
 
         return (features, results)
-        
+
 
 def is_nursery_rule_path(path: Path) -> bool:
     """

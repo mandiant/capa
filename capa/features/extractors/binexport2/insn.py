@@ -14,7 +14,7 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import AnalysisContext, FunctionContext, ReadMemoryError, InstructionContext
+from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
@@ -31,8 +31,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
     insn = be2.instruction[ii.instruction_index]
 
     for addr in insn.call_target:
-        if addr in be2_analysis.thunks:
-            addr = be2_analysis.thunks[addr]
+        addr = be2_analysis.thunks.get(addr, addr)
 
         if addr not in be2_index.vertex_index_by_address:
             # disassembler did not define function at address
