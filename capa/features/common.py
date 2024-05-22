@@ -387,6 +387,7 @@ class Bytes(Feature):
     def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
+        capa.perf.counters["evaluate.feature.bytes." + str(len(self.value))] += 1
 
         assert isinstance(self.value, bytes)
         for feature, locations in features.items():
