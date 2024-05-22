@@ -1811,7 +1811,7 @@ class RuleSet:
         """
         rules.sort(key=lambda r: rule_index_by_rule_name[r.name])
 
-    def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
+    def _match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
 
@@ -1976,6 +1976,29 @@ class RuleSet:
                     RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
 
         return (augmented_features, results)
+
+    def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
+        """
+        Match rules from this ruleset at the given scope against the given features.
+
+        This wrapper around _match exists so that we can assert it matches precisely 
+        the same as `capa.engine.match`, just faster.
+        """
+        features1, matches1 = self._match(scope, features, addr)
+
+        # enable this branch to demonstrate that the naive matcher agrees with this optimized matcher.
+        if True:
+            features2, matches2 = capa.engine.match(self.rules.values(), features, addr)
+
+            for feature, locations in features1.items():
+                assert feature in features2
+                assert locations == features2[feature]
+
+            for rulename, results in matches1.items():
+                assert rulename in matches2
+                assert len(results) == len(matches2[rulename])
+
+        return features1, matches1
 
 
 def is_nursery_rule_path(path: Path) -> bool:
