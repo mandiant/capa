@@ -1368,13 +1368,13 @@ class RuleSet:
         rules = capa.optimizer.optimize_rules(rules)
 
         scopes = (
-            Scope.FILE,
-            Scope.PROCESS,
-            Scope.THREAD,
             Scope.CALL,
-            Scope.FUNCTION,
-            Scope.BASIC_BLOCK,
+            Scope.THREAD,
+            Scope.PROCESS,
             Scope.INSTRUCTION,
+            Scope.BASIC_BLOCK,
+            Scope.FUNCTION,
+            Scope.FILE,
         )
 
         self.rules = {rule.name: rule for rule in rules}
@@ -1382,8 +1382,9 @@ class RuleSet:
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
 
         # unstable
+        scores_by_rule = {}
         self._feature_indexes_by_scopes = {
-            scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope]) for scope in scopes
+            scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
         }
 
     @property
@@ -1426,13 +1427,17 @@ class RuleSet:
     # unstable
     @staticmethod
     def _score_feature(scores_by_rule: Dict[str, int], node: capa.features.common.Feature) -> int:
-        if capa.features.common.is_global_feature(node):
-            # We don't want to index global features
-            # because they're not very selective.
-            # They also don't stand on their own - there's always some other logic.
-            raise ValueError("don't index global features")
+        """
+        Score the given feature by how "uncommon" it is, where a higher score is more uncommon.
+        Features that are not good for indexing will have a low score, or 0.
+        """
 
-        elif isinstance(
+        #
+        # Today, these scores are manually assigned by intuition/experience/guesswork.
+        # We could do a large-scale feature collection and use the results to assign scores.
+        #
+
+        if isinstance(
             node,
             capa.features.common.MatchedRule,
         ):
@@ -1455,6 +1460,7 @@ class RuleSet:
                 return 3
 
             if 0xFFFF_FFFF_FFFF_FF00 <= v <= 0xFFFF_FFFF_FFFF_FFFF:
+                # Like signed numbers closed to 0 that are stored as unsigned long ints.
                 return 3
 
             # Other numbers are assumed to be uncommon.
@@ -1466,10 +1472,20 @@ class RuleSet:
 
         C = node.__class__
         return {
+            #
+            # Very uncommon features that are probably very selective in capa's domain.
+            # When possible, we want rules to be indexed by these features.
+            #
             capa.features.common.String: 9,
             capa.features.insn.API: 8,
             capa.features.file.Export: 7,
             # "uncommon numbers": 7
+            #
+            # -----------------------------------------------------------------
+            #
+            # Features that are probably somewhat common, and/or rarely used within capa.
+            # Its ok to index rules by these.
+            #
             capa.features.common.Class: 5,
             capa.features.common.Namespace: 5,
             capa.features.insn.Property: 5,
@@ -1477,12 +1493,34 @@ class RuleSet:
             capa.features.file.Section: 5,
             capa.features.file.FunctionName: 5,
             # default MatchedRule: 5
+            #
+            # -----------------------------------------------------------------
+            #
+            # Features that are pretty common and we'd prefer not to index, but can if we have to.
+            #
             capa.features.common.Characteristic: 4,
             capa.features.insn.Offset: 4,
             capa.features.insn.OperandOffset: 4,
             # "common numbers": 3
+            #
+            # -----------------------------------------------------------------
+            #
+            # Very common features, which we'd only prefer to non-hashable features, like Regex/Substring/Bytes.
+            #
             capa.features.insn.Mnemonic: 2,
             capa.features.basicblock.BasicBlock: 1,
+            #
+            #
+            # We don't *want* to index global features because they're not very selective.
+            # They also don't usually stand on their own - there's always some other logic.
+            #
+            capa.features.common.OS: 0,
+            capa.features.common.Arch: 0,
+            capa.features.common.Format: 0,
+            # -----------------------------------------------------------------
+            #
+            # Non-hashable features, which will require a scan to evaluate, and are therefore quite expensive.
+            #
             # substring: 0
             # regex: 0
             # bytes: 0
@@ -1490,36 +1528,52 @@ class RuleSet:
 
     @dataclass
     class RuleFeatureIndex:
+        # Mapping from hashable feature to a list of rules that might have this feature.
         rules_by_feature: Dict[Feature, Set[str]] = dataclasses.field(default=dict)
+        # Mapping from rule name to list of Regex/Substring features that have to match.
+        # All these features will be evaluated whenever a String feature is encountered.
         string_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
+        # Mapping from rule name to list of Bytes features that have to match.
+        # All these features will be evaluated whenever a Bytes feature is encountered.
         bytes_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
 
     # unstable
     @staticmethod
-    def _index_rules_by_feature(scope: Scope, rules: List[Rule]) -> RuleFeatureIndex:
-        rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
-        scores_by_rule: Dict[str, int] = {}
+    def _index_rules_by_feature(scope: Scope, rules: List[Rule], scores_by_rule: Dict[str, int]) -> RuleFeatureIndex:
+        """
+        Index the given rules by their minimal set of most "uncommon" features required to match.
 
-        # note closure over scores_by_rule
+        If absolutely necessary, provide the Regex/Substring/Bytes features 
+        (which are not hashable and require a scan) that have to match, too.
+        """
+
+        rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
+
         def rec(
-            rule_name: str, node: Union[Feature, Statement]
-        ) -> Union[None, Tuple[int, Feature], Tuple[int, Set[Feature]]]:
+            rule_name: str, node: Union[Feature, Statement],
+            # closure over: scores_by_rule
+        ) -> Optional[Tuple[int, Set[Feature]]]:
             """
             Walk through a rule's logic tree, picking the features to use for indexing,
             returning the feature and an associated score.
             The higher the score, the more selective the feature is expected to be.
-            The score is only used internally, to pick the best fetaure from within
-             and AND block.
+            The score is only used internally, to pick the best feature from within AND blocks.
+
+            Note closure over `scores_by_rule`.
             """
 
             if isinstance(node, (ceng.Not)):
-                # we don't index features within NOT blocks
+                # We don't index features within NOT blocks, because we're only looking for
+                # features that should be present.
+                #
+                # Technically we could have a rule that does `not: not: foo` and we'd want to
+                # index `foo`. But this is not seen today.
                 return None
 
             elif isinstance(node, (ceng.Some)) and node.count == 0:
-                # when a subtree is optional, it may match, but not matching
+                # When a subtree is optional, it may match, but not matching
                 # doesn't have any impact either.
-                # now, our rule authors *should* not put this under `or:`
+                # Now, our rule authors *should* not put this under `or:`
                 # and this is checked by the linter,
                 return None
 
@@ -1528,31 +1582,45 @@ class RuleSet:
                 # because the min is 0, this subtree *can* match just about any feature.
                 return None
 
-            elif isinstance(node, capa.features.common.Feature) and capa.features.common.is_global_feature(node):
-                # we don't want to index global features
-                # because they're not very selective.
-                # they also don't stand on their own - there's always some other logic.
-                return None
-
             elif isinstance(node, capa.features.common.Feature):
-                return (RuleSet._score_feature(scores_by_rule, node), node)
+                return (RuleSet._score_feature(scores_by_rule, node), {node})
 
             elif isinstance(node, (ceng.Range)):
                 # feature is found N times
                 return rec(rule_name, node.child)
 
             elif isinstance(node, ceng.And):
-                scores = []
+                # When evaluating an AND block, all of the children need to match.
+                #
+                # So when we index rules, we want to pick the most uncommon feature(s)
+                # for each AND block. If the AND block matches, that feature must be there.
+                # We recursively explore children, computing their
+                # score, and pick the child with the greatest score.
+                #
+                # For example, given the rule:
+                #
+                #     and:
+                #       - mnemonic: mov
+                #       - api: CreateFile
+                #
+                # we prefer to pick `api: CreateFile` because we expect it to be more uncommon.
+                #
+                # Note that the children nodes might be complex, like:
+                #
+                #     and:
+                #       - mnemonic: mov
+                #       - or:
+                #         - api: CreateFile
+                #         - api: DeleteFile
+                #
+                # In this case, we prefer to pick the pair of API features since each is expected
+                # to be more common than the mnemonic.
+                scores: List[Tuple[int, Set[Feature]]] = []
                 for child in node.children:
-                    try:
-                        score = rec(rule_name, child)
-                    except AssertionError as e:
-                        # if one branch isn't possible to index,
-                        # thats ok, we can require a different one to match
-                        logger.warning("and: swallowing: %s: %s", e, rule_name)
-                        continue
+                    score = rec(rule_name, child)
 
                     if not score:
+                        # maybe an optional block or similar
                         continue
 
                     scores.append(score)
@@ -1562,13 +1630,8 @@ class RuleSet:
 
                 def and_score_key(item):
                     # order by score, then fewest number of features.
-                    # TODO(wb): minimize number of features? play with this.
                     score, features = item
-
-                    if isinstance(features, set):
-                        return (score, -len(features))
-                    else:
-                        return (score, -1)
+                    return (score, -len(features))
 
                 scores.sort(key=and_score_key, reverse=True)
 
@@ -1576,6 +1639,30 @@ class RuleSet:
                 return scores[0]
 
             elif isinstance(node, (ceng.Or, ceng.Some)):
+                # When evaluating an OR block, any of the children need to match.
+                # It could be any of them, so we can't decide to only index some of them.
+                #
+                # For example, given the rule:
+                #
+                #     or:
+                #       - mnemonic: mov
+                #       - api: CreateFile
+                #
+                # we have to pick both `mnemonic` and `api` features.
+                #
+                # Note that the children nodes might be complex, like:
+                #
+                #     or:
+                #       - mnemonic: mov
+                #       - and:
+                #         - api: CreateFile
+                #         - api: DeleteFile
+                #
+                # In this case, we have to pick both the `mnemonic` and one of the `api` features.
+                #
+                # When computing the score of an OR branch, we have to use the min value encountered.
+                # While many of the children might be very specific, there might be a branch that is common
+                # and we need to handle that correctly.
                 min_score = 10000000  # assume this is larger than any score
                 features = set()
 
@@ -1583,36 +1670,18 @@ class RuleSet:
                     item = rec(rule_name, child)
                     assert item is not None, "can't index OR branch"
 
-                    score, feature = item
-
+                    score, _features = item
                     min_score = min(min_score, score)
-
-                    if isinstance(feature, set):
-                        features.update(feature)
-                    else:
-                        features.add(feature)
+                    features.update(_features)
 
                 return min_score, features
 
-            elif isinstance(node, ceng.Statement):
-                # Unhandled type of statement.
-                # This should only happen if a new subtype of `Statement`
-                # has since been added to capa.
-                #
-                # Ideally, we'd like to use mypy for exhaustiveness checking
-                # for all the subtypes of `Statement`.
-                # But, as far as I can tell, mypy does not support this type
-                # of checking.
-                #
-                # In a way, this makes some intuitive sense:
-                # the set of subtypes of type A is unbounded,
-                # because any user might come along and create a new subtype B,
-                # so mypy can't reason about this set of types.
-                assert_never(node)
             else:
                 # programming error
                 assert_never(node)
 
+        # These are the Regex/Substring/Bytes features that we have to use for filtering.
+        # Ideally we find a way to get rid of all of these, eventually.
         string_rules: Dict[str, List[Feature]] = {}
         bytes_rules: Dict[str, List[Feature]] = {}
 
@@ -1622,13 +1691,7 @@ class RuleSet:
             root = rule.statement
             item = rec(rule_name, root)
             assert item is not None
-
-            score, feature = item
-
-            if isinstance(feature, set):
-                features = feature
-            else:
-                features = {feature}
+            score, features = item
 
             string_features = [
                 feature
@@ -1849,13 +1912,13 @@ class RuleSet:
                             candidate_rule_names.add(rule_name)
 
         # trace
-        logger.debug(
-            "perf: match: %s: %s: %d features, %d candidate rules",
-            scope,
-            addr,
-            len(features),
-            len(candidate_rule_names),
-        )
+        # logger.debug(
+        #     "perf: match: %s: %s: %d features, %d candidate rules",
+        #     scope,
+        #     addr,
+        #     len(features),
+        #     len(candidate_rule_names),
+        # )
 
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
