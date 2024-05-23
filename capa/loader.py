@@ -11,7 +11,7 @@ import datetime
 from typing import Set, Dict, List, Optional
 from pathlib import Path
 
-import halo
+from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.perf
@@ -176,6 +176,8 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+    console = Console(stderr=True, quiet=disable_progress)
+
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
@@ -222,7 +224,7 @@ def get_extractor(
             if os_ == OS_AUTO and not is_supported_os(input_path):
                 raise UnsupportedOSError()
 
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        with console.status("Analyzing program...", spinner="dots"):
             bv: BinaryView = binaryninja.load(str(input_path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
@@ -247,7 +249,7 @@ def get_extractor(
             if os_ == OS_AUTO and not is_supported_os(input_path):
                 raise UnsupportedOSError()
 
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        with console.status("Analyzing program...", spinner="dots"):
             vw = get_workspace(input_path, input_format, sigpaths)
 
             if should_save_workspace:
