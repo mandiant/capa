@@ -106,8 +106,18 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "function=0x107588", capa.features.insn.Number(0x10), "xfail: do we want this for ldp?"),
         ("687e79.be2", "function=0x105C88", capa.features.insn.Number(0xF000), True),
         # insn/number: negative
-        ("687e79.be2", "function=0x1057f8,bb=0x1057f8", capa.features.insn.Number(-1), True),  # TODO this should be unsigned / use two's complement
-        ("687e79.be2", "function=0x1057f8,bb=0x1057f8", capa.features.insn.Number(0xFFFFFFFFFFFFFFFF), "xfail: not implemented yet"),
+        (
+            "687e79.be2",
+            "function=0x1057f8,bb=0x1057f8",
+            capa.features.insn.Number(-1),
+            True,
+        ),  # TODO this should be unsigned / use two's complement
+        (
+            "687e79.be2",
+            "function=0x1057f8,bb=0x1057f8",
+            capa.features.insn.Number(0xFFFFFFFFFFFFFFFF),
+            "xfail: not implemented yet",
+        ),
         ("687e79.be2", "function=0x1066e0,bb=0x1068c4", capa.features.insn.Number(0xFFFFFFFF), True),
         # insn/offset
         ("687e79.be2", "function=0x0", capa.features.insn.Offset(0x0), "xfail: not implemented yet"),
@@ -219,7 +229,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # function/characteristic(calls to)
         ("687e79.be2", "function=0x1075c0", capa.features.common.Characteristic("calls to"), True),
         # file/function-name
-        ("687e79.be2", "file", capa.features.file.FunctionName("__libc_init"), "xfail: TODO should this be a function-name?"),
+        (
+            "687e79.be2",
+            "file",
+            capa.features.file.FunctionName("__libc_init"),
+            "xfail: TODO should this be a function-name?",
+        ),
         # os & format & arch
         ("687e79.be2", "file", OS(OS_ANDROID), True),
         ("687e79.be2", "file", OS(OS_LINUX), False),
