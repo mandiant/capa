@@ -95,7 +95,7 @@ dev = [
     "types-psutil==5.8.23",
     "types_requests==2.31.0.20240406",
     "types-protobuf==5.26.0.20240422",
-    "deptry>=0.14"
+    "deptry==0.14"
 ]
 build = [
     "pyinstaller==6.6.0",
