@@ -145,10 +145,12 @@ def extract_insn_number_features(
             # temporarily, we'll have to try to guess at the interpretation.
             symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
 
-            if symbol.startswith("#0x"):
+            if symbol.startswith(("#0x", "#-0x")):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "#0xffffffff"
+                # - type: SYMBOL
+                #   symbol: "#-0x1"
                 try:
                     value = int(symbol[len("#") :], 0x10)
                 except ValueError:
