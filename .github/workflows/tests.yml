@@ -64,6 +64,7 @@ jobs:
       run: python scripts/lint.py rules/
 
   tests:
+    if: always()  # TODO remove once code_style passes
     name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: [code_style, rule_linter]
