@@ -45,7 +45,9 @@ jobs:
     - name: Lint with flake8
       run: pre-commit run flake8 --hook-stage manual
     - name: Check types with mypy
-      run:  pre-commit run mypy --hook-stage manual
+      run: pre-commit run mypy --hook-stage manual
+    - name: Check imports against dependencies
+      run: pre-commit run deptry
 
   rule_linter:
     runs-on: ubuntu-20.04
