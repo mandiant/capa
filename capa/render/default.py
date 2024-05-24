@@ -102,7 +102,11 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows,
+                headers=[width("Capability", 50), width("Namespace", 50)],
+                tablefmt="mixed_outline",
+            )
         )
         ostream.write("\n")
     else:
@@ -148,7 +152,60 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="mixed_grid"
+                rows,
+                headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)],
+                tablefmt="mixed_grid",
+            )
+        )
+        ostream.write("\n")
+
+
+def render_maec(doc: rd.ResultDocument, ostream: StringIO):
+    """
+    example::
+
+        +--------------------------+-----------------------------------------------------------+
+        | MAEC Schema              | MAEC Value                                                |
+        |--------------------------+-----------------------------------------------------------|
+        | analysis-conclusion      | Anti-Virus Detected                                       |
+        |--------------------------+-----------------------------------------------------------|
+        | malware-family           | Ransomware                                                |
+        |--------------------------+-----------------------------------------------------------|
+        | malware-category         | Downloader                                                |
+        |                          | Launcher                                                  |
+        +--------------------------+-----------------------------------------------------------+
+    """
+    maec_schema = {
+        "analysis-conclusion": set(),
+        "analysis-conclusion-ov": set(),
+        "malware-family": set(),
+        "malware-category": set(),
+        "malware-category-ov": set(),
+    }
+
+    for rule in rutils.maec_rules(doc):
+        if rule.meta.maec.analysis_conclusion:
+            maec_schema["analysis-conclusion"].add(rule.meta.maec.analysis_conclusion)
+        if rule.meta.maec.analysis_conclusion_ov:
+            maec_schema["analysis-conclusion-ov"].add(rule.meta.maec.analysis_conclusion_ov)
+        if rule.meta.maec.malware_family:
+            maec_schema["malware-family"].add(rule.meta.maec.malware_family)
+        if rule.meta.maec.malware_category:
+            maec_schema["malware-category"].add(rule.meta.maec.malware_category)
+        if rule.meta.maec.malware_category_ov:
+            maec_schema["malware-category-ov"].add(rule.meta.maec.malware_category_ov)
+
+    rows = []
+    for schema, values in maec_schema.items():
+        if values:
+            rows.append((rutils.bold(schema), "\n".join(sorted(values))))
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(
+                rows,
+                headers=[width("MAEC Schema", 25), width("MAEC Value", 75)],
+                tablefmt="mixed_grid",
             )
         )
         ostream.write("\n")
@@ -191,7 +248,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+                rows,
+                headers=[width("MBC Objective", 25), width("MBC Behavior", 75)],
+                tablefmt="mixed_grid",
             )
         )
         ostream.write("\n")
@@ -203,6 +262,8 @@ def render_default(doc: rd.ResultDocument):
     render_meta(doc, ostream)
     ostream.write("\n")
     render_attack(doc, ostream)
+    ostream.write("\n")
+    render_maec(doc, ostream)
     ostream.write("\n")
     render_mbc(doc, ostream)
     ostream.write("\n")

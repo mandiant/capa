@@ -61,6 +61,21 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
         yield rule
 
 
+def maec_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
+    """enumerate the rules in (namespace, name) order that are 'maec' rules."""
+    for _, _, rule in sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()):
+        if any(
+            [
+                rule.meta.maec.analysis_conclusion,
+                rule.meta.maec.analysis_conclusion_ov,
+                rule.meta.maec.malware_family,
+                rule.meta.maec.malware_category,
+                rule.meta.maec.malware_category_ov,
+            ]
+        ):
+            yield rule
+
+
 class StringIO(io.StringIO):
     def writeln(self, s):
         self.write(s)
