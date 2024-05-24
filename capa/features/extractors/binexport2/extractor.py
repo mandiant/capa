@@ -45,7 +45,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.buf = buf
         self.idx = BinExport2Index(self.be2)
         self.analysis = BinExport2Analysis(self.be2, self.idx, self.buf)
-        address_space = AddressSpace.from_buf(buf)
+        address_space = AddressSpace.from_buf(buf, self.analysis.base_address)
         self.ctx = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
 
         self.global_features: List[Tuple[Feature, Address]] = []

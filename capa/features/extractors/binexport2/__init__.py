@@ -255,6 +255,8 @@ class BinExport2Analysis:
         # libraries mapped into memory.
         self.base_address = min(s.address for s in sections_with_perms)
 
+        logger.debug("found base address: %x", self.base_address)
+
     def _compute_thunks(self):
         for addr, idx in self.idx.vertex_index_by_address.items():
             vertex = self.be2.call_graph.vertex[idx]
@@ -322,9 +324,7 @@ class AddressSpace:
         raise AddressNotMappedError(address)
 
     @classmethod
-    def from_pe(cls, pe: PE):
-        base_address = pe.OPTIONAL_HEADER.ImageBase
-
+    def from_pe(cls, pe: PE, base_address: int):
         regions = []
         for section in pe.sections:
             address = section.VirtualAddress
@@ -342,7 +342,7 @@ class AddressSpace:
         return cls(base_address, tuple(regions))
 
     @classmethod
-    def from_elf(cls, elf: ELFFile):
+    def from_elf(cls, elf: ELFFile, base_address: int):
         regions = []
 
         # ELF segments are for runtime data,
@@ -362,16 +362,16 @@ class AddressSpace:
 
             regions.append(MemoryRegion(segment_rva, segment_data))
 
-        return cls(0, tuple(regions))
+        return cls(base_address, tuple(regions))
 
     @classmethod
-    def from_buf(cls, buf: bytes):
+    def from_buf(cls, buf: bytes, base_address: int):
         if buf.startswith(capa.features.extractors.common.MATCH_PE):
             pe = PE(data=buf)
-            return cls.from_pe(pe)
+            return cls.from_pe(pe, base_address)
         elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
             elf = ELFFile(io.BytesIO(buf))
-            return cls.from_elf(elf)
+            return cls.from_elf(elf, base_address)
         else:
             raise NotImplementedError("file format address space")
 
