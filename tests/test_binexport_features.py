@@ -157,7 +157,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "function=0x107588", capa.features.common.String("AppDataService start"), True),
         ("687e79.be2", "function=0x1075c0", capa.features.common.String("AppDataService"), True),
         ("687e79.be2", "function=0x107588", capa.features.common.String("nope"), False),
-        ("687e79.be2", "function=0x106d58", capa.features.common.String("/data/misc/wpa_supplicant"), True),
+        ("687e79.be2", "function=0x106d58", capa.features.common.String("/data/misc/wpa_supplicant.conf"), True),
         # insn/regex
         ("687e79.be2", "function=0x105c88", capa.features.common.Regex("innerRename"), True),
         ("687e79.be2", "function=0x106d58", capa.features.common.Regex("/data/misc"), True),
