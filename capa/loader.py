@@ -176,6 +176,8 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+
+    # stderr=True is used here to redirect the spinner banner to stderr, so that users can redirect capa's output.
     console = Console(stderr=True, quiet=disable_progress)
 
     if backend == BACKEND_CAPE:

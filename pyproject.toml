@@ -40,7 +40,6 @@ dependencies = [
     "wcwidth==0.2.13",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
-    "halo==0.0.31",
     "networkx==3.1",
     "ruamel.yaml==0.18.6",
     "vivisect==1.1.1",
