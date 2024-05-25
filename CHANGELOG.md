@@ -7,6 +7,7 @@
 
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
+- render maec/* fields #843 @s-ff
 
 ### Breaking Changes
 
