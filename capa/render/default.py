@@ -167,12 +167,12 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
         +--------------------------+-----------------------------------------------------------+
         | MAEC Schema              | MAEC Value                                                |
         |--------------------------+-----------------------------------------------------------|
-        | analysis-conclusion      | Anti-Virus Detected                                       |
+        | analysis-conclusion      | malicious                                                 |
         |--------------------------+-----------------------------------------------------------|
-        | malware-family           | Ransomware                                                |
+        | malware-family           | PlugX                                                     |
         |--------------------------+-----------------------------------------------------------|
-        | malware-category         | Downloader                                                |
-        |                          | Launcher                                                  |
+        | malware-category         | downloader                                                |
+        |                          | launcher                                                  |
         +--------------------------+-----------------------------------------------------------+
     """
     maec_schema: dict[str, set[str]] = {
