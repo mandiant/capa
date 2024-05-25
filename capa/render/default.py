@@ -175,7 +175,7 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
         |                          | Launcher                                                  |
         +--------------------------+-----------------------------------------------------------+
     """
-    maec_schema = {
+    maec_schema: dict[str, set[str]] = {
         "analysis-conclusion": set(),
         "analysis-conclusion-ov": set(),
         "malware-family": set(),
