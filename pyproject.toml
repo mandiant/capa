@@ -111,7 +111,7 @@ extend_exclude = [
     "tests"
 ]
 
-# X is marked as first party, to inform deptry that it is local
+# dependencies marked as first party, to inform deptry that they are local
 known_first_party = [
     "backports",
     "binaryninja",
@@ -133,7 +133,7 @@ known_first_party = [
 ]
 
 [tool.deptry.per_rule_ignores]
-# X defined as a dependency but not used in the codebase
+# dependencies defined but not used in the codebase
 DEP002 = [
     "black",
     "build",
@@ -174,9 +174,9 @@ DEP002 = [
     "wcwidth"
 ]
 
-# X imported but missing from the dependency definitions
+# dependencies imported but missing from definitions
 DEP003 = [
-    "typing_extensions" # should be removed when Python 3.9 is deprecated, see #1699
+    "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
 
 [project.urls]

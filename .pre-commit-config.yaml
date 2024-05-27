@@ -132,7 +132,7 @@ repos:
     hooks:
     -   id: deptry
         name: deptry
-        stages: [commit, push, manual]
+        stages: [push, manual]
         language: system
         entry: deptry .
         always_run: true
