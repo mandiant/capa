@@ -7,8 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 """
 Convert capa json output to sarif schema
-    usage: capa2yara.py [-h] [--version] [-v] [-vv] [-d] [-q] [--color {auto,always,never}] [-t TAG] rules
-Capa to YARA rule converter
+    usage: capa2sarif.py [-h] [-g] [-r] [-t TAG] [--version] capa_output
+    
+Capa to SARIF analysis file
 positional arguments:
     capa_output         Path to capa JSON output file
 optional arguments:
@@ -35,7 +36,7 @@ logger = logging.getLogger('capa2sarif')
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Capa to YARA rule converter"
+        description="Capa to SARIF analysis file"
     )
 
     # Positional argument
