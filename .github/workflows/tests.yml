@@ -47,7 +47,7 @@ jobs:
     - name: Check types with mypy
       run: pre-commit run mypy --hook-stage manual
     - name: Check imports against dependencies
-      run: pre-commit run deptry
+      run: pre-commit run deptry --hook-stage manual
 
   rule_linter:
     runs-on: ubuntu-20.04
