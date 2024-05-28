@@ -14,11 +14,7 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-<<<<<<< HEAD
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
-=======
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext, AnalysisContext, BasicBlockContext
->>>>>>> d60e4bcb (Add nzxor charecteristic in BinExport extractor.)
+from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext, BasicBlockContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 

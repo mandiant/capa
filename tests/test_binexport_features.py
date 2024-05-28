@@ -192,16 +192,16 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # ("mimikatz", "function=0x44EDEF", capa.features.common.Bytes("INPUTEVENT".encode("utf-16le")), False),
         # insn/characteristic(nzxor)
         (
-            "687e79.be2",
-            "function=0x0",
+            "d1e650.be2",
+            "function=0x114af4",
             capa.features.common.Characteristic("nzxor"),
-            "xfail: not implemented yet, may need other test sample",
+            True,
         ),
         (
-            "687e79.be2",
-            "function=0x0",
+            "d1e650.be2",
+            "function=0x117988",
             capa.features.common.Characteristic("nzxor"),
-            "xfail: not implemented yet, may need other test sample",
+            True,
         ),
         # # insn/characteristic(cross section flow)
         # ("a1982...", "function=0x4014D0", capa.features.common.Characteristic("cross section flow"), True),

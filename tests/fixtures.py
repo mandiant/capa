@@ -413,6 +413,13 @@ def get_data_path_by_name(name) -> Path:
             / "binexport2"
             / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
         )
+    elif name.startswith("d1e650.be2"):
+        return (
+            CD
+            / "data"
+            / "binexport2"
+            / "d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8.elf_.ghidra.BinExport"
+        )
     else:
         raise ValueError(f"unexpected sample fixture: {name}")
 
