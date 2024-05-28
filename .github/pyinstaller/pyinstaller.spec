@@ -1,10 +1,40 @@
 # -*- mode: python -*-
 # Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
-import os.path
-import subprocess
+import sys
+import logging
 
 import wcwidth
 
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+def generate_rule_cache(capa_dir: Path):
+    import capa
+    import capa.rules
+    import capa.rules.cache
+
+    rules_dir = capa_dir / 'rules'
+    cache_dir = capa_dir / 'cache'
+
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        rules = capa.rules.get_rules([Path(rules_dir)], cache_dir)
+        logger.info(f"successfully loaded {len(rules)} rules")
+    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+        logger.error(f"{str(e)}")
+        sys.exit(-1)
+
+    content = capa.rules.cache.get_ruleset_content(rules)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+
+    assert path.exists()
+    logger.info(f"cached to: {path}")
+
+# SPECPATH is a global variable which points to .spec file path
+capa_dir = Path(SPECPATH).parent.parent
+generate_rule_cache(capa_dir)
 
 a = Analysis(
     # when invoking pyinstaller from the project root,
@@ -26,7 +56,7 @@ a = Analysis(
         # so we manually embed the wcwidth resources here.
         #
         # ref: https://stackoverflow.com/a/62278462/87207
-        (os.path.dirname(wcwidth.__file__), "wcwidth"),
+        (Path(wcwidth.__file__).parent, "wcwidth"),
     ],
     # when invoking pyinstaller from the project root,
     # this gets run from the project root.
