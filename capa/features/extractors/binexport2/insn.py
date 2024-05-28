@@ -222,9 +222,11 @@ def extract_insn_number_features(
         if analysis.base_address == 0x0:
             # When the image is mapped at 0x0,
             #  then its hard to tell if numbers are pointers or numbers.
-            # TODO(mr): 1755 be a little less conservative otherwise?
+            # TODO(mr): be a little less conservative otherwise?
+            # https://github.com/mandiant/capa/issues/1755
 
-            # TODO(mr): 1755 this removes a lot of valid numbers, could check alignment and use additional heuristics
+            # TODO(mr): this removes a lot of valid numbers, could check alignment and use additional heuristics
+            # https://github.com/mandiant/capa/issues/1755
             # if is_address_mapped(be2, value):
             #     continue
             pass
@@ -314,7 +316,8 @@ def extract_insn_string_features(
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
+    # TODO(wb): complete
+    # https://github.com/mandiant/capa/issues/1755
     yield from ()
 
 
@@ -430,7 +433,8 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
+    # TODO(wb): complete
+    # https://github.com/mandiant/capa/issues/1755
     yield from ()
 
 

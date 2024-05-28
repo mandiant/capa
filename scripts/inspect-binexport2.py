@@ -301,6 +301,7 @@ def main(argv=None):
 
                 if vertex.HasField("library_index"):
                     # TODO(williballenthin): this seems to be incorrect for Ghidra exporter
+                    # https://github.com/mandiant/capa/issues/1755
                     library = be2.library[vertex.library_index]
                     o.writeln(f"library:   [{vertex.library_index}] {library.name}")
 
@@ -415,6 +416,7 @@ def main(argv=None):
             # if data_address in idx.instruction_index_by_address:
             #     # appears to be code
             #     continue
+            # https://github.com/mandiant/capa/issues/1755
 
             data_xrefs: List[int] = []
             for data_reference_index in idx.data_reference_index_by_target_address[data_address]:
@@ -423,6 +425,7 @@ def main(argv=None):
                 # TODO(wb): uh-oh, how to reconstruct address?
                 # instruction_address = idx.instruction_address_by_index[instruction_index]
                 # data_xrefs.append(instruction_address)
+                # https://github.com/mandiant/capa/issues/1755
 
             if not data_xrefs:
                 continue

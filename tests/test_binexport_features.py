@@ -45,7 +45,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "file", capa.features.file.Import("_ZN7android10IInterfaceD0Ev"), True),
         ("687e79.be2", "file", capa.features.file.Import("nope"), False),
         # function/characteristic(loop)
-        ("687e79.be2", "function=0x1056c0", capa.features.common.Characteristic("loop"), True),  # TODO
+        (
+            "687e79.be2",
+            "function=0x1056c0",
+            capa.features.common.Characteristic("loop"),
+            True,
+        ),  # TODO(mr): https://github.com/mandiant/capa/issues/1755
         ("687e79.be2", "function=0x1075c0", capa.features.common.Characteristic("loop"), False),
         # bb/characteristic(tight loop)
         ("687e79.be2", "function=0x0", capa.features.common.Characteristic("tight loop"), "xfail: not implemented yet"),
@@ -111,7 +116,7 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "function=0x1057f8,bb=0x1057f8",
             capa.features.insn.Number(-1),
             True,
-        ),  # TODO this should be unsigned / use two's complement
+        ),  # TODO(mr): this should be unsigned / use two's complement, https://github.com/mandiant/capa/issues/1755
         (
             "687e79.be2",
             "function=0x1057f8,bb=0x1057f8",

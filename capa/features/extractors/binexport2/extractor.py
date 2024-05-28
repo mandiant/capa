@@ -53,8 +53,9 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         self.global_features.extend(list(capa.features.extractors.common.extract_os(self.buf)))
         self.global_features.extend(list(capa.features.extractors.common.extract_arch(self.buf)))
 
-        # TODO: assert supported file formats, arches
+        # TODO(mr): assert supported file formats, arches
         # and gradually relax restrictions as they're tested.
+        # https://github.com/mandiant/capa/issues/1755
 
     def get_base_address(self):
         return AbsoluteVirtualAddress(self.analysis.base_address)
