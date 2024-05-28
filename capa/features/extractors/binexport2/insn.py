@@ -14,11 +14,15 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
+from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, BasicBlockContext, InstructionContext
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 logger = logging.getLogger(__name__)
+
+# security cookie checks may perform non-zeroing XORs, these are expected within a certain
+# byte range within the first and returning basic blocks, this helps to reduce FP features
+SECURITY_COOKIE_BYTES_DELTA = 0x40
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -314,11 +318,79 @@ def extract_insn_offset_features(
     yield from ()
 
 
+def is_security_cookie(
+    fhi: FunctionContext,
+    bbi: BasicBlockContext,
+    instruction: BinExport2.Instruction,
+) -> bool:
+    """
+    check if an instruction is related to security cookie checks.
+    """
+    be2 = fhi.ctx.be2
+
+    # security cookie check should use SP or BP
+    op1 = be2.operand[instruction.operand_index[1]]
+    op1_exprs = [be2.expression[expr_i] for expr_i in op1.expression_index]
+    if all(expr.symbol.lower() not in ("bp", "esp", "ebp", "rbp", "rsp") for expr in op1_exprs):
+        return False
+
+    # check_nzxor_security_cookie_delta
+    # if insn falls at the start of first entry block of the parent function.
+    flow_graph = be2.flow_graph[fhi.flow_graph_index]
+    basic_block_index = bbi.basic_block_index
+    bb = be2.basic_block[basic_block_index]
+    if flow_graph.entry_basic_block_index == basic_block_index:
+        first_addr = min((be2.instruction[ir.begin_index].address for ir in bb.instruction_index))
+        if instruction.address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
+            return True
+    # or insn falls at the end before return in a terminal basic block.
+    if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
+        last_addr = max((be2.instruction[ir.end_index - 1].address for ir in bb.instruction_index))
+        if instruction.address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
+            return True
+    return False
+
+
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    """
+    parse non-zeroing XOR instruction from the given instruction.
+    ignore expected non-zeroing XORs, e.g. security cookies.
+    """
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2 = fhi.ctx.be2
+
+    instruction = be2.instruction[ii.instruction_index]
+    mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    mnemonic_name = mnemonic.name.lower()
+    if mnemonic_name not in (
+        "xor",
+        "xorpd",
+        "xorps",
+        "pxor",  # x86 / amd64
+        "eor",  # arm / aarch64
+    ):
+        return
+
+    operands = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+
+    # check whether operands are same for x86 / amd64
+    if mnemonic_name in ("xor", "xorpd", "xorps", "pxor"):
+        if operands[0] == operands[1]:
+            return
+        if is_security_cookie(fhi, bbh.inner, instruction):
+            return
+
+    # check whether 2nd/3rd operands are same for arm / aarch64
+    if mnemonic_name == "eor":
+        assert len(operands) == 3
+        if operands[1] == operands[2]:
+            return
+
+    yield Characteristic("nzxor"), ih.address
 
 
 def extract_insn_mnemonic_features(
