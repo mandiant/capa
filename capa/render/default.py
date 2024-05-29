@@ -165,7 +165,7 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
     example::
 
         +--------------------------+-----------------------------------------------------------+
-        | MAEC Schema              | MAEC Value                                                |
+        | MAEC Category            | MAEC Value                                                |
         |--------------------------+-----------------------------------------------------------|
         | analysis-conclusion      | malicious                                                 |
         |--------------------------+-----------------------------------------------------------|
@@ -175,25 +175,12 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
         |                          | launcher                                                  |
         +--------------------------+-----------------------------------------------------------+
     """
-    maec_schema: dict[str, set[str]] = {
-        "analysis-conclusion": set(),
-        "analysis-conclusion-ov": set(),
-        "malware-family": set(),
-        "malware-category": set(),
-        "malware-category-ov": set(),
-    }
-
+    maec_schema = collections.defaultdict(set)
     for rule in rutils.maec_rules(doc):
-        if rule.meta.maec.analysis_conclusion:
-            maec_schema["analysis-conclusion"].add(rule.meta.maec.analysis_conclusion)
-        if rule.meta.maec.analysis_conclusion_ov:
-            maec_schema["analysis-conclusion-ov"].add(rule.meta.maec.analysis_conclusion_ov)
-        if rule.meta.maec.malware_family:
-            maec_schema["malware-family"].add(rule.meta.maec.malware_family)
-        if rule.meta.maec.malware_category:
-            maec_schema["malware-category"].add(rule.meta.maec.malware_category)
-        if rule.meta.maec.malware_category_ov:
-            maec_schema["malware-category-ov"].add(rule.meta.maec.malware_category_ov)
+        for category, value in rule.meta.maec:
+            if value:
+                maec_category = rule.meta.maec.__fields__[str(category)].alias
+                maec_schema[maec_category].add(value)
 
     rows = []
     for schema, values in maec_schema.items():
@@ -204,7 +191,7 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
         ostream.write(
             tabulate.tabulate(
                 rows,
-                headers=[width("MAEC Schema", 25), width("MAEC Value", 75)],
+                headers=[width("MAEC Category", 25), width("MAEC Value", 75)],
                 tablefmt="mixed_grid",
             )
         )
