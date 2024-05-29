@@ -107,7 +107,7 @@ jobs:
     name: Binary Ninja tests for ${{ matrix.python-version }}
     env:
       BN_SERIAL: ${{ secrets.BN_SERIAL }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [tests]
     strategy:
       fail-fast: false
