@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def extract_file_export_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(capa.features.extractors.common.MATCH_PE):
-        pe: PE = pefile.PE(data=buf)
+        pe: pefile.PE = pefile.PE(data=buf)
         yield from capa.features.extractors.pefile.extract_file_export_names(pe)
     elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
         elf: ELFFile = ELFFile(io.BytesIO(buf))
@@ -36,7 +36,7 @@ def extract_file_export_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Fe
 
 def extract_file_import_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(capa.features.extractors.common.MATCH_PE):
-        pe: PE = pefile.PE(data=buf)
+        pe: pefile.PE = pefile.PE(data=buf)
         yield from capa.features.extractors.pefile.extract_file_import_names(pe)
     elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
         elf: ELFFile = ELFFile(io.BytesIO(buf))
@@ -47,7 +47,7 @@ def extract_file_import_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Fe
 
 def extract_file_section_names(_be2: BinExport2, buf: bytes) -> Iterator[Tuple[Feature, Address]]:
     if buf.startswith(capa.features.extractors.common.MATCH_PE):
-        pe: PE = pefile.PE(data=buf)
+        pe: pefile.PE = pefile.PE(data=buf)
         yield from capa.features.extractors.pefile.extract_file_section_names(pe)
     elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
         elf: ELFFile = ELFFile(io.BytesIO(buf))
