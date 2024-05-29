@@ -6,7 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
@@ -21,10 +21,10 @@ def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[F
 
     idx = fhi.ctx.idx
 
-    basic_block_index = bbi.basic_block_index
-    target_edges = idx.target_edges_by_basic_block_index[basic_block_index]
+    basic_block_index: int = bbi.basic_block_index
+    target_edges: List[BinExport2.FlowGraph.Edge] = idx.target_edges_by_basic_block_index[basic_block_index]
     if basic_block_index in (e.source_basic_block_index for e in target_edges):
-        basic_block_address = idx.get_basic_block_address(basic_block_index)
+        basic_block_address: int = idx.get_basic_block_address(basic_block_index)
         yield Characteristic("tight loop"), AbsoluteVirtualAddress(basic_block_address)
 
 
