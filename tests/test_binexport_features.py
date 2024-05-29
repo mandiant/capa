@@ -31,31 +31,66 @@ from capa.features.common import (
 FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
     [
         # file/string
-        ("687e79.be2", "file", capa.features.common.String("AppDataService start"), True),
+        (
+            "687e79.be2",
+            "file",
+            capa.features.common.String("AppDataService start"),
+            True,
+        ),
         ("687e79.be2", "file", capa.features.common.String("nope"), False),
         # file/sections
         ("687e79.be2", "file", capa.features.file.Section(".text"), True),
         ("687e79.be2", "file", capa.features.file.Section(".nope"), False),
         # file/exports
-        ("687e79.be2", "file", capa.features.file.Export("android::clearDir"), "xfail: not implemented yet?!"),
+        (
+            "687e79.be2",
+            "file",
+            capa.features.file.Export("android::clearDir"),
+            "xfail: not implemented yet?!",
+        ),
         ("687e79.be2", "file", capa.features.file.Export("nope"), False),
         # file/imports
         ("687e79.be2", "file", capa.features.file.Import("fopen"), True),
         ("687e79.be2", "file", capa.features.file.Import("exit"), True),
-        ("687e79.be2", "file", capa.features.file.Import("_ZN7android10IInterfaceD0Ev"), True),
+        (
+            "687e79.be2",
+            "file",
+            capa.features.file.Import("_ZN7android10IInterfaceD0Ev"),
+            True,
+        ),
         ("687e79.be2", "file", capa.features.file.Import("nope"), False),
         # function/characteristic(loop)
         (
             "687e79.be2",
             "function=0x1056c0",
             capa.features.common.Characteristic("loop"),
-            True,
-        ),  # TODO(mr): https://github.com/mandiant/capa/issues/1755
-        ("687e79.be2", "function=0x1075c0", capa.features.common.Characteristic("loop"), False),
+            "xfail: not implemented yet",
+        ),  # TODO(mr): https://github.com/mandiant/capa/issues/2101
+        (
+            "687e79.be2",
+            "function=0x1075c0",
+            capa.features.common.Characteristic("loop"),
+            False,
+        ),
         # bb/characteristic(tight loop)
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("tight loop"), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0", capa.features.common.Characteristic("tight loop"), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x1075c0", capa.features.common.Characteristic("tight loop"), False),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("tight loop"),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.common.Characteristic("tight loop"),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x1075c0",
+            capa.features.common.Characteristic("tight loop"),
+            False,
+        ),
         # bb/characteristic(stack string)
         (
             "687e79.be2",
@@ -89,10 +124,30 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "function=0x107588", capa.features.insn.Mnemonic("in"), False),
         ("687e79.be2", "function=0x107588", capa.features.insn.Mnemonic("adrl"), False),
         # insn/operand.number
-        ("687e79.be2", "function=0x105128,bb=0x1051e4", capa.features.insn.OperandNumber(1, 0xFFFFFFFF), True),
-        ("687e79.be2", "function=0x107588,bb=0x107588", capa.features.insn.OperandNumber(1, 0x8), True),
-        ("687e79.be2", "function=0x107588,bb=0x107588,insn=0x1075a4", capa.features.insn.OperandNumber(1, 0x8), True),
-        ("687e79.be2", "function=0x107588,bb=0x107588", capa.features.insn.OperandNumber(3, 0x10), True),
+        (
+            "687e79.be2",
+            "function=0x105128,bb=0x1051e4",
+            capa.features.insn.OperandNumber(1, 0xFFFFFFFF),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x107588,bb=0x107588",
+            capa.features.insn.OperandNumber(1, 0x8),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x107588,bb=0x107588,insn=0x1075a4",
+            capa.features.insn.OperandNumber(1, 0x8),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x107588,bb=0x107588,insn=0x1075b8",
+            capa.features.insn.OperandNumber(3, 0x10),
+            "xfail: GSM?",
+        ),  # TODO(mr): https://github.com/mandiant/capa/issues/2102
         # insn/operand.offset
         (
             "687e79.be2",
@@ -108,7 +163,12 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ),
         # insn/number
         ("687e79.be2", "function=0x107588", capa.features.insn.Number(0x3), True),
-        ("687e79.be2", "function=0x107588", capa.features.insn.Number(0x10), "xfail: do we want this for ldp?"),
+        (
+            "687e79.be2",
+            "function=0x107588",
+            capa.features.insn.Number(0x10),
+            "xfail: do we want this for ldp?",
+        ),
         ("687e79.be2", "function=0x105C88", capa.features.insn.Number(0xF000), True),
         # insn/number: negative
         (
@@ -123,14 +183,44 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             capa.features.insn.Number(0xFFFFFFFFFFFFFFFF),
             "xfail: not implemented yet",
         ),
-        ("687e79.be2", "function=0x1066e0,bb=0x1068c4", capa.features.insn.Number(0xFFFFFFFF), True),
+        (
+            "687e79.be2",
+            "function=0x1066e0,bb=0x1068c4",
+            capa.features.insn.Number(0xFFFFFFFF),
+            True,
+        ),
         # insn/offset
-        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0x0), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0x4), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0", capa.features.insn.Offset(0xC), "xfail: not implemented yet"),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.insn.Offset(0x0),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.insn.Offset(0x4),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.insn.Offset(0xC),
+            "xfail: not implemented yet",
+        ),
         # insn/offset: negative
-        ("687e79.be2", "function=0x0", capa.features.insn.Offset(-0x1), "xfail: not implemented yet"),
-        ("687e79.be2", "function=0x0", capa.features.insn.Offset(-0x2), "xfail: not implemented yet"),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.insn.Offset(-0x1),
+            "xfail: not implemented yet",
+        ),
+        (
+            "687e79.be2",
+            "function=0x0",
+            capa.features.insn.Offset(-0x2),
+            "xfail: not implemented yet",
+        ),
         # insn/offset from mnemonic: add
         #
         # should not be considered, too big for an offset:
@@ -159,14 +249,44 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ("687e79.be2", "function=0x105c88", capa.features.insn.API("memset"), True),
         ("687e79.be2", "function=0x105c88", capa.features.insn.API("Nope"), False),
         # insn/string
-        ("687e79.be2", "function=0x107588", capa.features.common.String("AppDataService start"), True),
-        ("687e79.be2", "function=0x1075c0", capa.features.common.String("AppDataService"), True),
+        (
+            "687e79.be2",
+            "function=0x107588",
+            capa.features.common.String("AppDataService start"),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x1075c0",
+            capa.features.common.String("AppDataService"),
+            True,
+        ),
         ("687e79.be2", "function=0x107588", capa.features.common.String("nope"), False),
-        ("687e79.be2", "function=0x106d58", capa.features.common.String("/data/misc/wpa_supplicant.conf"), True),
+        (
+            "687e79.be2",
+            "function=0x106d58",
+            capa.features.common.String("/data/misc/wifi/wpa_supplicant.conf"),
+            True,
+        ),
         # insn/regex
-        ("687e79.be2", "function=0x105c88", capa.features.common.Regex("innerRename"), True),
-        ("687e79.be2", "function=0x106d58", capa.features.common.Regex("/data/misc"), True),
-        ("687e79.be2", "function=0x106d58", capa.features.common.Substring("/data/misc"), True),
+        (
+            "687e79.be2",
+            "function=0x105c88",
+            capa.features.common.Regex("innerRename"),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x106d58",
+            capa.features.common.Regex("/data/misc"),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x106d58",
+            capa.features.common.Substring("/data/misc"),
+            True,
+        ),
         # # insn/string, pointer to string
         # ("mimikatz", "function=0x44EDEF", capa.features.common.String("INPUTEVENT"), True),
         # # insn/string, direct memory reference
@@ -213,8 +333,18 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         # # insn/characteristic(cross section flow): imports don't count
         # ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("cross section flow"), False),
         # insn/characteristic(recursive call)
-        ("687e79.be2", "function=0x105b38", capa.features.common.Characteristic("recursive call"), True),
-        ("687e79.be2", "function=0x106530", capa.features.common.Characteristic("recursive call"), True),
+        (
+            "687e79.be2",
+            "function=0x105b38",
+            capa.features.common.Characteristic("recursive call"),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x106530",
+            capa.features.common.Characteristic("recursive call"),
+            True,
+        ),
         # insn/characteristic(indirect call)
         (
             "687e79.be2",
@@ -229,10 +359,25 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "xfail: not implemented yet",
         ),
         # insn/characteristic(calls from)
-        ("687e79.be2", "function=0x105080", capa.features.common.Characteristic("calls from"), True),
-        ("687e79.be2", "function=0x1070e8", capa.features.common.Characteristic("calls from"), False),
+        (
+            "687e79.be2",
+            "function=0x105080",
+            capa.features.common.Characteristic("calls from"),
+            True,
+        ),
+        (
+            "687e79.be2",
+            "function=0x1070e8",
+            capa.features.common.Characteristic("calls from"),
+            False,
+        ),
         # function/characteristic(calls to)
-        ("687e79.be2", "function=0x1075c0", capa.features.common.Characteristic("calls to"), True),
+        (
+            "687e79.be2",
+            "function=0x1075c0",
+            capa.features.common.Characteristic("calls to"),
+            True,
+        ),
         # file/function-name
         (
             "687e79.be2",
