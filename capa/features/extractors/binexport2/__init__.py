@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_binexport2(sample: Path) -> BinExport2:
-    be2 = BinExport2()
+    be2: BinExport2 = BinExport2()
     be2.ParseFromString(sample.read_bytes())
     return be2
 
@@ -54,15 +54,15 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
     searches in the same directory as the BinExport2 file, and then in search_paths.
     """
 
-    def filename_similarity_key(p: Path):
+    def filename_similarity_key(p: Path) -> Tuple[int, str]:
         # note closure over input_file.
         # sort first by length of common prefix, then by name (for stability)
         return (compute_common_prefix_length(p.name, input_file.name), p.name)
 
-    wanted_sha256 = be2.meta_information.executable_id.lower()
+    wanted_sha256: str = be2.meta_information.executable_id.lower()
 
-    input_directory = input_file.parent
-    siblings = [p for p in input_directory.iterdir() if p.is_file()]
+    input_directory: Path = input_file.parent
+    siblings: List[Path] = [p for p in input_directory.iterdir() if p.is_file()]
     siblings.sort(key=filename_similarity_key, reverse=True)
     for sibling in siblings:
         # e.g. with open IDA files in the same directory on Windows
@@ -71,7 +71,7 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
                 return sibling
 
     for search_path in search_paths:
-        candidates = [p for p in search_path.iterdir() if p.is_file()]
+        candidates: List[Path] = [p for p in search_path.iterdir() if p.is_file()]
         candidates.sort(key=filename_similarity_key, reverse=True)
         for candidate in candidates:
             with contextlib.suppress(PermissionError):
@@ -83,7 +83,7 @@ def get_sample_from_binexport2(input_file: Path, be2: BinExport2, search_paths: 
 
 class BinExport2Index:
     def __init__(self, be2: BinExport2):
-        self.be2 = be2
+        self.be2: BinExport2 = be2
 
         self.callers_by_vertex_index: Dict[int, List[int]] = defaultdict(list)
         self.callees_by_vertex_index: Dict[int, List[int]] = defaultdict(list)
@@ -119,9 +119,8 @@ class BinExport2Index:
         return self.insn_address_by_index[insn_index]
 
     def get_basic_block_address(self, basic_block_index: int) -> int:
-        basic_block = self.be2.basic_block[basic_block_index]
-        first_instruction_index = next(self.instruction_indices(basic_block))
-
+        basic_block: BinExport2.BasicBlock = self.be2.basic_block[basic_block_index]
+        first_instruction_index: int = next(self.instruction_indices(basic_block))
         return self.get_insn_address(first_instruction_index)
 
     def _index_vertex_edges(self):
@@ -136,7 +135,7 @@ class BinExport2Index:
 
     def _index_flow_graph_nodes(self):
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
-            function_address = self.get_basic_block_address(flow_graph.entry_basic_block_index)
+            function_address: int = self.get_basic_block_address(flow_graph.entry_basic_block_index)
             self.flow_graph_index_by_address[function_address] = flow_graph_index
             self.flow_graph_address_by_index[flow_graph_index] = function_address
 
@@ -154,7 +153,7 @@ class BinExport2Index:
             if not vertex.HasField("address"):
                 continue
 
-            vertex_address = vertex.address
+            vertex_address: int = vertex.address
             self.vertex_index_by_address[vertex_address] = vertex_index
 
     def _index_data_references(self):
@@ -177,8 +176,8 @@ class BinExport2Index:
 
         assert self.be2.instruction[0].HasField("address"), "first insn must have explicit address"
 
-        addr = 0
-        next_addr = 0
+        addr: int = 0
+        next_addr: int = 0
         for idx, insn in enumerate(self.be2.instruction):
             if insn.HasField("address"):
                 addr = insn.address
@@ -208,14 +207,14 @@ class BinExport2Index:
         the instruction instances, and their addresses.
         """
         for instruction_index in self.instruction_indices(basic_block):
-            instruction = self.be2.instruction[instruction_index]
-            instruction_address = self.get_insn_address(instruction_index)
+            instruction: BinExport2.Instruction = self.be2.instruction[instruction_index]
+            instruction_address: int = self.get_insn_address(instruction_index)
 
             yield instruction_index, instruction, instruction_address
 
     def get_function_name_by_vertex(self, vertex_index: int) -> str:
-        vertex = self.be2.call_graph.vertex[vertex_index]
-        name = f"sub_{vertex.address:x}"
+        vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[vertex_index]
+        name: str = f"sub_{vertex.address:x}"
         if vertex.HasField("mangled_name"):
             name = vertex.mangled_name
 
@@ -223,7 +222,7 @@ class BinExport2Index:
             name = vertex.demangled_name
 
         if vertex.HasField("library_index"):
-            library = self.be2.library[vertex.library_index]
+            library: BinExport2.Library = self.be2.library[vertex.library_index]
             if library.HasField("name"):
                 name = f"{library.name}!{name}"
 
@@ -233,15 +232,15 @@ class BinExport2Index:
         if address not in self.vertex_index_by_address:
             return ""
 
-        vertex_index = self.vertex_index_by_address[address]
+        vertex_index: int = self.vertex_index_by_address[address]
         return self.get_function_name_by_vertex(vertex_index)
 
 
 class BinExport2Analysis:
     def __init__(self, be2: BinExport2, idx: BinExport2Index, buf: bytes):
-        self.be2 = be2
-        self.idx = idx
-        self.buf = buf
+        self.be2: BinExport2 = be2
+        self.idx: BinExport2Index = idx
+        self.buf: bytes = buf
         self.base_address: int = 0
         self.thunks: Dict[int, int] = {}
 
@@ -249,7 +248,9 @@ class BinExport2Analysis:
         self._compute_thunks()
 
     def _find_base_address(self):
-        sections_with_perms = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, self.be2.section)
+        sections_with_perms: Iterator[BinExport2.Section] = filter(
+            lambda s: s.flag_r or s.flag_w or s.flag_x, self.be2.section
+        )
         # assume the lowest address is the base address.
         # this works as long as BinExport doesn't record other
         # libraries mapped into memory.
@@ -259,15 +260,15 @@ class BinExport2Analysis:
 
     def _compute_thunks(self):
         for addr, idx in self.idx.vertex_index_by_address.items():
-            vertex = self.be2.call_graph.vertex[idx]
+            vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[idx]
             if not capa.features.extractors.binexport2.helpers.is_vertex_type(
                 vertex, BinExport2.CallGraph.Vertex.Type.THUNK
             ):
                 continue
 
-            curr_idx = idx
+            curr_idx: int = idx
             for _ in range(capa.features.common.THUNK_CHAIN_DEPTH_DELTA):
-                thunk_callees = self.idx.callees_by_vertex_index[curr_idx]
+                thunk_callees: List[int] = self.idx.callees_by_vertex_index[curr_idx]
                 # if this doesn't hold, then it doesn't seem like this is a thunk,
                 # because either, len is:
                 #    0 and the thunk doesn't point to anything, or
@@ -280,8 +281,8 @@ class BinExport2Analysis:
 
                 assert len(thunk_callees) == 1
 
-                thunked_idx = thunk_callees[0]
-                thunked_vertex = self.be2.call_graph.vertex[thunked_idx]
+                thunked_idx: int = thunk_callees[0]
+                thunked_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[thunked_idx]
 
                 if not capa.features.extractors.binexport2.helpers.is_vertex_type(
                     thunked_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
@@ -321,21 +322,21 @@ class AddressSpace:
     memory_regions: Tuple[MemoryRegion, ...]
 
     def read_memory(self, address: int, length: int) -> bytes:
-        rva = address - self.base_address
+        rva: int = address - self.base_address
         for region in self.memory_regions:
             if region.contains(rva):
-                offset = rva - region.address
+                offset: int = rva - region.address
                 return region.buf[offset : offset + length]
 
         raise AddressNotMappedError(address)
 
     @classmethod
     def from_pe(cls, pe: PE, base_address: int):
-        regions = []
+        regions: List[MemoryRegion] = []
         for section in pe.sections:
-            address = section.VirtualAddress
-            size = section.Misc_VirtualSize
-            buf = section.get_data()
+            address: int = section.VirtualAddress
+            size: int = section.Misc_VirtualSize
+            buf: bytes = section.get_data()
 
             if len(buf) != size:
                 # pad the section with NULLs
@@ -349,16 +350,16 @@ class AddressSpace:
 
     @classmethod
     def from_elf(cls, elf: ELFFile, base_address: int):
-        regions = []
+        regions: List[MemoryRegion] = []
 
         # ELF segments are for runtime data,
         # ELF sections are for link-time data.
         for segment in elf.iter_segments():
             # assume p_align is consistent with addresses here.
             # otherwise, should harden this loader.
-            segment_rva = segment.header.p_vaddr
-            segment_size = segment.header.p_memsz
-            segment_data = segment.data()
+            segment_rva: int = segment.header.p_vaddr
+            segment_size: int = segment.header.p_memsz
+            segment_data: bytes = segment.data()
 
             if len(segment_data) < segment_size:
                 # pad the section with NULLs
@@ -373,10 +374,10 @@ class AddressSpace:
     @classmethod
     def from_buf(cls, buf: bytes, base_address: int):
         if buf.startswith(capa.features.extractors.common.MATCH_PE):
-            pe = PE(data=buf)
+            pe: PE = PE(data=buf)
             return cls.from_pe(pe, base_address)
         elif buf.startswith(capa.features.extractors.common.MATCH_ELF):
-            elf = ELFFile(io.BytesIO(buf))
+            elf: ELFFile = ELFFile(io.BytesIO(buf))
             return cls.from_elf(elf, base_address)
         else:
             raise NotImplementedError("file format address space")
