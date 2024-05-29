@@ -13,6 +13,7 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.basicblock import BasicBlock
 from capa.features.extractors.binexport2 import FunctionContext, BasicBlockContext
 from capa.features.extractors.base_extractor import BBHandle, FunctionHandle
+from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
 
 
 def extract_bb_tight_loop(fh: FunctionHandle, bbh: BBHandle) -> Iterator[Tuple[Feature, Address]]:
