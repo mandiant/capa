@@ -179,13 +179,13 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
     for rule in rutils.maec_rules(doc):
         for category, value in rule.meta.maec:
             if value:
-                maec_category = rule.meta.maec.__fields__[str(category)].alias
+                maec_category = str(rule.meta.maec.__fields__[str(category)].alias)
                 maec_schema[maec_category].add(value)
 
     rows = []
-    for schema, values in maec_schema.items():
+    for category, values in maec_schema.items():
         if values:
-            rows.append((rutils.bold(schema), "\n".join(sorted(values))))
+            rows.append((rutils.bold(category), "\n".join(sorted(values))))
 
     if rows:
         ostream.write(
