@@ -18,6 +18,7 @@ from capa.engine import MatchResults
 from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
+MIN_LIBFUNCS_COUNT = 5
 
 
 def width(s: str, character_count: int) -> str:
@@ -29,6 +30,15 @@ def width(s: str, character_count: int) -> str:
 
 
 def render_meta(doc: rd.ResultDocument, ostream: StringIO):
+    # check if analysis is Static analysis to inform users about
+    # potential false postive due to low number of library functions
+    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
+        n_libs: int = len(doc.meta.analysis.library_functions)
+        if n_libs <= MIN_LIBFUNCS_COUNT:
+            ostream.write(
+                "Few library functions recognized by FLIRT signatures, results may contain false positives\n\n"
+            )
+
     rows = [
         (width("md5", 22), width(doc.meta.sample.md5, 82)),
         ("sha1", doc.meta.sample.sha1),

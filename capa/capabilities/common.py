@@ -52,8 +52,7 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
             logger.warning(" %s", line)
         logger.warning(" Identified via rule: %s", file_limitation_rule.name)
         if is_standalone:
-            logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
+            pass
         logger.warning("-" * 80)
 
         # bail on first file limitation

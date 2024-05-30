@@ -75,7 +75,7 @@ from capa.features.common import (
     FORMAT_RESULT,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import FeatureExtractor, DynamicFeatureExtractor
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -666,16 +666,9 @@ def find_file_limitations_from_cli(args, rules: RuleSet, file_extractors: List[F
         except (ELFError, OverflowError) as e:
             logger.error("Input file '%s' is not a valid ELF file: %s", args.input_file, str(e))
             raise ShouldExitError(E_CORRUPT_FILE) from e
-
         # file limitations that rely on non-file scope won't be detected here.
         # nor on FunctionName features, because pefile doesn't support this.
         found_file_limitation = has_file_limitation(rules, pure_file_capabilities)
-        if found_file_limitation:
-            # bail if capa encountered file limitation e.g. a packed binary
-            # do show the output in verbose mode, though.
-            if not (args.verbose or args.vverbose or args.json):
-                logger.debug("file limitation short circuit, won't analyze fully.")
-                raise ShouldExitError(E_FILE_LIMITATION)
     return found_file_limitation
 
 
@@ -804,7 +797,7 @@ def main(argv: Optional[List[str]] = None):
         input_format = get_input_format_from_cli(args)
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
-        found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+        _ = find_file_limitations_from_cli(args, rules, file_extractors)
     except ShouldExitError as e:
         return e.status_code
 
@@ -836,12 +829,6 @@ def main(argv: Optional[List[str]] = None):
 
         meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
         meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
-
-        if isinstance(extractor, StaticFeatureExtractor) and found_file_limitation:
-            # bail if capa's static feature extractor encountered file limitation e.g. a packed binary
-            # do show the output in verbose mode, though.
-            if not (args.verbose or args.vverbose or args.json):
-                return E_FILE_LIMITATION
 
     if args.json:
         print(capa.render.json.render(meta, rules, capabilities))

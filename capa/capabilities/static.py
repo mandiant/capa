@@ -21,6 +21,7 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
+from capa.features.insn import API
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -118,6 +119,9 @@ def find_code_capabilities(
         features, bmatches, imatches = find_basic_block_capabilities(ruleset, extractor, fh, bb)
         for feature, vas in features.items():
             function_features[feature].update(vas)
+            if isinstance(feature, API):
+                # delcare a global variable (a set) and append to it here?
+                pass
 
         for rule_name, res in bmatches.items():
             bb_matches[rule_name].extend(res)
