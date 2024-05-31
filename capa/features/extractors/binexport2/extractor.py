@@ -34,6 +34,7 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +42,12 @@ logger = logging.getLogger(__name__)
 class BinExport2FeatureExtractor(StaticFeatureExtractor):
     def __init__(self, be2: BinExport2, buf: bytes):
         super().__init__(hashes=SampleHashes.from_bytes(buf))
-        self.be2 = be2
-        self.buf = buf
-        self.idx = BinExport2Index(self.be2)
-        self.analysis = BinExport2Analysis(self.be2, self.idx, self.buf)
-        address_space = AddressSpace.from_buf(buf, self.analysis.base_address)
-        self.ctx = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
+        self.be2: BinExport2 = be2
+        self.buf: bytes = buf
+        self.idx: BinExport2Index = BinExport2Index(self.be2)
+        self.analysis: BinExport2Analysis = BinExport2Analysis(self.be2, self.idx, self.buf)
+        address_space: AddressSpace = AddressSpace.from_buf(buf, self.analysis.base_address)
+        self.ctx: AnalysisContext = AnalysisContext(self.buf, self.be2, self.idx, self.analysis, address_space)
 
         self.global_features: List[Tuple[Feature, Address]] = []
         self.global_features.extend(list(capa.features.extractors.common.extract_format(self.buf)))
@@ -57,27 +58,25 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
         # and gradually relax restrictions as they're tested.
         # https://github.com/mandiant/capa/issues/1755
 
-    def get_base_address(self):
+    def get_base_address(self) -> AbsoluteVirtualAddress:
         return AbsoluteVirtualAddress(self.analysis.base_address)
 
-    def extract_global_features(self):
+    def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
-    def extract_file_features(self):
+    def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.file.extract_features(self.be2, self.buf)
 
     def get_functions(self) -> Iterator[FunctionHandle]:
         for flow_graph_index, flow_graph in enumerate(self.be2.flow_graph):
-            entry_basic_block_index = flow_graph.entry_basic_block_index
-            flow_graph_address = self.idx.get_basic_block_address(entry_basic_block_index)
+            entry_basic_block_index: int = flow_graph.entry_basic_block_index
+            flow_graph_address: int = self.idx.get_basic_block_address(entry_basic_block_index)
 
-            vertex_idx = self.idx.vertex_index_by_address[flow_graph_address]
-            be2_vertex = self.be2.call_graph.vertex[vertex_idx]
+            vertex_idx: int = self.idx.vertex_index_by_address[flow_graph_address]
+            be2_vertex: CallGraph.Vertex = self.be2.call_graph.vertex[vertex_idx]
 
             # skip thunks
-            if capa.features.extractors.binexport2.helpers.is_vertex_type(
-                be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
-            ):
+            if capa.features.extractors.binexport2.helpers.is_vertex_type(be2_vertex, CallGraph.Vertex.Type.THUNK):
                 continue
 
             yield FunctionHandle(
@@ -90,11 +89,11 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
 
     def get_basic_blocks(self, fh: FunctionHandle) -> Iterator[BBHandle]:
         fhi: FunctionContext = fh.inner
-        flow_graph_index = fhi.flow_graph_index
-        flow_graph = self.be2.flow_graph[flow_graph_index]
+        flow_graph_index: int = fhi.flow_graph_index
+        flow_graph: BinExport2.FlowGraph = self.be2.flow_graph[flow_graph_index]
 
         for basic_block_index in flow_graph.basic_block_index:
-            basic_block_address = self.idx.get_basic_block_address(basic_block_index)
+            basic_block_address: int = self.idx.get_basic_block_address(basic_block_index)
             yield BBHandle(
                 address=AbsoluteVirtualAddress(basic_block_address),
                 inner=BasicBlockContext(basic_block_index),
@@ -112,5 +111,7 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
                 inner=InstructionContext(instruction_index),
             )
 
-    def extract_insn_features(self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle):
+    def extract_insn_features(
+        self, fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.binexport2.insn.extract_features(fh, bbh, ih)
