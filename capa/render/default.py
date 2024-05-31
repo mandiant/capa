@@ -176,24 +176,24 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
         +--------------------------+-----------------------------------------------------------+
     """
     maec_categories = {
-        "analysis_conclusion": "analysis-conclusion",
-        "analysis_conclusion_ov": "analysis-conclusion-ov",
-        "malware_family": "malware-family",
-        "malware_category": "malware-category",
-        "malware_category_ov": "malware-category-ov",
+        "analysis_conclusion",
+        "analysis_conclusion_ov",
+        "malware_family",
+        "malware_category",
+        "malware_category_ov",
     }
     maec_table = collections.defaultdict(set)
     for rule in rutils.maec_rules(doc):
-        for category in maec_categories.keys():
-            value = getattr(rule.meta.maec, category, None)
-            if value:
-                maec_category = maec_categories[category]
-                maec_table[maec_category].add(value)
+        for maec_category in maec_categories:
+            maec_value = getattr(rule.meta.maec, maec_category, None)
+            if maec_value:
+                maec_table[maec_category].add(maec_value)
 
     rows = []
-    for category, values in sorted(maec_table.items()):
+    for category in sorted(maec_categories):
+        values = maec_table[category]
         if values:
-            rows.append((rutils.bold(category), "\n".join(sorted(values))))
+            rows.append((rutils.bold(category.replace("_", "-")), "\n".join(sorted(values))))
 
     if rows:
         ostream.write(
