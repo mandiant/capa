@@ -42,6 +42,7 @@
 - ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
 - ci: update binja version to stable 4.0 #2016 @xusheng6
 - ci: update github workflows to reflect the latest ghidrathon installation and bumped up jep, ghidra versions  #2020 @psahithireddy
+- add deptry support #1497 @s-ff
 
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
