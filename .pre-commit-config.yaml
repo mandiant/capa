@@ -127,3 +127,13 @@ repos:
         -   "--ignore=tests/test_scripts.py"
         always_run: true
         pass_filenames: false
+
+-   repo: local
+    hooks:
+    -   id: deptry
+        name: deptry
+        stages: [push, manual]
+        language: system
+        entry: deptry .
+        always_run: true
+        pass_filenames: false
