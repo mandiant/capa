@@ -5,8 +5,8 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 
-def is_vertex_type(vertex: BinExport2.CallGraph.Vertex, type_: BinExport2.CallGraph.Vertex.Type.ValueType) -> bool:
+def is_vertex_type(vertex: CallGraph.Vertex, type_: CallGraph.Vertex.Type.ValueType) -> bool:
     return vertex.HasField("type") and vertex.type == type_
