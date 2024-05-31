@@ -48,8 +48,9 @@ dependencies = [
     "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.7.1",
+    "rich==13.4.2",
+    "humanize==4.9.0",
     "protobuf==5.27.0",
-    "rich==13.4.2"
 ]
 dynamic = ["version"]
 
@@ -95,11 +96,83 @@ dev = [
     "types-psutil==5.8.23",
     "types_requests==2.32.0.20240523",
     "types-protobuf==5.26.0.20240422",
+    "deptry==0.14"
 ]
 build = [
     "pyinstaller==6.7.0",
     "setuptools==69.5.1",
     "build==1.2.1"
+]
+
+[tool.deptry]
+extend_exclude = [
+    "sigs",
+    "tests"
+]
+
+# dependencies marked as first party, to inform deptry that they are local
+known_first_party = [
+    "backports",
+    "binaryninja",
+    "flirt",
+    "ghidra",
+    "ida_bytes",
+    "ida_entry",
+    "ida_funcs",
+    "ida_kernwin",
+    "ida_loader",
+    "ida_nalt",
+    "ida_segment",
+    "idaapi",
+    "idautils",
+    "idc",
+    "java",
+    "netnode",
+    "PyQt5"
+]
+
+[tool.deptry.per_rule_ignores]
+# dependencies defined but not used in the codebase
+DEP002 = [
+    "black",
+    "build",
+    "deptry",
+    "flake8",
+    "flake8-bugbear",
+    "flake8-comprehensions",
+    "flake8-copyright",
+    "flake8-encodings",
+    "flake8-logging-format",
+    "flake8-no-implicit-concat",
+    "flake8-print",
+    "flake8-simplify",
+    "flake8-todos",
+    "flake8-use-pathlib",
+    "isort",
+    "mypy",
+    "mypy-protobuf",
+    "pre-commit",
+    "pyinstaller",
+    "pytest",
+    "pytest-cov",
+    "pytest-instafail",
+    "pytest-sugar",
+    "ruff",
+    "setuptools",
+    "types-backports",
+    "types-colorama",
+    "types-protobuf",
+    "types-psutil",
+    "types-PyYAML",
+    "types-tabulate",
+    "types-termcolor",
+    "types_requests",
+    "wcwidth"
+]
+
+# dependencies imported but missing from definitions
+DEP003 = [
+    "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
 
 [project.urls]
