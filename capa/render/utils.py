@@ -67,8 +67,8 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
 
 
 def maec_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
-    """enumerate the rules in (namespace, name) order that are 'maec' rules."""
-    for _, _, rule in sort_rules(doc.rules):
+    """enumerate 'maec' rules."""
+    for rule in doc.rules.values():
         if any(
             [
                 rule.meta.maec.analysis_conclusion,
