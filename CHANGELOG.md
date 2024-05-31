@@ -12,7 +12,7 @@
 ### Breaking Changes
 
 
-### New Rules (8)
+### New Rules (12)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -22,6 +22,10 @@
 - nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 - data-manipulation/encryption/rc4/encrypt-data-using-rc4-via-systemfunction033 daniel.stepanic@elastic.co
 - anti-analysis/anti-forensic/self-deletion/self-delete-using-alternate-data-streams daniel.stepanic@elastic.co
+- nursery/change-memory-permission-on-linux mehunhoff@google.com
+- nursery/check-file-permission-on-linux mehunhoff@google.com
+- nursery/check-if-process-is-running-under-android-emulator-on-android mehunhoff@google.com
+- nursery/map-or-unmap-memory-on-linux mehunhoff@google.com
 -
 
 ### Bug Fixes
