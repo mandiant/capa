@@ -8,11 +8,12 @@
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 - optimize rule matching #2080 @williballenthin
+- replace Halo spinner with Rich #2086 @s-ff
 
 ### Breaking Changes
 
 
-### New Rules (8)
+### New Rules (12)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -22,6 +23,10 @@
 - nursery/unmount-volume-via-ioctl william.ballenthin@mandiant.com
 - data-manipulation/encryption/rc4/encrypt-data-using-rc4-via-systemfunction033 daniel.stepanic@elastic.co
 - anti-analysis/anti-forensic/self-deletion/self-delete-using-alternate-data-streams daniel.stepanic@elastic.co
+- nursery/change-memory-permission-on-linux mehunhoff@google.com
+- nursery/check-file-permission-on-linux mehunhoff@google.com
+- nursery/check-if-process-is-running-under-android-emulator-on-android mehunhoff@google.com
+- nursery/map-or-unmap-memory-on-linux mehunhoff@google.com
 -
 
 ### Bug Fixes
@@ -42,6 +47,7 @@
 - ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
 - ci: update binja version to stable 4.0 #2016 @xusheng6
 - ci: update github workflows to reflect the latest ghidrathon installation and bumped up jep, ghidra versions  #2020 @psahithireddy
+- add deptry support #1497 @s-ff
 
 ### Raw diffs
 - [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)

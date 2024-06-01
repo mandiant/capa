@@ -14,21 +14,35 @@ import capa.features.extractors.binexport2.helpers
 from capa.features.insn import API, Number, Mnemonic, OperandNumber
 from capa.features.common import Bytes, String, Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
-from capa.features.extractors.binexport2 import FunctionContext, ReadMemoryError, InstructionContext
+from capa.features.extractors.binexport2 import (
+    AddressSpace,
+    AnalysisContext,
+    BinExport2Index,
+    FunctionContext,
+    ReadMemoryError,
+    BasicBlockContext,
+    BinExport2Analysis,
+    InstructionContext,
+)
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
+from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 logger = logging.getLogger(__name__)
+
+# security cookie checks may perform non-zeroing XORs, these are expected within a certain
+# byte range within the first and returning basic blocks, this helps to reduce FP features
+SECURITY_COOKIE_BYTES_DELTA: int = 0x40
 
 
 def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle) -> Iterator[Tuple[Feature, Address]]:
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
-    be2_index = fhi.ctx.idx
-    be2_analysis = fhi.ctx.analysis
-    insn = be2.instruction[ii.instruction_index]
+    be2: BinExport2 = fhi.ctx.be2
+    be2_index: BinExport2Index = fhi.ctx.idx
+    be2_analysis: BinExport2Analysis = fhi.ctx.analysis
+    insn: BinExport2.Instruction = be2.instruction[ii.instruction_index]
 
     for addr in insn.call_target:
         addr = be2_analysis.thunks.get(addr, addr)
@@ -38,19 +52,17 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             logger.debug("0x%x is not a vertex", addr)
             continue
 
-        vertex_idx = be2_index.vertex_index_by_address[addr]
-        vertex = be2.call_graph.vertex[vertex_idx]
+        vertex_idx: int = be2_index.vertex_index_by_address[addr]
+        vertex: CallGraph.Vertex = be2.call_graph.vertex[vertex_idx]
 
-        if not capa.features.extractors.binexport2.helpers.is_vertex_type(
-            vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED
-        ):
+        if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, CallGraph.Vertex.Type.IMPORTED):
             continue
 
         if not vertex.HasField("mangled_name"):
             logger.debug("vertex %d does not have mangled_name", vertex_idx)
             continue
 
-        api_name = vertex.mangled_name
+        api_name: str = vertex.mangled_name
         yield API(api_name), ih.address
 
     """
@@ -70,7 +82,7 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
 
 def is_address_mapped(be2: BinExport2, address: int) -> bool:
     """return True if the given address is mapped"""
-    sections_with_perms = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, be2.section)
+    sections_with_perms: Iterator[BinExport2.Section] = filter(lambda s: s.flag_r or s.flag_w or s.flag_x, be2.section)
     return any(section.address <= address < section.address + section.size for section in sections_with_perms)
 
 
@@ -122,11 +134,11 @@ def extract_insn_number_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
-    analysis = fhi.ctx.analysis
+    be2: BinExport2 = fhi.ctx.be2
+    analysis: BinExport2Analysis = fhi.ctx.analysis
 
-    instruction_index = ii.instruction_index
-    instruction = be2.instruction[instruction_index]
+    instruction_index: int = ii.instruction_index
+    instruction: BinExport2.Instruction = be2.instruction[instruction_index]
 
     # x86 / amd64
     mnemonic = be2.mnemonic[instruction.mnemonic_index]
@@ -144,10 +156,12 @@ def extract_insn_number_features(
             # temporarily, we'll have to try to guess at the interpretation.
             symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
 
-            if symbol.startswith("#0x"):
+            if symbol.startswith(("#0x", "#-0x")):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "#0xffffffff"
+                # - type: SYMBOL
+                #   symbol: "#-0x1"
                 try:
                     value = int(symbol[len("#") :], 0x10)
                 except ValueError:
@@ -216,9 +230,11 @@ def extract_insn_number_features(
         if analysis.base_address == 0x0:
             # When the image is mapped at 0x0,
             #  then its hard to tell if numbers are pointers or numbers.
-            # TODO(mr): 1755 be a little less conservative otherwise?
+            # TODO(mr): be a little less conservative otherwise?
+            # https://github.com/mandiant/capa/issues/1755
 
-            # TODO(mr): 1755 this removes a lot of valid numbers, could check alignment and use additional heuristics
+            # TODO(mr): this removes a lot of valid numbers, could check alignment and use additional heuristics
+            # https://github.com/mandiant/capa/issues/1755
             # if is_address_mapped(be2, value):
             #     continue
             pass
@@ -231,12 +247,12 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    ctx = fhi.ctx
-    be2 = ctx.be2
-    idx = ctx.idx
-    address_space = ctx.address_space
+    ctx: AnalysisContext = fhi.ctx
+    be2: BinExport2 = ctx.be2
+    idx: BinExport2Index = ctx.idx
+    address_space: AddressSpace = ctx.address_space
 
-    instruction_index = ii.instruction_index
+    instruction_index: int = ii.instruction_index
 
     if instruction_index in idx.string_reference_index_by_source_instruction_index:
         # disassembler already identified string reference from instruction
@@ -246,15 +262,15 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 
     if instruction_index in idx.data_reference_index_by_source_instruction_index:
         for data_reference_index in idx.data_reference_index_by_source_instruction_index[instruction_index]:
-            data_reference = be2.data_reference[data_reference_index]
-            data_reference_address = data_reference.address
+            data_reference: BinExport2.DataReference = be2.data_reference[data_reference_index]
+            data_reference_address: int = data_reference.address
 
             reference_addresses.append(data_reference_address)
 
     for reference_address in reference_addresses:
         try:
             # if at end of segment then there might be an overrun here.
-            buf = address_space.read_memory(reference_address, 0x100)
+            buf: bytes = address_space.read_memory(reference_address, 0x100)
         except ReadMemoryError:
             logger.debug("failed to read memory: 0x%x", reference_address)
             continue
@@ -262,7 +278,7 @@ def extract_insn_bytes_features(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
         if capa.features.extractors.helpers.all_zeros(buf):
             continue
 
-        is_string = False
+        is_string: bool = False
 
         # note: we *always* break after the first iteration
         for s in capa.features.extractors.strings.extract_ascii_strings(buf):
@@ -292,31 +308,100 @@ def extract_insn_string_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
-    idx = fhi.ctx.idx
+    be2: BinExport2 = fhi.ctx.be2
+    idx: BinExport2Index = fhi.ctx.idx
 
-    instruction_index = ii.instruction_index
+    instruction_index: int = ii.instruction_index
 
     if instruction_index in idx.string_reference_index_by_source_instruction_index:
         for string_reference_index in idx.string_reference_index_by_source_instruction_index[instruction_index]:
-            string_reference = be2.string_reference[string_reference_index]
-            string_index = string_reference.string_table_index
-            string = be2.string_table[string_index]
+            string_reference: BinExport2.Reference = be2.string_reference[string_reference_index]
+            string_index: int = string_reference.string_table_index
+            string: str = be2.string_table[string_index]
             yield String(string), ih.address
 
 
 def extract_insn_offset_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
+    # TODO(wb): complete
+    # https://github.com/mandiant/capa/issues/1755
     yield from ()
+
+
+def is_security_cookie(
+    fhi: FunctionContext,
+    bbi: BasicBlockContext,
+    instruction: BinExport2.Instruction,
+) -> bool:
+    """
+    check if an instruction is related to security cookie checks.
+    """
+    be2: BinExport2 = fhi.ctx.be2
+
+    # security cookie check should use SP or BP
+    op1: BinExport2.Operand = be2.operand[instruction.operand_index[1]]
+    op1_exprs: List[BinExport2.Expression] = [be2.expression[expr_i] for expr_i in op1.expression_index]
+    if all(expr.symbol.lower() not in ("bp", "esp", "ebp", "rbp", "rsp") for expr in op1_exprs):
+        return False
+
+    # check_nzxor_security_cookie_delta
+    # if insn falls at the start of first entry block of the parent function.
+    flow_graph: BinExport2.FlowGraph = be2.flow_graph[fhi.flow_graph_index]
+    basic_block_index: int = bbi.basic_block_index
+    bb: BinExport2.BasicBlock = be2.basic_block[basic_block_index]
+    if flow_graph.entry_basic_block_index == basic_block_index:
+        first_addr: int = min((be2.instruction[ir.begin_index].address for ir in bb.instruction_index))
+        if instruction.address < first_addr + SECURITY_COOKIE_BYTES_DELTA:
+            return True
+    # or insn falls at the end before return in a terminal basic block.
+    if basic_block_index not in (e.source_basic_block_index for e in flow_graph.edge):
+        last_addr: int = max((be2.instruction[ir.end_index - 1].address for ir in bb.instruction_index))
+        if instruction.address > last_addr - SECURITY_COOKIE_BYTES_DELTA:
+            return True
+    return False
 
 
 def extract_insn_nzxor_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
-    yield from ()
+    """
+    parse non-zeroing XOR instruction from the given instruction.
+    ignore expected non-zeroing XORs, e.g. security cookies.
+    """
+    fhi: FunctionContext = fh.inner
+    ii: InstructionContext = ih.inner
+
+    be2: BinExport2 = fhi.ctx.be2
+
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+    mnemonic: BinExport2.Mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    mnemonic_name: str = mnemonic.name.lower()
+    if mnemonic_name not in (
+        "xor",
+        "xorpd",
+        "xorps",
+        "pxor",  # x86 / amd64
+        "eor",  # arm / aarch64
+    ):
+        return
+
+    operands: List[BinExport2.Operand] = [be2.operand[operand_index] for operand_index in instruction.operand_index]
+
+    # check whether operands are same for x86 / amd64
+    if mnemonic_name in ("xor", "xorpd", "xorps", "pxor"):
+        if operands[0] == operands[1]:
+            return
+        if is_security_cookie(fhi, bbh.inner, instruction):
+            return
+
+    # check whether 2nd/3rd operands are same for arm / aarch64
+    if mnemonic_name == "eor":
+        assert len(operands) == 3
+        if operands[1] == operands[2]:
+            return
+
+    yield Characteristic("nzxor"), ih.address
 
 
 def extract_insn_mnemonic_features(
@@ -325,11 +410,11 @@ def extract_insn_mnemonic_features(
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
+    be2: BinExport2 = fhi.ctx.be2
 
-    instruction = be2.instruction[ii.instruction_index]
-    mnemonic = be2.mnemonic[instruction.mnemonic_index]
-    mnemonic_name = mnemonic.name.lower()
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
+    mnemonic: BinExport2.Mnemonic = be2.mnemonic[instruction.mnemonic_index]
+    mnemonic_name: str = mnemonic.name.lower()
     yield Mnemonic(mnemonic_name), ih.address
 
 
@@ -342,11 +427,11 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
     fhi: FunctionContext = fh.inner
     ii: InstructionContext = ih.inner
 
-    be2 = fhi.ctx.be2
+    be2: BinExport2 = fhi.ctx.be2
 
-    instruction = be2.instruction[ii.instruction_index]
+    instruction: BinExport2.Instruction = be2.instruction[ii.instruction_index]
     for call_target_address in instruction.call_target:
-        addr = AbsoluteVirtualAddress(call_target_address)
+        addr: AbsoluteVirtualAddress = AbsoluteVirtualAddress(call_target_address)
         yield Characteristic("calls from"), addr
 
         if fh.address == addr:
@@ -356,7 +441,8 @@ def extract_function_calls_from(fh: FunctionHandle, bbh: BBHandle, ih: InsnHandl
 def extract_function_indirect_call_characteristic_features(
     fh: FunctionHandle, bbh: BBHandle, ih: InsnHandle
 ) -> Iterator[Tuple[Feature, Address]]:
-    # TODO(wb): 1755
+    # TODO(wb): complete
+    # https://github.com/mandiant/capa/issues/1755
     yield from ()
 
 
