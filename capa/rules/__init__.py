@@ -859,7 +859,7 @@ class Rule:
                 # we'll give precedence to namespaces, and then assume if that does work,
                 #  that it must be a rule name.
                 #
-                # we don't expect any collisions between namespaces and rule names, but its possible.
+                # we don't expect any collisions between namespaces and rule names, but it's possible.
                 # most likely would be collision between top level namespace (e.g. `host-interaction`) and rule name.
                 # but, namespaces tend to use `-` while rule names use ` `. so, unlikely, but possible.
                 if statement.value in namespaces:
@@ -1536,7 +1536,7 @@ class RuleSet:
         # don't consider it easy, and therefore,
         # don't index any of its features.
         #
-        # otherwise, its an easy rule, and index its features
+        # otherwise, it's an easy rule, and index its features
         for rules_with_feature in rules_by_feature.values():
             rules_with_feature.difference_update(rules_with_hard_features)
         easy_rules_by_feature = rules_by_feature
