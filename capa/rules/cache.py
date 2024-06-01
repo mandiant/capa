@@ -167,9 +167,17 @@ def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
         return False
 
     try:
-        capa.rules.get_rules([rules_dir], cache_dir)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        rules = capa.rules.get_rules([rules_dir], cache_dir)
     except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
         logger.error(f"{str(e)}")
         return False
+
+    content = capa.rules.cache.get_ruleset_content(rules)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+
+    assert path.exists()
+    logger.info("rules cache saved to: %s", path)
 
     return True

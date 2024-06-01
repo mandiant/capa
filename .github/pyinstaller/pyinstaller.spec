@@ -1,14 +1,11 @@
 # -*- mode: python -*-
 # Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 import sys
-import logging
 
 import wcwidth
 import capa.rules.cache
 
 from pathlib import Path
-
-logger = logging.getLogger(__name__)
 
 # SPECPATH is a global variable which points to .spec file path
 capa_dir = Path(SPECPATH).parent.parent
