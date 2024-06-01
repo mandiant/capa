@@ -12,7 +12,7 @@
 ### Breaking Changes
 
 
-### New Rules (14)
+### New Rules (15)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -28,6 +28,7 @@
 - nursery/map-or-unmap-memory-on-linux mehunhoff@google.com
 - persistence/act-as-share-provider-dll jakub.jozwiak@mandiant.com
 - persistence/act-as-windbg-extension jakub.jozwiak@mandiant.com
+- persistence/act-as-time-provider-dll jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
