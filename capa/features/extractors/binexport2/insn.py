@@ -155,6 +155,14 @@ def extract_insn_number_features(
             # temporarily, we'll have to try to guess at the interpretation.
             symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
 
+            # x86 / amd64
+            if mnemonic.name.lower() == "add" and symbol.lower() == "esp":
+                # skip things like:
+                #
+                #    .text:00401140                 call    sub_407E2B
+                #    .text:00401145                 add     esp, 0Ch
+                return
+
             if symbol.startswith(("#0x", "#-0x")):
                 # like:
                 # - type: SYMBOL

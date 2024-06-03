@@ -440,6 +440,10 @@ def test_binexport_features_elf_aarch64(sample, scope, feature, expected):
 def test_binexport_features_pe_x86(sample, scope, feature, expected):
     if "mimikatz.exe_" not in sample.name:
         pytest.skip("for now only testing mimikatz.exe_ Ghidra BinExport file")
+
+    if isinstance(feature, capa.features.insn.Offset):
+        pytest.xfail("Offset features not supported yet")
+
     sample = sample.parent / "binexport2" / (sample.name + ".ghidra.BinExport")
     assert sample.exists()
     fixtures.do_test_feature_presence(fixtures.get_binexport_extractor, sample, scope, feature, expected)
