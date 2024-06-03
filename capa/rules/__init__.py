@@ -2000,6 +2000,14 @@ class RuleSet:
         This wrapper around _match exists so that we can assert it matches precisely
         the same as `capa.engine.match`, just faster.
 
+        This matcher does not handle some edge cases:
+          - top level NOT statements
+              - also top level counted features with zero occurances, like: `count(menmonic(mov)): 0`
+          - nested NOT statements (NOT: NOT: foo)
+
+        We should discourage/forbid these constructs from our rules and add lints for them.
+        TODO(williballenthin): add lints for logic edge cases
+
         Args:
           paranoid: when true, demonstrate that the naive matcher agrees with this optimized matcher (much slower!).
         """
