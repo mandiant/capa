@@ -62,7 +62,8 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             continue
 
         api_name: str = vertex.mangled_name
-        yield API(api_name), ih.address
+        for name in capa.features.extractors.helpers.generate_symbols("", api_name):
+            yield API(name), ih.address
 
     """
         # TODO: re-enable pending https://github.com/google/binexport/issues/126#issuecomment-2074402906
