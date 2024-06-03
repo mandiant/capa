@@ -28,7 +28,7 @@ except ImportError:
     # https://github.com/python/mypy/issues/1153
     from backports.functools_lru_cache import lru_cache  # type: ignore
 
-from typing import Any, Set, Dict, List, Tuple, Union, Callable, Iterator, Optional
+from typing import Any, Set, Dict, List, Tuple, Union, Callable, Iterator, Optional, cast
 from dataclasses import asdict, dataclass
 
 import yaml
@@ -1382,7 +1382,7 @@ class RuleSet:
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
 
         # unstable
-        scores_by_rule = {}
+        scores_by_rule: Dict[str, int] = {}
         self._feature_indexes_by_scopes = {
             scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
         }
@@ -1444,6 +1444,7 @@ class RuleSet:
             # If present, other rule must match before this one, in same scope.
             # Use score from that rule, which will have already been processed due to topological sorting.
             # Otherwise, use a default score of 5.
+            assert isinstance(node.value, str)
             return scores_by_rule.get(node.value, 5)
 
         elif isinstance(node, (capa.features.insn.Number, capa.features.insn.OperandNumber)):
@@ -1526,20 +1527,21 @@ class RuleSet:
             # bytes: 0
         }[C]
 
+    # unstable
     @dataclass
-    class RuleFeatureIndex:
+    class _RuleFeatureIndex:
         # Mapping from hashable feature to a list of rules that might have this feature.
-        rules_by_feature: Dict[Feature, Set[str]] = dataclasses.field(default=dict)
+        rules_by_feature: Dict[Feature, Set[str]]
         # Mapping from rule name to list of Regex/Substring features that have to match.
         # All these features will be evaluated whenever a String feature is encountered.
-        string_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
+        string_rules: Dict[str, List[Feature]]
         # Mapping from rule name to list of Bytes features that have to match.
         # All these features will be evaluated whenever a Bytes feature is encountered.
-        bytes_rules: Dict[str, List[Feature]] = dataclasses.field(default=dict)
+        bytes_rules: Dict[str, List[Feature]]
 
     # unstable
     @staticmethod
-    def _index_rules_by_feature(scope: Scope, rules: List[Rule], scores_by_rule: Dict[str, int]) -> RuleFeatureIndex:
+    def _index_rules_by_feature(scope: Scope, rules: List[Rule], scores_by_rule: Dict[str, int]) -> _RuleFeatureIndex:
         """
         Index the given rules by their minimal set of most "uncommon" features required to match.
 
@@ -1671,8 +1673,8 @@ class RuleSet:
                     item = rec(rule_name, child)
                     assert item is not None, "can't index OR branch"
 
-                    score, _features = item
-                    min_score = min(min_score, score)
+                    _score, _features = item
+                    min_score = min(min_score, _score)
                     features.update(_features)
 
                 return min_score, features
@@ -1714,10 +1716,10 @@ class RuleSet:
                 logger.debug("        : [%d] %s", RuleSet._score_feature(scores_by_rule, feature), feature)
 
             if string_features:
-                string_rules[rule_name] = string_features
+                string_rules[rule_name] = cast(List[Feature], string_features)
 
             if bytes_features:
-                bytes_rules[rule_name] = bytes_features
+                bytes_rules[rule_name] = cast(List[Feature], bytes_features)
 
             for feature in hashable_features:
                 rules_by_feature[feature].add(rule_name)
@@ -1731,7 +1733,7 @@ class RuleSet:
             "indexing: %d scanning string features, %d scanning bytes features", len(string_rules), len(bytes_rules)
         )
 
-        return RuleSet.RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
+        return RuleSet._RuleFeatureIndex(rules_by_feature, string_rules, bytes_rules)
 
     @staticmethod
     def _get_rules_for_scope(rules, scope) -> List[Rule]:
@@ -1820,7 +1822,7 @@ class RuleSet:
         It uses its knowledge of all the rules to evaluate a minimal set of candidate rules for the given features.
         """
 
-        feature_index: RuleSet.RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
+        feature_index: RuleSet._RuleFeatureIndex = self._feature_indexes_by_scopes[scope]
         rules: List[Rule] = self.rules_by_scope[scope]
         # Topologic location of rule given its name.
         # That is, rules with a lower index should be evaluated first, since their dependencies
@@ -1978,18 +1980,22 @@ class RuleSet:
 
         return (augmented_features, results)
 
-    def match(self, scope: Scope, features: FeatureSet, addr: Address) -> Tuple[FeatureSet, ceng.MatchResults]:
+    def match(
+        self, scope: Scope, features: FeatureSet, addr: Address, paranoid=False
+    ) -> Tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
 
         This wrapper around _match exists so that we can assert it matches precisely
         the same as `capa.engine.match`, just faster.
+
+        Args:
+          paranoid: when true, demonstrate that the naive matcher agrees with this optimized matcher (much slower!).
         """
         features1, matches1 = self._match(scope, features, addr)
 
-        # enable this branch to demonstrate that the naive matcher agrees with this optimized matcher.
-        if True:
-            features2, matches2 = capa.engine.match(self.rules.values(), features, addr)
+        if paranoid:
+            features2, matches2 = capa.engine.match(list(self.rules.values()), features, addr)
 
             for feature, locations in features1.items():
                 assert feature in features2
