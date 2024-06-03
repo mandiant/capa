@@ -178,10 +178,12 @@ def extract_insn_number_features(
 
                 # handling continues below at label: has a value
 
-            elif symbol.startswith("0x"):
+            elif symbol.startswith(("0x", "-0x")):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "0x1000"
+                # - type: SYMBOL
+                #   symbol: "-0x1"
                 try:
                     value = int(symbol, 0x10)
                 except ValueError:
