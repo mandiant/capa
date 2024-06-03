@@ -34,7 +34,6 @@ from capa.features.extractors.base_extractor import (
     StaticFeatureExtractor,
 )
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +72,10 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
             flow_graph_address: int = self.idx.get_basic_block_address(entry_basic_block_index)
 
             vertex_idx: int = self.idx.vertex_index_by_address[flow_graph_address]
-            be2_vertex: CallGraph.Vertex = self.be2.call_graph.vertex[vertex_idx]
+            be2_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[vertex_idx]
 
             # skip thunks
-            if capa.features.extractors.binexport2.helpers.is_vertex_type(be2_vertex, CallGraph.Vertex.Type.THUNK):
+            if capa.features.extractors.binexport2.helpers.is_vertex_type(be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK):
                 continue
 
             yield FunctionHandle(

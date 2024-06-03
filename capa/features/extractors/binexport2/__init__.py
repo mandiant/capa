@@ -26,7 +26,6 @@ import capa.features.common
 import capa.features.extractors.common
 import capa.features.extractors.binexport2.helpers
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph, FlowGraph
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +93,9 @@ class BinExport2Index:
         self.flow_graph_address_by_index: Dict[int, int] = {}
 
         # edges that come from the given basic block
-        self.source_edges_by_basic_block_index: Dict[int, List[FlowGraph.Edge]] = defaultdict(list)
+        self.source_edges_by_basic_block_index: Dict[int, List[BinExport2.FlowGraph.Edge]] = defaultdict(list)
         # edges that end up at the given basic block
-        self.target_edges_by_basic_block_index: Dict[int, List[FlowGraph.Edge]] = defaultdict(list)
+        self.target_edges_by_basic_block_index: Dict[int, List[BinExport2.FlowGraph.Edge]] = defaultdict(list)
 
         self.vertex_index_by_address: Dict[int, int] = {}
 
@@ -214,7 +213,7 @@ class BinExport2Index:
             yield instruction_index, instruction, instruction_address
 
     def get_function_name_by_vertex(self, vertex_index: int) -> str:
-        vertex: CallGraph.Vertex = self.be2.call_graph.vertex[vertex_index]
+        vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[vertex_index]
         name: str = f"sub_{vertex.address:x}"
         if vertex.HasField("mangled_name"):
             name = vertex.mangled_name
@@ -261,8 +260,8 @@ class BinExport2Analysis:
 
     def _compute_thunks(self):
         for addr, idx in self.idx.vertex_index_by_address.items():
-            vertex: CallGraph.Vertex = self.be2.call_graph.vertex[idx]
-            if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, CallGraph.Vertex.Type.THUNK):
+            vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[idx]
+            if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, BinExport2.CallGraph.Vertex.Type.THUNK):
                 continue
 
             curr_idx: int = idx
@@ -281,10 +280,10 @@ class BinExport2Analysis:
                 assert len(thunk_callees) == 1
 
                 thunked_idx: int = thunk_callees[0]
-                thunked_vertex: CallGraph.Vertex = self.be2.call_graph.vertex[thunked_idx]
+                thunked_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[thunked_idx]
 
                 if not capa.features.extractors.binexport2.helpers.is_vertex_type(
-                    thunked_vertex, CallGraph.Vertex.Type.THUNK
+                    thunked_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
                 ):
                     assert thunked_vertex.HasField("address")
 

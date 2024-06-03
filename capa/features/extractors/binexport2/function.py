@@ -13,7 +13,6 @@ from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.binexport2 import BinExport2Index, FunctionContext
 from capa.features.extractors.base_extractor import FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 
 def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
@@ -27,7 +26,7 @@ def extract_function_calls_to(fh: FunctionHandle) -> Iterator[Tuple[Feature, Add
     vertex_index: int = idx.vertex_index_by_address[flow_graph_address]
 
     for caller_index in idx.callers_by_vertex_index[vertex_index]:
-        caller: CallGraph.Vertex = be2.call_graph.vertex[caller_index]
+        caller: BinExport2.CallGraph.Vertex = be2.call_graph.vertex[caller_index]
         caller_address: int = caller.address
         yield Characteristic("calls to"), AbsoluteVirtualAddress(caller_address)
 
@@ -55,7 +54,7 @@ def extract_function_name(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
 
     flow_graph_address: int = idx.flow_graph_address_by_index[flow_graph_index]
     vertex_index: int = idx.vertex_index_by_address[flow_graph_address]
-    vertex: CallGraph.Vertex = be2.call_graph.vertex[vertex_index]
+    vertex: BinExport2.CallGraph.Vertex = be2.call_graph.vertex[vertex_index]
 
     if vertex.HasField("mangled_name"):
         yield FunctionName(vertex.mangled_name), fh.address
