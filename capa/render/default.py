@@ -191,7 +191,7 @@ def render_maec(doc: rd.ResultDocument, ostream: StringIO):
 
     rows = []
     for category in sorted(maec_categories):
-        values = maec_table.get(category, [])
+        values = maec_table.get(category, set())
         if values:
             rows.append((rutils.bold(category.replace("_", "-")), "\n".join(sorted(values))))
 
