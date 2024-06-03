@@ -26,7 +26,6 @@ from capa.features.extractors.binexport2 import (
 )
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
-from capa.features.extractors.binexport2.binexport2_pb2.BinExport2 import CallGraph
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +52,9 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             continue
 
         vertex_idx: int = be2_index.vertex_index_by_address[addr]
-        vertex: CallGraph.Vertex = be2.call_graph.vertex[vertex_idx]
+        vertex: BinExport2.CallGraph.Vertex = be2.call_graph.vertex[vertex_idx]
 
-        if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, CallGraph.Vertex.Type.IMPORTED):
+        if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED):
             continue
 
         if not vertex.HasField("mangled_name"):
