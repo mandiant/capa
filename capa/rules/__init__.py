@@ -1553,7 +1553,6 @@ class RuleSet:
         def rec(
             rule_name: str,
             node: Union[Feature, Statement],
-            # closure over: scores_by_rule
         ) -> Optional[Tuple[int, Set[Feature]]]:
             """
             Walk through a rule's logic tree, picking the features to use for indexing,
