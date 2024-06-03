@@ -261,7 +261,9 @@ class BinExport2Analysis:
     def _compute_thunks(self):
         for addr, idx in self.idx.vertex_index_by_address.items():
             vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[idx]
-            if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, BinExport2.CallGraph.Vertex.Type.THUNK):
+            if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+                vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+            ):
                 continue
 
             curr_idx: int = idx
