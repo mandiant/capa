@@ -15,7 +15,6 @@ import codecs
 import logging
 import binascii
 import collections
-import dataclasses
 from enum import Enum
 from pathlib import Path
 
@@ -1968,15 +1967,23 @@ class RuleSet:
 
                 ceng.index_rule_matches(augmented_features, rule, [addr])
 
-                # Its possible that we're relying on a MatchedRule feature to be the
+                # Its possible that we're relying on a MatchedRule (or namespace) feature to be the
                 # uncommon feature used to filter other rules. So, extend the candidate
                 # rules with any of these dependencies. If we find any, also ensure they're
                 # evaluated in the correct topologic order, so that further dependencies work.
-                new_candidates = feature_index.rules_by_feature.get(capa.features.common.MatchedRule(rule.name), ())
-                if new_candidates:
-                    candidate_rule_names.update(new_candidates)
-                    candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
-                    RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
+                new_features = [capa.features.common.MatchedRule(rule.name)]
+                for namespace in ceng.get_rule_namespaces(rule):
+                    new_features.append(capa.features.common.MatchedRule(namespace))
+
+                if new_features:
+                    new_candidates: List[str] = []
+                    for new_feature in new_features:
+                        new_candidates.extend(feature_index.rules_by_feature.get(new_feature, ()))
+
+                    if new_candidates:
+                        candidate_rule_names.update(new_candidates)
+                        candidate_rules.extend([self.rules[rule_name] for rule_name in new_candidates])
+                        RuleSet._sort_rules_by_index(rule_index_by_rule_name, candidate_rules)
 
         return (augmented_features, results)
 
