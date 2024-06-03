@@ -1992,7 +1992,7 @@ class RuleSet:
         return (augmented_features, results)
 
     def match(
-        self, scope: Scope, features: FeatureSet, addr: Address, paranoid=False
+        self, scope: Scope, features: FeatureSet, addr: Address, paranoid=True
     ) -> Tuple[FeatureSet, ceng.MatchResults]:
         """
         Match rules from this ruleset at the given scope against the given features.
