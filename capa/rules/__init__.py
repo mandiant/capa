@@ -1543,14 +1543,15 @@ class RuleSet:
         """
         Index the given rules by their minimal set of most "uncommon" features required to match.
 
-        If absolutely necessary, provide the Regex/Substring/Bytes features 
+        If absolutely necessary, provide the Regex/Substring/Bytes features
         (which are not hashable and require a scan) that have to match, too.
         """
 
         rules_by_feature: Dict[Feature, Set[str]] = collections.defaultdict(set)
 
         def rec(
-            rule_name: str, node: Union[Feature, Statement],
+            rule_name: str,
+            node: Union[Feature, Statement],
             # closure over: scores_by_rule
         ) -> Optional[Tuple[int, Set[Feature]]]:
             """
@@ -1981,7 +1982,7 @@ class RuleSet:
         """
         Match rules from this ruleset at the given scope against the given features.
 
-        This wrapper around _match exists so that we can assert it matches precisely 
+        This wrapper around _match exists so that we can assert it matches precisely
         the same as `capa.engine.match`, just faster.
         """
         features1, matches1 = self._match(scope, features, addr)
