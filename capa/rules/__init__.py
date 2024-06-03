@@ -1456,7 +1456,7 @@ class RuleSet:
 
             if 0xFFFF_FF00 <= v <= 0xFFFF_FFFF:
                 # Numbers close to u32::max_int are also probably pretty common,
-                # like signed numbers closed to 0 that are stored as unsigned ints.
+                # like signed numbers close to 0 that are stored as unsigned ints.
                 return 3
 
             if 0xFFFF_FFFF_FFFF_FF00 <= v <= 0xFFFF_FFFF_FFFF_FFFF:
