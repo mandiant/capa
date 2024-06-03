@@ -6,8 +6,10 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
+from unittest.mock import Mock
 
 import fixtures
+import tabulate
 
 import capa.rules
 import capa.render.utils
@@ -19,6 +21,7 @@ import capa.render.vverbose
 import capa.features.address
 import capa.features.basicblock
 import capa.render.result_document
+import capa.render.result_document as rd
 import capa.features.freeze.features
 
 
@@ -111,6 +114,70 @@ def test_render_meta_mbc():
     assert mbc.method == method
 
     assert capa.render.utils.format_parts_id(mbc) == canonical
+
+
+def test_render_meta_maec():
+    malware_family = "PlugX"
+    malware_category = "downloader"
+    analysis_conclusion = "malicious"
+
+    rule_yaml = textwrap.dedent(
+        """
+        rule:
+          meta:
+            name: test rule
+            scopes:
+              static: function
+              dynamic: process
+            authors:
+              - foo
+            maec/malware-family: {:s}
+            maec/malware-category: {:s}
+            maec/analysis-conclusion: {:s}
+          features:
+            - number: 1
+        """.format(
+            malware_family, malware_category, analysis_conclusion
+        )
+    )
+    rule = capa.rules.Rule.from_yaml(rule_yaml)
+    rule_meta = capa.render.result_document.RuleMetadata.from_capa(rule)
+
+    # create a mock RuleMatches object
+    mock_rule_matches = Mock(spec=rd.RuleMatches)
+    mock_rule_matches.meta = rule_meta
+
+    assert mock_rule_matches.meta.maec.malware_family == "PlugX"
+    assert mock_rule_matches.meta.maec.malware_category == "downloader"
+    assert mock_rule_matches.meta.maec.analysis_conclusion == "malicious"
+
+    # create a mock ResultDocument
+    mock_doc = Mock(spec=rd.ResultDocument)
+    mock_doc.rules = {"test rule": mock_rule_matches}
+
+    # capture the output of render_maec
+    output_stream = capa.render.utils.StringIO()
+    capa.render.default.render_maec(mock_doc, output_stream)
+    output = output_stream.getvalue()
+
+    # create the expected output
+    maec_fields = [
+        (capa.render.utils.bold("analysis-conclusion"), rule_meta.maec.analysis_conclusion),
+        (capa.render.utils.bold("malware-category"), rule_meta.maec.malware_category),
+        (capa.render.utils.bold("malware-family"), rule_meta.maec.malware_family),
+    ]
+
+    expected_output = (
+        tabulate.tabulate(
+            maec_fields,
+            headers=[capa.render.default.width("MAEC Category", 25), capa.render.default.width("MAEC Value", 75)],
+            tablefmt="mixed_grid",
+        )
+        + "\n"
+    )
+
+    # check if render_maec output is expected
+    assert output == expected_output
 
 
 @fixtures.parametrize(
