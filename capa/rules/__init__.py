@@ -2011,20 +2011,27 @@ class RuleSet:
         Args:
           paranoid: when true, demonstrate that the naive matcher agrees with this optimized matcher (much slower!).
         """
-        features1, matches1 = self._match(scope, features, addr)
+        features, matches = self._match(scope, features, addr)
 
         if paranoid:
-            features2, matches2 = capa.engine.match(list(self.rules.values()), features, addr)
+            rules: List[Rule] = self.rules_by_scope[scope]
+            paranoid_features, paranoid_matches = capa.engine.match(rules, features, addr)
 
-            for feature, locations in features1.items():
-                assert feature in features2
-                assert locations == features2[feature]
+            if features != paranoid_features:
+                logger.warning("paranoid: %s: %s", scope, addr)
+                for feature in sorted(set(features.keys()) & set(paranoid_features.keys())):
+                    logger.warning("paranoid:   %s", feature)
 
-            for rulename, results in matches1.items():
-                assert rulename in matches2
-                assert len(results) == len(matches2[rulename])
+                for feature in sorted(set(features.keys()) - set(paranoid_features.keys())):
+                    logger.warning("paranoid: + %s", feature)
 
-        return features1, matches1
+                for feature in sorted(set(paranoid_features.keys()) - set(features.keys())):
+                    logger.warning("paranoid: - %s", feature)
+
+            assert features == paranoid_features
+            assert set(matches.keys()) == set(paranoid_matches.keys())
+
+        return features, matches
 
 
 def is_nursery_rule_path(path: Path) -> bool:
