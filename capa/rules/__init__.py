@@ -1856,6 +1856,8 @@ class RuleSet:
         # feature frequently whenever a string/bytes feature is encountered. Its slow, but we can't
         # get around it. Reducing our reliance on regex/bytes feature and/or finding a way to
         # index these can futher improve performance.
+        #
+        # See the corresponding unstable tests in `test_match.py::test_index_features_*`.
 
         # Find all the rules that could match the given feature set.
         # Ideally we want this set to be as small and focused as possible,

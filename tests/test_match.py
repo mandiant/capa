@@ -788,3 +788,92 @@ def test_match_os_any():
         0x0,
     )
     assert "test rule" in matches
+
+
+def test_index_features_and_unstable():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - mnemonic: mov
+                    - api: CreateFileW
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    rr = capa.rules.RuleSet([r])
+    index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
+
+    # there's a single rule, and its indexed by a single feature
+    assert len(index.rules_by_feature) == 1
+    # and we index by the more uncommon API feature, not the common mnemonic feature
+    assert capa.features.insn.API("CreateFileW") in index.rules_by_feature
+
+    assert not index.string_rules
+    assert not index.bytes_rules
+
+
+def test_index_features_or_unstable():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - or:
+                    - mnemonic: mov
+                    - api: CreateFileW
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    rr = capa.rules.RuleSet([r])
+    index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
+
+    # there's a single rule, and its indexed by both features,
+    # because they fall under the single root OR node.
+    assert len(index.rules_by_feature) == 2
+    assert capa.features.insn.API("CreateFileW") in index.rules_by_feature
+    assert capa.features.insn.Mnemonic("mov") in index.rules_by_feature
+
+    assert not index.string_rules
+    assert not index.bytes_rules
+
+
+def test_index_features_nested_unstable():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+            features:
+                - and:
+                    - mnemonic: mov
+                    - or:
+                        - api: CreateFileW
+                        - string: foo
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+    rr = capa.rules.RuleSet([r])
+    index: capa.rules.RuleSet._RuleFeatureIndex = rr._feature_indexes_by_scopes[capa.rules.Scope.FUNCTION]
+
+    # there's a single rule, and its indexed by the two uncommon features,
+    # not the single common feature.
+    assert len(index.rules_by_feature) == 2
+    assert capa.features.insn.API("CreateFileW") in index.rules_by_feature
+    assert capa.features.common.String("foo") in index.rules_by_feature
+    assert capa.features.insn.Mnemonic("mov") not in index.rules_by_feature
+
+    assert not index.string_rules
+    assert not index.bytes_rules
