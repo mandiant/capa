@@ -64,7 +64,8 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
             continue
 
         api_name: str = vertex.mangled_name
-        yield API(api_name), ih.address
+        for name in capa.features.extractors.helpers.generate_symbols("", api_name):
+            yield API(name), ih.address
 
     """
         # TODO: re-enable pending https://github.com/google/binexport/issues/126#issuecomment-2074402906
@@ -157,6 +158,14 @@ def extract_insn_number_features(
             # temporarily, we'll have to try to guess at the interpretation.
             symbol = _gsm_get_instruction_operand(be2, instruction_index, i)
 
+            # x86 / amd64
+            if mnemonic.name.lower() == "add" and symbol.lower() == "esp":
+                # skip things like:
+                #
+                #    .text:00401140                 call    sub_407E2B
+                #    .text:00401145                 add     esp, 0Ch
+                return
+
             if symbol.startswith(("#0x", "#-0x")):
                 # like:
                 # - type: SYMBOL
@@ -171,10 +180,12 @@ def extract_insn_number_features(
 
                 # handling continues below at label: has a value
 
-            elif symbol.startswith("0x"):
+            elif symbol.startswith(("0x", "-0x")):
                 # like:
                 # - type: SYMBOL
                 #   symbol: "0x1000"
+                # - type: SYMBOL
+                #   symbol: "-0x1"
                 try:
                     value = int(symbol, 0x10)
                 except ValueError:
