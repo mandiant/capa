@@ -2009,7 +2009,8 @@ class RuleSet:
         TODO(williballenthin): add lints for logic edge cases
 
         Args:
-          paranoid: when true, demonstrate that the naive matcher agrees with this optimized matcher (much slower!).
+          paranoid: when true, demonstrate that the naive matcher agrees with this
+           optimized matcher (much slower! around 10x slower).
         """
         features, matches = self._match(scope, features, addr)
 
