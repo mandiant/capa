@@ -5,8 +5,9 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import textwrap
+
+import pytest
 
 import capa.rules
 import capa.engine
@@ -130,22 +131,29 @@ def test_match_range_exact_zero():
                     static: function
                     dynamic: process
             features:
-                - count(number(100)): 0
+                - and:
+                    - count(number(100)): 0
+
+                    # we can't have `count(foo): 0` at the top level,
+                    # since we don't support top level NOT statements.
+                    # so we have this additional trivial feature.
+                    - mnemonic: mov
+
         """
     )
     r = capa.rules.Rule.from_yaml(rule)
 
     # feature isn't indexed - good.
-    _, matches = match([r], {}, 0x0)
+    _, matches = match([r], {capa.features.insn.Mnemonic("mov"): {}}, 0x0)
     assert "test rule" in matches
 
     # feature is indexed, but no matches.
     # i don't think we should ever really have this case, but good to check anyways.
-    _, matches = match([r], {capa.features.insn.Number(100): {}}, 0x0)
+    _, matches = match([r], {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}}, 0x0)
     assert "test rule" in matches
 
     # too many matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    _, matches = match([r], {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}}, 0x0)
     assert "test rule" not in matches
 
 
@@ -159,21 +167,27 @@ def test_match_range_with_zero():
                     static: function
                     dynamic: process
              features:
-                 - count(number(100)): (0, 1)
+                - and:
+                    - count(number(100)): (0, 1)
+
+                    # we can't have `count(foo): 0` at the top level,
+                    # since we don't support top level NOT statements.
+                    # so we have this additional trivial feature.
+                    - mnemonic: mov
          """
     )
     r = capa.rules.Rule.from_yaml(rule)
 
     # ok
-    _, matches = match([r], {}, 0x0)
+    _, matches = match([r], {capa.features.insn.Mnemonic("mov"): {}}, 0x0)
     assert "test rule" in matches
-    _, matches = match([r], {capa.features.insn.Number(100): {}}, 0x0)
+    _, matches = match([r], {capa.features.insn.Number(100): {}, capa.features.insn.Mnemonic("mov"): {}}, 0x0)
     assert "test rule" in matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1}}, 0x0)
+    _, matches = match([r], {capa.features.insn.Number(100): {1}, capa.features.insn.Mnemonic("mov"): {1}}, 0x0)
     assert "test rule" in matches
 
     # too many matches
-    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}}, 0x0)
+    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
     assert "test rule" not in matches
 
 
@@ -551,7 +565,8 @@ def test_match_regex_values_always_string():
     assert capa.features.common.MatchedRule("test rule") in features
 
 
-def test_match_not():
+@pytest.mark.xfail(reason="can't have top level NOT")
+def test_match_only_not():
     rule = textwrap.dedent(
         """
         rule:
@@ -572,6 +587,30 @@ def test_match_not():
     assert "test rule" in matches
 
 
+def test_match_not():
+    rule = textwrap.dedent(
+        """
+        rule:
+            meta:
+                name: test rule
+                scopes:
+                    static: function
+                    dynamic: process
+                namespace: testns1/testns2
+            features:
+                - and:
+                    - mnemonic: mov
+                    - not:
+                        - number: 99
+        """
+    )
+    r = capa.rules.Rule.from_yaml(rule)
+
+    _, matches = match([r], {capa.features.insn.Number(100): {1, 2}, capa.features.insn.Mnemonic("mov"): {1, 2}}, 0x0)
+    assert "test rule" in matches
+
+
+@pytest.mark.xfail(reason="can't have nested NOT")
 def test_match_not_not():
     rule = textwrap.dedent(
         """

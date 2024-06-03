@@ -1579,9 +1579,13 @@ class RuleSet:
                 # and this is checked by the linter,
                 return None
 
-            elif isinstance(node, (ceng.Range)) and node.min == 0:
+            elif isinstance(node, (ceng.Range)) and node.min == 0 and node.max != 0:
                 # `count(foo): 0 or more` is just like an optional block,
                 # because the min is 0, this subtree *can* match just about any feature.
+                return None
+
+            elif isinstance(node, (ceng.Range)) and node.min == 0 and node.max == 0:
+                # `count(foo): 0` is like a not block, which we don't index.
                 return None
 
             elif isinstance(node, capa.features.common.Feature):
