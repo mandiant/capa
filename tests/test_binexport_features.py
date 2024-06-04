@@ -74,20 +74,20 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
         ),
         # bb/characteristic(tight loop)
         (
-            "687e79.be2",
-            "function=0x0",
+            "d1e650.be2",
+            "function=0x114af4",
             capa.features.common.Characteristic("tight loop"),
-            "xfail: not implemented yet",
+            True,
         ),
         (
-            "687e79.be2",
-            "function=0x0",
+            "d1e650.be2",
+            "function=0x118F1C",
             capa.features.common.Characteristic("tight loop"),
-            "xfail: not implemented yet",
+            True,
         ),
         (
-            "687e79.be2",
-            "function=0x1075c0",
+            "d1e650.be2",
+            "function=0x11464c",
             capa.features.common.Characteristic("tight loop"),
             False,
         ),
