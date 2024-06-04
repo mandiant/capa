@@ -1380,7 +1380,7 @@ class RuleSet:
         self.rules_by_namespace = index_rules_by_namespace(rules)
         self.rules_by_scope = {scope: self._get_rules_for_scope(rules, scope) for scope in scopes}
 
-        # unstable
+        # these structures are unstable and may change before the next major release.
         scores_by_rule: Dict[str, int] = {}
         self._feature_indexes_by_scopes = {
             scope: self._index_rules_by_feature(scope, self.rules_by_scope[scope], scores_by_rule) for scope in scopes
@@ -1423,7 +1423,7 @@ class RuleSet:
     def __contains__(self, rulename):
         return rulename in self.rules
 
-    # unstable
+    # this routine is unstable and may change before the next major release.
     @staticmethod
     def _score_feature(scores_by_rule: Dict[str, int], node: capa.features.common.Feature) -> int:
         """
@@ -1526,7 +1526,7 @@ class RuleSet:
             # bytes: 0
         }[C]
 
-    # unstable
+    # this class is unstable and may change before the next major release.
     @dataclass
     class _RuleFeatureIndex:
         # Mapping from hashable feature to a list of rules that might have this feature.
@@ -1538,7 +1538,7 @@ class RuleSet:
         # All these features will be evaluated whenever a Bytes feature is encountered.
         bytes_rules: Dict[str, List[Feature]]
 
-    # unstable
+    # this routine is unstable and may change before the next major release.
     @staticmethod
     def _index_rules_by_feature(scope: Scope, rules: List[Rule], scores_by_rule: Dict[str, int]) -> _RuleFeatureIndex:
         """
@@ -1806,7 +1806,7 @@ class RuleSet:
                             break
         return RuleSet(list(rules_filtered))
 
-    # unstable
+    # this routine is unstable and may change before the next major release.
     @staticmethod
     def _sort_rules_by_index(rule_index_by_rule_name: Dict[str, int], rules: List[Rule]):
         """

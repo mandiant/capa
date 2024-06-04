@@ -790,6 +790,7 @@ def test_match_os_any():
     assert "test rule" in matches
 
 
+# this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_and_unstable():
     rule = textwrap.dedent(
         """
@@ -818,6 +819,7 @@ def test_index_features_and_unstable():
     assert not index.bytes_rules
 
 
+# this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_or_unstable():
     rule = textwrap.dedent(
         """
@@ -847,6 +849,7 @@ def test_index_features_or_unstable():
     assert not index.bytes_rules
 
 
+# this test demonstrates the behavior of unstable features that may change before the next major release.
 def test_index_features_nested_unstable():
     rule = textwrap.dedent(
         """
