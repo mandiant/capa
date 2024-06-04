@@ -75,7 +75,9 @@ class BinExport2FeatureExtractor(StaticFeatureExtractor):
             be2_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[vertex_idx]
 
             # skip thunks
-            if capa.features.extractors.binexport2.helpers.is_vertex_type(be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK):
+            if capa.features.extractors.binexport2.helpers.is_vertex_type(
+                be2_vertex, BinExport2.CallGraph.Vertex.Type.THUNK
+            ):
                 continue
 
             yield FunctionHandle(

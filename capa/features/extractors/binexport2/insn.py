@@ -54,7 +54,9 @@ def extract_insn_api_features(fh: FunctionHandle, _bbh: BBHandle, ih: InsnHandle
         vertex_idx: int = be2_index.vertex_index_by_address[addr]
         vertex: BinExport2.CallGraph.Vertex = be2.call_graph.vertex[vertex_idx]
 
-        if not capa.features.extractors.binexport2.helpers.is_vertex_type(vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED):
+        if not capa.features.extractors.binexport2.helpers.is_vertex_type(
+            vertex, BinExport2.CallGraph.Vertex.Type.IMPORTED
+        ):
             continue
 
         if not vertex.HasField("mangled_name"):
