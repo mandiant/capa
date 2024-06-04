@@ -12,7 +12,7 @@
 ### Breaking Changes
 
 
-### New Rules (12)
+### New Rules (16)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -26,6 +26,10 @@
 - nursery/check-file-permission-on-linux mehunhoff@google.com
 - nursery/check-if-process-is-running-under-android-emulator-on-android mehunhoff@google.com
 - nursery/map-or-unmap-memory-on-linux mehunhoff@google.com
+- persistence/act-as-share-provider-dll jakub.jozwiak@mandiant.com
+- persistence/act-as-windbg-extension jakub.jozwiak@mandiant.com
+- persistence/act-as-time-provider-dll jakub.jozwiak@mandiant.com
+- host-interaction/gui/window/hide/hide-graphical-window-from-taskbar jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
@@ -46,6 +50,7 @@
 - ci: update github workflows to use latest version of actions that were using a deprecated version of node #1967 #2003 capa-rules#883 @sjha2048 @Ana06
 - ci: update binja version to stable 4.0 #2016 @xusheng6
 - ci: update github workflows to reflect the latest ghidrathon installation and bumped up jep, ghidra versions  #2020 @psahithireddy
+- ci: include rule caching in PyInstaller build process #2097 @s-ff
 - add deptry support #1497 @s-ff
 
 ### Raw diffs
@@ -300,7 +305,7 @@ For those that use capa as a library, we've introduced some limited breaking cha
 - [capa-rules v5.1.0...v6.0.0](https://github.com/mandiant/capa-rules/compare/v5.1.0...v6.0.0)
 
 ## v5.1.0
-capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and a output color format that's easier to read.
+capa version 5.1.0 adds a Protocol Buffers (protobuf) format for result documents. Additionally, the [Vector35](https://vector35.com/) team contributed a new feature extractor using Binary Ninja. Other new features are a new CLI flag to override the detected operating system, functionality to read and render existing result documents, and an output color format that's easier to read.
 
 Over 25 capa rules have been added and improved.
 
@@ -1499,7 +1504,7 @@ The IDA Pro integration is now distributed as a real plugin, instead of a script
   - updates distributed PyPI/`pip install --upgrade` without touching your `%IDADIR%`
   - generally doing thing the "right way"
 
-How to get this new version? Its easy: download [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
+How to get this new version? It's easy: download [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ida/plugin/capa_explorer.py) to your IDA plugins directory and update your capa installation (incidentally, this is a good opportunity to migrate to `pip install flare-capa` instead of git checkouts). Now you should see the plugin listed in the `Edit > Plugins > FLARE capa explorer` menu in IDA. 
 
 Please refer to the plugin [readme](https://github.com/mandiant/capa/blob/master/capa/ida/plugin/README.md) for additional information on installing and using the IDA Pro plugin.
 

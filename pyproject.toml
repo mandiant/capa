@@ -48,7 +48,7 @@ dependencies = [
     "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.7.1",
-    "rich==13.4.2",
+    "rich==13.7.1",
     "humanize==4.9.0",
     "protobuf==5.27.0",
 ]
@@ -79,7 +79,7 @@ dev = [
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.4.5",
+    "ruff==0.4.7",
     "black==24.4.2",
     "isort==5.13.2",
     "mypy==1.10.0",
@@ -96,7 +96,7 @@ dev = [
     "types-psutil==5.8.23",
     "types_requests==2.32.0.20240523",
     "types-protobuf==5.26.0.20240422",
-    "deptry==0.14"
+    "deptry==0.16.1"
 ]
 build = [
     "pyinstaller==6.7.0",
