@@ -1,10 +1,19 @@
 # -*- mode: python -*-
 # Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
-import os.path
-import subprocess
+import sys
 
 import wcwidth
+import capa.rules.cache
 
+from pathlib import Path
+
+# SPECPATH is a global variable which points to .spec file path
+capa_dir = Path(SPECPATH).parent.parent
+rules_dir = capa_dir / 'rules'
+cache_dir = capa_dir / 'cache'
+
+if not capa.rules.cache.generate_rule_cache(rules_dir, cache_dir):
+    sys.exit(-1)
 
 a = Analysis(
     # when invoking pyinstaller from the project root,
@@ -26,7 +35,7 @@ a = Analysis(
         # so we manually embed the wcwidth resources here.
         #
         # ref: https://stackoverflow.com/a/62278462/87207
-        (os.path.dirname(wcwidth.__file__), "wcwidth"),
+        (Path(wcwidth.__file__).parent, "wcwidth"),
     ],
     # when invoking pyinstaller from the project root,
     # this gets run from the project root.
