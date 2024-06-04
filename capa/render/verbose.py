@@ -265,6 +265,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
         if ns:
             rows.append(("namespace", ns))
 
+        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
+        rows.append(("prevalence", prevalence))
+
         desc = rule.meta.description
         if desc:
             rows.append(("description", desc))

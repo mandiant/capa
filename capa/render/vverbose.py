@@ -364,6 +364,9 @@ def render_rules(ostream, doc: rd.ResultDocument):
             # library rules should not have a namespace
             rows.append(("namespace", rule.meta.namespace))
 
+        prevalence = rutils.bold(rule.meta.prevalence) if rule.meta.prevalence != "unknown" else "unknown"
+        rows.append(("prevalence", prevalence))
+
         if rule.meta.maec.analysis_conclusion or rule.meta.maec.analysis_conclusion_ov:
             rows.append(
                 (
