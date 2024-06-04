@@ -194,7 +194,7 @@ def convert_rule(rule, rulename, cround, depth):
             yara_strings += "\t$" + var_name + ' = "' + string + '" ascii wide' + convert_description(kid) + "\n"
             yara_condition += "\t$" + var_name + " "
         elif s_type == "api" or s_type == "import":
-            # research needed to decide if its possible in YARA to make a difference between api & import?
+            # research needed to decide if it's possible in YARA to make a difference between api & import?
 
             # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#api
             api = kid.value
