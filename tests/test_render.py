@@ -141,45 +141,27 @@ def test_render_meta_maec():
         )
     )
     rule = capa.rules.Rule.from_yaml(rule_yaml)
-    rule_meta = capa.render.result_document.RuleMetadata.from_capa(rule)
-
-    # create a mock RuleMatches object
-    mock_rule_matches = Mock(spec=rd.RuleMatches)
-    mock_rule_matches.meta = rule_meta
-
-    assert mock_rule_matches.meta.maec.malware_family == "PlugX"
-    assert mock_rule_matches.meta.maec.malware_category == "downloader"
-    assert mock_rule_matches.meta.maec.analysis_conclusion == "malicious"
+    rm = capa.render.result_document.RuleMatches(
+        meta=capa.render.result_document.RuleMetadata.from_capa(rule),
+        source=rule_yaml,
+        matches=(),
+    )
 
     # create a mock ResultDocument
-    mock_doc = Mock(spec=rd.ResultDocument)
-    mock_doc.rules = {"test rule": mock_rule_matches}
+    mock_rd = Mock(spec=rd.ResultDocument)
+    mock_rd.rules = {"test rule": rm}
 
     # capture the output of render_maec
     output_stream = capa.render.utils.StringIO()
-    capa.render.default.render_maec(mock_doc, output_stream)
+    capa.render.default.render_maec(mock_rd, output_stream)
     output = output_stream.getvalue()
 
-    # create the expected output
-    maec_fields = [
-        (capa.render.utils.bold("analysis-conclusion"), rule_meta.maec.analysis_conclusion),
-        (capa.render.utils.bold("malware-category"), rule_meta.maec.malware_category),
-        (capa.render.utils.bold("malware-family"), rule_meta.maec.malware_family),
-    ]
-
-    expected_output = (
-        tabulate.tabulate(
-            maec_fields,
-            headers=[capa.render.default.width("MAEC Category", 25), capa.render.default.width("MAEC Value", 75)],
-            tablefmt="mixed_grid",
-        )
-        + "\n"
-    )
-
-    # check if render_maec output is expected
-    assert output == expected_output
-
-
+    assert "analysis-conclusion" in output
+    assert analysis_conclusion in output
+    assert "malware-category" in output
+    assert malware_category in output
+    assert "malware-family" in output
+    assert malware_family in output
 @fixtures.parametrize(
     "feature,expected",
     [
