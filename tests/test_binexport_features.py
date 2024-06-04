@@ -64,8 +64,8 @@ FEATURE_PRESENCE_TESTS_BE2_ELF_AARCH64 = sorted(
             "687e79.be2",
             "function=0x1056c0",
             capa.features.common.Characteristic("loop"),
-            "xfail: not implemented yet",
-        ),  # TODO(mr): https://github.com/mandiant/capa/issues/2101
+            True,
+        ),
         (
             "687e79.be2",
             "function=0x1075c0",
