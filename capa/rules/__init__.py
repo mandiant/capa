@@ -1429,7 +1429,7 @@ class RuleSet:
         """
         Score the given feature by how "uncommon" we think it will be.
         Features that we expect to be very selective (ie. uniquely identify a rule and be required to match),
-         or "uncommon", should get a high score. 
+         or "uncommon", should get a high score.
         Features that are not good for indexing will have a low score, or 0.
 
         The range of values doesn't really matter, but here we use 0-10, where
@@ -1492,7 +1492,6 @@ class RuleSet:
             #   - 0 is a very common, not selective, bad for indexing a rule.
             #
             # You shouldn't try to interpret the scores, beyond to compare features to pick one or the other.
-
             # -----------------------------------------------------------------
             #
             # Very uncommon features that are probably very selective in capa's domain.
