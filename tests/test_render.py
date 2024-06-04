@@ -9,7 +9,6 @@ import textwrap
 from unittest.mock import Mock
 
 import fixtures
-import tabulate
 
 import capa.rules
 import capa.render.utils
@@ -162,6 +161,8 @@ def test_render_meta_maec():
     assert malware_category in output
     assert "malware-family" in output
     assert malware_family in output
+
+
 @fixtures.parametrize(
     "feature,expected",
     [
