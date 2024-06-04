@@ -273,12 +273,6 @@ class BinExport2Analysis:
                 # because either, len is:
                 #    0 and the thunk doesn't point to anything, or
                 #   >1 and the thunk may end up at many functions.
-
-                # TODO (mr-tz): fails on d1e6506964edbfffb08c0dd32e1486b11fbced7a4bd870ffe79f110298f0efb8:0x113AE0
-                if len(thunk_callees) != 1:
-                    logger.error("callees: %s, addr: 0x%x, idx: %d", thunk_callees, addr, idx)
-                    continue
-
                 assert len(thunk_callees) == 1
 
                 thunked_idx: int = thunk_callees[0]
