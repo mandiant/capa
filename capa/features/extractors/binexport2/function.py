@@ -5,11 +5,12 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Tuple, Iterator
+from typing import List, Tuple, Iterator
 
 from capa.features.file import FunctionName
 from capa.features.common import Feature, Characteristic
 from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.extractors import loops
 from capa.features.extractors.binexport2 import BinExport2Index, FunctionContext
 from capa.features.extractors.base_extractor import FunctionHandle
 from capa.features.extractors.binexport2.binexport2_pb2 import BinExport2
@@ -39,10 +40,13 @@ def extract_function_loop(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address
     flow_graph_index: int = fhi.flow_graph_index
     flow_graph: BinExport2.FlowGraph = be2.flow_graph[flow_graph_index]
 
+    edges: List[Tuple[int, int]] = []
     for edge in flow_graph.edge:
-        if edge.is_back_edge:
-            yield Characteristic("loop"), fh.address
-            break
+        # TODO (meh): use Edge.is_back_edge pending https://github.com/mandiant/capa/issues/2101
+        edges.append((edge.source_basic_block_index, edge.target_basic_block_index))
+
+    if loops.has_loop(edges):
+        yield Characteristic("loop"), fh.address
 
 
 def extract_function_name(fh: FunctionHandle) -> Iterator[Tuple[Feature, Address]]:
