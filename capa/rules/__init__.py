@@ -1427,8 +1427,20 @@ class RuleSet:
     @staticmethod
     def _score_feature(scores_by_rule: Dict[str, int], node: capa.features.common.Feature) -> int:
         """
-        Score the given feature by how "uncommon" it is, where a higher score is more uncommon.
+        Score the given feature by how "uncommon" we think it will be.
+        Features that we expect to be very selective (ie. uniquely identify a rule and be required to match),
+         or "uncommon", should get a high score. 
         Features that are not good for indexing will have a low score, or 0.
+
+        The range of values doesn't really matter, but here we use 0-10, where
+          - 10 is very uncommon, very selective, good for indexing a rule, and
+          - 0 is a very common, not selective, bad for indexing a rule.
+
+        You shouldn't try to interpret the scores, beyond to compare features to pick one or the other.
+
+        Today, these scores are assigned manually, by the capa devs, who use their intuition and experience.
+        We *could* do a large scale analysis of all features emitted by capa across many samples to
+        make this more data driven. If the current approach doesn't work well, consider that.
         """
 
         #
@@ -1440,11 +1452,14 @@ class RuleSet:
             node,
             capa.features.common.MatchedRule,
         ):
-            # If present, other rule must match before this one, in same scope.
-            # Use score from that rule, which will have already been processed due to topological sorting.
-            # Otherwise, use a default score of 5.
-            assert isinstance(node.value, str)
-            return scores_by_rule.get(node.value, 5)
+            # The other rule must match before this one, in same scope or smaller.
+            # Because we process the rules small->large scope and topologically,
+            # then we can rely on dependencies being processed first.
+            #
+            # If logic changes and you see issues here, ensure that `scores_by_rule` is correctly provided.
+            rule_name = node.value
+            assert isinstance(rule_name, str)
+            return scores_by_rule[rule_name]
 
         elif isinstance(node, (capa.features.insn.Number, capa.features.insn.OperandNumber)):
             v = node.value
@@ -1472,6 +1487,13 @@ class RuleSet:
 
         C = node.__class__
         return {
+            # The range of values doesn't really matter, but here we use 0-10, where
+            #   - 10 is very uncommon, very selective, good for indexing a rule, and
+            #   - 0 is a very common, not selective, bad for indexing a rule.
+            #
+            # You shouldn't try to interpret the scores, beyond to compare features to pick one or the other.
+
+            # -----------------------------------------------------------------
             #
             # Very uncommon features that are probably very selective in capa's domain.
             # When possible, we want rules to be indexed by these features.
@@ -1479,7 +1501,7 @@ class RuleSet:
             capa.features.common.String: 9,
             capa.features.insn.API: 8,
             capa.features.file.Export: 7,
-            # "uncommon numbers": 7
+            # "uncommon numbers": 7 (placeholder for logic above)
             #
             # -----------------------------------------------------------------
             #
@@ -1492,7 +1514,6 @@ class RuleSet:
             capa.features.file.Import: 5,
             capa.features.file.Section: 5,
             capa.features.file.FunctionName: 5,
-            # default MatchedRule: 5
             #
             # -----------------------------------------------------------------
             #
@@ -1501,11 +1522,11 @@ class RuleSet:
             capa.features.common.Characteristic: 4,
             capa.features.insn.Offset: 4,
             capa.features.insn.OperandOffset: 4,
-            # "common numbers": 3
+            # "common numbers": 3 (placeholder for logic above)
             #
             # -----------------------------------------------------------------
             #
-            # Very common features, which we'd only prefer to non-hashable features, like Regex/Substring/Bytes.
+            # Very common features, which we'd only prefer instead of non-hashable features, like Regex/Substring/Bytes.
             #
             capa.features.insn.Mnemonic: 2,
             capa.features.basicblock.BasicBlock: 1,
@@ -1521,9 +1542,9 @@ class RuleSet:
             #
             # Non-hashable features, which will require a scan to evaluate, and are therefore quite expensive.
             #
-            # substring: 0
-            # regex: 0
-            # bytes: 0
+            # substring: 0 (placeholder for logic above)
+            # regex: 0 (placeholder for logic above)
+            # bytes: 0 (placeholder for logic above)
         }[C]
 
     # this class is unstable and may change before the next major release.
