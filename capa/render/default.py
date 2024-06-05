@@ -102,7 +102,11 @@ def render_capabilities(doc: rd.ResultDocument, ostream: StringIO):
 
     if rows:
         ostream.write(
-            tabulate.tabulate(rows, headers=[width("Capability", 50), width("Namespace", 50)], tablefmt="mixed_outline")
+            tabulate.tabulate(
+                rows,
+                headers=[width("Capability", 50), width("Namespace", 50)],
+                tablefmt="mixed_outline",
+            )
         )
         ostream.write("\n")
     else:
@@ -148,7 +152,55 @@ def render_attack(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)], tablefmt="mixed_grid"
+                rows,
+                headers=[width("ATT&CK Tactic", 20), width("ATT&CK Technique", 80)],
+                tablefmt="mixed_grid",
+            )
+        )
+        ostream.write("\n")
+
+
+def render_maec(doc: rd.ResultDocument, ostream: StringIO):
+    """
+    example::
+
+        +--------------------------+-----------------------------------------------------------+
+        | MAEC Category            | MAEC Value                                                |
+        |--------------------------+-----------------------------------------------------------|
+        | analysis-conclusion      | malicious                                                 |
+        |--------------------------+-----------------------------------------------------------|
+        | malware-family           | PlugX                                                     |
+        |--------------------------+-----------------------------------------------------------|
+        | malware-category         | downloader                                                |
+        |                          | launcher                                                  |
+        +--------------------------+-----------------------------------------------------------+
+    """
+    maec_categories = {
+        "analysis_conclusion",
+        "analysis_conclusion_ov",
+        "malware_family",
+        "malware_category",
+        "malware_category_ov",
+    }
+    maec_table = collections.defaultdict(set)
+    for rule in rutils.maec_rules(doc):
+        for maec_category in maec_categories:
+            maec_value = getattr(rule.meta.maec, maec_category, None)
+            if maec_value:
+                maec_table[maec_category].add(maec_value)
+
+    rows = []
+    for category in sorted(maec_categories):
+        values = maec_table.get(category, set())
+        if values:
+            rows.append((rutils.bold(category.replace("_", "-")), "\n".join(sorted(values))))
+
+    if rows:
+        ostream.write(
+            tabulate.tabulate(
+                rows,
+                headers=[width("MAEC Category", 25), width("MAEC Value", 75)],
+                tablefmt="mixed_grid",
             )
         )
         ostream.write("\n")
@@ -191,7 +243,9 @@ def render_mbc(doc: rd.ResultDocument, ostream: StringIO):
     if rows:
         ostream.write(
             tabulate.tabulate(
-                rows, headers=[width("MBC Objective", 25), width("MBC Behavior", 75)], tablefmt="mixed_grid"
+                rows,
+                headers=[width("MBC Objective", 25), width("MBC Behavior", 75)],
+                tablefmt="mixed_grid",
             )
         )
         ostream.write("\n")
@@ -203,6 +257,8 @@ def render_default(doc: rd.ResultDocument):
     render_meta(doc, ostream)
     ostream.write("\n")
     render_attack(doc, ostream)
+    ostream.write("\n")
+    render_maec(doc, ostream)
     ostream.write("\n")
     render_mbc(doc, ostream)
     ostream.write("\n")
