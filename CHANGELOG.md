@@ -7,12 +7,13 @@
 
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
+- render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
 
 ### Breaking Changes
 
 
-### New Rules (16)
+### New Rules (17)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -30,6 +31,7 @@
 - persistence/act-as-windbg-extension jakub.jozwiak@mandiant.com
 - persistence/act-as-time-provider-dll jakub.jozwiak@mandiant.com
 - host-interaction/gui/window/hide/hide-graphical-window-from-taskbar jakub.jozwiak@mandiant.com
+- compiler/dart/compiled-with-dart jakub.jozwiak@mandiant.com
 -
 
 ### Bug Fixes
