@@ -273,7 +273,7 @@ class BinExport2Analysis:
                 # because either, len is:
                 #    0 and the thunk doesn't point to anything, or
                 #   >1 and the thunk may end up at many functions.
-                assert len(thunk_callees) == 1
+                assert len(thunk_callees) == 1, f"thunk @ {hex(addr)} failed"
 
                 thunked_idx: int = thunk_callees[0]
                 thunked_vertex: BinExport2.CallGraph.Vertex = self.be2.call_graph.vertex[thunked_idx]
