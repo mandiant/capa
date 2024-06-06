@@ -349,6 +349,7 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
                 # "functions": { 0x401000: { "matched_basic_blocks": [ 0x401000, 0x401005, ... ] }, ... }
             ),
             feature_counts=counts["feature_counts"],
+            function_count=counts["function_count"],
             library_functions=counts["library_functions"],
         )
     elif isinstance(extractor, DynamicFeatureExtractor):

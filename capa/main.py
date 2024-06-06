@@ -876,6 +876,7 @@ def ida_main():
     capabilities, counts = find_capabilities(rules, capa.features.extractors.ida.extractor.IdaFeatureExtractor())
 
     meta.analysis.feature_counts = counts["feature_counts"]
+    meta.analysis.function_count = counts["function_count"]
     meta.analysis.library_functions = counts["library_functions"]
 
     if has_file_limitation(rules, capabilities, is_standalone=False):

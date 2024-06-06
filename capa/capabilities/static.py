@@ -144,6 +144,7 @@ def find_static_capabilities(
     all_insn_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
+    n_funcs: int = 0
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
 
     assert isinstance(extractor, StaticFeatureExtractor)
@@ -242,9 +243,6 @@ def find_static_capabilities(
         )
     )
 
-    meta = {
-        "feature_counts": feature_counts,
-        "library_functions": library_functions,
-    }
+    meta = {"feature_counts": feature_counts, "library_functions": library_functions, "function_count": n_funcs}
 
     return matches, meta
