@@ -1463,7 +1463,7 @@ class RuleSet:
             if rule_name not in scores_by_rule:
                 # Its possible that we haven't scored the rule that is being requested here.
                 # This means that it won't ever match (because it won't be evaluated before this one).
-                # Still, we need to provide a default value here. 
+                # Still, we need to provide a default value here.
                 # So we give it 9, because it won't match, so its very selective.
                 #
                 # But how could this dependency not exist?
