@@ -21,10 +21,14 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
+from capa.features.insn import API
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
 logger = logging.getLogger(__name__)
+
+MIN_LIB_FUNCS_RATIO = 0.4
+MIN_API_CALLS = 10
 
 
 def find_instruction_capabilities(
@@ -96,7 +100,7 @@ def find_basic_block_capabilities(
 
 def find_code_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
-) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
+) -> Tuple[MatchResults, MatchResults, MatchResults, FeatureSet]:
     """
     find matches for the given rules within the given function.
 
@@ -129,7 +133,7 @@ def find_code_capabilities(
         function_features[feature].add(va)
 
     _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
-    return function_matches, bb_matches, insn_matches, len(function_features)
+    return function_matches, bb_matches, insn_matches, function_features
 
 
 def find_static_capabilities(
@@ -140,7 +144,9 @@ def find_static_capabilities(
     all_insn_matches: MatchResults = collections.defaultdict(list)
 
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
+    n_funcs: int = 0
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
+    api_calls: int = 0
 
     assert isinstance(extractor, StaticFeatureExtractor)
     with redirecting_print_to_tqdm(disable_progress):
@@ -180,12 +186,24 @@ def find_static_capabilities(
                         pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
                     continue
 
-                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
+                function_matches, bb_matches, insn_matches, function_features = find_code_capabilities(
                     ruleset, extractor, f
                 )
+                feature_count = len(function_features)
                 feature_counts.functions += (
                     rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
                 )
+
+                # for each function, count the number of API features,
+                # and cumulatively it to the total count of API calls made
+                call_addresses = {
+                    addr
+                    for feature, addresses in function_features.items()
+                    if isinstance(feature, API)
+                    for addr in addresses
+                }
+                api_calls += len(call_addresses)
+
                 t1 = time.time()
 
                 match_count = 0
@@ -213,6 +231,18 @@ def find_static_capabilities(
                 for rule_name, res in insn_matches.items():
                     all_insn_matches[rule_name].extend(res)
 
+    if n_funcs:
+        lib_ratio = len(library_functions) / n_funcs
+        if lib_ratio < MIN_LIB_FUNCS_RATIO:
+            logger.info(
+                "Few library functions (%.2f%% of all functions) recognized by FLIRT signatures, results may contain false positives",
+                lib_ratio * 100,
+            )
+
+    if api_calls < MIN_API_CALLS:
+        logger.info(
+            "The analyzed sample reports very few API calls, this could indicate that it is packed, corrupted, or tiny"
+        )
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
     function_and_lower_features: FeatureSet = collections.defaultdict(set)
@@ -238,9 +268,6 @@ def find_static_capabilities(
         )
     )
 
-    meta = {
-        "feature_counts": feature_counts,
-        "library_functions": library_functions,
-    }
+    meta = {"feature_counts": feature_counts, "library_functions": library_functions}
 
     return matches, meta
