@@ -18,7 +18,6 @@ from capa.engine import MatchResults
 from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
-MIN_LIB_FUNCS_PERCENTAGE = 30
 
 
 def width(s: str, character_count: int) -> str:
@@ -30,19 +29,6 @@ def width(s: str, character_count: int) -> str:
 
 
 def render_meta(doc: rd.ResultDocument, ostream: StringIO):
-    # check if analysis is Static analysis to inform users about
-    # potential false postive due to low number of library functions
-    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
-        n_libs: int = len(doc.meta.analysis.library_functions)
-        n_funcs: int = doc.meta.analysis.function_count
-        lib_percentage = round(100 * (n_libs / n_funcs), 2)
-        if lib_percentage <= MIN_LIB_FUNCS_PERCENTAGE:
-            ostream.write(
-                rutils.warn(
-                    f"Few library functions (%{lib_percentage} of all functions) recognized by FLIRT signatures, results may contain false positives\n\n",
-                )
-            )
-
     rows = [
         (width("md5", 22), width(doc.meta.sample.md5, 82)),
         ("sha1", doc.meta.sample.sha1),
