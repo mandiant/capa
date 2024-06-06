@@ -270,6 +270,14 @@ class Subscope(Statement):
 MatchResults = Mapping[str, List[Tuple[Address, Result]]]
 
 
+def get_rule_namespaces(rule: "capa.rules.Rule") -> Iterator[str]:
+    namespace = rule.meta.get("namespace")
+    if namespace:
+        while namespace:
+            yield namespace
+            namespace, _, _ = namespace.rpartition("/")
+
+
 def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[Address]):
     """
     record into the given featureset that the given rule matched at the given locations.
@@ -280,11 +288,8 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
     updates `features` in-place. doesn't modify the remaining arguments.
     """
     features[capa.features.common.MatchedRule(rule.name)].update(locations)
-    namespace = rule.meta.get("namespace")
-    if namespace:
-        while namespace:
-            features[capa.features.common.MatchedRule(namespace)].update(locations)
-            namespace, _, _ = namespace.rpartition("/")
+    for namespace in get_rule_namespaces(rule):
+        features[capa.features.common.MatchedRule(namespace)].update(locations)
 
 
 def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -> Tuple[FeatureSet, MatchResults]:

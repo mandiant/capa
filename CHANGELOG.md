@@ -9,6 +9,7 @@
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
+- optimize rule matching #2080 @williballenthin
 
 ### Breaking Changes
 
