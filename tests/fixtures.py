@@ -406,14 +406,14 @@ def get_data_path_by_name(name) -> Path:
         return CD / "data" / "dotnet" / "dd9098ff91717f4906afe9dafdfa2f52.exe_"
     elif name.startswith("nested_typeref"):
         return CD / "data" / "dotnet" / "2c7d60f77812607dec5085973ff76cea.dll_"
-    elif name.startswith("687e79.be2"):
+    elif name.startswith("687e79.ghidra.be2"):
         return (
             CD
             / "data"
             / "binexport2"
             / "687e79cde5b0ced75ac229465835054931f9ec438816f2827a8be5f3bd474929.elf_.ghidra.BinExport"
         )
-    elif name.startswith("d1e650.be2"):
+    elif name.startswith("d1e650.ghidra.be2"):
         return (
             CD
             / "data"
@@ -1438,9 +1438,9 @@ FEATURE_COUNT_TESTS_DOTNET = [
 
 FEATURE_COUNT_TESTS_GHIDRA = [
     # Ghidra may render functions as labels, as well as provide differing amounts of call references
-    # (Colton) TODO: Add more test cases
     ("mimikatz", "function=0x4702FD", capa.features.common.Characteristic("calls from"), 0),
-    ("mimikatz", "function=0x4556E5", capa.features.common.Characteristic("calls to"), 0),
+    ("mimikatz", "function=0x401000", capa.features.common.Characteristic("calls to"), 0),
+    ("mimikatz", "function=0x401000", capa.features.basicblock.BasicBlock(), 3),
 ]
 
 
