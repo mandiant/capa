@@ -16,7 +16,6 @@ from typing import Any, Tuple
 import tqdm.contrib.logging
 
 import capa.perf
-import capa.render.utils as rutils
 import capa.features.freeze as frz
 import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
@@ -235,24 +234,17 @@ def find_static_capabilities(
                 for rule_name, res in insn_matches.items():
                     all_insn_matches[rule_name].extend(res)
 
-    # inform users if few library functions are recognized
-    # via FLIRT signatures, results may contain false positives
-    # from library code
     if n_funcs:
         lib_ratio = len(library_functions) / n_funcs
         if lib_ratio < MIN_LIB_FUNCS_RATIO:
-            print(
-                rutils.warn(
-                    "Few library functions (%.2f%% of all functions) recognized by FLIRT signatures, results may contain false positives"
-                    % (lib_ratio * 100)
-                )
+            logger.info(
+                "Few library functions (%.2f%% of all functions) recognized by FLIRT signatures, results may contain false positives",
+                lib_ratio * 100,
             )
 
     if api_calls < MIN_API_CALLS:
-        print(
-            rutils.warn(
-                "The analyzed sample reports very few API calls, this could indicate that it is packed, corrupted, or tiny"
-            )
+        logger.info(
+            "The analyzed sample reports very few API calls, this could indicate that it is packed, corrupted, or tiny"
         )
     # collection of features that captures the rule matches within function, BB, and instruction scopes.
     # mapping from feature (matched rule) to set of addresses at which it matched.
