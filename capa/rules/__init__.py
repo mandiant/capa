@@ -1459,6 +1459,25 @@ class RuleSet:
             # If logic changes and you see issues here, ensure that `scores_by_rule` is correctly provided.
             rule_name = node.value
             assert isinstance(rule_name, str)
+
+            if rule_name not in scores_by_rule:
+                # Its possible that we haven't scored the rule that is being requested here.
+                # This means that it won't ever match (because it won't be evaluated before this one).
+                # Still, we need to provide a default value here. 
+                # So we give it 9, because it won't match, so its very selective.
+                #
+                # But how could this dependency not exist?
+                # Consider a rule that supports both static and dynamic analysis, but also has
+                # a `instruction: ` block. This block gets translated into a derived rule that only
+                # matches in static mode. Therefore, when the parent rule is run in dynamic mode, it
+                # won't be able to find the derived rule. This is the case we have to handle here.
+                #
+                # A better solution would be to prune this logic based on static/dynamic mode, but
+                # that takes more work and isn't in scope of this feature.
+                #
+                # See discussion in: https://github.com/mandiant/capa/pull/2080/#discussion_r1624783396
+                return 9
+
             return scores_by_rule[rule_name]
 
         elif isinstance(node, (capa.features.insn.Number, capa.features.insn.OperandNumber)):
