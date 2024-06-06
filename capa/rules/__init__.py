@@ -1957,15 +1957,6 @@ class RuleSet:
                         if wanted_bytes.evaluate(bytes_features):
                             candidate_rule_names.add(rule_name)
 
-        # trace
-        # logger.debug(
-        #     "perf: match: %s: %s: %d features, %d candidate rules",
-        #     scope,
-        #     addr,
-        #     len(features),
-        #     len(candidate_rule_names),
-        # )
-
         # No rules can possibly match, so quickly return.
         if not candidate_rule_names:
             return (features, {})
