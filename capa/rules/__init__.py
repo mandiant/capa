@@ -1911,12 +1911,12 @@ class RuleSet:
         #
         # We may want to try to pre-evaluate these strings, based on their presence in the file,
         # to reduce the number of evaluations we do here.
-        # See: https://github.com/mandiant/capa/issues/2063#issuecomment-2095639672
+        # See: https://github.com/mandiant/capa/issues/2126
         #
         # We may also want to specialize case-insensitive strings, which would enable them to
         # be indexed, and therefore skip the scanning here, improving performance.
         # This strategy is described here:
-        # https://github.com/mandiant/capa/issues/2063#issuecomment-2107083068
+        # https://github.com/mandiant/capa/issues/2129
         if feature_index.string_rules:
 
             # This is a FeatureSet that contains only String features.
@@ -1944,7 +1944,7 @@ class RuleSet:
         # We may want to index bytes when they have a common length, like 16 or 32.
         # This would help us avoid the scanning here, which would improve performance.
         # The strategy is described here:
-        # https://github.com/mandiant/capa/issues/2063#issuecomment-2107052190
+        # https://github.com/mandiant/capa/issues/2128
         if feature_index.bytes_rules:
             bytes_features: FeatureSet = {}
             for feature, locations in features.items():
