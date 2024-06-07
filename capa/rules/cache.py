@@ -28,24 +28,31 @@ logger = logging.getLogger(__name__)
 CacheIdentifier = str
 
 
-def is_dev_environment() -> bool:
+def is_dev_environment() -> Optional[Path]:
     if getattr(sys, "frozen", False):
         # running as a PyInstaller executable
-        return False
+        return None
 
     if "site-packages" in __file__:
         # running from a site-packages installation
-        return False
+        return None
 
-    if not shutil.which("git"):
-        # git is found, but might not be always be in PATH
-        # we should handle this case
-        return False
+    capa_root = Path(__file__).resolve().parent.parent
+    git_dir = capa_root / ".git"
 
-    return True
+    if not git_dir.is_dir():
+        # .git directory doesn't exist
+        return None
+
+    git_exe = shutil.which("git")
+    if not git_exe:
+        # git is not found in PATH
+        return None
+
+    return Path(git_exe)
 
 
-def get_modified_files() -> List[str]:
+def get_modified_files() -> List[Path]:
     try:
         # use git status to retrieve tracked modified files
         result = subprocess.run(
@@ -59,13 +66,13 @@ def get_modified_files() -> List[str]:
         # ' M': the file has staged modifications
         # 'M ': the file has unstaged modifications
         # 'MM': the file has both staged and unstaged modifications
-        files = []
+        files: List[Path] = []
         for line in result.stdout.splitlines():
             if line.startswith(("M ", "MM", " M")) and line.endswith(".py"):
-                file_path = line[3:]
+                file_path = Path(line[3:])
                 files.append(file_path)
 
-        return files
+        return sorted(files)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
 
@@ -173,11 +180,10 @@ def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdenti
 
             for file in modified_files:
                 try:
-                    with Path(file).open("rb") as f:
-                        file_content = f.read()
-                        logger.debug("found modified source py %s", file)
-                        hash.update(file_content)
-                        hash.update(b"\x00")
+                    file_content = file.read_bytes()
+                    logger.debug("found modified source file %s", file)
+                    hash.update(file_content)
+                    hash.update(b"\x00")
                 except FileNotFoundError as e:
                     logger.error("modified file not found: %s", file)
                     logger.error("%s", e)
@@ -196,6 +202,7 @@ def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdenti
                 "developer environment detected, ruleset cache will be auto-generated upon each source modification"
             )
             return hash.hexdigest()
+
     return compute_cache_identifier(rule_contents)
 
 
@@ -262,8 +269,7 @@ def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
         logger.error("%s", str(e))
         return False
 
-    content = capa.rules.cache.get_ruleset_content(rules)
-    id = capa.rules.cache.compute_cache_identifier(content)
+    id = capa.rules.cache.compute_ruleset_cache_identifier(rules)
     path = capa.rules.cache.get_cache_path(cache_dir, id)
 
     assert path.exists()

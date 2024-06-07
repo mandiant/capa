@@ -48,9 +48,13 @@ Special thanks to our repeat and new contributors:
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
 - optimize rule matching #2080 @williballenthin
+<<<<<<< HEAD
 - add aarch64 as a valid architecture #2144 mehunhoff@google.com @williballenthin
 - relax dependency version requirements for the capa library #2053 @williballenthin
 - add scripts dependency group and update documentation #2145 @mr-tz
+=======
+- regenerate ruleset cache automatically on source change (only in dev mode) #2133 @s-ff
+>>>>>>> 699f49d2 (check if git dir exists, and return sorted modified file paths)
 
 ### New Rules (25)
 
