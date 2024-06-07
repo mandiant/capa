@@ -23,15 +23,25 @@ import json
 import argparse
 from pathlib import Path
 
-from sarif_om import Tool, SarifLog, Run, ToolComponent
-from jschema_to_python.to_json import to_json
-
 from capa.version import __version__
 
 from typing import Optional, List
 
 
 logger = logging.getLogger('capa2sarif')
+
+# Dependencies
+try:
+    from sarif_om import Tool, SarifLog, Run, ToolComponent
+except ImportError as e:
+    logger.error("Required import `sarif_om` is not installed. This is solved by installing `python3 -m pip install sarif_om>=1.0.4`. %s", e)
+    exit(-4)
+
+try:
+    from jschema_to_python.to_json import to_json
+except ImportError as e:
+    logger.error("Required import `jschema_to_python` is not installed. This is solved by installing `python3 -m pip install jschema_to_python>=1.2.3`, %s", e)
+    exit(-4)
 
 
 def _parse_args() -> argparse.Namespace:
