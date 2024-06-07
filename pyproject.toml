@@ -88,7 +88,6 @@ dependencies = [
     # latest bug fixes we need here.
     "viv-utils[flirt]>=0.7.9",
     "vivisect>=1.1.1",
-    "dnfile>=0.14.1",
     "dncil>=1.0.2",
 
     # ---------------------------------------
@@ -98,8 +97,13 @@ dependencies = [
     # typically due to dropping support for python releases
     # we still support.
 
-    # networkx 3.2 doesn't support python 3.8
+    # TODO(williballenthin): networkx 3.2 doesn't support python 3.8 while capa does.
+    # https://github.com/mandiant/capa/issues/1966
     "networkx>=3,<3.2",
+
+    # TODO(williballenthin): dnfile 0.15 changes UserString API and we havent updated yet.
+    # https://github.com/mandiant/capa/pull/2037
+    "dnfile>=0.14.1,<0.15",
 ]
 dynamic = ["version"]
 
