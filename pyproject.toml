@@ -40,7 +40,6 @@ dependencies = [
     "wcwidth==0.2.13",
     "ida-settings==2.1.0",
     "viv-utils[flirt]==0.7.9",
-    "halo==0.0.31",
     "networkx==3.1",
     "ruamel.yaml==0.18.6",
     "vivisect==1.1.1",
@@ -49,7 +48,9 @@ dependencies = [
     "dnfile==0.14.1",
     "dncil==1.0.2",
     "pydantic==2.7.1",
-    "protobuf==5.26.1",
+    "rich==13.7.1",
+    "humanize==4.9.0",
+    "protobuf==5.27.0",
 ]
 dynamic = ["version"]
 
@@ -78,7 +79,7 @@ dev = [
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.4.4",
+    "ruff==0.4.7",
     "black==24.4.2",
     "isort==5.13.2",
     "mypy==1.10.0",
@@ -93,13 +94,85 @@ dev = [
     "types-tabulate==0.9.0.20240106",
     "types-termcolor==1.1.4",
     "types-psutil==5.8.23",
-    "types_requests==2.31.0.20240406",
+    "types_requests==2.32.0.20240602",
     "types-protobuf==5.26.0.20240422",
+    "deptry==0.16.1"
 ]
 build = [
-    "pyinstaller==6.6.0",
+    "pyinstaller==6.7.0",
     "setuptools==69.5.1",
     "build==1.2.1"
+]
+
+[tool.deptry]
+extend_exclude = [
+    "sigs",
+    "tests"
+]
+
+# dependencies marked as first party, to inform deptry that they are local
+known_first_party = [
+    "backports",
+    "binaryninja",
+    "flirt",
+    "ghidra",
+    "ida_bytes",
+    "ida_entry",
+    "ida_funcs",
+    "ida_kernwin",
+    "ida_loader",
+    "ida_nalt",
+    "ida_segment",
+    "idaapi",
+    "idautils",
+    "idc",
+    "java",
+    "netnode",
+    "PyQt5"
+]
+
+[tool.deptry.per_rule_ignores]
+# dependencies defined but not used in the codebase
+DEP002 = [
+    "black",
+    "build",
+    "deptry",
+    "flake8",
+    "flake8-bugbear",
+    "flake8-comprehensions",
+    "flake8-copyright",
+    "flake8-encodings",
+    "flake8-logging-format",
+    "flake8-no-implicit-concat",
+    "flake8-print",
+    "flake8-simplify",
+    "flake8-todos",
+    "flake8-use-pathlib",
+    "isort",
+    "mypy",
+    "mypy-protobuf",
+    "pre-commit",
+    "pyinstaller",
+    "pytest",
+    "pytest-cov",
+    "pytest-instafail",
+    "pytest-sugar",
+    "ruff",
+    "setuptools",
+    "types-backports",
+    "types-colorama",
+    "types-protobuf",
+    "types-psutil",
+    "types-PyYAML",
+    "types-tabulate",
+    "types-termcolor",
+    "types_requests",
+    "wcwidth"
+]
+
+# dependencies imported but missing from definitions
+DEP003 = [
+    "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
 
 [project.urls]

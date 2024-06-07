@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
+from unittest.mock import Mock
 
 import fixtures
 
@@ -19,6 +20,7 @@ import capa.render.vverbose
 import capa.features.address
 import capa.features.basicblock
 import capa.render.result_document
+import capa.render.result_document as rd
 import capa.features.freeze.features
 
 
@@ -111,6 +113,54 @@ def test_render_meta_mbc():
     assert mbc.method == method
 
     assert capa.render.utils.format_parts_id(mbc) == canonical
+
+
+def test_render_meta_maec():
+    malware_family = "PlugX"
+    malware_category = "downloader"
+    analysis_conclusion = "malicious"
+
+    rule_yaml = textwrap.dedent(
+        """
+        rule:
+          meta:
+            name: test rule
+            scopes:
+              static: function
+              dynamic: process
+            authors:
+              - foo
+            maec/malware-family: {:s}
+            maec/malware-category: {:s}
+            maec/analysis-conclusion: {:s}
+          features:
+            - number: 1
+        """.format(
+            malware_family, malware_category, analysis_conclusion
+        )
+    )
+    rule = capa.rules.Rule.from_yaml(rule_yaml)
+    rm = capa.render.result_document.RuleMatches(
+        meta=capa.render.result_document.RuleMetadata.from_capa(rule),
+        source=rule_yaml,
+        matches=(),
+    )
+
+    # create a mock ResultDocument
+    mock_rd = Mock(spec=rd.ResultDocument)
+    mock_rd.rules = {"test rule": rm}
+
+    # capture the output of render_maec
+    output_stream = capa.render.utils.StringIO()
+    capa.render.default.render_maec(mock_rd, output_stream)
+    output = output_stream.getvalue()
+
+    assert "analysis-conclusion" in output
+    assert analysis_conclusion in output
+    assert "malware-category" in output
+    assert malware_category in output
+    assert "malware-family" in output
+    assert malware_family in output
 
 
 @fixtures.parametrize(
