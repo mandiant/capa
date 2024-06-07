@@ -19,7 +19,7 @@ optional arguments:
 
 Requires:
     - sarif_om 1.0.4
-    - jschema_to_python 1.2.
+    - jschema_to_python 1.2.3
 """
 import argparse
 import json
