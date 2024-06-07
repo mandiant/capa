@@ -21,22 +21,22 @@ Requires:
     - sarif_om 1.0.4
     - jschema_to_python 1.2.
 """
+import argparse
+import json
 import logging
 import sys
-import json
-import argparse
 from pathlib import Path
 
 from capa.version import __version__
 
-from typing import Optional, List
+from typing import List, Optional
 
 
 logger = logging.getLogger("capa2sarif")
 
 # Dependencies
 try:
-    from sarif_om import Tool, SarifLog, Run, ToolComponent
+    from sarif_om import Run, SarifLog, Tool, ToolComponent
 except ImportError as e:
     logger.error(
         "Required import `sarif_om` is not installed. This is solved by installing `python3 -m pip install sarif_om>=1.0.4`. %s",
@@ -112,7 +112,7 @@ def main() -> int:
         return -3
 
     _populate_artifact(sarif_structure, json_data["meta"])
-    _populate_invoations(sarif_structure, json_data["meta"])
+    _populate_invocations(sarif_structure, json_data["meta"])
     _populate_results(sarif_structure, json_data["rules"], args.ghidra_compat)
 
     if args.ghidra_compat:
@@ -231,7 +231,7 @@ def _populate_artifact(sarif_log: dict, meta_data: dict) -> None:
     sarif_log["runs"][0]["artifacts"].append(artifact)
 
 
-def _populate_invoations(sarif_log: dict, meta_data: dict) -> None:
+def _populate_invocations(sarif_log: dict, meta_data: dict) -> None:
     """
     @param sarif_log: dict - sarif data structure including runs
     @param meta_data: dict - Capa meta output
