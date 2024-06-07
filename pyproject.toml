@@ -32,25 +32,74 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "tqdm==4.66.4",
-    "pyyaml==6.0.1",
-    "tabulate==0.9.0",
-    "colorama==0.4.6",
-    "termcolor==2.4.0",
-    "wcwidth==0.2.13",
-    "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.7.9",
-    "networkx==3.1",
-    "ruamel.yaml==0.18.6",
-    "vivisect==1.1.1",
-    "pefile==2023.2.7",
-    "pyelftools==0.31",
-    "dnfile==0.14.1",
-    "dncil==1.0.2",
-    "pydantic==2.7.1",
-    "rich==13.7.1",
-    "humanize==4.9.0",
-    "protobuf==5.27.0",
+    # ---------------------------------------
+    # As a library, capa uses lower version bounds
+    # when specifying its dependencies. This lets
+    # other programs that use capa (and other libraries)
+    # to find a compatible set of dependency versions.
+    #
+    # We can optionally pin to specific versions or
+    # limit the upper bound when there's a good reason;
+    # but the default is to assume all greater versions
+    # probably work with capa until proven otherwise.
+    #
+    # The following link provides good background:
+    # https://iscinumpy.dev/post/bound-version-constraints/
+    #
+    # When we develop capa, and when we distribute it as
+    # a standalone binary, we'll use specific versions
+    # that are pinned in requirements.txt.
+    # But the requirements for a library are specified here
+    # and are looser.
+    #
+    # Related discussions:
+    # 
+    #   - https://github.com/mandiant/capa/issues/2053
+    #   - https://github.com/mandiant/capa/pull/2059
+    #   - https://github.com/mandiant/capa/pull/2079
+    #
+    # ---------------------------------------
+    # The following dependency versions were imported
+    # during June 2024 by truncating specific versions to
+    # their major-most version (major version when possible, 
+    # or minor otherwise).
+    # As specific constraints are identified, please provide
+    # comments and context.
+    "tqdm>=4",
+    "pyyaml>=6",
+    "tabulate>=0.9",
+    "colorama>=0.4",
+    "termcolor>=2",
+    "wcwidth>=0.2",
+    "ida-settings>=2",
+    "ruamel.yaml>=0.18",
+    "pefile>=2023.2.7",
+    "pyelftools>=0.31",
+    "pydantic>=2",
+    "rich>=13",
+    "humanize>=4",
+    "protobuf>=5",
+
+    # ---------------------------------------
+    # Dependencies that we develop
+    #
+    # These dependencies are often actively influenced by capa,
+    # so we provide a minimum patch version that includes the
+    # latest bug fixes we need here.
+    "viv-utils[flirt]>=0.7.9",
+    "vivisect>=1.1.1",
+    "dnfile>=0.14.1",
+    "dncil>=1.0.2",
+
+    # ---------------------------------------
+    # Dependencies with version caps
+    #
+    # These dependencies must not exceed the version cap,
+    # typically due to dropping support for python releases
+    # we still support.
+
+    # networkx 3.2 doesn't support python 3.8
+    "networkx>=3,<3.2",
 ]
 dynamic = ["version"]
 
