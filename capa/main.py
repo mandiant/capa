@@ -890,6 +890,8 @@ def ida_main():
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.apicall_count = counts["apicall_count"]
+    meta.analysis.import_count = counts["import_count"]
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         capa.ida.helpers.inform_user_ida_ui("capa encountered warnings during analysis")
@@ -928,6 +930,8 @@ def ghidra_main():
 
     meta.analysis.feature_counts = counts["feature_counts"]
     meta.analysis.library_functions = counts["library_functions"]
+    meta.analysis.apicall_count = counts["apicall_count"]
+    meta.analysis.import_count = counts["import_count"]
 
     if has_file_limitation(rules, capabilities, is_standalone=False):
         logger.info("capa encountered warnings during analysis")

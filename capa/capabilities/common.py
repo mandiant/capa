@@ -37,7 +37,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     file_features.update(function_features)
 
     _, matches = ruleset.match(Scope.FILE, file_features, NO_ADDRESS)
-    return matches, len(file_features)
+    return matches, file_features
 
 
 def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:

@@ -403,6 +403,9 @@ message StaticAnalysis {
   StaticLayout layout = 7;
   StaticFeatureCounts feature_counts = 8;
   repeated LibraryFunction library_functions = 9;
+  uint64 apicall_count = 10;
+  uint64 import_count = 11;
+
 }
 
 message StaticFeatureCounts {

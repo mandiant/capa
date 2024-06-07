@@ -350,6 +350,8 @@ def get_sample_analysis(format_, arch, os_, extractor, rules_path, counts):
             ),
             feature_counts=counts["feature_counts"],
             library_functions=counts["library_functions"],
+            apicall_count=counts["apicall_count"],
+            import_count=counts["import_count"],
         )
     elif isinstance(extractor, DynamicFeatureExtractor):
         return rdoc.DynamicAnalysis(

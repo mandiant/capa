@@ -19,6 +19,9 @@ from capa.render.utils import StringIO
 
 tabulate.PRESERVE_WHITESPACE = True
 
+MIN_LIBFUNCS_RATIO = 0.4
+MIN_API_CALLS = 10
+
 
 def width(s: str, character_count: int) -> str:
     """pad the given string to at least `character_count`"""
@@ -29,6 +32,27 @@ def width(s: str, character_count: int) -> str:
 
 
 def render_meta(doc: rd.ResultDocument, ostream: StringIO):
+    if isinstance(doc.meta.analysis, rd.StaticAnalysis):
+
+        if doc.meta.analysis.apicall_count < MIN_API_CALLS:
+            ostream.write(
+                rutils.warn(
+                    "The analyzed sample reports very few API calls, this could indicate that it is packed, encrypted, corrupted, or tiny\n"
+                )
+            )
+
+        n_libs: int = len(doc.meta.analysis.library_functions)
+        n_funcs: int = len(doc.meta.analysis.feature_counts.functions)
+        lib_ratio: float = n_libs / (n_funcs + n_libs) if (n_funcs + n_libs) > 0 else 0
+
+        if lib_ratio < MIN_LIBFUNCS_RATIO:
+            ostream.write(
+                rutils.warn(
+                    "Few library functions (%.2f%% of all functions) recognized by FLIRT signatures, results may contain false positives\n"
+                )
+                % (100 * lib_ratio)
+            )
+
     rows = [
         (width("md5", 22), width(doc.meta.sample.md5, 82)),
         ("sha1", doc.meta.sample.sha1),

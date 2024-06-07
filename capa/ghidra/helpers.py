@@ -156,5 +156,7 @@ def collect_metadata(rules: List[Path]):
             ),
             feature_counts=rdoc.StaticFeatureCounts(file=0, functions=()),
             library_functions=(),
+            apicall_count=0,
+            import_count=0,
         ),
     )

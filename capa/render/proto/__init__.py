@@ -703,6 +703,8 @@ def static_analysis_from_pb2(analysis: capa_pb2.StaticAnalysis) -> rd.StaticAnal
         library_functions=tuple(
             [rd.LibraryFunction(address=addr_from_pb2(lf.address), name=lf.name) for lf in analysis.library_functions]
         ),
+        apicall_count=analysis.apicall_count,
+        import_count=analysis.import_count,
     )
 
 
