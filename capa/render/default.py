@@ -36,7 +36,7 @@ def render_meta(doc: rd.ResultDocument, ostream: StringIO):
 
         if doc.meta.analysis.apicall_count < MIN_API_CALLS:
             ostream.write(
-                rutils.warn(
+                rutils.bold(
                     "The analyzed sample reports very few API calls, this could indicate that it is packed, encrypted, corrupted, or tiny\n"
                 )
             )
@@ -47,7 +47,7 @@ def render_meta(doc: rd.ResultDocument, ostream: StringIO):
 
         if lib_ratio < MIN_LIBFUNCS_RATIO:
             ostream.write(
-                rutils.warn(
+                rutils.bold(
                     "Few library functions (%.2f%% of all functions) recognized by FLIRT signatures, results may contain false positives\n"
                 )
                 % (100 * lib_ratio)
