@@ -21,12 +21,12 @@ Requires:
     - sarif_om 1.0.4
     - jschema_to_python 1.2.3
 """
-import argparse
+import sys
 import json
 import logging
-import sys
-from pathlib import Path
+import argparse
 from typing import List, Optional
+from pathlib import Path
 
 from capa.version import __version__
 
@@ -34,7 +34,7 @@ logger = logging.getLogger("capa2sarif")
 
 # Dependencies
 try:
-    from sarif_om import Run, SarifLog, Tool, ToolComponent
+    from sarif_om import Run, Tool, SarifLog, ToolComponent
 except ImportError as e:
     logger.error(
         "Required import `sarif_om` is not installed. This is solved by installing `python3 -m pip install sarif_om>=1.0.4`. %s",
