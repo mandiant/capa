@@ -26,11 +26,9 @@ import json
 import logging
 import sys
 from pathlib import Path
-
-from capa.version import __version__
-
 from typing import List, Optional
 
+from capa.version import __version__
 
 logger = logging.getLogger("capa2sarif")
 
