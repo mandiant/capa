@@ -40,7 +40,7 @@ def find_file_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, functi
     return matches, file_features
 
 
-def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalone=True) -> bool:
+def has_file_limitation(rules: RuleSet, capabilities: MatchResults) -> bool:
     file_limitation_rules = list(filter(lambda r: r.is_file_limitation_rule(), rules.rules.values()))
 
     for file_limitation_rule in file_limitation_rules:
@@ -51,9 +51,6 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
         for line in file_limitation_rule.meta.get("description", "").split("\n"):
             logger.warning(" %s", line)
         logger.warning(" Identified via rule: %s", file_limitation_rule.name)
-        if is_standalone:
-            logger.warning(" ")
-            logger.warning(" Use -v or -vv if you really want to see the capabilities identified by capa.")
         logger.warning("-" * 80)
 
         # bail on first file limitation
