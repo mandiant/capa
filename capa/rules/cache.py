@@ -9,10 +9,8 @@ import os
 import sys
 import zlib
 import pickle
-import shutil
 import hashlib
 import logging
-import subprocess
 from typing import List, Optional
 from pathlib import Path
 from dataclasses import dataclass
@@ -20,71 +18,13 @@ from dataclasses import dataclass
 import capa.rules
 import capa.helpers
 import capa.version
+import capa.rules.utils
 
 logger = logging.getLogger(__name__)
 
 
 # TypeAlias. note: using `foo: TypeAlias = bar` is Python 3.10+
 CacheIdentifier = str
-
-
-def is_dev_environment() -> Optional[Path]:
-    if getattr(sys, "frozen", False):
-        # running as a PyInstaller executable
-        return None
-
-    if "site-packages" in __file__:
-        # running from a site-packages installation
-        return None
-
-    capa_root = Path(__file__).resolve().parent.parent
-    git_dir = capa_root / ".git"
-
-    if not git_dir.is_dir():
-        # .git directory doesn't exist
-        return None
-
-    git_exe = shutil.which("git")
-    if not git_exe:
-        # git is not found in PATH
-        return None
-
-    return Path(git_exe)
-
-
-def get_modified_files() -> List[Path]:
-    try:
-        # use git status to retrieve tracked modified files
-        result = subprocess.run(
-            ["git", "--no-pager", "status", "--porcelain", "--untracked-files=no"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        # retrieve .py source files
-        # ' M': the file has staged modifications
-        # 'M ': the file has unstaged modifications
-        # 'MM': the file has both staged and unstaged modifications
-        files: List[Path] = []
-        for line in result.stdout.splitlines():
-            if line.startswith(("M ", "MM", " M")) and line.endswith(".py"):
-                file_path = Path(line[3:])
-                files.append(file_path)
-
-        return sorted(files)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return []
-
-
-def get_git_commit_hash() -> Optional[str]:
-    try:
-        result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True)
-        commit_hash = result.stdout.strip()
-        logger.debug("git commit hash %s", commit_hash)
-        return commit_hash
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
 
 
 def compute_cache_identifier(rule_content: List[bytes]) -> CacheIdentifier:
@@ -169,39 +109,43 @@ def get_ruleset_content(ruleset: capa.rules.RuleSet) -> List[bytes]:
 def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdentifier:
     rule_contents = get_ruleset_content(ruleset)
 
-    if is_dev_environment():
-        modified_files = get_modified_files()
-        commit_hash = get_git_commit_hash()
+    try:
+        if capa.rules.utils.is_dev_environment():
+            modified_files = capa.rules.utils.get_modified_files()
+            commit_hash = capa.rules.utils.get_git_commit_hash()
 
-        if modified_files or commit_hash:
-            hash = hashlib.sha256()
-            hash.update(capa.version.__version__.encode("utf-8"))
-            hash.update(b"\x00")
+            if modified_files or commit_hash:
+                hash = hashlib.sha256()
+                hash.update(capa.version.__version__.encode("utf-8"))
+                hash.update(b"\x00")
 
-            for file in modified_files:
-                try:
-                    file_content = file.read_bytes()
-                    logger.debug("found modified source file %s", file)
-                    hash.update(file_content)
+                for file in modified_files:
+                    try:
+                        file_content = file.read_bytes()
+                        logger.debug("found modified source file %s", file)
+                        hash.update(file_content)
+                        hash.update(b"\x00")
+                    except FileNotFoundError as e:
+                        logger.error("modified file not found: %s", file)
+                        logger.error("%s", e)
+
+                if commit_hash:
+                    hash.update(commit_hash.encode("ascii"))
                     hash.update(b"\x00")
-                except FileNotFoundError as e:
-                    logger.error("modified file not found: %s", file)
-                    logger.error("%s", e)
 
-            if commit_hash:
-                hash.update(commit_hash.encode("ascii"))
-                hash.update(b"\x00")
+                # include the hash of the rule contents
+                rule_hashes = sorted([hashlib.sha256(buf).hexdigest() for buf in rule_contents])
+                for rule_hash in rule_hashes:
+                    hash.update(rule_hash.encode("ascii"))
+                    hash.update(b"\x00")
 
-            # include the hash of the rule contents
-            rule_hashes = sorted([hashlib.sha256(buf).hexdigest() for buf in rule_contents])
-            for rule_hash in rule_hashes:
-                hash.update(rule_hash.encode("ascii"))
-                hash.update(b"\x00")
-
-            logger.debug(
-                "developer environment detected, ruleset cache will be auto-generated upon each source modification"
-            )
-            return hash.hexdigest()
+                logger.debug(
+                    "developer environment detected, ruleset cache will be auto-generated upon each source modification"
+                )
+                return hash.hexdigest()
+    except Exception as e:
+        logger.warning("failed to compute ruleset cache identifier in developer mode: %s", str(e))
+        logger.warning("falling back to default cache identifier based on rules contents")
 
     return compute_cache_identifier(rule_contents)
 
