@@ -50,7 +50,7 @@ dependencies = [
     "pydantic==2.7.1",
     "rich==13.7.1",
     "humanize==4.9.0",
-    "protobuf==5.27.0",
+    "protobuf==5.27.1",
 ]
 dynamic = ["version"]
 
