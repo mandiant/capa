@@ -210,6 +210,8 @@ def static_analysis_to_pb2(analysis: rd.StaticAnalysis) -> capa_pb2.StaticAnalys
         library_functions=[
             capa_pb2.LibraryFunction(address=addr_to_pb2(lf.address), name=lf.name) for lf in analysis.library_functions
         ],
+        apicall_count=analysis.apicall_count,
+        import_count=analysis.import_count,
     )
 
 
