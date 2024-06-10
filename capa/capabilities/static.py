@@ -21,6 +21,8 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
+from capa.features.file import Import
+from capa.features.insn import API
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -96,7 +98,7 @@ def find_basic_block_capabilities(
 
 def find_code_capabilities(
     ruleset: RuleSet, extractor: StaticFeatureExtractor, fh: FunctionHandle
-) -> Tuple[MatchResults, MatchResults, MatchResults, int]:
+) -> Tuple[MatchResults, MatchResults, MatchResults, FeatureSet]:
     """
     find matches for the given rules within the given function.
 
@@ -129,7 +131,7 @@ def find_code_capabilities(
         function_features[feature].add(va)
 
     _, function_matches = ruleset.match(Scope.FUNCTION, function_features, fh.address)
-    return function_matches, bb_matches, insn_matches, len(function_features)
+    return function_matches, bb_matches, insn_matches, function_features
 
 
 def find_static_capabilities(
@@ -141,6 +143,8 @@ def find_static_capabilities(
 
     feature_counts = rdoc.StaticFeatureCounts(file=0, functions=())
     library_functions: Tuple[rdoc.LibraryFunction, ...] = ()
+    apicall_count: int = 0
+    import_count: int = 0
 
     assert isinstance(extractor, StaticFeatureExtractor)
     with redirecting_print_to_tqdm(disable_progress):
@@ -180,12 +184,18 @@ def find_static_capabilities(
                         pb.set_postfix_str(f"skipped {n_libs} library functions ({percentage}%)")
                     continue
 
-                function_matches, bb_matches, insn_matches, feature_count = find_code_capabilities(
+                function_matches, bb_matches, insn_matches, function_features = find_code_capabilities(
                     ruleset, extractor, f
                 )
+                feature_count = len(function_features)
                 feature_counts.functions += (
                     rdoc.FunctionFeatureCount(address=frz.Address.from_capa(f.address), count=feature_count),
                 )
+                # cumulatively count the total number of API calls
+                for feature, vas in function_features.items():
+                    if isinstance(feature, API):
+                        apicall_count += len(vas)
+
                 t1 = time.time()
 
                 match_count = 0
@@ -223,8 +233,14 @@ def find_static_capabilities(
         rule = ruleset[rule_name]
         capa.engine.index_rule_matches(function_and_lower_features, rule, locations)
 
-    all_file_matches, feature_count = find_file_capabilities(ruleset, extractor, function_and_lower_features)
+    all_file_matches, file_features = find_file_capabilities(ruleset, extractor, function_and_lower_features)
+    feature_count = len(file_features)
     feature_counts.file = feature_count
+
+    # cumulatively count the total number of Import features
+    for feature, _ in file_features.items():
+        if isinstance(feature, Import):
+            import_count += 1
 
     matches: MatchResults = dict(
         itertools.chain(
@@ -241,6 +257,8 @@ def find_static_capabilities(
     meta = {
         "feature_counts": feature_counts,
         "library_functions": library_functions,
+        "apicall_count": apicall_count,
+        "import_count": import_count,
     }
 
     return matches, meta

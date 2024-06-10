@@ -170,6 +170,8 @@ def collect_metadata(rules: List[Path]):
             # ignore these for now - not used by IDA plugin.
             feature_counts=rdoc.StaticFeatureCounts(file=0, functions=()),
             library_functions=(),
+            apicall_count=0,
+            import_count=0,
         ),
     )
 

@@ -10,6 +10,7 @@
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
 - optimize rule matching #2080 @williballenthin
+- display analysis information to users #857 @s-ff
 
 ### Breaking Changes
 

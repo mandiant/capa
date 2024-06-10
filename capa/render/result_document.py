@@ -114,6 +114,8 @@ class StaticAnalysis(Model):
     layout: StaticLayout
     feature_counts: StaticFeatureCounts
     library_functions: Tuple[LibraryFunction, ...]
+    apicall_count: int
+    import_count: int
 
 
 class DynamicAnalysis(Model):
