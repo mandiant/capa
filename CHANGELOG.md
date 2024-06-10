@@ -41,6 +41,7 @@
 - binja: fix and simplify stack string detection code after binja 4.0 @xusheng6
 - binja: add support for forwarded export #1646 @xusheng6
 - cape: support more report formats #2035 @mr-tz
+- elf: capa fails to extract import / export symbols #2096 @ygasparis
 
 
 ### capa explorer IDA Pro plugin
