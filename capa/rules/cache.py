@@ -28,6 +28,49 @@ CacheIdentifier = str
 
 
 def compute_cache_identifier(rule_content: List[bytes]) -> CacheIdentifier:
+    # is this a development environment?
+    # if yes, include the modified files contents and/or commit hash
+    # in computing the cache identifier
+    try:
+        if capa.rules.utils.is_dev_environment():
+            modified_files = capa.rules.utils.get_modified_files()
+            commit_hash = capa.rules.utils.get_git_commit_hash()
+
+            if modified_files or commit_hash:
+                hash = hashlib.sha256()
+                hash.update(capa.version.__version__.encode("utf-8"))
+                hash.update(b"\x00")
+
+                for file in modified_files:
+                    try:
+                        file_content = file.read_bytes()
+                        logger.debug("found modified source file %s", file)
+                        hash.update(file_content)
+                        hash.update(b"\x00")
+                    except FileNotFoundError as e:
+                        logger.error("modified file not found: %s", file)
+                        logger.error("%s", e)
+
+                if commit_hash:
+                    hash.update(commit_hash.encode("ascii"))
+                    hash.update(b"\x00")
+
+                # include the hash of the rule contents
+                rule_hashes = sorted([hashlib.sha256(buf).hexdigest() for buf in rule_content])
+                for rule_hash in rule_hashes:
+                    hash.update(rule_hash.encode("ascii"))
+                    hash.update(b"\x00")
+
+                logger.debug(
+                    "developer environment detected, ruleset cache will be auto-generated upon each source modification"
+                )
+                return hash.hexdigest()
+    except Exception as e:
+        logger.warning("failed to compute ruleset cache identifier in developer mode: %s", str(e))
+        logger.warning("falling back to default cache identifier based on rules contents")
+
+    # this is not a development environment, only use rule contents in
+    # computing the cache identifier
     hash = hashlib.sha256()
 
     # note that this changes with each release,
@@ -109,44 +152,6 @@ def get_ruleset_content(ruleset: capa.rules.RuleSet) -> List[bytes]:
 def compute_ruleset_cache_identifier(ruleset: capa.rules.RuleSet) -> CacheIdentifier:
     rule_contents = get_ruleset_content(ruleset)
 
-    try:
-        if capa.rules.utils.is_dev_environment():
-            modified_files = capa.rules.utils.get_modified_files()
-            commit_hash = capa.rules.utils.get_git_commit_hash()
-
-            if modified_files or commit_hash:
-                hash = hashlib.sha256()
-                hash.update(capa.version.__version__.encode("utf-8"))
-                hash.update(b"\x00")
-
-                for file in modified_files:
-                    try:
-                        file_content = file.read_bytes()
-                        logger.debug("found modified source file %s", file)
-                        hash.update(file_content)
-                        hash.update(b"\x00")
-                    except FileNotFoundError as e:
-                        logger.error("modified file not found: %s", file)
-                        logger.error("%s", e)
-
-                if commit_hash:
-                    hash.update(commit_hash.encode("ascii"))
-                    hash.update(b"\x00")
-
-                # include the hash of the rule contents
-                rule_hashes = sorted([hashlib.sha256(buf).hexdigest() for buf in rule_contents])
-                for rule_hash in rule_hashes:
-                    hash.update(rule_hash.encode("ascii"))
-                    hash.update(b"\x00")
-
-                logger.debug(
-                    "developer environment detected, ruleset cache will be auto-generated upon each source modification"
-                )
-                return hash.hexdigest()
-    except Exception as e:
-        logger.warning("failed to compute ruleset cache identifier in developer mode: %s", str(e))
-        logger.warning("falling back to default cache identifier based on rules contents")
-
     return compute_cache_identifier(rule_contents)
 
 
@@ -213,7 +218,8 @@ def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
         logger.error("%s", str(e))
         return False
 
-    id = capa.rules.cache.compute_ruleset_cache_identifier(rules)
+    content = capa.rules.cache.get_ruleset_content(rules)
+    id = capa.rules.cache.compute_cache_identifier(content)
     path = capa.rules.cache.get_cache_path(cache_dir, id)
 
     assert path.exists()
