@@ -26,8 +26,9 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_UNKNOWN,
+    FORMAT_BINEXPORT2,
     Format,
-), FORMAT_BINEXPORT2
+)
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
