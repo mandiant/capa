@@ -17,7 +17,7 @@
 ### Breaking Changes
 
 
-### New Rules (17)
+### New Rules (25)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -36,6 +36,14 @@
 - persistence/act-as-time-provider-dll jakub.jozwiak@mandiant.com
 - host-interaction/gui/window/hide/hide-graphical-window-from-taskbar jakub.jozwiak@mandiant.com
 - compiler/dart/compiled-with-dart jakub.jozwiak@mandiant.com
+- nursery/bypass-hidden-api-restrictions-via-jni-on-android mehunhoff@google.com
+- nursery/get-current-process-filesystem-mounts-on-linux mehunhoff@google.com
+- nursery/get-current-process-memory-mapping-on-linux mehunhoff@google.com
+- nursery/get-system-property-on-android mehunhoff@google.com
+- nursery/hook-routines-via-lsplant mehunhoff@google.com
+- nursery/load-packed-dex-via-jiagu-on-android mehunhoff@google.com
+- nursery/modify-api-blacklist-or-denylist-via-jni-on-android mehunhoff@google.com
+- nursery/truncate-file-on-linux mehunhoff@google.com
 -
 
 ### Bug Fixes
