@@ -35,7 +35,9 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install dependencies
-      run: pip install -e .[dev]
+      run: |
+        pip install -r requirements.txt
+        pip install -e .[dev]
     - name: Lint with ruff
       run: pre-commit run ruff
     - name: Lint with isort
@@ -61,7 +63,9 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install capa
-      run: pip install -e .[dev]
+      run: |
+        pip install -r requirements.txt
+        pip install -e .[dev]
     - name: Run rule linter
       run: python scripts/lint.py rules/
 
@@ -96,7 +100,9 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: pip install -e .[dev]
+      run: |
+        pip install -r requirements.txt
+        pip install -e .[dev]
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
@@ -131,7 +137,9 @@ jobs:
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
       if: ${{ env.BN_SERIAL != 0 }}
-      run: pip install -e .[dev]
+      run: |
+        pip install -r requirements.txt
+        pip install -e .[dev]
     - name: install Binary Ninja
       if: ${{ env.BN_SERIAL != 0 }}
       run: |
@@ -188,7 +196,9 @@ jobs:
     - name: Install pyyaml
       run: sudo apt-get install -y libyaml-dev
     - name: Install capa
-      run: pip install -e .[dev] 
+      run: |
+        pip install -r requirements.txt
+        pip install -e .[dev] 
     - name: Run tests
       run: | 
         mkdir ./.github/ghidra/project
