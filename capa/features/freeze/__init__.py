@@ -485,7 +485,7 @@ def dumps_dynamic(extractor: DynamicFeatureExtractor) -> str:
                     address=Address.from_capa(addr),
                     feature=feature_from_capa(feature),
                 )  # type: ignore
-                # Mypy is unable to recognise `basic_block` as a argument due to alias
+                # Mypy is unable to recognise `basic_block` as an argument due to alias
                 for feature, addr in extractor.extract_thread_features(p, t)
             ]
 

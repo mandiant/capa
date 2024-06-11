@@ -419,7 +419,7 @@ class Match(FrozenModel):
                             # doc[locations] contains all matches for the given namespace.
                             # for example, the feature might be `match: anti-analysis/packer`
                             # which matches against "generic unpacker" and "UPX".
-                            # in this case, doc[locations] contains locations for *both* of thse.
+                            # in this case, doc[locations] contains locations for *both* of those.
                             #
                             # rule_matches contains the matches for the specific rule.
                             # this is a subset of doc[locations].

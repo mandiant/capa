@@ -159,3 +159,25 @@ def load_cached_ruleset(cache_dir: Path, rule_contents: List[bytes]) -> Optional
         return None
     else:
         return cache.ruleset
+
+
+def generate_rule_cache(rules_dir: Path, cache_dir: Path) -> bool:
+    if not rules_dir.is_dir():
+        logger.error("rules directory %s does not exist", rules_dir)
+        return False
+
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        rules = capa.rules.get_rules([rules_dir], cache_dir)
+    except (IOError, capa.rules.InvalidRule, capa.rules.InvalidRuleSet) as e:
+        logger.error("%s", str(e))
+        return False
+
+    content = capa.rules.cache.get_ruleset_content(rules)
+    id = capa.rules.cache.compute_cache_identifier(content)
+    path = capa.rules.cache.get_cache_path(cache_dir, id)
+
+    assert path.exists()
+    logger.info("rules cache saved to: %s", path)
+
+    return True
