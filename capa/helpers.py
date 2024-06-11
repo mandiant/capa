@@ -7,15 +7,15 @@
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
 import gzip
-import json
 import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import NoReturn
+from typing import Dict, Iterator, NoReturn
 from pathlib import Path
 
 import tqdm
+from msgspec import json
 
 from capa.exceptions import UnsupportedFormatError
 from capa.features.common import (
@@ -25,13 +25,14 @@ from capa.features.common import (
     FORMAT_SC64,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
+    FORMAT_DRAKVUF,
     FORMAT_UNKNOWN,
     Format,
 )
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", "log")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -76,13 +77,40 @@ def load_json_from_path(json_path: Path):
         try:
             report_json = compressed_report.read()
         except gzip.BadGzipFile:
-            report = json.load(json_path.open(encoding="utf-8"))
+            report = json.decode(json_path.read_text(encoding="utf-8"))
         else:
-            report = json.loads(report_json)
+            report = json.decode(report_json)
     return report
 
 
+def load_jsonl_from_path(jsonl_path: Path) -> Iterator[Dict]:
+    with open(jsonl_path, "rb") as f:
+        for line in f:
+            try:
+                line_s = line.strip().decode()
+                obj = json.decode(line_s)
+                yield obj
+            except:
+                # ignore erroneous lines
+                continue
+
+
+def load_one_jsonl_from_path(jsonl_path: Path) -> str:
+    # this loads one json line to avoid the overhead of loading the entire file
+    with open(jsonl_path, "rb") as f:
+        line = next(iter(f))
+        line = json.decode(line.decode(errors="ignore"))
+    return line
+
+
 def get_format_from_report(sample: Path) -> str:
+    if sample.name.endswith(".log"):
+        line = load_one_jsonl_from_path(sample)
+        if "Plugin" in line:
+            return FORMAT_DRAKVUF
+        else:
+            return FORMAT_UNKNOWN
+
     report = load_json_from_path(sample)
     if "CAPE" in report:
         return FORMAT_CAPE
@@ -189,9 +217,28 @@ def log_unsupported_cape_report_error(error: str):
     logger.error("-" * 80)
 
 
+def log_unsupported_drakvuf_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" Input file is not a valid DRAKVUF output file: %s", error)
+    logger.error(" ")
+    logger.error(" capa currently only supports analyzing standard DRAKVUF outputs in JSONL format.")
+    logger.error(
+        " Please make sure your report file is in the standard format and contains both the static and dynamic sections."
+    )
+    logger.error("-" * 80)
+
+
 def log_empty_cape_report_error(error: str):
     logger.error("-" * 80)
     logger.error(" CAPE report is empty or only contains little useful data: %s", error)
+    logger.error(" ")
+    logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
+    logger.error("-" * 80)
+
+
+def log_empty_drakvuf_report_error(error: str):
+    logger.error("-" * 80)
+    logger.error(" DRAKVUF report is empty or only contains little useful data: %s", error)
     logger.error(" ")
     logger.error(" Please make sure the sandbox run captures useful behaviour of your sample.")
     logger.error("-" * 80)

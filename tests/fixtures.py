@@ -200,6 +200,16 @@ def get_cape_extractor(path):
 
 
 @lru_cache(maxsize=1)
+def get_drakvuf_extractor(path):
+    from capa.helpers import load_jsonl_from_path
+    from capa.features.extractors.drakvuf.extractor import DrakvufExtractor
+
+    report = load_jsonl_from_path(path)
+
+    return DrakvufExtractor.from_report(report)
+
+
+@lru_cache(maxsize=1)
 def get_ghidra_extractor(path: Path):
     import capa.features.extractors.ghidra.extractor
 
@@ -384,6 +394,15 @@ def get_data_path_by_name(name) -> Path:
             / "cape"
             / "v2.2"
             / "d46900384c78863420fb3e297d0a2f743cd2b6b3f7f82bf64059a168e07aceb7.json.gz"
+        )
+    elif name.startswith("93b2d1"):
+        return (
+            CD
+            / "data"
+            / "dynamic"
+            / "drakvuf"
+            / "93b2d1840566f45fab674ebc79a9d19c88993bcb645e0357f3cb584d16e7c795"
+            / "drakmon.log"
         )
     elif name.startswith("ea2876"):
         return CD / "data" / "ea2876e9175410b6f6719f80ee44b9553960758c7d0f7bed73c0fe9a78d8e669.dll_"
@@ -678,7 +697,7 @@ def parametrize(params, values, **kwargs):
     return pytest.mark.parametrize(params, values, ids=ids, **kwargs)
 
 
-DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
+DYNAMIC_CAPE_FEATURE_PRESENCE_TESTS = sorted(
     [
         # file/string
         ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), True),
@@ -717,7 +736,7 @@ DYNAMIC_FEATURE_PRESENCE_TESTS = sorted(
     key=lambda t: (t[0], t[1]),
 )
 
-DYNAMIC_FEATURE_COUNT_TESTS = sorted(
+DYNAMIC_CAPE_FEATURE_COUNT_TESTS = sorted(
     [
         # file/string
         ("0000a657", "file", capa.features.common.String("T_Ba?.BcRJa"), 1),
@@ -750,6 +769,80 @@ DYNAMIC_FEATURE_COUNT_TESTS = sorted(
         ("0000a657", "process=(2852:3052),thread=2804", capa.features.common.String("nope"), 0),
         ("0000a657", "process=(2852:3052),thread=2804,call=56", capa.features.insn.API("NtQueryValueKey"), 1),
         ("0000a657", "process=(2852:3052),thread=2804,call=1958", capa.features.insn.API("nope"), 0),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
+DYNAMIC_DRAKVUF_FEATURE_PRESENCE_TESTS = sorted(
+    [
+        # file/string
+        (
+            "93b2d1",
+            "file",
+            capa.features.common.String(
+                "\\Program Files\\WindowsApps\\microsoft.windowscommunicationsapps_16005.11629.20316.0_x64__8wekyb3d8bbwe\\resources.pri"
+            ),
+            True,
+        ),
+        ("93b2d1", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
+        # file/imports
+        ("93b2d1", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), True),
+        # thread/api calls
+        ("93b2d1", "process=(3564:4852),thread=6592", capa.features.insn.API("LdrLoadDll"), True),
+        ("93b2d1", "process=(3564:4852),thread=6592", capa.features.insn.API("DoesNotExist"), False),
+        # call/api
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.API("LdrLoadDll"), True),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.API("DoesNotExist"), False),
+        # call/string argument
+        (
+            "93b2d1",
+            "process=(3564:4852),thread=6592, call=1",
+            capa.features.common.String('0x667e2beb40:"api-ms-win-core-fibers-l1-1-1"'),
+            True,
+        ),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.common.String("non_existant"), False),
+        # call/number argument
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.Number(0x801), True),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.Number(0x010101010101), False),
+    ],
+    # order tests by (file, item)
+    # so that our LRU cache is most effective.
+    key=lambda t: (t[0], t[1]),
+)
+
+DYNAMIC_DRAKVUF_FEATURE_COUNT_TESTS = sorted(
+    [
+        # file/string
+        (
+            "93b2d1",
+            "file",
+            capa.features.common.String(
+                "\\Program Files\\WindowsApps\\microsoft.windowscommunicationsapps_16005.11629.20316.0_x64__8wekyb3d8bbwe\\resources.pri"
+            ),
+            1,
+        ),
+        ("93b2d1", "file", capa.features.common.String("\\Program Files\\WindowsApps\\does_not_exist"), False),
+        # file/imports
+        ("93b2d1", "file", capa.features.file.Import("SetUnhandledExceptionFilter"), 1),
+        # thread/api calls
+        ("93b2d1", "process=(3564:4852),thread=6592", capa.features.insn.API("LdrLoadDll"), 9),
+        ("93b2d1", "process=(3564:4852),thread=6592", capa.features.insn.API("DoesNotExist"), False),
+        # call/api
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.API("LdrLoadDll"), 1),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.API("DoesNotExist"), 0),
+        # call/string argument
+        (
+            "93b2d1",
+            "process=(3564:4852),thread=6592, call=1",
+            capa.features.common.String('0x667e2beb40:"api-ms-win-core-fibers-l1-1-1"'),
+            1,
+        ),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.common.String("non_existant"), 0),
+        # call/number argument
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.Number(0x801), 1),
+        ("93b2d1", "process=(3564:4852),thread=6592, call=1", capa.features.insn.Number(0x010101010101), 0),
     ],
     # order tests by (file, item)
     # so that our LRU cache is most effective.
