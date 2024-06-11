@@ -9,8 +9,8 @@
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
-- add a feature extractor for Drakvuf sandbox #2143 @yelhamer
 - optimize rule matching #2080 @williballenthin
+- add a feature extractor for Drakvuf sandbox #2143 @yelhamer
 
 ### Breaking Changes
 
