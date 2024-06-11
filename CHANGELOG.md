@@ -10,6 +10,7 @@
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
 - optimize rule matching #2080 @williballenthin
+- add aarch64 as a valid architecture #2144 mehunhoff@google.com @williballenthin
 - relax dependency version requirements for the capa library #2053 @williballenthin
 
 ### Breaking Changes
