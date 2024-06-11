@@ -91,6 +91,12 @@ For more details about creating and using virtual environments, check out the [v
 
 ##### Install development dependencies
 
+When developing capa, please use the pinned dependencies found in `requirements.txt`.
+This ensures that everyone has the exact same, reproducible environment.
+Please install these dependencies before install capa (from source or from PyPI):
+
+`$ pip install -r requirements.txt`
+
 We use the following tools to ensure consistent code style and formatting:
   - [black](https://github.com/psf/black) code formatter
   - [isort](https://pypi.org/project/isort/) code formatter
