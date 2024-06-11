@@ -320,8 +320,11 @@ def get_dotnet_table_row(pe: dnfile.dnPE, table_index: int, row_index: int) -> O
     if row_index - 1 <= 0:
         return None
 
+    table: Optional[dnfile.base.ClrMetaDataTable] = pe.net.mdtables.tables.get(table_index)
+    if table is None:
+        return None
+
     try:
-        table = pe.net.mdtables.tables.get(table_index, [])
         return table[row_index - 1]
     except IndexError:
         return None
