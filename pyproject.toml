@@ -101,9 +101,7 @@ dependencies = [
     # https://github.com/mandiant/capa/issues/1966
     "networkx>=3,<3.2",
 
-    # TODO(williballenthin): dnfile 0.15 changes UserString API and we havent updated yet.
-    # https://github.com/mandiant/capa/pull/2037
-    "dnfile>=0.14.1,<0.15",
+    "dnfile>=0.15.0",
 ]
 dynamic = ["version"]
 
