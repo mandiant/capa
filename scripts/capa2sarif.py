@@ -72,9 +72,7 @@ def _parse_args() -> argparse.Namespace:
         help="Compatibility for Radare r2sarif plugin v2.0",
     )
     parser.add_argument("-t", "--tag", help="Filter on rule meta field values (ruleid)")
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     return parser.parse_args()
 
@@ -89,22 +87,16 @@ def main() -> int:
         with Path(args.capa_output).open() as capa_output:
             json_data = json.load(capa_output)
     except ValueError:
-        logger.error(
-            "Input data was not valid JSON, input should be a capa json output file."
-        )
+        logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -1
     except json.JSONDecodeError:
         # An exception has occured
-        logger.error(
-            "Input data was not valid JSON, input should be a capa json output file."
-        )
+        logger.error("Input data was not valid JSON, input should be a capa json output file.")
         return -2
 
     # Marshall json into Sarif
     # Create baseline sarif structure to be populated from json data
-    sarif_structure: Optional[dict] = _sarif_boilerplate(
-        json_data["meta"], json_data["rules"]
-    )
+    sarif_structure: Optional[dict] = _sarif_boilerplate(json_data["meta"], json_data["rules"])
     if sarif_structure is None:
         logger.errort("An Error has occured creating default sarif structure.")
         return -3
@@ -120,9 +112,7 @@ def main() -> int:
 
         # artifacts must include a description as well with a text field.
         if "artifacts" in sarif_structure["runs"][0]:
-            sarif_structure["runs"][0]["artifacts"][0]["description"] = {
-                "text": "placeholder"
-            }
+            sarif_structure["runs"][0]["artifacts"][0]["description"] = {"text": "placeholder"}
 
         # For better compliance with Ghidra table. Iteraction through properties['additionalProperties']
         """
@@ -170,13 +160,9 @@ def _sarif_boilerplate(data_meta: dict, data_rules: dict) -> Optional[dict]:
                 "id": id,
                 "name": data_rules[key]["meta"]["name"],
                 "shortDescription": {"text": data_rules[key]["meta"]["name"]},
-                "messageStrings": {
-                    "default": {"text": data_rules[key]["meta"]["name"]}
-                },
+                "messageStrings": {"default": {"text": data_rules[key]["meta"]["name"]}},
                 "properties": {
-                    "namespace": data_rules[key]["meta"]["namespace"]
-                    if "namespace" in data_rules[key]["meta"]
-                    else [],
+                    "namespace": data_rules[key]["meta"]["namespace"] if "namespace" in data_rules[key]["meta"] else [],
                     "scopes": data_rules[key]["meta"]["scopes"],
                     "references": data_rules[key]["meta"]["references"],
                     "lib": data_rules[key]["meta"]["lib"],
@@ -285,9 +271,7 @@ def _enumerate_evidence(node: dict, related_count: int) -> List[dict]:
                 )
                 return []
         else:
-            logger.error(
-                "Not implemented %s", node.get("node").get("type"), file=sys.stderr
-            )
+            logger.error("Not implemented %s", node.get("node").get("type"), file=sys.stderr)
             return []
 
         for loc in node.get("locations"):
