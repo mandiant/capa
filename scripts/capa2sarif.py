@@ -98,7 +98,7 @@ def main() -> int:
     # Create baseline sarif structure to be populated from json data
     sarif_structure: Optional[dict] = _sarif_boilerplate(json_data["meta"], json_data["rules"])
     if sarif_structure is None:
-        logger.errort("An Error has occured creating default sarif structure.")
+        logger.error("An Error has occured creating default sarif structure.")
         return -3
 
     _populate_artifact(sarif_structure, json_data["meta"])
@@ -244,37 +244,36 @@ def _populate_invocations(sarif_log: dict, meta_data: dict) -> None:
 
 def _enumerate_evidence(node: dict, related_count: int) -> List[dict]:
     related_locations = []
-    if node.get("success") and node.get("node").get("type") != "statement":
+    if node.get("success") and node.get("node", {}).get("type") != "statement":
         label = ""
-        if node.get("node").get("type") == "feature":
-            if node.get("node").get("feature").get("type") == "api":
-                label = "api: " + node.get("node").get("feature").get("api")
-            elif node.get("node").get("feature").get("type") == "match":
-                label = "match: " + node.get("node").get("feature").get("match")
-            elif node.get("node").get("feature").get("type") == "number":
-                label = f"number: {node.get('node').get('feature').get('description')} ({node.get('node').get('feature').get('number')})"
-            elif node.get("node").get("feature").get("type") == "offset":
-                label = f"offset: {node.get('node').get('feature').get('description')} ({node.get('node').get('feature').get('offset')})"
-            elif node.get("node").get("feature").get("type") == "mnemonic":
-                label = f"mnemonic: {node.get('node').get('feature').get('mnemonic')}"
-            elif node.get("node").get("feature").get("type") == "characteristic":
-                label = f"characteristic: {node.get('node').get('feature').get('characteristic')}"
-            elif node.get("node").get("feature").get("type") == "os":
-                label = f"os: {node.get('node').get('feature').get('os')}"
-            elif node.get("node").get("feature").get("type") == "operand number":
-                label = f"operand: ({node.get('node').get('feature').get('index')} ) {node.get('node').get('feature').get('description')} ({node.get('node').get('feature').get('operand_number')})"
+        if node.get("node", {}).get("type") == "feature":
+            if node.get("node", {}).get("feature", {}).get("type") == "api":
+                label = "api: " + node.get("node", {}).get("feature", {}).get("api")
+            elif node.get("node", {}).get("feature", {}).get("type") == "match":
+                label = "match: " + node.get("node", {}).get("feature", {}).get("match")
+            elif node.get("node", {}).get("feature", {}).get("type") == "number":
+                label = f"number: {node.get('node', {}).get('feature', {}).get('description')} ({node.get('node', {}).get('feature', {}).get('number')})"
+            elif node.get("node", {}).get("feature", {}).get("type") == "offset":
+                label = f"offset: {node.get('node', {}).get('feature', {}).get('description')} ({node.get('node', {}).get('feature', {}).get('offset')})"
+            elif node.get("node", {}).get("feature", {}).get("type") == "mnemonic":
+                label = f"mnemonic: {node.get('node', {}).get('feature', {}).get('mnemonic')}"
+            elif node.get("node", {}).get("feature", {}).get("type") == "characteristic":
+                label = f"characteristic: {node.get('node', {}).get('feature', {}).get('characteristic')}"
+            elif node.get("node", {}).get("feature", {}).get("type") == "os":
+                label = f"os: {node.get('node', {}).get('feature', {}).get('os')}"
+            elif node.get("node", {}).get("feature", {}).get("type") == "operand number":
+                label = f"operand: ({node.get('node', {}).get('feature', {}).get('index')} ) {node.get('node', {}).get('feature', {}).get('description')} ({node.get('node', {}).get('feature', {}).get('operand_number')})"
             else:
                 logger.error(
                     "Not implemented %s",
-                    node.get("node").get("feature").get("type"),
-                    file=sys.stderr,
+                    node.get("node", {}).get("feature", {}).get("type"),
                 )
                 return []
         else:
-            logger.error("Not implemented %s", node.get("node").get("type"), file=sys.stderr)
+            logger.error("Not implemented %s", node.get("node", {}).get("type"))
             return []
 
-        for loc in node.get("locations"):
+        for loc in node.get("locations", []):
             if loc["type"] != "absolute":
                 continue
 
@@ -287,8 +286,8 @@ def _enumerate_evidence(node: dict, related_count: int) -> List[dict]:
             )
             related_count += 1
 
-    if node.get("success") and node.get("node").get("type") == "statement":
-        for child in node.get("children"):
+    if node.get("success") and node.get("node", {}).get("type") == "statement":
+        for child in node.get("children", []):
             related_locations += _enumerate_evidence(child, related_count)
 
     return related_locations
