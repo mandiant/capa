@@ -6,6 +6,7 @@
 ### New Features
 
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
+
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
 - Add json to sarif conversion script @reversingwithme
 - render maec/* fields #843 @s-ff
@@ -13,6 +14,8 @@
 - optimize rule matching #2080 @williballenthin
 - add aarch64 as a valid architecture #2144 mehunhoff@google.com @williballenthin
 - relax dependency version requirements for the capa library #2053 @williballenthin
+
+- extracts and prints web domains/IP addresses and potential WinAPI networking functions #2031 @aaronatp
 
 ### Breaking Changes
 
