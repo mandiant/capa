@@ -162,7 +162,7 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
         # Remove the symbolic switch case solver.
         # This is only enabled for ELF files, not PE files.
         # During the following performance investigation, this analysis module
-        # had some terrible worst-case behavior. 
+        # had some terrible worst-case behavior.
         # We can put up with slightly worse CFG reconstruction in order to avoid this.
         # https://github.com/mandiant/capa/issues/1989#issuecomment-1948022767
         vw.delFuncAnalysisModule("vivisect.analysis.generic.symswitchcase")
