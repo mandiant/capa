@@ -45,3 +45,7 @@ class VMRayAnalysis:
         if pe.exports:
             for export in pe.exports:
                 self.exports[export.address] = export.api.name
+
+    def _compute_imports(self):
+        # TODO (meh)
+        ...
