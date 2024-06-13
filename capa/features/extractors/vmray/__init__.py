@@ -5,8 +5,9 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Dict, Optional
+from typing import Dict
 
+from capa.exceptions import UnsupportedFormatError
 from capa.features.extractors.vmray.models import File, Analysis, SummaryV2, StaticData
 
 
@@ -27,6 +28,9 @@ class VMRayAnalysis:
         self._compute_base_address()
         self._compute_exports()
         self._compute_sections()
+
+        if not self.sample_file_static_data.pe:
+            raise UnsupportedFormatError("VMRay feature extractor only supports PE at this time")
 
     def _find_sample_file(self):
         for file_name, file_analysis in self.sv2.files.items():
