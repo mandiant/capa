@@ -1098,10 +1098,12 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
     }
 
     if has_inline_strings:
-        # common path
+        # This is the common case/path. Most samples will have an inline GOOS string.
         #
-        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 02}
-        # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 02}
+        # To find samples on VT, use these VTGrep searches:
+        #
+        #   content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 02}
+        #   content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 02}
 
         # If present, the GOOS key will be found within
         # the current buildinfo data region.
@@ -1113,23 +1115,24 @@ def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
                 logger.debug("go buildinfo: found os: %s", os)
                 return os
     else:
-        # uncommon path
-
+        # This is the uncommon path. Most samples will have an inline GOOS string.
+        #
+        # To find samples on VT, use the referenced VTGrep content searches.
         info_format = {
             # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 00}
             # like: 71e617e5cc7fda89bf67422ff60f437e9d54622382c5ed6ff31f75e601f9b22e
-            # modinfo doesn't have GOOS
+            # in which the modinfo doesn't have GOOS.
             (4, False): "<II",
             # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 00}
             # like: 93d3b3e2a904c6c909e20f2f76c3c2e8d0c81d535eb46e5493b5701f461816c3
-            # modinfo doesn't have GOOS
+            # in which the modinfo doesn't have GOOS.
             (8, False): "<QQ",
             # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 01}
-            # no matches
+            # (no matches on VT today)
             (4, True): ">II",
             # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 01}
             # like: d44ba497964050c0e3dd2a192c511e4c3c4f17717f0322a554d64b797ee4690a
-            # modinfo doesn't have GOOS
+            # in which the modinfo doesn't have GOOS.
             (8, True): ">QQ",
         }
 
