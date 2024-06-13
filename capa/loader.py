@@ -154,7 +154,12 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
 
-    vw.delFuncAnalysisModule("vivisect.analysis.generic.symswitchcase")
+    try:
+        vw.delFuncAnalysisModule("vivisect.analysis.generic.symswitchcase")
+    except Exception:
+        # unfortuately viv raises a raw Exception (not any subclass).
+        # This happens when the module isn't found, such as with a viv upgrade.
+        pass
 
     vw.analyze()
 
