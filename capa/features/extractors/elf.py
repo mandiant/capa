@@ -957,6 +957,7 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
 
         for os, hints in keywords.items():
             if any(hint in sym_name for hint in hints):
+                logger.debug("symtab: %s looks like %s", sym_name, os)
                 return os
 
     return None
