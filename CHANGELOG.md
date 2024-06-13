@@ -1,7 +1,11 @@
 # Change Log
 
 ## master (unreleased)
+
 - Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
+
+### capa explorer user-option for choosing comments/bookmarks 
+- add function in capa explorer to let users choose if they want comments/bookmarks #1977 @Atlas-64
 
 ### New Features
 - ELF: detect OS from statically-linked Go binaries #1978 @williballenthin
