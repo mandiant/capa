@@ -965,6 +965,9 @@ def is_go_binary(elf: ELF) -> bool:
         if shdr.get_name(elf) == ".note.go.buildid":
             logger.debug("go buildinfo: found section .note.go.buildid")
             return True
+
+    # other strategy used by FLOSS: search for known runtime strings.
+    # https://github.com/mandiant/flare-floss/blob/b2ca8adfc5edf278861dd6bff67d73da39683b46/floss/language/identify.py#L88
     return False
 
 
