@@ -5,13 +5,12 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-from typing import Any, Dict, List, Union, Literal, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
 # TODO install/force lxml?
 from pydantic_xml import BaseXmlModel, attr, element
-
 
 ### models for flog.xml
 
