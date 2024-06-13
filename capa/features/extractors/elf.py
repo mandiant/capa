@@ -967,8 +967,8 @@ def is_go_binary(elf: ELF) -> bool:
             return True
 
     # The `go version` command enumerates sections for the name `.go.buildinfo`
-    # (in addition to looking for the BUILDINFO_MAGIC) to check if an executable is go or not. 
-    # See references to the `errNotGoExe` error here: 
+    # (in addition to looking for the BUILDINFO_MAGIC) to check if an executable is go or not.
+    # See references to the `errNotGoExe` error here:
     # https://github.com/golang/go/blob/master/src/debug/buildinfo/buildinfo.go#L41
     for shdr in elf.section_headers:
         if shdr.get_name(elf) == ".go.buildinfo":
