@@ -14,6 +14,7 @@
 - optimize rule matching #2080 @williballenthin
 - add aarch64 as a valid architecture #2144 mehunhoff@google.com @williballenthin
 - relax dependency version requirements for the capa library #2053 @williballenthin
+- add scripts dependency group and update documentation #2145 @mr-tz
 
 ### Breaking Changes
 
