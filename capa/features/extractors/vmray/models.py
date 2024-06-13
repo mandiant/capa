@@ -100,11 +100,23 @@ class PEFileImportModule(BaseModel):
     apis: List[PEFileImport]
 
 
+class PEFileSection(BaseModel):
+    _type: str
+    entropy: float
+    flags: List[str] = []
+    name: str
+    raw_data_offset: int
+    raw_data_size: int
+    virtual_address: int
+    virtual_size: int
+
+
 class PEFile(BaseModel):
     _type: str
     basic_info: Optional[PEFileBasicInfo] = None
-    exports: Optional[List[PEFileExport]] = None
-    imports: Optional[List[PEFileImportModule]] = None
+    exports: List[PEFileExport] = []
+    imports: List[PEFileImportModule] = []
+    sections: List[PEFileSection] = []
 
 
 class StaticData(BaseModel):
@@ -121,11 +133,11 @@ class File(BaseModel):
     size: int
     is_truncated: bool
     mime_type: Optional[str] = None
-    operations: Optional[List[str]] = None
-    ref_filenames: Optional[List[GenericReference]] = None
-    ref_gfncalls: Optional[List[GenericReference]] = None
+    operations: List[str] = []
+    ref_filenames: List[GenericReference] = []
+    ref_gfncalls: List[GenericReference] = []
     ref_static_data: Optional[StaticDataReference] = None
-    ref_vti_matches: Optional[List[GenericReference]] = None
+    ref_vti_matches: List[GenericReference] = []
     verdict: str
 
 
