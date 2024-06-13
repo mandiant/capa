@@ -21,7 +21,7 @@ class VMRayAnalysis:
 
         self.sample_file_name: str
         self.sample_file_analysis: File
-        self.sample_file_static_data: Optional[StaticData]
+        self.sample_file_static_data: StaticData
 
         self._find_sample_file()
         self._compute_base_address()
@@ -36,16 +36,16 @@ class VMRayAnalysis:
                 self.sample_file_analysis = file_analysis
 
                 if file_analysis.ref_static_data:
-                    self.sample_file_static_data = self.sv2.static_data.get(file_analysis.ref_static_data.path[1])
+                    self.sample_file_static_data = self.sv2.static_data[file_analysis.ref_static_data.path[1]]
 
                 break
 
     def _compute_base_address(self):
-        if self.sample_file_static_data and self.sample_file_static_data.pe:
+        if self.sample_file_static_data.pe:
             self.base_address = self.sample_file_static_data.pe.basic_info.image_base
 
     def _compute_exports(self):
-        if self.sample_file_static_data and self.sample_file_static_data.pe:
+        if self.sample_file_static_data.pe:
             for export in self.sample_file_static_data.pe.exports:
                 self.exports[export.address] = export.api.name
 
@@ -54,6 +54,6 @@ class VMRayAnalysis:
         ...
 
     def _compute_sections(self):
-        if self.sample_file_static_data and self.sample_file_static_data.pe:
+        if self.sample_file_static_data.pe:
             for section in self.sample_file_static_data.pe.sections:
                 self.sections[section.virtual_address] = section.name
