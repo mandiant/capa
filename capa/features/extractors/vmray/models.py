@@ -113,7 +113,7 @@ class PEFileSection(BaseModel):
 
 class PEFile(BaseModel):
     _type: str
-    basic_info: Optional[PEFileBasicInfo] = None
+    basic_info: PEFileBasicInfo
     exports: List[PEFileExport] = []
     imports: List[PEFileImportModule] = []
     sections: List[PEFileSection] = []

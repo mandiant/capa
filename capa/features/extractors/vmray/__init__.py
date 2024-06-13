@@ -17,12 +17,14 @@ class VMRayAnalysis:
         self.exports: Dict[int, str] = {}
         self.imports: Dict[int, str] = {}
         self.sections: Dict[int, str] = {}
+        self.base_address: int
 
         self.sample_file_name: str
         self.sample_file_analysis: File
         self.sample_file_static_data: Optional[StaticData]
 
         self._find_sample_file()
+        self._compute_base_address()
         self._compute_exports()
         self._compute_sections()
 
@@ -37,6 +39,10 @@ class VMRayAnalysis:
                     self.sample_file_static_data = self.sv2.static_data.get(file_analysis.ref_static_data.path[1])
 
                 break
+
+    def _compute_base_address(self):
+        if self.sample_file_static_data and self.sample_file_static_data.pe:
+            self.base_address = self.sample_file_static_data.pe.basic_info.image_base
 
     def _compute_exports(self):
         if self.sample_file_static_data and self.sample_file_static_data.pe:

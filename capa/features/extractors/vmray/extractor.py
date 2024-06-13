@@ -14,7 +14,7 @@ from zipfile import ZipFile
 import capa.helpers
 import capa.features.extractors.vmray.file
 from capa.features.common import Feature
-from capa.features.address import Address
+from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Analysis, SummaryV2
 from capa.features.extractors.base_extractor import DynamicFeatureExtractor
@@ -38,6 +38,10 @@ class VMRayExtractor(DynamicFeatureExtractor):
 
         return cls(VMRayAnalysis(sv2, flog))
 
+    def get_base_address(self) -> Address:
+        # value according to the PE header, the actual trace may use a different imagebase
+        return AbsoluteVirtualAddress(self.analysis.base_address)
+
     def extract_file_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from capa.features.extractors.vmray.file.extract_features(self.analysis)
 
@@ -50,3 +54,5 @@ if __name__ == "__main__":
     extractor = VMRayExtractor.from_archive(input_path)
     for feat, addr in extractor.extract_file_features():
         print(f"{feat} -> {addr}")
+
+    print(f"base address: {hex(extractor.get_base_address())}")
