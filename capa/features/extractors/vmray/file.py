@@ -5,7 +5,6 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
 import logging
 from typing import Tuple, Iterator
 
@@ -22,6 +21,11 @@ def extract_export_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Add
         yield Export(name), AbsoluteVirtualAddress(addr)
 
 
+def extract_import_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+    # TODO (meh)
+    yield from []
+
+
 def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(analysis):
@@ -29,7 +33,7 @@ def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address
 
 
 FILE_HANDLERS = (
-    # extract_import_names,
+    extract_import_names,
     extract_export_names,
     # extract_section_names,
     # extract_file_strings,
