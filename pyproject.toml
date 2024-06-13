@@ -138,9 +138,6 @@ dev = [
     "black==24.4.2",
     "isort==5.13.2",
     "mypy==1.10.0",
-    "psutil==5.9.2",
-    "stix2==3.0.1",
-    "requests==2.31.0",
     "mypy-protobuf==3.6.0",
     # type stubs for mypy
     "types-backports==0.1.3",
@@ -161,6 +158,13 @@ build = [
     "pyinstaller==6.8.0",
     "setuptools==70.0.0",
     "build==1.2.1"
+]
+scripts = [
+    "jschema_to_python==1.2.3",
+    "psutil==5.9.2",
+    "stix2==3.0.1",
+    "sarif_om==1.0.4",
+    "requests==2.31.0",
 ]
 
 [tool.deptry]
