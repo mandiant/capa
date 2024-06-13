@@ -966,6 +966,15 @@ def is_go_binary(elf: ELF) -> bool:
             logger.debug("go buildinfo: found section .note.go.buildid")
             return True
 
+    # The `go version` command enumerates sections for the name `.go.buildinfo`
+    # (in addition to looking for the BUILDINFO_MAGIC) to check if an executable is go or not. 
+    # See references to the `errNotGoExe` error here: 
+    # https://github.com/golang/go/blob/master/src/debug/buildinfo/buildinfo.go#L41
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".go.buildinfo":
+            logger.debug("go buildinfo: found section .go.buildinfo")
+            return True
+
     # other strategy used by FLOSS: search for known runtime strings.
     # https://github.com/mandiant/flare-floss/blob/b2ca8adfc5edf278861dd6bff67d73da39683b46/floss/language/identify.py#L88
     return False
