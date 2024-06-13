@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -306,7 +306,7 @@ class Match(FrozenModel):
     args:
       success: did the node match?
       node: the logic node or feature node.
-      children: any children of the logic node. not relevent for features, can be empty.
+      children: any children of the logic node. not relevant for features, can be empty.
       locations: where the feature matched. not relevant for logic nodes (except range), can be empty.
       captures: captured values from the string/regex feature, and the locations of those values.
     """
@@ -418,7 +418,7 @@ class Match(FrozenModel):
                             # doc[locations] contains all matches for the given namespace.
                             # for example, the feature might be `match: anti-analysis/packer`
                             # which matches against "generic unpacker" and "UPX".
-                            # in this case, doc[locations] contains locations for *both* of thse.
+                            # in this case, doc[locations] contains locations for *both* of those.
                             #
                             # rule_matches contains the matches for the specific rule.
                             # this is a subset of doc[locations].

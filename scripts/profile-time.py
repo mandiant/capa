@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -10,7 +10,7 @@ Invoke capa multiple times and record profiling informations.
 Use the --number and --repeat options to change the number of iterations.
 By default, the script will emit a markdown table with a label pulled from git.
 
-Note: you can run this script against pre-generated .frz files to reduce the startup time.
+This script requires the additional dependency `humanize`.
 
 usage:
 
@@ -43,6 +43,7 @@ import argparse
 import subprocess
 
 import tqdm
+import humanize
 import tabulate
 
 import capa.main
@@ -74,7 +75,7 @@ def main(argv=None):
         label += " (dirty)"
 
     parser = argparse.ArgumentParser(description="Profile capa performance")
-    capa.main.install_common_args(parser, wanted={"format", "os", "input_file", "signatures", "rules"})
+    capa.main.install_common_args(parser, wanted={"format", "backend", "os", "input_file", "signatures", "rules"})
     parser.add_argument("--number", type=int, default=3, help="batch size of profile collection")
     parser.add_argument("--repeat", type=int, default=30, help="batch count of profile collection")
     parser.add_argument("--label", type=str, default=label, help="description of the profile collection")
@@ -106,6 +107,15 @@ def main(argv=None):
 
     for counter, count in capa.perf.counters.most_common():
         logger.debug("perf: counter: %s: %s", counter, count)
+
+    print(
+        tabulate.tabulate(
+            [(counter, humanize.intcomma(count)) for counter, count in capa.perf.counters.most_common()],
+            headers=["feature class", "evaluation count"],
+            tablefmt="github",
+        )
+    )
+    print()
 
     print(
         tabulate.tabulate(

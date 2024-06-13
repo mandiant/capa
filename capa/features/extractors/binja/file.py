@@ -74,13 +74,18 @@ def extract_file_embedded_pe(bv: BinaryView) -> Iterator[Tuple[Feature, Address]
 
 def extract_file_export_names(bv: BinaryView) -> Iterator[Tuple[Feature, Address]]:
     """extract function exports"""
-    for sym in bv.get_symbols_of_type(SymbolType.FunctionSymbol):
+    for sym in bv.get_symbols_of_type(SymbolType.FunctionSymbol) + bv.get_symbols_of_type(SymbolType.DataSymbol):
         if sym.binding in [SymbolBinding.GlobalBinding, SymbolBinding.WeakBinding]:
             name = sym.short_name
-            yield Export(name), AbsoluteVirtualAddress(sym.address)
-            unmangled_name = unmangle_c_name(name)
-            if name != unmangled_name:
-                yield Export(unmangled_name), AbsoluteVirtualAddress(sym.address)
+            if name.startswith("__forwarder_name(") and name.endswith(")"):
+                yield Export(name[17:-1]), AbsoluteVirtualAddress(sym.address)
+                yield Characteristic("forwarded export"), AbsoluteVirtualAddress(sym.address)
+            else:
+                yield Export(name), AbsoluteVirtualAddress(sym.address)
+
+                unmangled_name = unmangle_c_name(name)
+                if name != unmangled_name:
+                    yield Export(unmangled_name), AbsoluteVirtualAddress(sym.address)
 
     for sym in bv.get_symbols_of_type(SymbolType.DataSymbol):
         if sym.binding not in [SymbolBinding.GlobalBinding]:

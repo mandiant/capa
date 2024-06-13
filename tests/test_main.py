@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -356,3 +356,9 @@ def test_main_cape1(tmp_path):
     assert capa.main.main([str(path), "-j", "-r", str(rules)]) == 0
     assert capa.main.main([str(path), "-v", "-r", str(rules)]) == 0
     assert capa.main.main([str(path), "-vv", "-r", str(rules)]) == 0
+
+
+def test_main_cape_gzip():
+    # tests successful execution of .json.gz
+    path = str(fixtures.get_data_path_by_name("0000a657"))
+    assert capa.main.main([path]) == 0

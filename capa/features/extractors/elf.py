@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -212,7 +212,7 @@ class ELF:
         15: OS.AROS,
         16: OS.FENIXOS,
         17: OS.CLOUD,
-        # 53: "SORTFIX",      # i can't find any reference to this OS, i dont think it exists
+        # 53: "SORTFIX",      # i can't find any reference to this OS, i don't think it exists
         # 64: "ARM_AEABI",    # not an OS
         # 97: "ARM",          # not an OS
         # 255: "STANDALONE",  # not an OS

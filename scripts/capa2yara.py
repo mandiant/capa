@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -194,7 +194,7 @@ def convert_rule(rule, rulename, cround, depth):
             yara_strings += "\t$" + var_name + ' = "' + string + '" ascii wide' + convert_description(kid) + "\n"
             yara_condition += "\t$" + var_name + " "
         elif s_type == "api" or s_type == "import":
-            # research needed to decide if its possible in YARA to make a difference between api & import?
+            # research needed to decide if it's possible in YARA to make a difference between api & import?
 
             # https://github.com/mandiant/capa-rules/blob/master/doc/format.md#api
             api = kid.value

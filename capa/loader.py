@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -6,13 +6,12 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import sys
-import json
 import logging
 import datetime
 from typing import Set, Dict, List, Optional
 from pathlib import Path
 
-import halo
+from rich.console import Console
 from typing_extensions import assert_never
 
 import capa.perf
@@ -179,10 +178,14 @@ def get_extractor(
       UnsupportedArchError
       UnsupportedOSError
     """
+
+    # stderr=True is used here to redirect the spinner banner to stderr, so that users can redirect capa's output.
+    console = Console(stderr=True, quiet=disable_progress)
+
     if backend == BACKEND_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_path.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_path)
         return capa.features.extractors.cape.extractor.CapeExtractor.from_report(report)
 
     elif backend == BACKEND_DOTNET:
@@ -225,7 +228,7 @@ def get_extractor(
             if os_ == OS_AUTO and not is_supported_os(input_path):
                 raise UnsupportedOSError()
 
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        with console.status("analyzing program...", spinner="dots"):
             bv: BinaryView = binaryninja.load(str(input_path))
             if bv is None:
                 raise RuntimeError(f"Binary Ninja cannot open file {input_path}")
@@ -250,7 +253,7 @@ def get_extractor(
             if os_ == OS_AUTO and not is_supported_os(input_path):
                 raise UnsupportedOSError()
 
-        with halo.Halo(text="analyzing program", spinner="simpleDots", stream=sys.stderr, enabled=not disable_progress):
+        with console.status("analyzing program...", spinner="dots"):
             vw = get_workspace(input_path, input_format, sigpaths)
 
             if should_save_workspace:
@@ -299,7 +302,7 @@ def get_file_extractors(input_file: Path, input_format: str) -> List[FeatureExtr
     elif input_format == FORMAT_CAPE:
         import capa.features.extractors.cape.extractor
 
-        report = json.loads(input_file.read_text(encoding="utf-8"))
+        report = capa.helpers.load_json_from_path(input_file)
         file_extractors.append(capa.features.extractors.cape.extractor.CapeExtractor.from_report(report))
 
     return file_extractors

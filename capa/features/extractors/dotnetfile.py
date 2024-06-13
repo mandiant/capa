@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2022 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -49,8 +49,8 @@ logger = logging.getLogger(__name__)
 
 
 def extract_file_format(**kwargs) -> Iterator[Tuple[Format, Address]]:
-    yield Format(FORMAT_PE), NO_ADDRESS
     yield Format(FORMAT_DOTNET), NO_ADDRESS
+    yield Format(FORMAT_PE), NO_ADDRESS
 
 
 def extract_file_import_names(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple[Import, Address]]:
@@ -78,12 +78,12 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
     for _, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET namespaces
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
-        namespaces.add(typedef.TypeNamespace)
+        namespaces.add(str(typedef.TypeNamespace))
 
     for _, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET namespaces
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
-        namespaces.add(typeref.TypeNamespace)
+        namespaces.add(str(typeref.TypeNamespace))
 
     # namespaces may be empty, discard
     namespaces.discard("")

@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -40,6 +40,10 @@ def get_rule_path():
     [
         pytest.param("capa2yara.py", [get_rules_path()]),
         pytest.param("capafmt.py", [get_rule_path()]),
+        pytest.param(
+            "capa2sarif.py",
+            [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
+        ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
         # `create directory` rule has native and .NET example PEs
@@ -130,8 +134,8 @@ def test_detect_duplicate_features(tmpdir):
                           - or:
                             - arch: i386
                             - number: 4
-                            - not:
-                              - count(mnemonic(xor)): 5
+                          - not:
+                            - count(mnemonic(xor)): 5
                           - not:
                             - os: linux
             """
@@ -162,26 +166,13 @@ def test_detect_duplicate_features(tmpdir):
                             static: function
                             dynamic: process
                     features:
-                      - or:
+                      - and:
                         - not:
                           - number: 4
                         - basic block:
                           - and:
                             - api: bind
                             - number: 2
-            """
-        ),
-        "rule_4": textwrap.dedent(
-            """
-                rule:
-                    meta:
-                        name: Test Rule 4
-                        scopes:
-                            static: function
-                            dynamic: process
-                    features:
-                      - not:
-                        - string: "expa"
             """
         ),
     }
@@ -193,11 +184,10 @@ def test_detect_duplicate_features(tmpdir):
         The overlaps are like:
         - Rule 0 has zero overlaps in RULESET
         - Rule 1 overlaps with 3 other rules in RULESET
-        - Rule 4 overlaps with itself in RULESET
         These overlap values indicate the number of rules with which
         each rule in RULESET has overlapping features.
     """
-    rule_overlaps = [0, 4, 3, 3, 1]
+    rule_overlaps = [0, 4, 3, 3]
 
     rule_dir = tmpdir.mkdir("capa_rule_overlap_test")
     rule_paths = []

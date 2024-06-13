@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -102,14 +102,14 @@ class And(Statement):
         super().__init__(description=description)
         self.children = children
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.and"] += 1
 
         if short_circuit:
             results = []
             for child in self.children:
-                result = child.evaluate(ctx, short_circuit=short_circuit)
+                result = child.evaluate(features, short_circuit=short_circuit)
                 results.append(result)
                 if not result:
                     # short circuit
@@ -117,7 +117,7 @@ class And(Statement):
 
             return Result(True, self, results)
         else:
-            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            results = [child.evaluate(features, short_circuit=short_circuit) for child in self.children]
             success = all(results)
             return Result(success, self, results)
 
@@ -135,14 +135,14 @@ class Or(Statement):
         super().__init__(description=description)
         self.children = children
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.or"] += 1
 
         if short_circuit:
             results = []
             for child in self.children:
-                result = child.evaluate(ctx, short_circuit=short_circuit)
+                result = child.evaluate(features, short_circuit=short_circuit)
                 results.append(result)
                 if result:
                     # short circuit as soon as we hit one match
@@ -150,7 +150,7 @@ class Or(Statement):
 
             return Result(False, self, results)
         else:
-            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            results = [child.evaluate(features, short_circuit=short_circuit) for child in self.children]
             success = any(results)
             return Result(success, self, results)
 
@@ -162,11 +162,11 @@ class Not(Statement):
         super().__init__(description=description)
         self.child = child
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.not"] += 1
 
-        results = [self.child.evaluate(ctx, short_circuit=short_circuit)]
+        results = [self.child.evaluate(features, short_circuit=short_circuit)]
         success = not results[0]
         return Result(success, self, results)
 
@@ -185,7 +185,7 @@ class Some(Statement):
         self.count = count
         self.children = children
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.some"] += 1
 
@@ -193,7 +193,7 @@ class Some(Statement):
             results = []
             satisfied_children_count = 0
             for child in self.children:
-                result = child.evaluate(ctx, short_circuit=short_circuit)
+                result = child.evaluate(features, short_circuit=short_circuit)
                 results.append(result)
                 if result:
                     satisfied_children_count += 1
@@ -204,7 +204,7 @@ class Some(Statement):
 
             return Result(False, self, results)
         else:
-            results = [child.evaluate(ctx, short_circuit=short_circuit) for child in self.children]
+            results = [child.evaluate(features, short_circuit=short_circuit) for child in self.children]
             # note that here we cast the child result as a bool
             # because we've overridden `__bool__` above.
             #
@@ -214,7 +214,7 @@ class Some(Statement):
 
 
 class Range(Statement):
-    """match if the child is contained in the ctx set with a count in the given range."""
+    """match if the child is contained in the feature set with a count in the given range."""
 
     def __init__(self, child, min=None, max=None, description=None):
         super().__init__(description=description)
@@ -222,15 +222,15 @@ class Range(Statement):
         self.min = min if min is not None else 0
         self.max = max if max is not None else (1 << 64 - 1)
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.range"] += 1
 
-        count = len(ctx.get(self.child, []))
+        count = len(features.get(self.child, []))
         if self.min == 0 and count == 0:
             return Result(True, self, [])
 
-        return Result(self.min <= count <= self.max, self, [], locations=ctx.get(self.child))
+        return Result(self.min <= count <= self.max, self, [], locations=features.get(self.child))
 
     def __str__(self):
         if self.max == (1 << 64 - 1):
@@ -250,7 +250,7 @@ class Subscope(Statement):
         self.scope = scope
         self.child = child
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: FeatureSet, short_circuit=True):
         raise ValueError("cannot evaluate a subscope directly!")
 
 
@@ -270,6 +270,14 @@ class Subscope(Statement):
 MatchResults = Mapping[str, List[Tuple[Address, Result]]]
 
 
+def get_rule_namespaces(rule: "capa.rules.Rule") -> Iterator[str]:
+    namespace = rule.meta.get("namespace")
+    if namespace:
+        while namespace:
+            yield namespace
+            namespace, _, _ = namespace.rpartition("/")
+
+
 def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations: Iterable[Address]):
     """
     record into the given featureset that the given rule matched at the given locations.
@@ -280,11 +288,8 @@ def index_rule_matches(features: FeatureSet, rule: "capa.rules.Rule", locations:
     updates `features` in-place. doesn't modify the remaining arguments.
     """
     features[capa.features.common.MatchedRule(rule.name)].update(locations)
-    namespace = rule.meta.get("namespace")
-    if namespace:
-        while namespace:
-            features[capa.features.common.MatchedRule(namespace)].update(locations)
-            namespace, _, _ = namespace.rpartition("/")
+    for namespace in get_rule_namespaces(rule):
+        features[capa.features.common.MatchedRule(namespace)].update(locations)
 
 
 def match(rules: List["capa.rules.Rule"], features: FeatureSet, addr: Address) -> Tuple[FeatureSet, MatchResults]:

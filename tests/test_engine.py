@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -93,10 +93,10 @@ def test_complex():
 def test_range():
     # unbounded range, but no matching feature
     # since the lower bound is zero, and there are zero matches, ok
-    assert bool(Range(Number(1)).evaluate({Number(2): {}})) is True
+    assert bool(Range(Number(1)).evaluate({Number(2): {}})) is True  # type: ignore
 
     # unbounded range with matching feature should always match
-    assert bool(Range(Number(1)).evaluate({Number(1): {}})) is True
+    assert bool(Range(Number(1)).evaluate({Number(1): {}})) is True  # type: ignore
     assert bool(Range(Number(1)).evaluate({Number(1): {ADDR1}})) is True
 
     # unbounded max
@@ -112,12 +112,12 @@ def test_range():
     assert bool(Range(Number(1), max=2).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is False
 
     # we can do an exact match by setting min==max
-    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {}})) is False
+    assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {}})) is False  # type: ignore
     assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1}})) is True
     assert bool(Range(Number(1), min=1, max=1).evaluate({Number(1): {ADDR1, ADDR2}})) is False
 
     # bounded range
-    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {}})) is False
+    assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {}})) is False  # type: ignore
     assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1}})) is True
     assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2}})) is True
     assert bool(Range(Number(1), min=1, max=3).evaluate({Number(1): {ADDR1, ADDR2, ADDR3}})) is True

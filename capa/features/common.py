@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2021 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -128,7 +128,7 @@ class Feature(abc.ABC):  # noqa: B024
 
     def __lt__(self, other):
         # implementing sorting by serializing to JSON is a huge hack.
-        # its slow, inelegant, and probably doesn't work intuitively;
+        # it's slow, inelegant, and probably doesn't work intuitively;
         # however, we only use it for deterministic output, so it's good enough for now.
 
         # circular import
@@ -166,10 +166,10 @@ class Feature(abc.ABC):  # noqa: B024
     def __repr__(self):
         return str(self)
 
-    def evaluate(self, ctx: Dict["Feature", Set[Address]], **kwargs) -> Result:
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True) -> Result:
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
-        return Result(self in ctx, self, [], locations=ctx.get(self, set()))
+        return Result(self in features, self, [], locations=features.get(self, set()))
 
 
 class MatchedRule(Feature):
@@ -207,7 +207,7 @@ class Substring(String):
         super().__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.substring"] += 1
 
@@ -216,7 +216,7 @@ class Substring(String):
         matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
         assert isinstance(self.value, str)
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (String,)):
                 continue
 
@@ -227,7 +227,7 @@ class Substring(String):
             if self.value in feature.value:
                 matches[feature.value].update(locations)
                 if short_circuit:
-                    # we found one matching string, thats sufficient to match.
+                    # we found one matching string, that's sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
@@ -299,7 +299,7 @@ class Regex(String):
                 f"invalid regular expression: {value} it should use Python syntax, try it at https://pythex.org"
             ) from exc
 
-    def evaluate(self, ctx, short_circuit=True):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.regex"] += 1
 
@@ -307,7 +307,7 @@ class Regex(String):
         # will unique the locations later on.
         matches: typing.DefaultDict[str, Set[Address]] = collections.defaultdict(set)
 
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (String,)):
                 continue
 
@@ -322,7 +322,7 @@ class Regex(String):
             if self.re.search(feature.value):
                 matches[feature.value].update(locations)
                 if short_circuit:
-                    # we found one matching string, thats sufficient to match.
+                    # we found one matching string, that's sufficient to match.
                     # don't collect other matching strings in this mode.
                     break
 
@@ -384,12 +384,14 @@ class Bytes(Feature):
         super().__init__(value, description=description)
         self.value = value
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
+        assert isinstance(self.value, bytes)
+
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature.bytes"] += 1
+        capa.perf.counters["evaluate.feature.bytes." + str(len(self.value))] += 1
 
-        assert isinstance(self.value, bytes)
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (Bytes,)):
                 continue
 
@@ -407,9 +409,10 @@ class Bytes(Feature):
 # other candidates here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#machine-types
 ARCH_I386 = "i386"
 ARCH_AMD64 = "amd64"
+ARCH_AARCH64 = "aarch64"
 # dotnet
 ARCH_ANY = "any"
-VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_ANY)
+VALID_ARCH = (ARCH_I386, ARCH_AMD64, ARCH_AARCH64, ARCH_ANY)
 
 
 class Arch(Feature):
@@ -434,11 +437,11 @@ class OS(Feature):
         super().__init__(value, description=description)
         self.name = "os"
 
-    def evaluate(self, ctx, **kwargs):
+    def evaluate(self, features: "capa.engine.FeatureSet", short_circuit=True):
         capa.perf.counters["evaluate.feature"] += 1
         capa.perf.counters["evaluate.feature." + self.name] += 1
 
-        for feature, locations in ctx.items():
+        for feature, locations in features.items():
             if not isinstance(feature, (OS,)):
                 continue
 
@@ -486,6 +489,6 @@ class Format(Feature):
 def is_global_feature(feature):
     """
     is this a feature that is extracted at every scope?
-    today, these are OS and arch features.
+    today, these are OS, arch, and format features.
     """
-    return isinstance(feature, (OS, Arch))
+    return isinstance(feature, (OS, Arch, Format))

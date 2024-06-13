@@ -6,6 +6,9 @@
 
 [capa](https://github.com/mandiant/capa) is the FLARE team’s open-source tool that detects capabilities in executable files. [Ghidra](https://github.com/NationalSecurityAgency/ghidra) is an open-source software reverse engineering framework created and maintained by the National Security Agency Research Directorate. capa + Ghidra brings capa’s detection capabilities directly to Ghidra’s user interface helping speed up your reverse engineering tasks by identifying what parts of a program suggest interesting behavior, such as setting a registry value. You can execute the included Python 3 scripts [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) or [capa_ghidra.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_ghidra.py) to run capa’s analysis and view the results in Ghidra. You may be asking yourself, “Python 3 scripts in Ghidra?”. You read that correctly. This integration is written entirely in Python 3 and relies on [Ghidrathon]( https://github.com/mandiant/ghidrathon), an open source Ghidra extension that adds Python 3 scripting to Ghidra.
 
+Check out our capa + Ghidra blog posts:
+* [Riding Dragons: capa Harnesses Ghidra](https://www.mandiant.com/resources/blog/capa-harnesses-ghidra)
+
 ## UI Integration
 [capa_explorer.py](https://raw.githubusercontent.com/mandiant/capa/master/capa/ghidra/capa_explorer.py) renders capa results in Ghidra's UI to help you quickly navigate them. This includes adding matched functions to Ghidra’s Symbol Tree and Bookmarks windows and adding comments to functions that indicate matched capabilities and features. You can execute this script using Ghidra’s Script Manager window.
 
@@ -24,7 +27,7 @@ Comments are added at the beginning of matched functions indicating matched capa
 
 ### Bookmarks
 
-Bookmarks are added to functions that matched a capabilitiy that is mapped to a MITRE ATT&CK and/or Malware Behavior Catalog (MBC) technique. You can view these bookmarks in Ghidra's Bookmarks window.
+Bookmarks are added to functions that matched a capability that is mapped to a MITRE ATT&CK and/or Malware Behavior Catalog (MBC) technique. You can view these bookmarks in Ghidra's Bookmarks window.
 <div align="center">
     <img src="https://github.com/mandiant/capa/assets/66766340/7f9a66a9-7be7-4223-91c6-4b8fc4651336" width=825>
 </div>

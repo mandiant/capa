@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2022 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -132,7 +132,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.file.Import):
         assert isinstance(f.value, str)
         return ImportFeature(import_=f.value, description=f.description)  # type: ignore
-        # Mypy is unable to recognise `import_` as a argument due to alias
+        # Mypy is unable to recognise `import_` as an argument due to alias
 
     elif isinstance(f, capa.features.file.Section):
         assert isinstance(f.value, str)
@@ -141,7 +141,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.file.FunctionName):
         assert isinstance(f.value, str)
         return FunctionNameFeature(function_name=f.value, description=f.description)  # type: ignore
-        # Mypy is unable to recognise `function_name` as a argument due to alias
+        # Mypy is unable to recognise `function_name` as an argument due to alias
 
     # must come before check for String due to inheritance
     elif isinstance(f, capa.features.common.Substring):
@@ -160,7 +160,7 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.common.Class):
         assert isinstance(f.value, str)
         return ClassFeature(class_=f.value, description=f.description)  # type: ignore
-        # Mypy is unable to recognise `class_` as a argument due to alias
+        # Mypy is unable to recognise `class_` as an argument due to alias
 
     elif isinstance(f, capa.features.common.Namespace):
         assert isinstance(f.value, str)
@@ -197,12 +197,12 @@ def feature_from_capa(f: capa.features.common.Feature) -> "Feature":
     elif isinstance(f, capa.features.insn.OperandNumber):
         assert isinstance(f.value, int)
         return OperandNumberFeature(index=f.index, operand_number=f.value, description=f.description)  # type: ignore
-        # Mypy is unable to recognise `operand_number` as a argument due to alias
+        # Mypy is unable to recognise `operand_number` as an argument due to alias
 
     elif isinstance(f, capa.features.insn.OperandOffset):
         assert isinstance(f.value, int)
         return OperandOffsetFeature(index=f.index, operand_offset=f.value, description=f.description)  # type: ignore
-        # Mypy is unable to recognise `operand_offset` as a argument due to alias
+        # Mypy is unable to recognise `operand_offset` as an argument due to alias
 
     else:
         raise NotImplementedError(f"feature_from_capa({type(f)}) not implemented")

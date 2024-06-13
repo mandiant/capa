@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -196,7 +196,7 @@ class CapaExplorerRulegenPreview(QtWidgets.QTextEdit):
             f"      - {author}",
             "    scopes:",
             f"      static: {scope}",
-            "      dynamic: unspecified",
+            "      dynamic: unsupported",
             "    references:",
             "      - <insert_references>",
             "    examples:",
@@ -764,7 +764,7 @@ class CapaExplorerRulegenEditor(QtWidgets.QTreeWidget):
 
             node = self.make_child_node_from_feature(parent, parse_yaml_line(line.strip()))
 
-            # append our new node in case its a parent for another node
+            # append our new node in case it's a parent for another node
             if node:
                 stack.append(node)
 

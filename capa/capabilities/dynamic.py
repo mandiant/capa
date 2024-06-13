@@ -6,6 +6,7 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+import sys
 import logging
 import itertools
 import collections
@@ -65,7 +66,7 @@ def find_thread_capabilities(
     features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the call scope.
-    # might be found at different calls, thats ok.
+    # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
     for ch in extractor.get_calls(ph, th):
@@ -103,11 +104,11 @@ def find_process_capabilities(
     process_features: FeatureSet = collections.defaultdict(set)
 
     # matches found at the basic threads.
-    # might be found at different threads, thats ok.
+    # might be found at different threads, that's ok.
     thread_matches: MatchResults = collections.defaultdict(list)
 
     # matches found at the call scope.
-    # might be found at different calls, thats ok.
+    # might be found at different calls, that's ok.
     call_matches: MatchResults = collections.defaultdict(list)
 
     for th in extractor.get_threads(ph):
@@ -144,6 +145,11 @@ def find_dynamic_capabilities(
             if disable_progress:
                 # do not use tqdm to avoid unnecessary side effects when caller intends
                 # to disable progress completely
+                def pbar(s, *args, **kwargs):
+                    return s
+
+            elif not sys.stderr.isatty():
+                # don't display progress bar when stderr is redirected to a file
                 def pbar(s, *args, **kwargs):
                     return s
 

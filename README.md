@@ -2,7 +2,7 @@
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/flare-capa)](https://pypi.org/project/flare-capa)
 [![Last release](https://img.shields.io/github/v/release/mandiant/capa)](https://github.com/mandiant/capa/releases)
-[![Number of rules](https://img.shields.io/badge/rules-871-blue.svg)](https://github.com/mandiant/capa-rules)
+[![Number of rules](https://gist.githubusercontent.com/capa-bot/6d7960e911f48b3b74916df8988cf0f3/raw/rules_badge.svg)](https://github.com/mandiant/capa-rules)
 [![CI status](https://github.com/mandiant/capa/workflows/CI/badge.svg)](https://github.com/mandiant/capa/actions?query=workflow%3ACI+event%3Apush+branch%3Amaster)
 [![Downloads](https://img.shields.io/github/downloads/mandiant/capa/total)](https://github.com/mandiant/capa/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
@@ -126,7 +126,7 @@ function @ 0x4011C0
 ...
 ```
 
-Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox reports for dynamic capabilty extraction.
+Additionally, capa also supports analyzing [CAPE](https://github.com/kevoreilly/CAPEv2) sandbox reports for dynamic capability extraction.
 In order to use this, you first submit your sample to CAPE for analysis, and then run capa against the generated report (JSON).
 
 Here's an example of running capa against a packed binary, and then running capa against the CAPE report of that binary:

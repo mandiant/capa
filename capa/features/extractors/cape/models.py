@@ -46,7 +46,7 @@ class FlexibleModel(BaseModel):
 
 
 # use this type to indicate that we won't model this data.
-# because its not relevant to our use in capa.
+# because it's not relevant to our use in capa.
 #
 # while its nice to have full coverage of the data shape,
 # it can easily change and break our parsing.
@@ -230,7 +230,7 @@ class File(FlexibleModel):
     sha1: str
     sha256: str
     sha512: str
-    sha3_384: str
+    sha3_384: Optional[str] = None
     ssdeep: str
     # unsure why this would ever be "False"
     tlsh: Optional[Union[str, bool]] = None
@@ -356,8 +356,8 @@ class Behavior(ExactModel):
     anomaly: List[str]
     encryptedbuffers: List[EncryptedBuffer]
     # these are small objects that describe atomic events,
-    # like file move, registery access.
-    # we'll detect the same with our API call analyis.
+    # like file move, registry access.
+    # we'll detect the same with our API call analysis.
     enhanced: Skip = None
 
 
@@ -398,7 +398,7 @@ class CapeReport(FlexibleModel):
     behavior: Behavior
 
     # post-processed results: payloads and extracted configs
-    CAPE: Optional[Cape] = None
+    CAPE: Optional[Union[Cape, List]] = None
     dropped: Optional[List[File]] = None
     procdump: Optional[List[ProcessFile]] = None
     procmemory: ListTODO

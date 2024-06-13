@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+# Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -7,7 +7,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 import io
-from typing import Union, Iterator
+from typing import Dict, List, Tuple, Union, Iterator, Optional
 
 import termcolor
 
@@ -40,9 +40,14 @@ def format_parts_id(data: Union[rd.AttackSpec, rd.MBCSpec]):
     return f"{'::'.join(data.parts)} [{data.id}]"
 
 
+def sort_rules(rules: Dict[str, rd.RuleMatches]) -> List[Tuple[Optional[str], str, rd.RuleMatches]]:
+    """Sort rules by namespace and name."""
+    return sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in rules.values())
+
+
 def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
     """enumerate the rules in (namespace, name) order that are 'capability' rules (not lib/subscope/disposition/etc)."""
-    for _, _, rule in sorted((rule.meta.namespace or "", rule.meta.name, rule) for rule in doc.rules.values()):
+    for _, _, rule in sort_rules(doc.rules):
         if rule.meta.lib:
             continue
         if rule.meta.is_subscope_rule:
@@ -59,6 +64,21 @@ def capability_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
             continue
 
         yield rule
+
+
+def maec_rules(doc: rd.ResultDocument) -> Iterator[rd.RuleMatches]:
+    """enumerate 'maec' rules."""
+    for rule in doc.rules.values():
+        if any(
+            [
+                rule.meta.maec.analysis_conclusion,
+                rule.meta.maec.analysis_conclusion_ov,
+                rule.meta.maec.malware_family,
+                rule.meta.maec.malware_category,
+                rule.meta.maec.malware_category_ov,
+            ]
+        ):
+            yield rule
 
 
 class StringIO(io.StringIO):

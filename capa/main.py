@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+Copyright (C) 2020 Mandiant, Inc. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
 You may obtain a copy of the License at: [package root]/LICENSE.txt
@@ -246,7 +246,7 @@ def install_common_args(parser, wanted=None):
 
     if "backend" in wanted:
         backends = [
-            (BACKEND_AUTO, "(default) detect apppropriate backend automatically"),
+            (BACKEND_AUTO, "(default) detect appropriate backend automatically"),
             (BACKEND_VIV, "vivisect"),
             (BACKEND_PEFILE, "pefile (file features only)"),
             (BACKEND_BINJA, "Binary Ninja"),
@@ -317,7 +317,7 @@ def install_common_args(parser, wanted=None):
 # Library code should *not* call these functions.
 #
 # These main routines may raise `ShouldExitError` to indicate the program
-# ...should exit. Its a tiny step away from doing `sys.exit()` directly.
+# ...should exit. It's a tiny step away from doing `sys.exit()` directly.
 # I'm not sure if we should just do that. In the meantime, programs should
 # handle `ShouldExitError` and pass the status code to `sys.exit()`.
 #
@@ -338,8 +338,9 @@ def handle_common_args(args):
       - rules: file system path to rule files.
       - signatures: file system path to signature files.
 
-    the following field may be added:
+    the following fields may be added:
       - is_default_rules: if the default rules were used.
+      - is_default_signatures: if the default signatures were used.
 
     args:
       args: The parsed command line arguments from `install_common_args`.
@@ -432,25 +433,11 @@ def handle_common_args(args):
 
     if hasattr(args, "signatures"):
         if args.signatures == SIGNATURES_PATH_DEFAULT_STRING:
-            logger.debug("-" * 80)
-            logger.debug(" Using default embedded signatures.")
-            logger.debug(
-                " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
-            )
-            logger.debug("-" * 80)
-
             sigs_path = get_default_root() / "sigs"
-
-            if not sigs_path.exists():
-                logger.error(
-                    "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
-                    + "Please install the signatures first: "
-                    + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
-                )
-                raise IOError(f"signatures path {sigs_path} does not exist or cannot be accessed")
+            args.is_default_signatures = True
         else:
             sigs_path = Path(args.signatures)
-            logger.debug("using signatures path: %s", sigs_path)
+            args.is_default_signatures = False
 
         args.signatures = sigs_path
 
@@ -700,6 +687,24 @@ def get_signatures_from_cli(args, input_format: str, backend: str) -> List[Path]
     if input_format != FORMAT_PE:
         logger.debug("skipping library code matching: signatures only supports PE files")
         return []
+
+    if args.is_default_signatures:
+        logger.debug("-" * 80)
+        logger.debug(" Using default embedded signatures.")
+        logger.debug(
+            " To provide your own signatures, use the form `capa.exe --signature ./path/to/signatures/  /path/to/mal.exe`."
+        )
+        logger.debug("-" * 80)
+
+        if not args.signatures.exists():
+            logger.error(
+                "Using default signature path, but it doesn't exist. "  # noqa: G003 [logging statement uses +]
+                + "Please install the signatures first: "
+                + "https://github.com/mandiant/capa/blob/master/doc/installation.md#method-2-using-capa-as-a-python-library."
+            )
+            raise IOError(f"signatures path {args.signatures} does not exist or cannot be accessed")
+    else:
+        logger.debug("using signatures path: %s", args.signatures)
 
     try:
         return capa.loader.get_signatures(args.signatures)
