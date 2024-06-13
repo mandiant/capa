@@ -870,6 +870,8 @@ def guess_os_from_ident_directive(elf: ELF) -> Optional[OS]:
             return OS.LINUX
         elif "Red Hat" in comment:
             return OS.LINUX
+        elif "Alpine" in comment:
+            return OS.LINUX
         elif "Android" in comment:
             return OS.ANDROID
 
