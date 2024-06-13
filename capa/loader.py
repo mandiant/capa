@@ -8,6 +8,7 @@
 import sys
 import logging
 import datetime
+import contextlib
 from typing import Set, Dict, List, Optional
 from pathlib import Path
 
@@ -153,6 +154,18 @@ def get_workspace(path: Path, input_format: str, sigpaths: List[Path]):
         raise ValueError("unexpected format: " + input_format)
 
     viv_utils.flirt.register_flirt_signature_analyzers(vw, [str(s) for s in sigpaths])
+
+    with contextlib.suppress(Exception):
+        # unfortuately viv raises a raw Exception (not any subclass).
+        # This happens when the module isn't found, such as with a viv upgrade.
+        #
+        # Remove the symbolic switch case solver.
+        # This is only enabled for ELF files, not PE files.
+        # During the following performance investigation, this analysis module
+        # had some terrible worst-case behavior.
+        # We can put up with slightly worse CFG reconstruction in order to avoid this.
+        # https://github.com/mandiant/capa/issues/1989#issuecomment-1948022767
+        vw.delFuncAnalysisModule("vivisect.analysis.generic.symswitchcase")
 
     vw.analyze()
 

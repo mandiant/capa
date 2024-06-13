@@ -139,6 +139,7 @@ dev = [
     "isort==5.13.2",
     "mypy==1.10.0",
     "mypy-protobuf==3.6.0",
+    "PyGithub==2.3.0",
     # type stubs for mypy
     "types-backports==0.1.3",
     "types-colorama==0.4.15.11",
@@ -215,6 +216,7 @@ DEP002 = [
     "mypy",
     "mypy-protobuf",
     "pre-commit",
+    "PyGithub",
     "pyinstaller",
     "pytest",
     "pytest-cov",
@@ -237,6 +239,9 @@ DEP002 = [
 DEP003 = [
     "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
+
+[tool.deptry.package_module_name_map]
+PyGithub = "github"
 
 [project.urls]
 Homepage = "https://github.com/mandiant/capa"
