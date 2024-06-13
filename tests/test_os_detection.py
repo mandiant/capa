@@ -92,6 +92,12 @@ def test_elf_android_notes():
         assert capa.features.extractors.elf.detect_elf_os(f) == "android"
 
 
+def test_elf_go_buildinfo():
+    path = get_data_path_by_name("3da7c")
+    with Path(path).open("rb") as f:
+        assert capa.features.extractors.elf.detect_elf_os(f) == "linux"
+
+
 def test_elf_parse_capa_pyinstaller_header():
     # error after misidentified large pydata section with address 0; fixed in #1454
     # compressed ELF header of capa-v5.1.0-linux
