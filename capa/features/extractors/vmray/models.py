@@ -51,7 +51,6 @@ class Analysis(BaseXmlModel, tag="analysis"):
 
 
 class GenericReference(BaseModel):
-    _type: str
     path: List[str]
     source: str
 
@@ -60,7 +59,6 @@ class StaticDataReference(GenericReference): ...
 
 
 class PEFileBasicInfo(BaseModel):
-    _type: str
     compile_time: str
     file_type: str
     image_base: int
@@ -74,19 +72,16 @@ class PEFileBasicInfo(BaseModel):
 
 
 class API(BaseModel):
-    _type: str
     name: str
     ordinal: Optional[int] = None
 
 
 class PEFileExport(BaseModel):
-    _type: str
     address: int
     api: API
 
 
 class PEFileImport(BaseModel):
-    _type: str
     address: int
     api: API
     thunk_offset: int
@@ -95,13 +90,11 @@ class PEFileImport(BaseModel):
 
 
 class PEFileImportModule(BaseModel):
-    _type: str
     dll: str
     apis: List[PEFileImport]
 
 
 class PEFileSection(BaseModel):
-    _type: str
     entropy: float
     flags: List[str] = []
     name: str
@@ -112,7 +105,6 @@ class PEFileSection(BaseModel):
 
 
 class PEFile(BaseModel):
-    _type: str
     basic_info: PEFileBasicInfo
     exports: List[PEFileExport] = []
     imports: List[PEFileImportModule] = []
@@ -123,10 +115,16 @@ class StaticData(BaseModel):
     pe: Optional[PEFile] = None
 
 
+class FileHashes(BaseModel):
+    md5: str
+    sha1: str
+    sha256: str
+    ssdeep: str
+
+
 class File(BaseModel):
-    _type: str
     categories: List[str]
-    hash_values: Dict[str, str]
+    hash_values: FileHashes
     is_artifact: bool
     is_ioc: bool
     is_sample: bool

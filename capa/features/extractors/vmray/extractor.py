@@ -17,13 +17,21 @@ from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Analysis, SummaryV2
-from capa.features.extractors.base_extractor import DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import SampleHashes, DynamicFeatureExtractor
 
 # TODO also/or look into xmltodict?
 
 
 class VMRayExtractor(DynamicFeatureExtractor):
-    def __init__(self, analysis):
+    def __init__(self, analysis: VMRayAnalysis):
+        super().__init__(
+            hashes=SampleHashes(
+                md5=analysis.sample_file_analysis.hash_values.md5.lower(),
+                sha1=analysis.sample_file_analysis.hash_values.sha1.lower(),
+                sha256=analysis.sample_file_analysis.hash_values.sha256.lower(),
+            )
+        )
+
         self.analysis = analysis
 
     @classmethod
