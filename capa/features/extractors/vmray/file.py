@@ -8,7 +8,7 @@
 import logging
 from typing import Tuple, Iterator
 
-from capa.features.file import Export
+from capa.features.file import Export, Section
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
@@ -26,6 +26,11 @@ def extract_import_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Add
     yield from []
 
 
+def extract_section_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
+    for addr, name in analysis.sections.items():
+        yield Section(name), AbsoluteVirtualAddress(addr)
+
+
 def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
     for handler in FILE_HANDLERS:
         for feature, addr in handler(analysis):
@@ -35,6 +40,6 @@ def extract_features(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address
 FILE_HANDLERS = (
     extract_import_names,
     extract_export_names,
-    # extract_section_names,
+    extract_section_names,
     # extract_file_strings,
 )
