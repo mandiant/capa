@@ -139,6 +139,12 @@ class File(BaseModel):
     verdict: str
 
 
+class AnalysisMetadata(BaseModel):
+    sample_type: str
+    submission_filename: str
+
+
 class SummaryV2(BaseModel):
     files: Dict[str, File]
     static_data: Dict[str, StaticData]
+    analysis_metadata: AnalysisMetadata
