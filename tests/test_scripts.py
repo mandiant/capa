@@ -40,7 +40,10 @@ def get_rule_path():
     [
         pytest.param("capa2yara.py", [get_rules_path()]),
         pytest.param("capafmt.py", [get_rule_path()]),
-        pytest.param("capa2sarif.py", [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"]),
+        pytest.param(
+            "capa2sarif.py",
+            [Path(__file__).resolve().parent / "data" / "rd" / "Practical Malware Analysis Lab 01-01.dll_.json"],
+        ),
         # testing some variations of linter script
         pytest.param("lint.py", ["-t", "create directory", get_rules_path()]),
         # `create directory` rule has native and .NET example PEs

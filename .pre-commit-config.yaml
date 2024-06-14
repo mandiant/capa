@@ -112,6 +112,16 @@ repos:
 
 -   repo: local
     hooks:
+    -   id: deptry
+        name: deptry
+        stages: [push, manual]
+        language: system
+        entry: deptry .
+        always_run: true
+        pass_filenames: false
+
+-   repo: local
+    hooks:
     -   id: pytest-fast
         name: pytest (fast)
         stages: [manual]
@@ -128,12 +138,3 @@ repos:
         always_run: true
         pass_filenames: false
 
--   repo: local
-    hooks:
-    -   id: deptry
-        name: deptry
-        stages: [push, manual]
-        language: system
-        entry: deptry .
-        always_run: true
-        pass_filenames: false

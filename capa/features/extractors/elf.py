@@ -58,6 +58,10 @@ class OS(str, Enum):
     SYLLABLE = "syllable"
     NACL = "nacl"
     ANDROID = "android"
+    DRAGONFLYBSD = "dragonfly BSD"
+    ILLUMOS = "illumos"
+    ZOS = "z/os"
+    UNIX = "unix"
 
 
 # via readelf: https://github.com/bminor/binutils-gdb/blob/c0e94211e1ac05049a4ce7c192c9d14d1764eb3e/binutils/readelf.c#L19635-L19658
@@ -81,6 +85,8 @@ class Phdr:
     paddr: int
     filesz: int
     buf: bytes
+    flags: int
+    memsz: int
 
 
 @dataclass
@@ -318,24 +324,23 @@ class ELF:
         phent_offset = i * self.e_phentsize
         phent = self.phbuf[phent_offset : phent_offset + self.e_phentsize]
 
-        (p_type,) = struct.unpack_from(self.endian + "I", phent, 0x0)
-        logger.debug("ph:p_type: 0x%04x", p_type)
-
         if self.bitness == 32:
-            p_offset, p_vaddr, p_paddr, p_filesz = struct.unpack_from(self.endian + "IIII", phent, 0x4)
+            p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags = struct.unpack_from(
+                self.endian + "IIIIIII", phent, 0x0
+            )
         elif self.bitness == 64:
-            p_offset, p_vaddr, p_paddr, p_filesz = struct.unpack_from(self.endian + "QQQQ", phent, 0x8)
+            p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz = struct.unpack_from(
+                self.endian + "IIQQQQQ", phent, 0x0
+            )
         else:
             raise NotImplementedError()
-
-        logger.debug("ph:p_offset: 0x%02x p_filesz: 0x%04x", p_offset, p_filesz)
 
         self.f.seek(p_offset)
         buf = self.f.read(p_filesz)
         if len(buf) != p_filesz:
             raise ValueError("failed to read program header content")
 
-        return Phdr(p_type, p_offset, p_vaddr, p_paddr, p_filesz, buf)
+        return Phdr(p_type, p_offset, p_vaddr, p_paddr, p_filesz, buf, p_flags, p_memsz)
 
     @property
     def program_headers(self):
@@ -359,8 +364,6 @@ class ELF:
             )
         else:
             raise NotImplementedError()
-
-        logger.debug("sh:sh_offset: 0x%02x sh_size: 0x%04x", sh_offset, sh_size)
 
         self.f.seek(sh_offset)
         buf = self.f.read(sh_size)
@@ -870,6 +873,8 @@ def guess_os_from_ident_directive(elf: ELF) -> Optional[OS]:
             return OS.LINUX
         elif "Red Hat" in comment:
             return OS.LINUX
+        elif "Alpine" in comment:
+            return OS.LINUX
         elif "Android" in comment:
             return OS.ANDROID
 
@@ -955,7 +960,502 @@ def guess_os_from_symtab(elf: ELF) -> Optional[OS]:
 
         for os, hints in keywords.items():
             if any(hint in sym_name for hint in hints):
+                logger.debug("symtab: %s looks like %s", sym_name, os)
                 return os
+
+    return None
+
+
+def is_go_binary(elf: ELF) -> bool:
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".note.go.buildid":
+            logger.debug("go buildinfo: found section .note.go.buildid")
+            return True
+
+    # The `go version` command enumerates sections for the name `.go.buildinfo`
+    # (in addition to looking for the BUILDINFO_MAGIC) to check if an executable is go or not.
+    # See references to the `errNotGoExe` error here:
+    # https://github.com/golang/go/blob/master/src/debug/buildinfo/buildinfo.go#L41
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".go.buildinfo":
+            logger.debug("go buildinfo: found section .go.buildinfo")
+            return True
+
+    # other strategy used by FLOSS: search for known runtime strings.
+    # https://github.com/mandiant/flare-floss/blob/b2ca8adfc5edf278861dd6bff67d73da39683b46/floss/language/identify.py#L88
+    return False
+
+
+def get_go_buildinfo_data(elf: ELF) -> Optional[bytes]:
+    for shdr in elf.section_headers:
+        if shdr.get_name(elf) == ".go.buildinfo":
+            logger.debug("go buildinfo: found section .go.buildinfo")
+            return shdr.buf
+
+    PT_LOAD = 0x1
+    PF_X = 1
+    PF_W = 2
+    for phdr in elf.program_headers:
+        if phdr.type != PT_LOAD:
+            continue
+
+        if (phdr.flags & (PF_X | PF_W)) == PF_W:
+            logger.debug("go buildinfo: found data segment")
+            return phdr.buf
+
+    return None
+
+
+def read_data(elf: ELF, rva: int, size: int) -> Optional[bytes]:
+    # ELF segments are for runtime data,
+    # ELF sections are for link-time data.
+    # So we want to read Program Headers/Segments.
+    for phdr in elf.program_headers:
+        if phdr.vaddr <= rva < phdr.vaddr + phdr.memsz:
+            segment_data = phdr.buf
+
+            # pad the section with NULLs
+            # assume page alignment is already handled.
+            # might need more hardening here.
+            if len(segment_data) < phdr.memsz:
+                segment_data += b"\x00" * (phdr.memsz - len(segment_data))
+
+            segment_offset = rva - phdr.vaddr
+            return segment_data[segment_offset : segment_offset + size]
+
+    return None
+
+
+def read_go_slice(elf: ELF, rva: int) -> Optional[bytes]:
+    if elf.bitness == 32:
+        struct_size = 8
+        struct_format = elf.endian + "II"
+    elif elf.bitness == 64:
+        struct_size = 16
+        struct_format = elf.endian + "QQ"
+    else:
+        raise ValueError("invalid psize")
+
+    struct_buf = read_data(elf, rva, struct_size)
+    if not struct_buf:
+        return None
+
+    addr, length = struct.unpack_from(struct_format, struct_buf, 0)
+
+    return read_data(elf, addr, length)
+
+
+def guess_os_from_go_buildinfo(elf: ELF) -> Optional[OS]:
+    """
+    In a binary compiled by Go, the buildinfo structure may contain
+    metadata about the build environment, including the configured
+    GOOS, which specifies the target operating system.
+
+    Search for and parse the buildinfo structure,
+    which may be found in the .go.buildinfo section,
+    and often contains this metadata inline. Otherwise,
+    follow a few byte slices to the relevant information.
+
+    This strategy is derived from GoReSym.
+    """
+    buf = get_go_buildinfo_data(elf)
+    if not buf:
+        logger.debug("go buildinfo: no buildinfo section")
+        return None
+
+    assert isinstance(buf, bytes)
+
+    # The build info blob left by the linker is identified by
+    # a 16-byte header, consisting of:
+    #  - buildInfoMagic (14 bytes),
+    #  - the binary's pointer size (1 byte), and
+    #  - whether the binary is big endian (1 byte).
+    #
+    # Then:
+    #  - virtual address to Go string: runtime.buildVersion
+    #  - virtual address to Go string: runtime.modinfo
+    #
+    #  On 32-bit platforms, the last 8 bytes are unused.
+    #
+    #  If the endianness has the 2 bit set, then the pointers are zero,
+    #  and the 32-byte header is followed by varint-prefixed string data
+    #  for the two string values we care about.
+    # https://github.com/mandiant/GoReSym/blob/0860a1b1b4f3495e9fb7e71eb4386bf3e0a7c500/buildinfo/buildinfo.go#L185-L193
+    BUILDINFO_MAGIC = b"\xFF Go buildinf:"
+
+    try:
+        index = buf.index(BUILDINFO_MAGIC)
+    except ValueError:
+        logger.debug("go buildinfo: no buildinfo magic")
+        return None
+
+    psize, flags = struct.unpack_from("<bb", buf, index + len(BUILDINFO_MAGIC))
+    assert psize in (4, 8)
+    is_big_endian = flags & 0b01
+    has_inline_strings = flags & 0b10
+    logger.debug("go buildinfo: psize: %d big endian: %s inline: %s", psize, is_big_endian, has_inline_strings)
+
+    GOOS_TO_OS = {
+        b"aix": OS.AIX,
+        b"android": OS.ANDROID,
+        b"dragonfly": OS.DRAGONFLYBSD,
+        b"freebsd": OS.FREEBSD,
+        b"hurd": OS.HURD,
+        b"illumos": OS.ILLUMOS,
+        b"linux": OS.LINUX,
+        b"netbsd": OS.NETBSD,
+        b"openbsd": OS.OPENBSD,
+        b"solaris": OS.SOLARIS,
+        b"zos": OS.ZOS,
+        b"windows": None,  # PE format
+        b"plan9": None,  # a.out format
+        b"ios": None,  # Mach-O format
+        b"darwin": None,  # Mach-O format
+        b"nacl": None,  # dropped in GO 1.14
+        b"js": None,
+    }
+
+    if has_inline_strings:
+        # This is the common case/path. Most samples will have an inline GOOS string.
+        #
+        # To find samples on VT, use these VTGrep searches:
+        #
+        #   content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 02}
+        #   content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 02}
+
+        # If present, the GOOS key will be found within
+        # the current buildinfo data region.
+        #
+        # Brute force the k-v pair, like `GOOS=linux`,
+        # rather than try to parse the data, which would be fragile.
+        for key, os in GOOS_TO_OS.items():
+            if (b"GOOS=" + key) in buf:
+                logger.debug("go buildinfo: found os: %s", os)
+                return os
+    else:
+        # This is the uncommon path. Most samples will have an inline GOOS string.
+        #
+        # To find samples on VT, use the referenced VTGrep content searches.
+        info_format = {
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 00}
+            # like: 71e617e5cc7fda89bf67422ff60f437e9d54622382c5ed6ff31f75e601f9b22e
+            # in which the modinfo doesn't have GOOS.
+            (4, False): "<II",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 00}
+            # like: 93d3b3e2a904c6c909e20f2f76c3c2e8d0c81d535eb46e5493b5701f461816c3
+            # in which the modinfo doesn't have GOOS.
+            (8, False): "<QQ",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 04 01}
+            # (no matches on VT today)
+            (4, True): ">II",
+            # content: {ff 20 47 6f 20 62 75 69 6c 64 69 6e 66 3a 08 01}
+            # like: d44ba497964050c0e3dd2a192c511e4c3c4f17717f0322a554d64b797ee4690a
+            # in which the modinfo doesn't have GOOS.
+            (8, True): ">QQ",
+        }
+
+        build_version_address, modinfo_address = struct.unpack_from(
+            info_format[(psize, is_big_endian)], buf, index + 0x10
+        )
+        logger.debug("go buildinfo: build version address: 0x%x", build_version_address)
+        logger.debug("go buildinfo: modinfo address: 0x%x", modinfo_address)
+
+        build_version = read_go_slice(elf, build_version_address)
+        if build_version:
+            logger.debug("go buildinfo: build version: %s", build_version.decode("utf-8"))
+
+        modinfo = read_go_slice(elf, modinfo_address)
+        if modinfo:
+            if modinfo[-0x11] == ord("\n"):
+                # Strip module framing: sentinel strings delimiting the module info.
+                # These are cmd/go/internal/modload/build.infoStart and infoEnd.
+                # Which should probably be:
+                # 	infoStart, _ = hex.DecodeString("3077af0c9274080241e1c107e6d618e6")
+                #   infoEnd, _   = hex.DecodeString("f932433186182072008242104116d8f2")
+                modinfo = modinfo[0x10:-0x10]
+            logger.debug("go buildinfo: modinfo: %s", modinfo.decode("utf-8"))
+
+        if not modinfo:
+            return None
+
+        for key, os in GOOS_TO_OS.items():
+            # Brute force the k-v pair, like `GOOS=linux`,
+            # rather than try to parse the data, which would be fragile.
+            if (b"GOOS=" + key) in modinfo:
+                logger.debug("go buildinfo: found os: %s", os)
+                return os
+
+    return None
+
+
+def guess_os_from_go_source(elf: ELF) -> Optional[OS]:
+    """
+    In a binary compiled by Go, runtime metadata may contain
+    references to the source filenames, including the
+    src/runtime/os_* files, whose name indicates the
+    target operating system.
+
+    Confirm the given ELF seems to be built by Go,
+    and then look for strings that look like
+    Go source filenames.
+
+    This strategy is derived from GoReSym.
+    """
+    if not is_go_binary(elf):
+        return None
+
+    for phdr in elf.program_headers:
+        buf = phdr.buf
+        NEEDLE_OS = b"/src/runtime/os_"
+        try:
+            index = buf.index(NEEDLE_OS)
+        except ValueError:
+            continue
+
+        rest = buf[index + len(NEEDLE_OS) : index + len(NEEDLE_OS) + 32]
+        filename = rest.partition(b".go")[0].decode("utf-8")
+        logger.debug("go source: filename: /src/runtime/os_%s.go", filename)
+
+        # via: https://cs.opensource.google/go/go/+/master:src/runtime/;bpv=1;bpt=0
+        # candidates today:
+        #   - aix
+        #   - android
+        #   - darwin
+        #   - darwin_arm64
+        #   - dragonfly
+        #   - freebsd
+        #   - freebsd2
+        #   - freebsd_amd64
+        #   - freebsd_arm
+        #   - freebsd_arm64
+        #   - freebsd_noauxv
+        #   - freebsd_riscv64
+        #   - illumos
+        #   - js
+        #   - linux
+        #   - linux_arm
+        #   - linux_arm64
+        #   - linux_be64
+        #   - linux_generic
+        #   - linux_loong64
+        #   - linux_mips64x
+        #   - linux_mipsx
+        #   - linux_noauxv
+        #   - linux_novdso
+        #   - linux_ppc64x
+        #   - linux_riscv64
+        #   - linux_s390x
+        #   - linux_x86
+        #   - netbsd
+        #   - netbsd_386
+        #   - netbsd_amd64
+        #   - netbsd_arm
+        #   - netbsd_arm64
+        #   - nonopenbsd
+        #   - only_solaris
+        #   - openbsd
+        #   - openbsd_arm
+        #   - openbsd_arm64
+        #   - openbsd_libc
+        #   - openbsd_mips64
+        #   - openbsd_syscall
+        #   - openbsd_syscall1
+        #   - openbsd_syscall2
+        #   - plan9
+        #   - plan9_arm
+        #   - solaris
+        #   - unix
+        #   - unix_nonlinux
+        #   - wasip1
+        #   - wasm
+        #   - windows
+        #   - windows_arm
+        #   - windows_arm64
+
+        OS_FILENAME_TO_OS = {
+            "aix": OS.AIX,
+            "android": OS.ANDROID,
+            "dragonfly": OS.DRAGONFLYBSD,
+            "freebsd": OS.FREEBSD,
+            "freebsd2": OS.FREEBSD,
+            "freebsd_": OS.FREEBSD,
+            "illumos": OS.ILLUMOS,
+            "linux": OS.LINUX,
+            "netbsd": OS.NETBSD,
+            "only_solaris": OS.SOLARIS,
+            "openbsd": OS.OPENBSD,
+            "solaris": OS.SOLARIS,
+            "unix_nonlinux": OS.UNIX,
+        }
+
+        for prefix, os in OS_FILENAME_TO_OS.items():
+            if filename.startswith(prefix):
+                return os
+
+    for phdr in elf.program_headers:
+        buf = phdr.buf
+        NEEDLE_RT0 = b"/src/runtime/rt0_"
+        try:
+            index = buf.index(NEEDLE_RT0)
+        except ValueError:
+            continue
+
+        rest = buf[index + len(NEEDLE_RT0) : index + len(NEEDLE_RT0) + 32]
+        filename = rest.partition(b".s")[0].decode("utf-8")
+        logger.debug("go source: filename: /src/runtime/rt0_%s.s", filename)
+
+        # via: https://cs.opensource.google/go/go/+/master:src/runtime/;bpv=1;bpt=0
+        # candidates today:
+        #   - aix_ppc64
+        #   - android_386
+        #   - android_amd64
+        #   - android_arm
+        #   - android_arm64
+        #   - darwin_amd64
+        #   - darwin_arm64
+        #   - dragonfly_amd64
+        #   - freebsd_386
+        #   - freebsd_amd64
+        #   - freebsd_arm
+        #   - freebsd_arm64
+        #   - freebsd_riscv64
+        #   - illumos_amd64
+        #   - ios_amd64
+        #   - ios_arm64
+        #   - js_wasm
+        #   - linux_386
+        #   - linux_amd64
+        #   - linux_arm
+        #   - linux_arm64
+        #   - linux_loong64
+        #   - linux_mips64x
+        #   - linux_mipsx
+        #   - linux_ppc64
+        #   - linux_ppc64le
+        #   - linux_riscv64
+        #   - linux_s390x
+        #   - netbsd_386
+        #   - netbsd_amd64
+        #   - netbsd_arm
+        #   - netbsd_arm64
+        #   - openbsd_386
+        #   - openbsd_amd64
+        #   - openbsd_arm
+        #   - openbsd_arm64
+        #   - openbsd_mips64
+        #   - openbsd_ppc64
+        #   - openbsd_riscv64
+        #   - plan9_386
+        #   - plan9_amd64
+        #   - plan9_arm
+        #   - solaris_amd64
+        #   - wasip1_wasm
+        #   - windows_386
+        #   - windows_amd64
+        #   - windows_arm
+        #   - windows_arm64
+
+        RT0_FILENAME_TO_OS = {
+            "aix": OS.AIX,
+            "android": OS.ANDROID,
+            "dragonfly": OS.DRAGONFLYBSD,
+            "freebsd": OS.FREEBSD,
+            "illumos": OS.ILLUMOS,
+            "linux": OS.LINUX,
+            "netbsd": OS.NETBSD,
+            "openbsd": OS.OPENBSD,
+            "solaris": OS.SOLARIS,
+        }
+
+        for prefix, os in RT0_FILENAME_TO_OS.items():
+            if filename.startswith(prefix):
+                return os
+
+    return None
+
+
+def guess_os_from_vdso_strings(elf: ELF) -> Optional[OS]:
+    """
+    The "vDSO" (virtual dynamic shared object) is a small shared
+    library that the kernel automatically maps into the address space
+    of all user-space applications.
+
+    Some statically linked executables include small dynamic linker
+    routines that finds these vDSO symbols, using the ASCII
+    symbol name and version. We can therefore recognize the pairs
+    (symbol, version) to guess the binary targets Linux.
+    """
+    for phdr in elf.program_headers:
+        buf = phdr.buf
+
+        # We don't really use the arch, but its interesting for documentation
+        # I suppose we could restrict the arch here to what's in the ELF header,
+        # but that's even more work. Let's see if this is sufficient.
+        for arch, symbol, version in (
+            # via: https://man7.org/linux/man-pages/man7/vdso.7.html
+            ("arm", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("arm", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("aarch64", b"__kernel_rt_sigreturn", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_gettimeofday", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_clock_gettime", b"LINUX_2.6.39"),
+            ("aarch64", b"__kernel_clock_getres", b"LINUX_2.6.39"),
+            ("mips", b"__kernel_gettimeofday", b"LINUX_2.6"),
+            ("mips", b"__kernel_clock_gettime", b"LINUX_2.6"),
+            ("ia64", b"__kernel_sigtramp", b"LINUX_2.5"),
+            ("ia64", b"__kernel_syscall_via_break", b"LINUX_2.5"),
+            ("ia64", b"__kernel_syscall_via_epc", b"LINUX_2.5"),
+            ("ppc/32", b"__kernel_clock_getres", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_clock_gettime", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_clock_gettime64", b"LINUX_5.11"),
+            ("ppc/32", b"__kernel_datapage_offset", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_get_syscall_map", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_get_tbfreq", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_getcpu", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_gettimeofday", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sigtramp_rt32", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sigtramp32", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sync_dicache", b"LINUX_2.6.15"),
+            ("ppc/32", b"__kernel_sync_dicache_p5", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_clock_getres", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_clock_gettime", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_datapage_offset", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_get_syscall_map", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_get_tbfreq", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_getcpu", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_gettimeofday", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sigtramp_rt64", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sync_dicache", b"LINUX_2.6.15"),
+            ("ppc/64", b"__kernel_sync_dicache_p5", b"LINUX_2.6.15"),
+            ("riscv", b"__vdso_rt_sigreturn", b"LINUX_4.15"),
+            ("riscv", b"__vdso_gettimeofday", b"LINUX_4.15"),
+            ("riscv", b"__vdso_clock_gettime", b"LINUX_4.15"),
+            ("riscv", b"__vdso_clock_getres", b"LINUX_4.15"),
+            ("riscv", b"__vdso_getcpu", b"LINUX_4.15"),
+            ("riscv", b"__vdso_flush_icache", b"LINUX_4.15"),
+            ("s390", b"__kernel_clock_getres", b"LINUX_2.6.29"),
+            ("s390", b"__kernel_clock_gettime", b"LINUX_2.6.29"),
+            ("s390", b"__kernel_gettimeofday", b"LINUX_2.6.29"),
+            ("superh", b"__kernel_rt_sigreturn", b"LINUX_2.6"),
+            ("superh", b"__kernel_sigreturn", b"LINUX_2.6"),
+            ("superh", b"__kernel_vsyscall", b"LINUX_2.6"),
+            ("i386", b"__kernel_sigreturn", b"LINUX_2.5"),
+            ("i386", b"__kernel_rt_sigreturn", b"LINUX_2.5"),
+            ("i386", b"__kernel_vsyscall", b"LINUX_2.5"),
+            ("i386", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("i386", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("i386", b"__vdso_time", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_getcpu", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("x86-64", b"__vdso_time", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_clock_gettime", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_getcpu", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_gettimeofday", b"LINUX_2.6"),
+            ("x86/32", b"__vdso_time", b"LINUX_2.6"),
+        ):
+            if symbol in buf and version in buf:
+                logger.debug("vdso string: %s %s %s", arch, symbol.decode("ascii"), version.decode("ascii"))
+                return OS.LINUX
 
     return None
 
@@ -1026,6 +1526,27 @@ def detect_elf_os(f) -> str:
         logger.warning("Error guessing OS from symbol table: %s", e)
         symtab_guess = None
 
+    try:
+        goos_guess = guess_os_from_go_buildinfo(elf)
+        logger.debug("guess: Go buildinfo: %s", goos_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from Go buildinfo: %s", e)
+        goos_guess = None
+
+    try:
+        gosrc_guess = guess_os_from_go_source(elf)
+        logger.debug("guess: Go source: %s", gosrc_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from Go source path: %s", e)
+        gosrc_guess = None
+
+    try:
+        vdso_guess = guess_os_from_vdso_strings(elf)
+        logger.debug("guess: vdso strings: %s", vdso_guess)
+    except Exception as e:
+        logger.warning("Error guessing OS from vdso strings: %s", e)
+        symtab_guess = None
+
     ret = None
 
     if osabi_guess:
@@ -1049,10 +1570,23 @@ def detect_elf_os(f) -> str:
     elif symtab_guess:
         ret = symtab_guess
 
+    elif goos_guess:
+        ret = goos_guess
+
+    elif gosrc_guess:
+        # prefer goos_guess to this method,
+        # which is just string interpretation.
+        ret = gosrc_guess
+
     elif ident_guess:
         # at the bottom because we don't trust this too much
         # due to potential for bugs with cross-compilation.
         ret = ident_guess
+
+    elif vdso_guess:
+        # at the bottom because this is just scanning strings,
+        # which isn't very authoritative.
+        ret = vdso_guess
 
     return ret.value if ret is not None else "unknown"
 

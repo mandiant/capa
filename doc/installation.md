@@ -107,7 +107,8 @@ We use the following tools to ensure consistent code style and formatting:
 
 To install these development dependencies, run:
 
-`$ pip install -e /local/path/to/src[dev]`
+- `$ pip install -e /local/path/to/src[dev]` or
+- `$ pip install -e /local/path/to/src[dev,scripts]` to also install all script dependencies
 
 We use [pre-commit](https://pre-commit.com/) so that its trivial to run the same linters & configuration locally as in CI.
 

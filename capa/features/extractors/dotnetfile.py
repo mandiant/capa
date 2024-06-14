@@ -78,12 +78,12 @@ def extract_file_namespace_features(pe: dnfile.dnPE, **kwargs) -> Iterator[Tuple
     for _, typedef in iter_dotnet_table(pe, dnfile.mdtable.TypeDef.number):
         # emit internal .NET namespaces
         assert isinstance(typedef, dnfile.mdtable.TypeDefRow)
-        namespaces.add(typedef.TypeNamespace)
+        namespaces.add(str(typedef.TypeNamespace))
 
     for _, typeref in iter_dotnet_table(pe, dnfile.mdtable.TypeRef.number):
         # emit external .NET namespaces
         assert isinstance(typeref, dnfile.mdtable.TypeRefRow)
-        namespaces.add(typeref.TypeNamespace)
+        namespaces.add(str(typeref.TypeNamespace))
 
     # namespaces may be empty, discard
     namespaces.discard("")

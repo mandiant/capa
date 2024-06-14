@@ -101,9 +101,7 @@ dependencies = [
     # https://github.com/mandiant/capa/issues/1966
     "networkx>=3,<3.2",
 
-    # TODO(williballenthin): dnfile 0.15 changes UserString API and we havent updated yet.
-    # https://github.com/mandiant/capa/pull/2037
-    "dnfile>=0.14.1,<0.15",
+    "dnfile>=0.15.0",
 ]
 dynamic = ["version"]
 
@@ -136,14 +134,12 @@ dev = [
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.4.7",
+    "ruff==0.4.8",
     "black==24.4.2",
     "isort==5.13.2",
     "mypy==1.10.0",
-    "psutil==5.9.2",
-    "stix2==3.0.1",
-    "requests==2.31.0",
     "mypy-protobuf==3.6.0",
+    "PyGithub==2.3.0",
     # type stubs for mypy
     "types-backports==0.1.3",
     "types-colorama==0.4.15.11",
@@ -163,6 +159,13 @@ build = [
     "pyinstaller==6.8.0",
     "setuptools==70.0.0",
     "build==1.2.1"
+]
+scripts = [
+    "jschema_to_python==1.2.3",
+    "psutil==5.9.2",
+    "stix2==3.0.1",
+    "sarif_om==1.0.4",
+    "requests==2.31.0",
 ]
 
 [tool.deptry]
@@ -213,6 +216,7 @@ DEP002 = [
     "mypy",
     "mypy-protobuf",
     "pre-commit",
+    "PyGithub",
     "pyinstaller",
     "pytest",
     "pytest-cov",
@@ -235,6 +239,9 @@ DEP002 = [
 DEP003 = [
     "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
+
+[tool.deptry.package_module_name_map]
+PyGithub = "github"
 
 [project.urls]
 Homepage = "https://github.com/mandiant/capa"

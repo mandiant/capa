@@ -37,7 +37,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install -e .[dev]
+        pip install -e .[dev,scripts]
     - name: Lint with ruff
       run: pre-commit run ruff
     - name: Lint with isort
@@ -65,7 +65,7 @@ jobs:
     - name: Install capa
       run: |
         pip install -r requirements.txt
-        pip install -e .[dev]
+        pip install -e .[dev,scripts]
     - name: Run rule linter
       run: python scripts/lint.py rules/
 
@@ -103,7 +103,7 @@ jobs:
     - name: Install capa
       run: |
         pip install -r requirements.txt
-        pip install -e .[dev]
+        pip install -e .[dev,scripts]
     - name: Run tests (fast)
       # this set of tests runs about 80% of the cases in 20% of the time,
       # and should catch most errors quickly.
@@ -140,7 +140,7 @@ jobs:
       if: ${{ env.BN_SERIAL != 0 }}
       run: |
         pip install -r requirements.txt
-        pip install -e .[dev]
+        pip install -e .[dev,scripts]
     - name: install Binary Ninja
       if: ${{ env.BN_SERIAL != 0 }}
       run: |
@@ -199,7 +199,7 @@ jobs:
     - name: Install capa
       run: |
         pip install -r requirements.txt
-        pip install -e .[dev] 
+        pip install -e .[dev,scripts]
     - name: Run tests
       run: | 
         mkdir ./.github/ghidra/project
