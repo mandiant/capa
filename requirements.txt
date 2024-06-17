@@ -8,7 +8,7 @@
 # Kept up to date by dependabot.
 annotated-types==0.7.0
 colorama==0.4.6
-cxxfilt==0.2.2
+cxxfilt==0.3.0
 dncil==1.0.2
 dnfile==0.15.0
 funcy==2.0
