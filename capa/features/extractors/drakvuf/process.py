@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def get_threads(calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]], ph: ProcessHandle) -> Iterator[ThreadHandle]:
     """
-    get the threads associated with a given process
+    Get the threads associated with a given process.
     """
     for thread_addr in calls[ph.address]:
         yield ThreadHandle(address=thread_addr, inner={})

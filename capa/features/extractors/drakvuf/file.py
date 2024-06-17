@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]]) -> Iterator[ProcessHandle]:
     """
-    get all the created processes for a sample
+    Get all the created processes for a sample.
     """
     for proc_addr, calls_per_thread in calls.items():
         sample_call: Call = next(iter(calls_per_thread.values()))[0]  # get process name
@@ -30,7 +30,7 @@ def get_processes(calls: Dict[ProcessAddress, Dict[ThreadAddress, Call]]) -> Ite
 
 def extract_import_names(report: DrakvufReport) -> Iterator[Tuple[Feature, Address]]:
     """
-    extract imported function names
+    Extract imported function names.
     """
     if report.loaded_dlls is None:
         return
