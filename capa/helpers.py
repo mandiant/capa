@@ -108,8 +108,7 @@ def get_format_from_report(sample: Path) -> str:
         line = load_one_jsonl_from_path(sample)
         if "Plugin" in line:
             return FORMAT_DRAKVUF
-        else:
-            return FORMAT_UNKNOWN
+        return FORMAT_UNKNOWN
 
     report = load_json_from_path(sample)
     if "CAPE" in report:
