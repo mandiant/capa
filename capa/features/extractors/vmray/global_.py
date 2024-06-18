@@ -33,7 +33,9 @@ def extract_format(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]
         yield Format(FORMAT_PE), NO_ADDRESS
     else:
         logger.warning("unrecognized file format: %s", analysis.sv2.analysis_metadata.sample_type)
-        raise ValueError(f"unrecognized file format from the VMRay report: {analysis.sv2.analysis_metadata.sample_type}")
+        raise ValueError(
+            f"unrecognized file format from the VMRay report: {analysis.sv2.analysis_metadata.sample_type}"
+        )
 
 
 def extract_os(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
