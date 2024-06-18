@@ -42,7 +42,15 @@ import capa.render.result_document as rdoc
 import capa.features.extractors.common
 from capa.rules import RuleSet
 from capa.engine import MatchResults
-from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
+from capa.loader import (
+    BACKEND_VIV,
+    BACKEND_CAPE,
+    BACKEND_BINJA,
+    BACKEND_VMRAY,
+    BACKEND_DOTNET,
+    BACKEND_FREEZE,
+    BACKEND_PEFILE,
+)
 from capa.helpers import (
     get_file_taste,
     get_auto_format,
@@ -70,6 +78,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
@@ -232,6 +241,7 @@ def install_common_args(parser, wanted=None):
             (FORMAT_SC32, "32-bit shellcode"),
             (FORMAT_SC64, "64-bit shellcode"),
             (FORMAT_CAPE, "CAPE sandbox report"),
+            (FORMAT_VMRAY, "VMRay sandbox report"),
             (FORMAT_FREEZE, "features previously frozen by capa"),
         ]
         format_help = ", ".join([f"{f[0]}: {f[1]}" for f in formats])
@@ -253,6 +263,7 @@ def install_common_args(parser, wanted=None):
             (BACKEND_DOTNET, ".NET"),
             (BACKEND_FREEZE, "capa freeze"),
             (BACKEND_CAPE, "CAPE"),
+            (BACKEND_VMRAY, "VMRay"),
         ]
         backend_help = ", ".join([f"{f[0]}: {f[1]}" for f in backends])
         parser.add_argument(
@@ -505,6 +516,9 @@ def get_backend_from_cli(args, input_format: str) -> str:
     if input_format == FORMAT_CAPE:
         return BACKEND_CAPE
 
+    elif input_format == FORMAT_VMRAY:
+        return BACKEND_VMRAY
+
     elif input_format == FORMAT_DOTNET:
         return BACKEND_DOTNET
 
@@ -529,7 +543,7 @@ def get_sample_path_from_cli(args, backend: str) -> Optional[Path]:
     raises:
       ShouldExitError: if the program is invoked incorrectly and should exit.
     """
-    if backend == BACKEND_CAPE:
+    if backend in (BACKEND_CAPE, BACKEND_VMRAY):
         return None
     else:
         return args.input_file

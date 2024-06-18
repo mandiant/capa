@@ -18,7 +18,13 @@ from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Analysis, SummaryV2
-from capa.features.extractors.base_extractor import SampleHashes, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    CallHandle,
+    SampleHashes,
+    ThreadHandle,
+    ProcessHandle,
+    DynamicFeatureExtractor,
+)
 
 # TODO also/or look into xmltodict?
 
@@ -48,29 +54,47 @@ class VMRayExtractor(DynamicFeatureExtractor):
     def extract_global_features(self) -> Iterator[Tuple[Feature, Address]]:
         yield from self.global_features
 
+    def get_processes(self) -> Iterator[ProcessHandle]:
+        # TODO (meh)
+        yield from []
+
+    def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
+        # TODO (meh)
+        yield from []
+
+    def get_process_name(self, ph) -> str:
+        # TODO (meh)
+        raise NotImplementedError()
+
+    def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
+        # TODO (meh)
+        yield from []
+
+    def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
+        # TODO (meh)
+        yield from []
+
+    def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
+        # TODO (meh)
+        yield from []
+
+    def extract_call_features(
+        self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
+    ) -> Iterator[Tuple[Feature, Address]]:
+        # TODO (meh)
+        yield from []
+
+    def get_call_name(self, ph, th, ch) -> str:
+        # TODO (meh)
+        raise NotImplementedError()
+
     @classmethod
-    def from_archive(cls, archive_path: Path):
-        archive = ZipFile(archive_path, "r")
+    def from_zipfile(cls, zipfile_path: Path):
+        with ZipFile(zipfile_path, "r") as zipfile:
+            sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
+            sv2 = SummaryV2.model_validate(sv2_json)
 
-        sv2_json = json.loads(archive.read("logs/summary_v2.json", pwd=b"infected"))
-        sv2 = SummaryV2.model_validate(sv2_json)
-
-        flog_xml = archive.read("logs/flog.xml", pwd=b"infected")
-        flog = Analysis.from_xml(flog_xml)
+            flog_xml = zipfile.read("logs/flog.xml", pwd=b"infected")
+            flog = Analysis.from_xml(flog_xml)
 
         return cls(VMRayAnalysis(sv2, flog))
-
-
-if __name__ == "__main__":
-    import sys
-
-    input_path = Path(sys.argv[1])
-
-    extractor = VMRayExtractor.from_archive(input_path)
-
-    for feat, addr in extractor.extract_file_features():
-        print(f"{feat} -> {addr}")
-    for feat, addr in extractor.extract_global_features():
-        print(f"{feat} -> {addr}")
-
-    print(f"base address: {hex(extractor.get_base_address())}")
