@@ -55,8 +55,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from self.global_features
 
     def get_processes(self) -> Iterator[ProcessHandle]:
-        # TODO (meh)
-        yield from []
+        yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
         # TODO (meh)

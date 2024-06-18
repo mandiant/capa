@@ -139,12 +139,36 @@ class File(BaseModel):
     verdict: str
 
 
+class Process(BaseModel):
+    bitness: int
+    is_artifact: bool
+    is_ioc: bool
+    monitor_id: int
+    monitor_reason: str
+    os_pid: int
+    filename: str
+    ref_parent_process: Optional[GenericReference] = None
+
+
+class Artifacts(BaseModel):
+    ref_processes: List[GenericReference] = []
+    ref_domains: List[GenericReference] = []
+    ref_filenames: List[GenericReference] = []
+    ref_files: List[GenericReference] = []
+    ref_ip_addresses: List[GenericReference] = []
+    ref_mutexes: List[GenericReference] = []
+    ref_registry_records: List[GenericReference] = []
+
+
 class AnalysisMetadata(BaseModel):
     sample_type: str
     submission_filename: str
 
 
 class SummaryV2(BaseModel):
+    analysis_metadata: AnalysisMetadata
+    artifacts: Artifacts
+
     files: Dict[str, File]
     static_data: Dict[str, StaticData]
-    analysis_metadata: AnalysisMetadata
+    processes: Dict[str, Process]
