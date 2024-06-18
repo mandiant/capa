@@ -1,20 +1,55 @@
 # Change Log
 
 ## master (unreleased)
-- Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
 
 ### New Features
 
+### Breaking Changes
+
+### New Rules (0)
+
+-
+
+### Bug Fixes
+
+### capa explorer IDA Pro plugin
+
+### Development
+
+### Raw diffs
+- [capa v7.1.0...master](https://github.com/mandiant/capa/compare/v7.1.0...master)
+- [capa-rules v7.1.0...master](https://github.com/mandiant/capa-rules/compare/v7.1.0...master)
+
+## v7.1.0
+The v7.1.0 release brings large performance improvements to capa's rule matching engine.
+Additionally, we've fixed various bugs and added new features for people using and developing capa.
+
+Special thanks to our repeat and new contributors:
+* @sjha2048 made their first contribution in https://github.com/mandiant/capa/pull/2000
+* @Rohit1123 made their first contribution in https://github.com/mandiant/capa/pull/1990
+* @psahithireddy made their first contribution in https://github.com/mandiant/capa/pull/2020
+* @Atlas-64 made their first contribution in https://github.com/mandiant/capa/pull/2018
+* @s-ff made their first contribution in https://github.com/mandiant/capa/pull/2011
+* @samadpls made their first contribution in https://github.com/mandiant/capa/pull/2024
+* @acelynnzhang made their first contribution in https://github.com/mandiant/capa/pull/2044
+* @RainRat made their first contribution in https://github.com/mandiant/capa/pull/2058
+* @ReversingWithMe made their first contribution in https://github.com/mandiant/capa/pull/2093
+* @malwarefrank made their first contribution in https://github.com/mandiant/capa/pull/2037
+
+### New Features
+- Emit "dotnet" as format to ResultDocument when processing .NET files #2024 @samadpls
+- ELF: detect OS from statically-linked Go binaries #1978 @williballenthin
 - add function in capa/helpers to load plain and compressed JSON reports #1883 @Rohit1123
 - document Antivirus warnings and VirusTotal false positive detections #2028 @RionEV @mr-tz
+- Add json to sarif conversion script @reversingwithme
 - render maec/* fields #843 @s-ff
 - replace Halo spinner with Rich #2086 @s-ff
 - optimize rule matching #2080 @williballenthin
+- add aarch64 as a valid architecture #2144 mehunhoff@google.com @williballenthin
+- relax dependency version requirements for the capa library #2053 @williballenthin
+- add scripts dependency group and update documentation #2145 @mr-tz
 
-### Breaking Changes
-
-
-### New Rules (17)
+### New Rules (25)
 
 - impact/wipe-disk/delete-drive-layout-via-ioctl william.ballenthin@mandiant.com
 - host-interaction/driver/interact-with-driver-via-ioctl moritz.raabe@mandiant.com
@@ -33,7 +68,14 @@
 - persistence/act-as-time-provider-dll jakub.jozwiak@mandiant.com
 - host-interaction/gui/window/hide/hide-graphical-window-from-taskbar jakub.jozwiak@mandiant.com
 - compiler/dart/compiled-with-dart jakub.jozwiak@mandiant.com
--
+- nursery/bypass-hidden-api-restrictions-via-jni-on-android mehunhoff@google.com
+- nursery/get-current-process-filesystem-mounts-on-linux mehunhoff@google.com
+- nursery/get-current-process-memory-mapping-on-linux mehunhoff@google.com
+- nursery/get-system-property-on-android mehunhoff@google.com
+- nursery/hook-routines-via-lsplant mehunhoff@google.com
+- nursery/load-packed-dex-via-jiagu-on-android mehunhoff@google.com
+- nursery/modify-api-blacklist-or-denylist-via-jni-on-android mehunhoff@google.com
+- nursery/truncate-file-on-linux mehunhoff@google.com
 
 ### Bug Fixes
 
@@ -42,7 +84,6 @@
 - binja: add support for forwarded export #1646 @xusheng6
 - cape: support more report formats #2035 @mr-tz
 - elf: extract import / export symbols from stripped binaries #2096 @ygasparis
-
 
 ### capa explorer IDA Pro plugin
 - replace deprecated IDA API find_binary with bin_search #1606 @s-ff
@@ -58,8 +99,8 @@
 - add deptry support #1497 @s-ff
 
 ### Raw diffs
-- [capa v7.0.1...master](https://github.com/mandiant/capa/compare/v7.0.1...master)
-- [capa-rules v7.0.1...master](https://github.com/mandiant/capa-rules/compare/v7.0.1...master)
+- [capa v7.0.1...v7.1.0](https://github.com/mandiant/capa/compare/v7.0.1...v7.1.0)
+- [capa-rules v7.0.1...v7.1.0](https://github.com/mandiant/capa-rules/compare/v7.0.1...v7.1.0)
 
 ## v7.0.1
 

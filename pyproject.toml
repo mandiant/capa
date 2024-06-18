@@ -32,25 +32,76 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "tqdm==4.66.4",
-    "pyyaml==6.0.1",
-    "tabulate==0.9.0",
-    "colorama==0.4.6",
-    "termcolor==2.4.0",
-    "wcwidth==0.2.13",
-    "ida-settings==2.1.0",
-    "viv-utils[flirt]==0.7.9",
-    "networkx==3.1",
-    "ruamel.yaml==0.18.6",
-    "vivisect==1.1.1",
-    "pefile==2023.2.7",
-    "pyelftools==0.31",
-    "dnfile==0.14.1",
-    "dncil==1.0.2",
-    "pydantic==2.7.1",
-    "rich==13.7.1",
-    "humanize==4.9.0",
-    "protobuf==5.27.0",
+    # ---------------------------------------
+    # As a library, capa uses lower version bounds
+    # when specifying its dependencies. This lets
+    # other programs that use capa (and other libraries)
+    # to find a compatible set of dependency versions.
+    #
+    # We can optionally pin to specific versions or
+    # limit the upper bound when there's a good reason;
+    # but the default is to assume all greater versions
+    # probably work with capa until proven otherwise.
+    #
+    # The following link provides good background:
+    # https://iscinumpy.dev/post/bound-version-constraints/
+    #
+    # When we develop capa, and when we distribute it as
+    # a standalone binary, we'll use specific versions
+    # that are pinned in requirements.txt.
+    # But the requirements for a library are specified here
+    # and are looser.
+    #
+    # Related discussions:
+    # 
+    #   - https://github.com/mandiant/capa/issues/2053
+    #   - https://github.com/mandiant/capa/pull/2059
+    #   - https://github.com/mandiant/capa/pull/2079
+    #
+    # ---------------------------------------
+    # The following dependency versions were imported
+    # during June 2024 by truncating specific versions to
+    # their major-most version (major version when possible, 
+    # or minor otherwise).
+    # As specific constraints are identified, please provide
+    # comments and context.
+    "tqdm>=4",
+    "pyyaml>=6",
+    "tabulate>=0.9",
+    "colorama>=0.4",
+    "termcolor>=2",
+    "wcwidth>=0.2",
+    "ida-settings>=2",
+    "ruamel.yaml>=0.18",
+    "pefile>=2023.2.7",
+    "pyelftools>=0.31",
+    "pydantic>=2",
+    "rich>=13",
+    "humanize>=4",
+    "protobuf>=5",
+
+    # ---------------------------------------
+    # Dependencies that we develop
+    #
+    # These dependencies are often actively influenced by capa,
+    # so we provide a minimum patch version that includes the
+    # latest bug fixes we need here.
+    "viv-utils[flirt]>=0.7.9",
+    "vivisect>=1.1.1",
+    "dncil>=1.0.2",
+
+    # ---------------------------------------
+    # Dependencies with version caps
+    #
+    # These dependencies must not exceed the version cap,
+    # typically due to dropping support for python releases
+    # we still support.
+
+    # TODO(williballenthin): networkx 3.2 doesn't support python 3.8 while capa does.
+    # https://github.com/mandiant/capa/issues/1966
+    "networkx>=3,<3.2",
+
+    "dnfile>=0.15.0",
 ]
 dynamic = ["version"]
 
@@ -63,6 +114,10 @@ namespaces = false
 
 [project.optional-dependencies]
 dev = [
+    # Dev and build dependencies are not relaxed because
+    # we want all developer environments to be consistent.
+    # These dependencies are not used in production environments
+    # and should not conflict with other libraries/tooling.
     "pre-commit==3.5.0",
     "pytest==8.0.0",
     "pytest-sugar==1.0.0",
@@ -79,14 +134,12 @@ dev = [
     "flake8-simplify==0.21.0",
     "flake8-use-pathlib==0.3.0",
     "flake8-copyright==0.2.4",
-    "ruff==0.4.7",
+    "ruff==0.4.8",
     "black==24.4.2",
     "isort==5.13.2",
     "mypy==1.10.0",
-    "psutil==5.9.2",
-    "stix2==3.0.1",
-    "requests==2.31.0",
     "mypy-protobuf==3.6.0",
+    "PyGithub==2.3.0",
     # type stubs for mypy
     "types-backports==0.1.3",
     "types-colorama==0.4.15.11",
@@ -99,9 +152,20 @@ dev = [
     "deptry==0.16.1"
 ]
 build = [
-    "pyinstaller==6.7.0",
-    "setuptools==69.5.1",
+    # Dev and build dependencies are not relaxed because
+    # we want all developer environments to be consistent.
+    # These dependencies are not used in production environments
+    # and should not conflict with other libraries/tooling.
+    "pyinstaller==6.8.0",
+    "setuptools==70.0.0",
     "build==1.2.1"
+]
+scripts = [
+    "jschema_to_python==1.2.3",
+    "psutil==5.9.2",
+    "stix2==3.0.1",
+    "sarif_om==1.0.4",
+    "requests==2.31.0",
 ]
 
 [tool.deptry]
@@ -152,6 +216,7 @@ DEP002 = [
     "mypy",
     "mypy-protobuf",
     "pre-commit",
+    "PyGithub",
     "pyinstaller",
     "pytest",
     "pytest-cov",
@@ -174,6 +239,9 @@ DEP002 = [
 DEP003 = [
     "typing_extensions" # TODO(s-ff): remove when Python 3.9 is deprecated, see #1699
 ]
+
+[tool.deptry.package_module_name_map]
+PyGithub = "github"
 
 [project.urls]
 Homepage = "https://github.com/mandiant/capa"
