@@ -70,7 +70,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from []
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh)
+        # force this routine to be a generator,
+        # but we don't actually have any elements to generate.
         yield from []
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
