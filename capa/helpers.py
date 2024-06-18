@@ -12,8 +12,9 @@ import inspect
 import logging
 import contextlib
 import importlib.util
-from typing import NoReturn
+from typing import List, NoReturn
 from pathlib import Path
+from zipfile import ZipFile
 
 import tqdm
 
@@ -23,6 +24,7 @@ from capa.features.common import (
     FORMAT_CAPE,
     FORMAT_SC32,
     FORMAT_SC64,
+    FORMAT_VMRAY,
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_UNKNOWN,
@@ -31,7 +33,7 @@ from capa.features.common import (
 
 EXTENSIONS_SHELLCODE_32 = ("sc32", "raw32")
 EXTENSIONS_SHELLCODE_64 = ("sc64", "raw64")
-EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz")
+EXTENSIONS_DYNAMIC = ("json", "json_", "json.gz", ".zip")
 EXTENSIONS_ELF = "elf_"
 EXTENSIONS_FREEZE = "frz"
 
@@ -83,14 +85,21 @@ def load_json_from_path(json_path: Path):
 
 
 def get_format_from_report(sample: Path) -> str:
-    report = load_json_from_path(sample)
-    if "CAPE" in report:
-        return FORMAT_CAPE
+    if not sample.name.endswith(".zip"):
+        report = load_json_from_path(sample)
+        if "CAPE" in report:
+            return FORMAT_CAPE
 
-    if "target" in report and "info" in report and "behavior" in report:
-        # CAPE report that's missing the "CAPE" key,
-        # which is not going to be much use, but its correct.
-        return FORMAT_CAPE
+        if "target" in report and "info" in report and "behavior" in report:
+            # CAPE report that's missing the "CAPE" key,
+            # which is not going to be much use, but its correct.
+            return FORMAT_CAPE
+    else:
+        with ZipFile(sample, "r") as zipfile:
+            namelist: List[str] = zipfile.namelist()
+            if "logs/summary_v2.json" in namelist and "logs/flog.xml" in namelist:
+                # assume VMRay zipfile at a minimum has these files
+                return FORMAT_VMRAY
 
     return FORMAT_UNKNOWN
 

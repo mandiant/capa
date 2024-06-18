@@ -227,13 +227,13 @@ def print_static_features(functions, extractor: StaticFeatureExtractor):
 
 def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
-        print(f"proc: {p.inner.process_name} (ppid={p.address.ppid}, pid={p.address.pid})")
+        print(f"proc: {extractor.get_process_name(p)} (ppid={p.address.ppid}, pid={p.address.pid})")
 
         for feature, addr in extractor.extract_process_features(p):
             if is_global_feature(feature):
                 continue
 
-            print(f" proc: {p.inner.process_name}: {feature}")
+            print(f" proc: {extractor.get_process_name(p)}: {feature}")
 
             for t in extractor.get_threads(p):
                 print(f"  thread: {t.address.tid}")

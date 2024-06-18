@@ -64,4 +64,3 @@ class Analysis(BaseXmlModel, tag="analysis"):
     remove_regions: List[RemoveRegion] = element(tag="remove_region")
     fncalls: List[FunctionCall] = element(tag="fncall")
     fnrets: List[FunctionReturn] = element(tag="fnret")
-   
