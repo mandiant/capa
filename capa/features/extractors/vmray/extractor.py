@@ -17,7 +17,7 @@ import capa.features.extractors.vmray.global_
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Analysis, SummaryV2
+from capa.features.extractors.vmray.models import Process, Analysis, SummaryV2
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -62,8 +62,8 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from []
 
     def get_process_name(self, ph) -> str:
-        # TODO (meh)
-        raise NotImplementedError()
+        process: Process = ph.inner
+        return process.image_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
         # TODO (meh)
