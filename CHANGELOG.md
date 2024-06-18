@@ -85,7 +85,6 @@ Special thanks to our repeat and new contributors:
 - binja: fix and simplify stack string detection code after binja 4.0 @xusheng6
 - binja: add support for forwarded export #1646 @xusheng6
 - cape: support more report formats #2035 @mr-tz
-- elf: extract import / export symbols from stripped binaries #2096 @ygasparis
 
 ### capa explorer IDA Pro plugin
 - replace deprecated IDA API find_binary with bin_search #1606 @s-ff
