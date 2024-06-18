@@ -12,6 +12,8 @@
 
 ### Bug Fixes
 
+- elf: extract import / export symbols from stripped binaries #2096 @ygasparis
+
 ### capa explorer IDA Pro plugin
 
 ### Development
