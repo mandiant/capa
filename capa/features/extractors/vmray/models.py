@@ -151,14 +151,40 @@ class Process(BaseModel):
     ref_parent_process: Optional[GenericReference] = None
 
 
-class Artifacts(BaseModel):
-    ref_processes: List[GenericReference] = []
-    ref_domains: List[GenericReference] = []
-    ref_filenames: List[GenericReference] = []
-    ref_files: List[GenericReference] = []
-    ref_ip_addresses: List[GenericReference] = []
-    ref_mutexes: List[GenericReference] = []
-    ref_registry_records: List[GenericReference] = []
+class Filename(BaseModel):
+    filename: str
+    is_artifact: bool
+    is_ioc: bool
+    verdict: str
+
+
+class Mutex(BaseModel):
+    name: str
+    is_artifact: bool
+    is_ioc: bool
+    verdict: str
+
+
+class Registry(BaseModel):
+    reg_key_name: str
+    reg_key_value_type: Optional[str] = None
+    is_artifact: bool
+    is_ioc: bool
+    verdict: str
+
+
+class Domain(BaseModel):
+    domain: str
+    is_artifact: bool
+    is_ioc: bool
+    verdict: str
+
+
+class IPAddress(BaseModel):
+    ip_address: str
+    is_artifact: bool
+    is_ioc: bool
+    verdict: str
 
 
 class AnalysisMetadata(BaseModel):
@@ -168,8 +194,14 @@ class AnalysisMetadata(BaseModel):
 
 class SummaryV2(BaseModel):
     analysis_metadata: AnalysisMetadata
-    artifacts: Artifacts
 
-    files: Dict[str, File]
-    static_data: Dict[str, StaticData]
-    processes: Dict[str, Process]
+    static_data: Dict[str, StaticData] = {}
+
+    # recorded artifacts
+    files: Dict[str, File] = {}
+    processes: Dict[str, Process] = {}
+    filenames: Dict[str, Filename] = {}
+    mutexes: Dict[str, Mutex] = {}
+    domains: Dict[str, Domain] = {}
+    ip_addresses: Dict[str, IPAddress] = {}
+    registry_records: Dict[str, Registry] = {}
