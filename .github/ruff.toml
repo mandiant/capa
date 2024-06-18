@@ -1,17 +1,3 @@
-# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
-select = ["E", "F"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# E402 module level import not at top of file
-# E722 do not use bare 'except'
-# E501 line too long
-ignore = ["E402", "E722", "E501"]
-
 line-length = 120
 
 exclude = [
@@ -41,3 +27,18 @@ exclude = [
     "*_pb2.py", 
     "*_pb2.pyi"
 ]
+
+[lint]
+# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E", "F"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# E402 module level import not at top of file
+# E722 do not use bare 'except'
+# E501 line too long
+ignore = ["E402", "E722", "E501"]
