@@ -147,6 +147,7 @@ class Process(BaseModel):
     monitor_reason: str
     os_pid: int
     filename: str
+    image_name: str
     ref_parent_process: Optional[GenericReference] = None
 
 
