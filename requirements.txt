@@ -30,7 +30,7 @@ pydantic==2.7.3
 pydantic-core==2.18.4
 pyelftools==0.31
 pygments==2.18.0
-python-flirt==0.8.6
+python-flirt==0.8.10
 pyyaml==6.0.1
 rich==13.7.1
 ruamel-yaml==0.18.6
