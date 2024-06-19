@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Set, Dict, List, Union, Optional
+from typing import Any, Set, Dict, List, Optional
 from pathlib import Path
 
 import colorama
@@ -775,7 +775,7 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
-def get_target_elements_from_cli(args, input_format) -> Union[None, Set]:
+def get_target_elements_from_cli(args, input_format) -> Optional[Set]:
     if input_format in STATIC_FORMATS:
         if args.processes:
             raise InvalidArgument("Cannot provide process ids with static analysis.")
