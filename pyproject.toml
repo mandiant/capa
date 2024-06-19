@@ -79,6 +79,7 @@ dependencies = [
     "rich>=13",
     "humanize>=4",
     "protobuf>=5",
+    "pydantic_xml[lxml]>=2.11",  # TODO benchmark lxml vs. elementtree - first impression eltree faster
 
     # ---------------------------------------
     # Dependencies that we develop
