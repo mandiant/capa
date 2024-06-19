@@ -168,7 +168,7 @@ def find_static_capabilities(
             if target_functions:
                 # analyze only the functions that the user required.
                 # if none were provided, analyze all functions.
-                functions_set = set(map(lambda h: h.address, functions))
+                functions_set = {fh.address for fh in functions}
                 if not target_functions <= functions_set:
                     raise NonExistantFunctionError(
                         f"The following function addresses were not found in the sample: {target_functions - functions_set}"

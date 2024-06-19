@@ -162,7 +162,7 @@ def find_dynamic_capabilities(
             if target_processes:
                 # analyze only the processes that the user required.
                 # if none were provided, analyze all processes.
-                processes_set = set(map(lambda h: h.address.pid, processes))
+                processes_set = {ph.address.pid for ph in processes}
                 if not (target_processes <= processes_set):
                     raise NonExistantProcessError(
                         f"The following process ids were not found in the report: {target_processes - processes_set}"
