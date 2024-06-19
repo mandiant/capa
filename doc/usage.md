@@ -9,6 +9,15 @@ Use the `-t` option to run rules with the given metadata value (see the rule fie
 For example, `capa -t william.ballenthin@mandiant.com` runs rules that reference Willi's email address (probably as the author), or
 `capa -t communication` runs rules with the namespace `communication`.
 
+### only analyze selected functions
+Use the `--functions` option to extract capabilities from only a selected set of functions.
+For example, `capa sample.exe --functions 0x4019C0,0x401CD0` will only extract the capabilities in the functions found at
+addresses 0x401CD0 and 0x4019C0.
+
+### only analyze selected processes
+Use the `--processes` option to extract capabilities from only a selected set of processes.
+For example, `capa report.log --processes 3888,3214,4299` will extract capabilities only from the processes 3888, 3214, and 4299.
+
 ### IDA Pro plugin: capa explorer
 Please check out the [capa explorer documentation](/capa/ida/plugin/README.md).
 
