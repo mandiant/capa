@@ -75,6 +75,8 @@ from capa.features.common import (
     FORMAT_DOTNET,
     FORMAT_FREEZE,
     FORMAT_RESULT,
+    STATIC_FORMATS,
+    DYNAMIC_FORMATS,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
 from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
@@ -773,17 +775,17 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
-def get_target_elements_from_cli(args, file_extractor) -> Union[None, Set]:
-    if isinstance(file_extractor, StaticFeatureExtractor):
+def get_target_elements_from_cli(args, input_format) -> Union[None, Set]:
+    if input_format in STATIC_FORMATS:
         if args.processes:
             raise InvalidArgument("Cannot provide process ids with static analysis.")
         return set(map(str_to_number, args.functions))
-    elif isinstance(file_extractor, DynamicFeatureExtractor):
+    elif input_format in DYNAMIC_FORMATS:
         if args.functions:
             raise InvalidArgument("Cannot provide function addresses with dynamic analysis.")
         return set(map(str_to_number, args.processes))
     else:
-        return ShouldExitError("Invalid file extractor is neither static nor dynamic.")
+        return ShouldExitError(f"format {input_format} is neither static nor dynamic.")
 
 
 def main(argv: Optional[List[str]] = None):
@@ -838,7 +840,7 @@ def main(argv: Optional[List[str]] = None):
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
-        target_elements = get_target_elements_from_cli(args, file_extractors[0])
+        target_elements = get_target_elements_from_cli(args, input_format)
     except ShouldExitError as e:
         return e.status_code
 
