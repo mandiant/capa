@@ -5,7 +5,7 @@ from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.vmray.models import Analysis, FunctionCall
+from capa.features.extractors.vmray.models import Analysis
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
 
 logger = logging.getLogger(__name__)
