@@ -273,7 +273,7 @@ def install_common_args(parser, wanted=None):
             "--functions",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
-            help=f"provide a list of comma-separated functions to analyze (static analysis).",
+            help="provide a list of comma-separated functions to analyze (static analysis).",
         )
 
     if "processes" in wanted:
@@ -281,7 +281,7 @@ def install_common_args(parser, wanted=None):
             "--processes",
             type=lambda s: s.replace(" ", "").split(","),
             default=[],
-            help=f"provide a list of comma-separaed processes to analyze (dynamic analysis).",
+            help="provide a list of comma-separaed processes to analyze (dynamic analysis).",
         )
 
     if "os" in wanted:
