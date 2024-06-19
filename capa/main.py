@@ -100,6 +100,7 @@ E_MISSING_CAPE_STATIC_ANALYSIS = 21
 E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
+E_INVALID_INPUT_FORMAT = 25
 
 logger = logging.getLogger("capa")
 
@@ -785,7 +786,7 @@ def get_target_elements_from_cli(args, input_format) -> Optional[Set]:
             raise InvalidArgument("Cannot provide function addresses with dynamic analysis.")
         return set(map(str_to_number, args.processes))
     else:
-        raise ShouldExitError(f"format {input_format} is neither static nor dynamic.")
+        raise ShouldExitError(E_INVALID_INPUT_FORMAT)
 
 
 def main(argv: Optional[List[str]] = None):
