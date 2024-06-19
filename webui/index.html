@@ -1,0 +1,142 @@
+<!--
+  Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at: [package root]/LICENSE.txt
+  Unless required by applicable law or agreed to in writing, software distributed under the License
+  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and limitations under the License.
+-->
+<html>
+   <head>
+      <!-- TODO(s-ff): include a favicon -->
+      <title>CAPA WebUI</title>
+      <meta charset="utf-8" />
+      <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link rel="stylesheet" href="assets/css/style.css">
+      <script src="scripts/main.js"> </script> 
+      <script>
+         // TODO(s-ff): the search now only search for feature value, fix it to
+         // to also search for the rule titles.
+
+        // unstable
+         function searchTree(node, keyword) {
+           if (node.nodeType === Node.ELEMENT_NODE) {
+             if (node.classList.contains('rule-title') || node.classList.contains('feature-value')) {
+               const textContent = node.textContent.toLowerCase();
+               if (textContent.includes(keyword.toLowerCase())) {
+                 node.closest('.matched-rule').style.display = 'block';
+                 expandParentDetails(node);
+               } else {
+                 node.closest('.matched-rule').style.display = 'none';
+               }
+             }
+
+             for (const child of node.childNodes) {
+               searchTree(child, keyword);
+             }
+           }
+         }
+
+         function expandParentDetails(node) {
+           const parentDetails = node.closest('details');
+           if (parentDetails) {
+             parentDetails.open = true;
+             expandParentDetails(parentDetails.parentNode);
+           }
+         }
+
+         function collapseAllDetails() {
+           const detailsElements = document.querySelectorAll('details');
+           detailsElements.forEach(details => {
+             details.open = false;
+           });
+         }
+
+         function expandAllDetails() {
+           const detailsElements = document.querySelectorAll('details');
+           detailsElements.forEach(details => {
+             details.open = true;
+           });
+         }
+
+         function toggleExpandCollapse() {
+           const togglebutton = document.getElementById('toggleExpand');
+           const tree = document.getElementById('tree');
+
+           if (togglebutton.textContent === 'Expand All') {
+             expandAllDetails();
+             togglebutton.textContent = 'Collapse All';
+           } else {
+             collapseAllDetails();
+             togglebutton.textContent = 'Expand All';
+           }
+         }
+
+          // unstable
+         function search(value) {
+           const tree = document.getElementById('tree');
+
+           if (value.trim() === '') {
+             // If the search bar is cleared, reset the tree to its initial state
+             const matchedRules = document.querySelectorAll('.matched-rule');
+             matchedRules.forEach(rule => {
+               rule.style.display = 'block';
+             });
+             collapseAllDetails();
+           } else {
+             searchTree(tree, value);
+           }
+         }
+
+         document.addEventListener('DOMContentLoaded', function() {
+           document.getElementById('toggleExpand').addEventListener('click', toggleExpandCollapse);
+         });
+      </script>
+   </head>
+   <body>
+      <header class="header">
+         <div class="banner">
+            <span class="bannerContent" role="alert">This is a pre-alpha release of capa-webui. Please report any bugs, enhacements, or features in the Github issues</span>
+            <div class="bannerLinks">
+               <div>
+                  <a href="https://github.com/mandiant/capa">CAPA v7.0.1 on Github</a>
+               </div>
+            </div>
+         </div>
+      </header>
+      <h1></h1>
+
+
+
+     <!-- TODO(s-ff): these controls are not prefectly aligned -->
+      <div class="controls">
+         <button id="toggleExpand">Expand All</button>
+
+         <!-- TODO(s-ff): allow users to disable showing rule logic on hover -->
+         <label class="hover-toggle-label">
+         <input type="checkbox" id="enableHover" checked>
+         Show rule logic on hover
+         </label>
+         <div id="searchContainer">
+            <input onkeyup="search(this.value)" type="text" placeholder="Type to search... (unstable)" />
+         </div>
+      </div>
+
+
+      <table class="tree-table">
+         <thead>
+            <tr>
+               <th>Rule Title</th>
+               <th>Feature Address</th>
+               <th>Namespace</th>
+            </tr>
+         </thead>
+      </table>
+      <ul class="tree" id="tree">
+         <!-- This will contain the rendered JSON capa result document -->
+      </ul>
+   </body>
+</html>
+

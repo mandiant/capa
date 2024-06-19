@@ -1,0 +1,355 @@
+/*
+ * Copyright (C) 2023 Mandiant, Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at: [package root]/LICENSE.txt
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
+/* TODO(s-ff): simplfy and refactor the CSS styling */
+
+
+/* TODO(s-ff): change font, do not use Product Sans */
+@font-face {
+  font-family: 'Product Sans';
+  font-style: normal;
+  src: local('Open Sans'), local('OpenSans'), url(https://fonts.gstatic.com/s/productsans/v5/HYvgU2fE2nRJvZ5JFAumwegdm0LZdjqr5-oayXSOefg.woff2) format('woff2');
+}
+
+/* Reset and general styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+input {
+  font: inherit;
+}
+
+fieldset {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+legend {
+  font-weight: 700;
+}
+
+html {
+  font-family: 'Product Sans', sans-serif;
+}
+
+body {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 8px;
+}
+
+/* Tree styles */
+.tree {
+  --font-size: 1rem;
+  --line-height: 1.75;
+  --spacing: calc(var(--line-height) * 1em);
+  --thickness: 0.35px;
+  --radius: 8px;
+  line-height: var(--line-height);
+  font-size: var(--font-size);
+}
+
+.tree li {
+  display: block;
+  position: relative;
+  padding-left: calc(2 * var(--spacing) - var(--radius) - var(--thickness));
+}
+
+.tree ul {
+  margin-left: calc(var(--radius) - var(--spacing));
+  padding-left: 0;
+}
+
+.tree ul li {
+  border-left: var(--thickness) solid grey;
+}
+
+.tree ul li:last-child {
+  border-color: transparent;
+}
+
+.tree ul li::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: calc(var(--spacing) / -2);
+  left: calc(-1 * var(--thickness));
+  width: calc(var(--spacing) + var(--thickness));
+  height: calc(var(--spacing) + var(--thickness) / 2);
+  border: solid grey;
+  border-width: 0 0 var(--thickness) var(--thickness);
+}
+
+.tree summary {
+  display: block;
+  cursor: pointer;
+}
+
+.tree summary::marker,
+.tree summary::-webkit-details-marker {
+  display: none;
+}
+
+.tree summary:focus {
+  outline: none;
+}
+
+.tree summary:focus-visible {
+  outline: var(--thickness) dotted #000;
+}
+
+.tree li::after,
+.tree summary::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: calc(var(--spacing) / 2 - var(--radius));
+  left: calc(var(--spacing) - var(--radius) - var(--thickness) / 2);
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  border-radius: 50%;
+  background: #ddd;
+}
+
+.tree summary::before {
+  content: "+";
+  z-index: 1;
+  background: #7fa0bb;
+  color: white;
+  line-height: calc(2 * var(--radius));
+  text-align: center;
+}
+
+.tree summary .summary-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tree summary .summary-content .statement-type,
+.feature-type {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  color: #000;
+  display: inline-block;
+  font-size: 0.7em;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.tree summary .summary-content .rule-title,
+.feature-value {
+  margin-left: 1rem;
+  flex-grow: 1;
+}
+
+.feature-value {
+  color: green;
+}
+
+.feature-location {
+  margin-left: 5px;
+  font-size: 0.8em;
+  color: #000;
+}
+
+.tree summary .summary-content .namespace {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  color: #000;
+  display: inline-block;
+  font-size: 0.75em;
+  padding: 2px 6px;
+  cursor: pointer;
+  content: "";
+}
+
+.tree details[open] > summary::before {
+  content: "−";
+}
+
+/* Rule source tooltip styles */
+.tree .rule-title {
+  position: relative;
+}
+
+.tree .rule-title:hover::after {
+  content: attr(source);
+  font-family: 'Courier New', monospace;
+  font-size: 0.7em;
+  line-height: 1.2em;
+  color: black;
+  width: max-content;
+  padding: 8px;
+  border-radius: 6px;
+  background: #eee;
+  position: absolute;
+  left: 350px;
+  z-index: 1000;
+  white-space: pre-wrap;
+  opacity: 0;
+}
+
+.tree .rule-title:hover::after {
+  opacity: 1;
+}
+
+.tree .rule-title:hover::before {
+  display: none;
+}
+
+/* Controls styles */
+.controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.hover-toggle-label {
+  margin-right: 20px;
+}
+
+#searchContainer {
+  flex-grow: 1;
+}
+
+#searchContainer input {
+  width: 100%;
+  padding: 5px;
+}
+
+/* Metadata table styles */
+.metadata-container {
+  margin-bottom: 20px;
+}
+
+.metadata-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.metadata-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.metadata-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.metadata-table tr:hover {
+  background-color: #ddd;
+}
+
+.metadata-table td:first-child {
+  font-weight: bold;
+  width: 140px;
+}
+
+/* Banner styles */
+.banner {
+  background-color: #007bff;
+  margin: 7px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 15px;
+  border-radius: 5px;
+  text-align: left;
+  color: #fff;
+  font-size: 14px;
+  font-family: 'Product-Sans', sans-serif;
+  cursor: initial;
+}
+
+.bannerContent {
+  padding-right: 15px;
+}
+
+.bannerLinks {
+  display: flex;
+  align-items: center;
+  border-left: 2px solid #ffffffad;
+  padding-left: 15px;
+  cursor: initial;
+}
+
+.banner a {
+  display: inline;
+  color: #fff;
+  text-decoration-color: #fff;
+}
+
+.banner a:hover {
+  color: #343a40;
+  opacity: 0.8;
+}
+
+/* Matched rule styles */
+.matched-rule li {
+  position: relative;
+}
+
+.matched-rule .feature-location {
+  position: absolute;
+  right: 580px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+  color: #000;
+}
+
+/* Tree table styles */
+.tree-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tree-table th {
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.tree-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.tree-table th:nth-child(1) {
+  width: 60%;
+}
+
+.tree-table th:nth-child(2),
+.tree-table th:nth-child(3) {
+  width: 20%;
+  border-left: 1px solid #ddd;
+}
+
+.tree-table .tree {
+  margin-top: 0;
+}
+
+/* Button styles */
+button {
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-left: 10px;
+  padding: 5px 10px;
+}
