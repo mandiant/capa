@@ -7,9 +7,9 @@
 # See the License for the specific language governing permissions and limitations under the License.
 from typing import Dict, List, Optional
 
-from typing import Any, Dict, List, Union, Literal, Optional
+from typing import Dict, List, Optional
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
 from pydantic_xml import BaseXmlModel, attr, element
 
 
