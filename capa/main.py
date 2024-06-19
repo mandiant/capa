@@ -17,7 +17,7 @@ import argparse
 import textwrap
 import contextlib
 from types import TracebackType
-from typing import Any, Dict, List, Optional
+from typing import Any, Set, Dict, List, Union, Optional
 from pathlib import Path
 
 import colorama
@@ -44,6 +44,7 @@ from capa.rules import RuleSet
 from capa.engine import MatchResults
 from capa.loader import BACKEND_VIV, BACKEND_CAPE, BACKEND_BINJA, BACKEND_DOTNET, BACKEND_FREEZE, BACKEND_PEFILE
 from capa.helpers import (
+    str_to_number,
     get_file_taste,
     get_auto_format,
     log_unsupported_os_error,
@@ -53,6 +54,7 @@ from capa.helpers import (
     log_unsupported_cape_report_error,
 )
 from capa.exceptions import (
+    InvalidArgument,
     EmptyReportError,
     UnsupportedOSError,
     UnsupportedArchError,
@@ -262,6 +264,22 @@ def install_common_args(parser, wanted=None):
             choices=[f[0] for f in backends],
             default=BACKEND_AUTO,
             help=f"select backend, {backend_help}",
+        )
+
+    if "functions" in wanted:
+        parser.add_argument(
+            "--functions",
+            type=lambda s: s.replace(" ", "").split(","),
+            default=[],
+            help=f"provide a list of comma-separated functions to analyze (static analysis).",
+        )
+
+    if "processes" in wanted:
+        parser.add_argument(
+            "--processes",
+            type=lambda s: s.replace(" ", "").split(","),
+            default=[],
+            help=f"provide a list of comma-separaed processes to analyze (dynamic analysis).",
         )
 
     if "os" in wanted:
@@ -755,6 +773,19 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
         raise ShouldExitError(E_INVALID_FILE_OS) from e
 
 
+def get_target_elements_from_cli(args, file_extractor) -> Union[None, Set]:
+    if isinstance(file_extractor, StaticFeatureExtractor):
+        if args.processes:
+            raise InvalidArgument("Cannot provide process ids with static analysis.")
+        return set(map(str_to_number, args.functions))
+    elif isinstance(file_extractor, DynamicFeatureExtractor):
+        if args.functions:
+            raise InvalidArgument("Cannot provide function addresses with dynamic analysis.")
+        return set(map(str_to_number, args.processes))
+    else:
+        return ShouldExitError("Invalid file extractor is neither static nor dynamic.")
+
+
 def main(argv: Optional[List[str]] = None):
     if sys.version_info < (3, 8):
         raise UnsupportedRuntimeError("This version of capa can only be used with Python 3.8+")
@@ -794,7 +825,9 @@ def main(argv: Optional[List[str]] = None):
     parser = argparse.ArgumentParser(
         description=desc, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    install_common_args(parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag"})
+    install_common_args(
+        parser, {"input_file", "format", "backend", "os", "signatures", "rules", "tag", "functions", "processes"}
+    )
     parser.add_argument("-j", "--json", action="store_true", help="emit JSON instead of text")
     args = parser.parse_args(args=argv)
 
@@ -805,6 +838,7 @@ def main(argv: Optional[List[str]] = None):
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
+        target_elements = get_target_elements_from_cli(args, file_extractors[0])
     except ShouldExitError as e:
         return e.status_code
 
@@ -832,7 +866,9 @@ def main(argv: Optional[List[str]] = None):
         except ShouldExitError as e:
             return e.status_code
 
-        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
+        capabilities, counts = find_capabilities(
+            rules, extractor, target_elements=target_elements, disable_progress=args.quiet
+        )
 
         meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
         meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)
