@@ -174,6 +174,36 @@ def test_subscope_bb_rules(z9324d_extractor):
     assert "test rule" in capabilities
 
 
+def test_match_specific_functions(z9324d_extractor):
+    rules = capa.rules.RuleSet(
+        [
+            capa.rules.Rule.from_yaml(
+                textwrap.dedent(
+                    """
+                    rule:
+                        meta:
+                            name: receive data
+                            scopes:
+                                static: function
+                                dynamic: call
+                            examples:
+                            - 9324d1a8ae37a36ae560c37448c9705a:0x401CD0
+                        features:
+                            - or:
+                                - api: recv
+                    """
+                )
+            )
+        ]
+    )
+    capabilities, meta = capa.capabilities.common.find_capabilities(rules, z9324d_extractor, target_elements={0x4019C0})
+    matches = capabilities["receive data"]
+    # test that we received only one match
+    assert len(matches) == 1
+    # and that this match is from the specified function
+    assert matches[0][0] == 0x4019C0
+
+
 def test_byte_matching(z9324d_extractor):
     rules = capa.rules.RuleSet(
         [
