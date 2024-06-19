@@ -785,7 +785,7 @@ def get_target_elements_from_cli(args, input_format) -> Optional[Set]:
             raise InvalidArgument("Cannot provide function addresses with dynamic analysis.")
         return set(map(str_to_number, args.processes))
     else:
-        return ShouldExitError(f"format {input_format} is neither static nor dynamic.")
+        raise ShouldExitError(f"format {input_format} is neither static nor dynamic.")
 
 
 def main(argv: Optional[List[str]] = None):
