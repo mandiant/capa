@@ -11,6 +11,8 @@ from typing import Tuple, Iterator
 from pathlib import Path
 from zipfile import ZipFile
 
+from devtools import debug, pprint
+
 import capa.helpers
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
@@ -97,4 +99,14 @@ class VMRayExtractor(DynamicFeatureExtractor):
             flog_xml = zipfile.read("logs/flog.xml", pwd=b"infected")
             flog = Analysis.from_xml(flog_xml)
 
+            # debug(flog)
+            pprint(flog.processes[0])
+
         return cls(VMRayAnalysis(sv2, flog))
+
+
+if __name__ == "__main__":
+    # TODO(mr): for testing, removeme
+    import sys
+    input_path = Path(sys.argv[1])
+    VMRayExtractor.from_zipfile(input_path)
