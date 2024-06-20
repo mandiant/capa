@@ -11,7 +11,7 @@ from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, Pr
 logger = logging.getLogger(__name__)
 
 
-def extract_function_calls(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
     """
     this method extracts the given call's features (such as API name and arguments),
     and returns them as API, Number, and String features.
@@ -50,9 +50,10 @@ def extract_function_calls(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) 
             assert_never(value)
 
 
-def extract_features(analysis: Analysis) -> Iterator[Tuple[Feature, Address]]:
-    """
-    Extract features from the Analysis object in models.py
-    """
-    for fncall in analysis.fncalls:
-        yield from extract_function_calls(fncall)
+def extract_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+    for handler in CALL_HANDLERS:
+        for feature, addr in handler(ph, th, ch):
+            yield feature, addr
+
+
+CALL_HANDLERS = (extract_call_features,)
