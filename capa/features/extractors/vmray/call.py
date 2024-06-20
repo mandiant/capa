@@ -5,13 +5,12 @@ from capa.helpers import assert_never
 from capa.features.insn import API, Number
 from capa.features.common import String, Feature
 from capa.features.address import Address
-from capa.features.extractors.vmray.models import Analysis
-from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle
+from capa.features.extractors.vmray.models import Analysis, FunctionCall, Param, In, Out
 
 logger = logging.getLogger(__name__)
 
 
-def extract_function_calls(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -> Iterator[Tuple[Feature, Address]]:
+def extract_function_calls(fncall: FunctionCall) -> Iterator[Tuple[Feature, Address]]:
     """
     this method extracts the given call's features (such as API name and arguments),
     and returns them as API, Number, and String features.
@@ -23,31 +22,31 @@ def extract_function_calls(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) 
     """
 
     # Extract API name
-    yield API(ch.inner.name), ch.inner.address
+    yield API(fncall.name), Address(fncall.address)
 
     # Extract arguments from <in>
-    for param in ch.inner.in_:
-        value = param.value
-        if isinstance(value, str):
-            yield String(value), ch.inner.address
-
-        elif isinstance(value, int):
-            yield Number(value), ch.inner.address
-
-        else:
-            assert_never(value)
+    if fncall.in_ is not None:
+        for param in fncall.in_.params:
+            value = param.value
+            if value is not None:
+                if isinstance(value, str):
+                    yield String(value), Address(fncall.address)
+                elif isinstance(value, int):
+                    yield Number(value), Address(fncall.address)
+                else:
+                    assert_never(value)
 
     # Extract return value from <out>
-    if ch.inner.out is not None:
-        value = ch.inner.out.value
-        if isinstance(value, str):
-            yield String(value), ch.inner.address
-
-        elif isinstance(value, int):
-            yield Number(value), ch.inner.address
-
-        else:
-            assert_never(value)
+    if fncall.out_ is not None:
+        for param in fncall.out_.params:
+            value = param.value
+            if value is not None:
+                if isinstance(value, str):
+                    yield String(value), Address(fncall.address)
+                elif isinstance(value, int):
+                    yield Number(value), Address(fncall.address)
+                else:
+                    assert_never(value)
 
 
 def extract_features(analysis: Analysis) -> Iterator[Tuple[Feature, Address]]:

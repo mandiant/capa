@@ -44,8 +44,8 @@ class FunctionCall(BaseXmlModel, tag="fncall"):
 class FunctionReturn(BaseXmlModel, tag="fnret"):
     ts: int = attr()
     fncall_id: int = attr()
-    address: str = attr(name="addr")  # string that contains a hex value
-    from_: str = attr(name="from")  # string that contains a hex value
+    address: str = attr(name="addr")  
+    from_: str = attr(name="from")  
 
 
 # TODO check multiple are there
