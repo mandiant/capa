@@ -229,7 +229,7 @@ def print_dynamic_features(processes, extractor: DynamicFeatureExtractor):
     for p in processes:
         print(f"proc: {extractor.get_process_name(p)} (ppid={p.address.ppid}, pid={p.address.pid})")
 
-        for feature, addr in extractor.extract_process_features(p):
+        for feature, _ in extractor.extract_process_features(p):
             if is_global_feature(feature):
                 continue
 

@@ -22,7 +22,7 @@ def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
     processes: Dict[str, Process] = analysis.sv2.processes
 
     for _, process in processes.items():
-        # TODO (meh) should we use the OS process ID or vmray-assigned ID?
+        # TODO (meh): should we use the OS process ID or vmray-assigned ID? https://github.com/mandiant/capa/issues/2148
         pid = process.monitor_id
         ppid = processes[process.ref_parent_process.path[1]].monitor_id if process.ref_parent_process else 0
 
@@ -36,7 +36,7 @@ def extract_export_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Add
 
 
 def extract_import_names(analysis: VMRayAnalysis) -> Iterator[Tuple[Feature, Address]]:
-    # TODO (meh)
+    # TODO (meh): https://github.com/mandiant/capa/issues/2148
     yield from []
 
 
