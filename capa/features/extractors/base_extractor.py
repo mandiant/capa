@@ -303,7 +303,7 @@ def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticF
     def filtered_get_functions(self):
         yield from (f for f in get_functions() if f.address in functions)
 
-    extractor.get_functions = MethodType(filtered_get_functions, extractor)
+    extractor.get_functions = MethodType(filtered_get_functions, extractor)  # type: ignore
     return extractor
 
 
@@ -484,7 +484,7 @@ def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> Dynamic
     def filtered_get_processes(self):
         yield from (f for f in get_processes() if f.address.pid in processes)
 
-    extractor.get_processes = MethodType(filtered_get_processes, extractor)
+    extractor.get_processes = MethodType(filtered_get_processes, extractor)  # type: ignore
     return extractor
 
 
