@@ -22,10 +22,10 @@ def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
     processes: Dict[str, Process] = analysis.sv2.processes
 
     for _, process in processes.items():
-        pid = process.os_pid
-        ppid = processes[process.ref_parent_process.path[1]].os_pid if process.ref_parent_process else 0
+        pid = process.monitor_id
+        ppid = processes[process.ref_parent_process.path[1]].monitor_id if process.ref_parent_process else 0
 
-        addr = ProcessAddress(pid=pid, ppid=ppid)
+        addr = ProcessAddress(pid=int(pid), ppid=int(ppid))
         yield ProcessHandle(address=addr, inner=process)
 
 

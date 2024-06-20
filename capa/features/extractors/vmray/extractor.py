@@ -14,10 +14,11 @@ from zipfile import ZipFile
 import xmltodict
 
 import capa.helpers
+import capa.features.extractors.vmray.call
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
-from capa.features.common import Feature
-from capa.features.address import Address, AbsoluteVirtualAddress
+from capa.features.common import Feature, Characteristic
+from capa.features.address import NO_ADDRESS, Address, ThreadAddress, DynamicCallAddress, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
 from capa.features.extractors.vmray.models import Flog, Process, SummaryV2
 from capa.features.extractors.base_extractor import (
@@ -27,8 +28,6 @@ from capa.features.extractors.base_extractor import (
     ProcessHandle,
     DynamicFeatureExtractor,
 )
-
-# TODO also/or look into xmltodict?
 
 
 class VMRayExtractor(DynamicFeatureExtractor):
@@ -68,23 +67,27 @@ class VMRayExtractor(DynamicFeatureExtractor):
         return process.image_name
 
     def get_threads(self, ph: ProcessHandle) -> Iterator[ThreadHandle]:
-        # TODO (meh)
-        yield from []
+        for thread in self.analysis.process_threads[ph.address.pid]:
+            address: ThreadAddress = ThreadAddress(process=ph.address, tid=thread)
+            yield ThreadHandle(address=address, inner={})
 
     def extract_thread_features(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[Tuple[Feature, Address]]:
-        # force this routine to be a generator,
-        # but we don't actually have any elements to generate.
-        yield from []
+        if False:
+            # force this routine to be a generator,
+            # but we don't actually have any elements to generate.
+            yield Characteristic("never"), NO_ADDRESS
+        return
 
     def get_calls(self, ph: ProcessHandle, th: ThreadHandle) -> Iterator[CallHandle]:
-        # TODO (meh)
-        yield from []
+        for function_call in self.analysis.process_calls[ph.address.pid][th.address.tid]:
+            addr = DynamicCallAddress(thread=th.address, id=int(function_call.fncall_id))
+            yield CallHandle(address=addr, inner=function_call)
 
     def extract_call_features(
         self, ph: ProcessHandle, th: ThreadHandle, ch: CallHandle
     ) -> Iterator[Tuple[Feature, Address]]:
         # TODO (meh)
-        yield from []
+        yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
         # TODO (meh)
