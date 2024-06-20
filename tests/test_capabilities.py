@@ -7,6 +7,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 import textwrap
+from copy import copy
 
 import capa.capabilities.common
 from capa.features.extractors.base_extractor import FunctionFilter
@@ -197,7 +198,7 @@ def test_match_specific_functions(z9324d_extractor):
             )
         ]
     )
-    extractor = FunctionFilter(z9324d_extractor, {0x4019C0})
+    extractor = FunctionFilter(copy(z9324d_extractor), {0x4019C0})
     capabilities, meta = capa.capabilities.common.find_capabilities(rules, extractor)
     matches = capabilities["receive data"]
     # test that we received only one match
