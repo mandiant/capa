@@ -53,16 +53,16 @@ class StaticDataReference(GenericReference): ...
 
 
 class PEFileBasicInfo(BaseModel):
-    compile_time: str
+    # compile_time: str
     file_type: str
     image_base: int
     machine_type: str
-    size_of_code: int
-    size_of_initialized_data: int
-    size_of_uninitialized_data: int
-    subsystem: str
-    entry_point: int
-    imphash: Optional[str] = None
+    # size_of_code: int
+    # size_of_initialized_data: int
+    # size_of_uninitialized_data: int
+    # subsystem: str
+    # entry_point: int
+    # imphash: Optional[str] = None
 
 
 class API(BaseModel):
@@ -78,9 +78,9 @@ class PEFileExport(BaseModel):
 class PEFileImport(BaseModel):
     address: int
     api: API
-    thunk_offset: int
-    hint: Optional[int] = None
-    thunk_rva: int
+    # thunk_offset: int
+    # hint: Optional[int] = None
+    # thunk_rva: int
 
 
 class PEFileImportModule(BaseModel):
@@ -89,13 +89,13 @@ class PEFileImportModule(BaseModel):
 
 
 class PEFileSection(BaseModel):
-    entropy: float
-    flags: List[str] = []
+    # entropy: float
+    # flags: List[str] = []
     name: str
-    raw_data_offset: int
-    raw_data_size: int
+    # raw_data_offset: int
+    # raw_data_size: int
     virtual_address: int
-    virtual_size: int
+    # virtual_size: int
 
 
 class PEFile(BaseModel):
@@ -113,32 +113,32 @@ class FileHashes(BaseModel):
     md5: str
     sha1: str
     sha256: str
-    ssdeep: str
+    # ssdeep: str
 
 
 class File(BaseModel):
-    categories: List[str]
+    # categories: List[str]
     hash_values: FileHashes
-    is_artifact: bool
-    is_ioc: bool
+    # is_artifact: bool
+    # is_ioc: bool
     is_sample: bool
-    size: int
-    is_truncated: bool
-    mime_type: Optional[str] = None
-    operations: List[str] = []
-    ref_filenames: List[GenericReference] = []
-    ref_gfncalls: List[GenericReference] = []
+    # size: int
+    # is_truncated: bool
+    # mime_type: Optional[str] = None
+    # operations: List[str] = []
+    # ref_filenames: List[GenericReference] = []
+    # ref_gfncalls: List[GenericReference] = []
     ref_static_data: Optional[StaticDataReference] = None
-    ref_vti_matches: List[GenericReference] = []
-    verdict: str
+    # ref_vti_matches: List[GenericReference] = []
+    # verdict: str
 
 
 class Process(BaseModel):
-    bitness: int
-    is_artifact: bool
-    is_ioc: bool
+    # bitness: int
+    # is_artifact: bool
+    # is_ioc: bool
     monitor_id: int
-    monitor_reason: str
+    # monitor_reason: str
     os_pid: int
     filename: str
     image_name: str
@@ -147,38 +147,38 @@ class Process(BaseModel):
 
 class Filename(BaseModel):
     filename: str
-    is_artifact: bool
-    is_ioc: bool
-    verdict: str
+    # is_artifact: bool
+    # is_ioc: bool
+    # verdict: str
 
 
 class Mutex(BaseModel):
     name: str
-    is_artifact: bool
-    is_ioc: bool
-    verdict: str
+    # is_artifact: bool
+    # is_ioc: bool
+    # verdict: str
 
 
 class Registry(BaseModel):
     reg_key_name: str
-    reg_key_value_type: Optional[str] = None
-    is_artifact: bool
-    is_ioc: bool
-    verdict: str
+    # reg_key_value_type: Optional[str] = None
+    # is_artifact: bool
+    # is_ioc: bool
+    # verdict: str
 
 
 class Domain(BaseModel):
     domain: str
-    is_artifact: bool
-    is_ioc: bool
-    verdict: str
+    # is_artifact: bool
+    # is_ioc: bool
+    # verdict: str
 
 
 class IPAddress(BaseModel):
     ip_address: str
-    is_artifact: bool
-    is_ioc: bool
-    verdict: str
+    # is_artifact: bool
+    # is_ioc: bool
+    # verdict: str
 
 
 class AnalysisMetadata(BaseModel):
