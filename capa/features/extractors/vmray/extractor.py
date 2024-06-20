@@ -59,7 +59,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.vmray.file.get_processes(self.analysis)
 
     def extract_process_features(self, ph: ProcessHandle) -> Iterator[Tuple[Feature, Address]]:
-        # TODO (meh)
+        # TODO (meh): https://github.com/mandiant/capa/issues/2148
         yield from []
 
     def get_process_name(self, ph) -> str:
@@ -89,7 +89,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
         yield from capa.features.extractors.vmray.call.extract_features(ph, th, ch)
 
     def get_call_name(self, ph, th, ch) -> str:
-        # TODO (meh)
+        # TODO (meh): https://github.com/mandiant/capa/issues/2148
         raise NotImplementedError()
 
     @classmethod

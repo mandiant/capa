@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 from pydantic import Field, BaseModel
 
 
-### models flog.xml files
+# models flog.xml files
 class FunctionCall(BaseModel):
     ts: str
     fncall_id: str
@@ -43,7 +43,7 @@ class Flog(BaseModel):
     analysis: Analysis
 
 
-### models for summary_v2.json files
+# models for summary_v2.json files
 class GenericReference(BaseModel):
     path: List[str]
     source: str

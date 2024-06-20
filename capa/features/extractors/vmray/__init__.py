@@ -59,7 +59,7 @@ class VMRayAnalysis:
                 self.exports[export.address] = export.api.name
 
     def _compute_imports(self):
-        # TODO (meh)
+        # TODO (meh): https://github.com/mandiant/capa/issues/2148
         ...
 
     def _compute_sections(self):
