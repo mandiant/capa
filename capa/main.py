@@ -79,7 +79,13 @@ from capa.features.common import (
     DYNAMIC_FORMATS,
 )
 from capa.capabilities.common import find_capabilities, has_file_limitation, find_file_capabilities
-from capa.features.extractors.base_extractor import FeatureExtractor, StaticFeatureExtractor, DynamicFeatureExtractor
+from capa.features.extractors.base_extractor import (
+    ProcessFilter,
+    FunctionFilter,
+    FeatureExtractor,
+    StaticFeatureExtractor,
+    DynamicFeatureExtractor,
+)
 
 RULES_PATH_DEFAULT_STRING = "(embedded rules)"
 SIGNATURES_PATH_DEFAULT_STRING = "(embedded signatures)"
@@ -101,6 +107,7 @@ E_MISSING_CAPE_DYNAMIC_ANALYSIS = 22
 E_EMPTY_REPORT = 23
 E_UNSUPPORTED_GHIDRA_EXECUTION_MODE = 24
 E_INVALID_INPUT_FORMAT = 25
+E_INVALID_FEATURE_EXTRACTOR = 26
 
 logger = logging.getLogger("capa")
 
@@ -779,14 +786,23 @@ def get_extractor_from_cli(args, input_format: str, backend: str) -> FeatureExtr
 def get_target_elements_from_cli(args, input_format) -> Optional[Set]:
     if input_format in STATIC_FORMATS:
         if args.processes:
-            raise InvalidArgument("Cannot provide process ids with static analysis.")
+            raise InvalidArgument("Cannot filter processes with static analysis.")
         return set(map(str_to_number, args.functions))
     elif input_format in DYNAMIC_FORMATS:
         if args.functions:
-            raise InvalidArgument("Cannot provide function addresses with dynamic analysis.")
+            raise InvalidArgument("Cannot filter functions with dynamic analysis.")
         return set(map(str_to_number, args.processes))
     else:
         raise ShouldExitError(E_INVALID_INPUT_FORMAT)
+
+
+def apply_extractor_filters(extractor: FeatureExtractor, elements: Set) -> FeatureExtractor:
+    if isinstance(extractor, StaticFeatureExtractor):
+        return FunctionFilter(extractor, elements)
+    elif isinstance(extractor, DynamicFeatureExtractor):
+        return ProcessFilter(extractor, elements)
+    else:
+        raise ShouldExitError(E_INVALID_FEATURE_EXTRACTOR)
 
 
 def main(argv: Optional[List[str]] = None):
@@ -838,10 +854,10 @@ def main(argv: Optional[List[str]] = None):
         handle_common_args(args)
         ensure_input_exists_from_cli(args)
         input_format = get_input_format_from_cli(args)
+        target_elements = get_target_elements_from_cli(args, input_format)
         rules = get_rules_from_cli(args)
         file_extractors = get_file_extractors_from_cli(args, input_format)
         found_file_limitation = find_file_limitations_from_cli(args, rules, file_extractors)
-        target_elements = get_target_elements_from_cli(args, input_format)
     except ShouldExitError as e:
         return e.status_code
 
@@ -869,9 +885,11 @@ def main(argv: Optional[List[str]] = None):
         except ShouldExitError as e:
             return e.status_code
 
-        capabilities, counts = find_capabilities(
-            rules, extractor, target_elements=target_elements, disable_progress=args.quiet
-        )
+        if target_elements:
+            # if the user specified function/process filters, apply them here.
+            extractor = apply_extractor_filters(extractor, target_elements)
+
+        capabilities, counts = find_capabilities(rules, extractor, disable_progress=args.quiet)
 
         meta = capa.loader.collect_metadata(argv, args.input_file, input_format, os_, args.rules, extractor, counts)
         meta.analysis.layout = capa.loader.compute_layout(rules, extractor, capabilities)

@@ -9,7 +9,8 @@
 import abc
 import hashlib
 import dataclasses
-from typing import Any, Dict, Tuple, Union, Iterator
+from types import MethodType
+from typing import Any, Set, Dict, Tuple, Union, Iterator
 from dataclasses import dataclass
 
 # TODO(williballenthin): use typing.TypeAlias directly when Python 3.9 is deprecated
@@ -296,6 +297,16 @@ class StaticFeatureExtractor:
         raise NotImplementedError()
 
 
+def FunctionFilter(extractor: StaticFeatureExtractor, functions: Set) -> StaticFeatureExtractor:
+    get_functions = extractor.get_functions  # fetch original get_functions()
+
+    def filtered_get_functions(self):
+        yield from (f for f in get_functions() if f.address in functions)
+
+    extractor.get_functions = MethodType(filtered_get_functions, extractor)
+    return extractor
+
+
 @dataclass
 class ProcessHandle:
     """
@@ -465,6 +476,16 @@ class DynamicFeatureExtractor:
             Foo(1, "two", b"\x00\x11") -> -1
         """
         raise NotImplementedError()
+
+
+def ProcessFilter(extractor: DynamicFeatureExtractor, processes: Set) -> DynamicFeatureExtractor:
+    get_processes = extractor.get_processes  # fetch original get_functions()
+
+    def filtered_get_processes(self):
+        yield from (f for f in get_processes() if f.address.pid in processes)
+
+    extractor.get_processes = MethodType(filtered_get_processes, extractor)
+    return extractor
 
 
 FeatureExtractor: TypeAlias = Union[StaticFeatureExtractor, DynamicFeatureExtractor]

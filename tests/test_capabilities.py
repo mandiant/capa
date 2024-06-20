@@ -9,6 +9,7 @@
 import textwrap
 
 import capa.capabilities.common
+from capa.features.extractors.base_extractor import FunctionFilter
 
 
 def test_match_across_scopes_file_function(z9324d_extractor):
@@ -196,7 +197,8 @@ def test_match_specific_functions(z9324d_extractor):
             )
         ]
     )
-    capabilities, meta = capa.capabilities.common.find_capabilities(rules, z9324d_extractor, target_elements={0x4019C0})
+    extractor = FunctionFilter(z9324d_extractor, {0x4019C0})
+    capabilities, meta = capa.capabilities.common.find_capabilities(rules, extractor)
     matches = capabilities["receive data"]
     # test that we received only one match
     assert len(matches) == 1

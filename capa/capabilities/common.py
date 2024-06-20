@@ -63,7 +63,7 @@ def has_file_limitation(rules: RuleSet, capabilities: MatchResults, is_standalon
 
 
 def find_capabilities(
-    ruleset: RuleSet, extractor: FeatureExtractor, target_elements=None, disable_progress=None, **kwargs
+    ruleset: RuleSet, extractor: FeatureExtractor, disable_progress=None, **kwargs
 ) -> Tuple[MatchResults, Any]:
     from capa.capabilities.static import find_static_capabilities
     from capa.capabilities.dynamic import find_dynamic_capabilities
@@ -72,12 +72,8 @@ def find_capabilities(
         # for the time being, extractors are either static or dynamic.
         # Remove this assertion once that has changed
         assert not isinstance(extractor, DynamicFeatureExtractor)
-        return find_static_capabilities(
-            ruleset, extractor, target_functions=target_elements, disable_progress=disable_progress, **kwargs
-        )
+        return find_static_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
     if isinstance(extractor, DynamicFeatureExtractor):
-        return find_dynamic_capabilities(
-            ruleset, extractor, target_processes=target_elements, disable_progress=disable_progress, **kwargs
-        )
+        return find_dynamic_capabilities(ruleset, extractor, disable_progress=disable_progress, **kwargs)
 
     raise ValueError(f"unexpected extractor type: {extractor.__class__.__name__}")

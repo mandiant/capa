@@ -20,7 +20,6 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
-from capa.exceptions import NonExistantProcessError
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import CallHandle, ThreadHandle, ProcessHandle, DynamicFeatureExtractor
 
@@ -131,14 +130,11 @@ def find_process_capabilities(
 
 
 def find_dynamic_capabilities(
-    ruleset: RuleSet, extractor: DynamicFeatureExtractor, target_processes=None, disable_progress=None
+    ruleset: RuleSet, extractor: DynamicFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
     all_process_matches: MatchResults = collections.defaultdict(list)
     all_thread_matches: MatchResults = collections.defaultdict(list)
     all_call_matches: MatchResults = collections.defaultdict(list)
-
-    if target_processes is None:
-        target_processes = set()
 
     feature_counts = rdoc.DynamicFeatureCounts(file=0, processes=())
 
@@ -158,16 +154,6 @@ def find_dynamic_capabilities(
                     return s
 
             processes = list(extractor.get_processes())
-
-            if target_processes:
-                # analyze only the processes that the user required.
-                # if none were provided, analyze all processes.
-                processes_set = {ph.address.pid for ph in processes}
-                if not (target_processes <= processes_set):
-                    raise NonExistantProcessError(
-                        f"The following process ids were not found in the report: {target_processes - processes_set}"
-                    )
-                processes = list(filter(lambda h: h.address.pid in target_processes, processes))
 
             pb = pbar(processes, desc="matching", unit=" processes", leave=False)
             for p in pb:

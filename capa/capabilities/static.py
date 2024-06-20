@@ -21,7 +21,6 @@ import capa.render.result_document as rdoc
 from capa.rules import Scope, RuleSet
 from capa.engine import FeatureSet, MatchResults
 from capa.helpers import redirecting_print_to_tqdm
-from capa.exceptions import NonExistantFunctionError
 from capa.capabilities.common import find_file_capabilities
 from capa.features.extractors.base_extractor import BBHandle, InsnHandle, FunctionHandle, StaticFeatureExtractor
 
@@ -134,7 +133,7 @@ def find_code_capabilities(
 
 
 def find_static_capabilities(
-    ruleset: RuleSet, extractor: StaticFeatureExtractor, target_functions=None, disable_progress=None
+    ruleset: RuleSet, extractor: StaticFeatureExtractor, disable_progress=None
 ) -> Tuple[MatchResults, Any]:
     all_function_matches: MatchResults = collections.defaultdict(list)
     all_bb_matches: MatchResults = collections.defaultdict(list)
@@ -164,17 +163,6 @@ def find_static_capabilities(
                     return s
 
             functions = list(extractor.get_functions())
-
-            if target_functions:
-                # analyze only the functions that the user required.
-                # if none were provided, analyze all functions.
-                functions_set = {fh.address for fh in functions}
-                if not target_functions <= functions_set:
-                    raise NonExistantFunctionError(
-                        f"The following function addresses were not found in the sample: {target_functions - functions_set}"
-                    )
-                functions = list(filter(lambda h: h.address in target_functions, functions))
-
             n_funcs = len(functions)
 
             pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions", leave=False)
