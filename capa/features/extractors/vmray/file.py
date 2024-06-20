@@ -22,6 +22,7 @@ def get_processes(analysis: VMRayAnalysis) -> Iterator[ProcessHandle]:
     processes: Dict[str, Process] = analysis.sv2.processes
 
     for _, process in processes.items():
+        # TODO (meh) should we use the OS process ID or vmray-assigned ID?
         pid = process.monitor_id
         ppid = processes[process.ref_parent_process.path[1]].monitor_id if process.ref_parent_process else 0
 
