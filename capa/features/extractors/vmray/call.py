@@ -21,6 +21,10 @@ def extract_call_features(ph: ProcessHandle, th: ThreadHandle, ch: CallHandle) -
       yields: Feature, address; where Feature is either: API, Number, or String.
     """
 
+    # TODO update for new models
+    # print(ch)
+    return
+
     # Extract API name
     yield API(ch.inner.name), ch.inner.address
 
