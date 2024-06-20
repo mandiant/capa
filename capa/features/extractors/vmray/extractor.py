@@ -95,6 +95,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
     @classmethod
     def from_zipfile(cls, zipfile_path: Path):
         with ZipFile(zipfile_path, "r") as zipfile:
+            # TODO (meh): is default password "infected" good enough?? https://github.com/mandiant/capa/issues/2148
             sv2_json = json.loads(zipfile.read("logs/summary_v2.json", pwd=b"infected"))
             sv2 = SummaryV2.model_validate(sv2_json)
 

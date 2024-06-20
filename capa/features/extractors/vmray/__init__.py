@@ -40,7 +40,7 @@ class VMRayAnalysis:
     def _find_sample_file(self):
         for file_name, file_analysis in self.sv2.files.items():
             if file_analysis.is_sample:
-                # this indicates the sample submitted for analysis??
+                # target the sample submitted for analysis
                 self.sample_file_name = file_name
                 self.sample_file_analysis = file_analysis
 
@@ -68,6 +68,8 @@ class VMRayAnalysis:
                 self.sections[section.virtual_address] = section.name
 
     def _compute_process_threads(self):
+        # logs/flog.xml appears to be the only file that contains thread-related
+        # so we use it here to map processes to threads
         for function_call in self.flog.analysis.function_calls:
             pid: int = int(function_call.process_id)
             tid: int = int(function_call.thread_id)
