@@ -9,96 +9,38 @@ from typing import Dict, List, Optional
 
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-from pydantic_xml import BaseXmlModel, attr, element
+from pydantic import Field, BaseModel
 
 
-### models for flog.xml
-class Param(BaseXmlModel, tag="param"):
-    name: str = attr()
-    type: str = attr()
-    value: Optional[str] = attr(default=None)
+### models flog.xml files
+class FunctionCall(BaseModel):
+    ts: str
+    fncall_id: str
+    process_id: str
+    thread_id: str
+    name: str
+    addr: str
+    from_addr: str = Field(alias="from")
 
 
-# or see https://pydantic-xml.readthedocs.io/en/latest/pages/quickstart.html#wrapper
-class In(BaseXmlModel, tag="in"):
-    params: List[Param] = element(name="in")
+class FunctionReturn(BaseModel):
+    ts: str
+    fncall_id: str
+    addr: str
+    from_addr: str = Field(alias="from")
 
 
-class Out(BaseXmlModel, tag="out"):
-    params: List[Param] = element(name="out")
+class Analysis(BaseModel):
+    log_version: str
+    analyzer_version: str
+    analysis_date: str
+
+    function_calls: List[FunctionCall] = Field(alias="fncall", default=[])
+    function_returns: List[FunctionReturn] = Field(alias="fnret", default=[])
 
 
-class FunctionCall(BaseXmlModel, tag="fncall"):
-    ts: int = attr()
-    fncall_id: int = attr()
-    process_id: int = attr()
-    thread_id: int = attr()
-    name: str = attr()  # API call name?
-    address: str = attr(name="addr")
-    from_: str = attr(name="from")
-    in_: Optional[In] = element(tag="in", default=None)
-    out_: Optional[Out] = element(tag="out", default=None)
-
-
-# note that not all fncalls always have an associated fnret, e.g. exit or WaitForSingleObject
-class FunctionReturn(BaseXmlModel, tag="fnret"):
-    ts: int = attr()
-    fncall_id: int = attr()
-    address: str = attr(name="addr")  # string that contains a hex value
-    from_: str = attr(name="from")  # string that contains a hex value
-
-
-# TODO check multiple are there
-class MonitorProcess(BaseXmlModel, tag="monitor_process"):
-    ts: str = attr()
-    process_id: int = attr()
-    image_name: str = attr()
-
-
-# TODO check multiple are there
-class MonitorThread(BaseXmlModel, tag="monitor_thread"):
-    ts: str = attr()
-    thread_id: int = attr()
-    process_id: int = attr()
-    os_tid: str = attr()  # TODO hex
-
-
-class NewRegion(BaseXmlModel, tag="new_region"):
-    ts: int = attr()
-    region_id: int = attr()
-    process_id: int = attr()
-    start_va: str = attr()
-    end_va: str = attr()
-    entry_point: str = attr()
-
-
-class RemoveRegion(BaseXmlModel, tag="remove_region"):
-    ts: int = attr()
-    region_id: int = attr()
-
-
-# unordered is very slow, but elements may occur in any order
-class Analysis(BaseXmlModel, tag="analysis", search_mode="unordered"):
-    log_version: str = attr()
-    analyzer_version: str = attr()
-    analysis_date: str = attr()
-
-    # super slow
-    # data: List[Union[MonitorProcess, MonitorThread, NewRegion, RemoveRegion, FunctionCall, FunctionReturn]]
-
-    # may want to preprocess file and remove/reorder entries for more efficient parsing
-
-    processes: List[MonitorProcess] = element(tag="monitor_process")
-    threads: List[MonitorThread] = element(tag="monitor_thread")
-
-    # not important and slow down parsing
-    # new_regions: List[NewRegion] = element(tag="new_region")
-    # remove_regions: List[RemoveRegion] = element(tag="remove_region")
-
-    # very slow alternative; calls: List[Union[FunctionCall, FunctionReturn]]
-    fncalls: List[FunctionCall] = element(tag="fncall")
-    fnrets: List[FunctionReturn] = element(tag="fnret")
+class Flog(BaseModel):
+    analysis: Analysis
 
 
 ### models for summary_v2.json files

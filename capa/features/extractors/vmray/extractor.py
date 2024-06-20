@@ -11,13 +11,15 @@ from typing import Tuple, Iterator
 from pathlib import Path
 from zipfile import ZipFile
 
+import xmltodict
+
 import capa.helpers
 import capa.features.extractors.vmray.file
 import capa.features.extractors.vmray.global_
 from capa.features.common import Feature
 from capa.features.address import Address, AbsoluteVirtualAddress
 from capa.features.extractors.vmray import VMRayAnalysis
-from capa.features.extractors.vmray.models import Process, Analysis, SummaryV2
+from capa.features.extractors.vmray.models import Flog, Process, SummaryV2
 from capa.features.extractors.base_extractor import (
     CallHandle,
     SampleHashes,
@@ -95,6 +97,7 @@ class VMRayExtractor(DynamicFeatureExtractor):
             sv2 = SummaryV2.model_validate(sv2_json)
 
             flog_xml = zipfile.read("logs/flog.xml", pwd=b"infected")
-            flog = Analysis.from_xml(flog_xml)
+            flog_json = xmltodict.parse(flog_xml, attr_prefix="")
+            flog = Flog.model_validate(flog_json)
 
         return cls(VMRayAnalysis(sv2, flog))
